@@ -1,0 +1,12 @@
+{
+  "name": "hellolocal",
+  "private": true,
+  "packageManager": "pnpm@9",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "pnpm -C apps/web dev",
+    "dev:api": "pnpm -C apps/api start:dev"
+  }
+}
