@@ -1,24 +1,37 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Lang } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
 
 const ALLOWED_PAGES = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
 
+/**
+ * Service for retrieving legal pages (imprint, terms, privacy).
+ * Supports both single-tenant (default) and multi-tenant modes.
+ */
 @Injectable()
 export class LegalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantResolver: TenantKeyResolverService
+  ) {}
 
   private normalizeLang(lang: string): Lang {
     if (lang === "hu" || lang === "en" || lang === "de") return lang;
     throw new BadRequestException("Unsupported lang. Use hu|en|de.");
   }
 
-  private getDefaultTenantSlug(): string {
-    return process.env.DEFAULT_TENANT_SLUG ?? "etyek-budai";
-  }
-
-  async getPage(args: { lang: string; page: string }) {
+  /**
+   * Gets a legal page by key (imprint, terms, or privacy).
+   * 
+   * @param args - Page retrieval arguments
+   * @param args.lang - Language code
+   * @param args.page - Page key (imprint, terms, or privacy)
+   * @param args.tenantKey - Optional tenant key for multi-tenant support
+   * @returns Legal page data with translations and SEO
+   */
+  async getPage(args: { lang: string; page: string; tenantKey?: string }) {
     const lang = this.normalizeLang(args.lang);
 
     if (!ALLOWED_PAGES.has(args.page as any)) {
@@ -26,16 +39,12 @@ export class LegalService {
     }
     const key = args.page as LegalKey;
 
-    const tenantSlug = this.getDefaultTenantSlug();
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { slug: tenantSlug },
-      select: { id: true, slug: true },
-    });
-    if (!tenant) throw new NotFoundException("Tenant not found");
+    // Resolve tenant (either default or from tenantKey parameter)
+    const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
 
     const legal = await this.prisma.legalPage.findUnique({
-      where: { tenantId_key: { tenantId: tenant.id, key } },
-      include: { translations: { where: { lang }, take: 1 } },
+      where: { tenantId_key: { tenantId: tenant.tenantId, key } },
+      include: { translations: { where: { lang: tenant.lang }, take: 1 } },
     });
 
     if (!legal || !legal.isActive) throw new NotFoundException("Legal page not found");

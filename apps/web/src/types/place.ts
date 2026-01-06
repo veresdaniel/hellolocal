@@ -1,13 +1,9 @@
 import type { Seo } from "./seo";
 
-export type PlaceCategory =
-  | "winery"
-  | "food_producer"
-  | "craft"
-  | "hospitality"
-  | "accommodation";
-
-export type PriceBand = "budget" | "mid" | "premium" | "luxury";
+// Category and PriceBand are now dynamic entities (admin-editable)
+// They are returned as localized names (strings) from the API
+export type PlaceCategory = string; // Localized category name (e.g., "Borászat", "Winery")
+export type PriceBand = string | null; // Localized price band name (e.g., "Prémium", "Premium") or null
 
 export type GeoPoint = { lat: number; lng: number };
 
@@ -15,10 +11,10 @@ export type Place = {
   id: string;
   slug: string;
 
-  tenantSlug: string;
-  townSlug: string;
+  tenantSlug?: string | null; // tenantKey from API
+  townSlug?: string | null;
 
-  category: PlaceCategory;
+  category: PlaceCategory | null; // Localized category name
   subcategory?: string;
 
   name: string;
@@ -45,8 +41,8 @@ export type Place = {
   // HTML stringet tartalmazhat
   accessibility?: string;
 
-  priceBand?: PriceBand;
-  tags?: string[];
+  priceBand?: PriceBand; // Localized price band name or null
+  tags?: string[]; // Array of localized tag names
 
   // category-specifikus, szabad struktúra
   extras?: Record<string, unknown>;

@@ -14,12 +14,27 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   };
 
   // Category hint keywords
+  // Since categories are now dynamic entities with localized names,
+  // we add keywords based on common category name patterns
   const extraKw: string[] = [];
-  if (place.category === "winery") extraKw.push("borászat", "borkóstoló");
-  if (place.category === "accommodation") extraKw.push("szállás", "foglalás");
-  if (place.category === "food_producer") extraKw.push("helyi termék", "termelő");
-  if (place.category === "hospitality") extraKw.push("vendéglátás", "étterem", "kávézó");
-  if (place.category === "craft") extraKw.push("kézműves", "workshop");
+  const categoryLower = place.category?.toLowerCase() ?? "";
+  
+  // Match common category names in different languages
+  if (categoryLower.includes("bor") || categoryLower.includes("winery") || categoryLower.includes("weingut")) {
+    extraKw.push("borászat", "borkóstoló");
+  }
+  if (categoryLower.includes("szállás") || categoryLower.includes("accommodation") || categoryLower.includes("unterkunft")) {
+    extraKw.push("szállás", "foglalás");
+  }
+  if (categoryLower.includes("termelő") || categoryLower.includes("producer") || categoryLower.includes("produzent")) {
+    extraKw.push("helyi termék", "termelő");
+  }
+  if (categoryLower.includes("vendéglátás") || categoryLower.includes("hospitality") || categoryLower.includes("gastronomie")) {
+    extraKw.push("vendéglátás", "étterem", "kávézó");
+  }
+  if (categoryLower.includes("kézműves") || categoryLower.includes("craft") || categoryLower.includes("handwerk")) {
+    extraKw.push("kézműves", "workshop");
+  }
 
   seo.keywords = uniq([...(seo.keywords ?? []), ...extraKw]);
 

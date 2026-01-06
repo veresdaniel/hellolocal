@@ -8,14 +8,14 @@ import { ExplorePage } from "../pages/ExplorePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 
-const tenantPrefix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
+const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
 
 export const router = createBrowserRouter([
   // root -> default nyelv
   { path: "/", element: <Navigate to={`/${DEFAULT_LANG}`} replace /> },
 
   {
-    path: `${tenantPrefix}/:lang`,
+    path: `/:lang${tenantSuffix}`,
     element: <TenantLayout />,
     children: [
       { index: true, element: <HomePage /> },

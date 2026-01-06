@@ -14,20 +14,15 @@ enum Lang {
   de
 }
 
-enum PlaceCategory {
-  winery
-  accommodation
-  hospitality
-  craft
-  food_producer
+enum SlugEntityType {
+  place
+  placeType
+  town
+  page
+  region
 }
 
-enum PriceBand {
-  budget
-  mid
-  premium
-  luxury
-}
+// Removed PlaceCategory and PriceBand enums - now they are entities
 
 model Tenant {
   id               String   @id @default(cuid())
@@ -44,6 +39,12 @@ model Tenant {
   places           Place[]
   legalPages       LegalPage[]
   translations     TenantTranslation[]
+
+  tenantKeys      TenantKey[]
+  slugs            Slug[]
+  categories       Category[]
+  tags             Tag[]
+  priceBands       PriceBand[]
 }
 
 model TenantTranslation {
@@ -68,10 +69,58 @@ model TenantTranslation {
   @@index([lang])
 }
 
+model TenantKey {
+  id            String   @id @default(cuid())
+  tenantId      String
+  lang          Lang
+  slug          String
+
+  isPrimary     Boolean  @default(true)
+  isActive      Boolean  @default(true)
+
+  redirectToId  String?
+  redirectTo    TenantKey?  @relation("TenantKeyRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
+  redirectsFrom TenantKey[] @relation("TenantKeyRedirect")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([lang, slug])
+  @@index([lang, slug])
+  @@index([tenantId, lang])
+}
+
+model Slug {
+  id            String         @id @default(cuid())
+  tenantId      String
+  lang          Lang
+  slug          String
+
+  entityType    SlugEntityType
+  entityId      String
+
+  isPrimary     Boolean        @default(true)
+  isActive      Boolean        @default(true)
+
+  redirectToId  String?
+  redirectTo    Slug?          @relation("SlugRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
+  redirectsFrom Slug[]         @relation("SlugRedirect")
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, lang, slug])
+  @@index([tenantId, lang, slug])
+  @@index([tenantId, entityType, entityId])
+}
+
 model Town {
   id         String   @id @default(cuid())
   tenantId   String
-  slug       String
   isActive   Boolean  @default(true)
 
   createdAt  DateTime @default(now())
@@ -81,7 +130,6 @@ model Town {
   places     Place[]
   translations TownTranslation[]
 
-  @@unique([tenantId, slug])
   @@index([tenantId])
 }
 
@@ -106,25 +154,110 @@ model TownTranslation {
   @@index([lang])
 }
 
+model Category {
+  id         String   @id @default(cuid())
+  tenantId   String
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  translations CategoryTranslation[]
+  places     Place[]
+
+  @@index([tenantId])
+}
+
+model CategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId String
+  lang        Lang
+
+  name        String
+  description String? // HTML
+
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+  @@index([lang])
+}
+
+model Tag {
+  id         String   @id @default(cuid())
+  tenantId   String
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  translations TagTranslation[]
+  places     PlaceTag[]
+
+  @@index([tenantId])
+}
+
+model TagTranslation {
+  id          String   @id @default(cuid())
+  tagId       String
+  lang        Lang
+
+  name        String
+  description String? // HTML
+
+  tag         Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, lang])
+  @@index([lang])
+}
+
+model PriceBand {
+  id         String   @id @default(cuid())
+  tenantId   String
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  translations PriceBandTranslation[]
+  places     Place[]
+
+  @@index([tenantId])
+}
+
+model PriceBandTranslation {
+  id          String   @id @default(cuid())
+  priceBandId String
+  lang        Lang
+
+  name        String
+  description String? // HTML
+
+  priceBand   PriceBand @relation(fields: [priceBandId], references: [id], onDelete: Cascade)
+
+  @@unique([priceBandId, lang])
+  @@index([lang])
+}
+
 model Place {
   id          String        @id @default(cuid())
   tenantId    String
   townId      String?
 
-  slug        String
-  category    PlaceCategory
+  categoryId  String
   isActive    Boolean       @default(true)
 
   // Media + discoverability
   heroImage   String?
   gallery     String[]      @default([])
-  tags        String[]      @default([])
 
   // Map
   lat         Float?
   lng         Float?
 
-  priceBand   PriceBand?
+  priceBandId String?
 
   // Aggregated rating (read-only in v1; write later)
   ratingAvg   Float?        // e.g. 4.6
@@ -138,11 +271,29 @@ model Place {
 
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   town        Town?         @relation(fields: [townId], references: [id], onDelete: SetNull)
+  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceBand   PriceBand?    @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
   translations PlaceTranslation[]
+  tags        PlaceTag[]
 
-  @@unique([tenantId, slug])
-  @@index([tenantId, category])
+  @@index([tenantId, categoryId])
   @@index([townId])
+}
+
+// Many-to-many relationship between Place and Tag
+model PlaceTag {
+  id        String   @id @default(cuid())
+  placeId   String
+  tagId     String
+
+  createdAt DateTime @default(now())
+
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, tagId])
+  @@index([placeId])
+  @@index([tagId])
 }
 
 model PlaceTranslation {

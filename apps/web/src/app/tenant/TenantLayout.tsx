@@ -14,9 +14,10 @@ function isLang(x: unknown): x is Lang {
 }
 
 export function TenantLayout() {
-  const params = useParams();
-  const langParam = params.lang;
-  const tenantParam = params.tenantSlug;
+  const { lang: langParam, tenantSlug: tenantParam } = useParams<{
+    lang?: Lang;
+    tenantSlug?: string;
+  }>();
 
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
@@ -27,8 +28,8 @@ export function TenantLayout() {
 
   // rossz lang -> redirect a javított langra (megtartva a többit)
   if (langParam !== lang) {
-    const prefix = HAS_MULTIPLE_TENANTS ? `/${tenantSlug}` : "";
-    return <Navigate to={`${prefix}/${lang}`} replace />;
+    const base = HAS_MULTIPLE_TENANTS ? `/${lang}/${tenantSlug}` : `/${lang}`;
+    return <Navigate to={base} replace />;
   }
 
   // Itt később tölthetsz tenant configot (React Queryvel), de MVP-ben elég, ha csak továbbadod.
