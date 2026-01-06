@@ -1,0 +1,992 @@
+{
+  "uuid": "14850ab3-9af7-4e06-8249-3445cb7915c1",
+  "lastMigration": 33,
+  "name": "hellolocal (fixed: port 3003, prefix api)",
+  "endpointPrefix": "api",
+  "port": 3003,
+  "routes": [
+    {
+      "uuid": "a8985cc3-bb92-4423-8725-87c2e5a52ddc",
+      "method": "get",
+      "endpoint": "hu/tenants",
+      "responses": [
+        {
+          "uuid": "9bd7527e-fee9-4ea5-82b3-e965be103a52",
+          "body": "[\n  {\n    \"slug\": \"etyek-budai\",\n    \"name\": \"Etyek–Budai borvidék\",\n    \"isDefault\": true\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": true,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "76ab1fbf-7101-4eb1-bc3c-31f36afbf962",
+      "method": "get",
+      "endpoint": "hu/tenants/etyek-budai",
+      "responses": [
+        {
+          "uuid": "320f99e4-3f17-4176-8535-a9cbcdea947c",
+          "body": "{\n  \"slug\": \"etyek-budai\",\n  \"scope\": {\n    \"kind\": \"region\",\n    \"regionSlug\": \"etyek-budai\",\n    \"townSlugs\": [\n      \"etyek\"\n    ]\n  },\n  \"languages\": [\n    \"hu\",\n    \"en\",\n    \"de\"\n  ],\n  \"map\": {\n    \"center\": {\n      \"lat\": 47.447,\n      \"lng\": 18.751\n    },\n    \"zoom\": 11\n  },\n  \"dominantGrapes\": [\n    \"Chardonnay\",\n    \"Sauvignon Blanc\",\n    \"Pinot Noir\"\n  ],\n  \"name\": \"Etyek–Budai borvidék\",\n  \"description\": \"<p>Pezsgők és friss fehérek hazája Budapest kapujában.</p>\",\n  \"history\": \"<p>Az Etyek–Budai borvidék a 18–19. században lendült fel.</p>\",\n  \"seo\": {\n    \"title\": \"Etyek–Budai borvidék – borászatok és gasztro élmények\",\n    \"description\": \"Fedezd fel az Etyek–Budai borvidék borászatait, gasztro- és turisztikai helyeit.\",\n    \"image\": \"https://picsum.photos/seed/etyek/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borvidék\",\n      \"borászat\",\n      \"gasztro\"\n    ]\n  },\n  \"legal\": {\n    \"imprint\": {\n      \"title\": \"Impresszum\",\n      \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n      \"seo\": {\n        \"title\": \"Impresszum\",\n        \"description\": \"Impresszum – Etyek–Budai borvidék\"\n      }\n    },\n    \"terms\": {\n      \"title\": \"ÁSZF\",\n      \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n      \"seo\": {\n        \"title\": \"ÁSZF\",\n        \"description\": \"Általános szerződési feltételek\"\n      }\n    },\n    \"privacy\": {\n      \"title\": \"Adatvédelem\",\n      \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n      \"seo\": {\n        \"title\": \"Adatvédelem\",\n        \"description\": \"Adatkezelési tájékoztató\"\n      }\n    }\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "14eccb41-da21-4db3-a511-193b102df53d",
+      "method": "get",
+      "endpoint": "hu/towns",
+      "responses": [
+        {
+          "uuid": "ba864384-9983-4de7-ae1b-11921dfe2b9d",
+          "body": "[\n  {\n    \"slug\": \"etyek\",\n    \"regionSlug\": \"etyek-budai\",\n    \"name\": \"Etyek\",\n    \"description\": \"<p>Ikonikus település, pezsgők és dűlők között.</p>\",\n    \"seo\": {\n      \"title\": \"Etyek – borászatok és pincék\",\n      \"description\": \"Etyek település borászatai és látogatható helyei.\",\n      \"image\": \"https://picsum.photos/seed/etyek-town/1200/630\"\n    },\n    \"location\": {\n      \"lat\": 47.4467,\n      \"lng\": 18.7539\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "28d327c6-f0e9-491c-be08-ea957c6123da",
+      "method": "get",
+      "endpoint": "hu/places",
+      "responses": [
+        {
+          "uuid": "a4b6cc90-a3b5-406d-a367-f8f5741bda2a",
+          "body": "[\n  {\n    \"id\": \"pl_001\",\n    \"slug\": \"hernak-estate\",\n    \"tenantSlug\": \"etyek-budai\",\n    \"townSlug\": \"etyek\",\n    \"category\": \"winery\",\n    \"name\": \"Hernák Estate\",\n    \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n    \"seo\": {\n      \"title\": \"Hernák Estate – borászat Etyeken\",\n      \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n      \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n      \"keywords\": [\n        \"etyek\",\n        \"borászat\",\n        \"pezsgő\"\n      ]\n    },\n    \"location\": {\n      \"lat\": 47.4475,\n      \"lng\": 18.7448\n    },\n    \"priceBand\": \"premium\",\n    \"tags\": [\n      \"tasting\",\n      \"terrace\"\n    ],\n    \"extras\": {\n      \"capacity\": 60,\n      \"hasFood\": true,\n      \"hasAccommodation\": false\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "1039822c-3a99-4caf-b52e-12b13611dce6",
+      "method": "get",
+      "endpoint": "hu/places/hernak-estate",
+      "responses": [
+        {
+          "uuid": "d0dc0509-4524-4bda-918b-fc3bf75dc1e1",
+          "body": "{\n  \"id\": \"pl_001\",\n  \"slug\": \"hernak-estate\",\n  \"tenantSlug\": \"etyek-budai\",\n  \"townSlug\": \"etyek\",\n  \"category\": \"winery\",\n  \"name\": \"Hernák Estate\",\n  \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n  \"seo\": {\n    \"title\": \"Hernák Estate – borászat Etyeken\",\n    \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n    \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borászat\",\n      \"pezsgő\"\n    ]\n  },\n  \"location\": {\n    \"lat\": 47.4475,\n    \"lng\": 18.7448\n  },\n  \"priceBand\": \"premium\",\n  \"tags\": [\n    \"tasting\",\n    \"terrace\"\n  ],\n  \"extras\": {\n    \"capacity\": 60,\n    \"hasFood\": true,\n    \"hasAccommodation\": false\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "0f019d06-b20c-4bcd-9150-bed0949d55f3",
+      "method": "get",
+      "endpoint": "hu/legal/imprint",
+      "responses": [
+        {
+          "uuid": "ca2e1c8f-5ba2-47e5-a2f9-131a2e3857c0",
+          "body": "{\n  \"title\": \"Impresszum\",\n  \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n  \"seo\": {\n    \"title\": \"Impresszum\",\n    \"description\": \"Impresszum – Etyek–Budai borvidék\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "cafdb56e-4a39-43bf-bdd0-59aabd8753bc",
+      "method": "get",
+      "endpoint": "hu/legal/terms",
+      "responses": [
+        {
+          "uuid": "ce2190d1-eb7d-48fb-adeb-529b6a50daba",
+          "body": "{\n  \"title\": \"ÁSZF\",\n  \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n  \"seo\": {\n    \"title\": \"ÁSZF\",\n    \"description\": \"Általános szerződési feltételek\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "6e4504e4-86b0-47bf-b46b-635cf250b74b",
+      "method": "get",
+      "endpoint": "hu/legal/privacy",
+      "responses": [
+        {
+          "uuid": "af393e66-ed5a-4cc0-955d-8350335ef183",
+          "body": "{\n  \"title\": \"Adatvédelem\",\n  \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n  \"seo\": {\n    \"title\": \"Adatvédelem\",\n    \"description\": \"Adatkezelési tájékoztató\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "8a8035f0-43e0-48aa-af54-498cca1b909b",
+      "method": "get",
+      "endpoint": "en/tenants",
+      "responses": [
+        {
+          "uuid": "f255e175-c7d8-4185-97ff-e6a9c6ea47cd",
+          "body": "[\n  {\n    \"slug\": \"etyek-budai\",\n    \"name\": \"Etyek–Budai borvidék\",\n    \"isDefault\": true\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "ba344a28-8449-4b8e-ae49-697abf396d73",
+      "method": "get",
+      "endpoint": "en/tenants/etyek-budai",
+      "responses": [
+        {
+          "uuid": "2dd0bd4e-7122-4e7e-afef-7ebaeb74c6e2",
+          "body": "{\n  \"slug\": \"etyek-budai\",\n  \"scope\": {\n    \"kind\": \"region\",\n    \"regionSlug\": \"etyek-budai\",\n    \"townSlugs\": [\n      \"etyek\"\n    ]\n  },\n  \"languages\": [\n    \"hu\",\n    \"en\",\n    \"de\"\n  ],\n  \"map\": {\n    \"center\": {\n      \"lat\": 47.447,\n      \"lng\": 18.751\n    },\n    \"zoom\": 11\n  },\n  \"dominantGrapes\": [\n    \"Chardonnay\",\n    \"Sauvignon Blanc\",\n    \"Pinot Noir\"\n  ],\n  \"name\": \"Etyek–Budai borvidék\",\n  \"description\": \"<p>Pezsgők és friss fehérek hazája Budapest kapujában.</p>\",\n  \"history\": \"<p>Az Etyek–Budai borvidék a 18–19. században lendült fel.</p>\",\n  \"seo\": {\n    \"title\": \"Etyek–Budai borvidék – borászatok és gasztro élmények\",\n    \"description\": \"Fedezd fel az Etyek–Budai borvidék borászatait, gasztro- és turisztikai helyeit.\",\n    \"image\": \"https://picsum.photos/seed/etyek/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borvidék\",\n      \"borászat\",\n      \"gasztro\"\n    ]\n  },\n  \"legal\": {\n    \"imprint\": {\n      \"title\": \"Impresszum\",\n      \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n      \"seo\": {\n        \"title\": \"Impresszum\",\n        \"description\": \"Impresszum – Etyek–Budai borvidék\"\n      }\n    },\n    \"terms\": {\n      \"title\": \"ÁSZF\",\n      \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n      \"seo\": {\n        \"title\": \"ÁSZF\",\n        \"description\": \"Általános szerződési feltételek\"\n      }\n    },\n    \"privacy\": {\n      \"title\": \"Adatvédelem\",\n      \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n      \"seo\": {\n        \"title\": \"Adatvédelem\",\n        \"description\": \"Adatkezelési tájékoztató\"\n      }\n    }\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "8abf7b75-1171-4ddb-80ba-aadafd0b19dd",
+      "method": "get",
+      "endpoint": "en/towns",
+      "responses": [
+        {
+          "uuid": "27d3ae0f-7a00-4587-835b-777bba5c50dd",
+          "body": "[\n  {\n    \"slug\": \"etyek\",\n    \"regionSlug\": \"etyek-budai\",\n    \"name\": \"Etyek\",\n    \"description\": \"<p>Ikonikus település, pezsgők és dűlők között.</p>\",\n    \"seo\": {\n      \"title\": \"Etyek – borászatok és pincék\",\n      \"description\": \"Etyek település borászatai és látogatható helyei.\",\n      \"image\": \"https://picsum.photos/seed/etyek-town/1200/630\"\n    },\n    \"location\": {\n      \"lat\": 47.4467,\n      \"lng\": 18.7539\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "ef53f3f7-4268-48ca-b89c-9af642ddf82e",
+      "method": "get",
+      "endpoint": "en/places",
+      "responses": [
+        {
+          "uuid": "d6384e17-989a-48a3-a3c0-2e77aae09686",
+          "body": "[\n  {\n    \"id\": \"pl_001\",\n    \"slug\": \"hernak-estate\",\n    \"tenantSlug\": \"etyek-budai\",\n    \"townSlug\": \"etyek\",\n    \"category\": \"winery\",\n    \"name\": \"Hernák Estate\",\n    \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n    \"seo\": {\n      \"title\": \"Hernák Estate – borászat Etyeken\",\n      \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n      \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n      \"keywords\": [\n        \"etyek\",\n        \"borászat\",\n        \"pezsgő\"\n      ]\n    },\n    \"location\": {\n      \"lat\": 47.4475,\n      \"lng\": 18.7448\n    },\n    \"priceBand\": \"premium\",\n    \"tags\": [\n      \"tasting\",\n      \"terrace\"\n    ],\n    \"extras\": {\n      \"capacity\": 60,\n      \"hasFood\": true,\n      \"hasAccommodation\": false\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "2b5adfad-05ac-45ce-b89a-759f296eaf01",
+      "method": "get",
+      "endpoint": "en/places/hernak-estate",
+      "responses": [
+        {
+          "uuid": "2b8e5554-3c5a-49cc-9ddf-08b600fa98a8",
+          "body": "{\n  \"id\": \"pl_001\",\n  \"slug\": \"hernak-estate\",\n  \"tenantSlug\": \"etyek-budai\",\n  \"townSlug\": \"etyek\",\n  \"category\": \"winery\",\n  \"name\": \"Hernák Estate\",\n  \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n  \"seo\": {\n    \"title\": \"Hernák Estate – borászat Etyeken\",\n    \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n    \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borászat\",\n      \"pezsgő\"\n    ]\n  },\n  \"location\": {\n    \"lat\": 47.4475,\n    \"lng\": 18.7448\n  },\n  \"priceBand\": \"premium\",\n  \"tags\": [\n    \"tasting\",\n    \"terrace\"\n  ],\n  \"extras\": {\n    \"capacity\": 60,\n    \"hasFood\": true,\n    \"hasAccommodation\": false\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "8e94aad7-2a9b-467f-af23-19a66c10eb64",
+      "method": "get",
+      "endpoint": "en/legal/imprint",
+      "responses": [
+        {
+          "uuid": "eec66616-f4b2-4bb7-aa94-c2c11d51a2d4",
+          "body": "{\n  \"title\": \"Impresszum\",\n  \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n  \"seo\": {\n    \"title\": \"Impresszum\",\n    \"description\": \"Impresszum – Etyek–Budai borvidék\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "5e1176e3-cb11-4500-bafd-a97e8f56aa09",
+      "method": "get",
+      "endpoint": "en/legal/terms",
+      "responses": [
+        {
+          "uuid": "e8788935-832e-48c2-bdc2-8ee616235ab6",
+          "body": "{\n  \"title\": \"ÁSZF\",\n  \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n  \"seo\": {\n    \"title\": \"ÁSZF\",\n    \"description\": \"Általános szerződési feltételek\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "799fa702-94c6-4313-961e-777648bf3e16",
+      "method": "get",
+      "endpoint": "en/legal/privacy",
+      "responses": [
+        {
+          "uuid": "a846c653-1291-4847-8c79-0dd80ac67dd7",
+          "body": "{\n  \"title\": \"Adatvédelem\",\n  \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n  \"seo\": {\n    \"title\": \"Adatvédelem\",\n    \"description\": \"Adatkezelési tájékoztató\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "0f2e9a15-161b-4873-9454-1c5fda7dabdb",
+      "method": "get",
+      "endpoint": "de/tenants",
+      "responses": [
+        {
+          "uuid": "e0f8807a-79b2-4e03-98c8-92c58c077b92",
+          "body": "[\n  {\n    \"slug\": \"etyek-budai\",\n    \"name\": \"Etyek–Budai borvidék\",\n    \"isDefault\": true\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "bc52c900-a8b2-4847-b67e-bc594bdc9dc4",
+      "method": "get",
+      "endpoint": "de/tenants/etyek-budai",
+      "responses": [
+        {
+          "uuid": "b6de7ea9-4d5b-4b41-942b-96f5d4b7f48b",
+          "body": "{\n  \"slug\": \"etyek-budai\",\n  \"scope\": {\n    \"kind\": \"region\",\n    \"regionSlug\": \"etyek-budai\",\n    \"townSlugs\": [\n      \"etyek\"\n    ]\n  },\n  \"languages\": [\n    \"hu\",\n    \"en\",\n    \"de\"\n  ],\n  \"map\": {\n    \"center\": {\n      \"lat\": 47.447,\n      \"lng\": 18.751\n    },\n    \"zoom\": 11\n  },\n  \"dominantGrapes\": [\n    \"Chardonnay\",\n    \"Sauvignon Blanc\",\n    \"Pinot Noir\"\n  ],\n  \"name\": \"Etyek–Budai borvidék\",\n  \"description\": \"<p>Pezsgők és friss fehérek hazája Budapest kapujában.</p>\",\n  \"history\": \"<p>Az Etyek–Budai borvidék a 18–19. században lendült fel.</p>\",\n  \"seo\": {\n    \"title\": \"Etyek–Budai borvidék – borászatok és gasztro élmények\",\n    \"description\": \"Fedezd fel az Etyek–Budai borvidék borászatait, gasztro- és turisztikai helyeit.\",\n    \"image\": \"https://picsum.photos/seed/etyek/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borvidék\",\n      \"borászat\",\n      \"gasztro\"\n    ]\n  },\n  \"legal\": {\n    \"imprint\": {\n      \"title\": \"Impresszum\",\n      \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n      \"seo\": {\n        \"title\": \"Impresszum\",\n        \"description\": \"Impresszum – Etyek–Budai borvidék\"\n      }\n    },\n    \"terms\": {\n      \"title\": \"ÁSZF\",\n      \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n      \"seo\": {\n        \"title\": \"ÁSZF\",\n        \"description\": \"Általános szerződési feltételek\"\n      }\n    },\n    \"privacy\": {\n      \"title\": \"Adatvédelem\",\n      \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n      \"seo\": {\n        \"title\": \"Adatvédelem\",\n        \"description\": \"Adatkezelési tájékoztató\"\n      }\n    }\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "a75cebd7-1852-4f15-a1de-96bd9f274e9f",
+      "method": "get",
+      "endpoint": "de/towns",
+      "responses": [
+        {
+          "uuid": "0fb0b3dd-141a-4950-843c-e748713ac1af",
+          "body": "[\n  {\n    \"slug\": \"etyek\",\n    \"regionSlug\": \"etyek-budai\",\n    \"name\": \"Etyek\",\n    \"description\": \"<p>Ikonikus település, pezsgők és dűlők között.</p>\",\n    \"seo\": {\n      \"title\": \"Etyek – borászatok és pincék\",\n      \"description\": \"Etyek település borászatai és látogatható helyei.\",\n      \"image\": \"https://picsum.photos/seed/etyek-town/1200/630\"\n    },\n    \"location\": {\n      \"lat\": 47.4467,\n      \"lng\": 18.7539\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "72ad55ae-e9d3-41a1-bbb0-9fe8d9c1b695",
+      "method": "get",
+      "endpoint": "de/places",
+      "responses": [
+        {
+          "uuid": "dd98fcbf-5bba-4f75-bcbb-3f8278b78ff2",
+          "body": "[\n  {\n    \"id\": \"pl_001\",\n    \"slug\": \"hernak-estate\",\n    \"tenantSlug\": \"etyek-budai\",\n    \"townSlug\": \"etyek\",\n    \"category\": \"winery\",\n    \"name\": \"Hernák Estate\",\n    \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n    \"seo\": {\n      \"title\": \"Hernák Estate – borászat Etyeken\",\n      \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n      \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n      \"keywords\": [\n        \"etyek\",\n        \"borászat\",\n        \"pezsgő\"\n      ]\n    },\n    \"location\": {\n      \"lat\": 47.4475,\n      \"lng\": 18.7448\n    },\n    \"priceBand\": \"premium\",\n    \"tags\": [\n      \"tasting\",\n      \"terrace\"\n    ],\n    \"extras\": {\n      \"capacity\": 60,\n      \"hasFood\": true,\n      \"hasAccommodation\": false\n    }\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4b653d29-f4fd-4a53-8967-fadcc03ec528",
+      "method": "get",
+      "endpoint": "de/places/hernak-estate",
+      "responses": [
+        {
+          "uuid": "c710f675-c441-4bf8-92e9-2bf40b8e4f84",
+          "body": "{\n  \"id\": \"pl_001\",\n  \"slug\": \"hernak-estate\",\n  \"tenantSlug\": \"etyek-budai\",\n  \"townSlug\": \"etyek\",\n  \"category\": \"winery\",\n  \"name\": \"Hernák Estate\",\n  \"description\": \"<p>Modern pince és kóstolók Etyeken.</p>\",\n  \"seo\": {\n    \"title\": \"Hernák Estate – borászat Etyeken\",\n    \"description\": \"Modern etyeki borászat kóstolókkal és pezsgőkkel.\",\n    \"image\": \"https://picsum.photos/seed/hernak/1200/630\",\n    \"keywords\": [\n      \"etyek\",\n      \"borászat\",\n      \"pezsgő\"\n    ]\n  },\n  \"location\": {\n    \"lat\": 47.4475,\n    \"lng\": 18.7448\n  },\n  \"priceBand\": \"premium\",\n  \"tags\": [\n    \"tasting\",\n    \"terrace\"\n  ],\n  \"extras\": {\n    \"capacity\": 60,\n    \"hasFood\": true,\n    \"hasAccommodation\": false\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "3ea1fa4a-6733-4533-826b-434bcc703e55",
+      "method": "get",
+      "endpoint": "de/legal/imprint",
+      "responses": [
+        {
+          "uuid": "11cd4d71-7124-4272-98fc-bfbf2bbde2eb",
+          "body": "{\n  \"title\": \"Impresszum\",\n  \"content\": \"<p>Demo alkalmazás, mock adatokkal.</p>\",\n  \"seo\": {\n    \"title\": \"Impresszum\",\n    \"description\": \"Impresszum – Etyek–Budai borvidék\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "5f119677-4644-42a4-8fcd-02dd4392bff0",
+      "method": "get",
+      "endpoint": "de/legal/terms",
+      "responses": [
+        {
+          "uuid": "737436ab-0e8f-4f42-bb28-101b8065c0d6",
+          "body": "{\n  \"title\": \"ÁSZF\",\n  \"content\": \"<p>Demonstrációs célú tartalom.</p>\",\n  \"seo\": {\n    \"title\": \"ÁSZF\",\n    \"description\": \"Általános szerződési feltételek\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "978b9803-7a1c-466c-a9ea-77f269ef7793",
+      "method": "get",
+      "endpoint": "de/legal/privacy",
+      "responses": [
+        {
+          "uuid": "bff45423-e24e-4b8a-8e4c-87ee956dac8c",
+          "body": "{\n  \"title\": \"Adatvédelem\",\n  \"content\": \"<p>Adatkezelési tájékoztató (demo).</p>\",\n  \"seo\": {\n    \"title\": \"Adatvédelem\",\n    \"description\": \"Adatkezelési tájékoztató\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR",
+          "callbacks": [],
+          "label": "",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id"
+        }
+      ],
+      "type": "http",
+      "documentation": "",
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "cors": true,
+  "callbacks": [],
+  "latency": 0,
+  "hostname": "",
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "a8985cc3-bb92-4423-8725-87c2e5a52ddc"
+    },
+    {
+      "type": "route",
+      "uuid": "76ab1fbf-7101-4eb1-bc3c-31f36afbf962"
+    },
+    {
+      "type": "route",
+      "uuid": "14eccb41-da21-4db3-a511-193b102df53d"
+    },
+    {
+      "type": "route",
+      "uuid": "28d327c6-f0e9-491c-be08-ea957c6123da"
+    },
+    {
+      "type": "route",
+      "uuid": "1039822c-3a99-4caf-b52e-12b13611dce6"
+    },
+    {
+      "type": "route",
+      "uuid": "0f019d06-b20c-4bcd-9150-bed0949d55f3"
+    },
+    {
+      "type": "route",
+      "uuid": "cafdb56e-4a39-43bf-bdd0-59aabd8753bc"
+    },
+    {
+      "type": "route",
+      "uuid": "6e4504e4-86b0-47bf-b46b-635cf250b74b"
+    },
+    {
+      "type": "route",
+      "uuid": "8a8035f0-43e0-48aa-af54-498cca1b909b"
+    },
+    {
+      "type": "route",
+      "uuid": "ba344a28-8449-4b8e-ae49-697abf396d73"
+    },
+    {
+      "type": "route",
+      "uuid": "8abf7b75-1171-4ddb-80ba-aadafd0b19dd"
+    },
+    {
+      "type": "route",
+      "uuid": "ef53f3f7-4268-48ca-b89c-9af642ddf82e"
+    },
+    {
+      "type": "route",
+      "uuid": "2b5adfad-05ac-45ce-b89a-759f296eaf01"
+    },
+    {
+      "type": "route",
+      "uuid": "8e94aad7-2a9b-467f-af23-19a66c10eb64"
+    },
+    {
+      "type": "route",
+      "uuid": "5e1176e3-cb11-4500-bafd-a97e8f56aa09"
+    },
+    {
+      "type": "route",
+      "uuid": "799fa702-94c6-4313-961e-777648bf3e16"
+    },
+    {
+      "type": "route",
+      "uuid": "0f2e9a15-161b-4873-9454-1c5fda7dabdb"
+    },
+    {
+      "type": "route",
+      "uuid": "bc52c900-a8b2-4847-b67e-bc594bdc9dc4"
+    },
+    {
+      "type": "route",
+      "uuid": "a75cebd7-1852-4f15-a1de-96bd9f274e9f"
+    },
+    {
+      "type": "route",
+      "uuid": "72ad55ae-e9d3-41a1-bbb0-9fe8d9c1b695"
+    },
+    {
+      "type": "route",
+      "uuid": "4b653d29-f4fd-4a53-8967-fadcc03ec528"
+    },
+    {
+      "type": "route",
+      "uuid": "3ea1fa4a-6733-4533-826b-434bcc703e55"
+    },
+    {
+      "type": "route",
+      "uuid": "5f119677-4644-42a4-8fcd-02dd4392bff0"
+    },
+    {
+      "type": "route",
+      "uuid": "978b9803-7a1c-466c-a9ea-77f269ef7793"
+    }
+  ],
+  "folders": [],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "headers": [],
+  "proxyReqHeaders": [],
+  "proxyResHeaders": [],
+  "data": []
+}

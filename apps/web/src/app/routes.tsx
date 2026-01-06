@@ -6,7 +6,7 @@ import { TenantLayout } from "./tenant/TenantLayout";
 import { HomePage } from "../pages/HomePage";
 import { ExplorePage } from "../pages/ExplorePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
-import { StaticPage } from "../pages/StaticPage";
+import { LegalPage } from "../pages/LegalPage";
 
 const tenantPrefix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
 
@@ -22,9 +22,9 @@ export const router = createBrowserRouter([
       { path: "explore", element: <ExplorePage /> },
       { path: "place/:slug", element: <PlaceDetailPage /> },
 
-      { path: "impresszum", element: <StaticPage pageKey="imprint" /> },
-      { path: "aszf", element: <StaticPage pageKey="terms" /> },
-      { path: "adatvedelem", element: <StaticPage pageKey="privacy" /> },
+      { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
+      { path: "aszf", element: <LegalPage pageKey="terms" /> },
+      { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
     ],
   },
 

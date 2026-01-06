@@ -1,9 +1,7 @@
 // src/app/tenant/useTenantContext.ts
 import { useOutletContext } from "react-router-dom";
-import type { Lang } from "../config";
-
-type TenantCtx = { lang: Lang; tenantSlug: string };
+import type { TenantOutletContext } from "./TenantContext";
 
 export function useTenantContext() {
-  return useOutletContext<TenantCtx>();
+  return useOutletContext<TenantOutletContext>();
 }

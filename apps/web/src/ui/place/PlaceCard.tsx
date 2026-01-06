@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import type { Place } from "../types/place";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { buildPath } from "../app/routing/buildPath";
+import type { Place } from "../../types/place";
+import { useTenantContext } from "../../app/tenant/useTenantContext";
+import { buildPath } from "../../app/routing/buildPath";
 
 export function PlaceCard({ place }: { place: Place }) {
   const { lang, tenantSlug } = useTenantContext();

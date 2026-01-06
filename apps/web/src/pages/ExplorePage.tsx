@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getPlaces } from "../api/places.api";
-import { PlaceCard } from "../ui/PlaceCard";
+import { PlaceCard } from "../ui/place/PlaceCard";
 import { useSeo } from "../seo/useSeo";
 
 export function ExplorePage() {

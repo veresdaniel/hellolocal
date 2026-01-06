@@ -1,0 +1,213 @@
+// apps/api/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Lang {
+  hu
+  en
+  de
+}
+
+enum PlaceCategory {
+  winery
+  accommodation
+  hospitality
+  craft
+  food_producer
+}
+
+enum PriceBand {
+  budget
+  mid
+  premium
+  luxury
+}
+
+model Tenant {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  isActive         Boolean  @default(true)
+
+  // optional: for domain/whitelabel later
+  primaryDomain    String?  @unique
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  towns            Town[]
+  places           Place[]
+  legalPages       LegalPage[]
+  translations     TenantTranslation[]
+}
+
+model TenantTranslation {
+  id              String  @id @default(cuid())
+  tenantId        String
+  lang            Lang
+
+  name            String
+  shortDescription String? // HTML
+  description     String?  // HTML
+  heroImage       String?
+
+  // SEO (per language)
+  seoTitle        String?
+  seoDescription  String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+
+  tenant          Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, lang])
+  @@index([lang])
+}
+
+model Town {
+  id         String   @id @default(cuid())
+  tenantId   String
+  slug       String
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  places     Place[]
+  translations TownTranslation[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model TownTranslation {
+  id              String @id @default(cuid())
+  townId          String
+  lang            Lang
+
+  name            String
+  description     String? // HTML
+  heroImage       String?
+
+  // SEO
+  seoTitle        String?
+  seoDescription  String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+
+  town            Town   @relation(fields: [townId], references: [id], onDelete: Cascade)
+
+  @@unique([townId, lang])
+  @@index([lang])
+}
+
+model Place {
+  id          String        @id @default(cuid())
+  tenantId    String
+  townId      String?
+
+  slug        String
+  category    PlaceCategory
+  isActive    Boolean       @default(true)
+
+  // Media + discoverability
+  heroImage   String?
+  gallery     String[]      @default([])
+  tags        String[]      @default([])
+
+  // Map
+  lat         Float?
+  lng         Float?
+
+  priceBand   PriceBand?
+
+  // Aggregated rating (read-only in v1; write later)
+  ratingAvg   Float?        // e.g. 4.6
+  ratingCount Int?          // e.g. 18
+
+  // Flexible details (capacity, services, etc.)
+  extras      Json?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  town        Town?         @relation(fields: [townId], references: [id], onDelete: SetNull)
+  translations PlaceTranslation[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, category])
+  @@index([townId])
+}
+
+model PlaceTranslation {
+  id              String  @id @default(cuid())
+  placeId         String
+  lang            Lang
+
+  name            String
+  // HTML content
+  teaser          String? // short HTML for list
+  description     String? // full HTML for detail
+
+  // Contact-ish fields (can be HTML or plain)
+  address         String? // HTML or plain
+  phone           String?
+  email           String?
+  website         String?
+
+  openingHours    String? // HTML
+  accessibility   String? // HTML
+
+  // SEO
+  seoTitle        String?
+  seoDescription  String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+
+  place           Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, lang])
+  @@index([lang])
+}
+
+model LegalPage {
+  id         String   @id @default(cuid())
+  tenantId   String
+  key        String   // imprint | terms | privacy
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  translations LegalPageTranslation[]
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model LegalPageTranslation {
+  id              String @id @default(cuid())
+  legalPageId     String
+  lang            Lang
+
+  title           String
+  content         String? // HTML
+
+  // SEO
+  seoTitle        String?
+  seoDescription  String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+
+  legalPage       LegalPage @relation(fields: [legalPageId], references: [id], onDelete: Cascade)
+
+  @@unique([legalPageId, lang])
+  @@index([lang])
+}
