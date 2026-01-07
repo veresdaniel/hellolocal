@@ -68,6 +68,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {user?.role === "superadmin" && (
               <>
                 <Link
+                  to="/admin/app-settings"
+                  style={{
+                    textDecoration: "none",
+                    color: isActive("/admin/app-settings") ? "#007bff" : "#666",
+                    fontWeight: isActive("/admin/app-settings") ? "bold" : "normal",
+                  }}
+                >
+                  {t("admin.appSettings")}
+                </Link>
+                <Link
                   to="/admin/users"
                   style={{
                     textDecoration: "none",
@@ -135,4 +145,3 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   );
 }
-

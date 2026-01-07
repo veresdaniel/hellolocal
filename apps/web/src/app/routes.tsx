@@ -26,6 +26,7 @@ import { StaticPagesPage } from "../pages/admin/StaticPagesPage";
 import { TenantsPage } from "../pages/admin/TenantsPage";
 import { PlacesPage } from "../pages/admin/PlacesPage";
 import { EventsPage } from "../pages/admin/EventsPage";
+import { AppSettingsPage } from "../pages/admin/AppSettingsPage";
 import { AdminLayout } from "../components/AdminLayout";
 
 const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
@@ -175,6 +176,16 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="superadmin">
             <AdminLayout>
               <TenantsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "app-settings",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <AdminLayout>
+              <AppSettingsPage />
             </AdminLayout>
           </ProtectedRoute>
         ),
