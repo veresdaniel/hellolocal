@@ -115,12 +115,41 @@ async function main() {
         
         // Now try migrate deploy again (should work or show "already applied")
         console.log("📦 Running migrations again after baseline...");
-        execSync("prisma migrate deploy", {
-          stdio: "inherit",
-          cwd: apiDir,
-        });
-        console.log("✅ Migrations verified");
-        migrationsSucceeded = true;
+        try {
+          execSync("prisma migrate deploy", {
+            stdio: "inherit",
+            cwd: apiDir,
+          });
+          console.log("✅ Migrations verified");
+          migrationsSucceeded = true;
+        } catch (retryError: any) {
+          // If it still fails with failed migrations error, try force resolve
+          const errorMessage = retryError.message || String(retryError);
+          if (errorMessage.includes("failed migrations") || errorMessage.includes("P3009")) {
+            console.log("🔄 Still has failed migrations after baseline, trying force resolve...");
+            try {
+              execSync("tsx scripts/force-resolve-migration.ts", {
+                stdio: "inherit",
+                cwd: apiDir,
+                env: { ...process.env },
+              });
+              console.log("✅ Force resolve completed, retrying migrate deploy...");
+              
+              // Final retry
+              execSync("prisma migrate deploy", {
+                stdio: "inherit",
+                cwd: apiDir,
+              });
+              console.log("✅ Migrations verified after force resolve");
+              migrationsSucceeded = true;
+            } catch (forceResolveError: any) {
+              console.error("❌ Force resolve failed");
+              throw forceResolveError;
+            }
+          } else {
+            throw retryError;
+          }
+        }
       } catch (baselineError: any) {
         // If baseline also fails, it might mean:
         // 1. Database connection issue
