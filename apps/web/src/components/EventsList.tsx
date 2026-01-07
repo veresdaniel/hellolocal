@@ -47,6 +47,7 @@ export function EventsList({ lang }: EventsListProps) {
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const eventsListRef = useRef<HTMLDivElement>(null);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
 
   // Save position to localStorage whenever it changes
   useEffect(() => {
@@ -98,6 +99,27 @@ export function EventsList({ lang }: EventsListProps) {
     });
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!eventsListRef.current || isMobile) return;
+    // Don't start drag if touching on the toggle button
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    setHasDragged(false);
+    const touch = e.touches[0];
+    const rect = eventsListRef.current.getBoundingClientRect();
+    dragStartPosRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+  };
+
   useEffect(() => {
     if (!isDragging) return;
 
@@ -127,18 +149,56 @@ export function EventsList({ lang }: EventsListProps) {
       });
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!eventsListRef.current || isMobile) return;
+      e.preventDefault();
+      
+      const touch = e.touches[0];
+      if (!touch) return;
+      
+      // Check if we've actually moved (dragged)
+      const moved = Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 || 
+                    Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
+      if (moved) {
+        setHasDragged(true);
+      }
+      
+      const newLeft = touch.clientX - dragOffset.x;
+      const newTop = touch.clientY - dragOffset.y;
+      
+      // Constrain to viewport
+      const maxLeft = window.innerWidth - eventsListRef.current.offsetWidth - 24;
+      const maxTop = window.innerHeight - eventsListRef.current.offsetHeight - 24;
+      
+      const clampedLeft = Math.max(24, Math.min(newLeft, maxLeft));
+      const clampedTop = Math.max(24, Math.min(newTop, maxTop));
+      
+      setPosition({
+        top: clampedTop,
+        right: window.innerWidth - clampedLeft - eventsListRef.current.offsetWidth,
+      });
+    };
+
     const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleTouchEnd = () => {
       setIsDragging(false);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, isMobile]);
 
   // Sort events: pinned first, then by start date
   const sortedEvents = [...events].sort((a, b) => {
@@ -147,10 +207,16 @@ export function EventsList({ lang }: EventsListProps) {
     return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
   });
 
+  // Hide on mobile
+  if (isMobile) {
+    return null;
+  }
+
   return (
     <div
       ref={eventsListRef}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       style={{
         position: "fixed",
         top: `${position.top}px`,
@@ -167,6 +233,7 @@ export function EventsList({ lang }: EventsListProps) {
         overflow: "hidden",
         transition: isDragging ? "none" : "box-shadow 0.2s",
         userSelect: "none",
+        touchAction: "none", // Prevent default touch behaviors
       }}
       onMouseEnter={(e) => {
         if (!isDragging) {

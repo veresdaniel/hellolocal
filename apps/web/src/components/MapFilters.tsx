@@ -70,6 +70,28 @@ export function MapFilters({
     setIsDragging(true);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!filtersRef.current) return;
+    // Don't allow dragging from input elements
+    if ((e.target as HTMLElement).closest("input")) {
+      return;
+    }
+    // Don't allow dragging from label elements (checkboxes)
+    if ((e.target as HTMLElement).closest("label")) {
+      return;
+    }
+    e.preventDefault();
+    setHasDragged(false);
+    const touch = e.touches[0];
+    const rect = filtersRef.current.getBoundingClientRect();
+    dragStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+    setIsDragging(true);
+  };
+
   useEffect(() => {
     if (!isDragging) return;
 
@@ -95,16 +117,50 @@ export function MapFilters({
       });
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      // Detect if we've actually moved (dragged)
+      const moved = Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
+      if (moved) {
+        setHasDragged(true);
+      }
+
+      const newLeft = touch.clientX - dragOffset.x;
+      const newTop = touch.clientY - dragOffset.y;
+
+      // Constrain to viewport
+      const maxTop = window.innerHeight - (filtersRef.current?.offsetHeight || 200);
+
+      // Convert left to right for positioning
+      const newRight = window.innerWidth - newLeft - (filtersRef.current?.offsetWidth || 280);
+
+      setPosition({
+        top: Math.max(0, Math.min(newTop, maxTop)),
+        right: Math.max(0, Math.min(newRight, window.innerWidth - 280)),
+      });
+    };
+
     const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleTouchEnd = () => {
       setIsDragging(false);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [isDragging, dragOffset]);
 
@@ -158,6 +214,7 @@ export function MapFilters({
     <div
       ref={filtersRef}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       style={{
         position: "absolute",
         top: position.top,
@@ -174,6 +231,7 @@ export function MapFilters({
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
         transition: isDragging ? "none" : "box-shadow 0.2s ease",
+        touchAction: "none", // Prevent default touch behaviors
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
