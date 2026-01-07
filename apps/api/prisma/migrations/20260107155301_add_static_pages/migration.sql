@@ -10,12 +10,26 @@ BEGIN
     END IF;
 END $$;
 
--- AlterTable
-ALTER TABLE "Category" ADD COLUMN     "order" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "parentId" TEXT;
+-- AlterTable (idempotent: only add columns if they don't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'Category' AND column_name = 'order'
+    ) THEN
+        ALTER TABLE "Category" ADD COLUMN "order" INTEGER NOT NULL DEFAULT 0;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'Category' AND column_name = 'parentId'
+    ) THEN
+        ALTER TABLE "Category" ADD COLUMN "parentId" TEXT;
+    END IF;
+END $$;
 
--- CreateTable
-CREATE TABLE "StaticPage" (
+-- CreateTable (idempotent: only create if it doesn't exist)
+CREATE TABLE IF NOT EXISTS "StaticPage" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "category" TEXT NOT NULL,
@@ -26,8 +40,8 @@ CREATE TABLE "StaticPage" (
     CONSTRAINT "StaticPage_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "StaticPageTranslation" (
+-- CreateTable (idempotent)
+CREATE TABLE IF NOT EXISTS "StaticPageTranslation" (
     "id" TEXT NOT NULL,
     "staticPageId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -41,8 +55,8 @@ CREATE TABLE "StaticPageTranslation" (
     CONSTRAINT "StaticPageTranslation_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "PushSubscription" (
+-- CreateTable (idempotent)
+CREATE TABLE IF NOT EXISTS "PushSubscription" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
@@ -56,41 +70,88 @@ CREATE TABLE "PushSubscription" (
     CONSTRAINT "PushSubscription_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE INDEX "StaticPage_tenantId_idx" ON "StaticPage"("tenantId");
+-- CreateIndex (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'StaticPage_tenantId_idx'
+    ) THEN
+        CREATE INDEX "StaticPage_tenantId_idx" ON "StaticPage"("tenantId");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "StaticPage_category_idx" ON "StaticPage"("category");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'StaticPage_category_idx'
+    ) THEN
+        CREATE INDEX "StaticPage_category_idx" ON "StaticPage"("category");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "StaticPageTranslation_lang_idx" ON "StaticPageTranslation"("lang");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'StaticPageTranslation_lang_idx'
+    ) THEN
+        CREATE INDEX "StaticPageTranslation_lang_idx" ON "StaticPageTranslation"("lang");
+    END IF;
 
--- CreateIndex
-CREATE UNIQUE INDEX "StaticPageTranslation_staticPageId_lang_key" ON "StaticPageTranslation"("staticPageId", "lang");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'StaticPageTranslation_staticPageId_lang_key'
+    ) THEN
+        CREATE UNIQUE INDEX "StaticPageTranslation_staticPageId_lang_key" ON "StaticPageTranslation"("staticPageId", "lang");
+    END IF;
 
--- CreateIndex
-CREATE UNIQUE INDEX "PushSubscription_endpoint_key" ON "PushSubscription"("endpoint");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'PushSubscription_endpoint_key'
+    ) THEN
+        CREATE UNIQUE INDEX "PushSubscription_endpoint_key" ON "PushSubscription"("endpoint");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "PushSubscription_tenantId_idx" ON "PushSubscription"("tenantId");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'PushSubscription_tenantId_idx'
+    ) THEN
+        CREATE INDEX "PushSubscription_tenantId_idx" ON "PushSubscription"("tenantId");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "PushSubscription_isActive_idx" ON "PushSubscription"("isActive");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'PushSubscription_isActive_idx'
+    ) THEN
+        CREATE INDEX "PushSubscription_isActive_idx" ON "PushSubscription"("isActive");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "Category_parentId_idx" ON "Category"("parentId");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'Category_parentId_idx'
+    ) THEN
+        CREATE INDEX "Category_parentId_idx" ON "Category"("parentId");
+    END IF;
 
--- CreateIndex
-CREATE INDEX "Category_tenantId_parentId_order_idx" ON "Category"("tenantId", "parentId", "order");
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'Category_tenantId_parentId_order_idx'
+    ) THEN
+        CREATE INDEX "Category_tenantId_parentId_order_idx" ON "Category"("tenantId", "parentId", "order");
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'Category_parentId_fkey'
+    ) THEN
+        ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
 
--- AddForeignKey
-ALTER TABLE "StaticPage" ADD CONSTRAINT "StaticPage_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'StaticPage_tenantId_fkey'
+    ) THEN
+        ALTER TABLE "StaticPage" ADD CONSTRAINT "StaticPage_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
 
--- AddForeignKey
-ALTER TABLE "StaticPageTranslation" ADD CONSTRAINT "StaticPageTranslation_staticPageId_fkey" FOREIGN KEY ("staticPageId") REFERENCES "StaticPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'StaticPageTranslation_staticPageId_fkey'
+    ) THEN
+        ALTER TABLE "StaticPageTranslation" ADD CONSTRAINT "StaticPageTranslation_staticPageId_fkey" FOREIGN KEY ("staticPageId") REFERENCES "StaticPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
 
--- AddForeignKey
-ALTER TABLE "PushSubscription" ADD CONSTRAINT "PushSubscription_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'PushSubscription_tenantId_fkey'
+    ) THEN
+        ALTER TABLE "PushSubscription" ADD CONSTRAINT "PushSubscription_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
