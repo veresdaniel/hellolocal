@@ -1,9 +1,9 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
@@ -43,7 +43,6 @@ interface Place {
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
-  const queryClient = useQueryClient();
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -201,14 +200,8 @@ export function PlacesPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
-      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
-      // Invalidate individual place cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["place"] });
-      // Invalidate events cache as events can be linked to places
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that places have changed
+      notifyEntityChanged("places");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create place");
     }
@@ -291,14 +284,8 @@ export function PlacesPage() {
       setEditingId(null);
       resetForm();
       await loadData();
-      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
-      // Invalidate individual place cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["place"] });
-      // Invalidate events cache as events can be linked to places
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that places have changed
+      notifyEntityChanged("places");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update place");
     }
@@ -310,14 +297,8 @@ export function PlacesPage() {
     try {
       await deletePlace(id, selectedTenantId || undefined);
       await loadData();
-      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
-      // Invalidate individual place cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["place"] });
-      // Invalidate events cache as events can be linked to places
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that places have changed
+      notifyEntityChanged("places");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete place");
     }

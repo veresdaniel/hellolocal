@@ -1,6 +1,7 @@
 // src/pages/admin/AppSettingsPage.tsx
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -209,6 +210,8 @@ export function AppSettingsPage() {
       
       // Invalidate React Query cache for map settings to refresh on public pages
       await queryClient.invalidateQueries({ queryKey: ["mapSettings"] });
+      // Notify global cache manager that map settings have changed
+      notifyEntityChanged("mapSettings");
       
       setSuccess(t("admin.mapSettingsUpdated"));
     } catch (err) {
@@ -279,7 +282,16 @@ export function AppSettingsPage() {
       setSiteSettingsState(newState);
       
       // Invalidate React Query cache to refresh site settings on public pages
-      queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+      // Invalidate all siteSettings queries regardless of language
+      await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+      // Also refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
+      // Notify global cache manager that site settings have changed
+      notifyEntityChanged("siteSettings");
+      
+      // Note: Site settings don't affect places data, so we don't need to invalidate places cache
+      // But if you want to force a refresh of the map view, you can uncomment this:
+      // await queryClient.invalidateQueries({ queryKey: ["places"] });
       
       console.log('[AppSettingsPage] Site settings saved successfully!');
       setSuccess(t("admin.siteSettingsUpdated"));

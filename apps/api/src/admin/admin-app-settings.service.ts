@@ -187,21 +187,40 @@ export class AdminAppSettingsService {
    * Get site settings (site name, description, SEO)
    */
   async getSiteSettings() {
-    const siteNameHu = await this.findOne("siteName_hu");
-    const siteNameEn = await this.findOne("siteName_en");
-    const siteNameDe = await this.findOne("siteName_de");
-    const siteDescriptionHu = await this.findOne("siteDescription_hu");
-    const siteDescriptionEn = await this.findOne("siteDescription_en");
-    const siteDescriptionDe = await this.findOne("siteDescription_de");
-    const seoTitleHu = await this.findOne("seoTitle_hu");
-    const seoTitleEn = await this.findOne("seoTitle_en");
-    const seoTitleDe = await this.findOne("seoTitle_de");
-    const seoDescriptionHu = await this.findOne("seoDescription_hu");
-    const seoDescriptionEn = await this.findOne("seoDescription_en");
-    const seoDescriptionDe = await this.findOne("seoDescription_de");
-    const isCrawlableSetting = await this.findOne("isCrawlable");
-    const defaultPlaceholderCardImage = await this.findOne("defaultPlaceholderCardImage");
-    const defaultPlaceholderDetailHeroImage = await this.findOne("defaultPlaceholderDetailHeroImage");
+    // Fetch all settings in parallel for better performance
+    const [
+      siteNameHu,
+      siteNameEn,
+      siteNameDe,
+      siteDescriptionHu,
+      siteDescriptionEn,
+      siteDescriptionDe,
+      seoTitleHu,
+      seoTitleEn,
+      seoTitleDe,
+      seoDescriptionHu,
+      seoDescriptionEn,
+      seoDescriptionDe,
+      isCrawlableSetting,
+      defaultPlaceholderCardImage,
+      defaultPlaceholderDetailHeroImage,
+    ] = await Promise.all([
+      this.findOne("siteName_hu"),
+      this.findOne("siteName_en"),
+      this.findOne("siteName_de"),
+      this.findOne("siteDescription_hu"),
+      this.findOne("siteDescription_en"),
+      this.findOne("siteDescription_de"),
+      this.findOne("seoTitle_hu"),
+      this.findOne("seoTitle_en"),
+      this.findOne("seoTitle_de"),
+      this.findOne("seoDescription_hu"),
+      this.findOne("seoDescription_en"),
+      this.findOne("seoDescription_de"),
+      this.findOne("isCrawlable"),
+      this.findOne("defaultPlaceholderCardImage"),
+      this.findOne("defaultPlaceholderDetailHeroImage"),
+    ]);
 
     return {
       siteName: {

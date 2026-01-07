@@ -70,10 +70,10 @@ export function HomePage() {
       selectedCategories.length > 0 ? selectedCategories : undefined,
       selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
-    staleTime: 30 * 1000, // Consider data stale after 30 seconds
+    staleTime: 0, // Always consider data stale to ensure fresh data
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Refetch when component mounts
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes in background
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds in background
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
   });
 

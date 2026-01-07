@@ -10,7 +10,11 @@
     "dev:api": "pnpm -C apps/api start:dev",
     "build": "pnpm -C apps/api build && pnpm -C apps/web build",
     "start:api": "pnpm -C apps/api start",
-    "start:web": "pnpm -C apps/web preview"
+    "start:web": "pnpm -C apps/web preview",
+    "lint": "pnpm -C apps/api lint && pnpm -C apps/web lint",
+    "lint:fix": "pnpm -C apps/api lint:fix && pnpm -C apps/web lint:fix",
+    "format": "pnpm -C apps/api format && pnpm -C apps/web format",
+    "format:check": "pnpm -C apps/api format:check && pnpm -C apps/web format:check"
   },
   "engines": {
     "node": ">=18.0.0",

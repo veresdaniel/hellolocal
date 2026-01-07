@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
+import { useAdminCache } from "../hooks/useAdminCache";
 import { TenantSelector } from "./TenantSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
@@ -15,6 +16,8 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { t } = useTranslation();
+  // Initialize global cache management for all admin pages
+  useAdminCache();
   const { user, logout } = useAuth();
   const location = useLocation();
   const { showWarning, secondsRemaining } = useSessionWarning();

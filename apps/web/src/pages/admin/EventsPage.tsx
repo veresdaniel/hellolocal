@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getEvents, createEvent, updateEvent, deleteEvent, getCategories, getTowns, getPlaces, getTags, type Event, type CreateEventDto } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
@@ -64,6 +65,22 @@ export function EventsPage() {
     if (selectedTenantId) {
       loadData();
     }
+  }, [selectedTenantId]);
+
+  // Reload places when they might have changed (e.g., after creating/updating a place)
+  // Listen for global cache events
+  useEffect(() => {
+    const handlePlacesChanged = () => {
+      if (selectedTenantId) {
+        // Reload only places, not all data
+        getPlaces(selectedTenantId).then(setPlaces).catch(console.error);
+      }
+    };
+
+    window.addEventListener("admin:places:changed", handlePlacesChanged);
+    return () => {
+      window.removeEventListener("admin:places:changed", handlePlacesChanged);
+    };
   }, [selectedTenantId]);
 
   const loadData = async () => {
@@ -157,11 +174,8 @@ export function EventsPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
-      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
-      // Invalidate individual event cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that events have changed
+      notifyEntityChanged("events");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createEventFailed"));
     }
@@ -244,11 +258,8 @@ export function EventsPage() {
     try {
       await deleteEvent(id, selectedTenantId || undefined);
       await loadData();
-      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
-      // Invalidate individual event cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that events have changed
+      notifyEntityChanged("events");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"));
     }

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
@@ -92,11 +93,8 @@ export function TagsPage() {
       setIsCreating(false);
       resetForm();
       await loadTags();
-      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
+      // Notify global cache manager that tags have changed
+      notifyEntityChanged("tags");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTagFailed"));
     }

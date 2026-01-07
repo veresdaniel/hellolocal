@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
@@ -156,9 +157,8 @@ export function TownsPage() {
       setIsCreating(false);
       resetForm();
       await loadTowns();
-      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
+      // Notify global cache manager that towns have changed
+      notifyEntityChanged("towns");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTownFailed"));
     }

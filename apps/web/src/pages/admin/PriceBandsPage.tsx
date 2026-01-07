@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from "../../api/admin.api";
@@ -92,9 +93,8 @@ export function PriceBandsPage() {
       setIsCreating(false);
       resetForm();
       await loadPriceBands();
-      // Invalidate and refetch places cache to refresh filters and lists (all languages and filter combinations)
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
+      // Notify global cache manager that price bands have changed
+      notifyEntityChanged("priceBands");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"));
     }

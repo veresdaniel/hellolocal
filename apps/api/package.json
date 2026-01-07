@@ -13,7 +13,11 @@
     "db:setup": "tsx scripts/setup-db.ts",
     "db:seed": "prisma db seed",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
-    "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh"
+    "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [],
   "author": "",
@@ -50,7 +54,12 @@
     "@types/web-push": "^3.6.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "eslint": "^9.39.1",
+    "@eslint/js": "^9.39.1",
+    "typescript-eslint": "^8.46.4",
+    "globals": "^16.5.0",
+    "prettier": "^3.4.2"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
