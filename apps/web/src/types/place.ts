@@ -21,6 +21,7 @@ export type Place = {
 
   // HTML stringet tartalmazhat
   description?: string;
+  teaser?: string; // Short description for lists/cards
 
   heroImage?: string;
   gallery?: string[];

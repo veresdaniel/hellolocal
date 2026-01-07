@@ -12,8 +12,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "db:setup": "tsx scripts/setup-db.ts",
     "db:seed": "prisma db seed",
-    "generate": "prisma generate",
-    "postinstall": "prisma generate"
+    "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
+    "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh"
   },
   "keywords": [],
   "author": "",
