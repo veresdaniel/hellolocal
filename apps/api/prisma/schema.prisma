@@ -22,6 +22,14 @@ enum SlugEntityType {
   region
 }
 
+enum UserRole {
+  superadmin
+  admin
+  editor
+  viewer
+  // Future roles can be added here
+}
+
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
 model Tenant {
@@ -45,6 +53,7 @@ model Tenant {
   categories       Category[]
   tags             Tag[]
   priceBands       PriceBand[]
+  users            UserTenant[]
 }
 
 model TenantTranslation {
@@ -122,6 +131,10 @@ model Town {
   id         String   @id @default(cuid())
   tenantId   String
   isActive   Boolean  @default(true)
+
+  // Map coordinates
+  lat        Float?
+  lng        Float?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -245,6 +258,7 @@ model Place {
   id          String        @id @default(cuid())
   tenantId    String
   townId      String?
+  ownerId    String?
 
   categoryId  String
   isActive    Boolean       @default(true)
@@ -273,6 +287,7 @@ model Place {
   town        Town?         @relation(fields: [townId], references: [id], onDelete: SetNull)
   category    Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   priceBand   PriceBand?    @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
+  owner       User?         @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   translations PlaceTranslation[]
   tags        PlaceTag[]
 
@@ -361,4 +376,74 @@ model LegalPageTranslation {
 
   @@unique([legalPageId, lang])
   @@index([lang])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String   @unique
+  passwordHash  String   // bcrypt hashed password
+  
+  firstName     String
+  lastName      String
+  bio           String?
+  
+  role          UserRole @default(viewer)
+  isActive      Boolean  @default(true)
+  
+  // Password reset
+  resetToken    String?
+  resetTokenExpiresAt DateTime?
+  
+  // Session management
+  refreshToken  String?
+  refreshTokenExpiresAt DateTime?
+  
+  // Two-Factor Authentication (2FA)
+  totpSecret    String?  // TOTP secret for 2FA
+  isTwoFactorEnabled Boolean @default(false) // Whether 2FA is enabled for this user
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Many-to-many with tenants (user can belong to multiple tenants)
+  tenants       UserTenant[]
+  
+  // Place ownership (for future - when user has appropriate role)
+  ownedPlaces   Place[]  @relation("PlaceOwner")
+  
+  @@index([email])
+  @@index([username])
+  @@index([isActive])
+}
+
+// Junction table for many-to-many relationship between User and Tenant
+model UserTenant {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  isPrimary Boolean   @default(false) // One tenant can be marked as primary
+  
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+}
+
+// Application settings (global, not tenant-specific)
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g., "defaultLanguage", "appName", etc.
+  value     String   // JSON string or simple string value
+  type      String   @default("string") // "string", "number", "boolean", "json"
+  description String? // Human-readable description
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([key])
 }

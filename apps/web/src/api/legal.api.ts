@@ -1,4 +1,4 @@
-import { apiGet } from "./client";
+import { apiGetPublic } from "./client";
 
 export type LegalPageDto = {
   key: "imprint" | "terms" | "privacy";
@@ -16,5 +16,5 @@ export function getLegalPage(
   lang: string,
   pageKey: "imprint" | "terms" | "privacy"
 ) {
-  return apiGet<LegalPageDto>(`/${lang}/legal/${pageKey}`);
+  return apiGetPublic<LegalPageDto>(`/${lang}/legal/${pageKey}`);
 }

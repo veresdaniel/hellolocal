@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
 import { PlacesService } from "./places.service";
 
 /**
@@ -13,6 +13,15 @@ import { PlacesService } from "./places.service";
 @Controller("/api/:lang/places")
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
+
+  /**
+   * Validates that the lang parameter is a valid language code.
+   */
+  private validateLang(lang: string): void {
+    if (lang !== "hu" && lang !== "en" && lang !== "de") {
+      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
+    }
+  }
 
   /**
    * Lists places with optional filtering.
@@ -35,6 +44,7 @@ export class PlacesController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
+    this.validateLang(lang);
     return this.placesService.list({
       lang,
       tenantKey,
@@ -62,6 +72,7 @@ export class PlacesController {
     @Param("slug") slug: string,
     @Query("tenantKey") tenantKey?: string
   ) {
+    this.validateLang(lang);
     return this.placesService.detail({ lang, tenantKey, slug });
   }
 }

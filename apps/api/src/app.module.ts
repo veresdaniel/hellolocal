@@ -6,6 +6,10 @@ import { PlacesModule } from "./places/places.module";
 import { LegalModule } from "./legal/legal.module";
 import { SlugModule } from "./slug/slug.module";
 import { TenantModule } from "./tenant/tenant.module";
+import { AuthModule } from "./auth/auth.module";
+import { AdminModule } from "./admin/admin.module";
+import { AppSettingsModule } from "./app-settings/app-settings.module";
+import { TwoFactorModule } from "./two-factor/two-factor.module";
 
 @Module({
   imports: [
@@ -13,6 +17,10 @@ import { TenantModule } from "./tenant/tenant.module";
     PrismaModule,
     TenantModule,
     SlugModule,
+    AuthModule,
+    TwoFactorModule,
+    AppSettingsModule, // Public app settings (no auth required)
+    AdminModule, // AdminModule must be imported before PlacesModule to ensure /api/admin routes take precedence
     PlacesModule,
     LegalModule,
   ],

@@ -19,9 +19,12 @@ export type ResolvedTenant = {
 export class TenantKeyResolverService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private normalizeLang(lang: string): Lang {
+  private normalizeLang(lang: string | undefined): Lang {
+    if (!lang) {
+      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
+    }
     if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException("Unsupported lang. Use hu|en|de.");
+    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
   }
 
   private defaultTenantInternalSlug(): string {

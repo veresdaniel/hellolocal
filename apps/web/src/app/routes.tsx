@@ -1,30 +1,180 @@
 // src/app/routes.tsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import { HAS_MULTIPLE_TENANTS, DEFAULT_LANG } from "./config";
+import { createBrowserRouter } from "react-router-dom";
+import { HAS_MULTIPLE_TENANTS } from "./config";
 import { TenantLayout } from "./tenant/TenantLayout";
+import { ProtectedRoute } from "../components/ProtectedRoute";
+import { RootRedirect } from "../components/RootRedirect";
 
 import { HomePage } from "../pages/HomePage";
 import { ExplorePage } from "../pages/ExplorePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { LegalPage } from "../pages/LegalPage";
+import { LoginPage } from "../pages/auth/LoginPage";
+import { RegisterPage } from "../pages/auth/RegisterPage";
+import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
+import { AdminDashboard } from "../pages/admin/AdminDashboard";
+import { UserProfilePage } from "../pages/admin/UserProfilePage";
+import { AppSettingsPage } from "../pages/admin/AppSettingsPage";
+import { UsersPage } from "../pages/admin/UsersPage";
+import { CategoriesPage } from "../pages/admin/CategoriesPage";
+import { TagsPage } from "../pages/admin/TagsPage";
+import { PriceBandsPage } from "../pages/admin/PriceBandsPage";
+import { TownsPage } from "../pages/admin/TownsPage";
+import { LegalPagesPage } from "../pages/admin/LegalPagesPage";
+import { TenantsPage } from "../pages/admin/TenantsPage";
+import { PlacesPage } from "../pages/admin/PlacesPage";
+import { AdminLayout } from "../components/AdminLayout";
 
 const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
 
 export const router = createBrowserRouter([
-  // root -> default nyelv
-  { path: "/", element: <Navigate to={`/${DEFAULT_LANG}`} replace /> },
+  // root -> default nyelv (dynamically loaded from app settings)
+  { path: "/", element: <RootRedirect /> },
 
   {
     path: `/:lang${tenantSuffix}`,
     element: <TenantLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "explore", element: <ExplorePage /> },
       { path: "place/:slug", element: <PlaceDetailPage /> },
 
       { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
       { path: "aszf", element: <LegalPage pageKey="terms" /> },
       { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+    ],
+  },
+
+  // Admin routes (no language prefix)
+  {
+    path: "/admin",
+    children: [
+      {
+        path: "login",
+        element: <LoginPage />,
+      },
+      {
+        path: "register",
+        element: <RegisterPage />,
+      },
+      {
+        path: "forgot-password",
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "reset-password",
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: "",
+        element: (
+          <ProtectedRoute requiredRole="viewer">
+            <AdminLayout>
+              <AdminDashboard />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute requiredRole="viewer">
+            <AdminLayout>
+              <UserProfilePage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <ProtectedRoute requiredRole="viewer">
+            <AdminLayout>
+              <AppSettingsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <AdminLayout>
+              <UsersPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "categories",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <CategoriesPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "tags",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <TagsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "price-bands",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <PriceBandsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "places",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <PlacesPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "towns",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <TownsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "legal",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <LegalPagesPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "tenants",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <AdminLayout>
+              <TenantsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
 

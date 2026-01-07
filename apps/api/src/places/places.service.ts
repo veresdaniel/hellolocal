@@ -23,9 +23,12 @@ export class PlacesService {
     private readonly slugResolver: SlugResolverService
   ) {}
 
-  private normalizeLang(lang: string): Lang {
+  private normalizeLang(lang: string | undefined): Lang {
+    if (!lang) {
+      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
+    }
     if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException("Unsupported lang. Use hu|en|de.");
+    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
   }
 
   /**
@@ -108,12 +111,12 @@ export class PlacesService {
         town: { select: { id: true } }, // Town slug is fetched separately
         category: {
           include: {
-            translations: { where: { lang: tenant.lang }, take: 1 },
+            translations: true, // Get all translations for fallback
           },
         },
         priceBand: {
           include: {
-            translations: { where: { lang: tenant.lang }, take: 1 },
+            translations: true, // Get all translations for fallback
           },
         },
         tags: {
@@ -121,12 +124,12 @@ export class PlacesService {
           include: {
             tag: {
               include: {
-                translations: { where: { lang: tenant.lang }, take: 1 },
+                translations: true, // Get all translations for fallback
               },
             },
           },
         },
-        translations: { where: { lang: tenant.lang }, take: 1 },
+        translations: true, // Get all translations for fallback
       },
     });
 
@@ -149,7 +152,7 @@ export class PlacesService {
 
     // Step 6: Load canonical town slugs (if needed for the list response)
     const townIds = Array.from(
-      new Set(places.map((p) => p.town?.id).filter(Boolean) as string[])
+      new Set(places.map((p) => p.town?.id).filter((id): id is string => id !== null && id !== undefined))
     );
     const townSlugs = townIds.length
       ? await this.prisma.slug.findMany({
@@ -166,22 +169,40 @@ export class PlacesService {
       : [];
     const townSlugById = new Map(townSlugs.map((s) => [s.entityId, s.slug]));
 
+    // Helper function to get translation with fallback to Hungarian
+    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+      const requested = translations.find((t) => t.lang === tenant.lang);
+      const hungarian = translations.find((t) => t.lang === "hu");
+      const translation = requested || hungarian;
+      return translation?.[field] ?? null;
+    };
+
     // Map places to response format with slugs attached
     return places.map((p) => {
-      const t = p.translations[0];
       const canonicalPlaceSlug = placeSlugById.get(p.id) ?? null;
       const canonicalTownSlug = p.town?.id ? townSlugById.get(p.town.id) ?? null : null;
 
-      // Extract category name from translation
-      const categoryName = p.category?.translations[0]?.name ?? null;
+      // Extract category name with fallback to Hungarian
+      const categoryName = p.category?.translations
+        ? getTranslation(p.category.translations, "name")
+        : null;
 
-      // Extract price band name from translation
-      const priceBandName = p.priceBand?.translations[0]?.name ?? null;
+      // Extract price band name with fallback to Hungarian
+      const priceBandName = p.priceBand?.translations
+        ? getTranslation(p.priceBand.translations, "name")
+        : null;
 
-      // Extract tag names from translations
+      // Extract tag names with fallback to Hungarian
       const tagNames = p.tags
-        .map((pt) => pt.tag.translations[0]?.name)
-        .filter((name): name is string => name !== undefined);
+        .map((pt: { tag: { translations: Array<{ lang: Lang; name: string }> } }) => {
+          if (!pt.tag?.translations) return null;
+          return getTranslation(pt.tag.translations, "name");
+        })
+        .filter((name: string | null): name is string => name !== null);
+
+      // Get place translation with fallback to Hungarian
+      const placeTranslation = p.translations.find((t) => t.lang === tenant.lang) ||
+        p.translations.find((t) => t.lang === "hu");
 
       return {
         id: p.id,
@@ -189,8 +210,8 @@ export class PlacesService {
         tenantKey: tenant.canonicalTenantKey ?? null,
         townSlug: canonicalTownSlug,
         category: categoryName,
-        name: t?.name ?? "(missing translation)",
-        description: t?.teaser ?? null,
+        name: placeTranslation?.name ?? "(missing translation)",
+        description: placeTranslation?.teaser ?? null,
         heroImage: p.heroImage ?? null,
         gallery: p.gallery,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
@@ -198,10 +219,10 @@ export class PlacesService {
         tags: tagNames,
         rating: { avg: p.ratingAvg ?? null, count: p.ratingCount ?? null },
         seo: {
-          title: t?.seoTitle ?? null,
-          description: t?.seoDescription ?? null,
-          image: t?.seoImage ?? null,
-          keywords: t?.seoKeywords ?? [],
+          title: placeTranslation?.seoTitle ?? null,
+          description: placeTranslation?.seoDescription ?? null,
+          image: placeTranslation?.seoImage ?? null,
+          keywords: placeTranslation?.seoKeywords ?? [],
         },
       };
     });
@@ -237,12 +258,12 @@ export class PlacesService {
         town: { select: { id: true } },
         category: {
           include: {
-            translations: { where: { lang: tenant.lang }, take: 1 },
+            translations: true, // Get all translations for fallback
           },
         },
         priceBand: {
           include: {
-            translations: { where: { lang: tenant.lang }, take: 1 },
+            translations: true, // Get all translations for fallback
           },
         },
         tags: {
@@ -250,12 +271,12 @@ export class PlacesService {
           include: {
             tag: {
               include: {
-                translations: { where: { lang: tenant.lang }, take: 1 },
+                translations: true, // Get all translations for fallback
               },
             },
           },
         },
-        translations: { where: { lang: tenant.lang }, take: 1 },
+        translations: true, // Get all translations for fallback
       },
     });
 
@@ -280,18 +301,35 @@ export class PlacesService {
           )?.slug ?? null
         : null;
 
-    const t = place.translations[0];
+    // Helper function to get translation with fallback to Hungarian
+    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+      const requested = translations.find((t) => t.lang === tenant.lang);
+      const hungarian = translations.find((t) => t.lang === "hu");
+      const translation = requested || hungarian;
+      return translation?.[field] ?? null;
+    };
 
-    // Extract category name from translation
-    const categoryName = place.category?.translations[0]?.name ?? null;
+    // Get place translation with fallback to Hungarian
+    const placeTranslation = place.translations.find((t) => t.lang === tenant.lang) ||
+      place.translations.find((t) => t.lang === "hu");
 
-    // Extract price band name from translation
-    const priceBandName = place.priceBand?.translations[0]?.name ?? null;
+    // Extract category name with fallback to Hungarian
+    const categoryName = place.category?.translations
+      ? getTranslation(place.category.translations, "name")
+      : null;
 
-    // Extract tag names from translations
+    // Extract price band name with fallback to Hungarian
+    const priceBandName = place.priceBand?.translations
+      ? getTranslation(place.priceBand.translations, "name")
+      : null;
+
+    // Extract tag names with fallback to Hungarian
     const tagNames = place.tags
-      .map((pt) => pt.tag.translations[0]?.name)
-      .filter((name): name is string => name !== undefined);
+      .map((pt: { tag: { translations: Array<{ lang: Lang; name: string }> } }) => {
+        if (!pt.tag?.translations) return null;
+        return getTranslation(pt.tag.translations, "name");
+      })
+      .filter((name: string | null): name is string => name !== null);
 
     return {
       id: place.id,
@@ -301,28 +339,28 @@ export class PlacesService {
       tenantRedirected: tenant.redirected,
       townSlug,
       category: categoryName,
-      name: t?.name ?? "(missing translation)",
-      description: t?.description ?? null,
+      name: placeTranslation?.name ?? "(missing translation)",
+      description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,
       gallery: place.gallery,
       location: { lat: place.lat ?? null, lng: place.lng ?? null },
       contact: {
-        phone: t?.phone ?? null,
-        email: t?.email ?? null,
-        website: t?.website ?? null,
-        address: t?.address ?? null,
+        phone: placeTranslation?.phone ?? null,
+        email: placeTranslation?.email ?? null,
+        website: placeTranslation?.website ?? null,
+        address: placeTranslation?.address ?? null,
       },
-      openingHours: t?.openingHours ?? null,
-      accessibility: t?.accessibility ?? null,
+      openingHours: placeTranslation?.openingHours ?? null,
+      accessibility: placeTranslation?.accessibility ?? null,
       priceBand: priceBandName,
       tags: tagNames,
       extras: place.extras ?? null,
       rating: { avg: place.ratingAvg ?? null, count: place.ratingCount ?? null },
       seo: {
-        title: t?.seoTitle ?? null,
-        description: t?.seoDescription ?? null,
-        image: t?.seoImage ?? null,
-        keywords: t?.seoKeywords ?? [],
+        title: placeTranslation?.seoTitle ?? null,
+        description: placeTranslation?.seoDescription ?? null,
+        image: placeTranslation?.seoImage ?? null,
+        keywords: placeTranslation?.seoKeywords ?? [],
       },
     };
   }

@@ -17,9 +17,12 @@ export class LegalService {
     private readonly tenantResolver: TenantKeyResolverService
   ) {}
 
-  private normalizeLang(lang: string): Lang {
+  private normalizeLang(lang: string | undefined): Lang {
+    if (!lang) {
+      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
+    }
     if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException("Unsupported lang. Use hu|en|de.");
+    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
   }
 
   /**
@@ -44,12 +47,15 @@ export class LegalService {
 
     const legal = await this.prisma.legalPage.findUnique({
       where: { tenantId_key: { tenantId: tenant.tenantId, key } },
-      include: { translations: { where: { lang: tenant.lang }, take: 1 } },
+      include: { translations: true }, // Get all translations for fallback
     });
 
     if (!legal || !legal.isActive) throw new NotFoundException("Legal page not found");
 
-    const t = legal.translations[0];
+    // Get translation with fallback to Hungarian
+    const t = legal.translations.find((trans) => trans.lang === tenant.lang) ||
+      legal.translations.find((trans) => trans.lang === "hu");
+
     if (!t) throw new NotFoundException("Legal page translation not found");
 
     return {

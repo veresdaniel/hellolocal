@@ -1,7 +1,8 @@
 import "dotenv/config";
-import { PrismaClient, Lang } from "@prisma/client";
+import { PrismaClient, Lang, UserRole } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { SlugEntityType } from "../src/slug/slug-entity-type";
+import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -852,7 +853,89 @@ async function main() {
   await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "privacy-policy", entityType: SlugEntityType.PAGE, entityId: privacyId });
   await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "datenschutz", entityType: SlugEntityType.PAGE, entityId: privacyId });
 
+  // 6) Superadmin user
+  const superadminPasswordHash = await bcrypt.hash("admin123", 10); // Change in production!
+  
+  // First, try to find existing admin user by email or username
+  const existingAdmin = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: "admin@example.com" },
+        { username: "admin" },
+      ],
+    },
+  });
+
+  let superadminUser;
+  if (existingAdmin) {
+    // Update existing admin to superadmin
+    superadminUser = await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: {
+        passwordHash: superadminPasswordHash,
+        isActive: true,
+        role: UserRole.superadmin,
+        firstName: "Super",
+        lastName: "Admin",
+        bio: "System super administrator",
+        // Ensure tenant relationship exists
+        tenants: {
+          upsert: {
+            where: {
+              userId_tenantId: {
+                userId: existingAdmin.id,
+                tenantId: tenant.id,
+              },
+            },
+            update: {
+              isPrimary: true,
+            },
+            create: {
+              tenantId: tenant.id,
+              isPrimary: true,
+            },
+          },
+        },
+      },
+      select: { id: true, username: true, email: true, role: true },
+    });
+  } else {
+    // Create new superadmin user
+    superadminUser = await prisma.user.create({
+      data: {
+        username: "admin",
+        email: "admin@example.com",
+        passwordHash: superadminPasswordHash,
+        firstName: "Super",
+        lastName: "Admin",
+        bio: "System super administrator",
+        role: UserRole.superadmin,
+        isActive: true,
+        tenants: {
+          create: {
+            tenantId: tenant.id,
+            isPrimary: true,
+          },
+        },
+      },
+      select: { id: true, username: true, email: true, role: true },
+    });
+  }
+
+  // 10) App Settings - Default Language
+  await prisma.appSetting.upsert({
+    where: { key: "defaultLanguage" },
+    update: { value: "hu", type: "string", description: "Default language for the application" },
+    create: {
+      key: "defaultLanguage",
+      value: "hu",
+      type: "string",
+      description: "Default language for the application",
+    },
+  });
+
   console.log("✅ Seed completed");
+  console.log(`👤 Superadmin user ${existingAdmin ? "updated" : "created"}: ${superadminUser.email} / admin123 (role: ${superadminUser.role})`);
 }
 
 main()

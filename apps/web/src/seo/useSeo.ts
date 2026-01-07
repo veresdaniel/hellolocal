@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Seo } from "../types/seo";
 
 function upsertMeta(sel: string, attrs: Record<string, string>, content?: string) {
@@ -23,11 +24,17 @@ function upsertLink(rel: string, href?: string) {
   el.setAttribute("href", href);
 }
 
-export function useSeo(seo?: Seo, opts?: { defaultOgType?: string }) {
+export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: string }) {
+  const { t } = useTranslation();
+  
   useEffect(() => {
     if (!seo) return;
 
-    document.title = seo.title;
+    // Get site name from i18n or use provided siteName or default
+    const siteName = opts?.siteName || t("common.siteName", { defaultValue: "HelloLocal" });
+    const fullTitle = seo.title ? `${seo.title} - ${siteName}` : siteName;
+    
+    document.title = fullTitle;
 
     upsertMeta(`meta[name="description"]`, { name: "description" }, seo.description);
     if (seo.keywords?.length) {
@@ -59,5 +66,5 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string }) {
     );
     const twImg = seo.twitter?.image ?? ogImg;
     if (twImg) upsertMeta(`meta[name="twitter:image"]`, { name: "twitter:image" }, twImg);
-  }, [seo, opts?.defaultOgType]);
+  }, [seo, opts?.defaultOgType, opts?.siteName, t]);
 }
