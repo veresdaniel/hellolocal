@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: hellolocal-db
+    environment:
+      POSTGRES_USER: hellolocal
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hellolocal123}
+      POSTGRES_DB: hellolocal
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hellolocal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hellolocal
+
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: hellolocal-api
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://hellolocal:${DB_PASSWORD:-hellolocal123}@postgres:5432/hellolocal
+      JWT_SECRET: ${JWT_SECRET:-change-this-super-secret-jwt-key-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 3002
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@hellolocal.com}
+    ports:
+      - "${API_PORT:-3002}:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hellolocal
+    restart: unless-stopped
+    command: sh -c "cd /app/apps/api && pnpm prisma migrate deploy && node dist/main.js"
+
+  # Frontend Web
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: hellolocal-web
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3002}
+      VITE_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+    ports:
+      - "${WEB_PORT:-80}:80"
+    depends_on:
+      - api
+    networks:
+      - hellolocal
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hellolocal:
+    driver: bridge
+

@@ -13,7 +13,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 export function AppSettingsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { selectedTenantId, tenants } = useAdminTenant();
+  const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
   usePageTitle("admin.appSettings");
   const [defaultLang, setDefaultLangState] = useState<"hu" | "en" | "de">("hu");
@@ -21,6 +21,11 @@ export function AppSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Collapse state for sections
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [siteOpen, setSiteOpen] = useState(true);
 
   // Map settings state
   const [mapSettings, setMapSettingsState] = useState<MapSettings>({
@@ -109,9 +114,32 @@ export function AppSettingsPage() {
       try {
         setIsLoadingSiteSettings(true);
         const data = await getSiteSettings();
-        setSiteSettingsState(data);
+        // Ensure all fields are properly initialized
+        setSiteSettingsState({
+          siteName: {
+            hu: data.siteName?.hu || "HelloLocal",
+            en: data.siteName?.en || "HelloLocal",
+            de: data.siteName?.de || "HelloLocal",
+          },
+          siteDescription: {
+            hu: data.siteDescription?.hu || "",
+            en: data.siteDescription?.en || "",
+            de: data.siteDescription?.de || "",
+          },
+          seoTitle: {
+            hu: data.seoTitle?.hu || "",
+            en: data.seoTitle?.en || "",
+            de: data.seoTitle?.de || "",
+          },
+          seoDescription: {
+            hu: data.seoDescription?.hu || "",
+            en: data.seoDescription?.en || "",
+            de: data.seoDescription?.de || "",
+          },
+        });
       } catch (err) {
         console.error("Failed to load site settings", err);
+        // Keep default values on error
       } finally {
         setIsLoadingSiteSettings(false);
       }
@@ -188,21 +216,49 @@ export function AppSettingsPage() {
       setIsSavingSiteSettings(true);
       setError(null);
       setSuccess(null);
+      console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
       const updated = await setSiteSettings({
         siteName: siteSettings.siteName,
         siteDescription: siteSettings.siteDescription,
         seoTitle: siteSettings.seoTitle,
         seoDescription: siteSettings.seoDescription,
       });
+      console.log('[AppSettingsPage] Received updated settings from backend:', JSON.stringify(updated, null, 2));
       
-      // Update local state with the response
-      setSiteSettingsState(updated);
+      // Update local state with the response, ensuring all fields are properly initialized
+      // Use the exact values from the response, not defaults
+      const newState = {
+        siteName: {
+          hu: updated.siteName?.hu ?? "HelloLocal",
+          en: updated.siteName?.en ?? "HelloLocal",
+          de: updated.siteName?.de ?? "HelloLocal",
+        },
+        siteDescription: {
+          hu: updated.siteDescription?.hu ?? "",
+          en: updated.siteDescription?.en ?? "",
+          de: updated.siteDescription?.de ?? "",
+        },
+        seoTitle: {
+          hu: updated.seoTitle?.hu ?? "",
+          en: updated.seoTitle?.en ?? "",
+          de: updated.seoTitle?.de ?? "",
+        },
+        seoDescription: {
+          hu: updated.seoDescription?.hu ?? "",
+          en: updated.seoDescription?.en ?? "",
+          de: updated.seoDescription?.de ?? "",
+        },
+      };
+      console.log('[AppSettingsPage] Setting new state:', JSON.stringify(newState, null, 2));
+      setSiteSettingsState(newState);
       
-      // Invalidate React Query cache for all languages to refresh site settings on public pages
-      await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+      // Invalidate React Query cache to refresh site settings on public pages
+      queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
       
+      console.log('[AppSettingsPage] Site settings saved successfully!');
       setSuccess(t("admin.siteSettingsUpdated"));
     } catch (err) {
+      console.error('[AppSettingsPage] Error saving site settings:', err);
       setError(err instanceof Error ? err.message : t("admin.errors.updateSiteSettingsFailed"));
     } finally {
       setIsSavingSiteSettings(false);
@@ -213,85 +269,132 @@ export function AppSettingsPage() {
   const isSingleTown = towns.length <= 1;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>{t("admin.appSettings")}</h1>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+      <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
+        <div style={{ padding: 16, marginBottom: 24, background: "#fee", color: "#c00", borderRadius: 8, border: "1px solid #fcc" }}>
           {error}
         </div>
       )}
 
       {success && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#dfd", color: "#060", borderRadius: 4 }}>
+        <div style={{ padding: 16, marginBottom: 24, background: "#dfd", color: "#060", borderRadius: 8, border: "1px solid #beb" }}>
           {success}
         </div>
       )}
 
-      <div style={{ padding: 24, background: "#f5f5f5", borderRadius: 8 }}>
-        <h2 style={{ marginBottom: 16 }}>{t("admin.defaultLanguage")}</h2>
-        <p style={{ color: "#666", marginBottom: 16 }}>
-          {t("admin.defaultLanguageDescription")}
-        </p>
-
-        <LoadingSpinner isLoading={isLoading} />
-        {!isLoading && (
-          <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-            <label style={{ display: "block", minWidth: 150 }}>{t("admin.defaultLanguage")}:</label>
-            <select
-              value={defaultLang}
-              onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
-              disabled={!isAdmin || isSaving}
-              style={{
-                padding: "8px 16px",
-                fontSize: 16,
-                borderRadius: 4,
-                border: "1px solid #ddd",
-                background: "white",
-                cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
-                minWidth: 200,
-              }}
-            >
-              <option value="hu">🇭🇺 Hungarian (Magyar)</option>
-              <option value="en">🇬🇧 English</option>
-              <option value="de">🇩🇪 German (Deutsch)</option>
-            </select>
-            {isAdmin && (
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                style={{
-                  padding: "8px 24px",
-                  fontSize: 16,
-                  background: isSaving ? "#999" : "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: isSaving ? "not-allowed" : "pointer",
-                }}
-              >
-                {isSaving ? t("common.loading") : t("common.save")}
-              </button>
-            )}
+      {/* Language Settings Section */}
+      <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+        <button
+          onClick={() => setLanguageOpen(!languageOpen)}
+          style={{
+            width: "100%",
+            padding: 24,
+            background: languageOpen ? "#f8f9fa" : "white",
+            border: "none",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 24 }}>🌍</span>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.defaultLanguage")}</h2>
           </div>
-        )}
+          <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        </button>
+        {languageOpen && (
+          <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+              {t("admin.defaultLanguageDescription")}
+            </p>
 
-        {!isAdmin && (
-          <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 4, marginTop: 16 }}>
-            {t("admin.onlyAdminCanEdit")}
+            <LoadingSpinner isLoading={isLoading} />
+            {!isLoading && (
+              <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
+                <label style={{ display: "block", minWidth: 150, fontWeight: 500 }}>{t("admin.defaultLanguage")}:</label>
+                <select
+                  value={defaultLang}
+                  onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
+                  disabled={!isAdmin || isSaving}
+                  style={{
+                    padding: "10px 16px",
+                    fontSize: 15,
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    background: "white",
+                    cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
+                    minWidth: 200,
+                  }}
+                >
+                  <option value="hu">🇭🇺 Hungarian (Magyar)</option>
+                  <option value="en">🇬🇧 English</option>
+                  <option value="de">🇩🇪 German (Deutsch)</option>
+                </select>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    style={{
+                      padding: "10px 24px",
+                      fontSize: 15,
+                      fontWeight: 500,
+                      background: isSaving ? "#999" : "#007bff",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: isSaving ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {isSaving ? t("common.loading") : t("common.save")}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!isAdmin && (
+              <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
+                {t("admin.onlyAdminCanEdit")}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Map Settings */}
+      {/* Map Settings Section */}
       {selectedTenantId && (
-        <div style={{ padding: 24, background: "#f5f5f5", borderRadius: 8, marginTop: 24 }}>
-          <h2 style={{ marginBottom: 16 }}>{t("admin.mapSettings")}</h2>
-          <p style={{ color: "#666", marginBottom: 16 }}>
-            {t("admin.mapSettingsDescription")}
-          </p>
+        <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+          <button
+            onClick={() => setMapOpen(!mapOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: mapOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "background 0.2s",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 24 }}>🗺️</span>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.mapSettings")}</h2>
+            </div>
+            <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: mapOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          </button>
+          {mapOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+                {t("admin.mapSettingsDescription")}
+              </p>
 
-          <LoadingSpinner isLoading={isLoadingMapSettings} />
+              <LoadingSpinner isLoading={isLoadingMapSettings} />
           {!isLoadingMapSettings && (
             <>
               {/* Town selector - only if multiple towns exist */}
@@ -438,6 +541,7 @@ export function AppSettingsPage() {
 
               {isAdmin && (
                 <button
+                  type="button"
                   onClick={handleSaveMapSettings}
                   disabled={isSavingMapSettings}
                   style={{
@@ -455,23 +559,46 @@ export function AppSettingsPage() {
               )}
 
               {!isAdmin && (
-                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 4, marginTop: 16 }}>
+                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
                   {t("admin.onlyAdminCanEdit")}
                 </div>
               )}
             </>
           )}
-        </div>
+          </div>
+        )}
+      </div>
       )}
 
-      {/* Site Settings */}
-      <div style={{ padding: 24, background: "#f5f5f5", borderRadius: 8, marginTop: 24 }}>
-        <h2 style={{ marginBottom: 16 }}>{t("admin.siteSettings")}</h2>
-        <p style={{ color: "#666", marginBottom: 16 }}>
-          {t("admin.siteSettingsDescription")}
-        </p>
+      {/* Site Settings Section */}
+      <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+        <button
+          onClick={() => setSiteOpen(!siteOpen)}
+          style={{
+            width: "100%",
+            padding: 24,
+            background: siteOpen ? "#f8f9fa" : "white",
+            border: "none",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 24 }}>⚙️</span>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.siteSettings")}</h2>
+          </div>
+          <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: siteOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        </button>
+        {siteOpen && (
+          <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+              {t("admin.siteSettingsDescription")}
+            </p>
 
-        <LoadingSpinner isLoading={isLoadingSiteSettings} />
+            <LoadingSpinner isLoading={isLoadingSiteSettings} />
         {!isLoadingSiteSettings && (
           <>
             <LanguageAwareForm>
@@ -530,10 +657,10 @@ export function AppSettingsPage() {
                     <textarea
                       value={
                         selectedLang === "hu"
-                          ? siteSettings.siteDescription.hu
+                          ? siteSettings.siteDescription?.hu || ""
                           : selectedLang === "en"
-                          ? siteSettings.siteDescription.en
-                          : siteSettings.siteDescription.de
+                          ? siteSettings.siteDescription?.en || ""
+                          : siteSettings.siteDescription?.de || ""
                       }
                       onChange={(e) => {
                         if (selectedLang === "hu") {
@@ -578,10 +705,10 @@ export function AppSettingsPage() {
                       type="text"
                       value={
                         selectedLang === "hu"
-                          ? siteSettings.seoTitle.hu
+                          ? siteSettings.seoTitle?.hu || ""
                           : selectedLang === "en"
-                          ? siteSettings.seoTitle.en
-                          : siteSettings.seoTitle.de
+                          ? siteSettings.seoTitle?.en || ""
+                          : siteSettings.seoTitle?.de || ""
                       }
                       onChange={(e) => {
                         if (selectedLang === "hu") {
@@ -623,10 +750,10 @@ export function AppSettingsPage() {
                     <textarea
                       value={
                         selectedLang === "hu"
-                          ? siteSettings.seoDescription.hu
+                          ? siteSettings.seoDescription?.hu || ""
                           : selectedLang === "en"
-                          ? siteSettings.seoDescription.en
-                          : siteSettings.seoDescription.de
+                          ? siteSettings.seoDescription?.en || ""
+                          : siteSettings.seoDescription?.de || ""
                       }
                       onChange={(e) => {
                         if (selectedLang === "hu") {
@@ -667,6 +794,7 @@ export function AppSettingsPage() {
 
             {isAdmin && (
               <button
+                type="button"
                 onClick={handleSaveSiteSettings}
                 disabled={isSavingSiteSettings}
                 style={{
@@ -685,11 +813,13 @@ export function AppSettingsPage() {
             )}
 
             {!isAdmin && (
-              <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 4, marginTop: 16 }}>
+              <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
                 {t("admin.onlyAdminCanEdit")}
               </div>
             )}
           </>
+        )}
+          </div>
         )}
       </div>
     </div>

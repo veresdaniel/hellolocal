@@ -8,10 +8,23 @@ import { AdminTenantProvider } from "./contexts/AdminTenantContext";
 import { router } from "./app/routes";
 import "./i18n/config";
 import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
+import { NotificationService } from "./services/notification.service";
 
-// Component to initialize default language
+// Component to initialize default language and service worker
 function AppInitializer({ children }: { children: React.ReactNode }) {
   useDefaultLanguage();
+
+  // Register service worker on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      NotificationService.register().then((registered) => {
+        if (registered) {
+          console.log("Service Worker and notifications registered");
+        }
+      });
+    }
+  }, []);
+
   return <>{children}</>;
 }
 

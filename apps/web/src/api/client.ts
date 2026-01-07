@@ -79,11 +79,47 @@ export async function apiGet<T>(path: string): Promise<T> {
         }
       }
     }
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    let errorMessage = `Request failed: ${res.status}`;
+    const contentType = res.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const json = await res.json();
+        if (json && json.message) {
+          errorMessage = json.message;
+        } else if (json && typeof json === "string") {
+          errorMessage = json;
+        }
+      } catch {
+        // If JSON parsing fails, try text
+        try {
+          const text = await res.text();
+          if (text) errorMessage = text;
+        } catch {
+          errorMessage = res.statusText || `Request failed: ${res.status}`;
+        }
+      }
+    } else {
+      try {
+        const text = await res.text();
+        if (text) errorMessage = text;
+      } catch {
+        errorMessage = res.statusText || `Request failed: ${res.status}`;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch (err) {
+    // If response is empty or not JSON, return empty object or throw
+    if (res.status === 204 || res.status === 201) {
+      return {} as T;
+    }
+    throw new Error("Invalid JSON response from server");
+  }
 }
 
 /**
@@ -283,11 +319,47 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
         }
       }
     }
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    let errorMessage = `Request failed: ${res.status}`;
+    const contentType = res.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const json = await res.json();
+        if (json && json.message) {
+          errorMessage = json.message;
+        } else if (json && typeof json === "string") {
+          errorMessage = json;
+        }
+      } catch {
+        // If JSON parsing fails, try text
+        try {
+          const text = await res.text();
+          if (text) errorMessage = text;
+        } catch {
+          errorMessage = res.statusText || `Request failed: ${res.status}`;
+        }
+      }
+    } else {
+      try {
+        const text = await res.text();
+        if (text) errorMessage = text;
+      } catch {
+        errorMessage = res.statusText || `Request failed: ${res.status}`;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch (err) {
+    // If response is empty or not JSON, return empty object or throw
+    if (res.status === 204 || res.status === 201) {
+      return {} as T;
+    }
+    throw new Error("Invalid JSON response from server");
+  }
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
@@ -334,9 +406,45 @@ export async function apiDelete<T>(path: string): Promise<T> {
         }
       }
     }
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    let errorMessage = `Request failed: ${res.status}`;
+    const contentType = res.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const json = await res.json();
+        if (json && json.message) {
+          errorMessage = json.message;
+        } else if (json && typeof json === "string") {
+          errorMessage = json;
+        }
+      } catch {
+        // If JSON parsing fails, try text
+        try {
+          const text = await res.text();
+          if (text) errorMessage = text;
+        } catch {
+          errorMessage = res.statusText || `Request failed: ${res.status}`;
+        }
+      }
+    } else {
+      try {
+        const text = await res.text();
+        if (text) errorMessage = text;
+      } catch {
+        errorMessage = res.statusText || `Request failed: ${res.status}`;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 
-  return (await res.json()) as T;
+  try {
+    return (await res.json()) as T;
+  } catch (err) {
+    // If response is empty or not JSON, return empty object or throw
+    if (res.status === 204 || res.status === 201) {
+      return {} as T;
+    }
+    throw new Error("Invalid JSON response from server");
+  }
 }

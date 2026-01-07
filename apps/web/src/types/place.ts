@@ -42,6 +42,7 @@ export type Place = {
   accessibility?: string;
 
   priceBand?: PriceBand; // Localized price band name or null
+  priceBandId?: string | null; // Price band ID
   tags?: string[]; // Array of localized tag names
 
   // category-specifikus, szabad struktúra

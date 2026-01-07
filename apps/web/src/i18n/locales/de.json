@@ -60,9 +60,22 @@
     "noPlacesFound": "Keine Orte gefunden",
     "errorLoadingPlace": "Fehler beim Laden des Ortes",
     "backToList": "Zurück zur Liste",
+    "event": {
+      "title": "Veranstaltungen",
+      "description": "Veranstaltungen entdecken"
+    },
+    "events": "Veranstaltungen",
+    "noEvents": "Keine Veranstaltungen",
     "contact": "Kontakt",
     "menu": "Menü",
-    "noResults": "Keine Ergebnisse gefunden"
+    "noResults": "Keine Ergebnisse gefunden",
+    "filters": "Filter",
+    "footer": {
+      "tagline": "Entdecke lokale Schätze",
+      "legal": "Rechtliche Informationen",
+      "quickLinks": "Schnellzugriff",
+      "rights": "Alle Rechte vorbehalten."
+    }
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -73,6 +86,7 @@
     "towns": "Städte",
     "legalPages": "Rechtliche Seiten",
     "users": "Benutzer",
+    "usersManagement": "Benutzerverwaltung",
     "tenants": "Gebiete",
     "settings": "Einstellungen",
     "appSettings": "App-Einstellungen",
@@ -135,6 +149,8 @@
       "priceBandsDesc": "Preisklassen verwalten",
       "places": "Orte",
       "placesDesc": "Orte verwalten",
+      "events": "Veranstaltungen",
+      "eventsDesc": "Veranstaltungen verwalten",
       "towns": "Städte",
       "townsDesc": "Städte verwalten",
       "legalPages": "Rechtliche Seiten",

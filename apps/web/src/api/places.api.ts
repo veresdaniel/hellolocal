@@ -90,3 +90,50 @@ export async function getPriceBands(lang: string): Promise<PriceBand[]> {
   });
   return Array.from(priceBandMap.values());
 }
+
+// Events
+export interface Event {
+  id: string;
+  slug: string;
+  tenantKey: string | null;
+  category: string | null;
+  name: string;
+  shortDescription: string | null;
+  description: string | null;
+  heroImage: string | null;
+  gallery: string[];
+  location: { lat: number; lng: number } | null;
+  placeId: string | null;
+  placeSlug: string | null;
+  placeName: string | null;
+  startDate: string;
+  endDate: string | null;
+  isPinned: boolean;
+  tags: string[];
+  seo: {
+    title: string | null;
+    description: string | null;
+    image: string | null;
+    keywords: string[];
+  };
+}
+
+export function getEvents(
+  lang: string,
+  category?: string,
+  placeId?: string,
+  limit?: number,
+  offset?: number
+) {
+  const params = new URLSearchParams();
+  if (category) params.append("category", category);
+  if (placeId) params.append("placeId", placeId);
+  if (limit) params.append("limit", limit.toString());
+  if (offset) params.append("offset", offset.toString());
+  const queryString = params.toString();
+  return apiGetPublic<Event[]>(`/${lang}/events${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getEvent(lang: string, slug: string) {
+  return apiGetPublic<Event>(`/${lang}/events/${slug}`);
+}

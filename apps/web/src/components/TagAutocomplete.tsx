@@ -151,7 +151,7 @@ export function TagAutocomplete({ tags, selectedTagIds, onChange, placeholder = 
             marginTop: 4,
             maxHeight: 200,
             overflowY: "auto",
-            zIndex: 1000,
+            zIndex: 800,
             boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
           }}
         >

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { getSiteSettings } from "../api/places.api";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 type Props = {
   pageKey: "imprint" | "terms" | "privacy";
@@ -33,16 +34,18 @@ export function LegalPage({ pageKey }: Props) {
     siteName: siteSettings?.siteName,
   });
 
-  if (isLoading) return <main className="p-4">Loading…</main>;
   if (error || !data) return <main className="p-4">Not found.</main>;
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
+    <>
+      <LoadingSpinner isLoading={isLoading} />
+      <main className="mx-auto max-w-3xl p-4">
       <h1 className="text-2xl font-semibold mb-4">{data.title}</h1>
       <article
         className="prose max-w-none"
         dangerouslySetInnerHTML={{ __html: data.content }}
       />
     </main>
+    </>
   );
 }

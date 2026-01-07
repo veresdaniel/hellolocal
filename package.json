@@ -1,11 +1,19 @@
 {
   "name": "hellolocal",
+  "version": "0.1.0-beta",
   "private": true,
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
     "dev:web": "pnpm -C apps/web dev",
-    "dev:api": "pnpm -C apps/api start:dev"
+    "dev:api": "pnpm -C apps/api start:dev",
+    "build": "pnpm -C apps/api build && pnpm -C apps/web build",
+    "start:api": "pnpm -C apps/api start",
+    "start:web": "pnpm -C apps/web preview"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.0.0"
   }
 }

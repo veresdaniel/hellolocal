@@ -355,7 +355,7 @@ export function PlacesPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>Places</h1>
+        <h1>{t("admin.places")}</h1>
         <button
           onClick={() => {
             setEditingId(null);

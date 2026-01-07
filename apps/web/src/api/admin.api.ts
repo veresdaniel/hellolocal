@@ -468,3 +468,117 @@ export function setSiteSettings(data: SetSiteSettingsDto) {
   return apiPut<SiteSettings>("/admin/app-settings/site-settings", data);
 }
 
+// Events
+export interface Event {
+  id: string;
+  tenantId: string;
+  placeId: string | null;
+  categoryId: string | null;
+  isActive: boolean;
+  isPinned: boolean;
+  startDate: string;
+  endDate: string | null;
+  heroImage: string | null;
+  gallery: string[];
+  lat: number | null;
+  lng: number | null;
+  place?: {
+    id: string;
+    translations: Array<{ lang: string; name: string }>;
+  } | null;
+  category?: {
+    id: string;
+    translations: Array<{ lang: string; name: string }>;
+  } | null;
+  tags: Array<{
+    tag: {
+      id: string;
+      translations: Array<{ lang: string; name: string }>;
+    };
+  }>;
+  translations: Array<{
+    lang: string;
+    title: string;
+    shortDescription: string | null;
+    description: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+    seoImage: string | null;
+    seoKeywords: string[];
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEventDto {
+  tenantId: string;
+  placeId?: string | null;
+  categoryId?: string | null;
+  tagIds?: string[];
+  translations: Array<{
+    lang: "hu" | "en" | "de";
+    title: string;
+    shortDescription?: string | null;
+    description?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+  isActive?: boolean;
+  isPinned?: boolean;
+  startDate: string;
+  endDate?: string | null;
+  heroImage?: string | null;
+  gallery?: string[];
+  lat?: number | null;
+  lng?: number | null;
+}
+
+export interface UpdateEventDto {
+  placeId?: string | null;
+  categoryId?: string | null;
+  tagIds?: string[];
+  translations?: Array<{
+    lang: "hu" | "en" | "de";
+    title: string;
+    shortDescription?: string | null;
+    description?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+  isActive?: boolean;
+  isPinned?: boolean;
+  startDate?: string;
+  endDate?: string | null;
+  heroImage?: string | null;
+  gallery?: string[];
+  lat?: number | null;
+  lng?: number | null;
+}
+
+export function getEvents(tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiGet<Event[]>(`/admin/events${params}`);
+}
+
+export function getEvent(id: string) {
+  return apiGet<Event>(`/admin/events/${id}`);
+}
+
+export function createEvent(data: CreateEventDto) {
+  return apiPost<Event>("/admin/events", data);
+}
+
+export function updateEvent(id: string, data: UpdateEventDto, tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiPut<Event>(`/admin/events/${id}${params}`, data);
+}
+
+export function deleteEvent(id: string, tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiDelete<{ message: string }>(`/admin/events/${id}${params}`);
+}
+

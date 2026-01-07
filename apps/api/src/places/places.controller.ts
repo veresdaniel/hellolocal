@@ -29,6 +29,7 @@ export class PlacesController {
    * Query parameters:
    * - tenantKey: Optional tenant key for multi-tenant support
    * - category: Filter by place category (winery, accommodation, etc.)
+   * - priceBand: Filter by price band name
    * - town: Filter by town using public town slug
    * - q: Search query (searches in place names)
    * - limit: Maximum number of results (default: 50, max: 200)
@@ -39,6 +40,7 @@ export class PlacesController {
     @Param("lang") lang: string,
     @Query("tenantKey") tenantKey?: string,
     @Query("category") category?: string,
+    @Query("priceBand") priceBand?: string,
     @Query("town") town?: string,
     @Query("q") q?: string,
     @Query("limit") limit?: string,
@@ -49,6 +51,7 @@ export class PlacesController {
       lang,
       tenantKey,
       category,
+      priceBand,
       town,
       q,
       limit: limit ? Number(limit) : 50,

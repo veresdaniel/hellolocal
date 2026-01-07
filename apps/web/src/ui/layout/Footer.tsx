@@ -1,22 +1,296 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 import type { Lang } from "../../app/config";
 
 export function Footer({
   lang,
   tenantSlug,
+  compact = false,
 }: {
   lang: Lang;
   tenantSlug?: string;
+  compact?: boolean;
 }) {
+  const { t } = useTranslation();
   const base = HAS_MULTIPLE_TENANTS && tenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
+  const currentYear = new Date().getFullYear();
 
+  // Compact version for map view
+  if (compact) {
+    return (
+      <footer
+        style={{
+          marginTop: "auto",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          color: "white",
+          borderTop: "none",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "16px 24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          {/* Brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 20 }}>📍</span>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>HelloLocal</span>
+          </div>
+
+          {/* Links */}
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
+            <Link
+              to={`${base}/impresszum`}
+              style={{
+                color: "white",
+                textDecoration: "none",
+                opacity: 0.9,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+            >
+              {t("public.legal.imprint.title")}
+            </Link>
+            <Link
+              to={`${base}/aszf`}
+              style={{
+                color: "white",
+                textDecoration: "none",
+                opacity: 0.9,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+            >
+              {t("public.legal.terms.title")}
+            </Link>
+            <Link
+              to={`${base}/adatvedelem`}
+              style={{
+                color: "white",
+                textDecoration: "none",
+                opacity: 0.9,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+            >
+              {t("public.legal.privacy.title")}
+            </Link>
+          </div>
+
+          {/* Copyright */}
+          <div style={{ fontSize: 12, opacity: 0.8, textAlign: "right" }}>
+            © {currentYear} HelloLocal
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Full version for other pages
   return (
-    <footer className="border-t mt-10">
-      <div className="mx-auto max-w-5xl p-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <Link className="underline" to={`${base}/impresszum`}>Impresszum</Link>
-        <Link className="underline" to={`${base}/aszf`}>ÁSZF</Link>
-        <Link className="underline" to={`${base}/adatvedelem`}>Adatvédelem</Link>
+    <footer
+      style={{
+        marginTop: "auto",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        color: "white",
+        borderTop: "none",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "48px 24px 32px",
+        }}
+      >
+        {/* Main Footer Content */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 40,
+            marginBottom: 40,
+          }}
+        >
+          {/* Brand Section */}
+          <div>
+            <h3
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                marginBottom: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>📍</span>
+              HelloLocal
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                opacity: 0.9,
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
+            </p>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h4
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                marginBottom: 16,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                opacity: 0.8,
+              }}
+            >
+              {t("public.footer.legal") || "Jogi információk"}
+            </h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <Link
+                to={`${base}/impresszum`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.legal.imprint.title")}
+              </Link>
+              <Link
+                to={`${base}/aszf`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.legal.terms.title")}
+              </Link>
+              <Link
+                to={`${base}/adatvedelem`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.legal.privacy.title")}
+              </Link>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                marginBottom: 16,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                opacity: 0.8,
+              }}
+            >
+              {t("public.footer.quickLinks") || "Gyors linkek"}
+            </h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <Link
+                to={`${base}`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.home.title")}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div
+          style={{
+            paddingTop: 24,
+            borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+            textAlign: "center",
+            fontSize: 13,
+            opacity: 0.8,
+          }}
+        >
+          © {currentYear} HelloLocal. {t("public.footer.rights") || "Minden jog fenntartva."}
+        </div>
       </div>
     </footer>
   );

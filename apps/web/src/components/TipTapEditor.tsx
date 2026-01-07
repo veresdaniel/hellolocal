@@ -125,6 +125,97 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
         <div style={{ width: 1, background: "#ddd", margin: "0 4px" }} />
         <button
           type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #ddd",
+            borderRadius: 4,
+            background: editor.isActive("heading", { level: 1 }) ? "#007bff" : "white",
+            color: editor.isActive("heading", { level: 1 }) ? "white" : "#333",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold",
+          }}
+          title="Heading 1"
+        >
+          H1
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #ddd",
+            borderRadius: 4,
+            background: editor.isActive("heading", { level: 2 }) ? "#007bff" : "white",
+            color: editor.isActive("heading", { level: 2 }) ? "white" : "#333",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold",
+          }}
+          title="Heading 2"
+        >
+          H2
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #ddd",
+            borderRadius: 4,
+            background: editor.isActive("heading", { level: 3 }) ? "#007bff" : "white",
+            color: editor.isActive("heading", { level: 3 }) ? "white" : "#333",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold",
+          }}
+          title="Heading 3"
+        >
+          H3
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #ddd",
+            borderRadius: 4,
+            background: editor.isActive("paragraph") ? "#007bff" : "white",
+            color: editor.isActive("paragraph") ? "white" : "#333",
+            cursor: "pointer",
+            fontSize: 14,
+          }}
+          title="Paragraph"
+        >
+          P
+        </button>
+        <div style={{ width: 1, background: "#ddd", margin: "0 4px" }} />
+        <button
+          type="button"
+          onClick={() => {
+            const url = window.prompt("Enter image URL:");
+            if (url) {
+              // Insert image as HTML since we don't have the Image extension
+              editor.chain().focus().insertContent(`<img src="${url}" alt="" />`).run();
+            }
+          }}
+          style={{
+            padding: "4px 8px",
+            border: "1px solid #ddd",
+            borderRadius: 4,
+            background: "white",
+            color: "#333",
+            cursor: "pointer",
+            fontSize: 14,
+          }}
+          title="Insert Image"
+        >
+          🖼️
+        </button>
+        <div style={{ width: 1, background: "#ddd", margin: "0 4px" }} />
+        <button
+          type="button"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().chain().focus().undo().run()}
           style={{
@@ -177,6 +268,25 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
           .tiptap-editor ul, .tiptap-editor ol {
             padding-left: 1.5em;
             margin: 0.5em 0;
+          }
+          .tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
+            margin: 1em 0 0.5em 0;
+            font-weight: bold;
+          }
+          .tiptap-editor h1 {
+            font-size: 2em;
+          }
+          .tiptap-editor h2 {
+            font-size: 1.5em;
+          }
+          .tiptap-editor h3 {
+            font-size: 1.25em;
+          }
+          .tiptap-editor img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 1em 0;
           }
         `}</style>
       </div>

@@ -53,7 +53,7 @@ export function UserInfoDropdown() {
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             padding: 16,
             minWidth: 280,
-            zIndex: 1000,
+            zIndex: 800,
           }}
         >
           <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: "bold" }}>

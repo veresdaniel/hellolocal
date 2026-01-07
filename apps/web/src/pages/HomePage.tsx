@@ -8,10 +8,13 @@ import { useSeo } from "../seo/useSeo";
 import { MapComponent } from "../components/MapComponent";
 import { MapFilters } from "../components/MapFilters";
 import { PlacesListView } from "../components/PlacesListView";
+import { EventsList } from "../components/EventsList";
 import { Header } from "../ui/layout/Header";
+import { Footer } from "../ui/layout/Footer";
 import { buildPath } from "../app/routing/buildPath";
 import { useNavigate } from "react-router-dom";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -19,7 +22,8 @@ export function HomePage() {
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPriceBands, setSelectedPriceBands] = useState<string[]>([]);
-  const [mapHeight, setMapHeight] = useState(window.innerHeight);
+  const compactFooterHeight = 56; // Height of compact footer
+  const [mapHeight, setMapHeight] = useState(window.innerHeight - compactFooterHeight);
   
   // Load view preference from localStorage
   const [showMap, setShowMap] = useState(() => {
@@ -38,12 +42,12 @@ export function HomePage() {
 
   useEffect(() => {
     const handleResize = () => {
-      setMapHeight(window.innerHeight);
+      setMapHeight(window.innerHeight - compactFooterHeight);
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [compactFooterHeight]);
 
   // Load map settings first to avoid flickering
   const { data: mapSettings, isLoading: isLoadingMapSettings } = useQuery({
@@ -61,7 +65,11 @@ export function HomePage() {
 
   const { data: placesData } = useQuery({
     queryKey: ["places", lang, selectedCategories, selectedPriceBands],
-    queryFn: () => getPlaces(lang, selectedCategories[0] || undefined, selectedPriceBands[0] || undefined),
+    queryFn: () => getPlaces(
+      lang,
+      selectedCategories.length > 0 ? selectedCategories[0] : undefined,
+      selectedPriceBands.length > 0 ? selectedPriceBands[0] : undefined
+    ),
   });
 
   useSeo({
@@ -110,12 +118,14 @@ export function HomePage() {
 
   // Don't render map until settings are loaded to avoid flickering
   if (isLoadingMapSettings) {
-    return null; // Or a loading spinner if preferred
+    return <LoadingSpinner isLoading={true} />;
   }
 
   return (
     <div
       style={{
+        display: showMap ? "flex" : "block",
+        flexDirection: showMap ? "column" : undefined,
         position: "relative",
         width: "100%",
         height: showMap ? "100vh" : "auto",
@@ -126,64 +136,74 @@ export function HomePage() {
     >
       {showMap ? (
         <>
-          <Header />
-          <MapComponent
-            latitude={centerLat}
-            longitude={centerLng}
-            markers={markers}
-            height={mapHeight}
-            interactive={true}
-            defaultZoom={defaultZoom}
-            mapStyle="default"
-          />
-          <MapFilters
-            selectedCategories={selectedCategories}
-            selectedPriceBands={selectedPriceBands}
-            onCategoriesChange={setSelectedCategories}
-            onPriceBandsChange={setSelectedPriceBands}
-            lang={lang}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              zIndex: 1000,
-              display: "flex",
-              gap: 8,
-            }}
-          >
-            <button
-              onClick={() => setShowMap(false)}
+          {/* Map container with flex: 1 to fill available space */}
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+            <Header />
+            <MapComponent
+              latitude={centerLat}
+              longitude={centerLng}
+              markers={markers}
+              height={mapHeight}
+              interactive={true}
+              defaultZoom={defaultZoom}
+              mapStyle="default"
+            />
+            <MapFilters
+              selectedCategories={selectedCategories}
+              selectedPriceBands={selectedPriceBands}
+              onCategoriesChange={setSelectedCategories}
+              onPriceBandsChange={setSelectedPriceBands}
+              lang={lang}
+            />
+            <EventsList lang={lang} />
+            <div
               style={{
-                padding: "12px 20px",
-                background: "rgba(255, 255, 255, 0.98)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                border: "1px solid rgba(0, 0, 0, 0.1)",
-                borderRadius: 12,
-                cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#333",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 1000,
+                display: "flex",
+                gap: 8,
               }}
             >
-              📋 {t("public.listView")}
-            </button>
+              <button
+                onClick={() => setShowMap(false)}
+                style={{
+                  padding: "12px 20px",
+                  background: "rgba(255, 255, 255, 0.98)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  border: "1px solid rgba(0, 0, 0, 0.1)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#333",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                }}
+              >
+                📋 {t("public.listView")}
+              </button>
+            </div>
           </div>
+          {/* Compact footer - not absolute, in the flow */}
+          <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
         </>
       ) : (
-        <PlacesListView onMapViewClick={() => setShowMap(true)} />
+        <>
+          <PlacesListView onMapViewClick={() => setShowMap(true)} />
+          {/* Full footer for list view */}
+          <Footer lang={lang} tenantSlug={tenantSlug} />
+        </>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 // src/components/MapFilters.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getPlaces } from "../api/places.api";
 
 interface MapFiltersProps {
@@ -18,6 +19,7 @@ export function MapFilters({
   onPriceBandsChange,
   lang,
 }: MapFiltersProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   // Load saved position from localStorage with lazy initializer
   const [position, setPosition] = useState(() => {
@@ -52,13 +54,11 @@ export function MapFilters({
     if ((e.target as HTMLElement).closest("input")) {
       return;
     }
-    // Allow dragging from button only if filters are closed, or if it's not a direct button click
-    const isButton = (e.target as HTMLElement).closest("button");
-    if (isButton && isOpen) {
-      // If filters are open and clicking on button, don't drag (allow toggle)
+    // Don't allow dragging from label elements (checkboxes)
+    if ((e.target as HTMLElement).closest("label")) {
       return;
     }
-    // If filters are closed, allow dragging even from button area
+    // Allow dragging from header area and anywhere else except inputs/labels
     e.preventDefault();
     setHasDragged(false); // Reset drag flag
     const rect = filtersRef.current.getBoundingClientRect();
@@ -115,6 +115,7 @@ export function MapFilters({
   });
 
   // Extract unique categories and price bands from places
+  // Note: For price bands, we use IDs. For categories, we still use names (can be updated later)
   const categories = useMemo(() => {
     if (!places) return [];
     const categorySet = new Set<string>();
@@ -128,13 +129,29 @@ export function MapFilters({
 
   const priceBands = useMemo(() => {
     if (!places) return [];
-    const priceBandSet = new Set<string>();
+    console.log('[MapFilters] Processing places for price bands:', places.length);
+    const priceBandMap = new Map<string, { id: string; name: string }>();
     places.forEach((place) => {
       if (place.priceBand) {
-        priceBandSet.add(place.priceBand);
+        // Use ID if available, otherwise use name as ID (fallback for backward compatibility)
+        const priceBandId = place.priceBandId || place.priceBand;
+        const priceBandName = place.priceBand;
+        
+        console.log('[MapFilters] Place price band:', { 
+          placeName: place.name, 
+          priceBandId, 
+          priceBandName 
+        });
+        
+        // Use ID/name as key to avoid duplicates
+        if (!priceBandMap.has(priceBandId)) {
+          priceBandMap.set(priceBandId, { id: priceBandId, name: priceBandName });
+        }
       }
     });
-    return Array.from(priceBandSet).map((name) => ({ id: name, name }));
+    const result = Array.from(priceBandMap.values());
+    console.log('[MapFilters] Final price bands:', result);
+    return result;
   }, [places]);
 
   return (
@@ -145,7 +162,7 @@ export function MapFilters({
         position: "absolute",
         top: position.top,
         right: position.right,
-        zIndex: 1000,
+        zIndex: 200,
         background: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
@@ -169,51 +186,47 @@ export function MapFilters({
         }
       }}
     >
-      <button
-        onClick={(e) => {
+      {/* Header */}
+      <div
+        onClick={() => {
           // Only toggle if we didn't drag
           if (!hasDragged) {
             setIsOpen(!isOpen);
           }
-          setHasDragged(false); // Reset for next interaction
-        }}
-        onMouseDown={(e) => {
-          // Only stop propagation if filters are open (to allow toggle)
-          // If closed, allow drag to start
-          if (isOpen) {
-            e.stopPropagation();
-          }
+          setHasDragged(false);
         }}
         style={{
-          width: "100%",
-          padding: "16px 20px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white",
-          border: "none",
-          fontSize: 16,
-          fontWeight: 600,
-          cursor: isDesktop ? (isOpen ? "pointer" : (isDragging ? "grabbing" : "grab")) : "pointer",
+          padding: 16,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          if (!isDragging) {
-            e.currentTarget.style.transform = "translateY(-1px)";
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
+          cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "pointer",
+          userSelect: "none",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <span>🔍 Szűrők</span>
-        <span style={{ fontSize: 20, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-          ▼
-        </span>
-      </button>
+        <h3 style={{ margin: 0, color: "white", fontSize: 18, fontWeight: 700 }}>
+          🔍 {t("public.filters") || "Szűrők"}
+        </h3>
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.2)",
+            border: "none",
+            borderRadius: 8,
+            width: 32,
+            height: 32,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 18,
+            transition: "background 0.2s",
+            pointerEvents: "none", // Let clicks pass through to parent
+          }}
+        >
+          {isOpen ? "−" : "+"}
+        </div>
+      </div>
 
       {isOpen && (
         <div style={{ padding: 20 }}>
@@ -222,8 +235,8 @@ export function MapFilters({
             <h3
               style={{
                 fontSize: 14,
-                fontWeight: 700,
-                color: "#1a1a1a",
+                fontWeight: 600,
+                color: "#5a3d7a",
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -231,7 +244,7 @@ export function MapFilters({
             >
               Kategóriák
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {categories?.map((category) => {
                 const isSelected = selectedCategories.includes(category.id);
                 return (
@@ -241,15 +254,16 @@ export function MapFilters({
                       display: "flex",
                       alignItems: "center",
                       gap: 10,
-                      padding: "10px 12px",
+                      padding: "8px 10px",
                       borderRadius: 8,
                       cursor: "pointer",
-                      background: isSelected ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                      background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                       transition: "all 0.2s",
+                      border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)";
+                        e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -269,17 +283,19 @@ export function MapFilters({
                         }
                       }}
                       style={{
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         cursor: "pointer",
-                        accentColor: "#667eea",
+                        accentColor: "#5a3d7a",
+                        flexShrink: 0,
                       }}
                     />
                     <span
                       style={{
-                        fontSize: 14,
-                        color: isSelected ? "#667eea" : "#666",
-                        fontWeight: isSelected ? 600 : 400,
+                        fontSize: 15,
+                        color: isSelected ? "#3d2952" : "#5a3d7a",
+                        fontWeight: isSelected ? 600 : 500,
+                        lineHeight: 1.5,
                       }}
                     >
                       {category.name}
@@ -295,8 +311,8 @@ export function MapFilters({
             <h3
               style={{
                 fontSize: 14,
-                fontWeight: 700,
-                color: "#1a1a1a",
+                fontWeight: 600,
+                color: "#5a3d7a",
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -304,62 +320,71 @@ export function MapFilters({
             >
               Ár sávok
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {priceBands?.map((priceBand) => {
-                const isSelected = selectedPriceBands.includes(priceBand.id);
-                return (
-                  <label
-                    key={priceBand.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      background: isSelected ? "rgba(102, 126, 234, 0.1)" : "transparent",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          onPriceBandsChange([...selectedPriceBands, priceBand.id]);
-                        } else {
-                          onPriceBandsChange(selectedPriceBands.filter((id) => id !== priceBand.id));
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {priceBands && priceBands.length > 0 ? (
+                priceBands.map((priceBand) => {
+                  const isSelected = selectedPriceBands.includes(priceBand.id);
+                  return (
+                    <label
+                      key={priceBand.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
+                        transition: "all 0.2s",
+                        border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
                         }
                       }}
-                      style={{
-                        width: 18,
-                        height: 18,
-                        cursor: "pointer",
-                        accentColor: "#667eea",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 14,
-                        color: isSelected ? "#667eea" : "#666",
-                        fontWeight: isSelected ? 600 : 400,
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "transparent";
+                        }
                       }}
                     >
-                      {priceBand.name}
-                    </span>
-                  </label>
-                );
-              })}
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            onPriceBandsChange([...selectedPriceBands, priceBand.id]);
+                          } else {
+                            onPriceBandsChange(selectedPriceBands.filter((id) => id !== priceBand.id));
+                          }
+                        }}
+                        style={{
+                          width: 16,
+                          height: 16,
+                          cursor: "pointer",
+                          accentColor: "#5a3d7a",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 15,
+                          color: isSelected ? "#3d2952" : "#5a3d7a",
+                          fontWeight: isSelected ? 600 : 500,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {priceBand.name}
+                      </span>
+                    </label>
+                  );
+                })
+              ) : (
+                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14 }}>
+                  Nincs elérhető ár sáv
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,5 @@
 // src/components/LoadingSpinner.tsx
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 
 interface LoadingSpinnerProps {
   isLoading: boolean;
@@ -8,7 +7,6 @@ interface LoadingSpinnerProps {
 }
 
 export function LoadingSpinner({ isLoading, delay = 2000 }: LoadingSpinnerProps) {
-  const { t } = useTranslation();
   const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
@@ -62,18 +60,6 @@ export function LoadingSpinner({ isLoading, delay = 2000 }: LoadingSpinnerProps)
           animation: "spin 1s linear infinite",
         }}
       />
-      
-      {/* Loading text */}
-      <div
-        style={{
-          fontSize: 16,
-          fontWeight: 500,
-          color: "#667eea",
-          letterSpacing: "0.05em",
-        }}
-      >
-        {t("common.loading")}
-      </div>
 
       <style>
         {`

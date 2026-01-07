@@ -8,7 +8,8 @@ import { SlugResolverService } from "../slug/slug-resolver.service";
 type ListArgs = {
   lang: string;
   tenantKey?: string; // Optional tenant key from URL (for multi-tenant support)
-  category?: string; // Filter by place category (winery, accommodation, etc.)
+  category?: string; // Filter by place category (name or ID)
+  priceBand?: string; // Filter by price band (name or ID)
   town?: string; // Filter by town using public town slug
   q?: string; // Search query (searches in place names)
   limit: number; // Maximum number of results (1-200)
@@ -48,29 +49,115 @@ export class PlacesService {
       isActive: true, // Only return active places
     };
 
-    // Filter by category if provided (category is now a categoryId)
+    // Filter by category if provided (category name)
     if (args.category) {
-      // Find category by slug or ID - for now, assume it's an ID
-      // TODO: Support category slugs in the future
-      const category = await this.prisma.category.findFirst({
+      // NestJS automatically decodes URL parameters
+      const categoryName = args.category.trim();
+      
+      // Try to find category by exact name match first
+      let category = await this.prisma.category.findFirst({
         where: {
           tenantId: tenant.tenantId,
           isActive: true,
           translations: {
             some: {
               lang: tenant.lang,
-              name: { equals: args.category, mode: "insensitive" },
+              name: { equals: categoryName, mode: "insensitive" },
             },
           },
         },
         select: { id: true },
       });
 
+      // If not found, try with contains (partial match) as fallback
       if (!category) {
-        throw new BadRequestException(`Category not found: ${args.category}`);
+        category = await this.prisma.category.findFirst({
+          where: {
+            tenantId: tenant.tenantId,
+            isActive: true,
+            translations: {
+              some: {
+                lang: tenant.lang,
+                name: { contains: categoryName, mode: "insensitive" },
+              },
+            },
+          },
+          select: { id: true },
+        });
       }
 
-      where.categoryId = category.id;
+      if (category) {
+        where.categoryId = category.id;
+      } else {
+        // If category not found, filter to return no results
+        // Use an impossible condition to ensure no results
+        where.categoryId = "NONEXISTENT_CATEGORY_ID";
+      }
+    }
+
+    // Filter by price band if provided (price band ID or name)
+    if (args.priceBand) {
+      const priceBandParam = args.priceBand.trim();
+      
+      // First, try to use it as an ID (if it looks like a CUID)
+      // CUIDs are typically 25 characters long and start with 'c'
+      if (priceBandParam.length === 25 && priceBandParam.startsWith('c')) {
+        // Try to find by ID first
+        const priceBandById = await this.prisma.priceBand.findFirst({
+          where: {
+            id: priceBandParam,
+            tenantId: tenant.tenantId,
+            isActive: true,
+          },
+          select: { id: true },
+        });
+        
+        if (priceBandById) {
+          where.priceBandId = priceBandById.id;
+        } else {
+          // If ID not found, filter to return no results
+          where.priceBandId = "NONEXISTENT_PRICE_BAND_ID";
+        }
+      } else {
+        // Otherwise, treat it as a name and search for it
+        let priceBand = await this.prisma.priceBand.findFirst({
+          where: {
+            tenantId: tenant.tenantId,
+            isActive: true,
+            translations: {
+              some: {
+                lang: tenant.lang,
+                name: { equals: priceBandParam, mode: "insensitive" },
+              },
+            },
+          },
+          select: { id: true },
+        });
+
+        // If not found, try with contains (partial match) as fallback
+        if (!priceBand) {
+          priceBand = await this.prisma.priceBand.findFirst({
+            where: {
+              tenantId: tenant.tenantId,
+              isActive: true,
+              translations: {
+                some: {
+                  lang: tenant.lang,
+                  name: { contains: priceBandParam, mode: "insensitive" },
+                },
+              },
+            },
+            select: { id: true },
+          });
+        }
+
+        if (priceBand) {
+          where.priceBandId = priceBand.id;
+        } else {
+          // If price band not found, filter to return no results
+          where.priceBandId = "NONEXISTENT_PRICE_BAND_ID";
+        }
+      }
     }
 
     // Step 3: Filter by town if provided
@@ -92,10 +179,12 @@ export class PlacesService {
 
     // Filter by search query (searches in place names)
     if (args.q) {
+      // NestJS automatically decodes URL parameters
+      const searchQuery = args.q.trim();
       where.translations = {
         some: {
           lang: tenant.lang,
-          name: { contains: args.q, mode: "insensitive" },
+          name: { contains: searchQuery, mode: "insensitive" },
         },
       };
     }
@@ -116,7 +205,7 @@ export class PlacesService {
         },
         priceBand: {
           include: {
-            translations: true, // Get all translations for fallback
+            translations: true, // Get all translations for fallback (id is automatically included)
           },
         },
         tags: {
@@ -136,6 +225,8 @@ export class PlacesService {
     // Step 5: Load canonical place slugs in a single database round-trip
     // This is more efficient than fetching slugs one-by-one
     const placeIds = places.map((p) => p.id);
+    
+    // First try to get slugs in the requested language
     const placeSlugs = await this.prisma.slug.findMany({
       where: {
         tenantId: tenant.tenantId,
@@ -145,10 +236,35 @@ export class PlacesService {
         isPrimary: true, // Only get the primary (canonical) slug
         isActive: true,
       },
-      select: { entityId: true, slug: true },
+      select: { entityId: true, slug: true, lang: true },
     });
+    
     // Create a map for O(1) lookup: placeId -> slug
     const placeSlugById = new Map(placeSlugs.map((s) => [s.entityId, s.slug]));
+    
+    // If requested language is not Hungarian, fetch Hungarian slugs as fallback for missing ones
+    if (tenant.lang !== Lang.hu) {
+      const missingPlaceIds = placeIds.filter((id) => !placeSlugById.has(id));
+      if (missingPlaceIds.length > 0) {
+        const fallbackSlugs = await this.prisma.slug.findMany({
+          where: {
+            tenantId: tenant.tenantId,
+            lang: Lang.hu, // Fallback to Hungarian
+            entityType: SlugEntityType.place,
+            entityId: { in: missingPlaceIds },
+            isPrimary: true,
+            isActive: true,
+          },
+          select: { entityId: true, slug: true },
+        });
+        // Add fallback slugs to the map
+        fallbackSlugs.forEach((s) => {
+          if (!placeSlugById.has(s.entityId)) {
+            placeSlugById.set(s.entityId, s.slug);
+          }
+        });
+      }
+    }
 
     // Step 6: Load canonical town slugs (if needed for the list response)
     const townIds = Array.from(
@@ -168,6 +284,29 @@ export class PlacesService {
         })
       : [];
     const townSlugById = new Map(townSlugs.map((s) => [s.entityId, s.slug]));
+    
+    // Fallback to Hungarian for missing town slugs
+    if (tenant.lang !== Lang.hu && townIds.length > 0) {
+      const missingTownIds = townIds.filter((id) => !townSlugById.has(id));
+      if (missingTownIds.length > 0) {
+        const fallbackTownSlugs = await this.prisma.slug.findMany({
+          where: {
+            tenantId: tenant.tenantId,
+            lang: Lang.hu,
+            entityType: SlugEntityType.town,
+            entityId: { in: missingTownIds },
+            isPrimary: true,
+            isActive: true,
+          },
+          select: { entityId: true, slug: true },
+        });
+        fallbackTownSlugs.forEach((s) => {
+          if (!townSlugById.has(s.entityId)) {
+            townSlugById.set(s.entityId, s.slug);
+          }
+        });
+      }
+    }
 
     // Helper function to get translation with fallback to Hungarian
     const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
@@ -187,10 +326,11 @@ export class PlacesService {
         ? getTranslation(p.category.translations, "name")
         : null;
 
-      // Extract price band name with fallback to Hungarian
+      // Extract price band name and ID with fallback to Hungarian
       const priceBandName = p.priceBand?.translations
         ? getTranslation(p.priceBand.translations, "name")
         : null;
+      const priceBandId = p.priceBand?.id ?? null;
 
       // Extract tag names with fallback to Hungarian
       const tagNames = p.tags
@@ -216,6 +356,7 @@ export class PlacesService {
         gallery: p.gallery,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
         priceBand: priceBandName,
+        priceBandId: priceBandId,
         tags: tagNames,
         rating: { avg: p.ratingAvg ?? null, count: p.ratingCount ?? null },
         seo: {
@@ -263,7 +404,7 @@ export class PlacesService {
         },
         priceBand: {
           include: {
-            translations: true, // Get all translations for fallback
+            translations: true, // Get all translations for fallback (id is automatically included)
           },
         },
         tags: {

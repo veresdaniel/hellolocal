@@ -24,6 +24,7 @@ import { AdminPlaceService, CreatePlaceDto, UpdatePlaceDto } from "./admin-place
 import { AdminLegalService, CreateLegalPageDto, UpdateLegalPageDto } from "./admin-legal.service";
 import { AdminTenantService, CreateTenantDto, UpdateTenantDto } from "./admin-tenant.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
+import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -36,7 +37,7 @@ import { PrismaService } from "../prisma/prisma.service";
  */
 @Controller("/api/admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+@Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
 export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
@@ -49,6 +50,7 @@ export class AdminController {
     private readonly legalService: AdminLegalService,
     private readonly tenantService: AdminTenantService,
     private readonly appSettingsService: AdminAppSettingsService,
+    private readonly eventService: AdminEventService,
     private readonly twoFactorService: TwoFactorService
   ) {}
 
@@ -639,6 +641,79 @@ export class AdminController {
     return this.tenantService.remove(id);
   }
 
+  // ==================== Events ====================
+
+  @Get("/events")
+  async getEvents(
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new ForbiddenException("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new ForbiddenException("User does not have access to this tenant");
+    }
+    return this.eventService.findAll(tenantId);
+  }
+
+  @Get("/events/:id")
+  async getEvent(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
+    const tenantId = user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    return this.eventService.findOne(id, tenantId);
+  }
+
+  @Post("/events")
+  async createEvent(
+    @Body() dto: CreateEventDto,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    if (!dto.tenantId) {
+      dto.tenantId = user.tenantIds[0];
+    }
+    if (!user.tenantIds.includes(dto.tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.eventService.create(dto);
+  }
+
+  @Put("/events/:id")
+  async updateEvent(
+    @Param("id") id: string,
+    @Body() dto: UpdateEventDto,
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.eventService.update(id, tenantId, dto);
+  }
+
+  @Delete("/events/:id")
+  async deleteEvent(
+    @Param("id") id: string,
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.eventService.remove(id, tenantId);
+  }
+
   // ==================== App Settings ====================
 
   // Specific routes must come before parameterized routes
@@ -739,6 +814,18 @@ export class AdminController {
     seoDescription?: { hu?: string; en?: string; de?: string };
   }) {
     return this.appSettingsService.setSiteSettings(settings);
+  }
+
+  @Post("/maintenance/generate-missing-slugs")
+  @Roles(UserRole.superadmin)
+  async generateMissingSlugs(@Query("tenantId") tenantIdParam: string | undefined, @CurrentUser() user: { tenantIds: string[] }) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new ForbiddenException("User does not have access to this tenant");
+    }
+
+    const result = await this.placeService.generateMissingSlugs(tenantId);
+    return result;
   }
 }
 

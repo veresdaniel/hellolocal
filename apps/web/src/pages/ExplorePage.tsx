@@ -8,6 +8,7 @@ import { useSeo } from "../seo/useSeo";
 import { MapComponent } from "../components/MapComponent";
 import { buildPath } from "../app/routing/buildPath";
 import { useNavigate } from "react-router-dom";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function ExplorePage() {
   const { t } = useTranslation();
@@ -25,7 +26,6 @@ export function ExplorePage() {
     description: t("public.explore.description"),
   });
 
-  if (isLoading) return <div style={{ padding: 24 }}>Betöltés…</div>;
   if (isError)
     return (
       <div style={{ padding: 24 }}>
@@ -54,7 +54,9 @@ export function ExplorePage() {
     : 19.0402;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
+    <>
+      <LoadingSpinner isLoading={isLoading} />
+      <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
       {showMap ? (
         <>
           <MapComponent
@@ -116,5 +118,6 @@ export function ExplorePage() {
         </div>
       )}
     </div>
+    </>
   );
 }

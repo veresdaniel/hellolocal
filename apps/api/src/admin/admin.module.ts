@@ -10,10 +10,12 @@ import { AdminPlaceService } from "./admin-place.service";
 import { AdminLegalService } from "./admin-legal.service";
 import { AdminTenantService } from "./admin-tenant.service";
 import { AdminAppSettingsService } from "./admin-app-settings.service";
+import { AdminEventService } from "./admin-event.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule],
   controllers: [AdminController],
   providers: [
     AdminCategoryService,
@@ -25,6 +27,7 @@ import { TwoFactorModule } from "../two-factor/two-factor.module";
     AdminLegalService,
     AdminTenantService,
     AdminAppSettingsService,
+    AdminEventService,
   ],
   exports: [
     AdminCategoryService,
@@ -36,6 +39,7 @@ import { TwoFactorModule } from "../two-factor/two-factor.module";
     AdminLegalService,
     AdminTenantService,
     AdminAppSettingsService,
+    AdminEventService,
   ],
 })
 export class AdminModule {}

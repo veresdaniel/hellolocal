@@ -192,7 +192,7 @@ export function UsersPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>Users Management</h1>
+        <h1>{t("admin.usersManagement")}</h1>
         <button
           onClick={() => {
             setEditingId(null);

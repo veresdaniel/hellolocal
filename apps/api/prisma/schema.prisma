@@ -20,6 +20,7 @@ enum SlugEntityType {
   town
   page
   region
+  event
 }
 
 enum UserRole {
@@ -45,15 +46,17 @@ model Tenant {
 
   towns            Town[]
   places           Place[]
+  events           Event[]
   legalPages       LegalPage[]
   translations     TenantTranslation[]
 
-  tenantKeys      TenantKey[]
+  tenantKeys       TenantKey[]
   slugs            Slug[]
   categories       Category[]
   tags             Tag[]
   priceBands       PriceBand[]
   users            UserTenant[]
+  pushSubscriptions PushSubscription[]
 }
 
 model TenantTranslation {
@@ -178,6 +181,7 @@ model Category {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   translations CategoryTranslation[]
   places     Place[]
+  events     Event[]
 
   @@index([tenantId])
 }
@@ -207,6 +211,7 @@ model Tag {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   translations TagTranslation[]
   places     PlaceTag[]
+  events     EventTag[]
 
   @@index([tenantId])
 }
@@ -290,6 +295,7 @@ model Place {
   owner       User?         @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   translations PlaceTranslation[]
   tags        PlaceTag[]
+  events      Event[]
 
   @@index([tenantId, categoryId])
   @@index([townId])
@@ -446,4 +452,86 @@ model AppSetting {
   updatedAt DateTime @updatedAt
   
   @@index([key])
+}
+
+model Event {
+  id         String   @id @default(cuid())
+  tenantId   String
+  placeId    String?  // Optional: event can be linked to a place
+  categoryId String?  // Optional: event can have a category
+  isActive   Boolean  @default(true)
+  isPinned   Boolean  @default(false) // Pinned events appear at top of lists
+  startDate  DateTime // Event start date/time
+  endDate    DateTime? // Optional end date/time
+  heroImage  String?  // Hero image URL
+  gallery    String[]  @default([]) // Array of image URLs
+  lat        Float?    // Optional latitude for map display
+  lng        Float?    // Optional longitude for map display
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  place      Place?   @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  translations EventTranslation[]
+  tags       EventTag[]
+  
+  @@index([tenantId, startDate])
+  @@index([placeId])
+  @@index([categoryId])
+}
+
+model EventTranslation {
+  id          String @id @default(cuid())
+  eventId     String
+  lang        Lang
+  
+  title       String
+  shortDescription String? // 2-line description
+  description String? // Full description (HTML)
+  
+  // SEO
+  seoTitle        String?
+  seoDescription  String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+  
+  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, lang])
+  @@index([lang])
+}
+
+model EventTag {
+  id      String @id @default(cuid())
+  eventId String
+  tagId   String
+  
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, tagId])
+  @@index([eventId])
+  @@index([tagId])
+}
+
+// Push notification subscriptions
+model PushSubscription {
+  id         String   @id @default(cuid())
+  tenantId   String
+  endpoint   String   @unique
+  p256dh     String   // Public key
+  auth       String   // Auth secret
+  
+  userAgent  String?  // Optional: browser/device info
+  isActive   Boolean  @default(true)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([isActive])
 }

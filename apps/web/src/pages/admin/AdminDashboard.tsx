@@ -19,10 +19,22 @@ export function AdminDashboard() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}>
         <DashboardCard
-          title={t("admin.dashboardCards.userProfile")}
-          description={t("admin.dashboardCards.userProfileDesc")}
-          link="/admin/profile"
-          icon="👤"
+          title={t("admin.dashboardCards.events")}
+          description={t("admin.dashboardCards.eventsDesc")}
+          link="/admin/events"
+          icon="📅"
+        />
+        <DashboardCard
+          title={t("admin.dashboardCards.places")}
+          description={t("admin.dashboardCards.placesDesc")}
+          link="/admin/places"
+          icon="📍"
+        />
+        <DashboardCard
+          title={t("admin.dashboardCards.priceBands")}
+          description={t("admin.dashboardCards.priceBandsDesc")}
+          link="/admin/price-bands"
+          icon="💰"
         />
         <DashboardCard
           title={t("admin.dashboardCards.categories")}
@@ -37,22 +49,16 @@ export function AdminDashboard() {
           icon="🏷️"
         />
         <DashboardCard
-          title={t("admin.dashboardCards.priceBands")}
-          description={t("admin.dashboardCards.priceBandsDesc")}
-          link="/admin/price-bands"
-          icon="💰"
-        />
-        <DashboardCard
-          title={t("admin.dashboardCards.places")}
-          description={t("admin.dashboardCards.placesDesc")}
-          link="/admin/places"
-          icon="📍"
-        />
-        <DashboardCard
           title={t("admin.dashboardCards.towns")}
           description={t("admin.dashboardCards.townsDesc")}
           link="/admin/towns"
           icon="🏘️"
+        />
+        <DashboardCard
+          title={t("admin.dashboardCards.settings")}
+          description={t("admin.dashboardCards.settingsDesc")}
+          link="/admin/settings"
+          icon="⚙️"
         />
         <DashboardCard
           title={t("admin.dashboardCards.legalPages")}
@@ -61,10 +67,10 @@ export function AdminDashboard() {
           icon="📄"
         />
         <DashboardCard
-          title={t("admin.dashboardCards.settings")}
-          description={t("admin.dashboardCards.settingsDesc")}
-          link="/admin/settings"
-          icon="⚙️"
+          title={t("admin.dashboardCards.userProfile")}
+          description={t("admin.dashboardCards.userProfileDesc")}
+          link="/admin/profile"
+          icon="👤"
         />
       </div>
 

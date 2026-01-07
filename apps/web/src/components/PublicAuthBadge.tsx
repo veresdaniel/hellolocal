@@ -1,4 +1,5 @@
 // src/components/PublicAuthBadge.tsx
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,16 @@ export function PublicAuthBadge() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Don't show on admin pages or auth pages
   if (location.pathname.startsWith("/admin")) {
@@ -31,12 +42,12 @@ export function PublicAuthBadge() {
     <div
       style={{
         position: "fixed",
-        bottom: 20,
-        right: 20,
-        zIndex: 1000,
+        bottom: isMobile ? 12 : 20,
+        right: isMobile ? 12 : 20,
+        zIndex: 300,
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: isMobile ? 8 : 10,
         alignItems: "flex-end",
       }}
     >
@@ -44,13 +55,13 @@ export function PublicAuthBadge() {
       <div
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          borderRadius: 16,
+          borderRadius: isMobile ? 12 : 16,
           boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4), 0 4px 8px rgba(0, 0, 0, 0.1)",
-          padding: "10px 14px",
+          padding: isMobile ? "8px 12px" : "10px 14px",
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          fontSize: 13,
+          gap: isMobile ? 8 : 10,
+          fontSize: isMobile ? 12 : 13,
           color: "white",
           fontWeight: 500,
           backdropFilter: "blur(10px)",
@@ -59,23 +70,23 @@ export function PublicAuthBadge() {
       >
         <div
           style={{
-            width: 10,
-            height: 10,
+            width: isMobile ? 8 : 10,
+            height: isMobile ? 8 : 10,
             borderRadius: "50%",
             background: "#4ade80",
             boxShadow: "0 0 0 3px rgba(74, 222, 128, 0.3), 0 0 8px rgba(74, 222, 128, 0.5)",
           }}
         />
-        <span style={{ fontWeight: 600 }}>
-          {user.firstName} {user.lastName}
+        <span style={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+          {isMobile ? `${user.firstName.charAt(0)}. ${user.lastName}` : `${user.firstName} ${user.lastName}`}
         </span>
         <span
           style={{
-            padding: "3px 8px",
+            padding: isMobile ? "2px 6px" : "3px 8px",
             borderRadius: 6,
             background: "rgba(255, 255, 255, 0.25)",
             color: "white",
-            fontSize: 10,
+            fontSize: isMobile ? 9 : 10,
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: 0.5,
@@ -101,19 +112,20 @@ export function PublicAuthBadge() {
         <button
           onClick={handleDashboard}
           style={{
-            padding: "11px 18px",
+            padding: isMobile ? "10px 14px" : "11px 18px",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
             border: "none",
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontWeight: 600,
             cursor: "pointer",
             transition: "all 0.2s ease",
             display: "flex",
             alignItems: "center",
-            gap: 7,
+            gap: isMobile ? 6 : 7,
             position: "relative",
             overflow: "hidden",
+            whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-1px)";
@@ -124,8 +136,14 @@ export function PublicAuthBadge() {
             e.currentTarget.style.boxShadow = "none";
           }}
         >
-          <span style={{ fontSize: 16 }}>📊</span>
-          <span>{t("admin.dashboard")}</span>
+          {isMobile ? (
+            <span style={{ fontSize: 16 }}>📊</span>
+          ) : (
+            <>
+              <span style={{ fontSize: 16 }}>📊</span>
+              <span>{t("admin.dashboard")}</span>
+            </>
+          )}
         </button>
         <div
           style={{
@@ -136,17 +154,18 @@ export function PublicAuthBadge() {
         <button
           onClick={handleLogout}
           style={{
-            padding: "11px 18px",
+            padding: isMobile ? "10px 14px" : "11px 18px",
             background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
             color: "white",
             border: "none",
-            fontSize: 13,
+            fontSize: isMobile ? 12 : 13,
             fontWeight: 600,
             cursor: "pointer",
             transition: "all 0.2s ease",
             display: "flex",
             alignItems: "center",
-            gap: 7,
+            gap: isMobile ? 6 : 7,
+            whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-1px)";
@@ -157,8 +176,14 @@ export function PublicAuthBadge() {
             e.currentTarget.style.boxShadow = "none";
           }}
         >
-          <span style={{ fontSize: 16 }}>🚪</span>
-          <span>{t("admin.logout")}</span>
+          {isMobile ? (
+            <span style={{ fontSize: 16 }}>🚪</span>
+          ) : (
+            <>
+              <span style={{ fontSize: 16 }}>🚪</span>
+              <span>{t("admin.logout")}</span>
+            </>
+          )}
         </button>
       </div>
     </div>

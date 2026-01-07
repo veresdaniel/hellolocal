@@ -27,16 +27,18 @@ export class AdminAppSettingsService {
   }
 
   async upsert(key: string, dto: Omit<AppSettingDto, "key">) {
+    // Ensure value is always a string (never undefined)
+    const value = dto.value ?? "";
     return this.prisma.appSetting.upsert({
       where: { key },
       update: {
-        value: dto.value,
+        value,
         type: dto.type ?? "string",
         description: dto.description ?? null,
       },
       create: {
         key,
-        value: dto.value,
+        value,
         type: dto.type ?? "string",
         description: dto.description ?? null,
       },
@@ -191,24 +193,24 @@ export class AdminAppSettingsService {
 
     return {
       siteName: {
-        hu: siteNameHu?.value || "HelloLocal",
-        en: siteNameEn?.value || "HelloLocal",
-        de: siteNameDe?.value || "HelloLocal",
+        hu: siteNameHu?.value ?? "HelloLocal",
+        en: siteNameEn?.value ?? "HelloLocal",
+        de: siteNameDe?.value ?? "HelloLocal",
       },
       siteDescription: {
-        hu: siteDescriptionHu?.value || "",
-        en: siteDescriptionEn?.value || "",
-        de: siteDescriptionDe?.value || "",
+        hu: siteDescriptionHu?.value ?? "",
+        en: siteDescriptionEn?.value ?? "",
+        de: siteDescriptionDe?.value ?? "",
       },
       seoTitle: {
-        hu: seoTitleHu?.value || "",
-        en: seoTitleEn?.value || "",
-        de: seoTitleDe?.value || "",
+        hu: seoTitleHu?.value ?? "",
+        en: seoTitleEn?.value ?? "",
+        de: seoTitleDe?.value ?? "",
       },
       seoDescription: {
-        hu: seoDescriptionHu?.value || "",
-        en: seoDescriptionEn?.value || "",
-        de: seoDescriptionDe?.value || "",
+        hu: seoDescriptionHu?.value ?? "",
+        en: seoDescriptionEn?.value ?? "",
+        de: seoDescriptionDe?.value ?? "",
       },
     };
   }
@@ -222,106 +224,93 @@ export class AdminAppSettingsService {
     seoTitle?: { hu?: string; en?: string; de?: string };
     seoDescription?: { hu?: string; en?: string; de?: string };
   }) {
+    console.log('[AdminAppSettingsService] setSiteSettings called with:', JSON.stringify(settings, null, 2));
     const updates: Promise<any>[] = [];
 
-    if (settings.siteName) {
-      if (settings.siteName.hu !== undefined) {
-        updates.push(this.upsert("siteName_hu", {
-          value: settings.siteName.hu,
-          type: "string",
-          description: "Site name in Hungarian",
-        }));
-      }
-      if (settings.siteName.en !== undefined) {
-        updates.push(this.upsert("siteName_en", {
-          value: settings.siteName.en,
-          type: "string",
-          description: "Site name in English",
-        }));
-      }
-      if (settings.siteName.de !== undefined) {
-        updates.push(this.upsert("siteName_de", {
-          value: settings.siteName.de,
-          type: "string",
-          description: "Site name in German",
-        }));
-      }
+    // Always save all languages - if object exists, save all three languages
+    // Get current values first to preserve existing data if not provided
+    const current = await this.getSiteSettings();
+    console.log('[AdminAppSettingsService] Current settings:', JSON.stringify(current, null, 2));
+
+    if (settings.siteName !== undefined) {
+      // Always save all three languages, use provided value or current value
+      updates.push(this.upsert("siteName_hu", {
+        value: settings.siteName.hu ?? current.siteName.hu ?? "HelloLocal",
+        type: "string",
+        description: "Site name in Hungarian",
+      }));
+      updates.push(this.upsert("siteName_en", {
+        value: settings.siteName.en ?? current.siteName.en ?? "HelloLocal",
+        type: "string",
+        description: "Site name in English",
+      }));
+      updates.push(this.upsert("siteName_de", {
+        value: settings.siteName.de ?? current.siteName.de ?? "HelloLocal",
+        type: "string",
+        description: "Site name in German",
+      }));
     }
 
-    if (settings.siteDescription) {
-      if (settings.siteDescription.hu !== undefined) {
-        updates.push(this.upsert("siteDescription_hu", {
-          value: settings.siteDescription.hu,
-          type: "string",
-          description: "Site description in Hungarian",
-        }));
-      }
-      if (settings.siteDescription.en !== undefined) {
-        updates.push(this.upsert("siteDescription_en", {
-          value: settings.siteDescription.en,
-          type: "string",
-          description: "Site description in English",
-        }));
-      }
-      if (settings.siteDescription.de !== undefined) {
-        updates.push(this.upsert("siteDescription_de", {
-          value: settings.siteDescription.de,
-          type: "string",
-          description: "Site description in German",
-        }));
-      }
+    if (settings.siteDescription !== undefined) {
+      updates.push(this.upsert("siteDescription_hu", {
+        value: settings.siteDescription.hu ?? current.siteDescription.hu ?? "",
+        type: "string",
+        description: "Site description in Hungarian",
+      }));
+      updates.push(this.upsert("siteDescription_en", {
+        value: settings.siteDescription.en ?? current.siteDescription.en ?? "",
+        type: "string",
+        description: "Site description in English",
+      }));
+      updates.push(this.upsert("siteDescription_de", {
+        value: settings.siteDescription.de ?? current.siteDescription.de ?? "",
+        type: "string",
+        description: "Site description in German",
+      }));
     }
 
-    if (settings.seoTitle) {
-      if (settings.seoTitle.hu !== undefined) {
-        updates.push(this.upsert("seoTitle_hu", {
-          value: settings.seoTitle.hu,
-          type: "string",
-          description: "Default SEO title in Hungarian",
-        }));
-      }
-      if (settings.seoTitle.en !== undefined) {
-        updates.push(this.upsert("seoTitle_en", {
-          value: settings.seoTitle.en,
-          type: "string",
-          description: "Default SEO title in English",
-        }));
-      }
-      if (settings.seoTitle.de !== undefined) {
-        updates.push(this.upsert("seoTitle_de", {
-          value: settings.seoTitle.de,
-          type: "string",
-          description: "Default SEO title in German",
-        }));
-      }
+    if (settings.seoTitle !== undefined) {
+      updates.push(this.upsert("seoTitle_hu", {
+        value: settings.seoTitle.hu ?? current.seoTitle.hu ?? "",
+        type: "string",
+        description: "Default SEO title in Hungarian",
+      }));
+      updates.push(this.upsert("seoTitle_en", {
+        value: settings.seoTitle.en ?? current.seoTitle.en ?? "",
+        type: "string",
+        description: "Default SEO title in English",
+      }));
+      updates.push(this.upsert("seoTitle_de", {
+        value: settings.seoTitle.de ?? current.seoTitle.de ?? "",
+        type: "string",
+        description: "Default SEO title in German",
+      }));
     }
 
-    if (settings.seoDescription) {
-      if (settings.seoDescription.hu !== undefined) {
-        updates.push(this.upsert("seoDescription_hu", {
-          value: settings.seoDescription.hu,
-          type: "string",
-          description: "Default SEO description in Hungarian",
-        }));
-      }
-      if (settings.seoDescription.en !== undefined) {
-        updates.push(this.upsert("seoDescription_en", {
-          value: settings.seoDescription.en,
-          type: "string",
-          description: "Default SEO description in English",
-        }));
-      }
-      if (settings.seoDescription.de !== undefined) {
-        updates.push(this.upsert("seoDescription_de", {
-          value: settings.seoDescription.de,
-          type: "string",
-          description: "Default SEO description in German",
-        }));
-      }
+    if (settings.seoDescription !== undefined) {
+      updates.push(this.upsert("seoDescription_hu", {
+        value: settings.seoDescription.hu ?? current.seoDescription.hu ?? "",
+        type: "string",
+        description: "Default SEO description in Hungarian",
+      }));
+      updates.push(this.upsert("seoDescription_en", {
+        value: settings.seoDescription.en ?? current.seoDescription.en ?? "",
+        type: "string",
+        description: "Default SEO description in English",
+      }));
+      updates.push(this.upsert("seoDescription_de", {
+        value: settings.seoDescription.de ?? current.seoDescription.de ?? "",
+        type: "string",
+        description: "Default SEO description in German",
+      }));
     }
 
     await Promise.all(updates);
-    return this.getSiteSettings();
+    console.log('[AdminAppSettingsService] Updates completed. Fetching fresh data...');
+    // Return fresh data from database
+    const result = await this.getSiteSettings();
+    console.log('[AdminAppSettingsService] Returning:', JSON.stringify(result, null, 2));
+    return result;
   }
 }
 

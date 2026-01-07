@@ -60,9 +60,22 @@
     "noPlacesFound": "No places found",
     "errorLoadingPlace": "Error loading place",
     "backToList": "Back to list",
+    "event": {
+      "title": "Events",
+      "description": "Discover events"
+    },
+    "events": "Events",
+    "noEvents": "No events",
     "contact": "Contact",
     "menu": "Menu",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "filters": "Filters",
+    "footer": {
+      "tagline": "Discover local treasures",
+      "legal": "Legal Information",
+      "quickLinks": "Quick Links",
+      "rights": "All rights reserved."
+    }
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -73,6 +86,7 @@
     "towns": "Towns",
     "legalPages": "Legal Pages",
     "users": "Users",
+    "usersManagement": "Users Management",
     "tenants": "Regions",
     "settings": "Settings",
     "appSettings": "App Settings",
@@ -135,6 +149,8 @@
       "priceBandsDesc": "Manage price bands",
       "places": "Places",
       "placesDesc": "Manage places",
+      "events": "Events",
+      "eventsDesc": "Manage events",
       "towns": "Towns",
       "townsDesc": "Manage towns",
       "legalPages": "Legal Pages",

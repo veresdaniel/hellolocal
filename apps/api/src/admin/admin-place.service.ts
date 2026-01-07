@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang, SlugEntityType } from "@prisma/client";
+import { generateSlug } from "../slug/slug.helper";
 
 export interface CreatePlaceDto {
   tenantId: string;
@@ -70,6 +71,69 @@ export interface UpdatePlaceDto {
 @Injectable()
 export class AdminPlaceService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Create slugs for a place in all languages
+   */
+  private async createSlugsForPlace(placeId: string, tenantId: string, translations: Array<{ lang: Lang; name: string }>) {
+    for (const translation of translations) {
+      // Check if slug already exists for this place and language
+      const existingSlug = await this.prisma.slug.findFirst({
+        where: {
+          tenantId,
+          lang: translation.lang,
+          entityType: SlugEntityType.place,
+          entityId: placeId,
+        },
+      });
+
+      const baseSlug = generateSlug(translation.name);
+      let slug = baseSlug;
+      let counter = 1;
+
+      // Check for slug conflicts and append counter if needed
+      while (true) {
+        const conflictingSlug = await this.prisma.slug.findFirst({
+          where: {
+            tenantId,
+            lang: translation.lang,
+            slug,
+            NOT: {
+              id: existingSlug?.id, // Exclude the current slug from conflict check
+            },
+          },
+        });
+
+        if (!conflictingSlug) break;
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
+      // Create or update the slug
+      if (existingSlug) {
+        await this.prisma.slug.update({
+          where: { id: existingSlug.id },
+          data: {
+            slug,
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+      } else {
+        await this.prisma.slug.create({
+          data: {
+            tenantId,
+            lang: translation.lang,
+            slug,
+            entityType: SlugEntityType.place,
+            entityId: placeId,
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+      }
+    }
+  }
 
   async findAll(tenantId: string) {
     return this.prisma.place.findMany({
@@ -204,6 +268,9 @@ export class AdminPlaceService {
       },
     });
 
+    // Automatically create slugs for all translations
+    await this.createSlugsForPlace(place.id, place.tenantId, translations);
+
     return place;
   }
 
@@ -274,6 +341,9 @@ export class AdminPlaceService {
           },
         });
       }
+      
+      // Update slugs for modified translations
+      await this.createSlugsForPlace(id, tenantId, translations);
     }
 
     return this.findOne(id, tenantId);
@@ -287,6 +357,81 @@ export class AdminPlaceService {
     });
 
     return { message: "Place deleted successfully" };
+  }
+
+  /**
+   * Generate missing slugs for all places in a tenant
+   */
+  async generateMissingSlugs(tenantId: string) {
+    const places = await this.prisma.place.findMany({
+      where: { tenantId },
+      include: {
+        translations: true,
+      },
+    });
+
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (const place of places) {
+      for (const translation of place.translations) {
+        // Check if slug already exists
+        const existingSlug = await this.prisma.slug.findFirst({
+          where: {
+            tenantId,
+            lang: translation.lang,
+            entityType: SlugEntityType.place,
+            entityId: place.id,
+          },
+        });
+
+        if (existingSlug) {
+          skippedCount++;
+          continue;
+        }
+
+        // Generate slug
+        const baseSlug = generateSlug(translation.name);
+        let slug = baseSlug;
+        let counter = 1;
+
+        // Check for conflicts
+        while (true) {
+          const conflictingSlug = await this.prisma.slug.findFirst({
+            where: {
+              tenantId,
+              lang: translation.lang,
+              slug,
+            },
+          });
+
+          if (!conflictingSlug) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+
+        // Create the slug
+        await this.prisma.slug.create({
+          data: {
+            tenantId,
+            lang: translation.lang,
+            slug,
+            entityType: SlugEntityType.place,
+            entityId: place.id,
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+
+        createdCount++;
+      }
+    }
+
+    return {
+      message: "Missing slugs generated successfully",
+      created: createdCount,
+      skipped: skippedCount,
+    };
   }
 }
 

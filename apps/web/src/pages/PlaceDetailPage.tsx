@@ -8,6 +8,8 @@ import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
 import { buildPath } from "../app/routing/buildPath";
 import { FloatingHeader } from "../components/FloatingHeader";
+import { SocialShareButtons } from "../components/SocialShareButtons";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -44,12 +46,12 @@ export function PlaceDetailPage() {
   });
 
   if (!slug) return <div style={{ padding: 24 }}>{t("public.errorLoadingPlace")}</div>;
-  if (isLoading)
-    return (
-      <div style={{ padding: 64, textAlign: "center", color: "#666" }}>
-        {t("common.loading")}...
-      </div>
-    );
+  
+  // Show loading spinner while loading
+  if (isLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
+  
   if (isError)
     return (
       <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
@@ -59,6 +61,7 @@ export function PlaceDetailPage() {
         </pre>
       </div>
     );
+  
   if (!place) return <div style={{ padding: 64, textAlign: "center" }}>{t("public.noPlacesFound")}</div>;
 
   return (
@@ -75,7 +78,7 @@ export function PlaceDetailPage() {
           style={{
             maxWidth: 960,
             margin: "0 auto",
-            padding: "0 24px 64px",
+            paddingBottom: 64,
             width: "100%",
           }}
         >
@@ -83,11 +86,11 @@ export function PlaceDetailPage() {
           {place.heroImage && (
             <div
               style={{
-                width: "100%",
-                height: "400px",
-                borderRadius: 20,
+                width: "calc(100% - 32px)",
+                margin: "0 16px 24px",
+                height: "clamp(250px, 50vw, 400px)",
+                borderRadius: 16,
                 overflow: "hidden",
-                marginBottom: 32,
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
               }}
             >
@@ -105,7 +108,7 @@ export function PlaceDetailPage() {
           )}
 
           {/* Header */}
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ margin: "0 16px 32px" }}>
             <div
               style={{
                 display: "flex",
@@ -126,6 +129,8 @@ export function PlaceDetailPage() {
                     lineHeight: 1.2,
                     letterSpacing: "-0.02em",
                     marginBottom: 12,
+                    wordWrap: "break-word",
+                    overflowWrap: "break-word",
                   }}
                 >
                   {place.name}
@@ -164,6 +169,14 @@ export function PlaceDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Social Share Buttons */}
+            <SocialShareButtons
+              url={window.location.href}
+              title={place.name}
+              description={place.description || place.teaser || ""}
+              image={place.heroImage || undefined}
+            />
           </div>
 
           {/* Description */}
@@ -173,9 +186,9 @@ export function PlaceDetailPage() {
                 fontSize: 18,
                 lineHeight: 1.8,
                 color: "#333",
-                marginBottom: 48,
+                margin: "0 16px 32px",
                 background: "white",
-                padding: 32,
+                padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
               }}
@@ -185,7 +198,7 @@ export function PlaceDetailPage() {
 
           {/* Tags */}
           {place.tags && place.tags.length > 0 && (
-            <div style={{ marginBottom: 48 }}>
+            <div style={{ margin: "0 16px 48px" }}>
               <h3
                 style={{
                   fontSize: 16,
@@ -224,10 +237,10 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: 32,
+                padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                marginBottom: 48,
+                margin: "0 16px 32px",
               }}
             >
               <h3
@@ -302,10 +315,10 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: 32,
+                padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                marginBottom: 48,
+                margin: "0 16px 32px",
               }}
             >
               <h3
@@ -330,10 +343,10 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: 32,
+                padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                marginBottom: 48,
+                margin: "0 16px 32px",
               }}
             >
               <h3
@@ -354,7 +367,7 @@ export function PlaceDetailPage() {
           )}
 
           {/* Back Link */}
-          <div style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #e0e0e0" }}>
+          <div style={{ margin: "48px 16px 0", paddingTop: 32, borderTop: "1px solid #e0e0e0" }}>
             <Link
               to={buildPath({ tenantSlug, lang, path: "" })}
               style={{

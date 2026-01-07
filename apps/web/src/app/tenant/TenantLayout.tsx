@@ -1,5 +1,5 @@
 // src/app/tenant/TenantLayout.tsx
-import { Outlet, useParams, Navigate } from "react-router-dom";
+import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
 import {
   APP_LANGS,
   DEFAULT_TENANT_SLUG,
@@ -19,6 +19,7 @@ export function TenantLayout() {
     lang?: Lang;
     tenantSlug?: string;
   }>();
+  const location = useLocation();
   const defaultLangFromSettings = usePublicDefaultLanguage();
 
   const lang: Lang = isLang(langParam) ? langParam : defaultLangFromSettings;
@@ -34,37 +35,35 @@ export function TenantLayout() {
     return <Navigate to={base} replace />;
   }
 
+  // Check if we're on the home page (where footer is handled internally)
+  const isHomePage = location.pathname === `/${lang}` || 
+                     (HAS_MULTIPLE_TENANTS && location.pathname === `/${lang}/${tenantSlug}`);
+
   // Header (logo island) is now rendered by HomePage when in map view
   // FloatingHeader is rendered by PlacesListView and PlaceDetailPage
 
   // Itt később tölthetsz tenant configot (React Queryvel), de MVP-ben elég, ha csak továbbadod.
   return (
     <div 
-      className="min-h-screen flex flex-col" 
       style={{ 
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
         margin: 0, 
         padding: 0,
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
         width: "100%",
-        height: "100%",
-        overflow: "hidden"
       }}
     >
       <style>{`
         body {
           margin: 0 !important;
           padding: 0 !important;
-          overflow: hidden !important;
         }
       `}</style>
-      <div className="flex-1" style={{ margin: 0, padding: 0, width: "100%", height: "100%" }}>
+      <div style={{ flex: 1, margin: 0, padding: 0, width: "100%", display: "flex", flexDirection: "column" }}>
         <Outlet context={{ lang, tenantSlug }} />
       </div>
-      <Footer lang={lang} tenantSlug={tenantSlug} />
+      {!isHomePage && <Footer lang={lang} tenantSlug={tenantSlug} />}
       <PublicAuthBadge />
     </div>
   );

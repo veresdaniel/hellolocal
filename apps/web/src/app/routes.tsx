@@ -6,8 +6,8 @@ import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RootRedirect } from "../components/RootRedirect";
 
 import { HomePage } from "../pages/HomePage";
-import { ExplorePage } from "../pages/ExplorePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
+import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
@@ -24,6 +24,7 @@ import { TownsPage } from "../pages/admin/TownsPage";
 import { LegalPagesPage } from "../pages/admin/LegalPagesPage";
 import { TenantsPage } from "../pages/admin/TenantsPage";
 import { PlacesPage } from "../pages/admin/PlacesPage";
+import { EventsPage } from "../pages/admin/EventsPage";
 import { AdminLayout } from "../components/AdminLayout";
 
 const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "place/:slug", element: <PlaceDetailPage /> },
+      { path: "event/:slug", element: <EventDetailPage /> },
 
       { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
       { path: "aszf", element: <LegalPage pageKey="terms" /> },
@@ -171,6 +173,16 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="superadmin">
             <AdminLayout>
               <TenantsPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "events",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <EventsPage />
             </AdminLayout>
           </ProtectedRoute>
         ),

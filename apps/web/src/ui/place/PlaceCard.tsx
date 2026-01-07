@@ -23,7 +23,6 @@ function getCategoryColor(categoryName: string | null | undefined): string {
     "gastronomie": "#FF6347",
     "étterem": "#FF6347",
     "restaurant": "#FF6347",
-    "restaurant": "#FF6347",
     "turisztika": "#32CD32", // Lime green for tourism
     "tourism": "#32CD32",
     "tourismus": "#32CD32",

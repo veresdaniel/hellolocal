@@ -4,4 +4,5 @@ export enum SlugEntityType {
     TOWN = "town",
     REGION = "region",
     PAGE = "page",
+    EVENT = "event",
   }
