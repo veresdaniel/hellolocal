@@ -775,6 +775,28 @@ export class AdminController {
     return this.appSettingsService.findAll();
   }
 
+  // IMPORTANT: Specific routes must come BEFORE parameterized routes
+  // Otherwise /app-settings/site-settings will match /app-settings/:key
+  @Get("/app-settings/site-settings")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getSiteSettings() {
+    return this.appSettingsService.getSiteSettings();
+  }
+
+  @Put("/app-settings/site-settings")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async setSiteSettings(@Body() settings: {
+    siteName?: { hu?: string; en?: string; de?: string };
+    siteDescription?: { hu?: string; en?: string; de?: string };
+    seoTitle?: { hu?: string; en?: string; de?: string };
+    seoDescription?: { hu?: string; en?: string; de?: string };
+    isCrawlable?: boolean;
+    defaultPlaceholderCardImage?: string | null;
+    defaultPlaceholderDetailHeroImage?: string | null;
+  }) {
+    return this.appSettingsService.setSiteSettings(settings);
+  }
+
   @Get("/app-settings/:key")
   @Roles(UserRole.superadmin, UserRole.admin)
   async getAppSetting(@Param("key") key: string) {
@@ -797,24 +819,6 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async deleteAppSetting(@Param("key") key: string) {
     return this.appSettingsService.delete(key);
-  }
-
-  @Get("/app-settings/site-settings")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async getSiteSettings() {
-    return this.appSettingsService.getSiteSettings();
-  }
-
-  @Put("/app-settings/site-settings")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async setSiteSettings(@Body() settings: {
-    siteName?: { hu?: string; en?: string; de?: string };
-    siteDescription?: { hu?: string; en?: string; de?: string };
-    seoTitle?: { hu?: string; en?: string; de?: string };
-    seoDescription?: { hu?: string; en?: string; de?: string };
-    isCrawlable?: boolean;
-  }) {
-    return this.appSettingsService.setSiteSettings(settings);
   }
 
   @Post("/maintenance/generate-missing-slugs")

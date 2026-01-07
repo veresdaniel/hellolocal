@@ -9,6 +9,7 @@ import { getDefaultLanguage, setDefaultLanguage, getMapSettings, setMapSettings,
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { MapComponent } from "../../components/MapComponent";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
+import { isValidImageUrl } from "../../utils/urlValidation";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
@@ -47,6 +48,8 @@ export function AppSettingsPage() {
     seoTitle: { hu: "", en: "", de: "" },
     seoDescription: { hu: "", en: "", de: "" },
     isCrawlable: true,
+    defaultPlaceholderCardImage: null,
+    defaultPlaceholderDetailHeroImage: null,
   });
   const [isLoadingSiteSettings, setIsLoadingSiteSettings] = useState(true);
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
@@ -138,6 +141,8 @@ export function AppSettingsPage() {
             de: data.seoDescription?.de || "",
           },
           isCrawlable: data.isCrawlable ?? true,
+          defaultPlaceholderCardImage: data.defaultPlaceholderCardImage ?? null,
+          defaultPlaceholderDetailHeroImage: data.defaultPlaceholderDetailHeroImage ?? null,
         });
       } catch (err) {
         console.error("Failed to load site settings", err);
@@ -218,6 +223,19 @@ export function AppSettingsPage() {
       setIsSavingSiteSettings(true);
       setError(null);
       setSuccess(null);
+      
+      // Validate image URLs before saving
+      if (siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage)) {
+        setError(t("admin.validation.invalidImageUrl") || "Invalid card image URL. Only http:// and https:// URLs are allowed.");
+        setIsSavingSiteSettings(false);
+        return;
+      }
+      if (siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage)) {
+        setError(t("admin.validation.invalidImageUrl") || "Invalid hero image URL. Only http:// and https:// URLs are allowed.");
+        setIsSavingSiteSettings(false);
+        return;
+      }
+      
       console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
       const updated = await setSiteSettings({
         siteName: siteSettings.siteName,
@@ -225,6 +243,8 @@ export function AppSettingsPage() {
         seoTitle: siteSettings.seoTitle,
         seoDescription: siteSettings.seoDescription,
         isCrawlable: siteSettings.isCrawlable,
+        defaultPlaceholderCardImage: siteSettings.defaultPlaceholderCardImage,
+        defaultPlaceholderDetailHeroImage: siteSettings.defaultPlaceholderDetailHeroImage,
       });
       console.log('[AppSettingsPage] Received updated settings from backend:', JSON.stringify(updated, null, 2));
       
@@ -252,6 +272,8 @@ export function AppSettingsPage() {
           de: updated.seoDescription?.de ?? "",
         },
         isCrawlable: updated.isCrawlable ?? true,
+        defaultPlaceholderCardImage: updated.defaultPlaceholderCardImage ?? null,
+        defaultPlaceholderDetailHeroImage: updated.defaultPlaceholderDetailHeroImage ?? null,
       };
       console.log('[AppSettingsPage] Setting new state:', JSON.stringify(newState, null, 2));
       setSiteSettingsState(newState);
@@ -820,6 +842,93 @@ export function AppSettingsPage() {
               <p style={{ color: "#666", fontSize: 14, marginTop: 8, marginLeft: 26 }}>
                 {t("admin.isCrawlableDescription")}
               </p>
+            </div>
+
+            {/* Default Placeholder Images */}
+            <div style={{ marginBottom: 16, marginTop: 24, paddingTop: 24, borderTop: "1px solid #e0e0e0" }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
+                {t("admin.defaultPlaceholderImages") || "Default Placeholder Images"}
+              </h3>
+              
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  {t("admin.defaultPlaceholderCardImage") || "Default Placeholder Card Image"}
+                </label>
+                <input
+                  type="text"
+                  value={siteSettings.defaultPlaceholderCardImage || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultPlaceholderCardImage: value,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && !isValidImageUrl(value)) {
+                      setError(t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed.");
+                    }
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  placeholder={t("admin.imageUrlPlaceholder") || "https://example.com/image.jpg"}
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    fontSize: 14,
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                  }}
+                />
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                  {t("admin.defaultPlaceholderCardImageDescription") || "Used for place cards when no image is set"}
+                </p>
+                {siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage) && (
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    {t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed."}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  {t("admin.defaultPlaceholderDetailHeroImage") || "Default Placeholder Detail Hero Image"}
+                </label>
+                <input
+                  type="text"
+                  value={siteSettings.defaultPlaceholderDetailHeroImage || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultPlaceholderDetailHeroImage: value,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && !isValidImageUrl(value)) {
+                      setError(t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed.");
+                    }
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  placeholder={t("admin.imageUrlPlaceholder") || "https://example.com/image.jpg"}
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    fontSize: 14,
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                  }}
+                />
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                  {t("admin.defaultPlaceholderDetailHeroImageDescription") || "Used for place detail pages when no hero image is set"}
+                </p>
+                {siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage) && (
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    {t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed."}
+                  </p>
+                )}
+              </div>
             </div>
 
             {isAdmin && (

@@ -297,13 +297,14 @@ export function MapComponent({
         {markers.map((marker) => {
           // Show labels only when zoomed in (zoom >= 13)
           const showLabel = viewState.zoom >= 13 && marker.name;
+          const isClickable = !!marker.onClick;
           
           return (
             <Marker
               key={marker.id}
               longitude={marker.lng}
               latitude={marker.lat}
-              onClick={marker.onClick}
+              {...(isClickable ? { onClick: marker.onClick } : {})}
             >
               <div
                 style={{
@@ -319,22 +320,29 @@ export function MapComponent({
                     width: 24,
                     height: 24,
                     borderRadius: "50% 50% 50% 0",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: isClickable 
+                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      : "linear-gradient(135deg, #999 0%, #777 100%)",
                     border: "3px solid white",
-                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)",
-                    cursor: marker.onClick ? "pointer" : "default",
+                    boxShadow: isClickable
+                      ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                      : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
+                    cursor: isClickable ? "pointer" : "default",
                     transform: "rotate(-45deg)",
                     transition: "all 0.2s ease",
+                    opacity: isClickable ? 1 : 0.7,
                   }}
                   onMouseEnter={(e) => {
-                    if (marker.onClick) {
+                    if (isClickable) {
                       e.currentTarget.style.transform = "rotate(-45deg) scale(1.15)";
                       e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "rotate(-45deg) scale(1)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)";
+                    e.currentTarget.style.boxShadow = isClickable
+                      ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                      : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)";
                   }}
                 >
                   {/* Inner dot */}

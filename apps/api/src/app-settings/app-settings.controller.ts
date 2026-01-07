@@ -58,12 +58,14 @@ export class AppSettingsController {
 
     const allSettings = await this.appSettingsService.getSiteSettings();
     
-    // Return only the requested language's settings
+    // Return only the requested language's settings, plus default placeholder images
     return {
       siteName: allSettings.siteName[lang as "hu" | "en" | "de"],
       siteDescription: allSettings.siteDescription[lang as "hu" | "en" | "de"],
       seoTitle: allSettings.seoTitle[lang as "hu" | "en" | "de"],
       seoDescription: allSettings.seoDescription[lang as "hu" | "en" | "de"],
+      defaultPlaceholderCardImage: allSettings.defaultPlaceholderCardImage,
+      defaultPlaceholderDetailHeroImage: allSettings.defaultPlaceholderDetailHeroImage,
     };
   }
 }

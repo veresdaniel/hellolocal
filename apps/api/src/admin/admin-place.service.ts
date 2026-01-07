@@ -74,20 +74,43 @@ export class AdminPlaceService {
 
   /**
    * Create slugs for a place in all languages
+   * If only Hungarian translation exists, create slugs for all languages (hu, en, de) using the Hungarian name
    */
   private async createSlugsForPlace(placeId: string, tenantId: string, translations: Array<{ lang: Lang; name: string }>) {
-    for (const translation of translations) {
+    // Find Hungarian translation to use as fallback for missing languages
+    const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
+    const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
+    
+    // Determine which languages need slugs
+    const languagesToCreate: Lang[] = [];
+    const translationByLang = new Map(translations.map((t) => [t.lang, t]));
+    
+    // Always create slugs for all supported languages (hu, en, de)
+    for (const lang of [Lang.hu, Lang.en, Lang.de]) {
+      languagesToCreate.push(lang);
+    }
+
+    for (const lang of languagesToCreate) {
       // Check if slug already exists for this place and language
       const existingSlug = await this.prisma.slug.findFirst({
         where: {
           tenantId,
-          lang: translation.lang,
+          lang,
           entityType: SlugEntityType.place,
           entityId: placeId,
         },
       });
 
-      const baseSlug = generateSlug(translation.name);
+      // Use translation name if available for this language, otherwise use Hungarian name as fallback
+      const translation = translationByLang.get(lang);
+      const nameToUse = translation?.name || fallbackName;
+
+      // Generate slug from name, or use place ID as fallback if name is empty
+      let baseSlug = generateSlug(nameToUse);
+      if (!baseSlug || baseSlug.trim() === "") {
+        // If name is empty or generates empty slug, use place ID as fallback
+        baseSlug = `place-${placeId}`;
+      }
       let slug = baseSlug;
       let counter = 1;
 
@@ -96,7 +119,7 @@ export class AdminPlaceService {
         const conflictingSlug = await this.prisma.slug.findFirst({
           where: {
             tenantId,
-            lang: translation.lang,
+            lang,
             slug,
             NOT: {
               id: existingSlug?.id, // Exclude the current slug from conflict check
@@ -123,7 +146,7 @@ export class AdminPlaceService {
         await this.prisma.slug.create({
           data: {
             tenantId,
-            lang: translation.lang,
+            lang,
             slug,
             entityType: SlugEntityType.place,
             entityId: placeId,
@@ -341,9 +364,33 @@ export class AdminPlaceService {
           },
         });
       }
-      
-      // Update slugs for modified translations
-      await this.createSlugsForPlace(id, tenantId, translations);
+    }
+
+    // Always update slugs for all languages, using all existing translations
+    // Fetch all current translations to ensure we have the complete set
+    const allTranslations = await this.prisma.placeTranslation.findMany({
+      where: { placeId: id },
+      select: { lang: true, name: true },
+    });
+
+    // If we have translations from the update, merge them with existing ones
+    // (prefer updated translations over existing ones)
+    const translationMap = new Map(allTranslations.map((t) => [t.lang, t.name]));
+    if (translations) {
+      for (const translation of translations) {
+        translationMap.set(translation.lang, translation.name);
+      }
+    }
+
+    // Convert to array format expected by createSlugsForPlace
+    const translationsForSlugs = Array.from(translationMap.entries()).map(([lang, name]) => ({
+      lang: lang as Lang,
+      name,
+    }));
+
+    // Always create/update slugs for all languages
+    if (translationsForSlugs.length > 0) {
+      await this.createSlugsForPlace(id, tenantId, translationsForSlugs);
     }
 
     return this.findOne(id, tenantId);

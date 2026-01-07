@@ -452,6 +452,8 @@ export interface SiteSettings {
     de: string;
   };
   isCrawlable: boolean;
+  defaultPlaceholderCardImage: string | null;
+  defaultPlaceholderDetailHeroImage: string | null;
 }
 
 export interface SetSiteSettingsDto {
@@ -460,6 +462,8 @@ export interface SetSiteSettingsDto {
   seoTitle?: { hu?: string; en?: string; de?: string };
   seoDescription?: { hu?: string; en?: string; de?: string };
   isCrawlable?: boolean;
+  defaultPlaceholderCardImage?: string | null;
+  defaultPlaceholderDetailHeroImage?: string | null;
 }
 
 export function getSiteSettings() {

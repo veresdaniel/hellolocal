@@ -18,6 +18,7 @@ interface Category {
   id: string;
   tenantId: string;
   isActive: boolean;
+  color: string | null;
   translations: Array<{
     id: string;
     lang: string;
@@ -44,6 +45,7 @@ export function CategoriesPage() {
     descriptionEn: "",
     descriptionDe: "",
     isActive: true,
+    color: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -93,6 +95,7 @@ export function CategoriesPage() {
         tenantId: selectedTenantId,
         translations,
         isActive: formData.isActive,
+        color: formData.color || null,
       });
       setIsCreating(false);
       resetForm();
@@ -125,6 +128,7 @@ export function CategoriesPage() {
         {
           translations,
           isActive: formData.isActive,
+          color: formData.color || null,
         },
         selectedTenantId || undefined
       );
@@ -170,6 +174,7 @@ export function CategoriesPage() {
       descriptionEn: en?.description || "",
       descriptionDe: de?.description || "",
       isActive: category.isActive,
+      color: category.color || "",
     });
   };
 
@@ -304,6 +309,43 @@ export function CategoriesPage() {
               />
               {t("common.active")}
             </label>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+              {t("admin.categoryColor") || "Kategória színe (kártya alján)"}
+            </label>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="color"
+                value={formData.color || "#667eea"}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                style={{
+                  width: 60,
+                  height: 40,
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              />
+              <input
+                type="text"
+                value={formData.color || ""}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                placeholder="#667eea"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                style={{
+                  flex: 1,
+                  padding: 8,
+                  fontSize: 14,
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                }}
+              />
+            </div>
+            <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+              {t("admin.categoryColorDescription") || "Ez a szín jelenik meg a kártya alján. Hex formátum (pl. #667eea)"}
+            </p>
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>

@@ -76,7 +76,8 @@ export class SeoController {
       const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
       const title = translation?.seoTitle || translation?.name || place.id;
       const description = translation?.seoDescription || translation?.teaser || translation?.description || "";
-      const image = translation?.seoImage || place.heroImage || "";
+      // Use SEO image, then hero image, then default placeholder detail hero image
+      const image = translation?.seoImage || place.heroImage || siteSettings.defaultPlaceholderDetailHeroImage || "";
 
       return {
         title: `${title} - ${siteName}`,
@@ -110,7 +111,8 @@ export class SeoController {
       const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
       const title = translation?.seoTitle || translation?.title || event.id;
       const description = translation?.seoDescription || translation?.shortDescription || translation?.description || "";
-      const image = translation?.seoImage || event.heroImage || "";
+      // Use SEO image, then hero image, then default placeholder detail hero image
+      const image = translation?.seoImage || event.heroImage || siteSettings.defaultPlaceholderDetailHeroImage || "";
 
       return {
         title: `${title} - ${siteName}`,

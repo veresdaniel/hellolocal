@@ -1,7 +1,8 @@
 // src/admin/admin-app-settings.service.ts
-import { Injectable } from "@nestjs/common";
+import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
+import { isValidImageUrl, sanitizeImageUrl } from "../common/url-validation";
 
 export interface AppSettingDto {
   key: string;
@@ -29,20 +30,28 @@ export class AdminAppSettingsService {
   async upsert(key: string, dto: Omit<AppSettingDto, "key">) {
     // Ensure value is always a string (never undefined)
     const value = dto.value ?? "";
-    return this.prisma.appSetting.upsert({
-      where: { key },
-      update: {
-        value,
-        type: dto.type ?? "string",
-        description: dto.description ?? null,
-      },
-      create: {
-        key,
-        value,
-        type: dto.type ?? "string",
-        description: dto.description ?? null,
-      },
-    });
+    console.log(`[AdminAppSettingsService] upsert called for key "${key}" with value:`, value);
+    try {
+      const result = await this.prisma.appSetting.upsert({
+        where: { key },
+        update: {
+          value,
+          type: dto.type ?? "string",
+          description: dto.description ?? null,
+        },
+        create: {
+          key,
+          value,
+          type: dto.type ?? "string",
+          description: dto.description ?? null,
+        },
+      });
+      console.log(`[AdminAppSettingsService] upsert successful for key "${key}":`, result);
+      return result;
+    } catch (error) {
+      console.error(`[AdminAppSettingsService] upsert failed for key "${key}":`, error);
+      throw error;
+    }
   }
 
   async delete(key: string) {
@@ -191,6 +200,8 @@ export class AdminAppSettingsService {
     const seoDescriptionEn = await this.findOne("seoDescription_en");
     const seoDescriptionDe = await this.findOne("seoDescription_de");
     const isCrawlableSetting = await this.findOne("isCrawlable");
+    const defaultPlaceholderCardImage = await this.findOne("defaultPlaceholderCardImage");
+    const defaultPlaceholderDetailHeroImage = await this.findOne("defaultPlaceholderDetailHeroImage");
 
     return {
       siteName: {
@@ -214,6 +225,8 @@ export class AdminAppSettingsService {
         de: seoDescriptionDe?.value ?? "",
       },
       isCrawlable: isCrawlableSetting?.value === "true" || isCrawlableSetting?.value === "1" || isCrawlableSetting === null, // Default to true if not set
+      defaultPlaceholderCardImage: defaultPlaceholderCardImage?.value && defaultPlaceholderCardImage.value.trim() !== "" ? defaultPlaceholderCardImage.value : null,
+      defaultPlaceholderDetailHeroImage: defaultPlaceholderDetailHeroImage?.value && defaultPlaceholderDetailHeroImage.value.trim() !== "" ? defaultPlaceholderDetailHeroImage.value : null,
     };
   }
 
@@ -226,83 +239,99 @@ export class AdminAppSettingsService {
     seoTitle?: { hu?: string; en?: string; de?: string };
     seoDescription?: { hu?: string; en?: string; de?: string };
     isCrawlable?: boolean;
+    defaultPlaceholderCardImage?: string | null;
+    defaultPlaceholderDetailHeroImage?: string | null;
   }) {
     console.log('[AdminAppSettingsService] setSiteSettings called with:', JSON.stringify(settings, null, 2));
+    console.log('[AdminAppSettingsService] Checking which fields are defined:', {
+      siteName: settings.siteName !== undefined,
+      siteDescription: settings.siteDescription !== undefined,
+      seoTitle: settings.seoTitle !== undefined,
+      seoDescription: settings.seoDescription !== undefined,
+      isCrawlable: settings.isCrawlable !== undefined,
+      defaultPlaceholderCardImage: settings.defaultPlaceholderCardImage !== undefined,
+      defaultPlaceholderDetailHeroImage: settings.defaultPlaceholderDetailHeroImage !== undefined,
+    });
     const updates: Promise<any>[] = [];
 
-    // Always save all languages - if object exists, save all three languages
-    // Get current values first to preserve existing data if not provided
-    const current = await this.getSiteSettings();
-    console.log('[AdminAppSettingsService] Current settings:', JSON.stringify(current, null, 2));
+    // Note: Frontend always sends all fields, so we don't need to get current values
+    // We'll save whatever the frontend sends
 
     if (settings.siteName !== undefined) {
-      // Always save all three languages, use provided value or current value
+      // Always save the provided values directly - frontend always sends all fields
+      const huValue = settings.siteName.hu ?? "HelloLocal";
+      const enValue = settings.siteName.en ?? "HelloLocal";
+      const deValue = settings.siteName.de ?? "HelloLocal";
+      console.log('[AdminAppSettingsService] Saving siteName:', { hu: huValue, en: enValue, de: deValue });
       updates.push(this.upsert("siteName_hu", {
-        value: settings.siteName.hu ?? current.siteName.hu ?? "HelloLocal",
+        value: huValue,
         type: "string",
         description: "Site name in Hungarian",
       }));
       updates.push(this.upsert("siteName_en", {
-        value: settings.siteName.en ?? current.siteName.en ?? "HelloLocal",
+        value: enValue,
         type: "string",
         description: "Site name in English",
       }));
       updates.push(this.upsert("siteName_de", {
-        value: settings.siteName.de ?? current.siteName.de ?? "HelloLocal",
+        value: deValue,
         type: "string",
         description: "Site name in German",
       }));
     }
 
     if (settings.siteDescription !== undefined) {
+      // Always save the provided values directly - frontend always sends all fields
       updates.push(this.upsert("siteDescription_hu", {
-        value: settings.siteDescription.hu ?? current.siteDescription.hu ?? "",
+        value: settings.siteDescription.hu ?? "",
         type: "string",
         description: "Site description in Hungarian",
       }));
       updates.push(this.upsert("siteDescription_en", {
-        value: settings.siteDescription.en ?? current.siteDescription.en ?? "",
+        value: settings.siteDescription.en ?? "",
         type: "string",
         description: "Site description in English",
       }));
       updates.push(this.upsert("siteDescription_de", {
-        value: settings.siteDescription.de ?? current.siteDescription.de ?? "",
+        value: settings.siteDescription.de ?? "",
         type: "string",
         description: "Site description in German",
       }));
     }
 
     if (settings.seoTitle !== undefined) {
+      // Always save the provided values directly - frontend always sends all fields
       updates.push(this.upsert("seoTitle_hu", {
-        value: settings.seoTitle.hu ?? current.seoTitle.hu ?? "",
+        value: settings.seoTitle.hu ?? "",
         type: "string",
         description: "Default SEO title in Hungarian",
       }));
       updates.push(this.upsert("seoTitle_en", {
-        value: settings.seoTitle.en ?? current.seoTitle.en ?? "",
+        value: settings.seoTitle.en ?? "",
         type: "string",
         description: "Default SEO title in English",
       }));
       updates.push(this.upsert("seoTitle_de", {
-        value: settings.seoTitle.de ?? current.seoTitle.de ?? "",
+        value: settings.seoTitle.de ?? "",
         type: "string",
         description: "Default SEO title in German",
       }));
     }
 
     if (settings.seoDescription !== undefined) {
+      // Always save the provided values directly - frontend always sends all fields
       updates.push(this.upsert("seoDescription_hu", {
-        value: settings.seoDescription.hu ?? current.seoDescription.hu ?? "",
+        value: settings.seoDescription.hu ?? "",
         type: "string",
         description: "Default SEO description in Hungarian",
       }));
       updates.push(this.upsert("seoDescription_en", {
-        value: settings.seoDescription.en ?? current.seoDescription.en ?? "",
+        value: settings.seoDescription.en ?? "",
         type: "string",
         description: "Default SEO description in English",
       }));
       updates.push(this.upsert("seoDescription_de", {
-        value: settings.seoDescription.de ?? current.seoDescription.de ?? "",
+        value: settings.seoDescription.de ?? "",
         type: "string",
         description: "Default SEO description in German",
       }));
@@ -316,6 +345,36 @@ export class AdminAppSettingsService {
       }));
     }
 
+    if (settings.defaultPlaceholderCardImage !== undefined) {
+      // Validate and sanitize URL
+      const sanitizedUrl = sanitizeImageUrl(settings.defaultPlaceholderCardImage);
+      if (settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== "" && !sanitizedUrl) {
+        throw new BadRequestException("Invalid image URL. Only http:// and https:// URLs are allowed.");
+      }
+      updates.push(this.upsert("defaultPlaceholderCardImage", {
+        value: sanitizedUrl || "",
+        type: "string",
+        description: "Default placeholder image URL for place cards",
+      }));
+    }
+
+    if (settings.defaultPlaceholderDetailHeroImage !== undefined) {
+      // Validate and sanitize URL
+      const sanitizedUrl = sanitizeImageUrl(settings.defaultPlaceholderDetailHeroImage);
+      if (settings.defaultPlaceholderDetailHeroImage && settings.defaultPlaceholderDetailHeroImage.trim() !== "" && !sanitizedUrl) {
+        throw new BadRequestException("Invalid image URL. Only http:// and https:// URLs are allowed.");
+      }
+      updates.push(this.upsert("defaultPlaceholderDetailHeroImage", {
+        value: sanitizedUrl || "",
+        type: "string",
+        description: "Default placeholder hero image URL for place detail pages",
+      }));
+    }
+
+    console.log(`[AdminAppSettingsService] About to execute ${updates.length} updates`);
+    if (updates.length === 0) {
+      console.warn('[AdminAppSettingsService] WARNING: No updates to execute! This should not happen.');
+    }
     await Promise.all(updates);
     console.log('[AdminAppSettingsService] Updates completed. Fetching fresh data...');
     // Return fresh data from database

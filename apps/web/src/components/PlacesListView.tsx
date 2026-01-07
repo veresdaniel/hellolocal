@@ -151,20 +151,33 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
       <FloatingHeader onMapViewClick={onMapViewClick} />
       <style>{`
         .places-grid {
-          display: grid;
-          gap: 24px;
+          column-count: 1;
+          column-gap: 20px;
           margin-bottom: 32px;
-          grid-template-columns: 1fr;
         }
         @media (min-width: 640px) {
           .places-grid {
-            grid-template-columns: repeat(2, 1fr);
+            column-count: 2;
+            column-gap: 24px;
           }
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 900px) {
           .places-grid {
-            grid-template-columns: repeat(3, 1fr);
+            column-count: 3;
+            column-gap: 24px;
           }
+        }
+        @media (min-width: 1440px) {
+          .places-grid {
+            column-count: 3;
+            column-gap: 32px;
+          }
+        }
+        .places-grid > * {
+          break-inside: avoid;
+          margin-bottom: 24px;
+          display: inline-block;
+          width: 100%;
         }
       `}</style>
       <div
@@ -251,7 +264,8 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
             <div className="places-grid">
               {combinedItems.map((item, index) => {
                 if (item.type === "place") {
-                  return <PlaceCard key={item.data.slug} place={item.data as Place} index={index} />;
+                  const place = item.data as Place;
+                  return <PlaceCard key={place.slug || place.id} place={place} index={index} />;
                 } else {
                   const event = item.data as Event;
                   return (

@@ -19,6 +19,8 @@ export interface SiteSettings {
   siteDescription: string;
   seoTitle: string;
   seoDescription: string;
+  defaultPlaceholderCardImage: string | null;
+  defaultPlaceholderDetailHeroImage: string | null;
 }
 
 export function getSiteSettings(lang: string): Promise<SiteSettings> {

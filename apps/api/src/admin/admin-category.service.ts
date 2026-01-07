@@ -10,6 +10,7 @@ export interface CreateCategoryDto {
     description?: string | null;
   }>;
   isActive?: boolean;
+  color?: string | null;
 }
 
 export interface UpdateCategoryDto {
@@ -19,6 +20,7 @@ export interface UpdateCategoryDto {
     description?: string | null;
   }>;
   isActive?: boolean;
+  color?: string | null;
 }
 
 @Injectable()
@@ -55,6 +57,7 @@ export class AdminCategoryService {
       data: {
         tenantId: dto.tenantId,
         isActive: dto.isActive ?? true,
+        color: dto.color ?? null,
         translations: {
           create: dto.translations.map((t) => ({
             lang: t.lang,
@@ -75,6 +78,9 @@ export class AdminCategoryService {
     const updateData: any = {};
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
+    }
+    if (dto.color !== undefined) {
+      updateData.color = dto.color;
     }
 
     await this.prisma.category.update({

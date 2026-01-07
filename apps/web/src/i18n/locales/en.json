@@ -188,6 +188,12 @@
     "published": "Published",
     "isCrawlable": "Allow search engines to crawl the site",
     "isCrawlableDescription": "If enabled, search engines (Google, Bing, etc.) can index the site. If disabled, robots.txt and meta tags will prevent indexing.",
+    "defaultPlaceholderImages": "Default Placeholder Images",
+    "defaultPlaceholderCardImage": "Default Placeholder Card Image",
+    "defaultPlaceholderCardImageDescription": "This image will be shown on place cards when no image is set",
+    "defaultPlaceholderDetailHeroImage": "Default Placeholder Detail Hero Image",
+    "defaultPlaceholderDetailHeroImageDescription": "This image will be shown on place detail pages when no hero image is set",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
     "errors": {
       "loadFailed": "Failed to load",
       "createFailed": "Failed to create",
@@ -332,6 +338,7 @@
     "required": "Required field",
     "invalidEmail": "Invalid email address",
     "invalidUrl": "Invalid URL",
+    "invalidImageUrl": "Invalid image URL. Only http:// and https:// URLs are allowed.",
     "minLength": "Minimum {{min}} characters",
     "maxLength": "Maximum {{max}} characters"
   }

@@ -10,6 +10,7 @@ import { buildPath } from "../app/routing/buildPath";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { sanitizeImageUrl } from "../utils/urlValidation";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -82,8 +83,8 @@ export function PlaceDetailPage() {
             width: "100%",
           }}
         >
-          {/* Hero Image */}
-          {place.heroImage && (
+          {/* Hero Image - use default placeholder if no image */}
+          {(sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(siteSettings?.defaultPlaceholderDetailHeroImage)) && (
             <div
               style={{
                 width: "calc(100% - 32px)",
@@ -95,7 +96,7 @@ export function PlaceDetailPage() {
               }}
             >
               <img
-                src={place.heroImage}
+                src={sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(siteSettings?.defaultPlaceholderDetailHeroImage) || ""}
                 alt={place.name}
                 style={{
                   width: "100%",

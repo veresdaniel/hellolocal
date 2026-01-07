@@ -188,6 +188,12 @@
     "published": "Veröffentlicht",
     "isCrawlable": "Suchmaschinen dürfen die Website durchsuchen",
     "isCrawlableDescription": "Wenn aktiviert, können Suchmaschinen (Google, Bing, etc.) die Website indexieren. Wenn deaktiviert, verhindern robots.txt und Meta-Tags die Indexierung.",
+    "defaultPlaceholderImages": "Standard-Platzhalterbilder",
+    "defaultPlaceholderCardImage": "Standard-Platzhalterbild für Karten",
+    "defaultPlaceholderCardImageDescription": "Dieses Bild wird auf Ortskarten angezeigt, wenn kein Bild festgelegt ist",
+    "defaultPlaceholderDetailHeroImage": "Standard-Platzhalter-Hero-Bild für Details",
+    "defaultPlaceholderDetailHeroImageDescription": "Dieses Bild wird auf Ortsdetailseiten angezeigt, wenn kein Hero-Bild festgelegt ist",
+    "imageUrlPlaceholder": "https://example.com/bild.jpg",
     "errors": {
       "userNotFound": "Benutzer nicht gefunden",
       "loadFailed": "Laden fehlgeschlagen",
@@ -333,6 +339,7 @@
     "required": "Pflichtfeld",
     "invalidEmail": "Ungültige E-Mail-Adresse",
     "invalidUrl": "Ungültige URL",
+    "invalidImageUrl": "Ungültige Bild-URL. Nur http:// und https:// URLs sind erlaubt.",
     "minLength": "Mindestens {{min}} Zeichen",
     "maxLength": "Höchstens {{max}} Zeichen"
   }

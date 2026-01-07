@@ -346,6 +346,7 @@ export class PlacesService {
       const categoryName = p.category?.translations
         ? getTranslation(p.category.translations, "name")
         : null;
+      const categoryColor = p.category?.color ?? null;
 
       // Extract price band name and ID with fallback to Hungarian
       const priceBandName = p.priceBand?.translations
@@ -371,6 +372,7 @@ export class PlacesService {
         tenantKey: tenant.canonicalTenantKey ?? null,
         townSlug: canonicalTownSlug,
         category: categoryName,
+        categoryColor: categoryColor,
         name: placeTranslation?.name ?? "(missing translation)",
         description: placeTranslation?.teaser ?? null,
         heroImage: p.heroImage ?? null,
@@ -479,6 +481,7 @@ export class PlacesService {
     const categoryName = place.category?.translations
       ? getTranslation(place.category.translations, "name")
       : null;
+    const categoryColor = place.category?.color ?? null;
 
     // Extract price band name with fallback to Hungarian
     const priceBandName = place.priceBand?.translations
@@ -501,6 +504,7 @@ export class PlacesService {
       tenantRedirected: tenant.redirected,
       townSlug,
       category: categoryName,
+      categoryColor: categoryColor,
       name: placeTranslation?.name ?? "(missing translation)",
       description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,

@@ -36,13 +36,13 @@ export function ExplorePage() {
 
   const placesWithCoordinates = data?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
   const markers = placesWithCoordinates.map((place) => ({
-    id: place.slug,
+    id: place.slug || place.id, // Use slug if available, otherwise use ID
     lat: place.location!.lat!,
     lng: place.location!.lng!,
     name: place.name,
-    onClick: () => {
+    onClick: place.slug ? () => {
       navigate(buildPath({ tenantSlug, lang, path: `place/${place.slug}` }));
-    },
+    } : undefined, // Only allow navigation if slug exists
   }));
 
   // Calculate center from places or default to Budapest

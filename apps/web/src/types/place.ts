@@ -9,12 +9,13 @@ export type GeoPoint = { lat: number; lng: number };
 
 export type Place = {
   id: string;
-  slug: string;
+  slug: string | null; // Can be null if slug hasn't been created yet
 
   tenantSlug?: string | null; // tenantKey from API
   townSlug?: string | null;
 
   category: PlaceCategory | null; // Localized category name
+  categoryColor?: string | null; // Category color for card border
   subcategory?: string;
 
   name: string;
