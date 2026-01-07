@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { getTenants, type Tenant } from "../api/admin.api";
+import type { Tenant } from "../api/admin.api";
 
 interface TenantAutocompleteProps {
   selectedTenantIds: string[];

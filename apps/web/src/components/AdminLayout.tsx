@@ -1,5 +1,5 @@
 // src/components/AdminLayout.tsx
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";

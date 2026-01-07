@@ -95,9 +95,17 @@ export function LegalPagesPage() {
         tenantId: selectedTenantId!,
         key: formData.key,
         translations: (() => {
-          const translations = [
+          const translations: Array<{
+            lang: string;
+            title: string;
+            content: string | null;
+            seoTitle: string | null;
+            seoDescription: string | null;
+            seoImage: string | null;
+            seoKeywords: string[];
+          }> = [
             {
-              lang: "hu" as const,
+              lang: "hu",
               title: formData.titleHu,
               content: formData.contentHu || null,
               seoTitle: formData.seoTitleHu || null,
@@ -108,7 +116,7 @@ export function LegalPagesPage() {
           ];
           if (formData.titleEn.trim()) {
             translations.push({
-              lang: "en" as const,
+              lang: "en",
               title: formData.titleEn,
               content: formData.contentEn || null,
               seoTitle: formData.seoTitleEn || null,
@@ -119,7 +127,7 @@ export function LegalPagesPage() {
           }
           if (formData.titleDe.trim()) {
             translations.push({
-              lang: "de" as const,
+              lang: "de",
               title: formData.titleDe,
               content: formData.contentDe || null,
               seoTitle: formData.seoTitleDe || null,
@@ -148,9 +156,17 @@ export function LegalPagesPage() {
         id,
         {
           translations: (() => {
-            const translations = [
+            const translations: Array<{
+              lang: string;
+              title: string;
+              content: string | null;
+              seoTitle: string | null;
+              seoDescription: string | null;
+              seoImage: string | null;
+              seoKeywords: string[];
+            }> = [
               {
-                lang: "hu" as const,
+                lang: "hu",
                 title: formData.titleHu,
                 content: formData.contentHu || null,
                 seoTitle: formData.seoTitleHu || null,
@@ -161,7 +177,7 @@ export function LegalPagesPage() {
             ];
             if (formData.titleEn.trim()) {
               translations.push({
-                lang: "en" as const,
+                lang: "en",
                 title: formData.titleEn,
                 content: formData.contentEn || null,
                 seoTitle: formData.seoTitleEn || null,
@@ -172,7 +188,7 @@ export function LegalPagesPage() {
             }
             if (formData.titleDe.trim()) {
               translations.push({
-                lang: "de" as const,
+                lang: "de",
                 title: formData.titleDe,
                 content: formData.contentDe || null,
                 seoTitle: formData.seoTitleDe || null,

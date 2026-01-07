@@ -3,6 +3,25 @@
  * Public API functions that don't require authentication
  */
 
+/**
+ * Get API base URL from environment variable or use relative path for development
+ * IMPORTANT: On Render.com, this must be set as an environment variable
+ * in the frontend service settings BEFORE building.
+ */
+function getApiBaseUrl(): string {
+  // In production, use environment variable if set
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
+  if (apiUrl) {
+    // Remove trailing slash if present
+    return apiUrl.replace(/\/$/, "");
+  }
+  
+  // In development, use relative path (Vite proxy will handle it)
+  // In production without VITE_API_URL, this will cause issues
+  return "";
+}
+
 export interface DefaultLanguageResponse {
   defaultLanguage: "hu" | "en" | "de";
 }
@@ -11,7 +30,8 @@ export interface DefaultLanguageResponse {
  * Get default language from public endpoint (no authentication required)
  */
 export async function getPublicDefaultLanguage(): Promise<DefaultLanguageResponse> {
-  const res = await fetch("/api/app-settings/default-language", {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/default-language`, {
     headers: {
       Accept: "application/json",
     },

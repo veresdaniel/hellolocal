@@ -10,14 +10,12 @@ import {
   verifyAndEnableTwoFactor,
   disableTwoFactor,
   getTwoFactorStatus,
-  type UpdateUserDto,
 } from "../../api/admin.api";
 import type { User } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 export function UserProfilePage() {
   const { t } = useTranslation();
-  const { user: authUser } = useAuth();
   usePageTitle("admin.profile.title");
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -292,9 +290,9 @@ export function UserProfilePage() {
                   padding: "4px 8px",
                   borderRadius: 4,
                   background:
-                    user.role === "admin"
+                    user.role === "superadmin"
                       ? "#dc3545"
-                      : user.role === "editor"
+                      : user.role === "admin"
                       ? "#007bff"
                       : user.role === "editor"
                       ? "#28a745"
@@ -319,11 +317,11 @@ export function UserProfilePage() {
 
           <h3 style={{ marginTop: 24, marginBottom: 16 }}>{t("admin.tenants")}</h3>
           <div style={{ padding: 16, background: "#f5f5f5", borderRadius: 4 }}>
-            {user.tenants.length === 0 ? (
+            {!user.tenants || user.tenants.length === 0 ? (
               <div>{t("admin.profile.noTenantsAssigned")}</div>
             ) : (
               <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {user.tenants.map((ut) => (
+                {user.tenants.map((ut: any) => (
                   <li key={ut.id}>
                     {ut.tenant.slug}
                     {ut.isPrimary && <span style={{ marginLeft: 8, color: "#007bff" }}>({t("admin.profile.primary")})</span>}

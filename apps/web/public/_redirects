@@ -1,0 +1,5 @@
+# Redirect all routes to index.html for React Router
+# This allows client-side routing to work on Render.com
+/*    /index.html   200
+
+

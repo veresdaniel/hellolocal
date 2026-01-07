@@ -16,7 +16,6 @@ import {
   type Tenant,
   type UpdateUserRoleDto,
   type CreateUserDto,
-  type UpdateUserDto,
 } from "../../api/admin.api";
 import { TenantAutocomplete } from "../../components/TenantAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
