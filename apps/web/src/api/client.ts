@@ -2,6 +2,20 @@ import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
 
 /**
+ * Get API base URL from environment variable or use relative path for development
+ * In production, set VITE_API_URL environment variable to the backend URL
+ * Example: VITE_API_URL=https://hellolocal.onrender.com
+ */
+function getApiBaseUrl(): string {
+  // In production, use environment variable if set
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // In development, use relative path (Vite proxy will handle it)
+  return "";
+}
+
+/**
  * Records user interaction (API call)
  */
 function recordApiInteraction() {
@@ -41,7 +55,8 @@ export async function apiGet<T>(path: string): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     headers: {
       Accept: "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -58,7 +73,7 @@ export async function apiGet<T>(path: string): Promise<T> {
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`/api${path}`, {
+          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
             headers: {
               Accept: "application/json",
               Authorization: `Bearer ${data.accessToken}`,
@@ -91,7 +106,8 @@ export async function apiGet<T>(path: string): Promise<T> {
  * Use this for public endpoints like places, legal pages, etc.
  */
 export async function apiGetPublic<T>(path: string): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     headers: {
       Accept: "application/json",
     },
@@ -120,7 +136,8 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
  * Use this for login, register, forgot-password, etc.
  */
 export async function apiPostPublic<T>(path: string, data: unknown): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -151,7 +168,8 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -171,7 +189,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`/api${path}`, {
+          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -239,7 +257,8 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -259,7 +278,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`/api${path}`, {
+          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -294,7 +313,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
-  const res = await fetch(`/api${path}`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "DELETE",
     headers: {
       Accept: "application/json",
@@ -312,7 +332,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`/api${path}`, {
+          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
             method: "DELETE",
             headers: {
               Accept: "application/json",
