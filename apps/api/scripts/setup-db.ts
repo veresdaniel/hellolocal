@@ -35,6 +35,20 @@ async function main() {
     throw new Error(`Prisma directory not found. Expected at: ${resolve(apiDir, "prisma")}`);
   }
 
+  // First, try to resolve any failed migrations
+  console.log("🔍 Checking for failed migrations...");
+  try {
+    execSync("tsx scripts/resolve-failed-migrations.ts", {
+      stdio: "inherit",
+      cwd: apiDir,
+    });
+    console.log("✅ Failed migrations resolved (if any)");
+  } catch (resolveError: any) {
+    // If resolve script fails, it might mean no failed migrations or connection issue
+    // Continue anyway - this is not critical
+    console.log("ℹ️  Could not check for failed migrations (this is okay)");
+  }
+
   // First, try to run migrations (will fail if schema is not empty and no migration history)
   console.log("📦 Running migrations...");
   try {
