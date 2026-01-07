@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hellolocal-frontend
+    env: static
+    buildCommand: cd apps/web && pnpm install && pnpm build
+    staticPublishPath: apps/web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
