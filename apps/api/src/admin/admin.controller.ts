@@ -779,22 +779,50 @@ export class AdminController {
   // Otherwise /app-settings/site-settings will match /app-settings/:key
   @Get("/app-settings/site-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async getSiteSettings() {
-    return this.appSettingsService.getSiteSettings();
+  async getSiteSettings(
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new ForbiddenException("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new ForbiddenException("User does not have access to this tenant");
+    }
+    return this.appSettingsService.getSiteSettings(tenantId);
   }
 
   @Put("/app-settings/site-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async setSiteSettings(@Body() settings: {
-    siteName?: { hu?: string; en?: string; de?: string };
-    siteDescription?: { hu?: string; en?: string; de?: string };
-    seoTitle?: { hu?: string; en?: string; de?: string };
-    seoDescription?: { hu?: string; en?: string; de?: string };
-    isCrawlable?: boolean;
-    defaultPlaceholderCardImage?: string | null;
-    defaultPlaceholderDetailHeroImage?: string | null;
-  }) {
-    return this.appSettingsService.setSiteSettings(settings);
+  async setSiteSettings(
+    @Body() dto: {
+      tenantId: string;
+      siteName?: { hu?: string; en?: string; de?: string };
+      siteDescription?: { hu?: string; en?: string; de?: string };
+      seoTitle?: { hu?: string; en?: string; de?: string };
+      seoDescription?: { hu?: string; en?: string; de?: string };
+      isCrawlable?: boolean;
+      defaultPlaceholderCardImage?: string | null;
+      defaultPlaceholderDetailHeroImage?: string | null;
+    },
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    if (!dto.tenantId) {
+      throw new ForbiddenException("tenantId is required");
+    }
+    if (!user.tenantIds.includes(dto.tenantId)) {
+      throw new ForbiddenException("User does not have access to this tenant");
+    }
+    return this.appSettingsService.setSiteSettings(dto.tenantId, {
+      siteName: dto.siteName,
+      siteDescription: dto.siteDescription,
+      seoTitle: dto.seoTitle,
+      seoDescription: dto.seoDescription,
+      isCrawlable: dto.isCrawlable,
+      defaultPlaceholderCardImage: dto.defaultPlaceholderCardImage,
+      defaultPlaceholderDetailHeroImage: dto.defaultPlaceholderDetailHeroImage,
+    });
   }
 
   @Get("/app-settings/:key")

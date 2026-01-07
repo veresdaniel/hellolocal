@@ -466,11 +466,12 @@ export interface SetSiteSettingsDto {
   defaultPlaceholderDetailHeroImage?: string | null;
 }
 
-export function getSiteSettings() {
-  return apiGet<SiteSettings>("/admin/app-settings/site-settings");
+export function getSiteSettings(tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiGet<SiteSettings>(`/admin/app-settings/site-settings${params}`);
 }
 
-export function setSiteSettings(data: SetSiteSettingsDto) {
+export function setSiteSettings(data: SetSiteSettingsDto & { tenantId: string }) {
   return apiPut<SiteSettings>("/admin/app-settings/site-settings", data);
 }
 

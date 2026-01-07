@@ -47,8 +47,8 @@ export class SeoController {
       throw new NotFoundException(`Entity not found or wrong type`);
     }
 
-    // Get site settings for fallback
-    const siteSettings = await this.appSettingsService.getSiteSettings();
+    // Get site settings for the resolved tenant
+    const siteSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
 
     if (type === "place") {
       const place = await this.prisma.place.findUnique({
@@ -141,8 +141,8 @@ export class SeoController {
     // Resolve tenant
     const tenant = await this.tenantResolver.resolve({ lang, tenantKey });
 
-    // Get site settings
-    const siteSettings = await this.appSettingsService.getSiteSettings();
+    // Get site settings for the resolved tenant
+    const siteSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
     const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
     const seoTitle = siteSettings.seoTitle[tenant.lang as "hu" | "en" | "de"] || siteName;
     const seoDescription = siteSettings.seoDescription[tenant.lang as "hu" | "en" | "de"] || "";

@@ -50,13 +50,19 @@ export class AppSettingsController {
    * Returns site name, description, and SEO settings for all languages
    */
   @Get("/:lang/site-settings")
-  async getSiteSettings(@Param("lang") lang: string) {
+  async getSiteSettings(
+    @Param("lang") lang: string,
+    @Query("tenantKey") tenantKey?: string
+  ) {
     // Validate lang
     if (lang !== "hu" && lang !== "en" && lang !== "de") {
       throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
     }
 
-    const allSettings = await this.appSettingsService.getSiteSettings();
+    // Resolve tenant
+    const tenant = await this.tenantKeyResolver.resolve({ lang, tenantKey });
+    
+    const allSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
     
     // Return only the requested language's settings, plus default placeholder images
     return {

@@ -115,10 +115,12 @@ export function AppSettingsPage() {
   }, [selectedTenantId, towns]);
 
   useEffect(() => {
+    if (!selectedTenantId) return;
+    
     const loadSiteSettings = async () => {
       try {
         setIsLoadingSiteSettings(true);
-        const data = await getSiteSettings();
+        const data = await getSiteSettings(selectedTenantId);
         // Ensure all fields are properly initialized
         setSiteSettingsState({
           siteName: {
@@ -153,7 +155,7 @@ export function AppSettingsPage() {
       }
     };
     loadSiteSettings();
-  }, []);
+  }, [selectedTenantId]);
 
   const handleSave = async () => {
     try {
@@ -240,7 +242,13 @@ export function AppSettingsPage() {
       }
       
       console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
+      if (!selectedTenantId) {
+        setError(t("admin.errors.noTenantSelected"));
+        return;
+      }
+      
       const updated = await setSiteSettings({
+        tenantId: selectedTenantId,
         siteName: siteSettings.siteName,
         siteDescription: siteSettings.siteDescription,
         seoTitle: siteSettings.seoTitle,

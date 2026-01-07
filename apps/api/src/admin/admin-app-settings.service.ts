@@ -184,10 +184,11 @@ export class AdminAppSettingsService {
   }
 
   /**
-   * Get site settings (site name, description, SEO)
+   * Get site settings (site name, description, SEO) for a tenant
    */
-  async getSiteSettings() {
+  async getSiteSettings(tenantId: string) {
     // Fetch all settings in parallel for better performance
+    // All keys are now tenant-specific
     const [
       siteNameHu,
       siteNameEn,
@@ -205,21 +206,21 @@ export class AdminAppSettingsService {
       defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage,
     ] = await Promise.all([
-      this.findOne("siteName_hu"),
-      this.findOne("siteName_en"),
-      this.findOne("siteName_de"),
-      this.findOne("siteDescription_hu"),
-      this.findOne("siteDescription_en"),
-      this.findOne("siteDescription_de"),
-      this.findOne("seoTitle_hu"),
-      this.findOne("seoTitle_en"),
-      this.findOne("seoTitle_de"),
-      this.findOne("seoDescription_hu"),
-      this.findOne("seoDescription_en"),
-      this.findOne("seoDescription_de"),
-      this.findOne("isCrawlable"),
-      this.findOne("defaultPlaceholderCardImage"),
-      this.findOne("defaultPlaceholderDetailHeroImage"),
+      this.findOne(`siteName_hu_${tenantId}`),
+      this.findOne(`siteName_en_${tenantId}`),
+      this.findOne(`siteName_de_${tenantId}`),
+      this.findOne(`siteDescription_hu_${tenantId}`),
+      this.findOne(`siteDescription_en_${tenantId}`),
+      this.findOne(`siteDescription_de_${tenantId}`),
+      this.findOne(`seoTitle_hu_${tenantId}`),
+      this.findOne(`seoTitle_en_${tenantId}`),
+      this.findOne(`seoTitle_de_${tenantId}`),
+      this.findOne(`seoDescription_hu_${tenantId}`),
+      this.findOne(`seoDescription_en_${tenantId}`),
+      this.findOne(`seoDescription_de_${tenantId}`),
+      this.findOne(`isCrawlable_${tenantId}`),
+      this.findOne(`defaultPlaceholderCardImage_${tenantId}`),
+      this.findOne(`defaultPlaceholderDetailHeroImage_${tenantId}`),
     ]);
 
     return {
@@ -250,9 +251,9 @@ export class AdminAppSettingsService {
   }
 
   /**
-   * Set site settings
+   * Set site settings for a tenant
    */
-  async setSiteSettings(settings: {
+  async setSiteSettings(tenantId: string, settings: {
     siteName?: { hu?: string; en?: string; de?: string };
     siteDescription?: { hu?: string; en?: string; de?: string };
     seoTitle?: { hu?: string; en?: string; de?: string };
@@ -301,17 +302,17 @@ export class AdminAppSettingsService {
 
     if (settings.siteDescription !== undefined) {
       // Always save the provided values directly - frontend always sends all fields
-      updates.push(this.upsert("siteDescription_hu", {
+      updates.push(this.upsert(`siteDescription_hu_${tenantId}`, {
         value: settings.siteDescription.hu ?? "",
         type: "string",
         description: "Site description in Hungarian",
       }));
-      updates.push(this.upsert("siteDescription_en", {
+      updates.push(this.upsert(`siteDescription_en_${tenantId}`, {
         value: settings.siteDescription.en ?? "",
         type: "string",
         description: "Site description in English",
       }));
-      updates.push(this.upsert("siteDescription_de", {
+      updates.push(this.upsert(`siteDescription_de_${tenantId}`, {
         value: settings.siteDescription.de ?? "",
         type: "string",
         description: "Site description in German",
@@ -320,17 +321,17 @@ export class AdminAppSettingsService {
 
     if (settings.seoTitle !== undefined) {
       // Always save the provided values directly - frontend always sends all fields
-      updates.push(this.upsert("seoTitle_hu", {
+      updates.push(this.upsert(`seoTitle_hu_${tenantId}`, {
         value: settings.seoTitle.hu ?? "",
         type: "string",
         description: "Default SEO title in Hungarian",
       }));
-      updates.push(this.upsert("seoTitle_en", {
+      updates.push(this.upsert(`seoTitle_en_${tenantId}`, {
         value: settings.seoTitle.en ?? "",
         type: "string",
         description: "Default SEO title in English",
       }));
-      updates.push(this.upsert("seoTitle_de", {
+      updates.push(this.upsert(`seoTitle_de_${tenantId}`, {
         value: settings.seoTitle.de ?? "",
         type: "string",
         description: "Default SEO title in German",
@@ -339,17 +340,17 @@ export class AdminAppSettingsService {
 
     if (settings.seoDescription !== undefined) {
       // Always save the provided values directly - frontend always sends all fields
-      updates.push(this.upsert("seoDescription_hu", {
+      updates.push(this.upsert(`seoDescription_hu_${tenantId}`, {
         value: settings.seoDescription.hu ?? "",
         type: "string",
         description: "Default SEO description in Hungarian",
       }));
-      updates.push(this.upsert("seoDescription_en", {
+      updates.push(this.upsert(`seoDescription_en_${tenantId}`, {
         value: settings.seoDescription.en ?? "",
         type: "string",
         description: "Default SEO description in English",
       }));
-      updates.push(this.upsert("seoDescription_de", {
+      updates.push(this.upsert(`seoDescription_de_${tenantId}`, {
         value: settings.seoDescription.de ?? "",
         type: "string",
         description: "Default SEO description in German",
@@ -370,7 +371,7 @@ export class AdminAppSettingsService {
       if (settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== "" && !sanitizedUrl) {
         throw new BadRequestException("Invalid image URL. Only http:// and https:// URLs are allowed.");
       }
-      updates.push(this.upsert("defaultPlaceholderCardImage", {
+      updates.push(this.upsert(`defaultPlaceholderCardImage_${tenantId}`, {
         value: sanitizedUrl || "",
         type: "string",
         description: "Default placeholder image URL for place cards",
@@ -383,7 +384,7 @@ export class AdminAppSettingsService {
       if (settings.defaultPlaceholderDetailHeroImage && settings.defaultPlaceholderDetailHeroImage.trim() !== "" && !sanitizedUrl) {
         throw new BadRequestException("Invalid image URL. Only http:// and https:// URLs are allowed.");
       }
-      updates.push(this.upsert("defaultPlaceholderDetailHeroImage", {
+      updates.push(this.upsert(`defaultPlaceholderDetailHeroImage_${tenantId}`, {
         value: sanitizedUrl || "",
         type: "string",
         description: "Default placeholder hero image URL for place detail pages",
@@ -397,7 +398,7 @@ export class AdminAppSettingsService {
     await Promise.all(updates);
     console.log('[AdminAppSettingsService] Updates completed. Fetching fresh data...');
     // Return fresh data from database
-    const result = await this.getSiteSettings();
+    const result = await this.getSiteSettings(tenantId);
     console.log('[AdminAppSettingsService] Returning:', JSON.stringify(result, null, 2));
     return result;
   }
