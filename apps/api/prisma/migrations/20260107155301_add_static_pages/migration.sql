@@ -1,5 +1,14 @@
--- AlterEnum
-ALTER TYPE "SlugEntityType" ADD VALUE 'event';
+-- AlterEnum (idempotent: only add if it doesn't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_enum 
+        WHERE enumlabel = 'event' 
+        AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'SlugEntityType')
+    ) THEN
+        ALTER TYPE "SlugEntityType" ADD VALUE 'event';
+    END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "Category" ADD COLUMN     "order" INTEGER NOT NULL DEFAULT 0,
