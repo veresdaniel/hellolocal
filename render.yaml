@@ -2,8 +2,9 @@ services:
   - type: web
     name: hellolocal-frontend
     env: node
-    buildCommand: cd apps/web && pnpm install && pnpm build
-    startCommand: node apps/web/server.js
+    rootDir: apps/web
+    buildCommand: pnpm install && pnpm build
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
