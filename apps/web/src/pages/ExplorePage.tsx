@@ -9,16 +9,18 @@ import { MapComponent } from "../components/MapComponent";
 import { buildPath } from "../app/routing/buildPath";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { HAS_MULTIPLE_TENANTS } from "../app/config";
 
 export function ExplorePage() {
   const { t } = useTranslation();
   const { lang, tenantSlug } = useTenantContext();
   const navigate = useNavigate();
   const [showMap, setShowMap] = useState(true);
+  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["places", lang],
-    queryFn: () => getPlaces(lang),
+    queryKey: ["places", lang, tenantKey],
+    queryFn: () => getPlaces(lang, tenantKey),
   });
 
   useSeo({
@@ -29,7 +31,7 @@ export function ExplorePage() {
   if (isError)
     return (
       <div style={{ padding: 24 }}>
-        <p>Hiba a place-ek betöltésekor.</p>
+        <p>{t("public.errorLoadingPlaces")}</p>
         <pre style={{ whiteSpace: "pre-wrap" }}>{String(error)}</pre>
       </div>
     );
@@ -88,14 +90,14 @@ export function ExplorePage() {
                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}
             >
-              List View
+              {t("public.listView")}
             </button>
           </div>
         </>
       ) : (
         <div style={{ padding: 24, height: "100vh", overflowY: "auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <h1>Felfedezés</h1>
+            <h1>{t("public.explore.title")}</h1>
             <button
               onClick={() => setShowMap(true)}
               style={{
@@ -107,7 +109,7 @@ export function ExplorePage() {
                 cursor: "pointer",
               }}
             >
-              Map View
+              {t("public.mapView")}
             </button>
           </div>
           <div style={{ display: "grid", gap: 16 }}>

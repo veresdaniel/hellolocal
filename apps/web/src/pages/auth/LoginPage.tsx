@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export function LoginPage() {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
       navigate("/admin");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      const errorMessage = err instanceof Error ? err.message : t("admin.loginFailed");
       const errorStatus = (err as any)?.status;
       
       // Check if error indicates 2FA is required
@@ -38,7 +40,7 @@ export function LoginPage() {
       
       if (is2FARequired) {
         setRequiresTwoFactor(true);
-        setError("Please enter your 2FA code");
+        setError(t("admin.pleaseEnter2FACode"));
         // Focus will be set by useEffect when requiresTwoFactor changes
       } else {
         setError(errorMessage);
@@ -65,7 +67,7 @@ export function LoginPage() {
 
   return (
     <div style={{ maxWidth: 400, margin: "50px auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>Login</h1>
+      <h1 style={{ marginBottom: 24 }}>{t("admin.login")}</h1>
 
       {error && (
         <div
@@ -84,7 +86,7 @@ export function LoginPage() {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Email</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.email")}</label>
           <input
             type="email"
             value={email}
@@ -95,7 +97,7 @@ export function LoginPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Password</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.password")}</label>
           <input
             type="password"
             value={password}
@@ -107,7 +109,7 @@ export function LoginPage() {
 
         {requiresTwoFactor && (
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>2FA Code</label>
+            <label style={{ display: "block", marginBottom: 4 }}>{t("admin.twoFactorCode")}</label>
             <input
               ref={twoFactorInputRef}
               type="text"
@@ -127,7 +129,7 @@ export function LoginPage() {
               }}
             />
             <p style={{ marginTop: 4, fontSize: 12, color: "#666" }}>
-              Enter the 6-digit code from your authenticator app
+              {t("admin.enter2FACodeDescription")}
             </p>
           </div>
         )}
@@ -146,18 +148,18 @@ export function LoginPage() {
             cursor: isLoading ? "not-allowed" : "pointer",
           }}
         >
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? t("admin.loggingIn") : t("admin.login")}
         </button>
       </form>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
         <Link to="/admin/forgot-password" style={{ color: "#007bff" }}>
-          Forgot password?
+          {t("admin.forgotPassword")}
         </Link>
       </div>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
-        Don't have an account? <Link to="/admin/register" style={{ color: "#007bff" }}>Register</Link>
+        {t("admin.dontHaveAccount")} <Link to="/admin/register" style={{ color: "#007bff" }}>{t("admin.register")}</Link>
       </div>
     </div>
   );

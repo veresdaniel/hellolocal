@@ -8,6 +8,7 @@ import { AdminUsersService } from "./admin-users.service";
 import { AdminTownService } from "./admin-town.service";
 import { AdminPlaceService } from "./admin-place.service";
 import { AdminLegalService } from "./admin-legal.service";
+import { AdminStaticPageService } from "./admin-static-page.service";
 import { AdminTenantService } from "./admin-tenant.service";
 import { AdminAppSettingsService } from "./admin-app-settings.service";
 import { AdminEventService } from "./admin-event.service";
@@ -25,6 +26,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTownService,
     AdminPlaceService,
     AdminLegalService,
+    AdminStaticPageService,
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,
@@ -37,6 +39,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTownService,
     AdminPlaceService,
     AdminLegalService,
+    AdminStaticPageService,
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,

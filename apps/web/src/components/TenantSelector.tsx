@@ -1,16 +1,28 @@
 // src/components/TenantSelector.tsx
 import { useTranslation } from "react-i18next";
-import { useAdminTenant } from "../contexts/AdminTenantContext";
+import { useContext } from "react";
+import { AdminTenantContext } from "../contexts/AdminTenantContext";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export function TenantSelector() {
   const { t } = useTranslation();
-  const { selectedTenantId, tenants, setSelectedTenantId, isLoading } = useAdminTenant();
+  const context = useContext(AdminTenantContext);
+  
+  // If context is not available, don't render anything (or render a placeholder)
+  if (!context) {
+    return null;
+  }
+  
+  const { selectedTenantId, tenants, setSelectedTenantId, isLoading } = context;
 
   if (isLoading) {
     return (
-      <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4, color: "#666" }}>
-        {t("common.loading")}...
-      </div>
+      <>
+        <LoadingSpinner isLoading={isLoading} delay={0} />
+        <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4, color: "#666", visibility: "hidden" }}>
+          {t("common.loading")}...
+        </div>
+      </>
     );
   }
 

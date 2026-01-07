@@ -5,6 +5,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { PlacesModule } from "./places/places.module";
 import { EventsModule } from "./events/events.module";
 import { LegalModule } from "./legal/legal.module";
+import { StaticPagesModule } from "./static-pages/static-pages.module";
 import { SlugModule } from "./slug/slug.module";
 import { TenantModule } from "./tenant/tenant.module";
 import { AuthModule } from "./auth/auth.module";
@@ -27,6 +28,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
     PlacesModule,
     EventsModule,
     LegalModule,
+    StaticPagesModule,
     SeoModule, // SEO metadata for SSR
     NotificationsModule, // Push notifications
   ],

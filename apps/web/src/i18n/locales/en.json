@@ -28,6 +28,8 @@
       "title": "Explore",
       "description": "Local experiences: winery, gastronomy, accommodation, crafts."
     },
+    "listView": "List View",
+    "mapView": "Map View",
     "place": {
       "title": "Place Details",
       "description": "View place details"
@@ -43,8 +45,6 @@
         "title": "Privacy Policy"
       }
     },
-    "mapView": "Map View",
-    "listView": "List View",
     "open": "Open",
     "category": "Category",
     "priceBand": "Price Band",
@@ -59,7 +59,13 @@
     "errorLoadingPlaces": "Error loading places",
     "noPlacesFound": "No places found",
     "errorLoadingPlace": "Error loading place",
+    "errorLoadingEvent": "Error loading event",
     "backToList": "Back to list",
+    "backToHome": "Back to home",
+    "gallery": "Gallery",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
     "event": {
       "title": "Events",
       "description": "Discover events"
@@ -69,7 +75,15 @@
     "contact": "Contact",
     "menu": "Menu",
     "noResults": "No results found",
-    "filters": "Filters",
+    "filtersTitle": "Filters",
+    "filters": {
+      "all": "All",
+      "openNow": "Open now",
+      "eventToday": "Event today",
+      "within30Minutes": "Within 30 minutes",
+      "rainSafe": "Rain-safe program",
+      "contextFilters": "Context-based filters"
+    },
     "footer": {
       "tagline": "Discover local treasures",
       "legal": "Legal Information",
@@ -88,13 +102,32 @@
     "users": "Users",
     "usersManagement": "Users Management",
     "tenants": "Regions",
+    "events": "Events",
+    "noEvents": "No events",
+    "readMore": "Read more",
     "settings": "Settings",
     "appSettings": "App Settings",
     "profileMenu": "Profile",
     "logout": "Logout",
     "login": "Login",
     "register": "Register",
-    "forgotPassword": "Forgot Password",
+    "registering": "Registering...",
+    "registrationFailed": "Registration failed",
+    "loginFailed": "Login failed",
+    "loggingIn": "Logging in...",
+    "pleaseEnter2FACode": "Please enter your 2FA code",
+    "twoFactorCode": "2FA Code",
+    "enter2FACodeDescription": "Enter the 6-digit code from your authenticator app",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "forgotPassword": "Forgot password?",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "bio": "Bio (optional)",
+    "bioOptional": "Bio (optional)",
     "newItem": "New Item",
     "editItem": "Edit Item",
     "deleteConfirm": "Are you sure you want to delete?",
@@ -174,7 +207,11 @@
       "newUser": "New User",
       "editUser": "Edit User",
       "newTenant": "New Tenant",
-      "editTenant": "Edit Tenant"
+      "editTenant": "Edit Tenant",
+      "newEvent": "New Event",
+      "editEvent": "Edit Event",
+      "newStaticPage": "New Static Page",
+      "editStaticPage": "Edit Static Page"
     },
     "table": {
       "nameHu": "Name (HU)",
@@ -237,7 +274,17 @@
       "defaultLanguageUpdated": "Default language updated successfully",
       "updateRoleFailed": "Failed to update role",
       "disable2FAFailed": "Failed to disable 2FA",
-      "updateSiteSettingsFailed": "Failed to update site settings"
+      "updateSiteSettingsFailed": "Failed to update site settings",
+      "loadEventsFailed": "Failed to load events",
+      "createEventFailed": "Failed to create event",
+      "updateEventFailed": "Failed to update event",
+      "deleteEventFailed": "Failed to delete event",
+      "loadStaticPagesFailed": "Failed to load static pages",
+      "createStaticPageFailed": "Failed to create static page",
+      "updateStaticPageFailed": "Failed to update static page",
+      "deleteStaticPageFailed": "Failed to delete static page",
+      "reorderFailed": "Failed to reorder",
+      "cannotDropOnChild": "Cannot drop a category on its own child"
     },
     "validation": {
       "hungarianNameRequired": "Hungarian name is required",
@@ -250,12 +297,11 @@
       "passwordMinLength": "Password must be at least 6 characters",
       "tenantNameRequired": "Tenant name is required",
       "tenantSlugRequired": "Tenant slug is required",
-      "categoryRequired": "Category is required"
+      "slugRequired": "Slug is required",
+      "categoryRequired": "Category is required",
+      "startDateRequired": "Start date is required",
+      "invalidImageUrl": "Invalid image URL. Only http:// and https:// URLs are allowed."
     },
-    "confirmDeleteTown": "Are you sure you want to delete this town?",
-    "confirmDeleteUser": "Are you sure you want to delete this user? This action cannot be undone.",
-    "confirmChangeRole": "Are you sure you want to change this user's role to {{role}}?",
-    "confirmDisable2FA": "Are you sure you want to disable 2FA for this user?",
     "confirmations": {
       "deleteCategory": "Are you sure you want to delete this category?",
       "deleteTag": "Are you sure you want to delete this tag?",
@@ -265,7 +311,10 @@
       "deleteLegalPage": "Are you sure you want to delete this legal page?",
       "deleteUser": "Are you sure you want to delete this user? This action cannot be undone.",
       "deleteTenant": "Are you sure you want to delete this tenant?",
-      "changeRole": "Are you sure you want to change this user's role to {{role}}?"
+      "changeRole": "Are you sure you want to change this user's role to {{role}}?",
+      "deleteStaticPage": "Are you sure you want to delete this static page?",
+      "deleteEvent": "Are you sure you want to delete this event?",
+      "disable2FA": "Are you sure you want to disable 2FA for this user?"
     },
     "fields": {
       "firstName": "First Name",
@@ -278,7 +327,14 @@
     "key": "Key",
     "content": "Content",
     "selectTenantFirst": "Please select a tenant first",
+    "shortDescriptionPlaceholder": "Short description of the event",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "isPinned": "Pin this event",
+    "selectPlace": "Select place",
+    "place": "Place",
     "heroImage": "Hero Image",
+    "urlPlaceholder": "URL",
     "accessDenied": "Access denied. Superadmin role required.",
     "disable2FA": "Disable 2FA",
     "primaryDomain": "Primary Domain",
@@ -332,6 +388,24 @@
       "noTenantsAssigned": "No tenants assigned",
       "primary": "Primary",
       "twoFactorAuthentication": "Two-Factor Authentication"
+    },
+    "parentCategory": "Parent Category",
+    "order": "Order",
+    "orderDescription": "Lower number = higher in list",
+    "dragToReorder": "Drag categories to reorder. Drag under a category to make it a child category.",
+    "noParentCategory": "No parent category",
+    "staticPages": "Static Pages",
+    "category": "Category",
+    "categoryBlog": "Blog",
+    "categoryTudastar": "Knowledge Base",
+    "categoryInfok": "Info",
+    "errors": {
+      "loadStaticPagesFailed": "Failed to load static pages",
+      "createStaticPageFailed": "Failed to create static page",
+      "updateStaticPageFailed": "Failed to update static page",
+      "deleteStaticPageFailed": "Failed to delete static page",
+      "reorderFailed": "Failed to reorder",
+      "cannotDropOnChild": "Cannot drop a category on its own child"
     }
   },
   "validation": {

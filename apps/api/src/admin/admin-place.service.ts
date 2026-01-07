@@ -300,7 +300,30 @@ export class AdminPlaceService {
   async update(id: string, tenantId: string, dto: UpdatePlaceDto) {
     const place = await this.findOne(id, tenantId);
 
-    const { tagIds, translations, ...updateData } = dto;
+    const { tagIds, translations, ...restData } = dto;
+
+    // Build update data object, explicitly handling all fields to ensure proper updates
+    const updateData: any = {};
+    
+    // Copy all fields from restData (categoryId, townId, priceBandId, heroImage, isActive, etc.)
+    if (restData.categoryId !== undefined) updateData.categoryId = restData.categoryId;
+    if (restData.townId !== undefined) updateData.townId = restData.townId;
+    if (restData.priceBandId !== undefined) updateData.priceBandId = restData.priceBandId;
+    if (restData.heroImage !== undefined) updateData.heroImage = restData.heroImage;
+    if (restData.gallery !== undefined) updateData.gallery = restData.gallery;
+    if (restData.isActive !== undefined) updateData.isActive = restData.isActive;
+    if (restData.ratingAvg !== undefined) updateData.ratingAvg = restData.ratingAvg;
+    if (restData.ratingCount !== undefined) updateData.ratingCount = restData.ratingCount;
+    if (restData.extras !== undefined) updateData.extras = restData.extras;
+    if (restData.ownerId !== undefined) updateData.ownerId = restData.ownerId;
+    
+    // Explicitly handle lat and lng to ensure null values are properly set
+    if (dto.lat !== undefined) {
+      updateData.lat = dto.lat;
+    }
+    if (dto.lng !== undefined) {
+      updateData.lng = dto.lng;
+    }
 
     await this.prisma.place.update({
       where: { id },

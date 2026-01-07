@@ -1,9 +1,9 @@
 // src/pages/HomePage.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getPlaces, getMapSettings, getSiteSettings } from "../api/places.api";
+import { getPlaces, getEvents, getMapSettings, getSiteSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { MapComponent } from "../components/MapComponent";
 import { MapFilters } from "../components/MapFilters";
@@ -15,30 +15,72 @@ import { buildPath } from "../app/routing/buildPath";
 import { useNavigate } from "react-router-dom";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useFiltersStore } from "../stores/useFiltersStore";
+import { useViewStore } from "../stores/useViewStore";
 
 export function HomePage() {
   const { t } = useTranslation();
   const { lang, tenantSlug } = useTenantContext();
   const navigate = useNavigate();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedPriceBands, setSelectedPriceBands] = useState<string[]>([]);
-  const compactFooterHeight = 56; // Height of compact footer
-  const [mapHeight, setMapHeight] = useState(window.innerHeight - compactFooterHeight);
+  const queryClient = useQueryClient();
   
-  // Load view preference from localStorage
-  const [showMap, setShowMap] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("homeViewPreference");
-    return saved !== "list"; // Default to map view if not set or if "map"
-  });
+  // Use Zustand stores for state management with persistence
+  const {
+    selectedCategories,
+    selectedPriceBands,
+    isOpenNow,
+    hasEventToday,
+    within30Minutes,
+    rainSafe,
+    userLocation,
+    setSelectedCategories,
+    setSelectedPriceBands,
+    setIsOpenNow,
+    setHasEventToday,
+    setWithin30Minutes,
+    setRainSafe,
+    setUserLocation,
+  } = useFiltersStore();
+  
+  const {
+    showMap,
+    mapHeight,
+    mapCenter,
+    setShowMap,
+    setMapHeight,
+    setMapCenter,
+  } = useViewStore();
+  
+  const compactFooterHeight = 56; // Height of compact footer
 
   // Get tenantKey for API call (only if multi-tenant mode)
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
-  // Save view preference to localStorage when it changes
+  // Listen for place changes from admin panel to refresh map view
   useEffect(() => {
-    localStorage.setItem("homeViewPreference", showMap ? "map" : "list");
-  }, [showMap]);
+    const handlePlacesChanged = async () => {
+      // Invalidate and refetch places cache to show new places on map
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+    };
+
+    window.addEventListener("admin:places:changed", handlePlacesChanged);
+    return () => {
+      window.removeEventListener("admin:places:changed", handlePlacesChanged);
+    };
+  }, [queryClient]);
+
+  // Update map height when window resizes
+  // Update map height when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      setMapHeight(window.innerHeight - compactFooterHeight);
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [setMapHeight, compactFooterHeight]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,10 +105,23 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Map center initialization tracking (mapCenter is now in useViewStore)
+  const hasInitializedCenter = useRef(false);
+  const initialPlacesLoaded = useRef(false);
+  const previousMarkersCount = useRef(0);
+
+  // Load events for "hasEventToday" filter
+  const { data: eventsData } = useQuery({
+    queryKey: ["events", lang, tenantKey],
+    queryFn: () => getEvents(lang, undefined, undefined, 100, 0, tenantKey),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   const { data: placesData, isLoading: isLoadingPlaces } = useQuery({
-    queryKey: ["places", lang, selectedCategories, selectedPriceBands],
+    queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands],
     queryFn: () => getPlaces(
       lang,
+      tenantKey,
       selectedCategories.length > 0 ? selectedCategories : undefined,
       selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
@@ -74,8 +129,38 @@ export function HomePage() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Refetch when component mounts
     refetchInterval: 30 * 1000, // Refetch every 30 seconds in background
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
+    // Remove placeholderData to ensure fresh data is always shown
+    // placeholderData can cause stale data to persist
   });
+
+  // Get user location for "within30Minutes" filter
+  useEffect(() => {
+    if (within30Minutes && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          // Fallback: use map center if available (check after mapCenter is initialized)
+          // We'll set userLocation in a separate effect when mapCenter becomes available
+        }
+      );
+    } else if (!within30Minutes) {
+      // Clear user location when filter is disabled
+      setUserLocation(null);
+    }
+  }, [within30Minutes]);
+
+  // Set user location from map center as fallback when map center is available
+  useEffect(() => {
+    if (within30Minutes && !userLocation && mapCenter) {
+      setUserLocation({ lat: mapCenter.lat, lng: mapCenter.lng });
+    }
+  }, [within30Minutes, mapCenter, userLocation]);
 
   useSeo({
     title: siteSettings?.seoTitle || t("public.home.title"),
@@ -84,7 +169,84 @@ export function HomePage() {
     siteName: siteSettings?.siteName,
   });
 
-  const placesWithCoordinates = placesData?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
+  // Helper function to calculate distance in km using Haversine formula
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Helper function to check if place is open now (simple check - if openingHours exists)
+  const isPlaceOpenNow = (place: typeof placesData[0]): boolean => {
+    if (!place.openingHours) return false;
+    // Simple heuristic: if openingHours contains HTML or text, assume it might be open
+    // In a real implementation, you'd parse the openingHours HTML/JSON
+    // For now, we'll just check if openingHours exists
+    return true; // Simplified - in production, parse actual hours
+  };
+
+  // Helper function to check if place has event today
+  const hasEventTodayForPlace = (placeId: string | null | undefined): boolean => {
+    if (!eventsData || !placeId) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return eventsData.some((event) => {
+      if (event.placeId !== placeId) return false;
+      const eventStart = new Date(event.startDate);
+      const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+      // Check if event overlaps with today
+      return eventStart < tomorrow && eventEnd >= today;
+    });
+  };
+
+  // Helper function to check if place is within 30 minutes (assuming average speed of 50 km/h = ~25 km in 30 min)
+  const isWithin30Minutes = (place: typeof placesData[0]): boolean => {
+    if (!within30Minutes || !userLocation || !place.location) return false;
+    const distance = calculateDistance(
+      userLocation.lat,
+      userLocation.lng,
+      place.location.lat,
+      place.location.lng
+    );
+    return distance <= 25; // 25 km ≈ 30 minutes at 50 km/h average
+  };
+
+  // Helper function to check if place is rain-safe (check tags or extras)
+  const isRainSafe = (place: typeof placesData[0]): boolean => {
+    if (!rainSafe) return false;
+    // Check if place has tags that suggest indoor/covered activities
+    const rainSafeTags = ["fedett", "beltér", "indoor", "covered", "binnen", "innen"];
+    if (place.tags) {
+      const placeTags = place.tags.map((tag) => tag.toLowerCase());
+      return rainSafeTags.some((safeTag) =>
+        placeTags.some((placeTag) => placeTag.includes(safeTag))
+      );
+    }
+    return false;
+  };
+
+  // Filter places based on context filters
+  const filteredPlaces = useMemo(() => {
+    if (!placesData) return [];
+    return placesData.filter((place) => {
+      if (isOpenNow && !isPlaceOpenNow(place)) return false;
+      if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
+      if (within30Minutes && !isWithin30Minutes(place)) return false;
+      if (rainSafe && !isRainSafe(place)) return false;
+      return true;
+    });
+  }, [placesData, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
+
+  const placesWithCoordinates = filteredPlaces?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
   const markers = placesWithCoordinates.map((place) => ({
     id: place.slug || place.id, // Use slug if available, otherwise use ID
     lat: place.location!.lat!,
@@ -95,27 +257,22 @@ export function HomePage() {
     } : undefined, // Only allow navigation if slug exists
   }));
 
-  // Store the initial map center/zoom to prevent flickering when filters change
-  // Only update when mapSettings change, not when places/filters change
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
-  const hasInitializedCenter = useRef(false);
-  const initialPlacesLoaded = useRef(false);
-  const previousMarkersCount = useRef(0);
-
   // Initialize map center from settings (only once, or when settings change)
+  // Use original placesData (not filtered) for center calculation
+  const allPlacesWithCoordinates = placesData?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
   useEffect(() => {
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
       // Always update if mapSettings changed
       setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
       hasInitializedCenter.current = true;
-    } else if (!hasInitializedCenter.current && !initialPlacesLoaded.current && placesWithCoordinates.length > 0 && !isLoadingPlaces) {
+    } else if (!hasInitializedCenter.current && !initialPlacesLoaded.current && allPlacesWithCoordinates.length > 0 && !isLoadingPlaces) {
       // Only use places center if we don't have map settings and haven't initialized yet
-      const avgLat = placesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / placesWithCoordinates.length;
-      const avgLng = placesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / placesWithCoordinates.length;
+      const avgLat = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / allPlacesWithCoordinates.length;
+      const avgLng = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / allPlacesWithCoordinates.length;
       setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
       hasInitializedCenter.current = true;
       initialPlacesLoaded.current = true;
-      previousMarkersCount.current = placesWithCoordinates.length;
+      previousMarkersCount.current = allPlacesWithCoordinates.length;
     } else if (!hasInitializedCenter.current && !isLoadingPlaces) {
       // Default to Budapest only if we have no settings and no places yet
       setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
@@ -126,7 +283,7 @@ export function HomePage() {
     if (!isLoadingPlaces) {
       initialPlacesLoaded.current = true;
     }
-  }, [mapSettings?.lat, mapSettings?.lng, mapSettings?.zoom, isLoadingPlaces]);
+  }, [mapSettings?.lat, mapSettings?.lng, mapSettings?.zoom, isLoadingPlaces, allPlacesWithCoordinates.length]);
 
   // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
   useEffect(() => {
@@ -282,12 +439,34 @@ export function HomePage() {
             selectedPriceBands={selectedPriceBands}
             onCategoriesChange={setSelectedCategories}
             onPriceBandsChange={setSelectedPriceBands}
+            isOpenNow={isOpenNow}
+            hasEventToday={hasEventToday}
+            within30Minutes={within30Minutes}
+            rainSafe={rainSafe}
+            onOpenNowChange={setIsOpenNow}
+            onHasEventTodayChange={setHasEventToday}
+            onWithin30MinutesChange={setWithin30Minutes}
+            onRainSafeChange={setRainSafe}
             lang={lang}
           />
         </>
       ) : (
         <>
-          <PlacesListView onMapViewClick={() => setShowMap(true)} />
+          <PlacesListView
+            onMapViewClick={() => setShowMap(true)}
+            selectedCategories={selectedCategories}
+            selectedPriceBands={selectedPriceBands}
+            onCategoriesChange={setSelectedCategories}
+            onPriceBandsChange={setSelectedPriceBands}
+            isOpenNow={isOpenNow}
+            hasEventToday={hasEventToday}
+            within30Minutes={within30Minutes}
+            rainSafe={rainSafe}
+            onOpenNowChange={setIsOpenNow}
+            onHasEventTodayChange={setHasEventToday}
+            onWithin30MinutesChange={setWithin30Minutes}
+            onRainSafeChange={setRainSafe}
+          />
           {/* Full footer for list view */}
           <Footer lang={lang} tenantSlug={tenantSlug} />
         </>

@@ -88,6 +88,15 @@ export class EventsService {
             translations: true,
           },
         },
+        categories: {
+          include: {
+            category: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -259,6 +268,15 @@ export class EventsService {
         category: {
           include: {
             translations: true,
+          },
+        },
+        categories: {
+          include: {
+            category: {
+              include: {
+                translations: true,
+              },
+            },
           },
         },
         tags: {

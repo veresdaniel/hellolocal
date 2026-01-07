@@ -9,19 +9,20 @@ import { HomePage } from "../pages/HomePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
+import { StaticPagesListPage } from "../pages/StaticPagesListPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 import { AdminDashboard } from "../pages/admin/AdminDashboard";
 import { UserProfilePage } from "../pages/admin/UserProfilePage";
-import { AppSettingsPage } from "../pages/admin/AppSettingsPage";
 import { UsersPage } from "../pages/admin/UsersPage";
 import { CategoriesPage } from "../pages/admin/CategoriesPage";
 import { TagsPage } from "../pages/admin/TagsPage";
 import { PriceBandsPage } from "../pages/admin/PriceBandsPage";
 import { TownsPage } from "../pages/admin/TownsPage";
 import { LegalPagesPage } from "../pages/admin/LegalPagesPage";
+import { StaticPagesPage } from "../pages/admin/StaticPagesPage";
 import { TenantsPage } from "../pages/admin/TenantsPage";
 import { PlacesPage } from "../pages/admin/PlacesPage";
 import { EventsPage } from "../pages/admin/EventsPage";
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "place/:slug", element: <PlaceDetailPage /> },
       { path: "event/:slug", element: <EventDetailPage /> },
+      { path: "static-pages", element: <StaticPagesListPage /> },
 
       { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
       { path: "aszf", element: <LegalPage pageKey="terms" /> },
@@ -83,16 +85,6 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="viewer">
             <AdminLayout>
               <UserProfilePage />
-            </AdminLayout>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "settings",
-        element: (
-          <ProtectedRoute requiredRole="viewer">
-            <AdminLayout>
-              <AppSettingsPage />
             </AdminLayout>
           </ProtectedRoute>
         ),
@@ -163,6 +155,16 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="editor">
             <AdminLayout>
               <LegalPagesPage />
+            </AdminLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "static-pages",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <AdminLayout>
+              <StaticPagesPage />
             </AdminLayout>
           </ProtectedRoute>
         ),

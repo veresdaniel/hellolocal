@@ -110,6 +110,10 @@ export function deleteCategory(id: string, tenantId?: string) {
   return apiDelete<{ message: string }>(`/admin/categories/${id}${params}`);
 }
 
+export function reorderCategories(tenantId: string, updates: Array<{ id: string; parentId: string | null; order: number }>) {
+  return apiPut<{ message: string }>("/admin/categories/reorder", { tenantId, updates });
+}
+
 // Tags
 export function getTags(tenantId?: string) {
   const params = tenantId ? `?tenantId=${tenantId}` : "";
@@ -236,6 +240,34 @@ export function updateLegalPage(id: string, data: any, tenantId?: string) {
 export function deleteLegalPage(id: string, tenantId?: string) {
   const params = tenantId ? `?tenantId=${tenantId}` : "";
   return apiDelete<{ message: string }>(`/admin/legal-pages/${id}${params}`);
+}
+
+// Static Pages
+export function getStaticPages(tenantId?: string, category?: string) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (category) params.append("category", category);
+  const queryString = params.toString();
+  return apiGet<any[]>(`/admin/static-pages${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getStaticPage(id: string, tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiGet<any>(`/admin/static-pages/${id}${params}`);
+}
+
+export function createStaticPage(data: any) {
+  return apiPost<any>("/admin/static-pages", data);
+}
+
+export function updateStaticPage(id: string, data: any, tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiPut<any>(`/admin/static-pages/${id}${params}`, data);
+}
+
+export function deleteStaticPage(id: string, tenantId?: string) {
+  const params = tenantId ? `?tenantId=${tenantId}` : "";
+  return apiDelete<{ message: string }>(`/admin/static-pages/${id}${params}`);
 }
 
 // App Settings
@@ -480,7 +512,7 @@ export interface Event {
   id: string;
   tenantId: string;
   placeId: string | null;
-  categoryId: string | null;
+  categoryId: string | null; // Legacy: kept for backward compatibility
   isActive: boolean;
   isPinned: boolean;
   startDate: string;
@@ -497,6 +529,12 @@ export interface Event {
     id: string;
     translations: Array<{ lang: string; name: string }>;
   } | null;
+  categories?: Array<{
+    category: {
+      id: string;
+      translations: Array<{ lang: string; name: string }>;
+    };
+  }>;
   tags: Array<{
     tag: {
       id: string;
@@ -520,7 +558,8 @@ export interface Event {
 export interface CreateEventDto {
   tenantId: string;
   placeId?: string | null;
-  categoryId?: string | null;
+  categoryId?: string | null; // Legacy: kept for backward compatibility
+  categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   translations: Array<{
     lang: "hu" | "en" | "de";
@@ -544,7 +583,8 @@ export interface CreateEventDto {
 
 export interface UpdateEventDto {
   placeId?: string | null;
-  categoryId?: string | null;
+  categoryId?: string | null; // Legacy: kept for backward compatibility
+  categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   translations?: Array<{
     lang: "hu" | "en" | "de";

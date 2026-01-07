@@ -57,8 +57,8 @@ export function TenantsPage() {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.slug.trim()) errors.slug = "Slug is required";
-    if (!formData.nameHu.trim()) errors.nameHu = "Hungarian name is required";
+    if (!formData.slug.trim()) errors.slug = t("admin.validation.slugRequired");
+    if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
     // English and German are optional
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -110,8 +110,12 @@ export function TenantsPage() {
       setIsCreating(false);
       resetForm();
       await loadTenants();
+      // Reload tenants in the context to update the tenant selector
+      reloadTenants();
+      // Reload tenants in the context to update the tenant selector
+      reloadTenants();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create tenant");
+      setError(err instanceof Error ? err.message : t("admin.errors.createTenantFailed"));
     }
   };
 
@@ -161,13 +165,15 @@ export function TenantsPage() {
       setEditingId(null);
       resetForm();
       await loadTenants();
+      // Reload tenants in the context to update the tenant selector
+      reloadTenants();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update tenant");
+      setError(err instanceof Error ? err.message : t("admin.errors.updateTenantFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this tenant? This action cannot be undone.")) return;
+    if (!confirm(t("admin.confirmations.deleteTenant"))) return;
 
     try {
       await deleteTenant(id);
@@ -176,10 +182,12 @@ export function TenantsPage() {
         setSelectedTenantId(null);
       }
       await loadTenants();
+      // Reload tenants in the context to update the tenant selector
+      reloadTenants();
       // Reload tenant selector
       reloadTenants();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete tenant");
+      setError(err instanceof Error ? err.message : t("admin.errors.deleteTenantFailed"));
     }
   };
 

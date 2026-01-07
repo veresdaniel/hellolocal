@@ -2,6 +2,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useTenantContext } from "../app/tenant/useTenantContext";
+import { HAS_MULTIPLE_TENANTS } from "../app/config";
 import { getPlaces } from "../api/places.api";
 
 interface MapFiltersProps {
@@ -9,6 +11,15 @@ interface MapFiltersProps {
   selectedPriceBands: string[];
   onCategoriesChange: (categories: string[]) => void;
   onPriceBandsChange: (priceBands: string[]) => void;
+  // Context-based filters
+  isOpenNow: boolean;
+  hasEventToday: boolean;
+  within30Minutes: boolean;
+  rainSafe: boolean;
+  onOpenNowChange: (value: boolean) => void;
+  onHasEventTodayChange: (value: boolean) => void;
+  onWithin30MinutesChange: (value: boolean) => void;
+  onRainSafeChange: (value: boolean) => void;
   lang: string;
 }
 
@@ -17,8 +28,18 @@ export function MapFilters({
   selectedPriceBands,
   onCategoriesChange,
   onPriceBandsChange,
+  isOpenNow,
+  hasEventToday,
+  within30Minutes,
+  rainSafe,
+  onOpenNowChange,
+  onHasEventTodayChange,
+  onWithin30MinutesChange,
+  onRainSafeChange,
   lang,
 }: MapFiltersProps) {
+  const { tenantSlug } = useTenantContext();
+  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   // Load saved position from localStorage with lazy initializer
@@ -166,8 +187,8 @@ export function MapFilters({
 
   // Fetch places to extract unique categories and price bands
   const { data: places } = useQuery({
-    queryKey: ["places", lang],
-    queryFn: () => getPlaces(lang),
+    queryKey: ["places", lang, tenantKey],
+    queryFn: () => getPlaces(lang, tenantKey),
     staleTime: 30 * 1000, // Consider data stale after 30 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Refetch when component mounts
@@ -272,7 +293,7 @@ export function MapFilters({
         }}
       >
         <h3 style={{ margin: 0, color: "white", fontSize: 18, fontWeight: 700 }}>
-          🔍 {t("public.filters") || "Szűrők"}
+          🔍 {t("public.filtersTitle") || "Szűrők"}
         </h3>
         <div
           style={{
@@ -451,6 +472,132 @@ export function MapFilters({
                   Nincs elérhető ár sáv
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Context-based filters */}
+          <div>
+            <h3
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#5a3d7a",
+                marginBottom: 12,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Kontextus alapú szűrők
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button
+                onClick={() => onOpenNowChange(!isOpenNow)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  background: isOpenNow ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                  color: isOpenNow ? "#3d2952" : "#5a3d7a",
+                  fontWeight: isOpenNow ? 600 : 500,
+                  fontSize: 14,
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                  border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isOpenNow) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isOpenNow) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
+                  }
+                }}
+              >
+                🕐 Most nyitva
+              </button>
+              <button
+                onClick={() => onHasEventTodayChange(!hasEventToday)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  background: hasEventToday ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                  color: hasEventToday ? "#3d2952" : "#5a3d7a",
+                  fontWeight: hasEventToday ? 600 : 500,
+                  fontSize: 14,
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                  border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!hasEventToday) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!hasEventToday) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
+                  }
+                }}
+              >
+                📅 Ma van esemény
+              </button>
+              <button
+                onClick={() => onWithin30MinutesChange(!within30Minutes)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                  color: within30Minutes ? "#3d2952" : "#5a3d7a",
+                  fontWeight: within30Minutes ? 600 : 500,
+                  fontSize: 14,
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                  border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!within30Minutes) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!within30Minutes) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
+                  }
+                }}
+              >
+                🚗 30 percen belül elérhető
+              </button>
+              <button
+                onClick={() => onRainSafeChange(!rainSafe)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  background: rainSafe ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                  color: rainSafe ? "#3d2952" : "#5a3d7a",
+                  fontWeight: rainSafe ? 600 : 500,
+                  fontSize: 14,
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                  border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!rainSafe) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!rainSafe) {
+                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
+                  }
+                }}
+              >
+                ☂️ Esőbiztos program
+              </button>
             </div>
           </div>
         </div>

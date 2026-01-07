@@ -12,12 +12,14 @@ export function useAdminCache() {
   // Listen for global entity change events
   useEffect(() => {
     const handlePlacesChanged = async () => {
-      // Invalidate all places-related caches
+      // Invalidate all places-related caches (including public API caches)
+      // This will force refetch of all places queries regardless of filters or tenant
       await queryClient.invalidateQueries({ queryKey: ["places"] });
       await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["place"] });
       // Events can be linked to places, so invalidate events too
       await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
       await queryClient.invalidateQueries({ queryKey: ["event"] });
     };
 
@@ -96,7 +98,7 @@ export function useAdminCache() {
  * Helper function to notify that an entity has changed
  * Use this after create/update/delete operations
  */
-export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "siteSettings" | "mapSettings") {
+export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "siteSettings" | "mapSettings" | "staticPages") {
   window.dispatchEvent(new CustomEvent(`admin:${entityType}:changed`));
 }
 

@@ -53,6 +53,18 @@ export function Header() {
     setIsDragging(true);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!headerRef.current) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = headerRef.current.getBoundingClientRect();
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+    setIsDragging(true);
+  };
+
   useEffect(() => {
     if (!isDragging) return;
 
@@ -70,16 +82,42 @@ export function Header() {
       });
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const newLeft = touch.clientX - dragOffset.x;
+      const newTop = touch.clientY - dragOffset.y;
+
+      // Constrain to viewport
+      const maxLeft = window.innerWidth - (headerRef.current?.offsetWidth || 200);
+      const maxTop = window.innerHeight - (headerRef.current?.offsetHeight || 60);
+
+      setPosition({
+        left: Math.max(0, Math.min(newLeft, maxLeft)),
+        top: Math.max(0, Math.min(newTop, maxTop)),
+      });
+    };
+
     const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleTouchEnd = () => {
       setIsDragging(false);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [isDragging, dragOffset]);
 
@@ -87,6 +125,7 @@ export function Header() {
     <header
       ref={headerRef}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       style={{
         position: "fixed",
         top: position.top,
@@ -101,6 +140,7 @@ export function Header() {
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
         transition: isDragging ? "none" : "box-shadow 0.2s ease",
+        touchAction: "none", // Prevent default touch behaviors
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {

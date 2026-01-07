@@ -6,7 +6,8 @@ import { NotificationsService } from "../notifications/notifications.service";
 export interface CreateEventDto {
   tenantId: string;
   placeId?: string | null;
-  categoryId?: string | null;
+  categoryId?: string | null; // Legacy: kept for backward compatibility
+  categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   translations: Array<{
     lang: Lang;
@@ -31,7 +32,8 @@ export interface CreateEventDto {
 
 export interface UpdateEventDto {
   placeId?: string | null;
-  categoryId?: string | null;
+  categoryId?: string | null; // Legacy: kept for backward compatibility
+  categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   translations?: Array<{
     lang: Lang;
@@ -158,6 +160,15 @@ export class AdminEventService {
             translations: true,
           },
         },
+        categories: {
+          include: {
+            category: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -179,7 +190,7 @@ export class AdminEventService {
   }
 
   async create(dto: CreateEventDto) {
-    const { tagIds = [], translations, ...eventData } = dto;
+    const { tagIds = [], categoryIds = [], translations, ...eventData } = dto;
 
     // Validate that at least one translation is provided
     if (!translations || translations.length === 0) {
@@ -216,6 +227,11 @@ export class AdminEventService {
             tagId,
           })),
         },
+        categories: {
+          create: categoryIds.map((categoryId) => ({
+            categoryId,
+          })),
+        },
       },
       include: {
         place: {
@@ -226,6 +242,15 @@ export class AdminEventService {
         category: {
           include: {
             translations: true,
+          },
+        },
+        categories: {
+          include: {
+            category: {
+              include: {
+                translations: true,
+              },
+            },
           },
         },
         tags: {
@@ -261,7 +286,7 @@ export class AdminEventService {
 
   async update(id: string, tenantId: string, dto: UpdateEventDto) {
     const event = await this.findOne(id, tenantId);
-    const { tagIds, translations, ...eventData } = dto;
+    const { tagIds, categoryIds, translations, ...eventData } = dto;
 
     // Update translations if provided
     if (translations && translations.length > 0) {
@@ -314,6 +339,24 @@ export class AdminEventService {
           data: tagIds.map((tagId) => ({
             eventId: id,
             tagId,
+          })),
+        });
+      }
+    }
+
+    // Update categories if provided
+    if (categoryIds !== undefined) {
+      // Delete existing categories
+      await this.prisma.eventCategory.deleteMany({
+        where: { eventId: id },
+      });
+
+      // Create new categories
+      if (categoryIds.length > 0) {
+        await this.prisma.eventCategory.createMany({
+          data: categoryIds.map((categoryId) => ({
+            eventId: id,
+            categoryId,
           })),
         });
       }

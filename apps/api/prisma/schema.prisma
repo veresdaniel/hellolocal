@@ -48,6 +48,7 @@ model Tenant {
   places           Place[]
   events           Event[]
   legalPages       LegalPage[]
+  staticPages      StaticPage[]
   translations     TenantTranslation[]
 
   tenantKeys       TenantKey[]
@@ -173,18 +174,25 @@ model TownTranslation {
 model Category {
   id         String   @id @default(cuid())
   tenantId   String
+  parentId   String?  // Parent category for hierarchy
   isActive   Boolean  @default(true)
   color      String?  // Hex color code for card border (e.g., "#667eea")
+  order      Int      @default(0) // Sort order within parent (or root level)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent     Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children   Category[] @relation("CategoryHierarchy")
   translations CategoryTranslation[]
   places     Place[]
   events     Event[]
+  eventCategories EventCategory[]
 
   @@index([tenantId])
+  @@index([parentId])
+  @@index([tenantId, parentId, order])
 }
 
 model CategoryTranslation {
@@ -385,6 +393,42 @@ model LegalPageTranslation {
   @@index([lang])
 }
 
+model StaticPage {
+  id         String   @id @default(cuid())
+  tenantId   String
+  category   String   // blog | tudastar | infok
+  isActive   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  translations StaticPageTranslation[]
+
+  @@index([tenantId])
+  @@index([category])
+}
+
+model StaticPageTranslation {
+  id              String @id @default(cuid())
+  staticPageId    String
+  lang            Lang
+
+  title           String
+  content         String? // HTML
+
+  // SEO
+  seoTitle        String?
+  seoDescription   String?
+  seoImage        String?
+  seoKeywords     String[] @default([])
+
+  staticPage      StaticPage @relation(fields: [staticPageId], references: [id], onDelete: Cascade)
+
+  @@unique([staticPageId, lang])
+  @@index([lang])
+}
+
 model User {
   id            String   @id @default(cuid())
   username      String   @unique
@@ -474,9 +518,10 @@ model Event {
   
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   place      Place?   @relation(fields: [placeId], references: [id], onDelete: SetNull)
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Legacy: kept for backward compatibility
   translations EventTranslation[]
   tags       EventTag[]
+  categories EventCategory[] // Many-to-many relationship with categories
   
   @@index([tenantId, startDate])
   @@index([placeId])
@@ -515,6 +560,22 @@ model EventTag {
   @@unique([eventId, tagId])
   @@index([eventId])
   @@index([tagId])
+}
+
+// Many-to-many relationship between Event and Category
+model EventCategory {
+  id         String   @id @default(cuid())
+  eventId    String
+  categoryId String
+  
+  createdAt  DateTime @default(now())
+  
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, categoryId])
+  @@index([eventId])
+  @@index([categoryId])
 }
 
 // Push notification subscriptions

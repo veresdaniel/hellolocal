@@ -51,16 +51,16 @@ export function AdminDashboard() {
           icon="🏘️"
         />
         <DashboardCard
-          title={t("admin.dashboardCards.settings")}
-          description={t("admin.dashboardCards.settingsDesc")}
-          link="/admin/settings"
-          icon="⚙️"
-        />
-        <DashboardCard
           title={t("admin.dashboardCards.legalPages")}
           description={t("admin.dashboardCards.legalPagesDesc")}
           link="/admin/legal"
           icon="📄"
+        />
+        <DashboardCard
+          title={t("admin.dashboardCards.staticPages")}
+          description={t("admin.dashboardCards.staticPagesDesc")}
+          link="/admin/static-pages"
+          icon="📝"
         />
         <DashboardCard
           title={t("admin.dashboardCards.userProfile")}

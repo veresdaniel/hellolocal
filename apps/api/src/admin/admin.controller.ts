@@ -22,6 +22,7 @@ import { AdminUsersService, UpdateUserRoleDto, UpdateUserDto, CreateUserDto } fr
 import { AdminTownService, CreateTownDto, UpdateTownDto } from "./admin-town.service";
 import { AdminPlaceService, CreatePlaceDto, UpdatePlaceDto } from "./admin-place.service";
 import { AdminLegalService, CreateLegalPageDto, UpdateLegalPageDto } from "./admin-legal.service";
+import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from "./admin-static-page.service";
 import { AdminTenantService, CreateTenantDto, UpdateTenantDto } from "./admin-tenant.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
 import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
@@ -48,6 +49,7 @@ export class AdminController {
     private readonly townService: AdminTownService,
     private readonly placeService: AdminPlaceService,
     private readonly legalService: AdminLegalService,
+    private readonly staticPageService: AdminStaticPageService,
     private readonly tenantService: AdminTenantService,
     private readonly appSettingsService: AdminAppSettingsService,
     private readonly eventService: AdminEventService,
@@ -128,6 +130,22 @@ export class AdminController {
       throw new Error("User does not have access to this tenant");
     }
     return this.categoryService.remove(id, tenantId);
+  }
+
+  @Put("/categories/reorder")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async reorderCategories(
+    @Body() body: { tenantId: string; updates: Array<{ id: string; parentId: string | null; order: number }> },
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = body.tenantId || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.categoryService.reorder(tenantId, body.updates);
   }
 
   // ==================== Tags ====================
@@ -530,6 +548,87 @@ export class AdminController {
       throw new Error("User does not have access to this tenant");
     }
     return this.legalService.remove(id, tenantId);
+  }
+
+  // ==================== Static Pages ====================
+
+  @Get("/static-pages")
+  async getStaticPages(
+    @CurrentUser() user: { tenantIds: string[] },
+    @Query("tenantId") tenantIdParam?: string,
+    @Query("category") category?: string
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.staticPageService.findAll(tenantId, category as any);
+  }
+
+  @Get("/static-pages/:id")
+  async getStaticPage(
+    @Param("id") id: string,
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.staticPageService.findOne(id, tenantId);
+  }
+
+  @Post("/static-pages")
+  async createStaticPage(
+    @Body() dto: CreateStaticPageDto,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    if (!dto.tenantId) {
+      dto.tenantId = user.tenantIds[0];
+    }
+    if (!user.tenantIds.includes(dto.tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.staticPageService.create(dto);
+  }
+
+  @Put("/static-pages/:id")
+  async updateStaticPage(
+    @Param("id") id: string,
+    @Body() dto: UpdateStaticPageDto,
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.staticPageService.update(id, tenantId, dto);
+  }
+
+  @Delete("/static-pages/:id")
+  async deleteStaticPage(
+    @Param("id") id: string,
+    @Query("tenantId") tenantIdParam: string | undefined,
+    @CurrentUser() user: { tenantIds: string[] }
+  ) {
+    const tenantId = tenantIdParam || user.tenantIds[0];
+    if (!tenantId) {
+      throw new Error("User has no associated tenant");
+    }
+    if (!user.tenantIds.includes(tenantId)) {
+      throw new Error("User does not have access to this tenant");
+    }
+    return this.staticPageService.remove(id, tenantId);
   }
 
   // ==================== Users ====================

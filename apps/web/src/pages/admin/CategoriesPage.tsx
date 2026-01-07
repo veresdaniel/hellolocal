@@ -11,6 +11,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  reorderCategories,
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
@@ -18,8 +19,11 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 interface Category {
   id: string;
   tenantId: string;
+  parentId: string | null;
   isActive: boolean;
   color: string | null;
+  order: number;
+  parent?: Category | null;
   translations: Array<{
     id: string;
     lang: string;
@@ -38,6 +42,8 @@ export function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nameHu: "",
     nameEn: "",
@@ -47,6 +53,8 @@ export function CategoriesPage() {
     descriptionDe: "",
     isActive: true,
     color: "",
+    parentId: "" as string | "",
+    order: 0,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -94,9 +102,11 @@ export function CategoriesPage() {
       }
       await createCategory({
         tenantId: selectedTenantId,
+        parentId: formData.parentId || null,
         translations,
         isActive: formData.isActive,
         color: formData.color || null,
+        order: formData.order,
       });
       setIsCreating(false);
       resetForm();
@@ -124,9 +134,11 @@ export function CategoriesPage() {
       await updateCategory(
         id,
         {
+          parentId: formData.parentId || null,
           translations,
           isActive: formData.isActive,
           color: formData.color || null,
+          order: formData.order,
         },
         selectedTenantId || undefined
       );
@@ -170,6 +182,8 @@ export function CategoriesPage() {
       descriptionDe: de?.description || "",
       isActive: category.isActive,
       color: category.color || "",
+      parentId: category.parentId || "",
+      order: category.order,
     });
   };
 
@@ -182,6 +196,9 @@ export function CategoriesPage() {
       descriptionEn: "",
       descriptionDe: "",
       isActive: true,
+      color: "",
+      parentId: "",
+      order: 0,
     });
     setFormErrors({});
   };
@@ -296,6 +313,52 @@ export function CategoriesPage() {
           </LanguageAwareForm>
 
           <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 4 }}>
+              {t("admin.parentCategory") || "Szülő kategória"}
+            </label>
+            <select
+              value={formData.parentId}
+              onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+              style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+            >
+              <option value="">{t("admin.noParentCategory")}</option>
+              {categories
+                .filter((cat) => !editingId || cat.id !== editingId) // Don't allow self as parent
+                .map((cat) => {
+                  const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                  const translation = cat.translations.find((t) => t.lang === currentLang) || 
+                                     cat.translations.find((t) => t.lang === "hu");
+                  const displayName = translation?.name || cat.id;
+                  const parentName = cat.parent 
+                    ? (cat.parent.translations.find((t) => t.lang === currentLang) || 
+                       cat.parent.translations.find((t) => t.lang === "hu"))?.name || ""
+                    : "";
+                  return (
+                    <option key={cat.id} value={cat.id}>
+                      {parentName ? `${parentName} > ` : ""}{displayName}
+                    </option>
+                  );
+                })}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", marginBottom: 4 }}>
+              {t("admin.order") || "Sorrend"}
+            </label>
+            <input
+              type="number"
+              value={formData.order}
+              onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+              style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+              min={0}
+            />
+            <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+              {t("admin.orderDescription") || "Kisebb szám = előrébb a listában"}
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="checkbox"
@@ -381,23 +444,165 @@ export function CategoriesPage() {
       <LoadingSpinner isLoading={isLoading} />
       {!isLoading && !isCreating && !editingId ? (
         <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
+          <div style={{ padding: 12, background: "#f5f5f5", borderBottom: "1px solid #ddd", fontSize: 12, color: "#666" }}>
+            {t("admin.dragToReorder") || "Húzd a kategóriákat a rendezéshez. Húzd egy kategória alá, hogy gyermek kategóriává tedd."}
+          </div>
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
             <thead>
               <tr style={{ background: "#f5f5f5" }}>
+                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd", width: 40 }}></th>
                 <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.name")}</th>
+                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.parentCategory") || "Szülő"}</th>
+                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.order") || "Sorrend"}</th>
                 <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
                 <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
               </tr>
             </thead>
             <tbody>
-              {categories.map((category) => {
+              {categories.map((category, index) => {
                 // Get current language or fallback to Hungarian
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = category.translations.find((t) => t.lang === currentLang) || 
                                    category.translations.find((t) => t.lang === "hu");
+                const parentTranslation = category.parent 
+                  ? (category.parent.translations.find((t) => t.lang === currentLang) || 
+                     category.parent.translations.find((t) => t.lang === "hu"))
+                  : null;
+                const isDragging = draggedId === category.id;
+                const isDragOver = dragOverId === category.id;
                 return (
-                  <tr key={category.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 12 }}>{translation?.name || "-"}</td>
+                  <tr
+                    key={category.id}
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggedId(category.id);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", category.id);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (dragOverId !== category.id && draggedId !== category.id) {
+                        setDragOverId(category.id);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      if (dragOverId === category.id) {
+                        setDragOverId(null);
+                      }
+                    }}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      const draggedCategoryId = e.dataTransfer.getData("text/plain");
+                      if (!draggedCategoryId || draggedCategoryId === category.id) {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                        return;
+                      }
+
+                      const draggedCategory = categories.find((c) => c.id === draggedCategoryId);
+                      if (!draggedCategory) {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                        return;
+                      }
+
+                      // Prevent dropping on itself or its children
+                      const isDescendant = (parentId: string, childId: string): boolean => {
+                        const child = categories.find((c) => c.id === childId);
+                        if (!child || !child.parentId) return false;
+                        if (child.parentId === parentId) return true;
+                        return isDescendant(parentId, child.parentId);
+                      };
+
+                      if (isDescendant(draggedCategoryId, category.id)) {
+                        setError(t("admin.errors.cannotDropOnChild") || "Cannot drop category on its own child");
+                        setDraggedId(null);
+                        setDragOverId(null);
+                        return;
+                      }
+
+                      // Determine new parent and order
+                      // If dropping on a root category (no parent), make it a child of that category
+                      // If dropping on a child category, make it a sibling (same parent)
+                      const newParentId = category.parentId ? category.parentId : (category.id === draggedCategoryId ? draggedCategory.parentId : category.id);
+                      
+                      // Get all siblings (categories with same parent, excluding dragged one)
+                      const siblings = categories
+                        .filter((c) => {
+                          if (c.id === draggedCategoryId) return false;
+                          if (newParentId) {
+                            return c.parentId === newParentId;
+                          } else {
+                            return !c.parentId;
+                          }
+                        })
+                        .sort((a, b) => a.order - b.order);
+
+                      // Find target position
+                      const targetIndex = siblings.findIndex((c) => c.id === category.id);
+                      const newOrder = targetIndex >= 0 ? targetIndex : siblings.length;
+
+                      // Build updates array
+                      const updates: Array<{ id: string; parentId: string | null; order: number }> = [];
+                      
+                      // Update dragged category
+                      updates.push({
+                        id: draggedCategoryId,
+                        parentId: newParentId === draggedCategoryId ? null : newParentId,
+                        order: newOrder,
+                      });
+
+                      // Update siblings that come after the new position
+                      siblings.forEach((sibling, idx) => {
+                        if (idx >= newOrder) {
+                          updates.push({
+                            id: sibling.id,
+                            parentId: sibling.parentId,
+                            order: idx + 1,
+                          });
+                        } else {
+                          // Update order for siblings before (to maintain order)
+                          updates.push({
+                            id: sibling.id,
+                            parentId: sibling.parentId,
+                            order: idx,
+                          });
+                        }
+                      });
+
+                      try {
+                        await reorderCategories(selectedTenantId!, updates);
+                        await loadCategories();
+                        notifyEntityChanged("categories");
+                        setError(null);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : t("admin.errors.reorderFailed") || "Failed to reorder categories");
+                      }
+
+                      setDraggedId(null);
+                      setDragOverId(null);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedId(null);
+                      setDragOverId(null);
+                    }}
+                    style={{
+                      borderBottom: "1px solid #eee",
+                      opacity: isDragging ? 0.5 : 1,
+                      background: isDragOver ? "#e3f2fd" : "transparent",
+                      cursor: "move",
+                    }}
+                  >
+                    <td style={{ padding: 12, textAlign: "center", color: "#999" }}>
+                      <span style={{ fontSize: 18 }}>⋮⋮</span>
+                    </td>
+                    <td style={{ padding: 12, paddingLeft: category.parentId ? 32 : 12 }}>
+                      {category.parentId && <span style={{ color: "#999", marginRight: 8 }}>└─</span>}
+                      {translation?.name || "-"}
+                    </td>
+                    <td style={{ padding: 12 }}>{parentTranslation?.name || "-"}</td>
+                    <td style={{ padding: 12 }}>{category.order}</td>
                     <td style={{ padding: 12 }}>
                       <span
                         style={{

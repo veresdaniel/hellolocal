@@ -12,18 +12,61 @@ import { HAS_MULTIPLE_TENANTS } from "../app/config";
 import { buildPath } from "../app/routing/buildPath";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { useFiltersStore } from "../stores/useFiltersStore";
 
 interface PlacesListViewProps {
   onMapViewClick: () => void;
+  selectedCategories?: string[];
+  selectedPriceBands?: string[];
+  onCategoriesChange?: (categories: string[]) => void;
+  onPriceBandsChange?: (priceBands: string[]) => void;
+  isOpenNow?: boolean;
+  hasEventToday?: boolean;
+  within30Minutes?: boolean;
+  rainSafe?: boolean;
+  onOpenNowChange?: (value: boolean) => void;
+  onHasEventTodayChange?: (value: boolean) => void;
+  onWithin30MinutesChange?: (value: boolean) => void;
+  onRainSafeChange?: (value: boolean) => void;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
+export function PlacesListView({
+  onMapViewClick,
+  selectedCategories: propSelectedCategories,
+  selectedPriceBands: propSelectedPriceBands,
+  onCategoriesChange: propOnCategoriesChange,
+  onPriceBandsChange: propOnPriceBandsChange,
+  isOpenNow: propIsOpenNow,
+  hasEventToday: propHasEventToday,
+  within30Minutes: propWithin30Minutes,
+  rainSafe: propRainSafe,
+  onOpenNowChange: propOnOpenNowChange,
+  onHasEventTodayChange: propOnHasEventTodayChange,
+  onWithin30MinutesChange: propOnWithin30MinutesChange,
+  onRainSafeChange: propOnRainSafeChange,
+}: PlacesListViewProps) {
   const { t } = useTranslation();
   const { lang, tenantSlug } = useTenantContext();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedPriceBands, setSelectedPriceBands] = useState<string[]>([]);
+  
+  // Use Zustand store as default, props override if provided
+  const storeFilters = useFiltersStore();
+  const selectedCategories = propSelectedCategories ?? storeFilters.selectedCategories;
+  const selectedPriceBands = propSelectedPriceBands ?? storeFilters.selectedPriceBands;
+  const isOpenNow = propIsOpenNow ?? storeFilters.isOpenNow;
+  const hasEventToday = propHasEventToday ?? storeFilters.hasEventToday;
+  const within30Minutes = propWithin30Minutes ?? storeFilters.within30Minutes;
+  const rainSafe = propRainSafe ?? storeFilters.rainSafe;
+  const userLocation = storeFilters.userLocation;
+
+  const setSelectedCategories = propOnCategoriesChange ?? storeFilters.setSelectedCategories;
+  const setSelectedPriceBands = propOnPriceBandsChange ?? storeFilters.setSelectedPriceBands;
+  const setIsOpenNow = propOnOpenNowChange ?? storeFilters.setIsOpenNow;
+  const setHasEventToday = propOnHasEventTodayChange ?? storeFilters.setHasEventToday;
+  const setWithin30Minutes = propOnWithin30MinutesChange ?? storeFilters.setWithin30Minutes;
+  const setRainSafe = propOnRainSafeChange ?? storeFilters.setRainSafe;
+
   const [searchQuery, setSearchQuery] = useState("");
   const observerTarget = useRef<HTMLDivElement>(null);
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
@@ -51,6 +94,7 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
       
       const places = await getPlaces(
         lang,
+        tenantKey,
         categoryParam,
         priceBandParam,
         searchQuery || undefined,
@@ -67,25 +111,113 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
     initialPageParam: 0,
   });
 
-  const places = data?.pages.flatMap((page) => page.places) ?? [];
+  const allPlaces = data?.pages.flatMap((page) => page.places) ?? [];
 
-  // Fetch events
-  const { data: events = [] } = useQuery({
+  // Fetch events for context-based filters
+  const { data: eventsData = [] } = useQuery({
     queryKey: ["events", lang, tenantKey],
-    queryFn: () => getEvents(lang, undefined, undefined, 100, 0),
+    queryFn: () => getEvents(lang, undefined, undefined, 100, 0, tenantKey),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    select: (data) => {
-      // Filter out past events (events that have ended)
-      const now = new Date();
-      return data.filter((event) => {
-        if (event.endDate) {
-          return new Date(event.endDate) >= now;
-        }
-        // If no endDate, check startDate
-        return new Date(event.startDate) >= now;
-      });
-    },
   });
+
+  // Get user location for "within30Minutes" filter
+  useEffect(() => {
+    if (within30Minutes && navigator.geolocation && !userLocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          storeFilters.setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+        }
+      );
+    }
+  }, [within30Minutes, userLocation, storeFilters]);
+
+  // Helper function to calculate distance in km using Haversine formula
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Helper function to check if place is open now
+  const isPlaceOpenNow = (place: Place): boolean => {
+    if (!place.openingHours) return false;
+    return true; // Simplified - in production, parse actual hours
+  };
+
+  // Helper function to check if place has event today
+  const hasEventTodayForPlace = (placeId: string | null | undefined): boolean => {
+    if (!eventsData || !placeId) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return eventsData.some((event) => {
+      if (event.placeId !== placeId) return false;
+      const eventStart = new Date(event.startDate);
+      const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+      return eventStart < tomorrow && eventEnd >= today;
+    });
+  };
+
+  // Helper function to check if place is within 30 minutes
+  const isWithin30Minutes = (place: Place): boolean => {
+    if (!within30Minutes || !userLocation || !place.location) return false;
+    const distance = calculateDistance(
+      userLocation.lat,
+      userLocation.lng,
+      place.location.lat,
+      place.location.lng
+    );
+    return distance <= 25; // 25 km ≈ 30 minutes at 50 km/h average
+  };
+
+  // Helper function to check if place is rain-safe
+  const isRainSafe = (place: Place): boolean => {
+    if (!rainSafe) return false;
+    const rainSafeTags = ["fedett", "beltér", "indoor", "covered", "binnen", "innen"];
+    if (place.tags) {
+      const placeTags = place.tags.map((tag) => tag.toLowerCase());
+      return rainSafeTags.some((safeTag) =>
+        placeTags.some((placeTag) => placeTag.includes(safeTag))
+      );
+    }
+    return false;
+  };
+
+  // Filter places based on context filters
+  const places = useMemo(() => {
+    return allPlaces.filter((place) => {
+      if (isOpenNow && !isPlaceOpenNow(place)) return false;
+      if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
+      if (within30Minutes && !isWithin30Minutes(place)) return false;
+      if (rainSafe && !isRainSafe(place)) return false;
+      return true;
+    });
+  }, [allPlaces, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
+
+  // Fetch events (filtered)
+  const events = useMemo(() => {
+    const now = new Date();
+    return eventsData.filter((event) => {
+      if (event.endDate) {
+        return new Date(event.endDate) >= now;
+      }
+      return new Date(event.startDate) >= now;
+    });
+  }, [eventsData]);
 
   // Combine places and events, sort by date (pinned events first, then by start date)
   const combinedItems = useMemo(() => {
@@ -151,32 +283,24 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
       <FloatingHeader onMapViewClick={onMapViewClick} />
       <style>{`
         .places-grid {
-          column-count: 1;
-          column-gap: 20px;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 20px;
           margin-bottom: 32px;
         }
         @media (min-width: 640px) {
           .places-grid {
-            column-count: 2;
-            column-gap: 24px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
           }
         }
         @media (min-width: 900px) {
           .places-grid {
-            column-count: 3;
-            column-gap: 24px;
-          }
-        }
-        @media (min-width: 1440px) {
-          .places-grid {
-            column-count: 3;
-            column-gap: 32px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
           }
         }
         .places-grid > * {
-          break-inside: avoid;
-          margin-bottom: 24px;
-          display: inline-block;
           width: 100%;
         }
       `}</style>
@@ -187,81 +311,98 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
           padding: "72px 12px 24px",
         }}
       >
-      <div
-        style={{
-          maxWidth: 960,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
         {/* Header */}
-        <h1
+        <div
           style={{
-            margin: 0,
-            marginBottom: 24,
-            fontSize: "clamp(24px, 5vw, 36px)",
-            fontWeight: 700,
-            color: "#1a1a1a",
-            letterSpacing: "-0.02em",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
+            maxWidth: 960,
+            margin: "0 auto",
+            width: "100%",
           }}
         >
-          {t("public.explore.title")}
-        </h1>
-
-        {/* Search Bar */}
-        <div style={{ marginBottom: 24 }}>
-          <input
-            type="text"
-            placeholder={t("public.searchPlaces") || "Keresés..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+          <h1
             style={{
-              width: "100%",
-              padding: "14px 20px",
-              fontSize: 16,
-              border: "2px solid #e0e0e0",
-              borderRadius: 12,
-              background: "white",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-              transition: "all 0.2s",
+              margin: 0,
+              marginBottom: 24,
+              fontSize: "clamp(24px, 5vw, 36px)",
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
             }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#667eea";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e0e0e0";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04)";
-            }}
-          />
-        </div>
+          >
+            {t("public.explore.title")}
+          </h1>
 
-        {/* Filters */}
-        <div style={{ marginBottom: 32 }}>
-          <MapFilters
-            selectedCategories={selectedCategories}
-            selectedPriceBands={selectedPriceBands}
-            onCategoriesChange={setSelectedCategories}
-            onPriceBandsChange={setSelectedPriceBands}
-            lang={lang}
-          />
+          {/* Search Bar */}
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="text"
+              placeholder={t("public.searchPlaces") || "Keresés..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "14px 20px",
+                fontSize: 16,
+                border: "2px solid #e0e0e0",
+                borderRadius: 12,
+                background: "white",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                transition: "all 0.2s",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#667eea";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#e0e0e0";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04)";
+              }}
+            />
+          </div>
         </div>
+        
+        {/* Filters and Places Grid - Same width as searchbar */}
+        <div
+          style={{
+            maxWidth: 960,
+            margin: "0 auto",
+            width: "100%",
+          }}
+        >
+          {/* Filters */}
+          <div style={{ marginBottom: 32 }}>
+            <MapFilters
+              selectedCategories={selectedCategories}
+              selectedPriceBands={selectedPriceBands}
+              onCategoriesChange={setSelectedCategories}
+              onPriceBandsChange={setSelectedPriceBands}
+              isOpenNow={isOpenNow}
+              hasEventToday={hasEventToday}
+              within30Minutes={within30Minutes}
+              rainSafe={rainSafe}
+              onOpenNowChange={setIsOpenNow}
+              onHasEventTodayChange={setHasEventToday}
+              onWithin30MinutesChange={setWithin30Minutes}
+              onRainSafeChange={setRainSafe}
+              lang={lang}
+            />
+          </div>
 
-        {/* Places and Events Grid */}
-        <LoadingSpinner isLoading={isLoading && places.length === 0} />
-        {!isLoading && isError ? (
-          <div style={{ textAlign: "center", padding: "64px 0", color: "#c00" }}>
-            {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
-          </div>
-        ) : !isLoading && combinedItems.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
-            {t("public.noPlacesFound") || "Nincs találat"}
-          </div>
-        ) : isLoading && places.length === 0 ? null : (
-          <>
-            <div className="places-grid">
+          {/* Places and Events Grid */}
+          <LoadingSpinner isLoading={isLoading && places.length === 0} />
+          {!isLoading && isError ? (
+            <div style={{ textAlign: "center", padding: "64px 0", color: "#c00" }}>
+              {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
+            </div>
+          ) : !isLoading && combinedItems.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
+              {t("public.noPlacesFound") || "Nincs találat"}
+            </div>
+          ) : isLoading && places.length === 0 ? null : (
+            <>
+              <div className="places-grid">
               {combinedItems.map((item, index) => {
                 if (item.type === "place") {
                   const place = item.data as Place;
@@ -353,7 +494,7 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
             </div>
           </>
         )}
-      </div>
+        </div>
       </div>
     </>
   );

@@ -48,6 +48,23 @@ export function Footer({
           {/* Links */}
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
             <Link
+              to={`${base}/static-pages`}
+              style={{
+                color: "white",
+                textDecoration: "none",
+                opacity: 0.9,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+            >
+              {t("admin.dashboardCards.staticPages")}
+            </Link>
+            <Link
               to={`${base}/impresszum`}
               style={{
                 color: "white",
@@ -274,6 +291,26 @@ export function Footer({
                 }}
               >
                 {t("public.home.title")}
+              </Link>
+              <Link
+                to={`${base}/static-pages`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                Statikus Oldalak
               </Link>
             </div>
           </div>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export function RegisterPage() {
       });
       navigate("/admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      setError(err instanceof Error ? err.message : t("admin.registrationFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +47,7 @@ export function RegisterPage() {
 
   return (
     <div style={{ maxWidth: 400, margin: "50px auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>Register</h1>
+      <h1 style={{ marginBottom: 24 }}>{t("admin.register")}</h1>
 
       {error && (
         <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
@@ -55,7 +57,7 @@ export function RegisterPage() {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Username</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.username")}</label>
           <input
             type="text"
             name="username"
@@ -67,7 +69,7 @@ export function RegisterPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Email</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.email")}</label>
           <input
             type="email"
             name="email"
@@ -79,7 +81,7 @@ export function RegisterPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Password</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.password")}</label>
           <input
             type="password"
             name="password"
@@ -91,7 +93,7 @@ export function RegisterPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>First Name</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.firstName")}</label>
           <input
             type="text"
             name="firstName"
@@ -103,7 +105,7 @@ export function RegisterPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Last Name</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.lastName")}</label>
           <input
             type="text"
             name="lastName"
@@ -115,7 +117,7 @@ export function RegisterPage() {
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>Bio (optional)</label>
+          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.bioOptional")}</label>
           <textarea
             name="bio"
             value={formData.bio}
@@ -139,12 +141,12 @@ export function RegisterPage() {
             cursor: isLoading ? "not-allowed" : "pointer",
           }}
         >
-          {isLoading ? "Registering..." : "Register"}
+          {isLoading ? t("admin.registering") : t("admin.register")}
         </button>
       </form>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
-        Already have an account? <Link to="/admin/login" style={{ color: "#007bff" }}>Login</Link>
+        {t("admin.alreadyHaveAccount")} <Link to="/admin/login" style={{ color: "#007bff" }}>{t("admin.login")}</Link>
       </div>
     </div>
   );

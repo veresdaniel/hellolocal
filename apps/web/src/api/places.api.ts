@@ -29,6 +29,7 @@ export function getSiteSettings(lang: string): Promise<SiteSettings> {
 
 export function getPlaces(
   lang: string,
+  tenantKey?: string,
   category?: string | string[],
   priceBand?: string | string[],
   searchQuery?: string,
@@ -36,6 +37,10 @@ export function getPlaces(
   offset?: number
 ) {
   const params = new URLSearchParams();
+  // Add tenantKey if provided (for multi-tenant mode)
+  if (tenantKey) {
+    params.append("tenantKey", tenantKey);
+  }
   // Support multiple categories and price bands (OR logic)
   if (category) {
     const categories = Array.isArray(category) ? category : [category];
@@ -71,7 +76,7 @@ export interface PriceBand {
 export async function getCategories(lang: string): Promise<Category[]> {
   // This is a placeholder - in a real implementation, you'd have a public endpoint
   // For now, we'll extract unique categories from places
-  const places = await getPlaces(lang);
+  const places = await getPlaces(lang, undefined);
   const categoryMap = new Map<string, Category>();
   places.forEach((place) => {
     if (place.category) {
@@ -91,7 +96,7 @@ export async function getCategories(lang: string): Promise<Category[]> {
 export async function getPriceBands(lang: string): Promise<PriceBand[]> {
   // This is a placeholder - in a real implementation, you'd have a public endpoint
   // For now, we'll extract unique price bands from places
-  const places = await getPlaces(lang);
+  const places = await getPlaces(lang, undefined);
   const priceBandMap = new Map<string, PriceBand>();
   places.forEach((place) => {
     if (place.priceBand) {
@@ -140,9 +145,11 @@ export function getEvents(
   category?: string,
   placeId?: string,
   limit?: number,
-  offset?: number
+  offset?: number,
+  tenantKey?: string
 ) {
   const params = new URLSearchParams();
+  if (tenantKey) params.append("tenantKey", tenantKey);
   if (category) params.append("category", category);
   if (placeId) params.append("placeId", placeId);
   if (limit) params.append("limit", limit.toString());

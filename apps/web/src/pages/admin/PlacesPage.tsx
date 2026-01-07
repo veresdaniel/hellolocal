@@ -9,6 +9,7 @@ import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTow
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
+import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 
 interface Place {
@@ -110,7 +111,7 @@ export function PlacesPage() {
       setPriceBands(priceBandsData);
       setTags(tagsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
+      setError(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +204,7 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create place");
+      setError(err instanceof Error ? err.message : t("admin.errors.createPlaceFailed"));
     }
   };
 
@@ -287,12 +288,12 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update place");
+      setError(err instanceof Error ? err.message : t("admin.errors.updatePlaceFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this place?")) return;
+    if (!confirm(t("admin.confirmations.deletePlace"))) return;
 
     try {
       await deletePlace(id, selectedTenantId || undefined);
@@ -300,7 +301,7 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete place");
+      setError(err instanceof Error ? err.message : t("admin.errors.deletePlaceFailed"));
     }
   };
 
@@ -418,26 +419,15 @@ export function PlacesPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.categories")} *</label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: 8,
-                  fontSize: 16,
-                  border: formErrors.categoryId ? "1px solid #dc3545" : "1px solid #ddd",
-                  borderRadius: 4,
-                }}
-              >
-                <option value="">{t("admin.selectCategory")}</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.translations.find((t: any) => t.lang === "hu")?.name || cat.id}
-                  </option>
-                ))}
-              </select>
-              {formErrors.categoryId && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.categoryId}</div>}
+              <CategoryAutocomplete
+                categories={categories}
+                selectedCategoryId={formData.categoryId}
+                onChange={(categoryId) => setFormData({ ...formData, categoryId })}
+                placeholder={t("admin.selectCategory")}
+                label={t("admin.categories")}
+                required
+                error={formErrors.categoryId}
+              />
             </div>
             <div>
               <label style={{ display: "block", marginBottom: 4 }}>{t("admin.towns")}</label>
@@ -590,73 +580,79 @@ export function PlacesPage() {
           </LanguageAwareForm>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("public.phone")}</label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("public.email")}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>{t("public.website")}</label>
-            <input
-              type="url"
-              value={formData.website}
-              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
-            <MapComponent
-              latitude={formData.lat ? parseFloat(formData.lat) : null}
-              longitude={formData.lng ? parseFloat(formData.lng) : null}
-              onLocationChange={(lat, lng) => {
-                setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
-              }}
-              height={300}
-              interactive={true}
-            />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 8 }}>
+            {/* Bal oszlop: Telefon, Email, Weboldal */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
+                <label style={{ display: "block", marginBottom: 4 }}>{t("public.phone")}</label>
                 <input
-                  type="number"
-                  step="any"
-                  value={formData.lat}
-                  onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                  style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
-                  placeholder="47.4979"
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 />
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
+                <label style={{ display: "block", marginBottom: 4 }}>{t("public.email")}</label>
                 <input
-                  type="number"
-                  step="any"
-                  value={formData.lng}
-                  onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                  style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
-                  placeholder="19.0402"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: 4 }}>{t("public.website")}</label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                />
+              </div>
+            </div>
+
+            {/* Jobb oszlop: Térkép és koordináták */}
+            <div>
+              <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
+              <div style={{ marginBottom: 16 }}>
+                <MapComponent
+                  latitude={formData.lat ? parseFloat(formData.lat) : null}
+                  longitude={formData.lng ? parseFloat(formData.lng) : null}
+                  onLocationChange={(lat, lng) => {
+                    setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
+                  }}
+                  height={500}
+                  interactive={true}
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.lat}
+                    onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    placeholder="47.4979"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.lng}
+                    onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    placeholder="19.0402"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Hero kép teljes szélességben */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", marginBottom: 4 }}>{t("admin.heroImageUrl")}</label>
             <input

@@ -1,18 +1,20 @@
-// src/pages/admin/LegalPagesPage.tsx
+// src/pages/admin/StaticPagesPage.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
-import { getLegalPages, createLegalPage, updateLegalPage, deleteLegalPage } from "../../api/admin.api";
+import { getStaticPages, createStaticPage, updateStaticPage, deleteStaticPage } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
+import { StaticPageCategoryAutocomplete } from "../../components/StaticPageCategoryAutocomplete";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
+import { notifyEntityChanged } from "../../hooks/useAdminCache";
 
-interface LegalPage {
+interface StaticPage {
   id: string;
   tenantId: string;
-  key: "imprint" | "terms" | "privacy";
+  category: "blog" | "tudastar" | "infok";
   isActive: boolean;
   translations: Array<{
     id: string;
@@ -26,18 +28,18 @@ interface LegalPage {
   }>;
 }
 
-export function LegalPagesPage() {
+export function StaticPagesPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
-  usePageTitle("admin.legalPages");
-  const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
+  usePageTitle("admin.staticPages");
+  const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
-    key: "imprint" as "imprint" | "terms" | "privacy",
+    category: "blog" as "blog" | "tudastar" | "infok",
     titleHu: "",
     titleEn: "",
     titleDe: "",
@@ -62,19 +64,19 @@ export function LegalPagesPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadLegalPages();
+      loadStaticPages();
     }
   }, [selectedTenantId]);
 
-  const loadLegalPages = async () => {
+  const loadStaticPages = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getLegalPages(selectedTenantId);
-      setLegalPages(data);
+      const data = await getStaticPages(selectedTenantId);
+      setStaticPages(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadLegalPagesFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.loadStaticPagesFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -93,9 +95,9 @@ export function LegalPagesPage() {
     if (!validateForm()) return;
 
     try {
-      await createLegalPage({
+      await createStaticPage({
         tenantId: selectedTenantId!,
-        key: formData.key,
+        category: formData.category,
         translations: (() => {
           const translations: Array<{
             lang: string;
@@ -144,11 +146,10 @@ export function LegalPagesPage() {
       });
       setIsCreating(false);
       resetForm();
-      await loadLegalPages();
-      // Invalidate legal pages cache to refresh public pages
-      queryClient.invalidateQueries({ queryKey: ["legal"] });
+      await loadStaticPages();
+      notifyEntityChanged("staticPages");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createLegalPageFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.createStaticPageFailed"));
     }
   };
 
@@ -156,9 +157,10 @@ export function LegalPagesPage() {
     if (!validateForm()) return;
 
     try {
-      await updateLegalPage(
+      await updateStaticPage(
         id,
         {
+          category: formData.category,
           translations: (() => {
             const translations: Array<{
               lang: string;
@@ -209,34 +211,32 @@ export function LegalPagesPage() {
       );
       setEditingId(null);
       resetForm();
-      await loadLegalPages();
-      // Invalidate legal pages cache to refresh public pages
-      queryClient.invalidateQueries({ queryKey: ["legal"] });
+      await loadStaticPages();
+      notifyEntityChanged("staticPages");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateLegalPageFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.updateStaticPageFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deleteLegalPage"))) return;
+    if (!confirm(t("admin.confirmations.deleteStaticPage"))) return;
 
     try {
-      await deleteLegalPage(id, selectedTenantId || undefined);
-      await loadLegalPages();
-      // Invalidate legal pages cache to refresh public pages
-      queryClient.invalidateQueries({ queryKey: ["legal"] });
+      await deleteStaticPage(id, selectedTenantId || undefined);
+      await loadStaticPages();
+      notifyEntityChanged("staticPages");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deleteLegalPageFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.deleteStaticPageFailed"));
     }
   };
 
-  const startEdit = (legalPage: LegalPage) => {
-    setEditingId(legalPage.id);
-    const hu = legalPage.translations.find((t) => t.lang === "hu");
-    const en = legalPage.translations.find((t) => t.lang === "en");
-    const de = legalPage.translations.find((t) => t.lang === "de");
+  const startEdit = (staticPage: StaticPage) => {
+    setEditingId(staticPage.id);
+    const hu = staticPage.translations.find((t) => t.lang === "hu");
+    const en = staticPage.translations.find((t) => t.lang === "en");
+    const de = staticPage.translations.find((t) => t.lang === "de");
     setFormData({
-      key: legalPage.key,
+      category: staticPage.category,
       titleHu: hu?.title || "",
       titleEn: en?.title || "",
       titleDe: de?.title || "",
@@ -255,13 +255,13 @@ export function LegalPagesPage() {
       seoKeywordsHu: hu?.seoKeywords?.join(", ") || "",
       seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
       seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
-      isActive: legalPage.isActive,
+      isActive: staticPage.isActive,
     });
   };
 
   const resetForm = () => {
     setFormData({
-      key: "imprint",
+      category: "blog",
       titleHu: "",
       titleEn: "",
       titleDe: "",
@@ -285,14 +285,27 @@ export function LegalPagesPage() {
     setFormErrors({});
   };
 
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case "blog":
+        return t("admin.categoryBlog");
+      case "tudastar":
+        return t("admin.categoryTudastar");
+      case "infok":
+        return t("admin.categoryInfok");
+      default:
+        return category;
+    }
+  };
+
   if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>Please select a tenant</div>;
+    return <div style={{ padding: 24 }}>{t("admin.selectTenantFirst")}</div>;
   }
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>Legal Pages</h1>
+        <h1>{t("admin.staticPages")}</h1>
         <button
           onClick={() => {
             setEditingId(null);
@@ -310,7 +323,7 @@ export function LegalPagesPage() {
             opacity: editingId || isCreating ? 0.6 : 1,
           }}
         >
-          + {t("admin.forms.newLegalPage")}
+          + {t("admin.forms.newStaticPage")}
         </button>
       </div>
 
@@ -322,23 +335,15 @@ export function LegalPagesPage() {
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editLegalPage") : t("admin.forms.newLegalPage")}</h2>
+          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editStaticPage") : t("admin.forms.newStaticPage")}</h2>
 
-          {isCreating && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.key")} *</label>
-              <select
-                value={formData.key}
-                onChange={(e) => setFormData({ ...formData, key: e.target.value as "imprint" | "terms" | "privacy" })}
-                disabled={!!editingId}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              >
-                <option value="imprint">{t("public.legal.imprint.title")}</option>
-                <option value="terms">{t("public.legal.terms.title")}</option>
-                <option value="privacy">{t("public.legal.privacy.title")}</option>
-              </select>
-            </div>
-          )}
+          <div style={{ marginBottom: 16 }}>
+            <StaticPageCategoryAutocomplete
+              value={formData.category}
+              onChange={(category) => setFormData({ ...formData, category })}
+              placeholder={t("admin.category")}
+            />
+          </div>
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -462,39 +467,39 @@ export function LegalPagesPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
             <thead>
               <tr style={{ background: "#f5f5f5" }}>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>Key</th>
+                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.category")}</th>
                 <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.title")}</th>
                 <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
                 <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
               </tr>
             </thead>
             <tbody>
-              {legalPages.map((legalPage) => {
+              {staticPages.map((staticPage) => {
                 // Get current language or fallback to Hungarian
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                                   legalPage.translations.find((t) => t.lang === "hu");
+                const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
+                                   staticPage.translations.find((t) => t.lang === "hu");
                 return (
-                  <tr key={legalPage.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 12 }}>{legalPage.key}</td>
+                  <tr key={staticPage.id} style={{ borderBottom: "1px solid #eee" }}>
+                    <td style={{ padding: 12 }}>{getCategoryLabel(staticPage.category)}</td>
                     <td style={{ padding: 12 }}>{translation?.title || "-"}</td>
                     <td style={{ padding: 12 }}>
                       <span
                         style={{
                           padding: "4px 8px",
                           borderRadius: 4,
-                          background: legalPage.isActive ? "#28a745" : "#dc3545",
+                          background: staticPage.isActive ? "#28a745" : "#dc3545",
                           color: "white",
                           fontSize: 12,
                         }}
                       >
-                        {legalPage.isActive ? t("common.active") : t("common.inactive")}
+                        {staticPage.isActive ? t("common.active") : t("common.inactive")}
                       </span>
                     </td>
                     <td style={{ padding: 12, textAlign: "right" }}>
                       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                         <button
-                          onClick={() => startEdit(legalPage)}
+                          onClick={() => startEdit(staticPage)}
                           style={{
                             padding: "4px 8px",
                             background: "#007bff",
@@ -508,7 +513,7 @@ export function LegalPagesPage() {
                           {t("common.edit")}
                         </button>
                         <button
-                          onClick={() => handleDelete(legalPage.id)}
+                          onClick={() => handleDelete(staticPage.id)}
                           style={{
                             padding: "4px 8px",
                             background: "#dc3545",
@@ -528,7 +533,7 @@ export function LegalPagesPage() {
               })}
             </tbody>
           </table>
-          {legalPages.length === 0 && (
+          {staticPages.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
           )}
         </div>

@@ -136,13 +136,22 @@ export function MapComponent({
     isDraggingRef.current = true;
   }, []);
 
+  const handleDrag = useCallback(
+    (event: { lngLat: { lng: number; lat: number } }) => {
+      // Update position continuously during drag
+      if (!onLocationChange) return;
+      const { lng, lat } = event.lngLat;
+      onLocationChange(lat, lng);
+    },
+    [onLocationChange],
+  );
+
   const handleDragEnd = useCallback(
     (event: { lngLat: { lng: number; lat: number } }) => {
       isDraggingRef.current = false;
       if (!onLocationChange) return;
       const { lng, lat } = event.lngLat;
-      // Only update the callback, don't update viewState here
-      // The viewState is already updated by the drag operation
+      // Final update when drag ends
       onLocationChange(lat, lng);
     },
     [onLocationChange],
@@ -261,6 +270,7 @@ export function MapComponent({
             latitude={currentLat}
             draggable={interactive}
             onDragStart={handleDragStart}
+            onDrag={handleDrag}
             onDragEnd={handleDragEnd}
           >
             <div

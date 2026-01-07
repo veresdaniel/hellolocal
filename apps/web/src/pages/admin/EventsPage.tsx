@@ -9,6 +9,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getEvents, createEvent, updateEvent, deleteEvent, getCategories, getTowns, getPlaces, getTags, type Event, type CreateEventDto } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
+import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { TipTapEditor } from "../../components/TipTapEditor";
 
@@ -29,6 +30,7 @@ export function EventsPage() {
   const [formData, setFormData] = useState({
     placeId: "",
     categoryId: "",
+    categoryIds: [] as string[], // For multiple category selection
     tagIds: [] as string[],
     titleHu: "",
     titleEn: "",
@@ -160,7 +162,7 @@ export function EventsPage() {
       await createEvent({
         tenantId: selectedTenantId,
         placeId: formData.placeId || null,
-        categoryId: formData.categoryId || null,
+        categoryIds: formData.categoryIds,
         tagIds: formData.tagIds,
         translations,
         isActive: formData.isActive,
@@ -226,7 +228,7 @@ export function EventsPage() {
         id,
         {
           placeId: formData.placeId || null,
-          categoryId: formData.categoryId || null,
+          categoryIds: formData.categoryIds,
           tagIds: formData.tagIds,
           translations,
           isActive: formData.isActive,
@@ -273,6 +275,7 @@ export function EventsPage() {
     setFormData({
       placeId: event.placeId || "",
       categoryId: event.categoryId || "",
+      categoryIds: event.categories?.map((ec) => ec.category.id) || (event.categoryId ? [event.categoryId] : []),
       tagIds: event.tags.map((et) => et.tag.id),
       titleHu: hu?.title || "",
       titleEn: en?.title || "",
@@ -309,6 +312,7 @@ export function EventsPage() {
     setFormData({
       placeId: "",
       categoryId: "",
+      categoryIds: [],
       tagIds: [],
       titleHu: "",
       titleEn: "",
@@ -401,19 +405,14 @@ export function EventsPage() {
               </select>
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.categories")}</label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              >
-                <option value="">{t("admin.selectCategory")}</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.translations.find((t: any) => t.lang === "hu")?.name || cat.id}
-                  </option>
-                ))}
-              </select>
+              <CategoryAutocomplete
+                categories={categories}
+                multiple={true}
+                selectedCategoryIds={formData.categoryIds}
+                onChange={(categoryIds) => setFormData({ ...formData, categoryIds })}
+                placeholder={t("admin.selectCategory")}
+                label={t("admin.categories")}
+              />
             </div>
           </div>
 
@@ -548,43 +547,47 @@ export function EventsPage() {
               value={formData.heroImage}
               onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
               style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              placeholder="URL"
+              placeholder={t("admin.urlPlaceholder")}
             />
           </div>
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
-            <MapComponent
-              latitude={formData.lat ? parseFloat(formData.lat) : null}
-              longitude={formData.lng ? parseFloat(formData.lng) : null}
-              onLocationChange={(lat, lng) => {
-                setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
-              }}
-              height={300}
-              interactive={true}
-            />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 8 }}>
-              <div>
-                <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={formData.lat}
-                  onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                  style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
-                  placeholder="47.4979"
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ flex: "0 0 400px" }}>
+                <MapComponent
+                  latitude={formData.lat ? parseFloat(formData.lat) : null}
+                  longitude={formData.lng ? parseFloat(formData.lng) : null}
+                  onLocationChange={(lat, lng) => {
+                    setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
+                  }}
+                  height={500}
+                  interactive={true}
                 />
               </div>
-              <div>
-                <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={formData.lng}
-                  onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                  style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
-                  placeholder="19.0402"
-                />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.lat}
+                    onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    placeholder="47.4979"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.lng}
+                    onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    placeholder="19.0402"
+                  />
+                </div>
               </div>
             </div>
           </div>

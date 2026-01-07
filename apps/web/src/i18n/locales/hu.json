@@ -28,6 +28,8 @@
       "title": "Felfedezés",
       "description": "Helyi élmények: borászat, gasztro, szállás, kézműves."
     },
+    "listView": "Lista nézet",
+    "mapView": "Térkép nézet",
     "place": {
       "title": "Hely részletei",
       "description": "Hely részleteinek megtekintése"
@@ -43,8 +45,6 @@
         "title": "Adatvédelem"
       }
     },
-    "mapView": "Térkép nézet",
-    "listView": "Lista nézet",
     "open": "Megnyitás",
     "category": "Kategória",
     "priceBand": "Ár sáv",
@@ -75,7 +75,15 @@
     "contact": "Kapcsolat",
     "menu": "Menü",
     "noResults": "Nincs találat",
-    "filters": "Szűrők",
+    "filtersTitle": "Szűrők",
+    "filters": {
+      "all": "Összes",
+      "openNow": "Most nyitva",
+      "eventToday": "Ma van esemény",
+      "within30Minutes": "30 percen belül elérhető",
+      "rainSafe": "Esőbiztos program",
+      "contextFilters": "Kontextus alapú szűrők"
+    },
     "footer": {
       "tagline": "Fedezd fel a helyi kincseket",
       "legal": "Jogi információk",
@@ -103,7 +111,23 @@
     "logout": "Kijelentkezés",
     "login": "Bejelentkezés",
     "register": "Regisztráció",
-    "forgotPassword": "Elfelejtett jelszó",
+    "registering": "Regisztrálás...",
+    "registrationFailed": "Regisztráció sikertelen",
+    "loginFailed": "Bejelentkezés sikertelen",
+    "loggingIn": "Bejelentkezés...",
+    "pleaseEnter2FACode": "Kérjük, add meg a 2FA kódot",
+    "twoFactorCode": "2FA kód",
+    "enter2FACodeDescription": "Add meg a 6 számjegyű kódot az autentikátor alkalmazásodból",
+    "alreadyHaveAccount": "Már van fiókod?",
+    "dontHaveAccount": "Nincs még fiókod?",
+    "forgotPassword": "Elfelejtetted a jelszót?",
+    "username": "Felhasználónév",
+    "email": "Email",
+    "password": "Jelszó",
+    "firstName": "Keresztnév",
+    "lastName": "Vezetéknév",
+    "bio": "Bio (opcionális)",
+    "bioOptional": "Bio (opcionális)",
     "newItem": "Új elem",
     "editItem": "Elem szerkesztése",
     "deleteConfirm": "Biztosan törölni szeretnéd?",
@@ -113,8 +137,6 @@
     "longitude": "Hosszúság",
     "clickOrDragMarker": "Kattints vagy húzd a marker-t a helyszín beállításához",
     "userInformation": "Felhasználói információk",
-    "username": "Felhasználónév",
-    "email": "Email",
     "role": "Szerepkör",
     "noTenants": "Nincs elérhető bérlő",
     "sessionExpiring": "Munkamenet lejár",
@@ -164,6 +186,8 @@
       "townsDesc": "Települések kezelése",
       "legalPages": "Jogi oldalak",
       "legalPagesDesc": "Jogi oldalak kezelése",
+      "staticPages": "Statikus oldalak",
+      "staticPagesDesc": "Blog, tudástár és infó oldalak kezelése",
       "settings": "Beállítások",
       "settingsDesc": "Beállítások"
     },
@@ -185,7 +209,9 @@
       "newTenant": "Új bérlő",
       "editTenant": "Bérlő szerkesztése",
       "newEvent": "Új esemény",
-      "editEvent": "Esemény szerkesztése"
+      "editEvent": "Esemény szerkesztése",
+      "newStaticPage": "Új statikus oldal",
+      "editStaticPage": "Statikus oldal szerkesztése"
     },
     "table": {
       "nameHu": "Név (HU)",
@@ -253,7 +279,13 @@
       "loadEventsFailed": "Az események betöltése sikertelen",
       "createEventFailed": "Az esemény létrehozása sikertelen",
       "updateEventFailed": "Az esemény frissítése sikertelen",
-      "deleteEventFailed": "Az esemény törlése sikertelen"
+      "deleteEventFailed": "Az esemény törlése sikertelen",
+      "loadStaticPagesFailed": "A statikus oldalak betöltése sikertelen",
+      "createStaticPageFailed": "A statikus oldal létrehozása sikertelen",
+      "updateStaticPageFailed": "A statikus oldal frissítése sikertelen",
+      "deleteStaticPageFailed": "A statikus oldal törlése sikertelen",
+      "reorderFailed": "A rendezés sikertelen",
+      "cannotDropOnChild": "Nem lehet egy kategóriát a saját gyermekére dobni"
     },
     "validation": {
       "hungarianNameRequired": "A magyar név kötelező",
@@ -266,13 +298,10 @@
       "passwordMinLength": "A jelszónak legalább 6 karakternek kell lennie",
       "tenantNameRequired": "A bérlő neve kötelező",
       "tenantSlugRequired": "A bérlő slug kötelező",
-      "startDateRequired": "A kezdés dátuma kötelező"
+      "slugRequired": "A slug kötelező",
+      "startDateRequired": "A kezdés dátuma kötelező",
+      "invalidImageUrl": "Érvénytelen kép URL. Csak http:// és https:// URL-ek engedélyezettek."
     },
-    "confirmDeleteTown": "Biztosan törölni szeretnéd ezt a települést?",
-    "confirmDeleteUser": "Biztosan törölni szeretnéd ezt a felhasználót? Ez a művelet nem vonható vissza.",
-    "confirmChangeRole": "Biztosan meg szeretnéd változtatni a felhasználó szerepkörét {{role}}-ra?",
-    "confirmDisable2FA": "Biztosan letiltod a 2FA-t ennél a felhasználónál?",
-    "confirmDeleteEvent": "Biztosan törölni szeretnéd ezt az eseményt?",
     "confirmations": {
       "deleteCategory": "Biztosan törölni szeretnéd ezt a kategóriát?",
       "deleteTag": "Biztosan törölni szeretnéd ezt a címkét?",
@@ -282,7 +311,10 @@
       "deleteLegalPage": "Biztosan törölni szeretnéd ezt a jogi oldalt?",
       "deleteUser": "Biztosan törölni szeretnéd ezt a felhasználót? Ez a művelet nem vonható vissza.",
       "deleteTenant": "Biztosan törölni szeretnéd ezt a bérlőt?",
-      "changeRole": "Biztosan meg szeretnéd változtatni a felhasználó szerepkörét {{role}}-ra?"
+      "changeRole": "Biztosan meg szeretnéd változtatni a felhasználó szerepkörét {{role}}-ra?",
+      "deleteStaticPage": "Biztosan törölni szeretnéd ezt a statikus oldalt?",
+      "deleteEvent": "Biztosan törölni szeretnéd ezt az eseményt?",
+      "disable2FA": "Biztosan letiltod a 2FA-t ennél a felhasználónál?"
     },
     "fields": {
       "firstName": "Keresztnév",
@@ -296,6 +328,7 @@
     "content": "Tartalom",
     "selectTenantFirst": "Kérjük, válassz először egy bérlőt",
     "heroImage": "Hero kép",
+    "urlPlaceholder": "URL",
     "accessDenied": "Hozzáférés megtagadva. Superadmin szerepkör szükséges.",
     "disable2FA": "2FA letiltása",
     "primaryDomain": "Elsődleges domain",
@@ -355,7 +388,17 @@
       "noTenantsAssigned": "Nincs hozzárendelt bérlő",
       "primary": "Elsődleges",
       "twoFactorAuthentication": "Kétfaktoros autentikáció"
-    }
+    },
+    "parentCategory": "Szülő kategória",
+    "order": "Sorrend",
+    "orderDescription": "Kisebb szám = előrébb a listában",
+    "dragToReorder": "Húzd a kategóriákat a rendezéshez. Húzd egy kategória alá, hogy gyermek kategóriává tedd.",
+    "noParentCategory": "Nincs szülő kategória",
+    "staticPages": "Statikus oldalak",
+    "category": "Kategória",
+    "categoryBlog": "Blog",
+    "categoryTudastar": "Tudástár",
+    "categoryInfok": "Infók"
   },
   "validation": {
     "required": "Kötelező mező",

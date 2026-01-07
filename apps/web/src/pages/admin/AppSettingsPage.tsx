@@ -231,12 +231,12 @@ export function AppSettingsPage() {
       
       // Validate image URLs before saving
       if (siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage)) {
-        setError(t("admin.validation.invalidImageUrl") || "Invalid card image URL. Only http:// and https:// URLs are allowed.");
+        setError(t("admin.validation.invalidImageUrl"));
         setIsSavingSiteSettings(false);
         return;
       }
       if (siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage)) {
-        setError(t("admin.validation.invalidImageUrl") || "Invalid hero image URL. Only http:// and https:// URLs are allowed.");
+        setError(t("admin.validation.invalidImageUrl"));
         setIsSavingSiteSettings(false);
         return;
       }
@@ -887,11 +887,11 @@ export function AppSettingsPage() {
                   onBlur={(e) => {
                     const value = e.target.value.trim();
                     if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed.");
+                      setError(t("admin.validation.invalidImageUrl"));
                     }
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
-                  placeholder={t("admin.imageUrlPlaceholder") || "https://example.com/image.jpg"}
+                  placeholder={t("admin.imageUrlPlaceholder")}
                   style={{
                     width: "100%",
                     padding: 8,
@@ -905,7 +905,7 @@ export function AppSettingsPage() {
                 </p>
                 {siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage) && (
                   <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-                    {t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed."}
+                    {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
               </div>
@@ -927,11 +927,11 @@ export function AppSettingsPage() {
                   onBlur={(e) => {
                     const value = e.target.value.trim();
                     if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed.");
+                      setError(t("admin.validation.invalidImageUrl"));
                     }
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
-                  placeholder={t("admin.imageUrlPlaceholder") || "https://example.com/image.jpg"}
+                  placeholder={t("admin.imageUrlPlaceholder")}
                   style={{
                     width: "100%",
                     padding: 8,
@@ -945,7 +945,7 @@ export function AppSettingsPage() {
                 </p>
                 {siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage) && (
                   <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-                    {t("admin.validation.invalidImageUrl") || "Invalid URL. Only http:// and https:// URLs are allowed."}
+                    {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
               </div>

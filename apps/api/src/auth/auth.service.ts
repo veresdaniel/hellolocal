@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
@@ -47,7 +48,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
-    private readonly twoFactorService: TwoFactorService
+    @Optional() private readonly twoFactorService?: TwoFactorService
   ) {}
 
   private getDefaultTenantSlug(): string {
@@ -223,35 +224,15 @@ export class AuthService {
         throw new UnauthorizedException("Invalid credentials");
       }
 
-      // Check if 2FA is enabled (safely handle case where field might not exist yet)
-      // Only check if TwoFactorService is available and user has 2FA enabled
-      const isTwoFactorEnabled = (user as any).isTwoFactorEnabled === true;
-      
-      // Debug log to check 2FA status
-      console.log("Login - 2FA check:", {
-        userId: user.id,
-        isTwoFactorEnabled,
-        hasTwoFactorService: !!this.twoFactorService,
-        hasToken: !!dto.twoFactorToken,
-      });
-      
-      if (isTwoFactorEnabled) {
-        if (!this.twoFactorService) {
-          // If 2FA is enabled but service is not available, log warning but allow login
-          console.warn("2FA is enabled but TwoFactorService is not available. Skipping 2FA check.");
-        } else {
-          // 2FA is enabled and service is available - require token
-          if (!dto.twoFactorToken) {
-            // Return a special response indicating 2FA is required
-            console.log("2FA required but no token provided - throwing BadRequestException");
-            throw new BadRequestException("2FA verification required. Please provide a 2FA token.");
-          }
+      // Check if 2FA is enabled for this user
+      if (user.isTwoFactorEnabled && this.twoFactorService) {
+        if (!dto.twoFactorToken) {
+          throw new BadRequestException("2FA token required");
+        }
 
-          // Verify 2FA token
-          const isTwoFactorValid = await this.twoFactorService.verifyTwoFactorCode(user.id, dto.twoFactorToken);
-          if (!isTwoFactorValid) {
-            throw new UnauthorizedException("Invalid 2FA token");
-          }
+        const isValid = await this.twoFactorService.verifyTwoFactorCode(user.id, dto.twoFactorToken);
+        if (!isValid) {
+          throw new UnauthorizedException("Invalid 2FA token");
         }
       }
 

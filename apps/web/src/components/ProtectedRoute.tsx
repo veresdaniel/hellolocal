@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { isTokenExpired } from "../utils/tokenUtils";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -52,7 +53,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   }, []);
 
   if (isLoading) {
-    return <div style={{ padding: 24 }}>Loading...</div>;
+    return <LoadingSpinner isLoading={isLoading} delay={0} />;
   }
 
   // Redirect to login if no user or session expired

@@ -12,7 +12,7 @@ interface AdminTenantContextType {
   reloadTenants: () => void;
 }
 
-const AdminTenantContext = createContext<AdminTenantContextType | undefined>(undefined);
+export const AdminTenantContext = createContext<AdminTenantContextType | undefined>(undefined);
 
 export function AdminTenantProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();

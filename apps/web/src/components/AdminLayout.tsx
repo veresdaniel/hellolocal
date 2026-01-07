@@ -41,7 +41,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }}
       >
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <Link to="/admin" style={{ textDecoration: "none", color: "inherit" }}>
+          <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
             <h2 style={{ margin: 0 }}>Admin</h2>
           </Link>
           <div style={{ display: "flex", gap: 16 }}>
@@ -64,16 +64,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               }}
             >
               {t("admin.profileMenu")}
-            </Link>
-            <Link
-              to="/admin/settings"
-              style={{
-                textDecoration: "none",
-                color: isActive("/admin/settings") ? "#007bff" : "#666",
-                fontWeight: isActive("/admin/settings") ? "bold" : "normal",
-              }}
-            >
-              {t("admin.appSettings")}
             </Link>
             {user?.role === "superadmin" && (
               <>

@@ -28,6 +28,8 @@
       "title": "Entdecken",
       "description": "Lokale Erlebnisse: Weingut, Gastronomie, Unterkunft, Handwerk."
     },
+    "listView": "Listenansicht",
+    "mapView": "Kartenansicht",
     "place": {
       "title": "Ortsdetails",
       "description": "Ortsdetails anzeigen"
@@ -43,8 +45,6 @@
         "title": "Datenschutz"
       }
     },
-    "mapView": "Kartenansicht",
-    "listView": "Listenansicht",
     "open": "Öffnen",
     "category": "Kategorie",
     "priceBand": "Preisklasse",
@@ -59,7 +59,13 @@
     "errorLoadingPlaces": "Fehler beim Laden der Orte",
     "noPlacesFound": "Keine Orte gefunden",
     "errorLoadingPlace": "Fehler beim Laden des Ortes",
+    "errorLoadingEvent": "Fehler beim Laden der Veranstaltung",
     "backToList": "Zurück zur Liste",
+    "backToHome": "Zurück zur Startseite",
+    "gallery": "Galerie",
+    "share": "Teilen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert!",
     "event": {
       "title": "Veranstaltungen",
       "description": "Veranstaltungen entdecken"
@@ -69,7 +75,15 @@
     "contact": "Kontakt",
     "menu": "Menü",
     "noResults": "Keine Ergebnisse gefunden",
-    "filters": "Filter",
+    "filtersTitle": "Filter",
+    "filters": {
+      "all": "Alle",
+      "openNow": "Jetzt geöffnet",
+      "eventToday": "Heute Veranstaltung",
+      "within30Minutes": "Innerhalb von 30 Minuten erreichbar",
+      "rainSafe": "Regensicheres Programm",
+      "contextFilters": "Kontextbasierte Filter"
+    },
     "footer": {
       "tagline": "Entdecke lokale Schätze",
       "legal": "Rechtliche Informationen",
@@ -88,13 +102,32 @@
     "users": "Benutzer",
     "usersManagement": "Benutzerverwaltung",
     "tenants": "Gebiete",
+    "events": "Veranstaltungen",
+    "noEvents": "Keine Veranstaltungen",
+    "readMore": "Weiterlesen",
     "settings": "Einstellungen",
     "appSettings": "App-Einstellungen",
     "profileMenu": "Profil",
     "logout": "Abmelden",
     "login": "Anmelden",
     "register": "Registrieren",
-    "forgotPassword": "Passwort vergessen",
+    "registering": "Registrierung läuft...",
+    "registrationFailed": "Registrierung fehlgeschlagen",
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "loggingIn": "Anmeldung läuft...",
+    "pleaseEnter2FACode": "Bitte geben Sie Ihren 2FA-Code ein",
+    "twoFactorCode": "2FA-Code",
+    "enter2FACodeDescription": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein",
+    "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+    "dontHaveAccount": "Haben Sie noch kein Konto?",
+    "forgotPassword": "Passwort vergessen?",
+    "username": "Benutzername",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "bio": "Bio (optional)",
+    "bioOptional": "Bio (optional)",
     "newItem": "Neues Element",
     "editItem": "Element bearbeiten",
     "deleteConfirm": "Möchten Sie wirklich löschen?",
@@ -174,7 +207,11 @@
       "newUser": "Neuer Benutzer",
       "editUser": "Benutzer bearbeiten",
       "newTenant": "Neuer Mieter",
-      "editTenant": "Mieter bearbeiten"
+      "editTenant": "Mieter bearbeiten",
+      "newEvent": "Neue Veranstaltung",
+      "editEvent": "Veranstaltung bearbeiten",
+      "newStaticPage": "Neue statische Seite",
+      "editStaticPage": "Statische Seite bearbeiten"
     },
     "table": {
       "nameHu": "Name (HU)",
@@ -238,7 +275,17 @@
       "defaultLanguageUpdated": "Standardsprache erfolgreich aktualisiert",
       "updateRoleFailed": "Fehler beim Aktualisieren der Rolle",
       "disable2FAFailed": "Fehler beim Deaktivieren von 2FA",
-      "updateSiteSettingsFailed": "Fehler beim Aktualisieren der Seiteneinstellungen"
+      "updateSiteSettingsFailed": "Fehler beim Aktualisieren der Seiteneinstellungen",
+      "loadEventsFailed": "Fehler beim Laden der Veranstaltungen",
+      "createEventFailed": "Fehler beim Erstellen der Veranstaltung",
+      "updateEventFailed": "Fehler beim Aktualisieren der Veranstaltung",
+      "deleteEventFailed": "Fehler beim Löschen der Veranstaltung",
+      "loadStaticPagesFailed": "Statische Seiten konnten nicht geladen werden",
+      "createStaticPageFailed": "Statische Seite konnte nicht erstellt werden",
+      "updateStaticPageFailed": "Statische Seite konnte nicht aktualisiert werden",
+      "deleteStaticPageFailed": "Statische Seite konnte nicht gelöscht werden",
+      "reorderFailed": "Neuordnung fehlgeschlagen",
+      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden"
     },
     "validation": {
       "hungarianNameRequired": "Ungarischer Name ist erforderlich",
@@ -251,12 +298,11 @@
       "passwordMinLength": "Passwort muss mindestens 6 Zeichen lang sein",
       "tenantNameRequired": "Mieter-Name ist erforderlich",
       "tenantSlugRequired": "Mieter-Slug ist erforderlich",
-      "categoryRequired": "Kategorie ist erforderlich"
+      "slugRequired": "Slug ist erforderlich",
+      "categoryRequired": "Kategorie ist erforderlich",
+      "startDateRequired": "Startdatum ist erforderlich",
+      "invalidImageUrl": "Ungültige Bild-URL. Nur http:// und https:// URLs sind erlaubt."
     },
-    "confirmDeleteTown": "Möchten Sie diese Stadt wirklich löschen?",
-    "confirmDeleteUser": "Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "confirmChangeRole": "Möchten Sie die Rolle dieses Benutzers wirklich auf {{role}} ändern?",
-    "confirmDisable2FA": "Möchten Sie 2FA für diesen Benutzer wirklich deaktivieren?",
     "confirmations": {
       "deleteCategory": "Möchten Sie diese Kategorie wirklich löschen?",
       "deleteTag": "Möchten Sie dieses Tag wirklich löschen?",
@@ -266,7 +312,10 @@
       "deleteLegalPage": "Möchten Sie diese rechtliche Seite wirklich löschen?",
       "deleteUser": "Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "deleteTenant": "Möchten Sie diesen Mieter wirklich löschen?",
-      "changeRole": "Möchten Sie die Rolle dieses Benutzers wirklich auf {{role}} ändern?"
+      "changeRole": "Möchten Sie die Rolle dieses Benutzers wirklich auf {{role}} ändern?",
+      "deleteStaticPage": "Möchten Sie diese statische Seite wirklich löschen?",
+      "deleteEvent": "Möchten Sie diese Veranstaltung wirklich löschen?",
+      "disable2FA": "Möchten Sie 2FA für diesen Benutzer wirklich deaktivieren?"
     },
     "fields": {
       "firstName": "Vorname",
@@ -279,7 +328,14 @@
     "key": "Schlüssel",
     "content": "Inhalt",
     "selectTenantFirst": "Bitte wählen Sie zuerst einen Mieter",
+    "shortDescriptionPlaceholder": "Kurze Beschreibung der Veranstaltung",
+    "startDate": "Startdatum",
+    "endDate": "Enddatum",
+    "isPinned": "Veranstaltung anheften",
+    "selectPlace": "Ort auswählen",
+    "place": "Ort",
     "heroImage": "Hero-Bild",
+    "urlPlaceholder": "URL",
     "accessDenied": "Zugriff verweigert. Superadmin-Rolle erforderlich.",
     "disable2FA": "2FA deaktivieren",
     "primaryDomain": "Primäre Domain",
@@ -333,6 +389,24 @@
       "noTenantsAssigned": "Keine Mieter zugewiesen",
       "primary": "Primär",
       "twoFactorAuthentication": "Zwei-Faktor-Authentifizierung"
+    },
+    "parentCategory": "Übergeordnete Kategorie",
+    "order": "Reihenfolge",
+    "orderDescription": "Kleinere Zahl = weiter oben in der Liste",
+    "dragToReorder": "Ziehen Sie Kategorien, um sie neu zu ordnen. Ziehen Sie unter eine Kategorie, um sie zu einer Unterkategorie zu machen.",
+    "noParentCategory": "Keine übergeordnete Kategorie",
+    "staticPages": "Statische Seiten",
+    "category": "Kategorie",
+    "categoryBlog": "Blog",
+    "categoryTudastar": "Wissensdatenbank",
+    "categoryInfok": "Info",
+    "errors": {
+      "loadStaticPagesFailed": "Statische Seiten konnten nicht geladen werden",
+      "createStaticPageFailed": "Statische Seite konnte nicht erstellt werden",
+      "updateStaticPageFailed": "Statische Seite konnte nicht aktualisiert werden",
+      "deleteStaticPageFailed": "Statische Seite konnte nicht gelöscht werden",
+      "reorderFailed": "Neuordnung fehlgeschlagen",
+      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden"
     }
   },
   "validation": {

@@ -1,0 +1,165 @@
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { Lang } from "@prisma/client";
+
+const ALLOWED_CATEGORIES = new Set(["blog", "tudastar", "infok"] as const);
+type StaticPageCategory = "blog" | "tudastar" | "infok";
+
+export interface CreateStaticPageDto {
+  tenantId: string;
+  category: StaticPageCategory;
+  translations: Array<{
+    lang: Lang;
+    title: string;
+    content?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+  isActive?: boolean;
+}
+
+export interface UpdateStaticPageDto {
+  category?: StaticPageCategory;
+  translations?: Array<{
+    lang: Lang;
+    title: string;
+    content?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+  isActive?: boolean;
+}
+
+@Injectable()
+export class AdminStaticPageService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(tenantId: string, category?: StaticPageCategory) {
+    const where: any = { tenantId };
+    if (category) {
+      if (!ALLOWED_CATEGORIES.has(category)) {
+        throw new BadRequestException(`Invalid category: ${category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+      }
+      where.category = category;
+    }
+
+    return this.prisma.staticPage.findMany({
+      where,
+      include: {
+        translations: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async findOne(id: string, tenantId: string) {
+    const staticPage = await this.prisma.staticPage.findFirst({
+      where: { id, tenantId },
+      include: {
+        translations: true,
+      },
+    });
+
+    if (!staticPage) {
+      throw new NotFoundException("Static page not found");
+    }
+
+    return staticPage;
+  }
+
+  async create(dto: CreateStaticPageDto) {
+    if (!ALLOWED_CATEGORIES.has(dto.category)) {
+      throw new BadRequestException(`Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+    }
+
+    return this.prisma.staticPage.create({
+      data: {
+        tenantId: dto.tenantId,
+        category: dto.category,
+        isActive: dto.isActive ?? true,
+        translations: {
+          create: dto.translations.map((t) => ({
+            lang: t.lang,
+            title: t.title,
+            content: t.content ?? null,
+            seoTitle: t.seoTitle ?? null,
+            seoDescription: t.seoDescription ?? null,
+            seoImage: t.seoImage ?? null,
+            seoKeywords: t.seoKeywords ?? [],
+          })),
+        },
+      },
+      include: {
+        translations: true,
+      },
+    });
+  }
+
+  async update(id: string, tenantId: string, dto: UpdateStaticPageDto) {
+    const staticPage = await this.findOne(id, tenantId);
+
+    const updateData: any = {};
+    if (dto.category !== undefined) {
+      if (!ALLOWED_CATEGORIES.has(dto.category)) {
+        throw new BadRequestException(`Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+      }
+      updateData.category = dto.category;
+    }
+    if (dto.isActive !== undefined) {
+      updateData.isActive = dto.isActive;
+    }
+
+    await this.prisma.staticPage.update({
+      where: { id },
+      data: updateData,
+    });
+
+    if (dto.translations) {
+      for (const translation of dto.translations) {
+        await this.prisma.staticPageTranslation.upsert({
+          where: {
+            staticPageId_lang: {
+              staticPageId: id,
+              lang: translation.lang,
+            },
+          },
+          update: {
+            title: translation.title,
+            content: translation.content ?? null,
+            seoTitle: translation.seoTitle ?? null,
+            seoDescription: translation.seoDescription ?? null,
+            seoImage: translation.seoImage ?? null,
+            seoKeywords: translation.seoKeywords ?? [],
+          },
+          create: {
+            staticPageId: id,
+            lang: translation.lang,
+            title: translation.title,
+            content: translation.content ?? null,
+            seoTitle: translation.seoTitle ?? null,
+            seoDescription: translation.seoDescription ?? null,
+            seoImage: translation.seoImage ?? null,
+            seoKeywords: translation.seoKeywords ?? [],
+          },
+        });
+      }
+    }
+
+    return this.findOne(id, tenantId);
+  }
+
+  async remove(id: string, tenantId: string) {
+    await this.findOne(id, tenantId);
+
+    await this.prisma.staticPage.delete({
+      where: { id },
+    });
+
+    return { message: "Static page deleted successfully" };
+  }
+}
+
