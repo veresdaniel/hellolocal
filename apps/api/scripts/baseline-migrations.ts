@@ -9,7 +9,7 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { readdirSync, statSync, existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { join, resolve } from "path";
 import { createHash, randomUUID } from "crypto";
 
 const prisma = new PrismaClient({
@@ -21,7 +21,24 @@ async function main() {
     throw new Error("DATABASE_URL is required");
   }
 
-  const migrationsPath = join(process.cwd(), "prisma/migrations");
+  // Determine the API directory
+  let apiDir = process.cwd();
+  
+  // Check if we're in the api directory (has prisma folder)
+  if (!existsSync(resolve(apiDir, "prisma"))) {
+    // Try going up one level if we're in scripts/
+    const parentDir = resolve(apiDir, "..");
+    if (existsSync(resolve(parentDir, "prisma"))) {
+      apiDir = parentDir;
+    }
+  }
+
+  const migrationsPath = join(apiDir, "prisma/migrations");
+  
+  if (!existsSync(migrationsPath)) {
+    throw new Error(`Migrations directory not found at: ${migrationsPath}`);
+  }
+  
   const migrations = readdirSync(migrationsPath)
     .filter((dir) => {
       const dirPath = join(migrationsPath, dir);
