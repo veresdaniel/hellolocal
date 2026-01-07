@@ -97,9 +97,11 @@ export function CategoriesPage() {
       setIsCreating(false);
       resetForm();
       await loadCategories();
-      // Invalidate places and events cache to refresh filters and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh filters and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createCategoryFailed"));
     }
@@ -129,9 +131,11 @@ export function CategoriesPage() {
       setEditingId(null);
       resetForm();
       await loadCategories();
-      // Invalidate places and events cache to refresh filters and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh filters and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"));
     }
@@ -143,9 +147,11 @@ export function CategoriesPage() {
     try {
       await deleteCategory(id, selectedTenantId || undefined);
       await loadCategories();
-      // Invalidate places and events cache to refresh filters and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh filters and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteCategoryFailed"));
     }

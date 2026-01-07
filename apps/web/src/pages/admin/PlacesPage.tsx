@@ -201,13 +201,14 @@ export function PlacesPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
-      // Invalidate places cache to refresh map and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
       // Invalidate individual place cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["place"] });
+      await queryClient.invalidateQueries({ queryKey: ["place"] });
       // Invalidate events cache as events can be linked to places
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create place");
     }
@@ -290,13 +291,14 @@ export function PlacesPage() {
       setEditingId(null);
       resetForm();
       await loadData();
-      // Invalidate places cache to refresh map and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
       // Invalidate individual place cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["place"] });
+      await queryClient.invalidateQueries({ queryKey: ["place"] });
       // Invalidate events cache as events can be linked to places
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update place");
     }
@@ -308,13 +310,14 @@ export function PlacesPage() {
     try {
       await deletePlace(id, selectedTenantId || undefined);
       await loadData();
-      // Invalidate places cache to refresh map and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh map and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
       // Invalidate individual place cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["place"] });
+      await queryClient.invalidateQueries({ queryKey: ["place"] });
       // Invalidate events cache as events can be linked to places
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete place");
     }

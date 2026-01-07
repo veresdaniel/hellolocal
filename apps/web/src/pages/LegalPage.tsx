@@ -5,6 +5,7 @@ import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { getSiteSettings } from "../api/places.api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FloatingHeader } from "../components/FloatingHeader";
 
 type Props = {
   pageKey: "imprint" | "terms" | "privacy";
@@ -34,18 +35,54 @@ export function LegalPage({ pageKey }: Props) {
     siteName: siteSettings?.siteName,
   });
 
-  if (error || !data) return <main className="p-4">Not found.</main>;
+  if (error || !data) {
+    return (
+      <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
+        <p>{t("public.errorLoadingPlace")}</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <LoadingSpinner isLoading={isLoading} />
-      <main className="mx-auto max-w-3xl p-4">
-      <h1 className="text-2xl font-semibold mb-4">{data.title}</h1>
-      <article
-        className="prose max-w-none"
-        dangerouslySetInnerHTML={{ __html: data.content }}
-      />
-    </main>
+      <FloatingHeader />
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+          paddingTop: 80,
+        }}
+      >
+        <article
+          style={{
+            maxWidth: 960,
+            margin: "0 auto",
+            padding: "0 16px 64px",
+            width: "100%",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "clamp(24px, 5vw, 36px)",
+              fontWeight: 700,
+              marginBottom: 24,
+              color: "#1a1a1a",
+              lineHeight: 1.3,
+            }}
+          >
+            {data.title}
+          </h1>
+          <div
+            style={{
+              fontSize: 16,
+              lineHeight: 1.8,
+              color: "#333",
+            }}
+            dangerouslySetInnerHTML={{ __html: data.content }}
+          />
+        </article>
+      </div>
     </>
   );
 }

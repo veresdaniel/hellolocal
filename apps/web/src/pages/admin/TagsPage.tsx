@@ -92,9 +92,11 @@ export function TagsPage() {
       setIsCreating(false);
       resetForm();
       await loadTags();
-      // Invalidate places and events cache to refresh place cards, event cards and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTagFailed"));
     }
@@ -124,9 +126,11 @@ export function TagsPage() {
       setEditingId(null);
       resetForm();
       await loadTags();
-      // Invalidate places and events cache to refresh place cards, event cards and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"));
     }
@@ -138,9 +142,11 @@ export function TagsPage() {
     try {
       await deleteTag(id, selectedTenantId || undefined);
       await loadTags();
-      // Invalidate places and events cache to refresh place cards, event cards and lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"));
     }

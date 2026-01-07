@@ -156,8 +156,9 @@ export function TownsPage() {
       setIsCreating(false);
       resetForm();
       await loadTowns();
-      // Invalidate places cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTownFailed"));
     }
@@ -225,8 +226,9 @@ export function TownsPage() {
       setEditingId(null);
       resetForm();
       await loadTowns();
-      // Invalidate places cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateTownFailed"));
     }
@@ -238,8 +240,9 @@ export function TownsPage() {
     try {
       await deleteTown(id, selectedTenantId || undefined);
       await loadTowns();
-      // Invalidate places cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
+      await queryClient.invalidateQueries({ queryKey: ["places"] });
+      await queryClient.refetchQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteTownFailed"));
     }

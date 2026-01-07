@@ -212,6 +212,11 @@ export function EventsList({ lang }: EventsListProps) {
     return null;
   }
 
+  // Hide if no events
+  if (!isLoading && sortedEvents.length === 0) {
+    return null;
+  }
+
   // Calculate dynamic z-index: higher only when actively dragging (not when just open)
   const baseZIndex = 200;
   const activeZIndex = 10000; // High z-index when actively being used (dragging)

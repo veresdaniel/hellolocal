@@ -157,10 +157,11 @@ export function EventsPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
-      // Invalidate events cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
       // Invalidate individual event cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createEventFailed"));
     }
@@ -227,10 +228,11 @@ export function EventsPage() {
       setEditingId(null);
       resetForm();
       await loadData();
-      // Invalidate events cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
       // Invalidate individual event cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateEventFailed"));
     }
@@ -242,10 +244,11 @@ export function EventsPage() {
     try {
       await deleteEvent(id, selectedTenantId || undefined);
       await loadData();
-      // Invalidate events cache to refresh lists
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.refetchQueries({ queryKey: ["events"] });
       // Invalidate individual event cache (all languages)
-      queryClient.invalidateQueries({ queryKey: ["event"] });
+      await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"));
     }
