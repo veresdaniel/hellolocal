@@ -24,7 +24,7 @@ interface Place {
   category: { translations: Array<{ lang: string; name: string }> };
   town: { translations: Array<{ lang: string; name: string }> } | null;
   priceBand: { translations: Array<{ lang: string; name: string }> } | null;
-  tags: Array<{ tag: { translations: Array<{ lang: string; name: string }> } }>;
+  tags: Array<{ tag: { id: string; translations: Array<{ lang: string; name: string }> } }>;
   translations: Array<{
     lang: string;
     name: string;
@@ -136,9 +136,20 @@ export function PlacesPage() {
         priceBandId: formData.priceBandId || null,
         tagIds: formData.tagIds,
         translations: (() => {
-          const translations = [
+          const translations: Array<{
+            lang: string;
+            name: string;
+            teaser: string | null;
+            description: string | null;
+            address: string | null;
+            phone: string | null;
+            email: string | null;
+            website: string | null;
+            openingHours: string | null;
+            accessibility: string | null;
+          }> = [
             {
-              lang: "hu" as const,
+              lang: "hu",
               name: formData.nameHu,
               teaser: formData.teaserHu || null,
               description: formData.descriptionHu || null,
@@ -152,7 +163,7 @@ export function PlacesPage() {
           ];
           if (formData.nameEn.trim()) {
             translations.push({
-              lang: "en" as const,
+              lang: "en",
               name: formData.nameEn,
               teaser: formData.teaserEn || null,
               description: formData.descriptionEn || null,
@@ -166,7 +177,7 @@ export function PlacesPage() {
           }
           if (formData.nameDe.trim()) {
             translations.push({
-              lang: "de" as const,
+              lang: "de",
               name: formData.nameDe,
               teaser: formData.teaserDe || null,
               description: formData.descriptionDe || null,
@@ -205,9 +216,20 @@ export function PlacesPage() {
           priceBandId: formData.priceBandId || null,
           tagIds: formData.tagIds,
           translations: (() => {
-            const translations = [
+            const translations: Array<{
+              lang: string;
+              name: string;
+              teaser: string | null;
+              description: string | null;
+              address: string | null;
+              phone: string | null;
+              email: string | null;
+              website: string | null;
+              openingHours: string | null;
+              accessibility: string | null;
+            }> = [
               {
-                lang: "hu" as const,
+                lang: "hu",
                 name: formData.nameHu,
                 teaser: formData.teaserHu || null,
                 description: formData.descriptionHu || null,
@@ -221,7 +243,7 @@ export function PlacesPage() {
             ];
             if (formData.nameEn.trim()) {
               translations.push({
-                lang: "en" as const,
+                lang: "en",
                 name: formData.nameEn,
                 teaser: formData.teaserEn || null,
                 description: formData.descriptionEn || null,
@@ -235,7 +257,7 @@ export function PlacesPage() {
             }
             if (formData.nameDe.trim()) {
               translations.push({
-                lang: "de" as const,
+                lang: "de",
                 name: formData.nameDe,
                 teaser: formData.teaserDe || null,
                 description: formData.descriptionDe || null,

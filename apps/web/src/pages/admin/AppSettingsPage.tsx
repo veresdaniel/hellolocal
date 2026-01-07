@@ -13,7 +13,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 export function AppSettingsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { selectedTenantId, tenants } = useAdminTenant();
+  const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
   usePageTitle("admin.appSettings");
   const [defaultLang, setDefaultLangState] = useState<"hu" | "en" | "de">("hu");

@@ -28,7 +28,6 @@ export function TenantSelector() {
     return huTranslation?.name || tenant.translations[0]?.name || tenant.slug;
   };
 
-  const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
 
   if (tenants.length === 1) {
     return (

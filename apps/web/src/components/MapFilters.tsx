@@ -170,7 +170,7 @@ export function MapFilters({
       }}
     >
       <button
-        onClick={(e) => {
+        onClick={(_e) => {
           // Only toggle if we didn't drag
           if (!hasDragged) {
             setIsOpen(!isOpen);

@@ -65,11 +65,15 @@ export async function getCategories(lang: string): Promise<Category[]> {
   const places = await getPlaces(lang);
   const categoryMap = new Map<string, Category>();
   places.forEach((place) => {
-    if (place.category && !categoryMap.has(place.category.id)) {
-      categoryMap.set(place.category.id, {
-        id: place.category.id,
-        name: place.category.name,
-      });
+    if (place.category) {
+      const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+      const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
+      if (!categoryMap.has(categoryId)) {
+        categoryMap.set(categoryId, {
+          id: categoryId,
+          name: categoryName,
+        });
+      }
     }
   });
   return Array.from(categoryMap.values());
@@ -81,11 +85,15 @@ export async function getPriceBands(lang: string): Promise<PriceBand[]> {
   const places = await getPlaces(lang);
   const priceBandMap = new Map<string, PriceBand>();
   places.forEach((place) => {
-    if (place.priceBand && !priceBandMap.has(place.priceBand.id)) {
-      priceBandMap.set(place.priceBand.id, {
-        id: place.priceBand.id,
-        name: place.priceBand.name,
-      });
+    if (place.priceBand) {
+      const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+      const priceBandId = priceBandName.toLowerCase().replace(/\s+/g, "-");
+      if (!priceBandMap.has(priceBandId)) {
+        priceBandMap.set(priceBandId, {
+          id: priceBandId,
+          name: priceBandName,
+        });
+      }
     }
   });
   return Array.from(priceBandMap.values());

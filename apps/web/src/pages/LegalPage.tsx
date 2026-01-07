@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { getSiteSettings } from "../api/places.api";
+import type { Seo } from "../types/seo";
 
 type Props = {
   pageKey: "imprint" | "terms" | "privacy";
@@ -24,7 +25,12 @@ export function LegalPage({ pageKey }: Props) {
   });
 
   // Use SEO from data if available, otherwise use i18n fallback
-  const seo = data?.seo || {
+  const seo: Seo = data?.seo ? {
+    title: data.seo.title || siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+    description: data.seo.description || siteSettings?.seoDescription || "",
+    image: data.seo.image || undefined,
+    keywords: data.seo.keywords || [],
+  } : {
     title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
     description: siteSettings?.seoDescription || "",
   };

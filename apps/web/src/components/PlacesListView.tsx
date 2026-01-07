@@ -31,8 +31,6 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    isError,
-    error,
   } = useInfiniteQuery({
     queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands, searchQuery],
     queryFn: async ({ pageParam = 0 }) => {

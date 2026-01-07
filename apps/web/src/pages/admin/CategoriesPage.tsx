@@ -78,14 +78,14 @@ export function CategoriesPage() {
     if (!validateForm()) return;
 
     try {
-      const translations = [
-        { lang: "hu" as const, name: formData.nameHu, description: formData.descriptionHu || null },
+      const translations: Array<{ lang: string; name: string; description: string | null }> = [
+        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
       ];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en" as const, name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de" as const, name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
       }
       await createCategory({
         tenantId: selectedTenantId,
@@ -104,14 +104,14 @@ export function CategoriesPage() {
     if (!validateForm()) return;
 
     try {
-      const translations = [
-        { lang: "hu" as const, name: formData.nameHu, description: formData.descriptionHu || null },
+      const translations: Array<{ lang: string; name: string; description: string | null }> = [
+        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
       ];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en" as const, name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de" as const, name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
       }
       await updateCategory(
         id,

@@ -1,15 +1,11 @@
 // src/pages/admin/AdminDashboard.tsx
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { Link } from "react-router-dom";
 
 export function AdminDashboard() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   usePageTitle("admin.dashboard");
-
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>

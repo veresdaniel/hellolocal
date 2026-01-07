@@ -22,8 +22,6 @@ function getCategoryColor(categoryName: string | null | undefined): string {
     "gastronomy": "#FF6347",
     "gastronomie": "#FF6347",
     "étterem": "#FF6347",
-    "restaurant": "#FF6347",
-    "restaurant": "#FF6347",
     "turisztika": "#32CD32", // Lime green for tourism
     "tourism": "#32CD32",
     "tourismus": "#32CD32",
@@ -60,7 +58,7 @@ interface PlaceCardProps {
 export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
   const { lang, tenantSlug } = useTenantContext();
   const { t } = useTranslation();
-  const categoryName = typeof place.category === "string" ? place.category : place.category?.name || null;
+  const categoryName: string | null = typeof place.category === "string" ? place.category : null;
   const categoryColor = getCategoryColor(categoryName);
 
   return (
@@ -209,7 +207,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                     padding: "4px 10px",
                   }}
                 >
-                  {typeof place.priceBand === "string" ? place.priceBand : place.priceBand.name}
+                  {typeof place.priceBand === "string" ? place.priceBand : ""}
                 </span>
               )}
               {place.tags?.slice(0, 3).map((tag) => (

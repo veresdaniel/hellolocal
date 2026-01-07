@@ -7,10 +7,12 @@ function upsertMeta(sel: string, attrs: Record<string, string>, content?: string
   let el = document.head.querySelector<HTMLMetaElement>(sel);
   if (!el) {
     el = document.createElement("meta");
-    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-    document.head.appendChild(el);
+    Object.entries(attrs).forEach(([k, v]) => {
+      if (el) el.setAttribute(k, v);
+    });
+    if (el) document.head.appendChild(el);
   }
-  el.setAttribute("content", content);
+  if (el) el.setAttribute("content", content);
 }
 
 function upsertLink(rel: string, href?: string) {

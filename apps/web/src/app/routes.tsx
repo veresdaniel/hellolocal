@@ -6,7 +6,6 @@ import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RootRedirect } from "../components/RootRedirect";
 
 import { HomePage } from "../pages/HomePage";
-import { ExplorePage } from "../pages/ExplorePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { LoginPage } from "../pages/auth/LoginPage";

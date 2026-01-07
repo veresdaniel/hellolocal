@@ -1,5 +1,5 @@
 // src/api/auth.api.ts
-import { apiGet, apiPost, apiPostPublic } from "./client";
+import { apiPost, apiPostPublic } from "./client";
 
 export interface RegisterDto {
   username: string;
