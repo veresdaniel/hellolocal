@@ -5,13 +5,26 @@ import { refreshToken } from "./auth.api";
  * Get API base URL from environment variable or use relative path for development
  * In production, set VITE_API_URL environment variable to the backend URL
  * Example: VITE_API_URL=https://hellolocal.onrender.com
+ * 
+ * IMPORTANT: On Render.com, this must be set as an environment variable
+ * in the frontend service settings BEFORE building.
  */
 function getApiBaseUrl(): string {
   // In production, use environment variable if set
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
+  // Debug: log in development to help troubleshoot
+  if (import.meta.env.DEV) {
+    console.log("API Base URL:", apiUrl || "(using relative path - Vite proxy)");
   }
+  
+  if (apiUrl) {
+    // Remove trailing slash if present
+    return apiUrl.replace(/\/$/, "");
+  }
+  
   // In development, use relative path (Vite proxy will handle it)
+  // In production without VITE_API_URL, this will cause issues
   return "";
 }
 

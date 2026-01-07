@@ -129,7 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Refresh user data from API to ensure it's up to date (especially role)
         if (storedToken) {
           // Get API base URL from environment variable or use relative path for development
-          const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+          const apiUrl = import.meta.env.VITE_API_URL;
+          const apiBaseUrl = apiUrl ? apiUrl.replace(/\/$/, "") : "";
           fetch(`${apiBaseUrl}/api/admin/users/me`, {
             headers: {
               Authorization: `Bearer ${storedToken}`,

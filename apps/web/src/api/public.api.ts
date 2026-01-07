@@ -5,13 +5,20 @@
 
 /**
  * Get API base URL from environment variable or use relative path for development
+ * IMPORTANT: On Render.com, this must be set as an environment variable
+ * in the frontend service settings BEFORE building.
  */
 function getApiBaseUrl(): string {
   // In production, use environment variable if set
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
+  if (apiUrl) {
+    // Remove trailing slash if present
+    return apiUrl.replace(/\/$/, "");
   }
+  
   // In development, use relative path (Vite proxy will handle it)
+  // In production without VITE_API_URL, this will cause issues
   return "";
 }
 
