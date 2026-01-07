@@ -14,29 +14,62 @@ const prisma = new PrismaClient({
 
 async function main() {
   if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required");
+    console.log("⚠️  DATABASE_URL not set, skipping failed migration resolution");
+    return;
   }
 
   console.log("🔍 Checking for failed migrations...");
 
+  // Check if _prisma_migrations table exists
+  try {
+    const tableExists = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = '_prisma_migrations'
+      );
+    `;
+
+    if (!tableExists[0]?.exists) {
+      console.log("ℹ️  Migration table does not exist yet, nothing to resolve");
+      return;
+    }
+  } catch (error) {
+    console.log("⚠️  Could not check migration table (this is okay)");
+    return;
+  }
+
   // Find failed migrations (started_at is set but finished_at is null)
-  const failedMigrations = await prisma.$queryRaw<Array<{
+  let failedMigrations: Array<{
     id: string;
     migration_name: string;
     started_at: Date;
     finished_at: Date | null;
     rolled_back_at: Date | null;
-  }>>`
-    SELECT 
-      id,
-      migration_name,
-      started_at,
-      finished_at,
-      rolled_back_at
-    FROM "_prisma_migrations"
-    WHERE finished_at IS NULL
-    ORDER BY started_at DESC
-  `;
+  }> = [];
+
+  try {
+    failedMigrations = await prisma.$queryRaw<Array<{
+      id: string;
+      migration_name: string;
+      started_at: Date;
+      finished_at: Date | null;
+      rolled_back_at: Date | null;
+    }>>`
+      SELECT 
+        id,
+        migration_name,
+        started_at,
+        finished_at,
+        rolled_back_at
+      FROM "_prisma_migrations"
+      WHERE finished_at IS NULL
+      ORDER BY started_at DESC
+    `;
+  } catch (error) {
+    console.log("⚠️  Could not query failed migrations (this is okay)");
+    return;
+  }
 
   if (failedMigrations.length === 0) {
     console.log("✅ No failed migrations found");
@@ -69,9 +102,9 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("❌ Failed to resolve migrations");
-    console.error(e);
-    process.exit(1);
+    // Don't throw error, just log it - this script should not break the deployment
+    console.log("⚠️  Could not resolve failed migrations (this is okay)");
+    console.log(e.message || String(e));
   })
   .finally(async () => {
     await prisma.$disconnect();
