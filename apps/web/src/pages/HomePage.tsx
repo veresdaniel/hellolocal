@@ -1,5 +1,5 @@
 // src/pages/HomePage.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
@@ -63,13 +63,18 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const { data: placesData } = useQuery({
+  const { data: placesData, isLoading: isLoadingPlaces } = useQuery({
     queryKey: ["places", lang, selectedCategories, selectedPriceBands],
     queryFn: () => getPlaces(
       lang,
-      selectedCategories.length > 0 ? selectedCategories[0] : undefined,
-      selectedPriceBands.length > 0 ? selectedPriceBands[0] : undefined
+      selectedCategories.length > 0 ? selectedCategories : undefined,
+      selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
+    staleTime: 30 * 1000, // Consider data stale after 30 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Refetch when component mounts
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes in background
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new data
   });
 
   useSeo({
@@ -90,31 +95,112 @@ export function HomePage() {
     },
   }));
 
-  // Calculate initial center and zoom from map settings, places, or defaults
-  const { centerLat, centerLng, defaultZoom } = useMemo(() => {
-    // Priority: 1. Map settings, 2. Places center, 3. Default (Budapest)
+  // Store the initial map center/zoom to prevent flickering when filters change
+  // Only update when mapSettings change, not when places/filters change
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
+  const hasInitializedCenter = useRef(false);
+  const initialPlacesLoaded = useRef(false);
+  const previousMarkersCount = useRef(0);
+
+  // Initialize map center from settings (only once, or when settings change)
+  useEffect(() => {
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
+      // Always update if mapSettings changed
+      setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
+      hasInitializedCenter.current = true;
+    } else if (!hasInitializedCenter.current && !initialPlacesLoaded.current && placesWithCoordinates.length > 0 && !isLoadingPlaces) {
+      // Only use places center if we don't have map settings and haven't initialized yet
+      const avgLat = placesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / placesWithCoordinates.length;
+      const avgLng = placesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / placesWithCoordinates.length;
+      setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
+      hasInitializedCenter.current = true;
+      initialPlacesLoaded.current = true;
+      previousMarkersCount.current = placesWithCoordinates.length;
+    } else if (!hasInitializedCenter.current && !isLoadingPlaces) {
+      // Default to Budapest only if we have no settings and no places yet
+      setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
+      hasInitializedCenter.current = true;
+    }
+    
+    // Mark places as loaded once we've checked them
+    if (!isLoadingPlaces) {
+      initialPlacesLoaded.current = true;
+    }
+  }, [mapSettings?.lat, mapSettings?.lng, mapSettings?.zoom, isLoadingPlaces]);
+
+  // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
+  useEffect(() => {
+    // Don't adjust zoom if:
+    // 1. Map center hasn't been initialized yet
+    // 2. We're still loading
+    // 3. There are no markers (keep current zoom - don't change)
+    // 4. Marker count hasn't changed (filter didn't change the number of visible markers)
+    if (!mapCenter || isLoadingPlaces || markers.length === 0) {
+      if (markers.length > 0) {
+        previousMarkersCount.current = markers.length;
+      }
+      return;
+    }
+
+    // Only adjust if marker count actually changed
+    if (markers.length === previousMarkersCount.current) {
+      return;
+    }
+
+    // Calculate bounding box of all markers
+    const lats = markers.map(m => m.lat);
+    const lngs = markers.map(m => m.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    // Calculate required zoom to fit all markers with some padding
+    // Approximate: each zoom level doubles/halves the view
+    const latRange = maxLat - minLat;
+    const lngRange = maxLng - minLng;
+    const maxRange = Math.max(latRange, lngRange);
+
+    // Estimate required zoom level (rough calculation)
+    // This is approximate - adjust based on testing
+    let requiredZoom = 13;
+    if (maxRange > 0.1) requiredZoom = 10;
+    else if (maxRange > 0.05) requiredZoom = 11;
+    else if (maxRange > 0.02) requiredZoom = 12;
+    else if (maxRange > 0.01) requiredZoom = 13;
+    else if (maxRange > 0.005) requiredZoom = 14;
+    else requiredZoom = 15;
+
+    // Only adjust zoom if current zoom is too high (markers don't fit)
+    // And only decrease zoom minimally (max 1 level)
+    if (mapCenter.zoom > requiredZoom) {
+      const newZoom = Math.max(requiredZoom, mapCenter.zoom - 1); // Max decrease by 1 level
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => {
+        setMapCenter(prev => prev ? { ...prev, zoom: newZoom } : null);
+      }, 0);
+    }
+
+    previousMarkersCount.current = markers.length;
+  }, [markers, mapCenter, isLoadingPlaces]);
+
+  // Calculate center and zoom - use stored center, don't recalculate on filter changes
+  const { centerLat, centerLng, defaultZoom } = useMemo(() => {
+    if (mapCenter) {
       return {
-        centerLat: mapSettings.lat,
-        centerLng: mapSettings.lng,
-        defaultZoom: mapSettings.zoom ?? (placesWithCoordinates.length > 0 ? 12 : 13),
+        centerLat: mapCenter.lat,
+        centerLng: mapCenter.lng,
+        defaultZoom: mapCenter.zoom,
       };
     }
 
-    if (placesWithCoordinates.length > 0) {
-      return {
-        centerLat: placesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / placesWithCoordinates.length,
-        centerLng: placesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / placesWithCoordinates.length,
-        defaultZoom: mapSettings?.zoom ?? 12,
-      };
-    }
-
+    // Fallback (shouldn't happen if useEffect works correctly)
     return {
-      centerLat: 47.4979, // Budapest default
+      centerLat: 47.4979,
       centerLng: 19.0402,
-      defaultZoom: mapSettings?.zoom ?? 13,
+      defaultZoom: 13,
     };
-  }, [mapSettings, placesWithCoordinates]);
+  }, [mapCenter]);
 
   // Don't render map until settings are loaded to avoid flickering
   if (isLoadingMapSettings) {
@@ -147,13 +233,6 @@ export function HomePage() {
               interactive={true}
               defaultZoom={defaultZoom}
               mapStyle="default"
-            />
-            <MapFilters
-              selectedCategories={selectedCategories}
-              selectedPriceBands={selectedPriceBands}
-              onCategoriesChange={setSelectedCategories}
-              onPriceBandsChange={setSelectedPriceBands}
-              lang={lang}
             />
             <EventsList lang={lang} />
             <div
@@ -197,6 +276,14 @@ export function HomePage() {
           </div>
           {/* Compact footer - not absolute, in the flow */}
           <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+          {/* MapFilters at top level to be above footer */}
+          <MapFilters
+            selectedCategories={selectedCategories}
+            selectedPriceBands={selectedPriceBands}
+            onCategoriesChange={setSelectedCategories}
+            onPriceBandsChange={setSelectedPriceBands}
+            lang={lang}
+          />
         </>
       ) : (
         <>

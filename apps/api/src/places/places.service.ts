@@ -8,8 +8,8 @@ import { SlugResolverService } from "../slug/slug-resolver.service";
 type ListArgs = {
   lang: string;
   tenantKey?: string; // Optional tenant key from URL (for multi-tenant support)
-  category?: string; // Filter by place category (name or ID)
-  priceBand?: string; // Filter by price band (name or ID)
+  category?: string | string[]; // Filter by place category (name or ID) - can be multiple (OR logic)
+  priceBand?: string | string[]; // Filter by price band (name or ID) - can be multiple (OR logic)
   town?: string; // Filter by town using public town slug
   q?: string; // Search query (searches in place names)
   limit: number; // Maximum number of results (1-200)
@@ -44,90 +44,31 @@ export class PlacesService {
     const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
 
     // Step 2: Build Prisma where clause for filtering places
-    const where: Prisma.PlaceWhereInput = {
+    const baseWhere: Prisma.PlaceWhereInput = {
       tenantId: tenant.tenantId,
       isActive: true, // Only return active places
     };
 
-    // Filter by category if provided (category name)
-    if (args.category) {
-      // NestJS automatically decodes URL parameters
-      const categoryName = args.category.trim();
+    // Collect category and price band IDs for OR logic
+    const categoryIds: string[] = [];
+    const priceBandIds: string[] = [];
+
+    // Resolve categories if provided (OR logic - any of the selected categories)
+    if (args.category && args.category.length > 0) {
+      const categoryNames = Array.isArray(args.category) ? args.category : [args.category];
       
-      // Try to find category by exact name match first
-      let category = await this.prisma.category.findFirst({
-        where: {
-          tenantId: tenant.tenantId,
-          isActive: true,
-          translations: {
-            some: {
-              lang: tenant.lang,
-              name: { equals: categoryName, mode: "insensitive" },
-            },
-          },
-        },
-        select: { id: true },
-      });
-
-      // If not found, try with contains (partial match) as fallback
-      if (!category) {
-        category = await this.prisma.category.findFirst({
-          where: {
-            tenantId: tenant.tenantId,
-            isActive: true,
-            translations: {
-              some: {
-                lang: tenant.lang,
-                name: { contains: categoryName, mode: "insensitive" },
-              },
-            },
-          },
-          select: { id: true },
-        });
-      }
-
-      if (category) {
-        where.categoryId = category.id;
-      } else {
-        // If category not found, filter to return no results
-        // Use an impossible condition to ensure no results
-        where.categoryId = "NONEXISTENT_CATEGORY_ID";
-      }
-    }
-
-    // Filter by price band if provided (price band ID or name)
-    if (args.priceBand) {
-      const priceBandParam = args.priceBand.trim();
-      
-      // First, try to use it as an ID (if it looks like a CUID)
-      // CUIDs are typically 25 characters long and start with 'c'
-      if (priceBandParam.length === 25 && priceBandParam.startsWith('c')) {
-        // Try to find by ID first
-        const priceBandById = await this.prisma.priceBand.findFirst({
-          where: {
-            id: priceBandParam,
-            tenantId: tenant.tenantId,
-            isActive: true,
-          },
-          select: { id: true },
-        });
+      for (const categoryName of categoryNames) {
+        const trimmedName = categoryName.trim();
         
-        if (priceBandById) {
-          where.priceBandId = priceBandById.id;
-        } else {
-          // If ID not found, filter to return no results
-          where.priceBandId = "NONEXISTENT_PRICE_BAND_ID";
-        }
-      } else {
-        // Otherwise, treat it as a name and search for it
-        let priceBand = await this.prisma.priceBand.findFirst({
+        // Try to find category by exact name match first
+        let category = await this.prisma.category.findFirst({
           where: {
             tenantId: tenant.tenantId,
             isActive: true,
             translations: {
               some: {
                 lang: tenant.lang,
-                name: { equals: priceBandParam, mode: "insensitive" },
+                name: { equals: trimmedName, mode: "insensitive" },
               },
             },
           },
@@ -135,15 +76,15 @@ export class PlacesService {
         });
 
         // If not found, try with contains (partial match) as fallback
-        if (!priceBand) {
-          priceBand = await this.prisma.priceBand.findFirst({
+        if (!category) {
+          category = await this.prisma.category.findFirst({
             where: {
               tenantId: tenant.tenantId,
               isActive: true,
               translations: {
                 some: {
                   lang: tenant.lang,
-                  name: { contains: priceBandParam, mode: "insensitive" },
+                  name: { contains: trimmedName, mode: "insensitive" },
                 },
               },
             },
@@ -151,13 +92,93 @@ export class PlacesService {
           });
         }
 
-        if (priceBand) {
-          where.priceBandId = priceBand.id;
-        } else {
-          // If price band not found, filter to return no results
-          where.priceBandId = "NONEXISTENT_PRICE_BAND_ID";
+        if (category) {
+          categoryIds.push(category.id);
         }
       }
+    }
+
+    // Resolve price bands if provided (OR logic - any of the selected price bands)
+    if (args.priceBand && args.priceBand.length > 0) {
+      const priceBandParams = Array.isArray(args.priceBand) ? args.priceBand : [args.priceBand];
+      
+      for (const priceBandParam of priceBandParams) {
+        const trimmedParam = priceBandParam.trim();
+        
+        // First, try to use it as an ID (if it looks like a CUID)
+        // CUIDs are typically 25 characters long and start with 'c'
+        if (trimmedParam.length === 25 && trimmedParam.startsWith('c')) {
+          // Try to find by ID first
+          const priceBandById = await this.prisma.priceBand.findFirst({
+            where: {
+              id: trimmedParam,
+              tenantId: tenant.tenantId,
+              isActive: true,
+            },
+            select: { id: true },
+          });
+          
+          if (priceBandById) {
+            priceBandIds.push(priceBandById.id);
+          }
+        } else {
+          // Otherwise, treat it as a name and search for it
+          let priceBand = await this.prisma.priceBand.findFirst({
+            where: {
+              tenantId: tenant.tenantId,
+              isActive: true,
+              translations: {
+                some: {
+                  lang: tenant.lang,
+                  name: { equals: trimmedParam, mode: "insensitive" },
+                },
+              },
+            },
+            select: { id: true },
+          });
+
+          // If not found, try with contains (partial match) as fallback
+          if (!priceBand) {
+            priceBand = await this.prisma.priceBand.findFirst({
+              where: {
+                tenantId: tenant.tenantId,
+                isActive: true,
+                translations: {
+                  some: {
+                    lang: tenant.lang,
+                    name: { contains: trimmedParam, mode: "insensitive" },
+                  },
+                },
+              },
+              select: { id: true },
+            });
+          }
+
+          if (priceBand) {
+            priceBandIds.push(priceBand.id);
+          }
+        }
+      }
+    }
+
+    // Build where clause with OR logic between categories and price bands
+    // If both are selected, place must match ANY category OR ANY price band
+    const where: Prisma.PlaceWhereInput = {
+      ...baseWhere,
+    };
+
+    if (categoryIds.length > 0 && priceBandIds.length > 0) {
+      // OR logic: match any category OR any price band
+      where.OR = [
+        { categoryId: { in: categoryIds } },
+        { priceBandId: { in: priceBandIds } },
+      ];
+    } else if (categoryIds.length > 0) {
+      // Only categories selected
+      where.categoryId = { in: categoryIds };
+    } else if (priceBandIds.length > 0) {
+      // Only price bands selected
+      where.priceBandId = { in: priceBandIds };
     }
 
     // Step 3: Filter by town if provided

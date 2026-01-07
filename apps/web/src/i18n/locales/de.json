@@ -185,6 +185,9 @@
       "noData": "Keine Daten gefunden",
       "pleaseSelectTenant": "Bitte wählen Sie einen Mieter"
     },
+    "published": "Veröffentlicht",
+    "isCrawlable": "Suchmaschinen dürfen die Website durchsuchen",
+    "isCrawlableDescription": "Wenn aktiviert, können Suchmaschinen (Google, Bing, etc.) die Website indexieren. Wenn deaktiviert, verhindern robots.txt und Meta-Tags die Indexierung.",
     "errors": {
       "userNotFound": "Benutzer nicht gefunden",
       "loadFailed": "Laden fehlgeschlagen",

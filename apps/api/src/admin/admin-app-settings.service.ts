@@ -190,6 +190,7 @@ export class AdminAppSettingsService {
     const seoDescriptionHu = await this.findOne("seoDescription_hu");
     const seoDescriptionEn = await this.findOne("seoDescription_en");
     const seoDescriptionDe = await this.findOne("seoDescription_de");
+    const isCrawlableSetting = await this.findOne("isCrawlable");
 
     return {
       siteName: {
@@ -212,6 +213,7 @@ export class AdminAppSettingsService {
         en: seoDescriptionEn?.value ?? "",
         de: seoDescriptionDe?.value ?? "",
       },
+      isCrawlable: isCrawlableSetting?.value === "true" || isCrawlableSetting?.value === "1" || isCrawlableSetting === null, // Default to true if not set
     };
   }
 
@@ -223,6 +225,7 @@ export class AdminAppSettingsService {
     siteDescription?: { hu?: string; en?: string; de?: string };
     seoTitle?: { hu?: string; en?: string; de?: string };
     seoDescription?: { hu?: string; en?: string; de?: string };
+    isCrawlable?: boolean;
   }) {
     console.log('[AdminAppSettingsService] setSiteSettings called with:', JSON.stringify(settings, null, 2));
     const updates: Promise<any>[] = [];
@@ -302,6 +305,14 @@ export class AdminAppSettingsService {
         value: settings.seoDescription.de ?? current.seoDescription.de ?? "",
         type: "string",
         description: "Default SEO description in German",
+      }));
+    }
+
+    if (settings.isCrawlable !== undefined) {
+      updates.push(this.upsert("isCrawlable", {
+        value: settings.isCrawlable ? "true" : "false",
+        type: "boolean",
+        description: "Whether search engines should crawl the site",
       }));
     }
 

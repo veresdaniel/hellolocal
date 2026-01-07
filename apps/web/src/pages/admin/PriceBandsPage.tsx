@@ -1,6 +1,7 @@
 // src/pages/admin/PriceBandsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from "../../api/admin.api";
@@ -23,6 +24,7 @@ interface PriceBand {
 export function PriceBandsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.priceBands");
   const [priceBands, setPriceBands] = useState<PriceBand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +92,8 @@ export function PriceBandsPage() {
       setIsCreating(false);
       resetForm();
       await loadPriceBands();
+      // Invalidate places cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"));
     }
@@ -119,6 +123,8 @@ export function PriceBandsPage() {
       setEditingId(null);
       resetForm();
       await loadPriceBands();
+      // Invalidate places cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"));
     }
@@ -130,6 +136,8 @@ export function PriceBandsPage() {
     try {
       await deletePriceBand(id, selectedTenantId || undefined);
       await loadPriceBands();
+      // Invalidate places cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"));
     }

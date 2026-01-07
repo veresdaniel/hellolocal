@@ -22,9 +22,10 @@ i18n
       escapeValue: false, // React already escapes values
     },
     detection: {
-      order: ["localStorage", "navigator", "htmlTag"],
+      order: ["path", "localStorage", "navigator", "htmlTag"],
       caches: ["localStorage"],
       lookupLocalStorage: "i18nextLng",
+      lookupFromPathIndex: 0, // First segment in path is language
     },
   });
 

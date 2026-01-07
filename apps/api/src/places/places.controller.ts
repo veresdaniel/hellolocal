@@ -39,19 +39,22 @@ export class PlacesController {
   list(
     @Param("lang") lang: string,
     @Query("tenantKey") tenantKey?: string,
-    @Query("category") category?: string,
-    @Query("priceBand") priceBand?: string,
+    @Query("category") category?: string | string[],
+    @Query("priceBand") priceBand?: string | string[],
     @Query("town") town?: string,
     @Query("q") q?: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
     this.validateLang(lang);
+    // Normalize category and priceBand to arrays
+    const categories = Array.isArray(category) ? category : category ? [category] : undefined;
+    const priceBands = Array.isArray(priceBand) ? priceBand : priceBand ? [priceBand] : undefined;
     return this.placesService.list({
       lang,
       tenantKey,
-      category,
-      priceBand,
+      category: categories,
+      priceBand: priceBands,
       town,
       q,
       limit: limit ? Number(limit) : 50,

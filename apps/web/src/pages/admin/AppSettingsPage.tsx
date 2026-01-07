@@ -46,6 +46,7 @@ export function AppSettingsPage() {
     siteDescription: { hu: "", en: "", de: "" },
     seoTitle: { hu: "", en: "", de: "" },
     seoDescription: { hu: "", en: "", de: "" },
+    isCrawlable: true,
   });
   const [isLoadingSiteSettings, setIsLoadingSiteSettings] = useState(true);
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
@@ -136,6 +137,7 @@ export function AppSettingsPage() {
             en: data.seoDescription?.en || "",
             de: data.seoDescription?.de || "",
           },
+          isCrawlable: data.isCrawlable ?? true,
         });
       } catch (err) {
         console.error("Failed to load site settings", err);
@@ -222,6 +224,7 @@ export function AppSettingsPage() {
         siteDescription: siteSettings.siteDescription,
         seoTitle: siteSettings.seoTitle,
         seoDescription: siteSettings.seoDescription,
+        isCrawlable: siteSettings.isCrawlable,
       });
       console.log('[AppSettingsPage] Received updated settings from backend:', JSON.stringify(updated, null, 2));
       
@@ -248,6 +251,7 @@ export function AppSettingsPage() {
           en: updated.seoDescription?.en ?? "",
           de: updated.seoDescription?.de ?? "",
         },
+        isCrawlable: updated.isCrawlable ?? true,
       };
       console.log('[AppSettingsPage] Setting new state:', JSON.stringify(newState, null, 2));
       setSiteSettingsState(newState);
@@ -791,6 +795,32 @@ export function AppSettingsPage() {
                 </>
               )}
             </LanguageAwareForm>
+
+            {/* Crawlable setting - not language-specific */}
+            <div style={{ marginBottom: 16, marginTop: 24, paddingTop: 24, borderTop: "1px solid #e0e0e0" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={siteSettings.isCrawlable}
+                  onChange={(e) => {
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      isCrawlable: e.target.checked,
+                    }));
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    cursor: isAdmin && !isSavingSiteSettings ? "pointer" : "not-allowed",
+                  }}
+                />
+                {t("admin.isCrawlable")}
+              </label>
+              <p style={{ color: "#666", fontSize: 14, marginTop: 8, marginLeft: 26 }}>
+                {t("admin.isCrawlableDescription")}
+              </p>
+            </div>
 
             {isAdmin && (
               <button

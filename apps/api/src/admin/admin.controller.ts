@@ -812,6 +812,7 @@ export class AdminController {
     siteDescription?: { hu?: string; en?: string; de?: string };
     seoTitle?: { hu?: string; en?: string; de?: string };
     seoDescription?: { hu?: string; en?: string; de?: string };
+    isCrawlable?: boolean;
   }) {
     return this.appSettingsService.setSiteSettings(settings);
   }

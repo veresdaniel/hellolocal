@@ -5,11 +5,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function PublicAuthBadge() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -25,8 +26,8 @@ export function PublicAuthBadge() {
     return null;
   }
 
-  // Don't show if not logged in
-  if (!user) {
+  // Don't show while loading or if not logged in
+  if (isLoading || !user) {
     return null;
   }
 
@@ -38,13 +39,28 @@ export function PublicAuthBadge() {
     await logout();
   };
 
+  // Calculate bottom position to be above the compact footer (56px height)
+  // Position it clearly above the footer with some padding
+  const compactFooterHeight = 56; // Height of compact footer
+  const paddingAboveFooter = 20; // Padding to ensure it's clearly visible above footer
+  const bottomOffset = isMobile 
+    ? compactFooterHeight + paddingAboveFooter // 76px on mobile
+    : compactFooterHeight + paddingAboveFooter + 8; // 84px on desktop
+
+  // Calculate dynamic z-index: higher when hovered (active)
+  const baseZIndex = 4000;
+  const activeZIndex = 10000; // High z-index when active (hovered)
+  const currentZIndex = isHovered ? activeZIndex : baseZIndex;
+
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: "fixed",
-        bottom: isMobile ? 12 : 20,
+        bottom: bottomOffset,
         right: isMobile ? 12 : 20,
-        zIndex: 300,
+        zIndex: currentZIndex, // Dynamic z-index based on hover state
         display: "flex",
         flexDirection: "column",
         gap: isMobile ? 8 : 10,

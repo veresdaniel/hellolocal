@@ -168,6 +168,9 @@ export function MapFilters({
   const { data: places } = useQuery({
     queryKey: ["places", lang],
     queryFn: () => getPlaces(lang),
+    staleTime: 30 * 1000, // Consider data stale after 30 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   // Extract unique categories and price bands from places
@@ -210,6 +213,11 @@ export function MapFilters({
     return result;
   }, [places]);
 
+  // Calculate dynamic z-index: higher only when actively dragging (not when just open)
+  const baseZIndex = 3000;
+  const activeZIndex = 10000; // High z-index when actively being used (dragging)
+  const currentZIndex = isDragging ? activeZIndex : baseZIndex;
+
   return (
     <div
       ref={filtersRef}
@@ -219,7 +227,7 @@ export function MapFilters({
         position: "absolute",
         top: position.top,
         right: position.right,
-        zIndex: 200,
+        zIndex: currentZIndex, // Dynamic z-index based on active state
         background: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",

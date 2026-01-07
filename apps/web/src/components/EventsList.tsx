@@ -212,6 +212,11 @@ export function EventsList({ lang }: EventsListProps) {
     return null;
   }
 
+  // Calculate dynamic z-index: higher only when actively dragging (not when just open)
+  const baseZIndex = 200;
+  const activeZIndex = 10000; // High z-index when actively being used (dragging)
+  const currentZIndex = isDragging ? activeZIndex : baseZIndex;
+
   return (
     <div
       ref={eventsListRef}
@@ -226,7 +231,7 @@ export function EventsList({ lang }: EventsListProps) {
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         borderRadius: 16,
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-        zIndex: 200,
+        zIndex: currentZIndex, // Dynamic z-index based on active state
         cursor: isDragging ? "grabbing" : isDesktop ? "grab" : "default",
         display: "flex",
         flexDirection: "column",

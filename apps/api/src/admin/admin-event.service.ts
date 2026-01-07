@@ -19,6 +19,7 @@ export interface CreateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isPublished?: boolean;
   isPinned?: boolean;
   startDate: Date | string;
   endDate?: Date | string | null;
@@ -43,6 +44,7 @@ export interface UpdateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isPublished?: boolean;
   isPinned?: boolean;
   startDate?: Date | string;
   endDate?: Date | string | null;

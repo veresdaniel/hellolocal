@@ -1,6 +1,7 @@
 // src/pages/admin/EventsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
@@ -13,6 +14,7 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 export function EventsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.events");
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -155,6 +157,10 @@ export function EventsPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
+      // Invalidate events cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate individual event cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createEventFailed"));
     }
@@ -221,6 +227,10 @@ export function EventsPage() {
       setEditingId(null);
       resetForm();
       await loadData();
+      // Invalidate events cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate individual event cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateEventFailed"));
     }
@@ -232,6 +242,10 @@ export function EventsPage() {
     try {
       await deleteEvent(id, selectedTenantId || undefined);
       await loadData();
+      // Invalidate events cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Invalidate individual event cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"));
     }
@@ -561,7 +575,7 @@ export function EventsPage() {
             </div>
           </div>
 
-          <div style={{ marginBottom: 16, display: "flex", gap: 16 }}>
+          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="checkbox"

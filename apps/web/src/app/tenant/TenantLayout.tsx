@@ -1,5 +1,7 @@
 // src/app/tenant/TenantLayout.tsx
 import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   APP_LANGS,
   DEFAULT_TENANT_SLUG,
@@ -20,9 +22,18 @@ export function TenantLayout() {
     tenantSlug?: string;
   }>();
   const location = useLocation();
+  const { i18n } = useTranslation();
   const defaultLangFromSettings = usePublicDefaultLanguage();
 
   const lang: Lang = isLang(langParam) ? langParam : defaultLangFromSettings;
+
+  // Sync i18n language with URL parameter (URL is source of truth for public pages)
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+      localStorage.setItem("i18nextLng", lang);
+    }
+  }, [lang, i18n]);
 
   // single-tenant módban mindig default tenant
   const tenantSlug = HAS_MULTIPLE_TENANTS

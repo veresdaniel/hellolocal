@@ -1,6 +1,7 @@
 // src/pages/admin/TownsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
@@ -31,6 +32,7 @@ interface Town {
 export function TownsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.towns");
   const [towns, setTowns] = useState<Town[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,6 +156,8 @@ export function TownsPage() {
       setIsCreating(false);
       resetForm();
       await loadTowns();
+      // Invalidate places cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTownFailed"));
     }
@@ -221,6 +225,8 @@ export function TownsPage() {
       setEditingId(null);
       resetForm();
       await loadTowns();
+      // Invalidate places cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateTownFailed"));
     }
@@ -232,6 +238,8 @@ export function TownsPage() {
     try {
       await deleteTown(id, selectedTenantId || undefined);
       await loadTowns();
+      // Invalidate places cache to refresh lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteTownFailed"));
     }

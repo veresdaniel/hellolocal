@@ -40,15 +40,13 @@ export function PlacesListView({ onMapViewClick }: PlacesListViewProps) {
   } = useInfiniteQuery({
     queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands, searchQuery],
     queryFn: async ({ pageParam = 0 }) => {
-      // Note: getPlaces now accepts both IDs and names for priceBand filtering
-      const categoryParam = selectedCategories.length > 0 ? selectedCategories[0] : undefined;
-      const priceBandParam = selectedPriceBands.length > 0 ? selectedPriceBands[0] : undefined;
+      // Note: getPlaces now accepts arrays for OR logic filtering
+      const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
+      const priceBandParam = selectedPriceBands.length > 0 ? selectedPriceBands : undefined;
       
       console.log('[PlacesListView] Filtering with:', { 
-        category: categoryParam, 
-        priceBand: priceBandParam,
-        priceBandLength: priceBandParam?.length,
-        priceBandStartsWith: priceBandParam?.startsWith('c')
+        categories: categoryParam, 
+        priceBands: priceBandParam,
       });
       
       const places = await getPlaces(

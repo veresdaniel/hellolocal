@@ -1,6 +1,7 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
@@ -42,6 +43,7 @@ interface Place {
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -199,6 +201,13 @@ export function PlacesPage() {
       setIsCreating(false);
       resetForm();
       await loadData();
+      // Invalidate places cache to refresh map and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate individual place cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["place"] });
+      // Invalidate events cache as events can be linked to places
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create place");
     }
@@ -281,6 +290,13 @@ export function PlacesPage() {
       setEditingId(null);
       resetForm();
       await loadData();
+      // Invalidate places cache to refresh map and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate individual place cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["place"] });
+      // Invalidate events cache as events can be linked to places
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update place");
     }
@@ -292,6 +308,13 @@ export function PlacesPage() {
     try {
       await deletePlace(id, selectedTenantId || undefined);
       await loadData();
+      // Invalidate places cache to refresh map and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      // Invalidate individual place cache (all languages)
+      queryClient.invalidateQueries({ queryKey: ["place"] });
+      // Invalidate events cache as events can be linked to places
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete place");
     }
@@ -660,7 +683,7 @@ export function PlacesPage() {
             />
           </div>
 
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="checkbox"

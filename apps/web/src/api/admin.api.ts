@@ -451,6 +451,7 @@ export interface SiteSettings {
     en: string;
     de: string;
   };
+  isCrawlable: boolean;
 }
 
 export interface SetSiteSettingsDto {
@@ -458,6 +459,7 @@ export interface SetSiteSettingsDto {
   siteDescription?: { hu?: string; en?: string; de?: string };
   seoTitle?: { hu?: string; en?: string; de?: string };
   seoDescription?: { hu?: string; en?: string; de?: string };
+  isCrawlable?: boolean;
 }
 
 export function getSiteSettings() {

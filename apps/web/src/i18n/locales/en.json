@@ -185,6 +185,9 @@
       "noData": "No data found",
       "pleaseSelectTenant": "Please select a tenant"
     },
+    "published": "Published",
+    "isCrawlable": "Allow search engines to crawl the site",
+    "isCrawlableDescription": "If enabled, search engines (Google, Bing, etc.) can index the site. If disabled, robots.txt and meta tags will prevent indexing.",
     "errors": {
       "loadFailed": "Failed to load",
       "createFailed": "Failed to create",

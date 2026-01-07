@@ -1,6 +1,7 @@
 // src/pages/admin/CategoriesPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
@@ -29,6 +30,7 @@ export function CategoriesPage() {
   const { t, i18n } = useTranslation();
   usePageTitle("admin.categories");
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,9 @@ export function CategoriesPage() {
       setIsCreating(false);
       resetForm();
       await loadCategories();
+      // Invalidate places and events cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createCategoryFailed"));
     }
@@ -124,6 +129,9 @@ export function CategoriesPage() {
       setEditingId(null);
       resetForm();
       await loadCategories();
+      // Invalidate places and events cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"));
     }
@@ -135,6 +143,9 @@ export function CategoriesPage() {
     try {
       await deleteCategory(id, selectedTenantId || undefined);
       await loadCategories();
+      // Invalidate places and events cache to refresh filters and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteCategoryFailed"));
     }

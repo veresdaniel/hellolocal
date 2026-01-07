@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { getLegalPages, createLegalPage, updateLegalPage, deleteLegalPage } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
@@ -28,6 +29,7 @@ interface LegalPage {
 export function LegalPagesPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.legalPages");
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -143,6 +145,8 @@ export function LegalPagesPage() {
       setIsCreating(false);
       resetForm();
       await loadLegalPages();
+      // Invalidate legal pages cache to refresh public pages
+      queryClient.invalidateQueries({ queryKey: ["legal"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create legal page");
     }
@@ -206,6 +210,8 @@ export function LegalPagesPage() {
       setEditingId(null);
       resetForm();
       await loadLegalPages();
+      // Invalidate legal pages cache to refresh public pages
+      queryClient.invalidateQueries({ queryKey: ["legal"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update legal page");
     }
@@ -217,6 +223,8 @@ export function LegalPagesPage() {
     try {
       await deleteLegalPage(id, selectedTenantId || undefined);
       await loadLegalPages();
+      // Invalidate legal pages cache to refresh public pages
+      queryClient.invalidateQueries({ queryKey: ["legal"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete legal page");
     }

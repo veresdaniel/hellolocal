@@ -1,6 +1,7 @@
 // src/pages/admin/TagsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
@@ -23,6 +24,7 @@ interface Tag {
 export function TagsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const queryClient = useQueryClient();
   usePageTitle("admin.tags");
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +92,9 @@ export function TagsPage() {
       setIsCreating(false);
       resetForm();
       await loadTags();
+      // Invalidate places and events cache to refresh place cards, event cards and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createTagFailed"));
     }
@@ -119,6 +124,9 @@ export function TagsPage() {
       setEditingId(null);
       resetForm();
       await loadTags();
+      // Invalidate places and events cache to refresh place cards, event cards and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"));
     }
@@ -130,6 +138,9 @@ export function TagsPage() {
     try {
       await deleteTag(id, selectedTenantId || undefined);
       await loadTags();
+      // Invalidate places and events cache to refresh place cards, event cards and lists
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"));
     }

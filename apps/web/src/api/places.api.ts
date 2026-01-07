@@ -27,15 +27,22 @@ export function getSiteSettings(lang: string): Promise<SiteSettings> {
 
 export function getPlaces(
   lang: string,
-  category?: string,
-  priceBand?: string,
+  category?: string | string[],
+  priceBand?: string | string[],
   searchQuery?: string,
   limit?: number,
   offset?: number
 ) {
   const params = new URLSearchParams();
-  if (category) params.append("category", category);
-  if (priceBand) params.append("priceBand", priceBand);
+  // Support multiple categories and price bands (OR logic)
+  if (category) {
+    const categories = Array.isArray(category) ? category : [category];
+    categories.forEach((cat) => params.append("category", cat));
+  }
+  if (priceBand) {
+    const priceBands = Array.isArray(priceBand) ? priceBand : [priceBand];
+    priceBands.forEach((pb) => params.append("priceBand", pb));
+  }
   if (searchQuery) params.append("q", searchQuery);
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());

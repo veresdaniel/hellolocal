@@ -1,5 +1,5 @@
 // src/components/MapComponent.tsx
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Map, { Marker } from "react-map-gl";
 import * as maplibregl from "maplibre-gl";
@@ -35,19 +35,39 @@ export function MapComponent({
   mapStyle = "default",
 }: MapComponentProps) {
   const { t } = useTranslation();
-  const [viewState, setViewState] = useState({
+  const [viewState, setViewState] = useState(() => ({
     longitude: longitude ?? 19.0402, // Default: Budapest
     latitude: latitude ?? 47.4979,
     zoom: defaultZoom,
-  });
+  }));
+  
+  // Track if this is the initial mount to prevent unnecessary updates
+  const isInitialMount = useRef(true);
 
   const isDraggingRef = useRef(false);
   const prevLatRef = useRef<number | null>(latitude);
   const prevLngRef = useRef<number | null>(longitude);
 
+  // Track zoom separately to allow smooth transitions
+  const prevZoomRef = useRef<number | null>(null);
+
   // Update view state when latitude/longitude props change (from input fields)
   // Only update if the values are significantly different to avoid jumping during drag
   useEffect(() => {
+    // On initial mount, set the viewState from props
+    if (isInitialMount.current && latitude != null && longitude != null) {
+      setViewState({
+        longitude,
+        latitude,
+        zoom: defaultZoom,
+      });
+      prevLatRef.current = latitude;
+      prevLngRef.current = longitude;
+      prevZoomRef.current = defaultZoom;
+      isInitialMount.current = false;
+      return;
+    }
+    
     if (isDraggingRef.current) {
       prevLatRef.current = latitude;
       prevLngRef.current = longitude;
@@ -61,43 +81,41 @@ export function MapComponent({
       if (prevLat != null && prevLng != null) {
         const latDiff = Math.abs(latitude - prevLat);
         const lngDiff = Math.abs(longitude - prevLng);
-        // Only update if difference is significant (more than 0.0001 degrees, ~11 meters)
-        if (latDiff > 0.0001 || lngDiff > 0.0001) {
-          // Use setTimeout to avoid synchronous setState in effect
-          setTimeout(() => {
-            setViewState((prev) => ({
-              ...prev,
-              latitude,
-              longitude,
-            }));
-          }, 0);
-        }
-      } else {
-        // First time setting coordinates
-        setTimeout(() => {
+        // Only update if difference is significant (more than 0.01 degrees, ~1km)
+        // This prevents flickering when filters change and center recalculates slightly
+        if (latDiff > 0.01 || lngDiff > 0.01) {
           setViewState((prev) => ({
             ...prev,
             latitude,
             longitude,
           }));
-        }, 0);
+        }
+      } else {
+        // First time setting coordinates
+        setViewState((prev) => ({
+          ...prev,
+          latitude,
+          longitude,
+        }));
       }
       
       prevLatRef.current = latitude;
       prevLngRef.current = longitude;
-    } else if (latitude == null && longitude == null && (prevLatRef.current != null || prevLngRef.current != null)) {
-      // Reset to default if both are null and they weren't null before
-      setTimeout(() => {
-        setViewState((prev) => ({
-          ...prev,
-          latitude: 47.4979,
-          longitude: 19.0402,
-        }));
-      }, 0);
-      prevLatRef.current = null;
-      prevLngRef.current = null;
     }
+    // Don't reset to default if coordinates become null - keep current position
   }, [latitude, longitude]);
+
+  // Update zoom separately with smooth transition
+  useEffect(() => {
+    if (defaultZoom != null && prevZoomRef.current !== defaultZoom) {
+      // Only update zoom if it actually changed
+      setViewState((prev) => ({
+        ...prev,
+        zoom: defaultZoom,
+      }));
+      prevZoomRef.current = defaultZoom;
+    }
+  }, [defaultZoom]);
 
   const handleMapClick = useCallback(
     (event: { lngLat: { lng: number; lat: number } }) => {
@@ -136,6 +154,86 @@ export function MapComponent({
   const currentLat = latitude != null ? latitude : viewState.latitude;
   const currentLng = longitude != null ? longitude : viewState.longitude;
 
+  // Memoize map style to prevent re-initialization on every render
+  const memoizedMapStyle = useMemo(() => {
+    if (mapStyle === "hand-drawn") {
+      return {
+        version: 8,
+        sources: {
+          "hand-drawn-tiles": {
+            type: "raster",
+            tiles: [
+              "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"
+            ],
+            tileSize: 256,
+            attribution: "© Stamen Design, © OpenStreetMap contributors"
+          }
+        },
+        layers: [
+          {
+            id: "hand-drawn-layer",
+            type: "raster",
+            source: "hand-drawn-tiles",
+            minzoom: 0,
+            maxzoom: 18
+          }
+        ]
+      };
+    } else if (mapStyle === "pastel") {
+      return {
+        version: 8,
+        sources: {
+          "pastel-tiles": {
+            type: "raster",
+            tiles: [
+              "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors"
+          }
+        },
+        layers: [
+          {
+            id: "pastel-layer",
+            type: "raster",
+            source: "pastel-tiles",
+            minzoom: 0,
+            maxzoom: 22,
+            paint: {
+              "raster-saturation": -0.3
+            }
+          }
+        ]
+      };
+    } else {
+      return {
+        version: 8,
+        sources: {
+          "raster-tiles": {
+            type: "raster",
+            tiles: [
+              "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors"
+          }
+        },
+        layers: [
+          {
+            id: "simple-tiles",
+            type: "raster",
+            source: "raster-tiles",
+            minzoom: 0,
+            maxzoom: 22,
+            paint: {
+              "raster-saturation": -0.3
+            }
+          }
+        ]
+      };
+    }
+  }, [mapStyle]);
+
   return (
     <div style={{ width: "100%", height, position: "relative", overflow: "hidden" }}>
       <Map
@@ -150,85 +248,11 @@ export function MapComponent({
         style={{ width: "100%", height: "100%" }}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapLib={maplibregl as any}
-        mapStyle={
-          mapStyle === "hand-drawn"
-            ? {
-                version: 8,
-                sources: {
-                  "hand-drawn-tiles": {
-                    type: "raster",
-                    tiles: [
-                      "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"
-                    ],
-                    tileSize: 256,
-                    attribution: "© Stamen Design, © OpenStreetMap contributors"
-                  }
-                },
-                layers: [
-                  {
-                    id: "hand-drawn-layer",
-                    type: "raster",
-                    source: "hand-drawn-tiles",
-                    minzoom: 0,
-                    maxzoom: 18
-                  }
-                ]
-              }
-            : mapStyle === "pastel"
-            ? {
-                version: 8,
-                sources: {
-                  "pastel-tiles": {
-                    type: "raster",
-                    tiles: [
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    ],
-                    tileSize: 256,
-                    attribution: "© OpenStreetMap contributors"
-                  }
-                },
-                layers: [
-                  {
-                    id: "pastel-layer",
-                    type: "raster",
-                    source: "pastel-tiles",
-                    minzoom: 0,
-                    maxzoom: 22,
-                    paint: {
-                      "raster-saturation": -0.3
-                    }
-                  }
-                ]
-              }
-            : {
-                version: 8,
-                sources: {
-                  "raster-tiles": {
-                    type: "raster",
-                    tiles: [
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    ],
-                    tileSize: 256,
-                    attribution: "© OpenStreetMap contributors"
-                  }
-                },
-                layers: [
-                  {
-                    id: "simple-tiles",
-                    type: "raster",
-                    source: "raster-tiles",
-                    minzoom: 0,
-                    maxzoom: 22,
-                    paint: {
-                      "raster-saturation": -0.3
-                    }
-                  }
-                ]
-              }
-        }
+        mapStyle={memoizedMapStyle}
         cursor={interactive && onLocationChange ? "crosshair" : "default"}
         dragRotate={false}
         touchZoomRotate={false}
+        transitionDuration={300}
       >
         {/* Main marker (editable location) */}
         {currentLat && currentLng && onLocationChange && (

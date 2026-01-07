@@ -196,6 +196,9 @@
       "noData": "Nincs adat",
       "pleaseSelectTenant": "Kérjük, válassz bérlőt"
     },
+    "published": "Közzétéve",
+    "isCrawlable": "Keresőmotorok indexelhetik az oldalt",
+    "isCrawlableDescription": "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést.",
     "errors": {
       "userNotFound": "Felhasználó nem található",
       "loadFailed": "Betöltés sikertelen",
