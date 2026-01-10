@@ -1,8 +1,13 @@
 // src/pages/auth/LoginPage.tsx
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,7 +19,19 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+
+  // Sync i18n language with URL parameter
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+      localStorage.setItem("i18nextLng", lang);
+    }
+  }, [lang, i18n]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +40,7 @@ export function LoginPage() {
 
     try {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
-      navigate("/admin");
+      navigate(`/${lang}/admin`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t("admin.loginFailed");
       const errorStatus = (err as any)?.status;
@@ -153,13 +170,13 @@ export function LoginPage() {
       </form>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
-        <Link to="/admin/forgot-password" style={{ color: "#007bff" }}>
+        <Link to={`/${lang}/admin/forgot-password`} style={{ color: "#007bff" }}>
           {t("admin.forgotPassword")}
         </Link>
       </div>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
-        {t("admin.dontHaveAccount")} <Link to="/admin/register" style={{ color: "#007bff" }}>{t("admin.register")}</Link>
+        {t("admin.dontHaveAccount")} <Link to={`/${lang}/admin/register`} style={{ color: "#007bff" }}>{t("admin.register")}</Link>
       </div>
     </div>
   );

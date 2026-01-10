@@ -352,31 +352,37 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
       }
     }
     let errorMessage = `Request failed: ${res.status}`;
-    const contentType = res.headers.get("content-type");
     
-    if (contentType && contentType.includes("application/json")) {
-      try {
-        const json = await res.json();
-        if (json && json.message) {
-          errorMessage = json.message;
-        } else if (json && typeof json === "string") {
-          errorMessage = json;
+    // Handle 404 specifically - endpoint not found
+    if (res.status === 404) {
+      errorMessage = `Endpoint not found (404). Path: ${path}. Check if backend is running on port 3002 and route /api${path} exists.`;
+    } else {
+      const contentType = res.headers.get("content-type");
+      
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const json = await res.json();
+          if (json && json.message) {
+            errorMessage = json.message;
+          } else if (json && typeof json === "string") {
+            errorMessage = json;
+          }
+        } catch {
+          // If JSON parsing fails, try text
+          try {
+            const text = await res.text();
+            if (text) errorMessage = text;
+          } catch {
+            errorMessage = res.statusText || `Request failed: ${res.status}`;
+          }
         }
-      } catch {
-        // If JSON parsing fails, try text
+      } else {
         try {
           const text = await res.text();
           if (text) errorMessage = text;
         } catch {
           errorMessage = res.statusText || `Request failed: ${res.status}`;
         }
-      }
-    } else {
-      try {
-        const text = await res.text();
-        if (text) errorMessage = text;
-      } catch {
-        errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
     }
     

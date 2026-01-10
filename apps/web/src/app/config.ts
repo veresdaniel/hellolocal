@@ -8,4 +8,4 @@ export const DEFAULT_LANG: Lang = "hu";
 export const DEFAULT_TENANT_SLUG = "etyek-budai";
 
 // ha később több tenant lesz (Mockoon /tenants alapján), ezt true-ra állítod runtime:
-export const HAS_MULTIPLE_TENANTS = false;
+export const HAS_MULTIPLE_TENANTS = true;

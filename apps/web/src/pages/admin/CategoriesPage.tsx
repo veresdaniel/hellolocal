@@ -525,59 +525,194 @@ export function CategoriesPage() {
                       // Determine new parent and order
                       // If dropping on a root category (no parent), make it a child of that category
                       // If dropping on a child category, make it a sibling (same parent)
-                      const newParentId = category.parentId ? category.parentId : (category.id === draggedCategoryId ? draggedCategory.parentId : category.id);
+                      let targetParentId: string | null;
+                      if (category.parentId) {
+                        // Dropping on a child category - make it a sibling (same parent)
+                        targetParentId = category.parentId;
+                      } else {
+                        // Dropping on a root category - make it a child of that category
+                        targetParentId = category.id;
+                      }
                       
-                      // Get all siblings (categories with same parent, excluding dragged one)
-                      const siblings = categories
+                      // Prevent setting self as parent
+                      if (targetParentId === draggedCategoryId) {
+                        targetParentId = null;
+                      }
+                      
+                      const isMovingToDifferentParent = (draggedCategory.parentId ?? null) !== (targetParentId ?? null);
+                      
+                      // Get all categories that will be in the target group (same parent, excluding dragged one)
+                      const targetGroup = categories
                         .filter((c) => {
                           if (c.id === draggedCategoryId) return false;
-                          if (newParentId) {
-                            return c.parentId === newParentId;
+                          if (targetParentId) {
+                            return (c.parentId ?? null) === targetParentId;
                           } else {
-                            return !c.parentId;
+                            return (c.parentId ?? null) === null;
                           }
                         })
                         .sort((a, b) => a.order - b.order);
 
-                      // Find target position
-                      const targetIndex = siblings.findIndex((c) => c.id === category.id);
-                      const newOrder = targetIndex >= 0 ? targetIndex : siblings.length;
+                      // Find target position - where to insert the dragged category
+                      const targetIndex = targetGroup.findIndex((c) => c.id === category.id);
+                      const insertPosition = targetIndex >= 0 ? targetIndex : targetGroup.length;
 
                       // Build updates array
                       const updates: Array<{ id: string; parentId: string | null; order: number }> = [];
                       
-                      // Update dragged category
-                      updates.push({
-                        id: draggedCategoryId,
-                        parentId: newParentId === draggedCategoryId ? null : newParentId,
-                        order: newOrder,
+                      // Get all categories that will be in the target group after the move
+                      // This includes all current target group members + the dragged category
+                      const finalTargetGroup: Array<{ id: string; currentOrder: number }> = [];
+                      
+                      // Add all current target group members (excluding dragged if it's already there)
+                      targetGroup.forEach(c => {
+                        if (c.id !== draggedCategoryId) {
+                          finalTargetGroup.push({ id: c.id, currentOrder: c.order });
+                        }
                       });
-
-                      // Update siblings that come after the new position
-                      siblings.forEach((sibling, idx) => {
-                        if (idx >= newOrder) {
+                      
+                      // Sort by current order
+                      finalTargetGroup.sort((a, b) => a.currentOrder - b.currentOrder);
+                      
+                      // Insert dragged category at target position
+                      finalTargetGroup.splice(insertPosition, 0, { 
+                        id: draggedCategoryId, 
+                        currentOrder: draggedCategory.order 
+                      });
+                      
+                      // Update all categories in target group with new orders
+                      finalTargetGroup.forEach((item, newOrder) => {
+                        const currentCat = categories.find(c => c.id === item.id);
+                        if (!currentCat) {
+                          console.error(`Category not found: ${item.id}`);
+                          return;
+                        }
+                        
+                        const currentParentId = currentCat.parentId ?? null;
+                        const needsParentUpdate = isMovingToDifferentParent && currentParentId !== targetParentId;
+                        const needsOrderUpdate = currentCat.order !== newOrder;
+                        
+                        if (needsParentUpdate || needsOrderUpdate) {
                           updates.push({
-                            id: sibling.id,
-                            parentId: sibling.parentId,
-                            order: idx + 1,
-                          });
-                        } else {
-                          // Update order for siblings before (to maintain order)
-                          updates.push({
-                            id: sibling.id,
-                            parentId: sibling.parentId,
-                            order: idx,
+                            id: item.id,
+                            parentId: isMovingToDifferentParent ? targetParentId : currentParentId,
+                            order: newOrder,
                           });
                         }
                       });
+                      
+                      // If moving to different parent, update old siblings to fill the gap
+                      if (isMovingToDifferentParent) {
+                        const oldParentId = draggedCategory.parentId ?? null;
+                        const oldGroup = categories
+                          .filter((c) => {
+                            if (c.id === draggedCategoryId) return false;
+                            return (c.parentId ?? null) === oldParentId;
+                          })
+                          .sort((a, b) => a.order - b.order);
+                        
+                        oldGroup.forEach((sibling, idx) => {
+                          if (sibling.order !== idx) {
+                            updates.push({
+                              id: sibling.id,
+                              parentId: sibling.parentId ?? null,
+                              order: idx,
+                            });
+                          }
+                        });
+                      }
+
+                      // Validate all category IDs exist before sending
+                      const allUpdateIds = updates.map(u => u.id);
+                      const missingIds = allUpdateIds.filter(id => !categories.find(c => c.id === id));
+                      if (missingIds.length > 0) {
+                        console.error("Missing category IDs:", missingIds);
+                        console.error("Available categories:", categories.map(c => c.id));
+                        setError(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingIds.join(", ")}`);
+                        setDraggedId(null);
+                        setDragOverId(null);
+                        return;
+                      }
+
+                      // Only send if there are actual changes
+                      if (updates.length === 0) {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                        return;
+                      }
+
+                      // Debug logging
+                      console.log("=== REORDER DEBUG ===");
+                      console.log("Tenant ID:", selectedTenantId);
+                      console.log("Updates count:", updates.length);
+                      console.log("Updates:", updates.map(u => ({ 
+                        id: u.id, 
+                        parentId: u.parentId, 
+                        order: u.order 
+                      })));
+                      console.log("All category IDs in updates:", updates.map(u => u.id));
+                      console.log("All parent IDs in updates:", updates.filter(u => u.parentId).map(u => u.parentId));
+                      console.log("Available categories:", categories.map(c => ({ 
+                        id: c.id, 
+                        parentId: c.parentId, 
+                        order: c.order 
+                      })));
+                      console.log("===================");
 
                       try {
+                        // Double-check all IDs exist before sending
+                        const allIds = updates.map(u => u.id);
+                        const allParentIds = updates.filter(u => u.parentId).map(u => u.parentId!);
+                        const missingCategoryIds = allIds.filter(id => !categories.find(c => c.id === id));
+                        const missingParentIds = allParentIds.filter(id => !categories.find(c => c.id === id));
+                        
+                        if (missingCategoryIds.length > 0) {
+                          console.error("Missing category IDs before send:", missingCategoryIds);
+                          setError(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingCategoryIds.join(", ")}`);
+                          setDraggedId(null);
+                          setDragOverId(null);
+                          return;
+                        }
+                        
+                        if (missingParentIds.length > 0) {
+                          console.error("Missing parent category IDs before send:", missingParentIds);
+                          setError(t("admin.errors.parentCategoriesNotFound") || `Invalid parent category IDs: ${missingParentIds.join(", ")}`);
+                          setDraggedId(null);
+                          setDragOverId(null);
+                          return;
+                        }
+                        
                         await reorderCategories(selectedTenantId!, updates);
                         await loadCategories();
                         notifyEntityChanged("categories");
                         setError(null);
                       } catch (err) {
-                        setError(err instanceof Error ? err.message : t("admin.errors.reorderFailed") || "Failed to reorder categories");
+                        console.error("=== REORDER ERROR ===");
+                        console.error("Error object:", err);
+                        console.error("Error message:", err instanceof Error ? err.message : String(err));
+                        console.error("Error stack:", err instanceof Error ? err.stack : "N/A");
+                        console.error("Request was:", {
+                          tenantId: selectedTenantId,
+                          updates: updates,
+                        });
+                        console.error("====================");
+                        
+                        let errorMessage = err instanceof Error ? err.message : t("admin.errors.reorderFailed") || "Failed to reorder categories";
+                        
+                        // Translate backend error messages
+                        if (errorMessage.includes("Some categories not found or don't belong to tenant")) {
+                          errorMessage = t("admin.errors.categoriesNotFound");
+                        } else if (errorMessage.includes("Some parent categories not found or don't belong to tenant")) {
+                          errorMessage = t("admin.errors.parentCategoriesNotFound");
+                        } else if (errorMessage.includes("One or more categories not found during update")) {
+                          errorMessage = t("admin.errors.oneOrMoreCategoriesNotFound");
+                        } else if (errorMessage.includes("Category not found")) {
+                          errorMessage = t("admin.errors.categoryNotFound");
+                        } else if (errorMessage.includes("404") || errorMessage.includes("Not Found") || errorMessage.includes("Endpoint not found")) {
+                          errorMessage = t("admin.errors.reorderFailed") + " (404 - Endpoint nem található. Ellenőrizd, hogy a backend fut-e a 3002-es porton és hogy az /api/admin/categories/reorder route létezik-e)";
+                        }
+                        
+                        setError(errorMessage);
                       }
 
                       setDraggedId(null);

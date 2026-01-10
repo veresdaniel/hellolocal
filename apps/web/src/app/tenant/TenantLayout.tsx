@@ -11,6 +11,7 @@ import {
 import { Footer } from "../../ui/layout/Footer";
 import { usePublicDefaultLanguage } from "../../hooks/usePublicDefaultLanguage";
 import { PublicAuthBadge } from "../../components/PublicAuthBadge";
+import { useActiveTenantsCount } from "../../hooks/useActiveTenantsCount";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -24,6 +25,7 @@ export function TenantLayout() {
   const location = useLocation();
   const { i18n } = useTranslation();
   const defaultLangFromSettings = usePublicDefaultLanguage();
+  const { data: tenantsCountData, isLoading: isLoadingTenantsCount } = useActiveTenantsCount();
 
   const lang: Lang = isLang(langParam) ? langParam : defaultLangFromSettings;
 
@@ -35,20 +37,36 @@ export function TenantLayout() {
     }
   }, [lang, i18n]);
 
+  // Determine if we should show tenant slug in URL
+  // If multi-tenant is enabled but only one tenant exists, hide tenant slug from URL
+  const shouldShowTenantSlug = HAS_MULTIPLE_TENANTS && (tenantsCountData?.count ?? 0) > 1;
+
   // single-tenant módban mindig default tenant
+  // multi-tenant módban: ha csak egy tenant van, ne mutassuk az URL-ben
   const tenantSlug = HAS_MULTIPLE_TENANTS
     ? tenantParam ?? DEFAULT_TENANT_SLUG
     : DEFAULT_TENANT_SLUG;
 
+  // Multi-tenant módban: ha több tenant van és nincs tenant slug az URL-ben, redirect a default tenant-ra
+  // Ha csak egy tenant van, ne redirectáljunk (hagyjuk, hogy az URL-ben ne legyen tenant slug)
+  if (HAS_MULTIPLE_TENANTS && shouldShowTenantSlug && !tenantParam && langParam === lang && !isLoadingTenantsCount) {
+    return <Navigate to={`/${lang}/${DEFAULT_TENANT_SLUG}`} replace />;
+  }
+
+  // Ha csak egy tenant van és van tenant slug az URL-ben, redirectáljunk anélkül
+  if (HAS_MULTIPLE_TENANTS && !shouldShowTenantSlug && tenantParam && langParam === lang && !isLoadingTenantsCount) {
+    return <Navigate to={`/${lang}`} replace />;
+  }
+
   // rossz lang -> redirect a javított langra (megtartva a többit)
-  if (langParam !== lang) {
-    const base = HAS_MULTIPLE_TENANTS ? `/${lang}/${tenantSlug}` : `/${lang}`;
+  if (langParam !== lang && !isLoadingTenantsCount) {
+    const base = shouldShowTenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
     return <Navigate to={base} replace />;
   }
 
   // Check if we're on the home page (where footer is handled internally)
   const isHomePage = location.pathname === `/${lang}` || 
-                     (HAS_MULTIPLE_TENANTS && location.pathname === `/${lang}/${tenantSlug}`);
+                     (shouldShowTenantSlug && location.pathname === `/${lang}/${tenantSlug}`);
 
   // Header (logo island) is now rendered by HomePage when in map view
   // FloatingHeader is rendered by PlacesListView and PlaceDetailPage

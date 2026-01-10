@@ -77,26 +77,54 @@ export class AdminEventService {
 
   /**
    * Create slugs for an event in all languages
+   * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForEvent(eventId: string, tenantId: string, translations: Array<{ lang: Lang; title: string }>) {
+  private async createSlugsForEvent(eventId: string, tenantId: string, translations: Array<{ lang: Lang; title: string }>, throwOnConflict: boolean = false) {
     for (const translation of translations) {
       const baseSlug = this.generateSlug(translation.title);
       let slug = baseSlug;
       let counter = 1;
 
-      // Check for existing slugs and append counter if needed
-      while (true) {
-        const existing = await this.prisma.slug.findFirst({
-          where: {
-            tenantId,
-            lang: translation.lang,
-            slug,
+      // Check for existing slugs
+      const existing = await this.prisma.slug.findFirst({
+        where: {
+          tenantId,
+          lang: translation.lang,
+          slug,
+          NOT: {
+            entityType: SlugEntityType.event,
+            entityId: eventId,
           },
-        });
+        },
+      });
 
-        if (!existing) break;
-        slug = `${baseSlug}-${counter}`;
-        counter++;
+      // If conflict detected and throwOnConflict is true, throw error
+      if (existing && throwOnConflict) {
+        const langName = translation.lang === Lang.hu ? "magyar" : translation.lang === Lang.en ? "angol" : "német";
+        throw new BadRequestException(
+          `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik címet vagy módosítsa a meglévő eseményt.`
+        );
+      }
+
+      // Auto-resolve conflicts by appending counter if needed (only if throwOnConflict is false)
+      if (existing && !throwOnConflict) {
+        while (true) {
+          const nextExisting = await this.prisma.slug.findFirst({
+            where: {
+              tenantId,
+              lang: translation.lang,
+              slug,
+              NOT: {
+                entityType: SlugEntityType.event,
+                entityId: eventId,
+              },
+            },
+          });
+
+          if (!nextExisting) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
       }
 
       // Create the slug
@@ -111,6 +139,143 @@ export class AdminEventService {
           isActive: true,
         },
       });
+    }
+  }
+
+  /**
+   * Create slugs for an event with redirect support when slug changes
+   * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
+   */
+  private async createSlugsForEventWithRedirects(
+    eventId: string,
+    tenantId: string,
+    translations: Array<{ lang: Lang; title: string }>,
+    existingSlugsByLang: Map<Lang, any>,
+    throwOnConflict: boolean = false
+  ) {
+    for (const translation of translations) {
+      const baseSlug = this.generateSlug(translation.title);
+      let slug = baseSlug;
+      let counter = 1;
+
+      const existingSlug = existingSlugsByLang.get(translation.lang);
+
+      // Check for existing slugs (excluding current event's slugs)
+      const existing = await this.prisma.slug.findFirst({
+        where: {
+          tenantId,
+          lang: translation.lang,
+          slug,
+          NOT: {
+            OR: [
+              { entityType: SlugEntityType.event, entityId: eventId },
+              { id: existingSlug?.id }, // Also exclude the current slug if it exists
+            ],
+          },
+        },
+      });
+
+      // If conflict detected and throwOnConflict is true, throw error
+      if (existing && throwOnConflict) {
+        const langName = translation.lang === Lang.hu ? "magyar" : translation.lang === Lang.en ? "angol" : "német";
+        throw new BadRequestException(
+          `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik címet vagy módosítsa a meglévő eseményt.`
+        );
+      }
+
+      // Auto-resolve conflicts by appending counter if needed (only if throwOnConflict is false)
+      if (existing && !throwOnConflict) {
+        while (true) {
+          const nextExisting = await this.prisma.slug.findFirst({
+            where: {
+              tenantId,
+              lang: translation.lang,
+              slug,
+              NOT: {
+                OR: [
+                  { entityType: SlugEntityType.event, entityId: eventId },
+                  { id: existingSlug?.id },
+                ],
+              },
+            },
+          });
+
+          if (!nextExisting) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+      }
+
+      if (existingSlug) {
+        const oldSlug = existingSlug.slug;
+
+        // If the slug has changed, create a redirect from old to new
+        if (oldSlug !== slug) {
+          // Check if there's already a slug with the new value
+          const newSlugExists = await this.prisma.slug.findUnique({
+            where: { tenantId_lang_slug: { tenantId, lang: translation.lang, slug } },
+          });
+
+          if (!newSlugExists) {
+            // Create new slug with isPrimary = true
+            const newSlug = await this.prisma.slug.create({
+              data: {
+                tenantId,
+                lang: translation.lang,
+                slug,
+                entityType: SlugEntityType.event,
+                entityId: eventId,
+                isPrimary: true,
+                isActive: true,
+              },
+            });
+
+            // Update old slug to redirect to new slug
+            await this.prisma.slug.update({
+              where: { id: existingSlug.id },
+              data: {
+                isPrimary: false, // Old slug is no longer primary
+                isActive: true, // Keep active so redirect works
+                redirectToId: newSlug.id, // Redirect to new slug
+              },
+            });
+          } else {
+            // If new slug already exists, just update the existing slug to point to it
+            await this.prisma.slug.update({
+              where: { id: existingSlug.id },
+              data: {
+                isPrimary: false,
+                isActive: true,
+                redirectToId: newSlugExists.id,
+              },
+            });
+          }
+        } else {
+          // Slug hasn't changed, just update if needed
+          await this.prisma.slug.update({
+            where: { id: existingSlug.id },
+            data: {
+              slug,
+              isPrimary: true,
+              isActive: true,
+              redirectToId: null, // Clear any redirects
+            },
+          });
+        }
+      } else {
+        // No existing slug, create new one
+        await this.prisma.slug.create({
+          data: {
+            tenantId,
+            lang: translation.lang,
+            slug,
+            entityType: SlugEntityType.event,
+            entityId: eventId,
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+      }
     }
   }
 
@@ -267,10 +432,12 @@ export class AdminEventService {
     });
 
     // Generate slugs for the event
+    // Throw error if slug conflict is detected (admin should be aware of conflicts)
     await this.createSlugsForEvent(
       event.id,
       dto.tenantId,
-      translations.map((t) => ({ lang: t.lang, title: t.title }))
+      translations.map((t) => ({ lang: t.lang, title: t.title })),
+      true
     );
 
     // Send notification about new event
@@ -310,8 +477,9 @@ export class AdminEventService {
         })),
       });
 
-      // Update slugs for the event (delete old, create new)
-      await this.prisma.slug.deleteMany({
+      // Update slugs for the event with redirect support
+      // Get existing slugs before updating
+      const existingSlugs = await this.prisma.slug.findMany({
         where: {
           tenantId,
           entityType: SlugEntityType.event,
@@ -319,10 +487,17 @@ export class AdminEventService {
         },
       });
 
-      await this.createSlugsForEvent(
+      // Create a map of existing slugs by language
+      const existingSlugsByLang = new Map(existingSlugs.map((s) => [s.lang, s]));
+
+      // Create new slugs (this will handle redirects if slug changed)
+      // Throw error if slug conflict is detected (admin should be aware of conflicts)
+      await this.createSlugsForEventWithRedirects(
         id,
         tenantId,
-        translations.map((t) => ({ lang: t.lang, title: t.title }))
+        translations.map((t) => ({ lang: t.lang, title: t.title })),
+        existingSlugsByLang,
+        true
       );
     }
 

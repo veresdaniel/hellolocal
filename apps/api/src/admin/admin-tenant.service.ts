@@ -79,7 +79,20 @@ export class AdminTenantService {
       throw new BadRequestException(`Tenant with slug "${dto.slug}" already exists`);
     }
 
-    return this.prisma.tenant.create({
+    // Check if TenantKey slugs already exist for any language
+    for (const translation of dto.translations) {
+      const existingKey = await this.prisma.tenantKey.findUnique({
+        where: { lang_slug: { lang: translation.lang, slug: dto.slug } },
+      });
+      if (existingKey) {
+        throw new BadRequestException(
+          `TenantKey with slug "${dto.slug}" already exists for language "${translation.lang}"`
+        );
+      }
+    }
+
+    // Create tenant with translations
+    const tenant = await this.prisma.tenant.create({
       data: {
         slug: dto.slug,
         isActive: dto.isActive ?? true,
@@ -102,6 +115,22 @@ export class AdminTenantService {
         translations: true,
       },
     });
+
+    // Create TenantKey records for each language that has a translation
+    // This enables multi-tenant mode to work with this tenant
+    for (const translation of dto.translations) {
+      await this.prisma.tenantKey.create({
+        data: {
+          tenantId: tenant.id,
+          lang: translation.lang,
+          slug: dto.slug, // Use tenant slug as the public-facing slug
+          isPrimary: true,
+          isActive: true,
+        },
+      });
+    }
+
+    return tenant;
   }
 
   async update(id: string, dto: UpdateTenantDto) {
@@ -130,6 +159,16 @@ export class AdminTenantService {
 
     if (dto.translations) {
       for (const translation of dto.translations) {
+        // Check if translation already exists
+        const existingTranslation = await this.prisma.tenantTranslation.findUnique({
+          where: {
+            tenantId_lang: {
+              tenantId: id,
+              lang: translation.lang,
+            },
+          },
+        });
+
         await this.prisma.tenantTranslation.upsert({
           where: {
             tenantId_lang: {
@@ -160,6 +199,27 @@ export class AdminTenantService {
             seoKeywords: translation.seoKeywords ?? [],
           },
         });
+
+        // If this is a new translation (didn't exist before), create TenantKey for it
+        if (!existingTranslation) {
+          const tenantSlug = dto.slug ?? tenant.slug;
+          // Check if TenantKey already exists for this lang+slug combination
+          const existingKey = await this.prisma.tenantKey.findUnique({
+            where: { lang_slug: { lang: translation.lang, slug: tenantSlug } },
+          });
+          
+          if (!existingKey) {
+            await this.prisma.tenantKey.create({
+              data: {
+                tenantId: id,
+                lang: translation.lang,
+                slug: tenantSlug,
+                isPrimary: true,
+                isActive: true,
+              },
+            });
+          }
+        }
       }
     }
 

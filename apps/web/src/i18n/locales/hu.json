@@ -285,7 +285,12 @@
       "updateStaticPageFailed": "A statikus oldal frissítése sikertelen",
       "deleteStaticPageFailed": "A statikus oldal törlése sikertelen",
       "reorderFailed": "A rendezés sikertelen",
-      "cannotDropOnChild": "Nem lehet egy kategóriát a saját gyermekére dobni"
+      "cannotDropOnChild": "Nem lehet egy kategóriát a saját gyermekére dobni",
+      "categoryNotFound": "Kategória nem található",
+      "invalidCategoryIds": "Érvénytelen kategória azonosítók",
+      "categoriesNotFound": "Egy vagy több kategória nem található vagy nem tartozik a bérlőhöz",
+      "parentCategoriesNotFound": "Egy vagy több szülő kategória nem található vagy nem tartozik a bérlőhöz",
+      "oneOrMoreCategoriesNotFound": "Egy vagy több kategória nem található a frissítés során"
     },
     "validation": {
       "hungarianNameRequired": "A magyar név kötelező",
@@ -407,6 +412,23 @@
     "invalidImageUrl": "Érvénytelen kép URL. Csak http:// és https:// URL-ek engedélyezettek.",
     "minLength": "Minimum {{min}} karakter",
     "maxLength": "Maximum {{max}} karakter"
+  },
+  "error": {
+    "pageNotFound": "Az oldal nem található",
+    "pageNotFoundDescription": "A keresett oldal nem létezik vagy el lett távolítva.",
+    "errorOccurred": "Hiba történt",
+    "unknownError": "Ismeretlen hiba",
+    "badRequest": "Hibás kérés",
+    "unauthorized": "Nincs jogosultság",
+    "forbidden": "Hozzáférés megtagadva",
+    "notFound": "Nem található",
+    "internalServerError": "Belső szerver hiba",
+    "badGateway": "Hibás átjáró",
+    "serviceUnavailable": "Szolgáltatás nem elérhető",
+    "goHome": "Vissza a főoldalra",
+    "goBack": "Vissza",
+    "reload": "Oldal újratöltése",
+    "errorDetails": "Hiba részletei"
   }
 }
 

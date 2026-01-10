@@ -1,6 +1,6 @@
 // src/pages/EventDetailPage.tsx
-import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
@@ -10,17 +10,30 @@ import { buildPath } from "../app/routing/buildPath";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { HAS_MULTIPLE_TENANTS } from "../app/config";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const { lang, tenantSlug } = useTenantContext();
+  const navigate = useNavigate();
+
+  // Get tenantKey for API call (only if multi-tenant mode)
+  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   const { data: event, isLoading, isError, error } = useQuery({
-    queryKey: ["event", lang, slug],
-    queryFn: () => getEvent(lang, slug!),
+    queryKey: ["event", lang, slug, tenantKey],
+    queryFn: () => getEvent(lang, slug!, tenantKey),
     enabled: !!slug,
   });
+
+  // Handle redirects: if the slug was redirected, navigate to the canonical slug
+  useEffect(() => {
+    if (event?.redirected && event.slug && event.slug !== slug) {
+      const canonicalPath = buildPath({ tenantSlug, lang, path: `event/${event.slug}` });
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [event, slug, lang, tenantSlug, navigate]);
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({

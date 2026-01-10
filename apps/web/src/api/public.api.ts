@@ -26,6 +26,10 @@ export interface DefaultLanguageResponse {
   defaultLanguage: "hu" | "en" | "de";
 }
 
+export interface ActiveTenantsCountResponse {
+  count: number;
+}
+
 /**
  * Get default language from public endpoint (no authentication required)
  */
@@ -43,5 +47,24 @@ export async function getPublicDefaultLanguage(): Promise<DefaultLanguageRespons
   }
 
   return (await res.json()) as DefaultLanguageResponse;
+}
+
+/**
+ * Get active tenants count from public endpoint (no authentication required)
+ */
+export async function getActiveTenantsCount(): Promise<ActiveTenantsCountResponse> {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/active-tenants-count`, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    // If API call fails, assume single tenant (fallback)
+    return { count: 1 };
+  }
+
+  return (await res.json()) as ActiveTenantsCountResponse;
 }
 

@@ -2,6 +2,7 @@
 import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
 import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
+import { PrismaService } from "../prisma/prisma.service";
 
 /**
  * Public controller for app settings that don't require authentication
@@ -10,7 +11,8 @@ import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service"
 export class AppSettingsController {
   constructor(
     private readonly appSettingsService: AdminAppSettingsService,
-    private readonly tenantKeyResolver: TenantKeyResolverService
+    private readonly tenantKeyResolver: TenantKeyResolverService,
+    private readonly prisma: PrismaService
   ) {}
 
   /**
@@ -73,6 +75,18 @@ export class AppSettingsController {
       defaultPlaceholderCardImage: allSettings.defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage: allSettings.defaultPlaceholderDetailHeroImage,
     };
+  }
+
+  /**
+   * Get active tenants count - public endpoint, no authentication required
+   * Returns the number of active tenants to determine if multi-tenant URLs should be used
+   */
+  @Get("/app-settings/active-tenants-count")
+  async getActiveTenantsCount() {
+    const count = await this.prisma.tenant.count({
+      where: { isActive: true },
+    });
+    return { count };
   }
 }
 

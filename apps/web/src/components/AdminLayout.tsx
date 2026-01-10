@@ -7,26 +7,47 @@ import { useAdminCache } from "../hooks/useAdminCache";
 import { TenantSelector } from "./TenantSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
 import "../styles/sessionWarning.css";
+
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Initialize global cache management for all admin pages
   useAdminCache();
   const { user, logout } = useAuth();
   const location = useLocation();
   const { showWarning, secondsRemaining } = useSessionWarning();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+
+  // Sync i18n language with URL parameter
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+      localStorage.setItem("i18nextLng", lang);
+    }
+  }, [lang, i18n]);
 
   const handleLogout = async () => {
     await logout();
   };
 
   const isActive = (path: string) => location.pathname === path;
+  
+  // Helper to build admin paths with language
+  const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
@@ -41,26 +62,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }}
       >
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+          <Link to={`/${lang}`} style={{ textDecoration: "none", color: "inherit" }}>
             <h2 style={{ margin: 0 }}>Admin</h2>
           </Link>
           <div style={{ display: "flex", gap: 16 }}>
             <Link
-              to="/admin"
+              to={adminPath("")}
               style={{
                 textDecoration: "none",
-                color: isActive("/admin") ? "#007bff" : "#666",
-                fontWeight: isActive("/admin") ? "bold" : "normal",
+                color: isActive(adminPath("")) ? "#007bff" : "#666",
+                fontWeight: isActive(adminPath("")) ? "bold" : "normal",
               }}
             >
               {t("admin.dashboard")}
             </Link>
             <Link
-              to="/admin/profile"
+              to={adminPath("/profile")}
               style={{
                 textDecoration: "none",
-                color: isActive("/admin/profile") ? "#007bff" : "#666",
-                fontWeight: isActive("/admin/profile") ? "bold" : "normal",
+                color: isActive(adminPath("/profile")) ? "#007bff" : "#666",
+                fontWeight: isActive(adminPath("/profile")) ? "bold" : "normal",
               }}
             >
               {t("admin.profileMenu")}
@@ -68,31 +89,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {user?.role === "superadmin" && (
               <>
                 <Link
-                  to="/admin/app-settings"
+                  to={adminPath("/app-settings")}
                   style={{
                     textDecoration: "none",
-                    color: isActive("/admin/app-settings") ? "#007bff" : "#666",
-                    fontWeight: isActive("/admin/app-settings") ? "bold" : "normal",
+                    color: isActive(adminPath("/app-settings")) ? "#007bff" : "#666",
+                    fontWeight: isActive(adminPath("/app-settings")) ? "bold" : "normal",
                   }}
                 >
                   {t("admin.appSettings")}
                 </Link>
                 <Link
-                  to="/admin/users"
+                  to={adminPath("/users")}
                   style={{
                     textDecoration: "none",
-                    color: isActive("/admin/users") ? "#007bff" : "#666",
-                    fontWeight: isActive("/admin/users") ? "bold" : "normal",
+                    color: isActive(adminPath("/users")) ? "#007bff" : "#666",
+                    fontWeight: isActive(adminPath("/users")) ? "bold" : "normal",
                   }}
                 >
                   {t("admin.users")}
                 </Link>
                 <Link
-                  to="/admin/tenants"
+                  to={adminPath("/tenants")}
                   style={{
                     textDecoration: "none",
-                    color: isActive("/admin/tenants") ? "#007bff" : "#666",
-                    fontWeight: isActive("/admin/tenants") ? "bold" : "normal",
+                    color: isActive(adminPath("/tenants")) ? "#007bff" : "#666",
+                    fontWeight: isActive(adminPath("/tenants")) ? "bold" : "normal",
                   }}
                 >
                   {t("admin.tenants")}

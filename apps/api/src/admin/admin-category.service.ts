@@ -261,17 +261,26 @@ export class AdminCategoryService {
     }
 
     // Update all categories in a transaction
-    await this.prisma.$transaction(
-      updates.map((update) =>
-        this.prisma.category.update({
-          where: { id: update.id },
-          data: {
-            parentId: update.parentId,
-            order: update.order,
-          },
-        })
-      )
-    );
+    try {
+      await this.prisma.$transaction(
+        updates.map((update) =>
+          this.prisma.category.update({
+            where: { id: update.id },
+            data: {
+              parentId: update.parentId,
+              order: update.order,
+            },
+          })
+        )
+      );
+    } catch (error: any) {
+      // Handle Prisma errors
+      if (error.code === "P2025") {
+        throw new BadRequestException("One or more categories not found during update");
+      }
+      // Re-throw other errors
+      throw error;
+    }
 
     return { message: "Categories reordered successfully" };
   }

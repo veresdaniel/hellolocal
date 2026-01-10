@@ -28,16 +28,24 @@ import { PlacesPage } from "../pages/admin/PlacesPage";
 import { EventsPage } from "../pages/admin/EventsPage";
 import { AppSettingsPage } from "../pages/admin/AppSettingsPage";
 import { AdminLayout } from "../components/AdminLayout";
+import { NotFoundPage } from "../pages/NotFoundPage";
+import { ErrorPage } from "../pages/ErrorPage";
 
-const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug" : "";
+// If multi-tenant is enabled, tenant slug is optional (will be determined dynamically)
+const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug?" : "";
 
 export const router = createBrowserRouter([
   // root -> default nyelv (dynamically loaded from app settings)
   { path: "/", element: <RootRedirect /> },
+  
+  // Legacy admin routes redirect to language-specific routes
+  { path: "/admin", element: <RootRedirect /> },
+  { path: "/admin/*", element: <RootRedirect /> },
 
   {
     path: `/:lang${tenantSuffix}`,
     element: <TenantLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
       { path: "place/:slug", element: <PlaceDetailPage /> },
@@ -50,9 +58,10 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Admin routes (no language prefix)
+  // Admin routes (with language prefix)
   {
-    path: "/admin",
+    path: `/:lang/admin`,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: "login",
@@ -203,5 +212,5 @@ export const router = createBrowserRouter([
     ],
   },
 
-  { path: "*", element: <div style={{ padding: 24 }}>404</div> },
+  { path: "*", element: <NotFoundPage /> },
 ]);

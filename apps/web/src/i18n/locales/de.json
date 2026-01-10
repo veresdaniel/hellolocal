@@ -285,7 +285,12 @@
       "updateStaticPageFailed": "Statische Seite konnte nicht aktualisiert werden",
       "deleteStaticPageFailed": "Statische Seite konnte nicht gelöscht werden",
       "reorderFailed": "Neuordnung fehlgeschlagen",
-      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden"
+      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden",
+      "categoryNotFound": "Kategorie nicht gefunden",
+      "invalidCategoryIds": "Ungültige Kategorie-IDs",
+      "categoriesNotFound": "Einige Kategorien wurden nicht gefunden oder gehören nicht zum Mandanten",
+      "parentCategoriesNotFound": "Einige übergeordnete Kategorien wurden nicht gefunden oder gehören nicht zum Mandanten",
+      "oneOrMoreCategoriesNotFound": "Eine oder mehrere Kategorien wurden während der Aktualisierung nicht gefunden"
     },
     "validation": {
       "hungarianNameRequired": "Ungarischer Name ist erforderlich",
@@ -406,8 +411,27 @@
       "updateStaticPageFailed": "Statische Seite konnte nicht aktualisiert werden",
       "deleteStaticPageFailed": "Statische Seite konnte nicht gelöscht werden",
       "reorderFailed": "Neuordnung fehlgeschlagen",
-      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden"
+      "cannotDropOnChild": "Eine Kategorie kann nicht auf ihr eigenes Kind gezogen werden",
+      "categoryNotFound": "Kategorie nicht gefunden",
+      "invalidCategoryIds": "Ungültige Kategorie-IDs"
     }
+  },
+  "error": {
+    "pageNotFound": "Seite nicht gefunden",
+    "pageNotFoundDescription": "Die gesuchte Seite existiert nicht oder wurde entfernt.",
+    "errorOccurred": "Ein Fehler ist aufgetreten",
+    "unknownError": "Unbekannter Fehler",
+    "badRequest": "Ungültige Anfrage",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert",
+    "notFound": "Nicht gefunden",
+    "internalServerError": "Interner Serverfehler",
+    "badGateway": "Ungültiges Gateway",
+    "serviceUnavailable": "Dienst nicht verfügbar",
+    "goHome": "Zur Startseite",
+    "goBack": "Zurück",
+    "reload": "Seite neu laden",
+    "errorDetails": "Fehlerdetails"
   },
   "validation": {
     "required": "Pflichtfeld",

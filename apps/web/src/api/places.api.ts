@@ -57,8 +57,9 @@ export function getPlaces(
   return apiGetPublic<Place[]>(`/${lang}/places${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getPlace(lang: string, slug: string) {
-  return apiGetPublic<Place>(`/${lang}/places/${slug}`);
+export function getPlace(lang: string, slug: string, tenantKey?: string) {
+  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
+  return apiGetPublic<Place>(`/${lang}/places/${slug}${params}`);
 }
 
 export interface Category {
@@ -117,6 +118,8 @@ export async function getPriceBands(lang: string): Promise<PriceBand[]> {
 export interface Event {
   id: string;
   slug: string;
+  redirected?: boolean; // Whether the slug was redirected to a canonical slug
+  tenantRedirected?: boolean; // Whether the tenant key was redirected
   tenantKey: string | null;
   category: string | null;
   name: string;
@@ -158,6 +161,7 @@ export function getEvents(
   return apiGetPublic<Event[]>(`/${lang}/events${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getEvent(lang: string, slug: string) {
-  return apiGetPublic<Event>(`/${lang}/events/${slug}`);
+export function getEvent(lang: string, slug: string, tenantKey?: string) {
+  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
+  return apiGetPublic<Event>(`/${lang}/events/${slug}${params}`);
 }

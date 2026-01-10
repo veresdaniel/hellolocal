@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
@@ -11,17 +11,30 @@ import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { sanitizeImageUrl } from "../utils/urlValidation";
+import { HAS_MULTIPLE_TENANTS } from "../app/config";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const { lang, tenantSlug } = useTenantContext();
+  const navigate = useNavigate();
+
+  // Get tenantKey for API call (only if multi-tenant mode)
+  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   const { data: place, isLoading, isError, error } = useQuery({
-    queryKey: ["place", lang, slug],
-    queryFn: () => getPlace(lang, slug!),
+    queryKey: ["place", lang, slug, tenantKey],
+    queryFn: () => getPlace(lang, slug!, tenantKey),
     enabled: !!slug,
   });
+
+  // Handle redirects: if the slug was redirected, navigate to the canonical slug
+  useEffect(() => {
+    if (place?.redirected && place.slug && place.slug !== slug) {
+      const canonicalPath = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [place, slug, lang, tenantSlug, navigate]);
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({

@@ -10,10 +10,10 @@ export function LanguageSelector() {
   const navigate = useNavigate();
   const params = useParams<{ lang?: Lang; tenantSlug?: string }>();
   
-  // Try to get lang from URL params (for public pages)
+  // Try to get lang from URL params (for public pages and admin pages)
   const currentLang = params.lang;
   const tenantSlug = HAS_MULTIPLE_TENANTS ? (params.tenantSlug || DEFAULT_TENANT_SLUG) : DEFAULT_TENANT_SLUG;
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAdminPage = location.pathname.includes("/admin");
 
   const handleLanguageChange = (lang: "hu" | "en" | "de") => {
     i18n.changeLanguage(lang);
@@ -32,7 +32,15 @@ export function LanguageSelector() {
         navigate(basePath + location.search, { replace: true });
       }
     }
-    // Admin pages don't have lang in URL, so just update i18n (already done above)
+    
+    // Admin pages: replace language in URL
+    if (isAdminPage && currentLang) {
+      const currentPath = location.pathname;
+      const newPath = currentPath.replace(`/${currentLang}/admin`, `/${lang}/admin`);
+      if (newPath !== currentPath) {
+        navigate(newPath + location.search, { replace: true });
+      }
+    }
   };
 
   return (

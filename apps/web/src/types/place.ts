@@ -10,6 +10,8 @@ export type GeoPoint = { lat: number; lng: number };
 export type Place = {
   id: string;
   slug: string | null; // Can be null if slug hasn't been created yet
+  redirected?: boolean; // Whether the slug was redirected to a canonical slug
+  tenantRedirected?: boolean; // Whether the tenant key was redirected
 
   tenantSlug?: string | null; // tenantKey from API
   townSlug?: string | null;

@@ -75,8 +75,9 @@ export class AdminPlaceService {
   /**
    * Create slugs for a place in all languages
    * If only Hungarian translation exists, create slugs for all languages (hu, en, de) using the Hungarian name
+   * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForPlace(placeId: string, tenantId: string, translations: Array<{ lang: Lang; name: string }>) {
+  private async createSlugsForPlace(placeId: string, tenantId: string, translations: Array<{ lang: Lang; name: string }>, throwOnConflict: boolean = false) {
     // Find Hungarian translation to use as fallback for missing languages
     const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
     const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
@@ -114,34 +115,103 @@ export class AdminPlaceService {
       let slug = baseSlug;
       let counter = 1;
 
-      // Check for slug conflicts and append counter if needed
-      while (true) {
-        const conflictingSlug = await this.prisma.slug.findFirst({
-          where: {
-            tenantId,
-            lang,
-            slug,
-            NOT: {
-              id: existingSlug?.id, // Exclude the current slug from conflict check
-            },
+      // Check for slug conflicts
+      const conflictingSlug = await this.prisma.slug.findFirst({
+        where: {
+          tenantId,
+          lang,
+          slug,
+          NOT: {
+            id: existingSlug?.id, // Exclude the current slug from conflict check
           },
-        });
+        },
+      });
 
-        if (!conflictingSlug) break;
-        slug = `${baseSlug}-${counter}`;
-        counter++;
+      // If conflict detected and throwOnConflict is true, throw error
+      if (conflictingSlug && throwOnConflict) {
+        const langName = lang === Lang.hu ? "magyar" : lang === Lang.en ? "angol" : "német";
+        throw new BadRequestException(
+          `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik nevet vagy módosítsa a meglévő helyet.`
+        );
       }
 
-      // Create or update the slug
+      // Auto-resolve conflicts by appending counter if needed (only if throwOnConflict is false)
+      if (conflictingSlug && !throwOnConflict) {
+        while (true) {
+          const nextConflictingSlug = await this.prisma.slug.findFirst({
+            where: {
+              tenantId,
+              lang,
+              slug,
+              NOT: {
+                id: existingSlug?.id,
+              },
+            },
+          });
+
+          if (!nextConflictingSlug) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+      }
+
+      // Create or update the slug with redirect support
       if (existingSlug) {
-        await this.prisma.slug.update({
-          where: { id: existingSlug.id },
-          data: {
-            slug,
-            isPrimary: true,
-            isActive: true,
-          },
-        });
+        const oldSlug = existingSlug.slug;
+        
+        // If the slug has changed, create a redirect from old to new
+        if (oldSlug !== slug) {
+          // First, check if there's already a slug with the new value (shouldn't happen due to conflict check, but safety)
+          const newSlugExists = await this.prisma.slug.findUnique({
+            where: { tenantId_lang_slug: { tenantId, lang, slug } },
+          });
+
+          if (!newSlugExists) {
+            // Create new slug with isPrimary = true
+            const newSlug = await this.prisma.slug.create({
+              data: {
+                tenantId,
+                lang,
+                slug,
+                entityType: SlugEntityType.place,
+                entityId: placeId,
+                isPrimary: true,
+                isActive: true,
+              },
+            });
+
+            // Update old slug to redirect to new slug
+            await this.prisma.slug.update({
+              where: { id: existingSlug.id },
+              data: {
+                isPrimary: false, // Old slug is no longer primary
+                isActive: true, // Keep active so redirect works
+                redirectToId: newSlug.id, // Redirect to new slug
+              },
+            });
+          } else {
+            // If new slug already exists, just update the existing slug to point to it
+            await this.prisma.slug.update({
+              where: { id: existingSlug.id },
+              data: {
+                isPrimary: false,
+                isActive: true,
+                redirectToId: newSlugExists.id,
+              },
+            });
+          }
+        } else {
+          // Slug hasn't changed, just update if needed
+          await this.prisma.slug.update({
+            where: { id: existingSlug.id },
+            data: {
+              slug,
+              isPrimary: true,
+              isActive: true,
+              redirectToId: null, // Clear any redirects
+            },
+          });
+        }
       } else {
         await this.prisma.slug.create({
           data: {
@@ -292,7 +362,8 @@ export class AdminPlaceService {
     });
 
     // Automatically create slugs for all translations
-    await this.createSlugsForPlace(place.id, place.tenantId, translations);
+    // Throw error if slug conflict is detected (admin should be aware of conflicts)
+    await this.createSlugsForPlace(place.id, place.tenantId, translations, true);
 
     return place;
   }
@@ -413,7 +484,8 @@ export class AdminPlaceService {
 
     // Always create/update slugs for all languages
     if (translationsForSlugs.length > 0) {
-      await this.createSlugsForPlace(id, tenantId, translationsForSlugs);
+      // Throw error if slug conflict is detected (admin should be aware of conflicts)
+      await this.createSlugsForPlace(id, tenantId, translationsForSlugs, true);
     }
 
     return this.findOne(id, tenantId);

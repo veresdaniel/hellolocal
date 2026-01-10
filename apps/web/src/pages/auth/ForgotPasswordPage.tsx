@@ -1,9 +1,28 @@
 // src/pages/auth/ForgotPasswordPage.tsx
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 import { forgotPassword } from "../../api/auth.api";
+import { useTranslation } from "react-i18next";
+import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
 
 export function ForgotPasswordPage() {
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  const { i18n } = useTranslation();
+  
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+
+  // Sync i18n language with URL parameter
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+      localStorage.setItem("i18nextLng", lang);
+    }
+  }, [lang, i18n]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -76,7 +95,7 @@ export function ForgotPasswordPage() {
       </form>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
-        <Link to="/admin/login" style={{ color: "#007bff" }}>
+        <Link to={`/${lang}/admin/login`} style={{ color: "#007bff" }}>
           Back to login
         </Link>
       </div>
