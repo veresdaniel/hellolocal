@@ -405,7 +405,7 @@ export function UserProfilePage() {
                       </p>
                       {qrCodeUrl && (
                         <div style={{ marginBottom: 16, textAlign: "center", padding: 12, background: "white", borderRadius: 8, border: "1px solid #ddd" }}>
-                          <img src={qrCodeUrl} alt="2FA QR Code" style={{ maxWidth: 220, height: "auto", display: "block", margin: "0 auto" }} />
+                          <img src={qrCodeUrl} alt={t("admin.profile.qrCodeAlt")} style={{ maxWidth: 220, height: "auto", display: "block", margin: "0 auto" }} />
                         </div>
                       )}
                       {twoFactorSecret && (

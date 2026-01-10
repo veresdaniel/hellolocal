@@ -104,6 +104,7 @@
     "tenants": "Gebiete",
     "events": "Veranstaltungen",
     "noEvents": "Keine Veranstaltungen",
+    "noUsersFound": "Keine Benutzer gefunden",
     "readMore": "Weiterlesen",
     "settings": "Einstellungen",
     "appSettings": "App-Einstellungen",
@@ -144,6 +145,11 @@
     "sessionExpiring": "Sitzung läuft ab",
     "defaultLanguage": "Standardsprache",
     "defaultLanguageDescription": "Diese Sprache wird die Standardsprache für sowohl die öffentliche als auch die Admin-Oberfläche sein.",
+    "languageNames": {
+      "hu": "Ungarisch",
+      "en": "Englisch",
+      "de": "Deutsch"
+    },
     "onlyAdminCanEdit": "Nur Admin und Superadmin können diese Einstellung bearbeiten.",
     "mapSettings": "Karteneinstellungen",
     "mapSettingsDescription": "Legen Sie die Standard-Kartenposition und Zoomstufe für die öffentliche Seite fest.",
@@ -394,7 +400,9 @@
       "noTenantsAssigned": "Keine Gebiete zugewiesen",
       "addTenants": "Gebiete hinzufügen...",
       "primary": "Primär",
-      "twoFactorAuthentication": "Zwei-Faktor-Authentifizierung"
+      "twoFactorAuthentication": "Zwei-Faktor-Authentifizierung",
+      "usersCanEnable2FA": "Benutzer können 2FA auf ihrer Profilseite aktivieren.",
+      "qrCodeAlt": "2FA QR-Code"
     },
     "parentCategory": "Übergeordnete Kategorie",
     "order": "Reihenfolge",

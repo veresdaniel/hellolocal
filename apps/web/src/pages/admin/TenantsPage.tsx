@@ -239,7 +239,7 @@ export function TenantsPage() {
   const isSuperadmin = currentUser?.role === "superadmin";
 
   if (!isSuperadmin) {
-    return <div style={{ padding: 24 }}>Access denied. Superadmin role required.</div>;
+    return <div style={{ padding: 24 }}>{t("admin.accessDenied")}</div>;
   }
 
   return (

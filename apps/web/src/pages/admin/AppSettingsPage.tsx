@@ -376,9 +376,9 @@ export function AppSettingsPage() {
                     minWidth: 200,
                   }}
                 >
-                  <option value="hu">🇭🇺 Hungarian (Magyar)</option>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="de">🇩🇪 German (Deutsch)</option>
+                  <option value="hu">🇭🇺 {t("admin.languageNames.hu")} (Magyar)</option>
+                  <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
+                  <option value="de">🇩🇪 {t("admin.languageNames.de")} (Deutsch)</option>
                 </select>
                 {isAdmin && (
                   <button

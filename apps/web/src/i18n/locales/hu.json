@@ -104,6 +104,7 @@
     "tenants": "Területek",
     "events": "Események",
     "noEvents": "Nincs esemény",
+    "noUsersFound": "Nincs felhasználó",
     "readMore": "Tovább",
     "settings": "Beállítások",
     "appSettings": "Alkalmazás beállítások",
@@ -142,6 +143,11 @@
     "sessionExpiring": "Munkamenet lejár",
     "defaultLanguage": "Alapértelmezett nyelv",
     "defaultLanguageDescription": "Ez a nyelv lesz az alapértelmezett a public felületen és az admin felületen is.",
+    "languageNames": {
+      "hu": "Magyar",
+      "en": "Angol",
+      "de": "Német"
+    },
     "onlyAdminCanEdit": "Csak admin és superadmin szerkesztheti ezt a beállítást.",
     "mapSettings": "Térkép beállítások",
     "mapSettingsDescription": "Állítsd be a térkép alapértelmezett pozícióját és nagyítását a publikus oldalon.",
@@ -393,7 +399,9 @@
       "noTenantsAssigned": "Nincs hozzárendelt terület",
       "addTenants": "Területek hozzáadása...",
       "primary": "Elsődleges",
-      "twoFactorAuthentication": "Kétfaktoros autentikáció"
+      "twoFactorAuthentication": "Kétfaktoros autentikáció",
+      "usersCanEnable2FA": "A felhasználók a profil oldalukról engedélyezhetik a 2FA-t.",
+      "qrCodeAlt": "2FA QR kód"
     },
     "parentCategory": "Szülő kategória",
     "order": "Sorrend",

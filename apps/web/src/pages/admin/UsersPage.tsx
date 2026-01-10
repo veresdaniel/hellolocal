@@ -336,10 +336,10 @@ export function UsersPage() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as CreateUserDto["role"] })}
                   style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                  <option value="admin">Admin</option>
-                  <option value="superadmin">Superadmin</option>
+                  <option value="viewer">{t("admin.roles.viewer")}</option>
+                  <option value="editor">{t("admin.roles.editor")}</option>
+                  <option value="admin">{t("admin.roles.admin")}</option>
+                  <option value="superadmin">{t("admin.roles.superadmin")}</option>
                 </select>
               </div>
             )}
@@ -365,13 +365,13 @@ export function UsersPage() {
 
           {editingId && (
             <div style={{ marginBottom: 16, padding: 16, background: "#f8f9fa", borderRadius: 4, border: "1px solid #ddd" }}>
-              <h3 style={{ marginBottom: 12, fontSize: 16 }}>Two-Factor Authentication</h3>
+              <h3 style={{ marginBottom: 12, fontSize: 16 }}>{t("admin.profile.twoFactorAuthentication")}</h3>
               {(() => {
                 const editingUser = users.find((u) => u.id === editingId);
                 return editingUser?.isTwoFactorEnabled ? (
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <span style={{ color: "#28a745", fontWeight: 600 }}>✓ 2FA is enabled</span>
+                      <span style={{ color: "#28a745", fontWeight: 600 }}>✓ {t("admin.twoFactor.isEnabled")}</span>
                     </div>
                     <button
                       onClick={async () => {
@@ -402,9 +402,9 @@ export function UsersPage() {
                   </div>
                 ) : (
                   <div>
-                    <span style={{ color: "#6c757d" }}>2FA is disabled</span>
+                    <span style={{ color: "#6c757d" }}>{t("admin.twoFactor.disabled")}</span>
                     <p style={{ marginTop: 8, fontSize: 14, color: "#666" }}>
-                      Users can enable 2FA from their profile page.
+                      {t("admin.profile.usersCanEnable2FA")}
                     </p>
                   </div>
                 );
@@ -563,7 +563,7 @@ export function UsersPage() {
             </tbody>
           </table>
           {users.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>No users found</div>
+            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.noUsersFound")}</div>
           )}
         </div>
       ) : null}

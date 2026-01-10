@@ -104,6 +104,7 @@
     "tenants": "Regions",
     "events": "Events",
     "noEvents": "No events",
+    "noUsersFound": "No users found",
     "readMore": "Read more",
     "settings": "Settings",
     "appSettings": "App Settings",
@@ -144,6 +145,11 @@
     "sessionExpiring": "Session expiring",
     "defaultLanguage": "Default Language",
     "defaultLanguageDescription": "This language will be the default for both the public and admin interfaces.",
+    "languageNames": {
+      "hu": "Hungarian",
+      "en": "English",
+      "de": "German"
+    },
     "onlyAdminCanEdit": "Only admin and superadmin can edit this setting.",
     "mapSettings": "Map Settings",
     "mapSettingsDescription": "Set the default map position and zoom level for the public page.",
@@ -393,7 +399,9 @@
       "noTenantsAssigned": "No regions assigned",
       "addTenants": "Add regions...",
       "primary": "Primary",
-      "twoFactorAuthentication": "Two-Factor Authentication"
+      "twoFactorAuthentication": "Two-Factor Authentication",
+      "usersCanEnable2FA": "Users can enable 2FA from their profile page.",
+      "qrCodeAlt": "2FA QR Code"
     },
     "parentCategory": "Parent Category",
     "order": "Order",
