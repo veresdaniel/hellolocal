@@ -111,7 +111,7 @@ export function PublicAuthBadge() {
 
   const handleLogout = async () => {
     if (!hasDragged) {
-      await logout();
+      await logout(true); // Manual logout - redirect to home page
     }
   };
 

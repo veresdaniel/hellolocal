@@ -1,18 +1,27 @@
 // src/components/ProtectedRoute.tsx
-import { Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: "superadmin" | "admin" | "editor" | "viewer";
 }
 
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
+
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  
+  // Get language from URL or use default
+  const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
   // Check token expiration on mount and periodically
   useEffect(() => {
@@ -58,7 +67,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   // Redirect to login if no user or session expired
   if (!user || shouldRedirect) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 
   if (requiredRole) {

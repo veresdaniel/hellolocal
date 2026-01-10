@@ -392,6 +392,7 @@
       "memberSince": "Mitglied seit",
       "lastUpdated": "Zuletzt aktualisiert",
       "noTenantsAssigned": "Keine Gebiete zugewiesen",
+      "addTenants": "Gebiete hinzufügen...",
       "primary": "Primär",
       "twoFactorAuthentication": "Zwei-Faktor-Authentifizierung"
     },

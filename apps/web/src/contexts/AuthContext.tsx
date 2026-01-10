@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
 import { isTokenExpired } from "../utils/tokenUtils";
+import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +19,7 @@ interface AuthContextType {
     lastName: string;
     bio?: string;
   }) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (isManualLogout?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,7 +28,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogout = useCallback(async () => {
+  // Helper function to extract language code from URL or localStorage
+  const getLanguageCode = (): Lang => {
+    const currentPath = window.location.pathname;
+    // Try to extract lang from URL (e.g., /hu/admin or /en/admin)
+    const pathMatch = currentPath.match(/^\/(hu|en|de)(\/|$)/);
+    if (pathMatch && APP_LANGS.includes(pathMatch[1] as Lang)) {
+      return pathMatch[1] as Lang;
+    }
+    // Fallback to localStorage i18nextLng
+    const storedLang = localStorage.getItem("i18nextLng");
+    if (storedLang && APP_LANGS.includes(storedLang as Lang)) {
+      return storedLang as Lang;
+    }
+    // Final fallback to default
+    return DEFAULT_LANG;
+  };
+
+  const handleLogout = useCallback(async (isManualLogout: boolean = false) => {
     try {
       await apiLogout();
     } catch (e) {
@@ -38,10 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("user");
       localStorage.removeItem("adminSelectedTenantId");
       setUser(null);
-      // Redirect to login page (admin login)
+      
       const currentPath = window.location.pathname;
-      if (!currentPath.startsWith("/admin/login") && !currentPath.startsWith("/admin/register") && !currentPath.startsWith("/admin/forgot-password") && !currentPath.startsWith("/admin/reset-password")) {
-        window.location.href = "/admin/login";
+      const lang = getLanguageCode();
+      
+      // Skip redirect if already on the target page
+      if (isManualLogout) {
+        // Manual logout: check if already on home page
+        if (currentPath === `/${lang}` || currentPath === `/${lang}/`) {
+          return;
+        }
+        // Redirect to home page
+        window.location.href = `/${lang}`;
+      } else {
+        // Automatic logout (session expired): check if already on admin login
+        if (currentPath.startsWith(`/${lang}/admin/login`)) {
+          return;
+        }
+        // Redirect to admin login
+        window.location.href = `/${lang}/admin/login`;
       }
     }
   }, []);
@@ -68,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!accessToken && !refreshTokenValue) {
         // No tokens, ensure user is logged out
         if (user) {
-          handleLogout();
+          handleLogout(false); // Automatic logout
         }
         return;
       }
@@ -84,11 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             .catch(() => {
               // Refresh failed, logout
-              handleLogout();
+              handleLogout(false); // Automatic logout
             });
         } else {
           // Both tokens expired, logout
-          handleLogout();
+          handleLogout(false); // Automatic logout
         }
       }
     };
@@ -101,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for logout event from API client
     const handleLogoutEvent = () => {
-      handleLogout();
+      handleLogout(false); // Automatic logout
     };
     window.addEventListener("auth:logout", handleLogoutEvent);
 

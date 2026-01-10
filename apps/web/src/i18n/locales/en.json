@@ -391,6 +391,7 @@
       "memberSince": "Member since",
       "lastUpdated": "Last updated",
       "noTenantsAssigned": "No regions assigned",
+      "addTenants": "Add regions...",
       "primary": "Primary",
       "twoFactorAuthentication": "Two-Factor Authentication"
     },

@@ -391,6 +391,7 @@
       "memberSince": "Tag",
       "lastUpdated": "Utolsó frissítés",
       "noTenantsAssigned": "Nincs hozzárendelt terület",
+      "addTenants": "Területek hozzáadása...",
       "primary": "Elsődleges",
       "twoFactorAuthentication": "Kétfaktoros autentikáció"
     },

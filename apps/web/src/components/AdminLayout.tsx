@@ -41,7 +41,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [lang, i18n]);
 
   const handleLogout = async () => {
-    await logout();
+    await logout(true); // Manual logout - redirect to home page
   };
 
   const isActive = (path: string) => location.pathname === path;

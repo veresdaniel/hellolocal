@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { Tenant } from "../api/admin.api";
 
 interface TenantAutocompleteProps {
@@ -8,6 +9,7 @@ interface TenantAutocompleteProps {
 }
 
 export function TenantAutocomplete({ selectedTenantIds, onTenantIdsChange, allTenants }: TenantAutocompleteProps) {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<Tenant[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +57,7 @@ export function TenantAutocomplete({ selectedTenantIds, onTenantIdsChange, allTe
 
   return (
     <div style={{ position: "relative", marginBottom: 16 }}>
-      <label style={{ display: "block", marginBottom: 4 }}>Tenants</label>
+      <label style={{ display: "block", marginBottom: 4 }}>{t("admin.tenants")}</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         {selectedTenantIds.map((tenantId) => (
           <span
@@ -93,7 +95,7 @@ export function TenantAutocomplete({ selectedTenantIds, onTenantIdsChange, allTe
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Add tenants..."
+        placeholder={t("admin.forms.addTenants")}
         style={{
           width: "100%",
           padding: 8,
