@@ -1,35 +1,42 @@
 // src/app/routes.tsx
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { HAS_MULTIPLE_TENANTS } from "./config";
 import { TenantLayout } from "./tenant/TenantLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RootRedirect } from "../components/RootRedirect";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
+// Public pages - loaded eagerly (main entry point)
 import { HomePage } from "../pages/HomePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { StaticPagesListPage } from "../pages/StaticPagesListPage";
+import { NotFoundPage } from "../pages/NotFoundPage";
+import { ErrorPage } from "../pages/ErrorPage";
+
+// Auth pages - loaded eagerly (small, needed for login)
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
-import { AdminDashboard } from "../pages/admin/AdminDashboard";
-import { UserProfilePage } from "../pages/admin/UserProfilePage";
-import { UsersPage } from "../pages/admin/UsersPage";
-import { CategoriesPage } from "../pages/admin/CategoriesPage";
-import { TagsPage } from "../pages/admin/TagsPage";
-import { PriceBandsPage } from "../pages/admin/PriceBandsPage";
-import { TownsPage } from "../pages/admin/TownsPage";
-import { LegalPagesPage } from "../pages/admin/LegalPagesPage";
-import { StaticPagesPage } from "../pages/admin/StaticPagesPage";
-import { TenantsPage } from "../pages/admin/TenantsPage";
-import { PlacesPage } from "../pages/admin/PlacesPage";
-import { EventsPage } from "../pages/admin/EventsPage";
-import { AppSettingsPage } from "../pages/admin/AppSettingsPage";
-import { AdminLayout } from "../components/AdminLayout";
-import { NotFoundPage } from "../pages/NotFoundPage";
-import { ErrorPage } from "../pages/ErrorPage";
+
+// Admin pages - lazy loaded (only needed when user is logged in)
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const UserProfilePage = lazy(() => import("../pages/admin/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
+const UsersPage = lazy(() => import("../pages/admin/UsersPage").then(m => ({ default: m.UsersPage })));
+const CategoriesPage = lazy(() => import("../pages/admin/CategoriesPage").then(m => ({ default: m.CategoriesPage })));
+const TagsPage = lazy(() => import("../pages/admin/TagsPage").then(m => ({ default: m.TagsPage })));
+const PriceBandsPage = lazy(() => import("../pages/admin/PriceBandsPage").then(m => ({ default: m.PriceBandsPage })));
+const TownsPage = lazy(() => import("../pages/admin/TownsPage").then(m => ({ default: m.TownsPage })));
+const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m => ({ default: m.LegalPagesPage })));
+const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
+const TenantsPage = lazy(() => import("../pages/admin/TenantsPage").then(m => ({ default: m.TenantsPage })));
+const PlacesPage = lazy(() => import("../pages/admin/PlacesPage").then(m => ({ default: m.PlacesPage })));
+const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
+const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
+const AdminLayout = lazy(() => import("../components/AdminLayout").then(m => ({ default: m.AdminLayout })));
 
 // If multi-tenant is enabled, tenant slug is optional (will be determined dynamically)
 const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug?" : "";
@@ -83,9 +90,23 @@ export const router = createBrowserRouter([
         path: "",
         element: (
           <ProtectedRoute requiredRole="viewer">
-            <AdminLayout>
-              <AdminDashboard />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "",
+        element: (
+          <ProtectedRoute requiredRole="viewer">
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -93,9 +114,11 @@ export const router = createBrowserRouter([
         path: "profile",
         element: (
           <ProtectedRoute requiredRole="viewer">
-            <AdminLayout>
-              <UserProfilePage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <UserProfilePage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -103,9 +126,11 @@ export const router = createBrowserRouter([
         path: "users",
         element: (
           <ProtectedRoute requiredRole="superadmin">
-            <AdminLayout>
-              <UsersPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <UsersPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -113,9 +138,11 @@ export const router = createBrowserRouter([
         path: "categories",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <CategoriesPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <CategoriesPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -123,9 +150,11 @@ export const router = createBrowserRouter([
         path: "tags",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <TagsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <TagsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -133,9 +162,11 @@ export const router = createBrowserRouter([
         path: "price-bands",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <PriceBandsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <PriceBandsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -143,9 +174,11 @@ export const router = createBrowserRouter([
         path: "places",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <PlacesPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <PlacesPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -153,9 +186,11 @@ export const router = createBrowserRouter([
         path: "towns",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <TownsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <TownsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -163,9 +198,11 @@ export const router = createBrowserRouter([
         path: "legal",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <LegalPagesPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <LegalPagesPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -173,9 +210,11 @@ export const router = createBrowserRouter([
         path: "static-pages",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <StaticPagesPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <StaticPagesPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -183,9 +222,11 @@ export const router = createBrowserRouter([
         path: "tenants",
         element: HAS_MULTIPLE_TENANTS ? (
           <ProtectedRoute requiredRole="superadmin">
-            <AdminLayout>
-              <TenantsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <TenantsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ) : (
           <NotFoundPage />
@@ -195,9 +236,11 @@ export const router = createBrowserRouter([
         path: "app-settings",
         element: (
           <ProtectedRoute requiredRole="superadmin">
-            <AdminLayout>
-              <AppSettingsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <AppSettingsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
@@ -205,9 +248,11 @@ export const router = createBrowserRouter([
         path: "events",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <AdminLayout>
-              <EventsPage />
-            </AdminLayout>
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <EventsPage />
+              </AdminLayout>
+            </Suspense>
           </ProtectedRoute>
         ),
       },
