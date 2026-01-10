@@ -11,6 +11,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { MapComponent } from "../../components/MapComponent";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { isValidImageUrl } from "../../utils/urlValidation";
+import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
@@ -37,7 +38,7 @@ export function AppSettingsPage() {
     zoom: null,
   });
   const [towns, setTowns] = useState<Array<{ id: string; lat: number | null; lng: number | null; translations: Array<{ lang: string; name: string }> }>>([]);
-  const [isLoadingMapSettings, setIsLoadingMapSettings] = useState(true);
+  const [isLoadingMapSettings, setIsLoadingMapSettings] = useState(false); // Start as false, will be set to true when loading
   const [isSavingMapSettings, setIsSavingMapSettings] = useState(false);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 47.4979, lng: 19.0402 }); // Default to Budapest
   const [mapZoom, setMapZoom] = useState<number>(13);
@@ -52,7 +53,7 @@ export function AppSettingsPage() {
     defaultPlaceholderCardImage: null,
     defaultPlaceholderDetailHeroImage: null,
   });
-  const [isLoadingSiteSettings, setIsLoadingSiteSettings] = useState(true);
+  const [isLoadingSiteSettings, setIsLoadingSiteSettings] = useState(false); // Start as false, will be set to true when loading
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
 
   useEffect(() => {
@@ -71,20 +72,34 @@ export function AppSettingsPage() {
   }, [t]);
 
   useEffect(() => {
-    if (!selectedTenantId) return;
+    if (!selectedTenantId) {
+      // Reset loading states when tenant is cleared
+      setIsLoadingMapSettings(false);
+      setIsLoadingSiteSettings(false);
+      setTowns([]);
+      return;
+    }
     const loadTowns = async () => {
       try {
         const data = await getTowns(selectedTenantId);
         setTowns(data);
       } catch (err) {
         console.error("Failed to load towns", err);
+        setTowns([]); // Set empty array on error
       }
     };
     loadTowns();
   }, [selectedTenantId]);
 
   useEffect(() => {
-    if (!selectedTenantId || towns.length === 0) return;
+    if (!selectedTenantId) {
+      // Reset loading state if no tenant
+      setIsLoadingMapSettings(false);
+      return;
+    }
+    
+    // Wait for towns to load before loading map settings
+    // But don't wait indefinitely - if towns array is empty after a delay, still try to load map settings
     const loadMapSettings = async () => {
       try {
         setIsLoadingMapSettings(true);
@@ -94,8 +109,8 @@ export function AppSettingsPage() {
         // Set map center and zoom from settings
         if (data.lat && data.lng) {
           setMapCenter({ lat: data.lat, lng: data.lng });
-        } else if (data.townId) {
-          // If town is selected, use town coordinates
+        } else if (data.townId && towns.length > 0) {
+          // If town is selected, use town coordinates (only if towns are loaded)
           const town = towns.find((t) => t.id === data.townId);
           if (town && town.lat && town.lng) {
             setMapCenter({ lat: town.lat, lng: town.lng });
@@ -111,11 +126,17 @@ export function AppSettingsPage() {
         setIsLoadingMapSettings(false);
       }
     };
+    
+    // Load map settings even if towns array is empty (towns might not be required)
     loadMapSettings();
   }, [selectedTenantId, towns]);
 
   useEffect(() => {
-    if (!selectedTenantId) return;
+    if (!selectedTenantId) {
+      // Reset loading state when tenant is cleared
+      setIsLoadingSiteSettings(false);
+      return;
+    }
     
     const loadSiteSettings = async () => {
       try {
@@ -313,6 +334,99 @@ export function AppSettingsPage() {
 
   const isAdmin = user?.role === "admin" || user?.role === "superadmin";
   const isSingleTown = towns.length <= 1;
+
+  // Show message if no tenant is selected (but allow language settings which don't need tenant)
+  if (!selectedTenantId && HAS_MULTIPLE_TENANTS) {
+    return (
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+        <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
+        <div style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
+          <p style={{ color: "#666", fontSize: 16, margin: 0 }}>{t("admin.selectTenantFirst")}</p>
+        </div>
+        
+        {/* Language Settings Section - available without tenant */}
+        <div style={{ marginTop: 24, marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+          <button
+            onClick={() => setLanguageOpen(!languageOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: languageOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "background 0.2s",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 24 }}>🌍</span>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.defaultLanguage")}</h2>
+            </div>
+            <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          </button>
+          {languageOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+                {t("admin.defaultLanguageDescription")}
+              </p>
+
+              <LoadingSpinner isLoading={isLoading} />
+              {!isLoading && (
+                <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
+                  <label style={{ display: "block", minWidth: 150, fontWeight: 500 }}>{t("admin.defaultLanguage")}:</label>
+                  <select
+                    value={defaultLang}
+                    onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
+                    disabled={!isAdmin || isSaving}
+                    style={{
+                      padding: "10px 16px",
+                      fontSize: 15,
+                      borderRadius: 6,
+                      border: "1px solid #ddd",
+                      background: "white",
+                      cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
+                      minWidth: 200,
+                    }}
+                  >
+                    <option value="hu">🇭🇺 {t("admin.languageNames.hu")} (Magyar)</option>
+                    <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
+                    <option value="de">🇩🇪 {t("admin.languageNames.de")} (Deutsch)</option>
+                  </select>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      style={{
+                        padding: "10px 24px",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        background: isSaving ? "#999" : "#007bff",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 6,
+                        cursor: isSaving ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {isSaving ? t("common.loading") : t("common.save")}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {!isAdmin && (
+                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
+                  {t("admin.onlyAdminCanEdit")}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>

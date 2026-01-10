@@ -217,7 +217,8 @@
       "newEvent": "Neue Veranstaltung",
       "editEvent": "Veranstaltung bearbeiten",
       "newStaticPage": "Neue statische Seite",
-      "editStaticPage": "Statische Seite bearbeiten"
+      "editStaticPage": "Statische Seite bearbeiten",
+      "addTenants": "Gebiete hinzufügen..."
     },
     "table": {
       "nameHu": "Name (HU)",

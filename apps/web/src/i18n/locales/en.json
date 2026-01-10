@@ -217,7 +217,8 @@
       "newEvent": "New Event",
       "editEvent": "Edit Event",
       "newStaticPage": "New Static Page",
-      "editStaticPage": "Edit Static Page"
+      "editStaticPage": "Edit Static Page",
+      "addTenants": "Add regions..."
     },
     "table": {
       "nameHu": "Name (HU)",

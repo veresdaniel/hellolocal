@@ -217,7 +217,8 @@
       "newEvent": "Új esemény",
       "editEvent": "Esemény szerkesztése",
       "newStaticPage": "Új statikus oldal",
-      "editStaticPage": "Statikus oldal szerkesztése"
+      "editStaticPage": "Statikus oldal szerkesztése",
+      "addTenants": "Területek hozzáadása..."
     },
     "table": {
       "nameHu": "Név (HU)",
