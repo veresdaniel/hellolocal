@@ -63,6 +63,9 @@ export function LegalPagesPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadLegalPages();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 

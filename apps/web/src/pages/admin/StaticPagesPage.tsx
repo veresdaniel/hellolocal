@@ -65,6 +65,9 @@ export function StaticPagesPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadStaticPages();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 

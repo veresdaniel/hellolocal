@@ -71,6 +71,9 @@ export function TownsPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadTowns();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId]);

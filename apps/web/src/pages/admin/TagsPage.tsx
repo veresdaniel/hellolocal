@@ -46,6 +46,9 @@ export function TagsPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadTags();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 

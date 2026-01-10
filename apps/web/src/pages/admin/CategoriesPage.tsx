@@ -61,6 +61,9 @@ export function CategoriesPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadCategories();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 

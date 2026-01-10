@@ -46,6 +46,9 @@ export function PriceBandsPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadPriceBands();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 

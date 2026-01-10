@@ -90,6 +90,9 @@ export function PlacesPage() {
   useEffect(() => {
     if (selectedTenantId) {
       loadData();
+    } else {
+      // Reset loading state if no tenant
+      setIsLoading(false);
     }
   }, [selectedTenantId]);
 
