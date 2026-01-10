@@ -29,19 +29,21 @@ export function RootRedirect() {
   // Fetch active tenants count to determine if tenant slug should be shown
   const { data: tenantsCountData, isLoading: isLoadingTenantsCount } = useActiveTenantsCount();
 
+  // If this is an admin route, redirect to language-specific admin route
+  // (Don't wait for tenants count for admin routes)
+  if (isAdminRoute && defaultLang) {
+    const adminPath = location.pathname.replace("/admin", "");
+    return <Navigate to={`/${defaultLang}/admin${adminPath}`} replace />;
+  }
+
   // Show loading spinner while fetching default language and tenants count
   if (isLoadingLang || !defaultLang || isLoadingTenantsCount) {
     return <LoadingSpinner isLoading={true} delay={0} />;
   }
 
-  // If this is an admin route, redirect to language-specific admin route
-  if (isAdminRoute) {
-    const adminPath = location.pathname.replace("/admin", "");
-    return <Navigate to={`/${defaultLang}/admin${adminPath}`} replace />;
-  }
-
   // Determine if we should show tenant slug in URL
   // If multi-tenant is enabled but only one tenant exists, hide tenant slug from URL
+  // Fallback to false if tenantsCountData is not available
   const shouldShowTenantSlug = HAS_MULTIPLE_TENANTS && (tenantsCountData?.count ?? 0) > 1;
 
   // Redirect to default language (with or without tenant slug based on tenant count)

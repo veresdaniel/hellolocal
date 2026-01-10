@@ -181,12 +181,14 @@ export const router = createBrowserRouter([
       },
       {
         path: "tenants",
-        element: (
+        element: HAS_MULTIPLE_TENANTS ? (
           <ProtectedRoute requiredRole="superadmin">
             <AdminLayout>
               <TenantsPage />
             </AdminLayout>
           </ProtectedRoute>
+        ) : (
+          <NotFoundPage />
         ),
       },
       {

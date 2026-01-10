@@ -19,6 +19,7 @@ import {
 } from "../../api/admin.api";
 import { TenantAutocomplete } from "../../components/TenantAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -354,11 +355,13 @@ export function UsersPage() {
             </div>
           </div>
 
-          <TenantAutocomplete
-            selectedTenantIds={formData.tenantIds}
-            onTenantIdsChange={(tenantIds) => setFormData({ ...formData, tenantIds })}
-            allTenants={tenants}
-          />
+          {HAS_MULTIPLE_TENANTS && (
+            <TenantAutocomplete
+              selectedTenantIds={formData.tenantIds}
+              onTenantIdsChange={(tenantIds) => setFormData({ ...formData, tenantIds })}
+              allTenants={tenants}
+            />
+          )}
 
           {editingId && (
             <div style={{ marginBottom: 16, padding: 16, background: "#f8f9fa", borderRadius: 4, border: "1px solid #ddd" }}>

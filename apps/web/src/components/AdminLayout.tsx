@@ -9,7 +9,7 @@ import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, type Lang } from "../app/config";
 import "../styles/sessionWarning.css";
 
 function isLang(x: unknown): x is Lang {
@@ -108,23 +108,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   {t("admin.users")}
                 </Link>
-                <Link
-                  to={adminPath("/tenants")}
-                  style={{
-                    textDecoration: "none",
-                    color: isActive(adminPath("/tenants")) ? "#007bff" : "#666",
-                    fontWeight: isActive(adminPath("/tenants")) ? "bold" : "normal",
-                  }}
-                >
-                  {t("admin.tenants")}
-                </Link>
+                {HAS_MULTIPLE_TENANTS && (
+                  <Link
+                    to={adminPath("/tenants")}
+                    style={{
+                      textDecoration: "none",
+                      color: isActive(adminPath("/tenants")) ? "#007bff" : "#666",
+                      fontWeight: isActive(adminPath("/tenants")) ? "bold" : "normal",
+                    }}
+                  >
+                    {t("admin.tenants")}
+                  </Link>
+                )}
               </>
             )}
           </div>
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <LanguageSelector />
-          <TenantSelector />
+          {HAS_MULTIPLE_TENANTS && <TenantSelector />}
           {showWarning && (
             <div
               style={{
