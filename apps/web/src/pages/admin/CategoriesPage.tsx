@@ -257,6 +257,7 @@ export function CategoriesPage() {
         <h1 style={{ 
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -297,6 +298,7 @@ export function CategoriesPage() {
             color: "#667eea",
             fontSize: "clamp(20px, 5vw, 24px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {editingId ? t("admin.forms.editCategory") : t("admin.forms.newCategory")}
           </h2>
@@ -305,7 +307,7 @@ export function CategoriesPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -349,7 +351,7 @@ export function CategoriesPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("common.description")}</label>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
@@ -412,7 +414,7 @@ export function CategoriesPage() {
               style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
               min={0}
             />
-            <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+            <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("admin.orderDescription") || "Kisebb szám = előrébb a listában"}
             </p>
           </div>
@@ -460,7 +462,7 @@ export function CategoriesPage() {
                 }}
               />
             </div>
-            <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+            <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("admin.categoryColorDescription") || "Ez a szín jelenik meg a kártya alján. Hex formátum (pl. #667eea)"}
             </p>
           </div>
@@ -472,7 +474,7 @@ export function CategoriesPage() {
       {/* Desktop: Drag & Drop Table */}
       {!isLoading && !isCreating && !editingId && !isMobile && (
         <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
-          <div style={{ padding: 12, background: "#f5f5f5", borderBottom: "1px solid #ddd", fontSize: 12, color: "#666" }}>
+          <div style={{ padding: 12, background: "#f5f5f5", borderBottom: "1px solid #ddd", fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             {t("admin.dragToReorder") || "Húzd a kategóriákat a rendezéshez. Húzd egy kategória alá, hogy gyermek kategóriává tedd."}
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>

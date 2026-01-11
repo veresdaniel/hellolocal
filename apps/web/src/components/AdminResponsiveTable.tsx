@@ -137,7 +137,7 @@ export function AdminResponsiveTable<T>({
             }}
           />
           {filteredData.length !== data.length && (
-            <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
+            <div style={{ marginTop: 8, fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("admin.searchResults", { count: filteredData.length, total: data.length })}
             </div>
           )}
@@ -163,6 +163,7 @@ export function AdminResponsiveTable<T>({
 
       {/* Desktop Table View */}
       <div
+        className="admin-table-wrapper"
         style={{
           background: "white",
           borderRadius: 8,
@@ -171,9 +172,18 @@ export function AdminResponsiveTable<T>({
           display: isMobile ? "none" : "block",
         }}
       >
-        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-          <thead>
-            <tr style={{ background: "#f5f5f5" }}>
+        <table 
+          className="admin-table" 
+          data-font="poppins" 
+          style={{ 
+            width: "100%", 
+            borderCollapse: "collapse", 
+            tableLayout: "auto",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+          }}
+        >
+          <thead style={{ fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <tr style={{ background: "#f5f5f5", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -182,9 +192,24 @@ export function AdminResponsiveTable<T>({
                     textAlign: col.align || "left",
                     borderBottom: "2px solid #ddd",
                     width: col.width,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    color: "#333",
+                    fontStyle: "normal",
+                    fontVariant: "normal",
+                    textRendering: "optimizeLegibility",
+                    WebkitFontSmoothing: "antialiased",
+                    MozOsxFontSmoothing: "grayscale",
                   }}
                 >
-                  {col.label}
+                  <span style={{ 
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                    fontWeight: 600,
+                    display: "inline-block",
+                  }}>
+                    {col.label}
+                  </span>
                 </th>
               ))}
               <th
@@ -194,27 +219,44 @@ export function AdminResponsiveTable<T>({
                   borderBottom: "2px solid #ddd",
                   width: "1%",
                   whiteSpace: "nowrap",
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  color: "#333",
+                  fontStyle: "normal",
+                  fontVariant: "normal",
+                  textRendering: "optimizeLegibility",
+                  WebkitFontSmoothing: "antialiased",
+                  MozOsxFontSmoothing: "grayscale",
                 }}
               >
-                {t("admin.table.actions")}
+                <span style={{ 
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                  fontWeight: 600,
+                  display: "inline-block",
+                }}>
+                  {t("admin.table.actions")}
+                </span>
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style={{ fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             {filteredData.map((item) => (
-              <tr key={getItemId(item)} style={{ borderBottom: "1px solid #eee" }}>
+              <tr key={getItemId(item)} style={{ borderBottom: "1px solid #eee", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {columns.map((col) => (
                   <td
                     key={col.key}
                     style={{
                       padding: 12,
                       textAlign: col.align || "left",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontSize: 14,
                     }}
                   >
                     {col.render(item)}
                   </td>
                 ))}
-                <td style={{ padding: 12, textAlign: "right" }}>
+                <td style={{ padding: 12, textAlign: "right", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button
                       onClick={() => onEdit(item)}
@@ -227,6 +269,7 @@ export function AdminResponsiveTable<T>({
                         cursor: "pointer",
                         fontSize: 12,
                         fontWeight: 600,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
                         boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                       }}
@@ -252,6 +295,7 @@ export function AdminResponsiveTable<T>({
                         cursor: "pointer",
                         fontSize: 12,
                         fontWeight: 600,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
                         boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
                       }}
@@ -273,7 +317,7 @@ export function AdminResponsiveTable<T>({
           </tbody>
         </table>
         {filteredData.length === 0 && (
-          <div style={{ padding: 48, textAlign: "center", color: "#999" }}>
+          <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 14 }}>
             {searchQuery ? t("admin.table.noSearchResults") : t("admin.table.noData")}
           </div>
         )}
@@ -346,7 +390,7 @@ export function AdminResponsiveTable<T>({
                 >
                   ‹
                 </button>
-                <span style={{ fontSize: 15, fontWeight: 600, color: "#667eea" }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#667eea", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {currentMobileIndex + 1} / {filteredData.length}
                 </span>
                 <button
@@ -401,6 +445,9 @@ export function AdminResponsiveTable<T>({
                 }
               }}
               onTouchEnd={(e) => {
+                // Only handle container swipe if no card has actions open
+                if (swipedCardId) return;
+                
                 const touch = e.changedTouches[0];
                 const startX = (e.currentTarget as any).swipeStartX || 0;
                 const startY = (e.currentTarget as any).swipeStartY || 0;
@@ -413,16 +460,17 @@ export function AdminResponsiveTable<T>({
                   isHorizontalSwipe ||
                   (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50)
                 ) {
-                  if (diffX < -50 && timeDiff < 400) {
-                    // Swipe left = next card (infinite)
+                  // Swipe right (diffX > 0) = next card (infinite)
+                  if (diffX > 50 && timeDiff < 400) {
                     if (currentMobileIndex === filteredData.length - 1) {
                       setCurrentMobileIndex(0); // Loop to first
                     } else {
                       setCurrentMobileIndex(currentMobileIndex + 1);
                     }
                     setSwipedCardId(null);
-                  } else if (diffX > 50 && timeDiff < 400) {
-                    // Swipe right = previous card (infinite)
+                  } 
+                  // Swipe left (diffX < 0) = previous card (infinite)
+                  else if (diffX < -50 && timeDiff < 400) {
                     if (currentMobileIndex === 0) {
                       setCurrentMobileIndex(filteredData.length - 1); // Loop to last
                     } else {
@@ -670,24 +718,23 @@ export function AdminResponsiveTable<T>({
                           const timeDiff =
                             Date.now() - ((e.currentTarget as any).cardTouchStartTime || 0);
 
-                          // Left swipe = actions slide in (only if not swiping right for navigation)
-                          if ((diffX > 60 && timeDiff < 300) || diffX > 90) {
-                            // Only show actions if we're not doing a navigation swipe
-                            // Check if this is a deliberate left swipe (not just a small movement)
-                            if (Math.abs(diffX) > 50 && diffX > 0) {
-                              setSwipedCardId(itemId);
-                            }
-                          } else if (diffX < -50 && timeDiff < 300) {
-                            // Right swipe = navigate to next card (infinite)
-                            // Don't close actions, just navigate
+                          // Left swipe (diffX > 0) = actions slide in
+                          if (diffX > 60 && timeDiff < 300) {
+                            // Deliberate left swipe = show actions
+                            setSwipedCardId(itemId);
+                          } 
+                          // Right swipe (diffX < 0) = navigate to next card (infinite)
+                          else if (diffX < -50 && timeDiff < 300) {
+                            // Navigate to next card (infinite loop)
                             if (currentMobileIndex === filteredData.length - 1) {
                               setCurrentMobileIndex(0); // Loop to first
                             } else {
                               setCurrentMobileIndex(currentMobileIndex + 1);
                             }
                             setSwipedCardId(null);
-                          } else if (diffX < -30 && diffX > -50) {
-                            // Small right swipe = close actions only
+                          } 
+                          // Small right swipe = close actions only
+                          else if (diffX < -30 && diffX > -50) {
                             setSwipedCardId(null);
                           }
                         }}
@@ -717,7 +764,7 @@ export function AdminResponsiveTable<T>({
                             {cardTitle(item)}
                           </div>
                           {cardSubtitle && (
-                            <div style={{ fontSize: 13, color: "#666" }}>{cardSubtitle(item)}</div>
+                            <div style={{ fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{cardSubtitle(item)}</div>
                           )}
                         </div>
 
@@ -736,7 +783,7 @@ export function AdminResponsiveTable<T>({
                                 color: "#666",
                               }}
                             >
-                              {field.icon && <span style={{ fontWeight: 600 }}>{field.icon}</span>}
+                              {field.icon && <span style={{ fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{field.icon}</span>}
                               <div style={{ flex: 1 }}>{field.render(item)}</div>
                             </div>
                           );

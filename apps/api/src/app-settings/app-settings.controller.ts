@@ -74,6 +74,7 @@ export class AppSettingsController {
       seoDescription: allSettings.seoDescription[lang as "hu" | "en" | "de"],
       defaultPlaceholderCardImage: allSettings.defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage: allSettings.defaultPlaceholderDetailHeroImage,
+      defaultEventPlaceholderCardImage: allSettings.defaultEventPlaceholderCardImage,
       brandBadgeIcon: allSettings.brandBadgeIcon,
       faviconUrl: allSettings.faviconUrl,
     };

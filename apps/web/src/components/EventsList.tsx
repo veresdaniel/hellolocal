@@ -1,8 +1,8 @@
 // src/components/EventsList.tsx
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getEvents } from "../api/places.api";
+import { getEvents, getSiteSettings } from "../api/places.api";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { buildPath } from "../app/routing/buildPath";
 import { Link } from "react-router-dom";
@@ -17,6 +17,7 @@ export function EventsList({ lang }: EventsListProps) {
   const { t } = useTranslation();
   const { tenantSlug } = useTenantContext();
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  const queryClient = useQueryClient();
   
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -59,6 +60,39 @@ export function EventsList({ lang }: EventsListProps) {
   useEffect(() => {
     localStorage.setItem("eventsListOpen", String(isOpen));
   }, [isOpen]);
+
+  // Load site settings for default placeholder image
+  const { data: siteSettings, isLoading: isLoadingSiteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      // Invalidate and refetch site settings to update placeholder images
+      console.debug('[EventsList] Site settings changed, invalidating cache');
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug, queryClient]);
+
+  // Debug: log site settings when they change
+  useEffect(() => {
+    if (siteSettings) {
+      console.debug('[EventsList] Site settings loaded:', {
+        defaultEventPlaceholderCardImage: siteSettings.defaultEventPlaceholderCardImage,
+        lang,
+        tenantSlug,
+      });
+    }
+  }, [siteSettings, lang, tenantSlug]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events", lang, tenantKey],
@@ -366,13 +400,23 @@ export function EventsList({ lang }: EventsListProps) {
                     </div>
                   );
                 }
+                // Determine image URL - use event image or placeholder
+                const eventImage = event.heroImage?.trim() || null;
+                const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                const imageUrl = eventImage || placeholderImage;
+                const hasImage = !!imageUrl && imageUrl.length > 0;
+                
+                // Debug logging (remove in production)
+                if (!eventImage && placeholderImage) {
+                  console.debug('[EventsList] Using placeholder image:', placeholderImage);
+                }
+
                 return (
                   <Link
                     key={event.id}
                     to={buildPath({ tenantSlug, lang, path: `event/${event.slug}` })}
                     style={{
                       display: "block",
-                      padding: 14,
                       background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
                       borderRadius: 12,
                       textDecoration: "none",
@@ -381,6 +425,7 @@ export function EventsList({ lang }: EventsListProps) {
                       backdropFilter: "blur(10px)",
                       border: "1px solid rgba(102, 126, 234, 0.25)",
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      overflow: "hidden",
                     }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)";
@@ -393,19 +438,60 @@ export function EventsList({ lang }: EventsListProps) {
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  {/* Title */}
-                  <h4 style={{ 
-                    margin: "0 0 8px 0", 
-                    fontSize: 16, 
-                    fontWeight: 600,
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    lineHeight: 1.4,
-                    letterSpacing: "-0.01em",
-                    color: "#2d1f3d",
-                  }}>
-                    {event.isPinned && <span style={{ marginRight: 6 }}>📌</span>}
-                    {event.name}
-                  </h4>
+                  {/* Event Image */}
+                  {hasImage && (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 120,
+                        backgroundImage: `url(${imageUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        position: "relative",
+                      }}
+                    >
+                      {event.isPinned && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 8,
+                            left: 8,
+                            zIndex: 10,
+                          }}
+                        >
+                          <Badge
+                            variant="custom"
+                            backgroundColor="rgba(102, 126, 234, 0.95)"
+                            textColor="white"
+                            size="small"
+                            uppercase={true}
+                            style={{
+                              backdropFilter: "blur(8px)",
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                            }}
+                          >
+                            📌 {t("public.events") || "Esemény"}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div style={{ padding: 14 }}>
+                    {/* Title */}
+                    <h4 style={{ 
+                      margin: "0 0 8px 0", 
+                      fontSize: 16, 
+                      fontWeight: 600,
+                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      lineHeight: 1.4,
+                      letterSpacing: "-0.01em",
+                      color: "#2d1f3d",
+                    }}>
+                      {!hasImage && event.isPinned && <span style={{ marginRight: 6 }}>📌</span>}
+                      {event.name}
+                    </h4>
 
                   {/* Date */}
                   <div style={{ 
@@ -442,20 +528,21 @@ export function EventsList({ lang }: EventsListProps) {
                     </div>
                   )}
 
-                  {/* First Tag as Badge */}
-                  {event.tags && event.tags.length > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      <Badge
-                        variant="custom"
-                        backgroundColor="rgba(102, 126, 234, 0.2)"
-                        textColor="#2d1f3d"
-                        size="small"
-                        uppercase={true}
-                      >
-                        {event.tags[0]}
-                      </Badge>
-                    </div>
-                  )}
+                    {/* First Tag as Badge */}
+                    {event.tags && event.tags.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <Badge
+                          variant="custom"
+                          backgroundColor="rgba(102, 126, 234, 0.2)"
+                          textColor="#2d1f3d"
+                          size="small"
+                          uppercase={true}
+                        >
+                          {event.tags[0]}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
                 </Link>
               );
               })}

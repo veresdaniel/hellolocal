@@ -573,6 +573,7 @@ export function PlacesPage() {
     fontSize: "clamp(13px, 3vw, 14px)",
     fontWeight: 600,
     color: "#333",
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   };
 
   return (
@@ -581,6 +582,7 @@ export function PlacesPage() {
         <h1 style={{
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -700,6 +702,7 @@ export function PlacesPage() {
             color: "#667eea",
             fontSize: "clamp(20px, 5vw, 24px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}
           </h2>
@@ -950,7 +953,7 @@ export function PlacesPage() {
                   borderRadius: 8,
                   border: "1px solid #667eea30"
                 }}>
-                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     🔍 SEO {t("admin.settings")}
                   </h3>
                   

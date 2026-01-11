@@ -34,7 +34,7 @@ export function TenantSelector() {
     return (
       <>
         <LoadingSpinner isLoading={isLoading} delay={0} />
-        <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4, color: "#666", visibility: "hidden" }}>
+        <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4, color: "#666", visibility: "hidden", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           {t("common.loading")}...
         </div>
       </>

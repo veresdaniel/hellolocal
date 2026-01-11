@@ -64,6 +64,7 @@ export function CookieConsent() {
         borderRadius: isMobile ? "0" : 16,
         maxWidth: isMobile ? "100%" : 420,
         border: isMobile ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       <div
@@ -80,6 +81,7 @@ export function CookieConsent() {
               fontSize: "clamp(14px, 3vw, 15px)",
               lineHeight: 1.5,
               color: "rgba(255, 255, 255, 0.95)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("cookieConsent.message")}
@@ -102,6 +104,7 @@ export function CookieConsent() {
               transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(255, 255, 255, 0.2)",
               whiteSpace: "nowrap",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
@@ -129,6 +132,7 @@ export function CookieConsent() {
               fontWeight: 500,
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";

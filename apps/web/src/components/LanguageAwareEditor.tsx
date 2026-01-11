@@ -38,7 +38,7 @@ export function LanguageAwareEditor({
   return (
     <div>
       {label && (
-        <label style={{ display: "block", marginBottom: 8, fontWeight: "bold" }}>
+        <label style={{ display: "block", marginBottom: 8, fontWeight: "bold", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           {label}
         </label>
       )}

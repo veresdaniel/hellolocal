@@ -280,6 +280,7 @@ export function DraggableBox({
           color: "white", 
           fontSize: isMobile && !isOpen ? 20 : 15, 
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

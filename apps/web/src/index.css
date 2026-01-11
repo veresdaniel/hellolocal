@@ -25,10 +25,36 @@ a:hover {
 }
 
 * {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Apply Inter font to most elements, but exclude table headers and headings */
+html, body, div, span, p, a, button, input, textarea, select, label, li, ul, ol, dl, dd, dt, 
+section, article, aside, nav, header, footer, main, form, fieldset, legend {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Table headers use Poppins - must come after the above rules */
+table thead th,
+table thead th *,
+thead th,
+thead th *,
+.admin-layout table thead th,
+.admin-layout table thead th * {
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+/* Table body cells use Inter */
+table tbody td,
+table tbody td *,
+tbody td,
+tbody td *,
+.admin-layout table tbody td,
+.admin-layout table tbody td * {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 
 html {
@@ -59,8 +85,9 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* Headings use Poppins - override the general rule above */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   font-weight: 600;
   letter-spacing: -0.02em;
 }

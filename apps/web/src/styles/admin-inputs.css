@@ -31,3 +31,62 @@
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   color: #333 !important;
 }
+
+/* Table header styling - Poppins font - override EVERYTHING with maximum specificity */
+.admin-layout .admin-table-wrapper table.admin-table thead th,
+.admin-layout .admin-table-wrapper table.admin-table thead th *,
+.admin-layout .admin-table-wrapper table thead th,
+.admin-layout .admin-table-wrapper table thead th *,
+.admin-layout table.admin-table thead th,
+.admin-layout table.admin-table thead th *,
+.admin-layout table thead th,
+.admin-layout table thead th *,
+div.admin-layout table.admin-table thead tr th,
+div.admin-layout table.admin-table thead tr th *,
+table.admin-table thead th,
+table.admin-table thead th *,
+.admin-layout table thead th span,
+.admin-layout table thead th div,
+.admin-layout table thead th p,
+.admin-layout table thead th strong,
+.admin-layout table thead th em,
+.admin-layout table thead th b,
+table thead th,
+table thead th *,
+thead th,
+thead th * {
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-weight: 600 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Table body cells - Inter font */
+.admin-layout table.admin-table tbody td,
+.admin-layout table.admin-table tbody td *,
+.admin-layout table tbody td,
+.admin-layout table tbody td *,
+table.admin-table tbody td,
+table.admin-table tbody td *,
+.admin-layout table tbody td span,
+.admin-layout table tbody td div,
+.admin-layout table tbody td p,
+.admin-layout table tbody td strong,
+.admin-layout table tbody td em,
+table tbody td,
+table tbody td *,
+tbody td,
+tbody td * {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: 14px !important;
+}
+
+/* Table rows */
+.admin-layout table.admin-table tbody tr,
+.admin-layout table tbody tr,
+table tbody tr {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}

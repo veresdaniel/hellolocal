@@ -85,6 +85,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
     fontWeight: 600,
     color: "#333",
     minWidth: "clamp(70px, 15vw, 100px)",
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   };
 
   return (
@@ -104,6 +105,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
           fontSize: "clamp(13px, 3vw, 14px)",
           color: "#666",
           marginBottom: "8px",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         {t("common.openingHoursHint")}
@@ -174,7 +176,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
                   }}
                   placeholder={t("common.openTime")}
                 />
-                <span style={{ color: "#666", fontSize: "14px", fontWeight: 600 }}>-</span>
+                <span style={{ color: "#666", fontSize: "14px", fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>-</span>
                 <input
                   type="time"
                   value={hour.closeTime}

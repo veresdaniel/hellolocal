@@ -1,6 +1,6 @@
 // src/components/PlacesListView.tsx
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getPlaces, getEvents, type Event, getSiteSettings } from "../api/places.api";
@@ -51,6 +51,7 @@ export function PlacesListView({
 }: PlacesListViewProps) {
   const { t } = useTranslation();
   const { lang, tenantSlug } = useTenantContext();
+  const queryClient = useQueryClient();
   
   // Use Zustand store as default, props override if provided
   const storeFilters = useFiltersStore();
@@ -123,6 +124,32 @@ export function PlacesListView({
     queryFn: () => getSiteSettings(lang, tenantKey),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      // Invalidate and refetch site settings to update placeholder images
+      console.debug('[PlacesListView] Site settings changed, invalidating cache');
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug, queryClient]);
+
+  // Debug: log site settings when they change
+  useEffect(() => {
+    if (siteSettings) {
+      console.debug('[PlacesListView] Site settings loaded:', {
+        defaultEventPlaceholderCardImage: siteSettings.defaultEventPlaceholderCardImage,
+        lang,
+        tenantSlug,
+      });
+    }
+  }, [siteSettings, lang, tenantSlug]);
 
   // Get user location for "within30Minutes" filter
   useEffect(() => {
@@ -425,7 +452,7 @@ export function PlacesListView({
               {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
             </div>
           ) : !isLoading && combinedItems.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
+            <div style={{ textAlign: "center", padding: "64px 0", color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("public.noPlacesFound") || "Nincs találat"}
             </div>
           ) : isLoading && places.length === 0 ? null : (
@@ -453,17 +480,23 @@ export function PlacesListView({
                           opacity: 0.7,
                         }}
                       >
-                        {(event.heroImage || siteSettings?.defaultEventPlaceholderCardImage) && (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: 200,
-                              backgroundImage: `url(${event.heroImage || siteSettings?.defaultEventPlaceholderCardImage || ""})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              position: "relative",
-                            }}
-                          >
+                        {(() => {
+                          const eventImage = event.heroImage?.trim() || null;
+                          const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                          const imageUrl = eventImage || placeholderImage;
+                          const hasImage = !!imageUrl && imageUrl.length > 0;
+                          
+                          return hasImage ? (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: 200,
+                                backgroundImage: `url(${imageUrl})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                position: "relative",
+                              }}
+                            >
                             <div
                               style={{
                                 position: "absolute",
@@ -487,7 +520,8 @@ export function PlacesListView({
                               </Badge>
                             </div>
                           </div>
-                        )}
+                          ) : null;
+                        })()}
                         <div style={{ padding: 20 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
                             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>
@@ -560,17 +594,23 @@ export function PlacesListView({
                           e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
                         }}
                       >
-                        {(event.heroImage || siteSettings?.defaultEventPlaceholderCardImage) && (
-                          <div
-                            style={{
-                              width: "100%",
-                              height: 200,
-                              backgroundImage: `url(${event.heroImage || siteSettings?.defaultEventPlaceholderCardImage || ""})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                              position: "relative",
-                            }}
-                          >
+                        {(() => {
+                          const eventImage = event.heroImage?.trim() || null;
+                          const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                          const imageUrl = eventImage || placeholderImage;
+                          const hasImage = !!imageUrl && imageUrl.length > 0;
+                          
+                          return hasImage ? (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: 200,
+                                backgroundImage: `url(${imageUrl})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                position: "relative",
+                              }}
+                            >
                             {/* Event badge overlay */}
                             <div
                               style={{
@@ -595,7 +635,8 @@ export function PlacesListView({
                               </Badge>
                             </div>
                           </div>
-                        )}
+                          ) : null;
+                        })()}
                         <div style={{ padding: 20 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
                             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>

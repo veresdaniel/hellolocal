@@ -355,7 +355,7 @@ export function TownsPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
-        <h1 style={{ fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700, color: "#e0e0ff", margin: 0, textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)" }}>
+        <h1 style={{ fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#e0e0ff", margin: 0, textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)" }}>
           {t("admin.towns")}
         </h1>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -377,14 +377,14 @@ export function TownsPage() {
       </div>
 
       {error && (
-        <div style={{ padding: "clamp(12px, 3vw, 16px)", marginBottom: 24, background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)", color: "#991b1b", borderRadius: 12, border: "1px solid #fca5a5", fontSize: "clamp(13px, 3vw, 14px)", fontWeight: 500 }}>
+        <div style={{ padding: "clamp(12px, 3vw, 16px)", marginBottom: 24, background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)", color: "#991b1b", borderRadius: 12, border: "1px solid #fca5a5", fontSize: "clamp(13px, 3vw, 14px)", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
-          <h2 style={{ marginBottom: 24, color: "#667eea", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700 }}>
+          <h2 style={{ marginBottom: 24, color: "#667eea", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
           </h2>
 
@@ -392,7 +392,7 @@ export function TownsPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -436,7 +436,7 @@ export function TownsPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("common.description")}</label>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
@@ -456,7 +456,7 @@ export function TownsPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("admin.heroImage")}</label>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.heroImage")}</label>
                   <input
                     type="text"
                     value={

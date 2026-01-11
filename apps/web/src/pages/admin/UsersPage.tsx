@@ -232,7 +232,8 @@ export function UsersPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
         <h1 style={{ 
           fontSize: "clamp(20px, 4vw, 28px)", 
-          fontWeight: 700, 
+          fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff", 
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -278,18 +279,18 @@ export function UsersPage() {
       </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
+        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}</h2>
+          <h2 style={{ marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}</h2>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.username")} *</label>
+              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.username")} *</label>
               <input
                 type="text"
                 value={formData.username}
@@ -307,7 +308,7 @@ export function UsersPage() {
               {formErrors.username && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.username}</div>}
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("public.email")} *</label>
+              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.email")} *</label>
               <input
                 type="email"
                 value={formData.email}
@@ -328,7 +329,7 @@ export function UsersPage() {
 
           {isCreating && (
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.password")} *</label>
+              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.password")} *</label>
               <input
                 type="password"
                 value={formData.password}
@@ -347,7 +348,7 @@ export function UsersPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.firstName")} *</label>
+              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.firstName")} *</label>
               <input
                 type="text"
                 value={formData.firstName}
@@ -363,7 +364,7 @@ export function UsersPage() {
               {formErrors.firstName && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.firstName}</div>}
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.lastName")} *</label>
+              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.lastName")} *</label>
               <input
                 type="text"
                 value={formData.lastName}
@@ -393,7 +394,7 @@ export function UsersPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
             {isCreating && (
               <div>
-                <label style={{ display: "block", marginBottom: 4 }}>{t("admin.role")} *</label>
+                <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.role")} *</label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as CreateUserDto["role"] })}
@@ -428,7 +429,7 @@ export function UsersPage() {
 
           {editingId && (
             <div style={{ marginBottom: 16, padding: 16, background: "#f8f9fa", borderRadius: 4, border: "1px solid #ddd" }}>
-              <h3 style={{ marginBottom: 12, fontSize: 16 }}>{t("admin.profile.twoFactorAuthentication")}</h3>
+              <h3 style={{ marginBottom: 12, fontSize: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.profile.twoFactorAuthentication")}</h3>
               {(() => {
                 const editingUser = users.find((u) => u.id === editingId);
                 return editingUser?.isTwoFactorEnabled ? (
@@ -466,7 +467,7 @@ export function UsersPage() {
                 ) : (
                   <div>
                     <span style={{ color: "#6c757d" }}>{t("admin.twoFactor.disabled")}</span>
-                    <p style={{ marginTop: 8, fontSize: 14, color: "#666" }}>
+                    <p style={{ marginTop: 8, fontSize: 14, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {t("admin.profile.usersCanEnable2FA")}
                     </p>
                   </div>

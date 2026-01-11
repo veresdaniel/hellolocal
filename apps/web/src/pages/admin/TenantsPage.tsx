@@ -242,6 +242,7 @@ export function TenantsPage() {
         <h1 style={{
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -375,6 +376,7 @@ export function TenantsPage() {
             color: "#667eea",
             fontSize: "clamp(20px, 5vw, 24px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {editingId ? t("admin.forms.editTenant") : t("admin.forms.newTenant")}
           </h2>

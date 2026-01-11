@@ -58,7 +58,7 @@ export function TenantAutocomplete({ selectedTenantIds, onTenantIdsChange, allTe
 
   return (
     <div style={{ position: "relative", marginBottom: 16 }}>
-      <label style={{ display: "block", marginBottom: 4 }}>{t("admin.tenants")}</label>
+      <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.tenants")}</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         {selectedTenantIds.map((tenantId) => (
           <span

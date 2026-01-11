@@ -356,6 +356,7 @@ export function StaticPagesPage() {
         <h1 style={{
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           textShadow: "0 2px 4px rgba(0,0,0,0.1)",
           margin: 0,
@@ -401,14 +402,14 @@ export function StaticPagesPage() {
       </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
+        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editStaticPage") : t("admin.forms.newStaticPage")}</h2>
+          <h2 style={{ marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{editingId ? t("admin.forms.editStaticPage") : t("admin.forms.newStaticPage")}</h2>
 
           <div style={{ marginBottom: 16 }}>
             <StaticPageCategoryAutocomplete
@@ -422,7 +423,7 @@ export function StaticPagesPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("common.title")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -466,7 +467,7 @@ export function StaticPagesPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("admin.content")}</label>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.content")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
@@ -493,12 +494,12 @@ export function StaticPagesPage() {
                   borderRadius: 8,
                   border: "1px solid #667eea30"
                 }}>
-                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     🔍 SEO {t("admin.settings")}
                   </h3>
                   
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.title")}</label>
+                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.title")}</label>
                     <input
                       type="text"
                       value={
@@ -522,7 +523,7 @@ export function StaticPagesPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.description")}</label>
+                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.description")}</label>
                     <textarea
                       value={
                         selectedLang === "hu"
@@ -546,7 +547,7 @@ export function StaticPagesPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.image")}</label>
+                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.image")}</label>
                     <input
                       type="url"
                       value={
@@ -567,7 +568,7 @@ export function StaticPagesPage() {
                   </div>
 
                   <div style={{ marginBottom: 0 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>SEO Keywords</label>
+                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO Keywords</label>
                     <input
                       type="text"
                       value={

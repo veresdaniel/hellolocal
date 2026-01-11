@@ -151,7 +151,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
       return (
         <div ref={containerRef} style={{ position: "relative" }}>
           {label && (
-            <label style={{ display: "block", marginBottom: 4 }}>
+            <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {label} {required && "*"}
             </label>
           )}

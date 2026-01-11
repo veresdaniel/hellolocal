@@ -47,6 +47,7 @@ export function Pagination({
           color: "#666", 
           fontSize: "clamp(12px, 3vw, 14px)",
           whiteSpace: "nowrap",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {t("admin.pagination.showing", { start: startItem, end: endItem, total })}
         </span>
@@ -60,6 +61,7 @@ export function Pagination({
             borderRadius: 6,
             cursor: "pointer",
             background: "white",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <option value={10}>10 / {t("admin.pagination.page")}</option>
@@ -85,6 +87,7 @@ export function Pagination({
             cursor: currentPage === 1 ? "not-allowed" : "pointer",
             fontSize: "clamp(12px, 3vw, 14px)",
             fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             transition: "all 0.2s ease",
             boxShadow: currentPage === 1 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}
@@ -98,6 +101,7 @@ export function Pagination({
           minWidth: "clamp(80px, 20vw, 100px)", 
           textAlign: "center",
           fontWeight: 600,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {t("admin.pagination.pageInfo", { current: currentPage, total: totalPages })}
         </span>
@@ -116,6 +120,7 @@ export function Pagination({
             cursor: currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
             fontSize: "clamp(12px, 3vw, 14px)",
             fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             transition: "all 0.2s ease",
             boxShadow: currentPage === totalPages || totalPages === 0 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}

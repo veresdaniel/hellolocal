@@ -441,7 +441,7 @@ export function AppSettingsPage() {
               )}
 
               {!isAdmin && (
-                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
+                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.onlyAdminCanEdit")}
                 </div>
               )}
@@ -648,7 +648,7 @@ export function AppSettingsPage() {
                     mapStyle="default"
                   />
                 </div>
-                <p style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+                <p style={{ marginTop: 8, fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.mapSettingsHint")}
                 </p>
               </div>
@@ -683,7 +683,7 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 />
-                <p style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+                <p style={{ marginTop: 8, fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {isSingleTown && towns.length > 0
                     ? t("admin.singleTownHighZoomHint")
                     : t("admin.mapZoomHint")}
@@ -783,7 +783,7 @@ export function AppSettingsPage() {
               )}
 
               {!isAdmin && (
-                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
+                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.onlyAdminCanEdit")}
                 </div>
               )}
@@ -1100,7 +1100,7 @@ export function AppSettingsPage() {
                   {t("admin.defaultPlaceholderCardImageDescription") || "Used for place cards when no image is set"}
                 </p>
                 {siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage) && (
-                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
@@ -1144,7 +1144,7 @@ export function AppSettingsPage() {
                   {t("admin.defaultPlaceholderDetailHeroImageDescription") || "Used for place detail pages when no hero image is set"}
                 </p>
                 {siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage) && (
-                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
@@ -1188,7 +1188,7 @@ export function AppSettingsPage() {
                   {t("admin.defaultEventPlaceholderCardImageDescription")}
                 </p>
                 {siteSettings.defaultEventPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultEventPlaceholderCardImage) && (
-                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
@@ -1232,7 +1232,7 @@ export function AppSettingsPage() {
                   {t("admin.brandBadgeIconDescription") || "Icon displayed in the brand badge on public pages"}
                 </p>
                 {siteSettings.brandBadgeIcon && !isValidImageUrl(siteSettings.brandBadgeIcon) && (
-                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}
@@ -1276,7 +1276,7 @@ export function AppSettingsPage() {
                   {t("admin.faviconUrlDescription") || "Favicon displayed in browser tabs (recommended: 32x32px or 16x16px .ico, .png)"}
                 </p>
                 {siteSettings.faviconUrl && !isValidImageUrl(siteSettings.faviconUrl) && (
-                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
                 )}

@@ -550,13 +550,13 @@ export function UserProfilePage() {
             border: "1px solid rgba(102, 126, 234, 0.1)",
           }}>
             {twoFactorError && (
-              <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 6, fontSize: 14, border: "1px solid #fcc" }}>
+              <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 6, fontSize: 14, border: "1px solid #fcc", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {twoFactorError}
               </div>
             )}
 
             {twoFactorSuccess && (
-              <div style={{ padding: 12, marginBottom: 16, background: "#efe", color: "#0a0", borderRadius: 6, fontSize: 14, border: "1px solid #cfc" }}>
+              <div style={{ padding: 12, marginBottom: 16, background: "#efe", color: "#0a0", borderRadius: 6, fontSize: 14, border: "1px solid #cfc", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {twoFactorSuccess}
               </div>
             )}
@@ -567,7 +567,7 @@ export function UserProfilePage() {
                   <span style={{ fontSize: 20 }}>✓</span>
                   <span style={{ color: "#28a745", fontWeight: 600, fontSize: 15 }}>{t("admin.twoFactor.isEnabled")}</span>
                 </div>
-                <p style={{ marginBottom: 16, color: "#666", fontSize: 14, lineHeight: 1.5 }}>
+                <p style={{ marginBottom: 16, color: "#666", fontSize: 14, lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.twoFactor.accountProtected")}
                 </p>
                 <button
@@ -652,7 +652,7 @@ export function UserProfilePage() {
                       )}
                       {twoFactorSecret && (
                         <div style={{ marginBottom: 0, padding: 12, background: "white", borderRadius: 6, border: "1px solid #ddd" }}>
-                          <p style={{ marginBottom: 6, fontSize: 13, color: "#666", fontWeight: 500 }}>{t("admin.twoFactor.orEnterKeyManually")}</p>
+                          <p style={{ marginBottom: 6, fontSize: 13, color: "#666", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.twoFactor.orEnterKeyManually")}</p>
                           <code style={{ fontFamily: "monospace", fontSize: 13, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4, display: "block", wordBreak: "break-all", border: "1px solid #e0e0e0" }}>
                             {twoFactorSecret}
                           </code>

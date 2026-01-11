@@ -228,6 +228,7 @@ export function TagsPage() {
         <h1 style={{
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -267,6 +268,7 @@ export function TagsPage() {
             color: "#667eea",
             fontSize: "clamp(20px, 5vw, 24px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {editingId ? t("admin.forms.editTag") : t("admin.forms.newTag")}
           </h2>
@@ -275,7 +277,7 @@ export function TagsPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -319,7 +321,7 @@ export function TagsPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("common.description")}</label>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
