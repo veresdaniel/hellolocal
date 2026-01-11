@@ -1111,15 +1111,81 @@ export function MapComponent({
             touchAction: "manipulation",
           }}
           onClick={(e) => {
-            // For iOS: handle click on label to ensure checkbox toggles
+            // For iOS: handle click on label - request geolocation directly in user gesture context
             e.stopPropagation();
+            if (isDraggingLocationControl) return;
+            
             const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
-            if (checkbox && !isDraggingLocationControl) {
-              // Toggle checkbox state
-              checkbox.checked = !checkbox.checked;
-              // Trigger change event
-              const changeEvent = new Event('change', { bubbles: true });
-              checkbox.dispatchEvent(changeEvent);
+            if (!checkbox) return;
+            
+            const willBeChecked = !checkbox.checked;
+            
+            if (willBeChecked) {
+              // Request geolocation FIRST in user gesture context (iOS requirement)
+              // Must use callbacks directly, not Promises, to maintain user gesture context
+              if (navigator.geolocation) {
+                // Request permission immediately in user gesture context
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    // Success: set location and enable checkbox
+                    setUserLocation({
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude,
+                    });
+                    setShowUserLocation(true);
+                    checkbox.checked = true;
+                    
+                    // Start watching for updates
+                    if (watchIdRef.current !== null) {
+                      navigator.geolocation.clearWatch(watchIdRef.current);
+                    }
+                    watchIdRef.current = navigator.geolocation.watchPosition(
+                      (updatedPosition) => {
+                        setUserLocation({
+                          lat: updatedPosition.coords.latitude,
+                          lng: updatedPosition.coords.longitude,
+                        });
+                      },
+                      (error) => {
+                        if (error.code === error.PERMISSION_DENIED) {
+                          setShowUserLocation(false);
+                          setUserLocation(null);
+                          checkbox.checked = false;
+                        }
+                      },
+                      {
+                        enableHighAccuracy: true,
+                        maximumAge: 30000,
+                        timeout: 10000,
+                      }
+                    );
+                  },
+                  (error) => {
+                    // Permission denied or error - don't enable
+                    setShowUserLocation(false);
+                    setUserLocation(null);
+                    checkbox.checked = false;
+                  },
+                  {
+                    enableHighAccuracy: true,
+                    maximumAge: 300000,
+                    timeout: 15000,
+                  }
+                );
+              } else {
+                // Geolocation not available
+                setShowUserLocation(false);
+                checkbox.checked = false;
+              }
+            } else {
+              // Disable: clear watch and location
+              if (watchIdRef.current !== null) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+              }
+              setShowUserLocation(false);
+              setUserLocation(null);
+              checkbox.checked = false;
             }
           }}
         >
@@ -1146,12 +1212,14 @@ export function MapComponent({
                 pointerEvents: "auto",
               }}
               onChange={(e) => {
+                // For desktop/non-iOS: handle change normally
+                // For iOS, the label onClick handles it directly
                 const checked = e.target.checked;
-                if (checked) {
-                  // First, enable the checkbox immediately (user gesture context)
+                if (checked && !showUserLocation) {
+                  // Only handle if not already handled by label onClick (iOS)
+                  // This is a fallback for desktop
                   setShowUserLocation(true);
                   
-                  // Then request geolocation in user gesture context
                   if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                       (position) => {
@@ -1188,15 +1256,6 @@ export function MapComponent({
                         // Permission denied or error - disable
                         setShowUserLocation(false);
                         setUserLocation(null);
-                        
-                        // Log error for debugging
-                        if (error.code === error.PERMISSION_DENIED) {
-                          // Permission denied - user needs to allow in browser settings
-                        } else if (error.code === error.POSITION_UNAVAILABLE) {
-                          // Position unavailable
-                        } else if (error.code === error.TIMEOUT) {
-                          // Timeout
-                        }
                       },
                       {
                         enableHighAccuracy: true,
@@ -1205,10 +1264,9 @@ export function MapComponent({
                       }
                     );
                   } else {
-                    // Geolocation not available
                     setShowUserLocation(false);
                   }
-                } else {
+                } else if (!checked) {
                   // Disable: clear watch and location
                   if (watchIdRef.current !== null) {
                     navigator.geolocation.clearWatch(watchIdRef.current);
