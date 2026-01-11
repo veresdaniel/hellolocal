@@ -35,18 +35,23 @@ export function PublicAuthBadge() {
   const badgeRef = useRef<HTMLDivElement>(null);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
 
-  // Load saved position from localStorage
+  // Default positions: jobb lent (bottom right)
+  const defaultPositionDesktop = { bottom: 100, right: 16 };
+  const defaultPositionMobile = { bottom: 80, right: 12 };
+
+  // Load saved position from localStorage (device-specific)
   const [position, setPosition] = useState(() => {
-    if (typeof window === "undefined") return { bottom: 150, right: 20 };
-    const saved = localStorage.getItem("publicAuthBadgePosition");
+    if (typeof window === "undefined") return defaultPositionDesktop;
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`publicAuthBadgePosition_${deviceKey}`);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return { bottom: 150, right: 20 };
+        return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
       }
     }
-    return { bottom: 150, right: 20 };
+    return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
 
   useEffect(() => {
@@ -58,10 +63,34 @@ export function PublicAuthBadge() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Save position to localStorage
+  // Load position when device type changes
   useEffect(() => {
-    localStorage.setItem("publicAuthBadgePosition", JSON.stringify(position));
-  }, [position]);
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`publicAuthBadgePosition_${deviceKey}`);
+    if (saved) {
+      try {
+        const savedPos = JSON.parse(saved);
+        setPosition(savedPos);
+      } catch {
+        setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+      }
+    } else {
+      setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+    }
+  }, [isDesktop]);
+  
+  // Save position to localStorage (device-specific)
+  useEffect(() => {
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const defaultPos = isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+    // Only save if position differs from default (user has moved it)
+    if (position.bottom !== defaultPos.bottom || position.right !== defaultPos.right) {
+      localStorage.setItem(`publicAuthBadgePosition_${deviceKey}`, JSON.stringify(position));
+    } else {
+      // Remove saved position if it's back to default
+      localStorage.removeItem(`publicAuthBadgePosition_${deviceKey}`);
+    }
+  }, [position, isDesktop]);
 
   // Drag handling useEffect - must be before early returns
   useEffect(() => {

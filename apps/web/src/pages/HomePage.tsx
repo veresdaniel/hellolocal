@@ -33,6 +33,8 @@ export function HomePage() {
     within30Minutes,
     rainSafe,
     userLocation,
+    _hasHydrated,
+    showUserLocation,
     setSelectedCategories,
     setSelectedPriceBands,
     setIsOpenNow,
@@ -92,10 +94,19 @@ export function HomePage() {
   }, [compactFooterHeight]);
 
   // Load map settings first to avoid flickering
-  const { data: mapSettings, isLoading: isLoadingMapSettings } = useQuery({
+  // Don't cache too aggressively - need to refresh on lang/tenant change
+  const { data: mapSettings, isLoading: isLoadingMapSettings, dataUpdatedAt } = useQuery({
     queryKey: ["mapSettings", lang, tenantKey],
-    queryFn: () => getMapSettings(lang, tenantKey),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    queryFn: async () => {
+      console.log("Fetching mapSettings for lang:", lang, "tenantKey:", tenantKey);
+      const result = await getMapSettings(lang, tenantKey);
+      console.log("mapSettings fetched:", result, "for lang:", lang, "tenantKey:", tenantKey);
+      return result;
+    },
+    staleTime: 0, // Always consider stale to ensure fresh data on lang/tenant change
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    gcTime: 0, // Don't keep in cache (formerly cacheTime)
   });
 
   // Load site settings for SEO
@@ -117,7 +128,7 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const { data: placesData, isLoading: isLoadingPlaces } = useQuery({
+  const { data: placesData, isLoading: isLoadingPlaces, isError: isPlacesError, error: placesError } = useQuery({
     queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands],
     queryFn: () => getPlaces(
       lang,
@@ -129,31 +140,234 @@ export function HomePage() {
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnMount: true, // Refetch when component mounts
     refetchInterval: 30 * 1000, // Refetch every 30 seconds in background
+    retry: false, // Don't retry on error (404 is expected for some languages)
     // Remove placeholderData to ensure fresh data is always shown
     // placeholderData can cause stale data to persist
   });
-
-  // Get user location for "within30Minutes" filter
+  
+  // Log error if places query fails
   useEffect(() => {
-    if (within30Minutes && navigator.geolocation) {
+    if (isPlacesError) {
+      console.warn("Places query error:", placesError, "lang:", lang, "tenantKey:", tenantKey);
+    }
+  }, [isPlacesError, placesError, lang, tenantKey]);
+
+  // Get user location - always try to get it if available, not just for filter
+  const [locationPermission, setLocationPermission] = useState<"prompt" | "granted" | "denied">("prompt");
+  const watchIdRef = useRef<number | null>(null);
+  const hasRequestedLocation = useRef(false);
+  
+  // Wait for store to hydrate before using userLocation
+  // Also manually check and set hydration flag if onRehydrateStorage didn't fire
+  useEffect(() => {
+    // If store is not hydrated yet, check if we can manually detect hydration
+    if (!_hasHydrated) {
+      // Check if localStorage has data (indicating store should be hydrated)
+      try {
+        const stored = localStorage.getItem("home-filters-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const persistedLocation = parsed.state?.userLocation;
+          // If we have persisted data, manually trigger hydration after a short delay
+          const timeoutId = setTimeout(() => {
+            const storeState = useFiltersStore.getState();
+            if (!storeState._hasHydrated && persistedLocation) {
+              console.log("Manually setting hydration flag, userLocation:", persistedLocation);
+              useFiltersStore.getState().setHasHydrated(true);
+              if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
+                setUserLocation(persistedLocation);
+              }
+            }
+          }, 50); // Small delay to allow zustand to finish
+          
+          return () => clearTimeout(timeoutId);
+        }
+      } catch (e) {
+        console.warn("Failed to check localStorage for hydration:", e);
+      }
+    } else if (_hasHydrated && userLocation && userLocation.lat && userLocation.lng) {
+      console.log("Store hydrated, userLocation available:", userLocation);
+    }
+  }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
+  
+  // Clear userLocation when showUserLocation is disabled
+  // Or restore it from localStorage when enabled
+  useEffect(() => {
+    if (!showUserLocation) {
+      console.log("showUserLocation disabled, clearing userLocation");
+      // Clear any existing watch
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      // Reset hasRequestedLocation so we can request again when enabled
+      hasRequestedLocation.current = false;
+      // Clear userLocation from store when disabled
+      setUserLocation(null);
+    } else {
+      // When enabled, try to restore from localStorage immediately
+      console.log("showUserLocation enabled, checking for saved location");
+      try {
+        const stored = localStorage.getItem("home-filters-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const savedLocation = parsed.state?.userLocation;
+          if (savedLocation && savedLocation.lat && savedLocation.lng) {
+            console.log("Restoring saved location from localStorage:", savedLocation);
+            setUserLocation(savedLocation);
+            // Reset hasRequestedLocation to allow new request
+            hasRequestedLocation.current = false;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to restore location from localStorage:", e);
+      }
+    }
+  }, [showUserLocation, setUserLocation]);
+  
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.log("Geolocation not available");
+      return;
+    }
+    
+    // Don't request geolocation if showUserLocation is disabled
+    if (!showUserLocation) {
+      console.log("User location disabled, not requesting geolocation");
+      return;
+    }
+    
+    // Check store state directly as fallback (don't wait for hydration if showUserLocation is enabled)
+    const storeState = useFiltersStore.getState();
+    const currentUserLocation = userLocation || storeState.userLocation;
+    
+    // If we already have a userLocation (from localStorage or store), use it and start watching
+    if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
+      // Only start watching if we're not already watching
+      if (watchIdRef.current === null) {
+        console.log("Using existing userLocation from store:", currentUserLocation);
+        setLocationPermission("granted");
+        // Start watching for updates
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (updatedPosition) => {
+            console.log("Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
+            setUserLocation({
+              lat: updatedPosition.coords.latitude,
+              lng: updatedPosition.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn("Geolocation watch error:", error);
+            if (error.code === error.PERMISSION_DENIED) {
+              setLocationPermission("denied");
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
+          }
+        );
+        hasRequestedLocation.current = true;
+      }
+      return;
+    }
+    
+    // If we're already watching, don't request again
+    if (watchIdRef.current !== null) {
+      console.log("Already watching position, skipping new request");
+      return;
+    }
+    
+    if (hasRequestedLocation.current) {
+      console.log("Already requested location, skipping new request. watchIdRef:", watchIdRef.current);
+      return;
+    }
+    
+    console.log("Requesting geolocation... showUserLocation:", showUserLocation, "hasRequestedLocation:", hasRequestedLocation.current);
+    hasRequestedLocation.current = true;
+    
+    // Try to get current position
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("Geolocation success:", position.coords.latitude, position.coords.longitude);
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLocationPermission("granted");
+        
+        // Watch position for updates (especially useful on mobile)
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (updatedPosition) => {
+            console.log("Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
+            setUserLocation({
+              lat: updatedPosition.coords.latitude,
+              lng: updatedPosition.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn("Geolocation watch error:", error);
+            if (error.code === error.PERMISSION_DENIED) {
+              setLocationPermission("denied");
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
+          }
+        );
+      },
+      (error) => {
+        console.warn("Geolocation error:", error);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationPermission("denied");
+          console.log("Location permission denied");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          console.log("Position unavailable");
+        } else if (error.code === error.TIMEOUT) {
+          console.log("Geolocation timeout");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 300000, // Accept cached position up to 5 minutes old (for page refresh)
+        timeout: 15000,
+      }
+    );
+    
+    // Cleanup watch on unmount
+    return () => {
+      if (watchIdRef.current !== null) {
+        console.log("Clearing geolocation watch");
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [userLocation, setUserLocation, showUserLocation, _hasHydrated]);
+
+  // Also handle within30Minutes filter requirement
+  useEffect(() => {
+    if (within30Minutes && !userLocation && navigator.geolocation && locationPermission === "prompt") {
+      // If filter is enabled but we don't have location yet, try again
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
+          setLocationPermission("granted");
         },
         (error) => {
           console.warn("Geolocation error:", error);
-          // Fallback: use map center if available (check after mapCenter is initialized)
-          // We'll set userLocation in a separate effect when mapCenter becomes available
+          if (error.code === error.PERMISSION_DENIED) {
+            setLocationPermission("denied");
+          }
         }
       );
-    } else if (!within30Minutes) {
-      // Clear user location when filter is disabled
-      setUserLocation(null);
     }
-  }, [within30Minutes]);
+  }, [within30Minutes, userLocation, locationPermission]);
 
   // Set user location from map center as fallback when map center is available
   useEffect(() => {
@@ -235,8 +449,9 @@ export function HomePage() {
   };
 
   // Filter places based on context filters
+  // Handle case where placesData is undefined (e.g., 404 error or no data)
   const filteredPlaces = useMemo(() => {
-    if (!placesData) return [];
+    if (!placesData || !Array.isArray(placesData)) return [];
     return placesData.filter((place) => {
       if (isOpenNow && !isPlaceOpenNow(place)) return false;
       if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
@@ -253,28 +468,97 @@ export function HomePage() {
     lng: place.location!.lng!,
     name: place.name,
     onClick: place.slug ? () => {
-      navigate(buildPath({ tenantSlug, lang, path: `place/${place.slug}` }));
+      const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
+      console.log("Navigating to place:", place.slug, "path:", path, "tenantSlug:", tenantSlug, "lang:", lang);
+      navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));
 
   // Initialize map center from settings (only once, or when settings change)
   // Use original placesData (not filtered) for center calculation
   const allPlacesWithCoordinates = placesData?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
+  
+  // Reset initialization flags when lang or tenant changes
   useEffect(() => {
+    hasInitializedCenter.current = false;
+    initialPlacesLoaded.current = false;
+  }, [lang, tenantKey]);
+  
+  // Force reset and update when lang or tenant changes (ensures fresh initialization)
+  useEffect(() => {
+    // Reset flags when lang or tenant changes
+    console.log("Lang or tenant changed, resetting flags. lang:", lang, "tenantKey:", tenantKey);
+    hasInitializedCenter.current = false;
+    initialPlacesLoaded.current = false;
+  }, [lang, tenantKey]);
+  
+  // Track previous mapSettings values to detect actual changes
+  const prevMapSettingsRef = useRef<{ lat: number | null; lng: number | null; zoom: number | null } | null>(null);
+  // Initialize with null to detect initial mount
+  const prevLangRef = useRef<string | null>(null);
+  const prevTenantKeyRef = useRef<string | undefined>(undefined);
+  
+  // Update map center when mapSettings loads or changes (including on lang/tenant change)
+  // This is the primary effect that should always run when mapSettings is available
+  useEffect(() => {
+    // Wait for mapSettings to load
+    if (isLoadingMapSettings) {
+      console.log("Waiting for mapSettings to load... lang:", lang, "tenantKey:", tenantKey);
+      return;
+    }
+    
+    // Check if lang or tenantKey changed (force update even if mapSettings values are the same)
+    // On initial mount, prevLangRef will be null, so we want to update
+    const isInitialMount = prevLangRef.current === null;
+    const langChanged = !isInitialMount && prevLangRef.current !== lang;
+    const tenantKeyChanged = !isInitialMount && prevTenantKeyRef.current !== tenantKey;
+    const mapSettingsChanged = prevMapSettingsRef.current === null || 
+      prevMapSettingsRef.current.lat !== mapSettings?.lat ||
+      prevMapSettingsRef.current.lng !== mapSettings?.lng ||
+      prevMapSettingsRef.current.zoom !== mapSettings?.zoom;
+    
+    // Update refs
+    if (isInitialMount || langChanged || tenantKeyChanged) {
+      if (langChanged || tenantKeyChanged) {
+        console.log("Lang or tenantKey changed, forcing map center update. lang:", lang, "tenantKey:", tenantKey, "prevLang:", prevLangRef.current, "prevTenantKey:", prevTenantKeyRef.current);
+      }
+      prevLangRef.current = lang;
+      prevTenantKeyRef.current = tenantKey;
+    }
+    
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
-      // Always update if mapSettings changed
-      setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
-      hasInitializedCenter.current = true;
-    } else if (!hasInitializedCenter.current && !initialPlacesLoaded.current && allPlacesWithCoordinates.length > 0 && !isLoadingPlaces) {
-      // Only use places center if we don't have map settings and haven't initialized yet
+      // Always update if mapSettings is available (including on initial load and lang/tenant change)
+      // Force update if lang/tenant changed, or on initial mount, or if mapSettings changed, or if not initialized yet
+      // Also check if current mapCenter doesn't match mapSettings (safety check)
+      const currentCenterMatches = mapCenter && 
+        Math.abs(mapCenter.lat - mapSettings.lat) < 0.0001 && 
+        Math.abs(mapCenter.lng - mapSettings.lng) < 0.0001;
+      
+      if (isInitialMount || langChanged || tenantKeyChanged || mapSettingsChanged || !hasInitializedCenter.current || !currentCenterMatches) {
+        console.log("Updating map center from mapSettings:", mapSettings, "lang:", lang, "tenantKey:", tenantKey, "dataUpdatedAt:", dataUpdatedAt, "current mapCenter:", mapCenter, "isInitialMount:", isInitialMount, "langChanged:", langChanged, "tenantKeyChanged:", tenantKeyChanged, "mapSettingsChanged:", mapSettingsChanged, "hasInitializedCenter:", hasInitializedCenter.current, "currentCenterMatches:", currentCenterMatches);
+        setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
+        hasInitializedCenter.current = true;
+        prevMapSettingsRef.current = { lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? null };
+        return; // Exit early if we have map settings
+      } else {
+        console.log("Skipping map center update (no change detected):", { mapSettings, lang, tenantKey, "prevMapSettings": prevMapSettingsRef.current, "hasInitializedCenter": hasInitializedCenter.current, "currentCenterMatches": currentCenterMatches });
+      }
+    } else {
+      console.warn("mapSettings has no lat/lng:", mapSettings, "lang:", lang, "tenantKey:", tenantKey);
+    }
+    
+    // Fallback: only use places center if we don't have map settings and haven't initialized yet
+    if (!hasInitializedCenter.current && !initialPlacesLoaded.current && allPlacesWithCoordinates.length > 0 && !isLoadingPlaces) {
       const avgLat = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / allPlacesWithCoordinates.length;
       const avgLng = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / allPlacesWithCoordinates.length;
+      console.log("Using places center as fallback:", { lat: avgLat, lng: avgLng });
       setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
       hasInitializedCenter.current = true;
       initialPlacesLoaded.current = true;
       previousMarkersCount.current = allPlacesWithCoordinates.length;
-    } else if (!hasInitializedCenter.current && !isLoadingPlaces) {
+    } else if (!hasInitializedCenter.current && !isLoadingPlaces && !isLoadingMapSettings) {
       // Default to Budapest only if we have no settings and no places yet
+      console.log("Using default Budapest center");
       setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
       hasInitializedCenter.current = true;
     }
@@ -283,7 +567,7 @@ export function HomePage() {
     if (!isLoadingPlaces) {
       initialPlacesLoaded.current = true;
     }
-  }, [mapSettings?.lat, mapSettings?.lng, mapSettings?.zoom, isLoadingPlaces, allPlacesWithCoordinates.length]);
+  }, [mapSettings, isLoadingPlaces, isLoadingMapSettings, allPlacesWithCoordinates.length, lang, tenantKey, setMapCenter, dataUpdatedAt, mapCenter]);
 
   // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
   useEffect(() => {
@@ -342,6 +626,7 @@ export function HomePage() {
   }, [markers, mapCenter, isLoadingPlaces]);
 
   // Calculate center and zoom - use stored center, don't recalculate on filter changes
+  // If mapCenter is not set yet, use mapSettings directly as fallback
   const { centerLat, centerLng, defaultZoom } = useMemo(() => {
     if (mapCenter) {
       return {
@@ -350,14 +635,37 @@ export function HomePage() {
         defaultZoom: mapCenter.zoom,
       };
     }
+    
+    // Fallback to mapSettings if available
+    if (mapSettings?.lat != null && mapSettings?.lng != null) {
+      console.log("Using mapSettings as fallback for center calculation:", mapSettings);
+      return {
+        centerLat: mapSettings.lat,
+        centerLng: mapSettings.lng,
+        defaultZoom: mapSettings.zoom ?? 13,
+      };
+    }
 
-    // Fallback (shouldn't happen if useEffect works correctly)
+    // Final fallback (shouldn't happen if useEffect works correctly)
     return {
       centerLat: 47.4979,
       centerLng: 19.0402,
       defaultZoom: 13,
     };
-  }, [mapCenter]);
+  }, [mapCenter, mapSettings]);
+
+  // If mapSettings is loaded but mapCenter is not set yet, use mapSettings directly
+  // This can happen when lang changes and mapSettings loads but mapCenter update is pending
+  // Use useEffect to set mapCenter immediately when mapSettings loads
+  useEffect(() => {
+    if (!isLoadingMapSettings && mapSettings && mapSettings.lat != null && mapSettings.lng != null) {
+      if (!mapCenter || Math.abs(mapCenter.lat - mapSettings.lat) > 0.0001 || Math.abs(mapCenter.lng - mapSettings.lng) > 0.0001) {
+        console.log("Setting mapCenter immediately from mapSettings:", mapSettings, "current mapCenter:", mapCenter);
+        setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
+        hasInitializedCenter.current = true;
+      }
+    }
+  }, [mapSettings, isLoadingMapSettings, mapCenter, setMapCenter]);
 
   // Don't render map until settings are loaded to avoid flickering
   if (isLoadingMapSettings) {
@@ -386,6 +694,8 @@ export function HomePage() {
               latitude={centerLat}
               longitude={centerLng}
               markers={markers}
+              userLocation={userLocation || useFiltersStore.getState().userLocation}
+              showRoutes={false}
               height={mapHeight}
               interactive={true}
               defaultZoom={defaultZoom}

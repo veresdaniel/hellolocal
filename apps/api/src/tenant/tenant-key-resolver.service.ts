@@ -65,7 +65,29 @@ export class TenantKeyResolverService {
       select: { id: true, tenantId: true, slug: true, isActive: true, redirectToId: true },
     });
 
-    if (!hit || !hit.isActive) throw new NotFoundException("Tenant key not found");
+    // If TenantKey not found for this language, fallback to default tenant
+    // This handles cases where TenantKey entries don't exist for all languages
+    if (!hit || !hit.isActive) {
+      // Try to find the tenant by its internal slug (assuming tenantKey matches internal slug)
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { slug: args.tenantKey },
+        select: { id: true, slug: true },
+      });
+      
+      if (tenant) {
+        // Tenant exists but no TenantKey entry for this language - use default tenant
+        return {
+          tenantId: tenant.id,
+          tenantInternalSlug: tenant.slug,
+          lang,
+          canonicalTenantKey: args.tenantKey,
+          redirected: false,
+        };
+      }
+      
+      // If tenant doesn't exist at all, throw error
+      throw new NotFoundException("Tenant key not found");
+    }
 
     // Handle redirects: if this tenant key redirects to another (canonical) key
     // This allows URL aliases and URL migrations

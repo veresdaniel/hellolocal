@@ -15,6 +15,12 @@ interface FiltersState {
   // User location for distance-based filters
   userLocation: { lat: number; lng: number } | null;
   
+  // Show user location toggle
+  showUserLocation: boolean;
+  
+  // Hydration state
+  _hasHydrated: boolean;
+  
   // Actions
   setSelectedCategories: (categories: string[]) => void;
   setSelectedPriceBands: (priceBands: string[]) => void;
@@ -23,7 +29,9 @@ interface FiltersState {
   setWithin30Minutes: (value: boolean) => void;
   setRainSafe: (value: boolean) => void;
   setUserLocation: (location: { lat: number; lng: number } | null) => void;
+  setShowUserLocation: (show: boolean) => void;
   resetFilters: () => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 const initialState = {
@@ -34,6 +42,8 @@ const initialState = {
   within30Minutes: false,
   rainSafe: false,
   userLocation: null as { lat: number; lng: number } | null,
+  showUserLocation: false,
+  _hasHydrated: false,
 };
 
 export const useFiltersStore = create<FiltersState>()(
@@ -48,12 +58,14 @@ export const useFiltersStore = create<FiltersState>()(
       setWithin30Minutes: (value) => set({ within30Minutes: value }),
       setRainSafe: (value) => set({ rainSafe: value }),
       setUserLocation: (location) => set({ userLocation: location }),
+      setShowUserLocation: (show) => set({ showUserLocation: show }),
+      setHasHydrated: (hasHydrated) => set({ _hasHydrated: hasHydrated }),
       
       resetFilters: () => set(initialState),
     }),
     {
       name: "home-filters-storage", // localStorage key
-      // Only persist certain fields (exclude userLocation as it's temporary)
+      // Persist userLocation for a short time (max 5 minutes old) to show on page refresh
       partialize: (state) => ({
         selectedCategories: state.selectedCategories,
         selectedPriceBands: state.selectedPriceBands,
@@ -61,8 +73,21 @@ export const useFiltersStore = create<FiltersState>()(
         hasEventToday: state.hasEventToday,
         within30Minutes: state.within30Minutes,
         rainSafe: state.rainSafe,
-        // userLocation is not persisted (temporary)
+        // Persist userLocation if it exists (will be validated on load)
+        userLocation: state.userLocation,
+        // Persist showUserLocation toggle state
+        showUserLocation: state.showUserLocation,
+        // Don't persist _hasHydrated - it's runtime state
       }),
+      onRehydrateStorage: () => (state) => {
+        // This callback is called after rehydration is complete
+        // Ensure showUserLocation has a default value if missing (migration)
+        if (state && typeof state.showUserLocation === "undefined") {
+          state.showUserLocation = false;
+        }
+        console.log("Store rehydration complete, userLocation:", state?.userLocation, "showUserLocation:", state?.showUserLocation);
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

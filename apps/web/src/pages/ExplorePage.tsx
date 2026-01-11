@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
@@ -10,6 +10,7 @@ import { buildPath } from "../app/routing/buildPath";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { useFiltersStore } from "../stores/useFiltersStore";
 
 export function ExplorePage() {
   const { t } = useTranslation();
@@ -17,6 +18,183 @@ export function ExplorePage() {
   const navigate = useNavigate();
   const [showMap, setShowMap] = useState(true);
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  
+  // Get user location from store
+  const { userLocation, _hasHydrated, setUserLocation, showUserLocation } = useFiltersStore();
+  
+  // Get user location if available
+  const watchIdRef = useRef<number | null>(null);
+  const hasRequestedLocation = useRef(false);
+  
+  // Wait for store to hydrate before using userLocation
+  // Also manually check and set hydration flag if onRehydrateStorage didn't fire
+  useEffect(() => {
+    // If store is not hydrated yet, check if we can manually detect hydration
+    if (!_hasHydrated) {
+      // Check if localStorage has data (indicating store should be hydrated)
+      try {
+        const stored = localStorage.getItem("home-filters-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const persistedLocation = parsed.state?.userLocation;
+          // If we have persisted data, manually trigger hydration after a short delay
+          const timeoutId = setTimeout(() => {
+            const storeState = useFiltersStore.getState();
+            if (!storeState._hasHydrated && persistedLocation) {
+              console.log("ExplorePage: Manually setting hydration flag, userLocation:", persistedLocation);
+              useFiltersStore.getState().setHasHydrated(true);
+              if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
+                setUserLocation(persistedLocation);
+              }
+            }
+          }, 50); // Small delay to allow zustand to finish
+          
+          return () => clearTimeout(timeoutId);
+        }
+      } catch (e) {
+        console.warn("ExplorePage: Failed to check localStorage for hydration:", e);
+      }
+    } else if (_hasHydrated && userLocation && userLocation.lat && userLocation.lng) {
+      console.log("ExplorePage: Store hydrated, userLocation available:", userLocation);
+    }
+  }, [_hasHydrated, userLocation, setUserLocation]);
+  
+  // Clear userLocation when showUserLocation is disabled
+  // Or restore it from localStorage when enabled
+  useEffect(() => {
+    if (!showUserLocation) {
+      console.log("ExplorePage: showUserLocation disabled, clearing userLocation");
+      // Clear any existing watch
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      // Reset hasRequestedLocation so we can request again when enabled
+      hasRequestedLocation.current = false;
+      // Clear userLocation from store when disabled
+      setUserLocation(null);
+    } else {
+      // When enabled, try to restore from localStorage immediately
+      console.log("ExplorePage: showUserLocation enabled, checking for saved location");
+      try {
+        const stored = localStorage.getItem("home-filters-storage");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const savedLocation = parsed.state?.userLocation;
+          if (savedLocation && savedLocation.lat && savedLocation.lng) {
+            console.log("ExplorePage: Restoring saved location from localStorage:", savedLocation);
+            setUserLocation(savedLocation);
+            // Reset hasRequestedLocation to allow new request
+            hasRequestedLocation.current = false;
+          }
+        }
+      } catch (e) {
+        console.warn("ExplorePage: Failed to restore location from localStorage:", e);
+      }
+    }
+  }, [showUserLocation, setUserLocation]);
+  
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.log("Geolocation not available");
+      return;
+    }
+    
+    // Don't request geolocation if showUserLocation is disabled
+    if (!showUserLocation) {
+      console.log("ExplorePage: User location disabled, not requesting geolocation");
+      return;
+    }
+    
+    // Check store state directly as fallback (don't wait for hydration if showUserLocation is enabled)
+    const storeState = useFiltersStore.getState();
+    const currentUserLocation = userLocation || storeState.userLocation;
+    
+    // If we already have a userLocation (from localStorage or store), use it and start watching
+    if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
+      // Only start watching if we're not already watching
+      if (watchIdRef.current === null) {
+        console.log("ExplorePage: Using existing userLocation from store:", currentUserLocation);
+        // Start watching for updates
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (updatedPosition) => {
+            console.log("ExplorePage: Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
+            setUserLocation({
+              lat: updatedPosition.coords.latitude,
+              lng: updatedPosition.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn("ExplorePage: Geolocation watch error:", error);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
+          }
+        );
+        hasRequestedLocation.current = true;
+      }
+      return;
+    }
+    
+    // If we're already watching, don't request again
+    if (watchIdRef.current !== null || hasRequestedLocation.current) {
+      return;
+    }
+    
+    console.log("ExplorePage: Requesting geolocation...");
+    hasRequestedLocation.current = true;
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log("ExplorePage: Geolocation success:", position.coords.latitude, position.coords.longitude);
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        
+        // Watch position for updates (especially useful on mobile)
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (updatedPosition) => {
+            console.log("ExplorePage: Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
+            setUserLocation({
+              lat: updatedPosition.coords.latitude,
+              lng: updatedPosition.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn("ExplorePage: Geolocation watch error:", error);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
+          }
+        );
+      },
+      (error) => {
+        console.warn("ExplorePage: Geolocation error:", error);
+        if (error.code === error.PERMISSION_DENIED) {
+          console.log("ExplorePage: Location permission denied");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 300000, // Accept cached position up to 5 minutes old (for page refresh)
+        timeout: 15000,
+      }
+    );
+    
+    // Cleanup watch on unmount
+    return () => {
+      if (watchIdRef.current !== null) {
+        console.log("ExplorePage: Clearing geolocation watch");
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["places", lang, tenantKey],
@@ -43,7 +221,9 @@ export function ExplorePage() {
     lng: place.location!.lng!,
     name: place.name,
     onClick: place.slug ? () => {
-      navigate(buildPath({ tenantSlug, lang, path: `place/${place.slug}` }));
+      const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
+      console.log("ExplorePage: Navigating to place:", place.slug, "path:", path, "tenantSlug:", tenantSlug, "lang:", lang);
+      navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));
 
@@ -65,6 +245,8 @@ export function ExplorePage() {
             latitude={centerLat}
             longitude={centerLng}
             markers={markers}
+            userLocation={userLocation || useFiltersStore.getState().userLocation}
+            showRoutes={false}
             height={window.innerHeight}
             interactive={true}
             defaultZoom={placesWithCoordinates.length > 0 ? 12 : 13}

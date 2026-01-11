@@ -42,32 +42,61 @@ export function MapFilters({
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  // Load saved position from localStorage with lazy initializer
+  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  
+  // Default positions: jobb, listanézet alatt (right, below list view button)
+  // List view button is at top: 16, so filters should be at top: ~80
+  const defaultPositionDesktop = { top: 80, right: 16 };
+  const defaultPositionMobile = { top: 70, right: 12 };
+  
+  // Load saved position from localStorage with lazy initializer (device-specific)
   const [position, setPosition] = useState(() => {
-    if (typeof window === "undefined") return { top: 100, right: 24 };
-    const saved = localStorage.getItem("mapFiltersPosition");
+    if (typeof window === "undefined") return defaultPositionDesktop;
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`mapFiltersPosition_${deviceKey}`);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return { top: 100, right: 24 };
+        return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
       }
     }
-    return { top: 100, right: 24 };
+    return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const filtersRef = useRef<HTMLDivElement>(null);
-  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
 
-  // Save position to localStorage
+  // Load position when device type changes
   useEffect(() => {
-    if (position.top !== 100 || position.right !== 24) {
-      localStorage.setItem("mapFiltersPosition", JSON.stringify(position));
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`mapFiltersPosition_${deviceKey}`);
+    if (saved) {
+      try {
+        const savedPos = JSON.parse(saved);
+        setPosition(savedPos);
+      } catch {
+        setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+      }
+    } else {
+      setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
-  }, [position]);
+  }, [isDesktop]);
+  
+  // Save position to localStorage (device-specific)
+  useEffect(() => {
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const defaultPos = isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+    // Only save if position differs from default (user has moved it)
+    if (position.top !== defaultPos.top || position.right !== defaultPos.right) {
+      localStorage.setItem(`mapFiltersPosition_${deviceKey}`, JSON.stringify(position));
+    } else {
+      // Remove saved position if it's back to default
+      localStorage.removeItem(`mapFiltersPosition_${deviceKey}`);
+    }
+  }, [position, isDesktop]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !filtersRef.current) return;

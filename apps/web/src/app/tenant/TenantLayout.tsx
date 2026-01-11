@@ -61,19 +61,35 @@ export function TenantLayout() {
 
   // Multi-tenant módban: ha több tenant van és nincs tenant slug az URL-ben, redirect a default tenant-ra
   // Ha csak egy tenant van, ne redirectáljunk (hagyjuk, hogy az URL-ben ne legyen tenant slug)
+  // De meg kell tartani a path-et (pl. place/slug)
   if (HAS_MULTIPLE_TENANTS && shouldShowTenantSlug && !tenantParam && langParam === lang && !isLoadingTenantsCount) {
-    return <Navigate to={`/${lang}/${DEFAULT_TENANT_SLUG}`} replace />;
+    // Extract the path after lang (everything after /lang)
+    const pathAfterLang = location.pathname.split(`/${lang}`)[1] || "";
+    const redirectPath = `/${lang}/${DEFAULT_TENANT_SLUG}${pathAfterLang}`;
+    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(adding tenant slug)");
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Ha csak egy tenant van és van tenant slug az URL-ben, redirectáljunk anélkül
+  // De meg kell tartani a path-et (pl. place/slug)
   if (HAS_MULTIPLE_TENANTS && !shouldShowTenantSlug && tenantParam && langParam === lang && !isLoadingTenantsCount) {
-    return <Navigate to={`/${lang}`} replace />;
+    // Extract the path after tenant slug (everything after /lang/tenantSlug)
+    const pathAfterTenant = location.pathname.split(`/${lang}/${tenantParam}`)[1] || "";
+    const redirectPath = `/${lang}${pathAfterTenant}`;
+    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(removing tenant slug)");
+    return <Navigate to={redirectPath} replace />;
   }
 
   // rossz lang -> redirect a javított langra (megtartva a többit)
   if (langParam !== lang && !isLoadingTenantsCount) {
+    // Extract the path after lang (everything after /lang or /lang/tenantSlug)
+    const pathAfterLang = location.pathname.split(`/${langParam}`)[1] || "";
+    // Remove tenant slug from path if it exists
+    const pathWithoutTenant = tenantParam ? pathAfterLang.replace(`/${tenantParam}`, "") : pathAfterLang;
     const base = shouldShowTenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
-    return <Navigate to={base} replace />;
+    const redirectPath = `${base}${pathWithoutTenant}`;
+    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(fixing lang)");
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Check if we're on the home page (where footer is handled internally)

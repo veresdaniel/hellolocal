@@ -84,6 +84,20 @@
       "rainSafe": "Esőbiztos program",
       "contextFilters": "Kontextus alapú szűrők"
     },
+    "yourLocation": "Te vagy itt",
+    "showRoute": "Útvonal mutatása",
+    "hideRoute": "Útvonal elrejtése",
+    "distance": "Távolság",
+    "routeDistance": "útvonal",
+    "walkingTime": "Sétálási idő",
+    "clickAgainToNavigate": "Kattints újra a navigációhoz",
+    "tooFarAway": "Túl messze ({{distance}} km-nél távolabb)",
+    "hour": "óra",
+    "hours": "óra",
+    "minute": "perc",
+    "minutes": "perc",
+    "locationPermissionDenied": "A helyzet megosztása elutasítva. Engedélyezd a böngésző beállításaiban a helyzet megosztását.",
+    "locationPermissionPrompt": "A helyzeted megjelenítéséhez engedélyezd a helyzet megosztását.",
     "footer": {
       "tagline": "Fedezd fel a helyi kincseket",
       "legal": "Jogi információk",
@@ -93,6 +107,7 @@
   },
   "admin": {
     "dashboard": "Irányítópult",
+    "openPublicPage": "Publikus oldal megnyitása",
     "categories": "Kategóriák",
     "tags": "Címkék",
     "priceBands": "Ár sávok",

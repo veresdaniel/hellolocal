@@ -8,23 +8,30 @@ import { getSiteSettings } from "../../api/places.api";
 
 export function Header() {
   const { lang, tenantSlug } = useTenantContext();
-  // Load saved position from localStorage with lazy initializer
+  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  
+  // Default positions: bal fent (top left)
+  const defaultPositionDesktop = { top: 16, left: 16 };
+  const defaultPositionMobile = { top: 12, left: 12 };
+  
+  // Load saved position from localStorage with lazy initializer (device-specific)
   const [position, setPosition] = useState(() => {
-    if (typeof window === "undefined") return { top: 32, left: 32 };
-    const saved = localStorage.getItem("headerPosition");
+    if (typeof window === "undefined") return defaultPositionDesktop;
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`headerPosition_${deviceKey}`);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return { top: 32, left: 32 };
+        return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
       }
     }
-    return { top: 32, left: 32 };
+    return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
+  
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const headerRef = useRef<HTMLElement>(null);
-  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
 
   // Load site name from settings
   const { data: siteSettings } = useQuery({
@@ -35,12 +42,34 @@ export function Header() {
 
   const siteName = siteSettings?.siteName || "HelloLocal";
 
-  // Save position to localStorage
+  // Load position when device type changes
   useEffect(() => {
-    if (position.top !== 32 || position.left !== 32) {
-      localStorage.setItem("headerPosition", JSON.stringify(position));
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`headerPosition_${deviceKey}`);
+    if (saved) {
+      try {
+        const savedPos = JSON.parse(saved);
+        setPosition(savedPos);
+      } catch {
+        setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+      }
+    } else {
+      setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
-  }, [position]);
+  }, [isDesktop]);
+  
+  // Save position to localStorage (device-specific)
+  useEffect(() => {
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const defaultPos = isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+    // Only save if position differs from default (user has moved it)
+    if (position.top !== defaultPos.top || position.left !== defaultPos.left) {
+      localStorage.setItem(`headerPosition_${deviceKey}`, JSON.stringify(position));
+    } else {
+      // Remove saved position if it's back to default
+      localStorage.removeItem(`headerPosition_${deviceKey}`);
+    }
+  }, [position, isDesktop]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !headerRef.current) return;
