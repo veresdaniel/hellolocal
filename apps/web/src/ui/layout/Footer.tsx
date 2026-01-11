@@ -47,23 +47,16 @@ export function Footer({
             margin: "0 auto",
             padding: isMobile ? "12px 16px" : "16px 24px",
             display: "flex",
-            justifyContent: isMobile ? "flex-start" : "space-between",
+            justifyContent: "space-between",
             alignItems: "center",
-            flexWrap: "wrap",
+            flexWrap: isMobile ? "nowrap" : "wrap",
             gap: isMobile ? 8 : 16,
           }}
         >
-          {/* Brand and Copyright - Mobile: left side only */}
-          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: isMobile ? 18 : 20 }}>📍</span>
-              <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>HelloLocal</span>
-            </div>
-            {isMobile && (
-              <div style={{ fontSize: 11, opacity: 0.8 }}>
-                © {currentYear}
-              </div>
-            )}
+          {/* Brand - Always on left */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: isMobile ? 18 : 20 }}>📍</span>
+            <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>HelloLocal</span>
           </div>
 
           {/* Links - Desktop only */}
@@ -140,12 +133,10 @@ export function Footer({
             </div>
           )}
 
-          {/* Copyright - Desktop only */}
-          {!isMobile && (
-            <div style={{ fontSize: 12, opacity: 0.8, textAlign: "right" }}>
-              © {currentYear} HelloLocal
-            </div>
-          )}
+          {/* Copyright - Always on right */}
+          <div style={{ fontSize: isMobile ? 11 : 12, opacity: 0.8, textAlign: "right" }}>
+            © {currentYear}
+          </div>
         </div>
       </footer>
     );

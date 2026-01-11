@@ -168,14 +168,16 @@ export function MapFilters({
       const newTop = e.clientY - dragOffset.y;
 
       // Constrain to viewport
-      const maxTop = window.innerHeight - (filtersRef.current?.offsetHeight || 200);
+      const elementWidth = filtersRef.current?.offsetWidth || 280;
+      const elementHeight = filtersRef.current?.offsetHeight || 200;
+      const maxTop = window.innerHeight - elementHeight;
 
       // Convert left to right for positioning
-      const newRight = window.innerWidth - newLeft - (filtersRef.current?.offsetWidth || 280);
+      const newRight = window.innerWidth - newLeft - elementWidth;
 
       setPosition({
         top: Math.max(0, Math.min(newTop, maxTop)),
-        right: Math.max(0, Math.min(newRight, window.innerWidth - 280)),
+        right: Math.max(0, Math.min(newRight, window.innerWidth - elementWidth)),
       });
     };
 
@@ -194,14 +196,16 @@ export function MapFilters({
       const newTop = touch.clientY - dragOffset.y;
 
       // Constrain to viewport
-      const maxTop = window.innerHeight - (filtersRef.current?.offsetHeight || 200);
+      const elementWidth = filtersRef.current?.offsetWidth || 280;
+      const elementHeight = filtersRef.current?.offsetHeight || 200;
+      const maxTop = window.innerHeight - elementHeight;
 
       // Convert left to right for positioning
-      const newRight = window.innerWidth - newLeft - (filtersRef.current?.offsetWidth || 280);
+      const newRight = window.innerWidth - newLeft - elementWidth;
 
       setPosition({
         top: Math.max(0, Math.min(newTop, maxTop)),
-        right: Math.max(0, Math.min(newRight, window.innerWidth - 280)),
+        right: Math.max(0, Math.min(newRight, window.innerWidth - elementWidth)),
       });
     };
 
@@ -331,6 +335,9 @@ export function MapFilters({
           cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "pointer",
           userSelect: "none",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          width: isMobile && !isOpen ? 44 : "auto",
+          height: isMobile && !isOpen ? 44 : "auto",
+          borderRadius: isMobile && !isOpen ? 12 : 0,
         }}
       >
         <h3 style={{ 
@@ -340,6 +347,7 @@ export function MapFilters({
           fontWeight: 700,
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: isMobile && !isOpen ? 0 : 8,
         }}>
           🔍 {(!isMobile || isOpen) && (t("public.filtersTitle") || "Szűrők")}

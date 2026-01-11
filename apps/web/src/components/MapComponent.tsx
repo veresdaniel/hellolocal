@@ -561,6 +561,19 @@ export function MapComponent({
     }
   }, [selectedMarkerId, userLocation, markers, fetchRoute, showUserLocation]);
 
+  // Clear selected marker if it's no longer in the markers list (filtered out)
+  useEffect(() => {
+    if (selectedMarkerId) {
+      const markerStillExists = markers.find(m => m.id === selectedMarkerId);
+      if (!markerStillExists) {
+        console.log('[MapComponent] Selected marker filtered out, clearing selection:', selectedMarkerId);
+        setSelectedMarkerId(null);
+        setRoutes([]);
+        lastRouteFetchPosition.current = null;
+      }
+    }
+  }, [markers, selectedMarkerId]);
+
 
   // Calculate distances for markers
   // ONLY use route distance from API - don't show straight-line distance
@@ -817,6 +830,10 @@ export function MapComponent({
 
         {/* Route lines from user location to selected marker only - only show if showUserLocation is enabled */}
         {showUserLocation && selectedMarkerId && userLocation && routes.length > 0 && routes.map((route) => {
+          // Only show route if the marker still exists in the markers list (not filtered out)
+          const markerExists = markers.find(m => m.id === route.markerId);
+          if (!markerExists) return null;
+          
           return (
             <Source
               key={`route-${route.markerId}`}
