@@ -110,14 +110,15 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       const slug = pathParts[routeIndex + 1];
 
       // Fetch SEO metadata
-      let seoData: {
+      type SeoData = {
         title: string;
         description: string;
         image: string;
         url: string;
         type: string;
         siteName: string;
-      } | null = null;
+      };
+      let seoData: SeoData | null = null;
 
       try {
         let seoUrl: string;
@@ -146,7 +147,30 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         clearTimeout(timeoutId);
 
         if (response.ok) {
-          seoData = await response.json();
+          const jsonData = await response.json() as unknown;
+          // Type guard to validate the response structure
+          if (
+            jsonData &&
+            typeof jsonData === "object" &&
+            "title" in jsonData &&
+            "description" in jsonData &&
+            "image" in jsonData &&
+            "url" in jsonData &&
+            "type" in jsonData &&
+            "siteName" in jsonData &&
+            typeof (jsonData as any).title === "string" &&
+            typeof (jsonData as any).description === "string" &&
+            typeof (jsonData as any).image === "string" &&
+            typeof (jsonData as any).url === "string" &&
+            typeof (jsonData as any).type === "string" &&
+            typeof (jsonData as any).siteName === "string"
+          ) {
+            seoData = jsonData as SeoData;
+          } else {
+            this.logger.warn(
+              `Invalid SEO data structure received for ${req.path}`
+            );
+          }
         } else {
           this.logger.warn(
             `Failed to fetch SEO data for ${req.path}: ${response.status} ${response.statusText}`
@@ -156,8 +180,9 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         if (error instanceof Error && error.name === "AbortError") {
           this.logger.warn(`SEO fetch timeout for ${req.path}`);
         } else {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           this.logger.warn(
-            `Failed to fetch SEO data for ${req.path}: ${error instanceof Error ? error.message : String(error)}`
+            `Failed to fetch SEO data for ${req.path}: ${errorMessage}`
           );
         }
         // Continue with default HTML if SEO fetch fails
@@ -174,7 +199,9 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(html);
     } catch (error) {
-      this.logger.error(`Error in SEO injector: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error in SEO injector: ${errorMessage}`, errorStack);
       // Fallback to normal request
       next();
     }
