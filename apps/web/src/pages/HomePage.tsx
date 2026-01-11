@@ -54,6 +54,17 @@ export function HomePage() {
   } = useViewStore();
   
   const compactFooterHeight = 56; // Height of compact footer
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Get tenantKey for API call (only if multi-tenant mode)
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
@@ -73,25 +84,22 @@ export function HomePage() {
   }, [queryClient]);
 
   // Update map height when window resizes
-  // Update map height when window resizes
   useEffect(() => {
     const handleResize = () => {
-      setMapHeight(window.innerHeight - compactFooterHeight);
+      if (isMobile) {
+        // On mobile: map should fill viewport minus footer height
+        setMapHeight(window.innerHeight - compactFooterHeight);
+      } else {
+        // On desktop: map should fill viewport minus footer height
+        setMapHeight(window.innerHeight - compactFooterHeight);
+      }
     };
     if (typeof window !== "undefined") {
+      handleResize(); // Set initial height
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
-  }, [setMapHeight, compactFooterHeight]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setMapHeight(window.innerHeight - compactFooterHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [compactFooterHeight]);
+  }, [setMapHeight, compactFooterHeight, isMobile]);
 
   // Load map settings first to avoid flickering
   // Don't cache too aggressively - need to refresh on lang/tenant change
@@ -612,8 +620,23 @@ export function HomePage() {
     >
       {showMap ? (
         <>
-          {/* Map container with flex: 1 to fill available space */}
-          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+          {/* Map container - fills viewport on mobile, flex on desktop */}
+          <div 
+            style={{ 
+              ...(isMobile 
+                ? { 
+                    height: `calc(100vh - ${compactFooterHeight}px)`,
+                    position: "relative",
+                    overflow: "hidden"
+                  }
+                : {
+                    flex: 1,
+                    position: "relative",
+                    overflow: "hidden"
+                  }
+              )
+            }}
+          >
             <Header />
             <MapComponent
               latitude={centerLat}
@@ -621,7 +644,7 @@ export function HomePage() {
               markers={markers}
               userLocation={userLocation || useFiltersStore.getState().userLocation}
               showRoutes={false}
-              height={mapHeight}
+              height={isMobile && typeof window !== "undefined" ? window.innerHeight - compactFooterHeight : mapHeight}
               interactive={true}
               defaultZoom={defaultZoom}
               mapStyle="default"
@@ -666,8 +689,19 @@ export function HomePage() {
               </button>
             </div>
           </div>
-          {/* Compact footer - not absolute, in the flow */}
-          <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+          {/* Compact footer - absolute positioned at bottom on mobile */}
+          <div
+            style={{
+              position: isMobile ? "fixed" : "relative",
+              bottom: isMobile ? 0 : "auto",
+              left: 0,
+              right: 0,
+              width: "100%",
+              zIndex: isMobile ? 100 : "auto",
+            }}
+          >
+            <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+          </div>
           {/* MapFilters at top level to be above footer */}
           <MapFilters
             selectedCategories={selectedCategories}
