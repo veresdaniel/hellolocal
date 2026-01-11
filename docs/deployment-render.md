@@ -41,6 +41,9 @@ Ha a `render.yaml` fájl a repository-ban van, Render automatikusan felismeri é
 - `JWT_SECRET` - Generálj egy random stringet
 - `JWT_EXPIRES_IN` - `7d` (opcionális)
 - `FRONTEND_URL` - Frontend URL (később, miután a frontend deploy-olva van)
+- `CORS_ORIGIN` - **FONTOS**: Frontend URL (pl: `https://hellolocal-frontend.onrender.com`)
+  - Több origin esetén vesszővel elválasztva: `https://hellolocal.com,https://www.hellolocal.com`
+  - **Kritikus**: A biztonsági beállítások után production módban kötelező!
 
 **Frontend (`hellolocal-frontend`)**:
 - `API_URL` - Backend API URL (pl: `https://hellolocal-api.onrender.com`)
@@ -97,8 +100,13 @@ Ha a `render.yaml` fájl a repository-ban van, Render automatikusan felismeri é
    JWT_SECRET=<generálj egy hosszú random stringet>
    JWT_EXPIRES_IN=7d
    PORT=3002
-   FRONTEND_URL=<Frontend URL lesz később, pl: https://hellolocal.onrender.com>
+   FRONTEND_URL=<Frontend URL lesz később, pl: https://hellolocal-frontend.onrender.com>
+   CORS_ORIGIN=<Frontend URL lesz később, pl: https://hellolocal-frontend.onrender.com>
    ```
+   
+   **⚠️ FONTOS**: A `CORS_ORIGIN` változó **kötelező** a biztonsági beállítások után! 
+   - Ha nincs beállítva, a frontend nem fog tudni API kéréseket küldeni (CORS hibák)
+   - Több origin esetén vesszővel elválasztva: `https://hellolocal.com,https://www.hellolocal.com`
 
    **JWT Secret generálás** (Terminal-ban):
    ```bash
@@ -160,13 +168,18 @@ Ha a `render.yaml` fájl a repository-ban van, Render automatikusan felismeri é
 
 ### 4. Környezeti változók frissítése
 
-#### Backend FRONTEND_URL frissítése
+#### Backend FRONTEND_URL és CORS_ORIGIN frissítése
 
 1. Menj vissza a **Backend API** service-hez
 2. Kattints az **"Environment"** tab-ra
-3. Frissítsd a `FRONTEND_URL` változót az új frontend URL-re:
+3. Frissítsd a `FRONTEND_URL` és `CORS_ORIGIN` változókat az új frontend URL-re:
    ```
    FRONTEND_URL=https://hellolocal-frontend.onrender.com
+   CORS_ORIGIN=https://hellolocal-frontend.onrender.com
+   ```
+   **Fontos**: Ha több origin-t szeretnél engedélyezni (pl. custom domain), add hozzá vesszővel elválasztva:
+   ```
+   CORS_ORIGIN=https://hellolocal-frontend.onrender.com,https://hellolocal.com,https://www.hellolocal.com
    ```
 4. Kattints **"Save Changes"** gombra
 5. A backend automatikusan újra fog indulni
@@ -268,9 +281,13 @@ npm install -g pnpm@10.27.0 && ...
 ### 4. CORS Error Frontend-en
 
 **Megoldás**: 
+- **Ellenőrizd, hogy a backend `CORS_ORIGIN` változó be van állítva!** ⚠️
+  - A biztonsági beállítások után production módban kötelező
+  - Formátum: `https://hellolocal-frontend.onrender.com` (nincs trailing slash!)
+  - Több origin esetén: `https://hellolocal-frontend.onrender.com,https://hellolocal.com`
 - Ellenőrizd, hogy a backend `FRONTEND_URL` jól van beállítva
-- Formátum: `https://hellolocal-frontend.onrender.com` (nincs trailing slash!)
 - Ellenőrizd, hogy a frontend `API_URL` vagy `VITE_API_URL` helyesen van beállítva
+- Ha még mindig CORS hibát kapsz, ellenőrizd a böngésző konzoljában az exact origin-t, amit a frontend küld
 
 ### 5. Free Tier "Spins Down" Inaktivitás Után
 

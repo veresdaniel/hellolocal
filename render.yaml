@@ -15,6 +15,9 @@ services:
       # JWT_SECRET - Set in Render Dashboard (generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
       # JWT_EXPIRES_IN - Set in Render Dashboard (default: 7d)
       # FRONTEND_URL - Set in Render Dashboard after frontend is deployed
+      # CORS_ORIGIN - Set in Render Dashboard (Frontend URL, e.g. https://hellolocal-frontend.onrender.com)
+      #   IMPORTANT: After security fixes, CORS_ORIGIN is required in production!
+      #   Can include multiple origins separated by commas: https://hellolocal.com,https://www.hellolocal.com
       # VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT - Optional, set in Render Dashboard
 
   # Frontend Web Service

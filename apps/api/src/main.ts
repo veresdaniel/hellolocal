@@ -26,8 +26,10 @@ async function bootstrap() {
   // CORS konfiguráció - productionban csak megbízható domain-ek
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+    : process.env.FRONTEND_URL
+    ? [process.env.FRONTEND_URL.trim()] // Fallback: használjuk FRONTEND_URL-t ha CORS_ORIGIN nincs beállítva
     : process.env.NODE_ENV === "production"
-    ? [] // Productionban NINCS default, kötelező beállítani!
+    ? [] // Productionban NINCS default, kötelező beállítani CORS_ORIGIN vagy FRONTEND_URL!
     : ["http://localhost:5173", "http://localhost:3000"]; // Dev default
 
   app.enableCors({
