@@ -537,17 +537,26 @@ export function AdminResponsiveTable<T>({
 
                 // Calculate position relative to current index
                 const offset = index - currentMobileIndex;
-                const previousOffset = index - previousMobileIndex;
+                let previousOffset = index - previousMobileIndex;
                 
-                // For infinite loop: show adjacent cards even when wrapping
+                // For infinite loop: normalize offsets to show adjacent cards when wrapping
                 // This allows seamless carousel without jumps
                 let displayOffset = offset;
+                let displayPreviousOffset = previousOffset;
+                
                 if (filteredData.length > 0) {
-                  // If offset is too large, wrap it for display (but keep original for smooth transition)
+                  // Normalize offset for display
                   if (Math.abs(offset) > filteredData.length / 2) {
                     displayOffset = offset > 0 
                       ? offset - filteredData.length 
                       : offset + filteredData.length;
+                  }
+                  
+                  // Normalize previousOffset for display
+                  if (Math.abs(previousOffset) > filteredData.length / 2) {
+                    displayPreviousOffset = previousOffset > 0 
+                      ? previousOffset - filteredData.length 
+                      : previousOffset + filteredData.length;
                   }
                 }
                 
@@ -556,7 +565,7 @@ export function AdminResponsiveTable<T>({
                 if (!isVisible) return null;
 
                 // Check if this card is transitioning in (was offset 1/-1, now offset 0)
-                const isTransitioningIn = displayOffset === 0 && previousOffset !== 0 && swipeDirection !== null;
+                const isTransitioningIn = displayOffset === 0 && displayPreviousOffset !== 0 && swipeDirection !== null;
 
                 // Styling based on position - Carousel layout (cards side by side with gap)
                 const getCardStyle = () => {
@@ -679,13 +688,13 @@ export function AdminResponsiveTable<T>({
                         overflow: "hidden",
                         borderRadius: 12,
                         boxShadow:
-                          offset === 0
+                          displayOffset === 0
                             ? "0 8px 24px rgba(0, 0, 0, 0.15)"
                             : "0 2px 8px rgba(0, 0, 0, 0.1)",
                       }}
                     >
                       {/* Action buttons (slide over card) - PONTOSAN AZ EVENTSPAGE-RŐL */}
-                      {offset === 0 && (
+                      {displayOffset === 0 && (
                         <div
                           style={{
                             position: "absolute",
@@ -822,7 +831,7 @@ export function AdminResponsiveTable<T>({
                       <div
                         data-card-content
                         onClick={() => {
-                          if (offset === 0) {
+                          if (displayOffset === 0) {
                             if (isOpen) {
                               setSwipedCardId(null);
                             } else {
@@ -831,7 +840,7 @@ export function AdminResponsiveTable<T>({
                           }
                         }}
                         onTouchStart={(e) => {
-                          if (offset !== 0) return;
+                          if (displayOffset !== 0) return;
                           e.stopPropagation();
                           const touch = e.touches[0];
                           dragStartXRef.current = touch.clientX;
@@ -841,7 +850,7 @@ export function AdminResponsiveTable<T>({
                           (e.currentTarget as any).cardTouchStartTime = Date.now();
                         }}
                         onTouchMove={(e) => {
-                          if (offset !== 0 || !isDragging) return;
+                          if (displayOffset !== 0 || !isDragging) return;
                           e.stopPropagation();
                           const touch = e.touches[0];
                           const diffX = touch.clientX - dragStartXRef.current;
@@ -853,7 +862,7 @@ export function AdminResponsiveTable<T>({
                           }
                         }}
                         onTouchEnd={(e) => {
-                          if (offset !== 0) return;
+                          if (displayOffset !== 0) return;
                           e.stopPropagation();
                           const touch = e.changedTouches[0];
                           const startX = (e.currentTarget as any).cardTouchStartX || 0;
@@ -911,9 +920,9 @@ export function AdminResponsiveTable<T>({
                           background: "white",
                           padding: 20,
                           border: "1px solid #e0e0e0",
-                          cursor: offset === 0 ? "pointer" : "default",
+                          cursor: displayOffset === 0 ? "pointer" : "default",
                           position: "relative",
-                          touchAction: offset === 0 ? "pan-y" : "none",
+                          touchAction: displayOffset === 0 ? "pan-y" : "none",
                           userSelect: "none",
                           WebkitUserSelect: "none",
                           MozUserSelect: "none",

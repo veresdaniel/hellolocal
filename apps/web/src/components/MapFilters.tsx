@@ -388,7 +388,12 @@ export function MapFilters({
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           width: isMobile && !isOpen ? 44 : "auto",
           height: isMobile && !isOpen ? 44 : "auto",
+          minWidth: isMobile && !isOpen ? 44 : "auto",
+          minHeight: isMobile && !isOpen ? 44 : "auto",
+          maxWidth: isMobile && !isOpen ? 44 : "auto",
+          maxHeight: isMobile && !isOpen ? 44 : "auto",
           borderRadius: isMobile && !isOpen ? 12 : 0,
+          boxSizing: "border-box",
         }}
       >
         <h3 style={{
@@ -402,8 +407,18 @@ export function MapFilters({
           justifyContent: "center",
           gap: isMobile && !isOpen ? 0 : 8,
           paddingLeft: 0,
+          minWidth: isMobile && !isOpen ? 44 : "auto",
+          minHeight: isMobile && !isOpen ? 44 : "auto",
+          flexShrink: 0,
         }}>
-          <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>🔍</span>
+          <span style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            lineHeight: 1,
+            minWidth: isMobile && !isOpen ? 44 : "auto",
+            minHeight: isMobile && !isOpen ? 44 : "auto",
+            flexShrink: 0,
+          }}>🔍</span>
           {(!isMobile || isOpen) && <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{t("public.filtersTitle") || "Szűrők"}</span>}
         </h3>
         {(!isMobile || isOpen) && (
