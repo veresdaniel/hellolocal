@@ -113,7 +113,7 @@ export class StaticPagesService {
     };
 
     // Helper to extract first 2 sentences from HTML/text
-    const getFirstSentences = (html: string | undefined, count: number = 2): string => {
+    const getFirstSentences = (html: string | null | undefined, count: number = 2): string => {
       if (!html) return "";
       // Remove HTML tags
       const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
