@@ -1106,12 +1106,45 @@ export function MapComponent({
             fontWeight: 500,
             color: "white",
             whiteSpace: "nowrap",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            touchAction: "manipulation",
+          }}
+          onClick={(e) => {
+            // For iOS: handle click on label to ensure checkbox toggles
+            e.stopPropagation();
+            const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (checkbox && !isDraggingLocationControl) {
+              // Toggle checkbox state
+              checkbox.checked = !checkbox.checked;
+              // Trigger change event
+              const changeEvent = new Event('change', { bubbles: true });
+              checkbox.dispatchEvent(changeEvent);
+            }
           }}
         >
-          <div style={{ position: "relative", display: "inline-block" }}>
+          <div 
+            style={{ position: "relative", display: "inline-block" }}
+          >
             <input
               type="checkbox"
               checked={showUserLocation}
+              style={{
+                width: 18,
+                height: 18,
+                cursor: "pointer",
+                margin: 0,
+                appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                backgroundColor: "white",
+                border: "2px solid rgba(255, 255, 255, 0.5)",
+                borderRadius: 3,
+                position: "relative",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
+                pointerEvents: "auto",
+              }}
               onChange={(e) => {
                 const checked = e.target.checked;
                 if (checked) {
@@ -1188,6 +1221,29 @@ export function MapComponent({
               onClick={(e) => {
                 // Prevent drag when clicking directly on checkbox
                 e.stopPropagation();
+                // For iOS: ensure the change event fires
+                const target = e.currentTarget;
+                if (target.checked !== showUserLocation) {
+                  // Force change event if state doesn't match
+                  const changeEvent = new Event('change', { bubbles: true });
+                  target.dispatchEvent(changeEvent);
+                }
+              }}
+              onTouchStart={(e) => {
+                // For iOS: prevent default and ensure touch works
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                // For iOS: ensure change event fires after touch
+                e.stopPropagation();
+                const target = e.currentTarget;
+                // Small delay to ensure state is updated
+                setTimeout(() => {
+                  if (target.checked !== showUserLocation) {
+                    const changeEvent = new Event('change', { bubbles: true });
+                    target.dispatchEvent(changeEvent);
+                  }
+                }, 10);
               }}
               style={{
                 width: 18,

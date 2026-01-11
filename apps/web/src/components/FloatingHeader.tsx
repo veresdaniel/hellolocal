@@ -264,6 +264,52 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
             }
           }}
         >
+          {/* Close Button - Top Right */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMobileMenuOpen(false);
+            }}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 12,
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10001,
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "rgba(0, 0, 0, 0.1)",
+            }}
+            aria-label={t("public.close") || "Bezárás"}
+          >
+            <span
+              style={{
+                width: 24,
+                height: 2,
+                background: "#1a1a1a",
+                transition: "all 0.3s ease",
+                transform: "rotate(45deg)",
+                position: "absolute",
+              }}
+            />
+            <span
+              style={{
+                width: 24,
+                height: 2,
+                background: "#1a1a1a",
+                transition: "all 0.3s ease",
+                transform: "rotate(-45deg)",
+                position: "absolute",
+              }}
+            />
+          </button>
             <Link
               to={buildPath({ tenantSlug, lang, path: "" })}
               onClick={() => setIsMobileMenuOpen(false)}
