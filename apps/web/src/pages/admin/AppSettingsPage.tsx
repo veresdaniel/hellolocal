@@ -18,7 +18,7 @@ export function AppSettingsPage() {
   const { t } = useTranslation();
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   usePageTitle("admin.appSettings");
@@ -82,8 +82,9 @@ export function AppSettingsPage() {
     }
     const loadTowns = async () => {
       try {
-        const data = await getTowns(selectedTenantId);
-        setTowns(data);
+        const response = await getTowns(selectedTenantId);
+        // Handle paginated response
+        setTowns(Array.isArray(response) ? response : (response?.towns || []));
       } catch (err) {
         console.error("Failed to load towns", err);
         setTowns([]); // Set empty array on error
@@ -330,13 +331,18 @@ export function AppSettingsPage() {
   const isAdmin = user?.role === "admin" || user?.role === "superadmin";
   const isSingleTown = towns.length <= 1;
 
+  // Wait for tenant context to initialize
+  if (isTenantLoading && HAS_MULTIPLE_TENANTS) {
+    return <LoadingSpinner isLoading={true} />;
+  }
+
   // Show message if no tenant is selected (but allow language settings which don't need tenant)
   if (!selectedTenantId && HAS_MULTIPLE_TENANTS) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
         <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
         <div style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
-          <p style={{ color: "#666", fontSize: 16, margin: 0 }}>{t("admin.selectTenantFirst")}</p>
+          <p style={{ color: "#666", fontSize: 16, margin: 0 }}>{t("admin.table.pleaseSelectTenant")}</p>
         </div>
         
         {/* Language Settings Section - available without tenant */}

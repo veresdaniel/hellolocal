@@ -69,10 +69,17 @@ export async function apiGet<T>(path: string): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
+  
+  // Add cache-busting headers and options for GET requests
   const res = await fetch(`${apiBaseUrl}/api${path}`, {
+    method: "GET",
+    cache: "no-store", // Prevent browser cache
     headers: {
       Accept: "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
     },
   });
 
@@ -85,11 +92,16 @@ export async function apiGet<T>(path: string): Promise<T> {
           const data = await refreshToken({ refreshToken: refreshTokenValue });
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
-          // Retry the original request
+          // Retry the original request with cache-busting
           const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
+            method: "GET",
+            cache: "no-store", // Prevent browser cache
             headers: {
               Accept: "application/json",
               Authorization: `Bearer ${data.accessToken}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
             },
           });
           if (!retryRes.ok) {
@@ -423,11 +435,19 @@ export async function apiDelete<T>(path: string): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
+  
+  console.log(`[apiDelete] Deleting: ${path}`);
+  
   const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "DELETE",
+    cache: "no-store", // Prevent browser cache
     headers: {
       Accept: "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
+      // Add cache-busting headers
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
     },
   });
 
@@ -440,19 +460,25 @@ export async function apiDelete<T>(path: string): Promise<T> {
           const refreshData = await refreshToken({ refreshToken: refreshTokenValue });
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
-          // Retry the original request
+          // Retry the original request with cache-busting
           const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
             method: "DELETE",
+            cache: "no-store", // Prevent browser cache
             headers: {
               Accept: "application/json",
               Authorization: `Bearer ${refreshData.accessToken}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
             },
           });
           if (!retryRes.ok) {
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
-          return (await retryRes.json()) as T;
+          const data = await retryRes.json() as T;
+          console.log(`[apiDelete] Success after retry:`, data);
+          return data;
         } catch {
           // Refresh failed, clear tokens and redirect to login
           localStorage.removeItem("accessToken");
@@ -492,11 +518,14 @@ export async function apiDelete<T>(path: string): Promise<T> {
       }
     }
     
+    console.error(`[apiDelete] Failed: ${errorMessage}`);
     throw new Error(errorMessage);
   }
 
   try {
-    return (await res.json()) as T;
+    const data = await res.json() as T;
+    console.log(`[apiDelete] Success:`, data);
+    return data;
   } catch (err) {
     // If response is empty or not JSON, return empty object or throw
     if (res.status === 204 || res.status === 201) {

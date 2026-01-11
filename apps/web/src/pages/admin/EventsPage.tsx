@@ -6,6 +6,7 @@ import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 import { getEvents, createEvent, updateEvent, deleteEvent, getCategories, getTowns, getPlaces, getTags, type Event, type CreateEventDto } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
@@ -15,7 +16,7 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 
 export function EventsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   usePageTitle("admin.events");
   const [events, setEvents] = useState<Event[]>([]);
@@ -25,6 +26,12 @@ export function EventsPage() {
   const [tags, setTags] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,12 +72,20 @@ export function EventsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadData();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
   }, [selectedTenantId]);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
 
   // Reload places when they might have changed (e.g., after creating/updating a place)
   // Listen for global cache events
@@ -78,7 +93,9 @@ export function EventsPage() {
     const handlePlacesChanged = () => {
       if (selectedTenantId) {
         // Reload only places, not all data
-        getPlaces(selectedTenantId).then(setPlaces).catch(console.error);
+        getPlaces(selectedTenantId).then((response) => {
+          setPlaces(Array.isArray(response) ? response : (response?.places || []));
+        }).catch(console.error);
       }
     };
 
@@ -93,18 +110,27 @@ export function EventsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [eventsData, categoriesData, townsData, placesData, tagsData] = await Promise.all([
-        getEvents(selectedTenantId),
+      const [eventsResponse, categoriesResponse, townsResponse, placesResponse, tagsResponse] = await Promise.all([
+        getEvents(selectedTenantId, pagination.page, pagination.limit),
         getCategories(selectedTenantId),
         getTowns(selectedTenantId),
         getPlaces(selectedTenantId),
         getTags(selectedTenantId),
       ]);
-      setEvents(eventsData);
-      setCategories(categoriesData);
-      setTowns(townsData);
-      setPlaces(placesData);
-      setTags(tagsData);
+      // Backend always returns paginated response now
+      if (Array.isArray(eventsResponse)) {
+        // Fallback for backward compatibility (should not happen)
+        setEvents(eventsResponse);
+        setPagination(prev => ({ ...prev, total: eventsResponse.length, totalPages: 1 }));
+      } else {
+        setEvents(eventsResponse.events || []);
+        setPagination(eventsResponse.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
+      // Handle paginated responses for categories, towns, places, tags (used in dropdowns)
+      setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
+      setTowns(Array.isArray(townsResponse) ? townsResponse : (townsResponse?.towns || []));
+      setPlaces(Array.isArray(placesResponse) ? placesResponse : (placesResponse?.places || []));
+      setTags(Array.isArray(tagsResponse) ? tagsResponse : (tagsResponse?.tags || []));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadEventsFailed"));
     } finally {
@@ -349,8 +375,13 @@ export function EventsPage() {
     setFormErrors({});
   };
 
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
+
   if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.selectTenantFirst")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
   return (
@@ -743,6 +774,16 @@ export function EventsPage() {
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>
               {t("admin.table.noData")}
             </div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

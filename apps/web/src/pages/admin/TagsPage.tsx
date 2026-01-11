@@ -10,6 +10,7 @@ import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 
 interface Tag {
   id: string;
@@ -25,7 +26,7 @@ interface Tag {
 
 export function TagsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   usePageTitle("admin.tags");
@@ -33,6 +34,12 @@ export function TagsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [formData, setFormData] = useState({
     nameHu: "",
     nameEn: "",
@@ -46,19 +53,35 @@ export function TagsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadTags();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadTags();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
+
   const loadTags = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
     try {
-      const data = await getTags(selectedTenantId);
-      setTags(data);
+      const response = await getTags(selectedTenantId, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setTags(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setTags(response.tags || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadTagsFailed"), "error");
     } finally {
@@ -184,6 +207,11 @@ export function TagsPage() {
     });
     setFormErrors({});
   };
+
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
 
   if (!selectedTenantId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
@@ -406,6 +434,16 @@ export function TagsPage() {
           </table>
           {tags.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

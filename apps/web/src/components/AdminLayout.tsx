@@ -62,7 +62,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+    <div style={{ minHeight: "100vh", background: "#f5f5f5", margin: 0, padding: 0 }}>
+      <style>{`
+        body {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+      `}</style>
         <nav
           style={{
             background: "white",
@@ -176,7 +182,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </button>
           </div>
         </nav>
-        <main style={{ padding: 24 }}>{children}</main>
+        <main style={{ padding: 24, margin: 0 }}>{children}</main>
         <VersionDisplay />
       </div>
   );

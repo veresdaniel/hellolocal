@@ -10,6 +10,7 @@ import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 
 interface PriceBand {
   id: string;
@@ -25,13 +26,19 @@ interface PriceBand {
 
 export function PriceBandsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   usePageTitle("admin.priceBands");
   const [priceBands, setPriceBands] = useState<PriceBand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     nameHu: "",
@@ -46,19 +53,35 @@ export function PriceBandsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadPriceBands();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadPriceBands();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
+
   const loadPriceBands = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
     try {
-      const data = await getPriceBands(selectedTenantId);
-      setPriceBands(data);
+      const response = await getPriceBands(selectedTenantId, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setPriceBands(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setPriceBands(response.priceBands || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadPriceBandsFailed"), "error");
     } finally {
@@ -180,6 +203,11 @@ export function PriceBandsPage() {
     });
     setFormErrors({});
   };
+
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
 
   if (!selectedTenantId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
@@ -402,6 +430,16 @@ export function PriceBandsPage() {
           </table>
           {priceBands.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

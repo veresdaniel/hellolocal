@@ -64,8 +64,10 @@ export class AdminController {
 
   @Get("/categories")
   async getCategories(
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { tenantIds: string[] },
+    @Query("tenantId") tenantIdParam?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string
   ) {
     // Use tenantId from query if provided, otherwise use first tenant from user
     const tenantId = tenantIdParam || user.tenantIds[0];
@@ -76,7 +78,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.categoryService.findAll(tenantId);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.categoryService.findAll(tenantId, pageNum, limitNum);
   }
 
   @Get("/categories/:id")
@@ -91,7 +95,7 @@ export class AdminController {
   @Post("/categories")
   async createCategory(
     @Body() dto: CreateCategoryDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     // Use tenantId from user if not provided
     if (!dto.tenantId) {
@@ -100,7 +104,19 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.categoryService.create(dto);
+    const result = await this.categoryService.create(dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "category",
+      entityId: result.id,
+      description: `Created category`,
+    }).catch(err => console.error("Failed to log create category:", err));
+    
+    return result;
   }
 
   @Put("/categories/:id")
@@ -108,7 +124,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateCategoryDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -117,14 +133,26 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.categoryService.update(id, tenantId, dto);
+    const result = await this.categoryService.update(id, tenantId, dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "category",
+      entityId: id,
+      description: `Updated category`,
+    }).catch(err => console.error("Failed to log update category:", err));
+    
+    return result;
   }
 
   @Delete("/categories/:id")
   async deleteCategory(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -133,7 +161,19 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.categoryService.remove(id, tenantId);
+    const result = await this.categoryService.remove(id, tenantId);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "category",
+      entityId: id,
+      description: `Deleted category`,
+    }).catch(err => console.error("Failed to log delete category:", err));
+    
+    return result;
   }
 
   @Put("/categories/reorder")
@@ -157,6 +197,8 @@ export class AdminController {
   @Get("/tags")
   async getTags(
     @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("page") pageParam: string | undefined,
+    @Query("limit") limitParam: string | undefined,
     @CurrentUser() user: { tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
@@ -166,7 +208,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.tagService.findAll(tenantId);
+    const page = pageParam ? parseInt(pageParam, 10) : undefined;
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    return this.tagService.findAll(tenantId, page, limit);
   }
 
   @Get("/tags/:id")
@@ -181,7 +225,7 @@ export class AdminController {
   @Post("/tags")
   async createTag(
     @Body() dto: CreateTagDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -189,7 +233,19 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.tagService.create(dto);
+    const result = await this.tagService.create(dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "tag",
+      entityId: result.id,
+      description: `Created tag`,
+    }).catch(err => console.error("Failed to log create tag:", err));
+    
+    return result;
   }
 
   @Put("/tags/:id")
@@ -197,7 +253,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateTagDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -206,14 +262,26 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.tagService.update(id, tenantId, dto);
+    const result = await this.tagService.update(id, tenantId, dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "tag",
+      entityId: id,
+      description: `Updated tag`,
+    }).catch(err => console.error("Failed to log update tag:", err));
+    
+    return result;
   }
 
   @Delete("/tags/:id")
   async deleteTag(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -222,7 +290,19 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.tagService.remove(id, tenantId);
+    const result = await this.tagService.remove(id, tenantId);
+    
+    // Log the action
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "tag",
+      entityId: id,
+      description: `Deleted tag`,
+    }).catch(err => console.error("Failed to log delete tag:", err));
+    
+    return result;
   }
 
   // ==================== Price Bands ====================
@@ -230,6 +310,8 @@ export class AdminController {
   @Get("/price-bands")
   async getPriceBands(
     @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("page") pageParam: string | undefined,
+    @Query("limit") limitParam: string | undefined,
     @CurrentUser() user: { tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
@@ -239,7 +321,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.priceBandService.findAll(tenantId);
+    const page = pageParam ? parseInt(pageParam, 10) : undefined;
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    return this.priceBandService.findAll(tenantId, page, limit);
   }
 
   @Get("/price-bands/:id")
@@ -254,7 +338,7 @@ export class AdminController {
   @Post("/price-bands")
   async createPriceBand(
     @Body() dto: CreatePriceBandDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -262,7 +346,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.priceBandService.create(dto);
+    const result = await this.priceBandService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "priceBand",
+      entityId: result.id,
+      description: `Created price band`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/price-bands/:id")
@@ -270,7 +365,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdatePriceBandDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -279,14 +374,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.priceBandService.update(id, tenantId, dto);
+    const result = await this.priceBandService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "priceBand",
+      entityId: id,
+      description: `Updated price band`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/price-bands/:id")
   async deletePriceBand(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -295,7 +401,18 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.priceBandService.remove(id, tenantId);
+    const result = await this.priceBandService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "priceBand",
+      entityId: id,
+      description: `Deleted price band`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== Towns ====================
@@ -303,6 +420,8 @@ export class AdminController {
   @Get("/towns")
   async getTowns(
     @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("page") pageParam: string | undefined,
+    @Query("limit") limitParam: string | undefined,
     @CurrentUser() user: { tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
@@ -312,7 +431,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.townService.findAll(tenantId);
+    const page = pageParam ? parseInt(pageParam, 10) : undefined;
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    return this.townService.findAll(tenantId, page, limit);
   }
 
   @Get("/towns/:id")
@@ -334,7 +455,7 @@ export class AdminController {
   @Post("/towns")
   async createTown(
     @Body() dto: CreateTownDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -342,7 +463,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.townService.create(dto);
+    const result = await this.townService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "town",
+      entityId: result.id,
+      description: `Created town`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/towns/:id")
@@ -350,7 +482,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateTownDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -359,14 +491,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.townService.update(id, tenantId, dto);
+    const result = await this.townService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "town",
+      entityId: id,
+      description: `Updated town`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/towns/:id")
   async deleteTown(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -375,7 +518,18 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.townService.remove(id, tenantId);
+    const result = await this.townService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "town",
+      entityId: id,
+      description: `Deleted town`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== Places ====================
@@ -383,6 +537,8 @@ export class AdminController {
   @Get("/places")
   async getPlaces(
     @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("page") pageParam: string | undefined,
+    @Query("limit") limitParam: string | undefined,
     @CurrentUser() user: { tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
@@ -392,7 +548,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.placeService.findAll(tenantId);
+    const page = pageParam ? parseInt(pageParam, 10) : undefined;
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    return this.placeService.findAll(tenantId, page, limit);
   }
 
   @Get("/places/:id")
@@ -414,7 +572,7 @@ export class AdminController {
   @Post("/places")
   async createPlace(
     @Body() dto: CreatePlaceDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -422,7 +580,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.placeService.create(dto);
+    const result = await this.placeService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "place",
+      entityId: result.id,
+      description: `Created place`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/places/:id")
@@ -430,7 +599,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdatePlaceDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -439,14 +608,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.placeService.update(id, tenantId, dto);
+    const result = await this.placeService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "place",
+      entityId: id,
+      description: `Updated place`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/places/:id")
   async deletePlace(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -455,15 +635,28 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.placeService.remove(id, tenantId);
+    const result = await this.placeService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "place",
+      entityId: id,
+      description: `Deleted place`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== Legal Pages ====================
 
   @Get("/legal-pages")
   async getLegalPages(
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { tenantIds: string[] },
+    @Query("tenantId") tenantIdParam?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -472,7 +665,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.legalService.findAll(tenantId);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.legalService.findAll(tenantId, pageNum, limitNum);
   }
 
   @Get("/legal-pages/:id")
@@ -510,7 +705,7 @@ export class AdminController {
   @Post("/legal-pages")
   async createLegalPage(
     @Body() dto: CreateLegalPageDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -518,7 +713,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.legalService.create(dto);
+    const result = await this.legalService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "legalPage",
+      entityId: result.id,
+      description: `Created legal page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/legal-pages/:id")
@@ -526,7 +732,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateLegalPageDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -535,14 +741,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.legalService.update(id, tenantId, dto);
+    const result = await this.legalService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "legalPage",
+      entityId: id,
+      description: `Updated legal page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/legal-pages/:id")
   async deleteLegalPage(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -551,7 +768,18 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.legalService.remove(id, tenantId);
+    const result = await this.legalService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "legalPage",
+      entityId: id,
+      description: `Deleted legal page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== Static Pages ====================
@@ -560,7 +788,9 @@ export class AdminController {
   async getStaticPages(
     @CurrentUser() user: { tenantIds: string[] },
     @Query("tenantId") tenantIdParam?: string,
-    @Query("category") category?: string
+    @Query("category") category?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -569,7 +799,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.staticPageService.findAll(tenantId, category as any);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.staticPageService.findAll(tenantId, category as any, pageNum, limitNum);
   }
 
   @Get("/static-pages/:id")
@@ -591,7 +823,7 @@ export class AdminController {
   @Post("/static-pages")
   async createStaticPage(
     @Body() dto: CreateStaticPageDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -599,7 +831,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.staticPageService.create(dto);
+    const result = await this.staticPageService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "staticPage",
+      entityId: result.id,
+      description: `Created static page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/static-pages/:id")
@@ -607,7 +850,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateStaticPageDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -616,14 +859,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.staticPageService.update(id, tenantId, dto);
+    const result = await this.staticPageService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "staticPage",
+      entityId: id,
+      description: `Updated static page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/static-pages/:id")
   async deleteStaticPage(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -632,7 +886,18 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.staticPageService.remove(id, tenantId);
+    const result = await this.staticPageService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "staticPage",
+      entityId: id,
+      description: `Deleted static page`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== Users ====================
@@ -673,31 +938,74 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async createUser(
     @Body() dto: CreateUserDto,
-    @CurrentUser() user: { role: UserRole }
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
   ) {
-    return this.usersService.create(dto, user.role);
+    const result = await this.usersService.create(dto, user.role);
+    
+    // Log to first tenant of the created user
+    const tenantId = dto.tenantIds?.[0] || user.tenantIds[0];
+    if (tenantId) {
+      await this.eventLogService.create({
+        tenantId,
+        userId: user.id,
+        action: "create",
+        entityType: "user",
+        entityId: result.id,
+        description: `Created user`,
+      }).catch(err => console.error("Failed to log:", err));
+    }
+    
+    return result;
   }
 
   @Put("/users/:id")
   async updateUser(
     @Param("id") id: string,
     @Body() dto: UpdateUserDto,
-    @CurrentUser() user: { id: string; role: UserRole }
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
   ) {
     // Users can only update themselves, unless they are superadmin or admin
     if (user.id !== id && user.role !== UserRole.superadmin && user.role !== UserRole.admin) {
       throw new ForbiddenException("You can only update your own profile");
     }
-    return this.usersService.updateUserWithTenants(id, dto, user.role);
+    const result = await this.usersService.updateUserWithTenants(id, dto, user.role);
+    
+    const tenantId = user.tenantIds[0];
+    if (tenantId) {
+      await this.eventLogService.create({
+        tenantId,
+        userId: user.id,
+        action: "update",
+        entityType: "user",
+        entityId: id,
+        description: `Updated user`,
+      }).catch(err => console.error("Failed to log:", err));
+    }
+    
+    return result;
   }
 
   @Delete("/users/:id")
   @Roles(UserRole.superadmin)
   async deleteUser(
     @Param("id") id: string,
-    @CurrentUser() user: { role: UserRole }
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
   ) {
-    return this.usersService.remove(id, user.role);
+    const result = await this.usersService.remove(id, user.role);
+    
+    const tenantId = user.tenantIds[0];
+    if (tenantId) {
+      await this.eventLogService.create({
+        tenantId,
+        userId: user.id,
+        action: "delete",
+        entityType: "user",
+        entityId: id,
+        description: `Deleted user`,
+      }).catch(err => console.error("Failed to log:", err));
+    }
+    
+    return result;
   }
 
   @Post("/users/:id/two-factor/disable")
@@ -728,28 +1036,79 @@ export class AdminController {
 
   @Post("/tenants")
   @Roles(UserRole.superadmin)
-  async createTenant(@Body() dto: CreateTenantDto) {
-    return this.tenantService.create(dto);
+  async createTenant(
+    @Body() dto: CreateTenantDto,
+    @CurrentUser() user: { id: string; tenantIds: string[] }
+  ) {
+    const result = await this.tenantService.create(dto);
+    
+    // Log to the first available tenant (or the newly created one)
+    const tenantId = result.id;
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "tenant",
+      entityId: result.id,
+      description: `Created tenant`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/tenants/:id")
   @Roles(UserRole.superadmin)
-  async updateTenant(@Param("id") id: string, @Body() dto: UpdateTenantDto) {
-    return this.tenantService.update(id, dto);
+  async updateTenant(
+    @Param("id") id: string,
+    @Body() dto: UpdateTenantDto,
+    @CurrentUser() user: { id: string; tenantIds: string[] }
+  ) {
+    const result = await this.tenantService.update(id, dto);
+    
+    await this.eventLogService.create({
+      tenantId: id,
+      userId: user.id,
+      action: "update",
+      entityType: "tenant",
+      entityId: id,
+      description: `Updated tenant`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/tenants/:id")
   @Roles(UserRole.superadmin)
-  async deleteTenant(@Param("id") id: string) {
-    return this.tenantService.remove(id);
+  async deleteTenant(
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string; tenantIds: string[] }
+  ) {
+    const result = await this.tenantService.remove(id);
+    
+    // Log to first available tenant since we're deleting one
+    const tenantId = user.tenantIds[0];
+    if (tenantId) {
+      await this.eventLogService.create({
+        tenantId,
+        userId: user.id,
+        action: "delete",
+        entityType: "tenant",
+        entityId: id,
+        description: `Deleted tenant`,
+      }).catch(err => console.error("Failed to log:", err));
+    }
+    
+    return result;
   }
 
   // ==================== Events ====================
 
   @Get("/events")
   async getEvents(
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { tenantIds: string[] },
+    @Query("tenantId") tenantIdParam?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -758,7 +1117,9 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new ForbiddenException("User does not have access to this tenant");
     }
-    return this.eventService.findAll(tenantId);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.eventService.findAll(tenantId, pageNum, limitNum);
   }
 
   @Get("/events/:id")
@@ -773,7 +1134,7 @@ export class AdminController {
   @Post("/events")
   async createEvent(
     @Body() dto: CreateEventDto,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     if (!dto.tenantId) {
       dto.tenantId = user.tenantIds[0];
@@ -781,7 +1142,18 @@ export class AdminController {
     if (!user.tenantIds.includes(dto.tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.eventService.create(dto);
+    const result = await this.eventService.create(dto);
+    
+    await this.eventLogService.create({
+      tenantId: dto.tenantId,
+      userId: user.id,
+      action: "create",
+      entityType: "event",
+      entityId: result.id,
+      description: `Created event`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Put("/events/:id")
@@ -789,7 +1161,7 @@ export class AdminController {
     @Param("id") id: string,
     @Body() dto: UpdateEventDto,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -798,14 +1170,25 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.eventService.update(id, tenantId, dto);
+    const result = await this.eventService.update(id, tenantId, dto);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "update",
+      entityType: "event",
+      entityId: id,
+      description: `Updated event`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   @Delete("/events/:id")
   async deleteEvent(
     @Param("id") id: string,
     @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { id: string; tenantIds: string[] }
   ) {
     const tenantId = tenantIdParam || user.tenantIds[0];
     if (!tenantId) {
@@ -814,7 +1197,18 @@ export class AdminController {
     if (!user.tenantIds.includes(tenantId)) {
       throw new Error("User does not have access to this tenant");
     }
-    return this.eventService.remove(id, tenantId);
+    const result = await this.eventService.remove(id, tenantId);
+    
+    await this.eventLogService.create({
+      tenantId,
+      userId: user.id,
+      action: "delete",
+      entityType: "event",
+      entityId: id,
+      description: `Deleted event`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
   }
 
   // ==================== App Settings ====================

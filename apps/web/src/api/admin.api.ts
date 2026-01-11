@@ -87,9 +87,13 @@ export function disableTwoFactorForUser(id: string) {
 }
 
 // Categories
-export function getCategories(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/categories${params}`);
+export function getCategories(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<{ categories: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/categories${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getCategory(id: string) {
@@ -115,9 +119,13 @@ export function reorderCategories(tenantId: string, updates: Array<{ id: string;
 }
 
 // Tags
-export function getTags(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/tags${params}`);
+export function getTags(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<any[] | { tags: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/tags${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getTag(id: string) {
@@ -139,9 +147,13 @@ export function deleteTag(id: string, tenantId?: string) {
 }
 
 // Price Bands
-export function getPriceBands(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/price-bands${params}`);
+export function getPriceBands(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<any[] | { priceBands: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/price-bands${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getPriceBand(id: string) {
@@ -163,9 +175,13 @@ export function deletePriceBand(id: string, tenantId?: string) {
 }
 
 // Towns
-export function getTowns(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/towns${params}`);
+export function getTowns(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<any[] | { towns: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/towns${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getTown(id: string, tenantId?: string) {
@@ -188,9 +204,13 @@ export function deleteTown(id: string, tenantId?: string) {
 }
 
 // Places
-export function getPlaces(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/places${params}`);
+export function getPlaces(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<any[] | { places: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/places${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getPlace(id: string, tenantId?: string) {
@@ -213,9 +233,13 @@ export function deletePlace(id: string, tenantId?: string) {
 }
 
 // Legal Pages
-export function getLegalPages(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<any[]>(`/admin/legal-pages${params}`);
+export function getLegalPages(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<{ legalPages: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/legal-pages${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getLegalPage(id: string, tenantId?: string) {
@@ -243,12 +267,14 @@ export function deleteLegalPage(id: string, tenantId?: string) {
 }
 
 // Static Pages
-export function getStaticPages(tenantId?: string, category?: string) {
+export function getStaticPages(tenantId?: string, category?: string, page?: number, limit?: number) {
   const params = new URLSearchParams();
   if (tenantId) params.append("tenantId", tenantId);
   if (category) params.append("category", category);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<any[]>(`/admin/static-pages${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{ staticPages: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/static-pages${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getStaticPage(id: string, tenantId?: string) {
@@ -606,9 +632,13 @@ export interface UpdateEventDto {
   lng?: number | null;
 }
 
-export function getEvents(tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
-  return apiGet<Event[]>(`/admin/events${params}`);
+export function getEvents(tenantId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (tenantId) params.append("tenantId", tenantId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<{ events: Event[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/events${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getEvent(id: string) {
@@ -690,7 +720,17 @@ export function getEventLogs(filters: EventLogFilterDto) {
   if (filters.page) params.append("page", filters.page.toString());
   if (filters.limit) params.append("limit", filters.limit.toString());
   
+  // Add cache-busting timestamp to ensure fresh data
+  // Always use current timestamp for maximum freshness
+  params.append("_t", Date.now().toString());
+  
+  // Also add _refresh if present (for post-delete refresh)
+  if ((filters as any)._refresh) {
+    params.append("_refresh", (filters as any)._refresh.toString());
+  }
+  
   const queryString = params.toString();
+  console.log("[getEventLogs] Fetching with URL:", `/admin/event-logs?${queryString}`);
   return apiGet<EventLogResponse>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
 }
 
@@ -721,13 +761,16 @@ export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
 
 export function deleteEventLogs(filters: EventLogFilterDto) {
   const params = new URLSearchParams();
+  // Only include filters that are relevant for deletion (exclude page and limit)
   if (filters.tenantId) params.append("tenantId", filters.tenantId);
   if (filters.userId) params.append("userId", filters.userId);
   if (filters.action) params.append("action", filters.action);
   if (filters.entityType) params.append("entityType", filters.entityType);
   if (filters.startDate) params.append("startDate", filters.startDate);
   if (filters.endDate) params.append("endDate", filters.endDate);
-  
+  // Explicitly exclude page and limit - we want to delete ALL matching records
+
   const queryString = params.toString();
+  console.log("[deleteEventLogs] Delete URL:", `/admin/event-logs${queryString ? `?${queryString}` : ""}`);
   return apiDelete<{ message: string; count: number }>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
 }

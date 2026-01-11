@@ -38,7 +38,7 @@ export interface UpdateStaticPageDto {
 export class AdminStaticPageService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, category?: StaticPageCategory) {
+  async findAll(tenantId: string, category?: StaticPageCategory, page?: number, limit?: number) {
     const where: any = { tenantId };
     if (category) {
       if (!ALLOWED_CATEGORIES.has(category)) {
@@ -47,13 +47,34 @@ export class AdminStaticPageService {
       where.category = category;
     }
 
-    return this.prisma.staticPage.findMany({
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    // Get total count
+    const total = await this.prisma.staticPage.count({ where });
+    
+    // Get paginated results
+    const staticPages = await this.prisma.staticPage.findMany({
       where,
       include: {
         translations: true,
       },
       orderBy: { createdAt: "desc" },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      staticPages,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {

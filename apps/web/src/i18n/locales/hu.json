@@ -231,6 +231,13 @@
       "noData": "Nincs adat",
       "pleaseSelectTenant": "Kérjük, válassz területet"
     },
+    "pagination": {
+      "showing": "Megjelenítés: {{start}}-{{end}} / {{total}}",
+      "page": "oldal",
+      "previous": "Előző",
+      "next": "Következő",
+      "pageInfo": "{{current}} / {{total}} oldal"
+    },
     "published": "Közzétéve",
     "isCrawlable": "Keresőmotorok indexelhetik az oldalt",
     "isCrawlableDescription": "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést.",

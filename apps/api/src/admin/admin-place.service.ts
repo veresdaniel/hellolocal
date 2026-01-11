@@ -228,9 +228,19 @@ export class AdminPlaceService {
     }
   }
 
-  async findAll(tenantId: string) {
-    return this.prisma.place.findMany({
-      where: { tenantId },
+  async findAll(tenantId: string, page?: number, limit?: number) {
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    const where = { tenantId };
+    
+    // Get total count
+    const total = await this.prisma.place.count({ where });
+    
+    // Get paginated results
+    const places = await this.prisma.place.findMany({
+      where,
       include: {
         category: {
           include: {
@@ -259,7 +269,20 @@ export class AdminPlaceService {
         translations: true,
       },
       orderBy: { updatedAt: "desc" },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      places,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {

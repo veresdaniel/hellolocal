@@ -7,6 +7,7 @@ import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 import {
   getCategories,
   createCategory,
@@ -36,11 +37,17 @@ interface Category {
 export function CategoriesPage() {
   const { t, i18n } = useTranslation();
   usePageTitle("admin.categories");
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -61,22 +68,37 @@ export function CategoriesPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadCategories();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
+
   const loadCategories = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
-    setError(null);
     try {
-      const data = await getCategories(selectedTenantId);
-      setCategories(data);
+      const response = await getCategories(selectedTenantId, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setCategories(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setCategories(response.categories || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadCategoriesFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadCategoriesFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -209,6 +231,11 @@ export function CategoriesPage() {
     });
     setFormErrors({});
   };
+
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
 
   if (!selectedTenantId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
@@ -518,7 +545,7 @@ export function CategoriesPage() {
                       };
 
                       if (isDescendant(draggedCategoryId, category.id)) {
-                        setError(t("admin.errors.cannotDropOnChild") || "Cannot drop category on its own child");
+                        showToast(t("admin.errors.cannotDropOnChild") || "Cannot drop category on its own child", "error");
                         setDraggedId(null);
                         setDragOverId(null);
                         return;
@@ -792,6 +819,16 @@ export function CategoriesPage() {
           </table>
           {categories.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

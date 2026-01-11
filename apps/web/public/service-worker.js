@@ -50,20 +50,43 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  
   // Don't cache version.json - always fetch fresh
-  if (event.request.url.includes("/version.json")) {
+  if (url.pathname.includes("/version.json")) {
     event.respondWith(fetch(event.request));
     return;
   }
   
+  // Don't cache API requests - always fetch fresh from network
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // If network fails, return offline response
+        return new Response("Offline", { status: 503 });
+      })
+    );
+    return;
+  }
+  
+  // Don't cache chrome-extension, chrome, or other non-http(s) schemes
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
+  // For other requests, use cache-first strategy
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((fetchResponse) => {
-        // Cache successful responses
-        if (fetchResponse.ok) {
+        // Cache successful responses (only for non-API requests and http(s) schemes)
+        if (fetchResponse.ok && (url.protocol === "http:" || url.protocol === "https:")) {
           const responseClone = fetchResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
+            cache.put(event.request, responseClone).catch((err) => {
+              // Ignore cache errors (e.g., chrome-extension requests)
+              console.warn("[SW] Failed to cache request:", err);
+            });
           });
         }
         return fetchResponse;

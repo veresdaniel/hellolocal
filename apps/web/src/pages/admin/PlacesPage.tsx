@@ -6,6 +6,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
@@ -44,7 +45,7 @@ interface Place {
 
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const { showToast } = useToast();
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
@@ -53,6 +54,12 @@ export function PlacesPage() {
   const [priceBands, setPriceBands] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -90,6 +97,8 @@ export function PlacesPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
       loadData();
     } else {
       // Reset loading state if no tenant
@@ -97,22 +106,46 @@ export function PlacesPage() {
     }
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadPlaces();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
+
   const loadData = async () => {
     if (!selectedTenantId) return;
-    setIsLoading(true);
     try {
-      const [placesData, categoriesData, townsData, priceBandsData, tagsData] = await Promise.all([
-        getPlaces(selectedTenantId),
+      const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse] = await Promise.all([
         getCategories(selectedTenantId),
         getTowns(selectedTenantId),
         getPriceBands(selectedTenantId),
         getTags(selectedTenantId),
       ]);
-      setPlaces(placesData);
-      setCategories(categoriesData);
-      setTowns(townsData);
-      setPriceBands(priceBandsData);
-      setTags(tagsData);
+      // Handle paginated responses (used in dropdowns, so we extract the array)
+      setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
+      setTowns(Array.isArray(townsResponse) ? townsResponse : (townsResponse?.towns || []));
+      setPriceBands(Array.isArray(priceBandsResponse) ? priceBandsResponse : (priceBandsResponse?.priceBands || []));
+      setTags(Array.isArray(tagsResponse) ? tagsResponse : (tagsResponse?.tags || []));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
+    }
+  };
+
+  const loadPlaces = async () => {
+    if (!selectedTenantId) return;
+    setIsLoading(true);
+    try {
+      const response = await getPlaces(selectedTenantId, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setPlaces(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setPlaces(response.places || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
     } finally {
@@ -203,7 +236,7 @@ export function PlacesPage() {
       });
       setIsCreating(false);
       resetForm();
-      await loadData();
+      await loadPlaces();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeCreated"), "success");
@@ -288,7 +321,7 @@ export function PlacesPage() {
       );
       setEditingId(null);
       resetForm();
-      await loadData();
+      await loadPlaces();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeUpdated"), "success");
@@ -302,7 +335,7 @@ export function PlacesPage() {
 
     try {
       await deletePlace(id, selectedTenantId || undefined);
-      await loadData();
+      await loadPlaces();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeDeleted"), "success");
@@ -384,8 +417,13 @@ export function PlacesPage() {
     setFormErrors({});
   };
 
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
+
   if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>Please select a tenant</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
   return (
@@ -790,6 +828,16 @@ export function PlacesPage() {
           </table>
           {places.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

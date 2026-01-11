@@ -283,22 +283,62 @@ export class AuthService {
       const { accessToken, refreshToken } = await this.generateTokens(payload);
 
       // Log login event (use first tenant if available)
+      // Add a small delay to prevent duplicate logs in development (React StrictMode)
       if (this.eventLogService && tenantIds.length > 0) {
-        this.eventLogService
-          .create({
-            tenantId: tenantIds[0],
-            userId: user.id,
-            action: "login",
-            description: `User logged in`,
-            metadata: {
-              email: user.email,
-              username: user.username,
+        // Check if we already logged this login in the last 2 seconds to prevent duplicates
+        try {
+          const recentLogin = await this.prisma.eventLog.findFirst({
+            where: {
+              tenantId: tenantIds[0],
+              userId: user.id,
+              action: 'login',
+              createdAt: {
+                gte: new Date(Date.now() - 2000), // Last 2 seconds
+              },
             },
-          })
-          .catch((err) => {
-            console.error("Failed to log login event:", err);
-            // Don't fail login if logging fails
           });
+
+          if (!recentLogin) {
+            this.eventLogService
+              .create({
+                tenantId: tenantIds[0],
+                userId: user.id,
+                action: "login",
+                description: `User logged in`,
+                metadata: {
+                  email: user.email,
+                  username: user.username,
+                },
+              })
+              .catch((err) => {
+                console.error("Failed to log login event:", err);
+                // Don't fail login if logging fails
+              });
+          } else {
+            console.log("[AuthService] Skipping duplicate login log entry");
+          }
+        } catch (err) {
+          // If event log check fails, log error but don't fail login
+          console.error("Failed to check for recent login log:", err);
+          // Still try to create the log entry
+          if (this.eventLogService) {
+            this.eventLogService
+              .create({
+                tenantId: tenantIds[0],
+                userId: user.id,
+                action: "login",
+                description: `User logged in`,
+                metadata: {
+                  email: user.email,
+                  username: user.username,
+                },
+              })
+              .catch((logErr) => {
+                console.error("Failed to log login event:", logErr);
+                // Don't fail login if logging fails
+              });
+          }
+        }
       }
 
       return {

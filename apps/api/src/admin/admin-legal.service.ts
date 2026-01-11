@@ -37,14 +37,37 @@ export interface UpdateLegalPageDto {
 export class AdminLegalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
-    return this.prisma.legalPage.findMany({
-      where: { tenantId },
+  async findAll(tenantId: string, page?: number, limit?: number) {
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    const where = { tenantId };
+    
+    // Get total count
+    const total = await this.prisma.legalPage.count({ where });
+    
+    // Get paginated results
+    const legalPages = await this.prisma.legalPage.findMany({
+      where,
       include: {
         translations: true,
       },
       orderBy: { createdAt: "desc" },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      legalPages,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {

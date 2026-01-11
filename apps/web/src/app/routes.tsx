@@ -23,7 +23,7 @@ import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 
 // Admin pages - lazy loaded (only needed when user is logged in)
-const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const AdminDashboardWrapper = lazy(() => import("../pages/admin/AdminDashboardWrapper").then(m => ({ default: m.AdminDashboardWrapper })));
 const UserProfilePage = lazy(() => import("../pages/admin/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
 const UsersPage = lazy(() => import("../pages/admin/UsersPage").then(m => ({ default: m.UsersPage })));
 const CategoriesPage = lazy(() => import("../pages/admin/CategoriesPage").then(m => ({ default: m.CategoriesPage })));
@@ -126,7 +126,7 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="viewer">
             <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
               <AdminLayout>
-                <AdminDashboard />
+                <AdminDashboardWrapper />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

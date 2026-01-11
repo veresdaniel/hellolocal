@@ -10,6 +10,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
 import { MapComponent } from "../../components/MapComponent";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 
 interface Town {
   id: string;
@@ -32,12 +33,18 @@ interface Town {
 
 export function TownsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   usePageTitle("admin.towns");
   const [towns, setTowns] = useState<Town[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,21 +77,36 @@ export function TownsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadTowns();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId]);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadTowns();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
 
   const loadTowns = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getTowns(selectedTenantId);
-      setTowns(data);
+      const response = await getTowns(selectedTenantId, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setTowns(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setTowns(response.towns || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadTownsFailed"));
     } finally {
@@ -314,8 +336,13 @@ export function TownsPage() {
     setFormErrors({});
   };
 
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinner isLoading={true} />;
+  }
+
   if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.selectTenantFirst")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
   return (
@@ -603,6 +630,16 @@ export function TownsPage() {
           </table>
           {towns.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

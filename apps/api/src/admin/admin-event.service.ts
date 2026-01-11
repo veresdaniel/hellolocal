@@ -279,9 +279,19 @@ export class AdminEventService {
     }
   }
 
-  async findAll(tenantId: string) {
-    return this.prisma.event.findMany({
-      where: { tenantId },
+  async findAll(tenantId: string, page?: number, limit?: number) {
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    const where = { tenantId };
+    
+    // Get total count
+    const total = await this.prisma.event.count({ where });
+    
+    // Get paginated results
+    const events = await this.prisma.event.findMany({
+      where,
       include: {
         place: {
           include: {
@@ -308,7 +318,20 @@ export class AdminEventService {
         { isPinned: "desc" },
         { startDate: "asc" },
       ],
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      events,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {

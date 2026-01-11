@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.tsx
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const handleLogin = async (email: string, password: string, twoFactorToken?: string) => {
+  const handleLogin = useCallback(async (email: string, password: string, twoFactorToken?: string) => {
     const response = await login({ email, password, twoFactorToken });
     localStorage.setItem("accessToken", response.accessToken);
     localStorage.setItem("refreshToken", response.refreshToken);
@@ -240,11 +240,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...response.user,
       role: response.user.role.toLowerCase() as User["role"],
     };
+    console.log("[AuthContext] Login successful, setting user:", userData);
+    console.log("[AuthContext] User role after login:", userData.role);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
-  const handleRegister = async (data: {
+  const handleRegister = useCallback(async (data: {
     username: string;
     email: string;
     password: string;
@@ -262,20 +264,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
+
+  // Memoize context value to ensure stable reference
+  // Only recreate when user, isLoading, or handlers change
+  const contextValue = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      login: handleLogin,
+      register: handleRegister,
+      logout: handleLogout,
+    }),
+    [user, isLoading, handleLogin, handleRegister, handleLogout]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login: handleLogin,
-        register: handleRegister,
-        logout: handleLogout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

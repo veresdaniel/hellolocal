@@ -31,9 +31,19 @@ export interface UpdateCategoryDto {
 export class AdminCategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
-    return this.prisma.category.findMany({
-      where: { tenantId },
+  async findAll(tenantId: string, page?: number, limit?: number) {
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    const where = { tenantId };
+    
+    // Get total count
+    const total = await this.prisma.category.count({ where });
+    
+    // Get paginated results
+    const categories = await this.prisma.category.findMany({
+      where,
       include: {
         translations: true,
         parent: {
@@ -47,7 +57,20 @@ export class AdminCategoryService {
         { order: "asc" },
         { createdAt: "asc" },
       ],
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      categories,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {

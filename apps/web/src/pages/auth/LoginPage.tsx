@@ -40,6 +40,7 @@ export function LoginPage() {
 
     try {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
+      // Navigate after login completes - React will re-render when AuthContext updates
       navigate(`/${lang}/admin`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t("admin.loginFailed");

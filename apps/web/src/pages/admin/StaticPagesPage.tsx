@@ -9,6 +9,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
 import { StaticPageCategoryAutocomplete } from "../../components/StaticPageCategoryAutocomplete";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
+import { Pagination } from "../../components/Pagination";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 
 interface StaticPage {
@@ -30,12 +31,18 @@ interface StaticPage {
 
 export function StaticPagesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const queryClient = useQueryClient();
   usePageTitle("admin.staticPages");
   const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,20 +71,36 @@ export function StaticPagesPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      loadStaticPages();
+      // Reset to first page when tenant changes
+      setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
   }, [selectedTenantId]);
 
+  useEffect(() => {
+    if (selectedTenantId) {
+      loadStaticPages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId, pagination.page, pagination.limit]);
+
   const loadStaticPages = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getStaticPages(selectedTenantId);
-      setStaticPages(data);
+      const response = await getStaticPages(selectedTenantId, undefined, pagination.page, pagination.limit);
+      // Backend always returns paginated response now
+      if (Array.isArray(response)) {
+        // Fallback for backward compatibility (should not happen)
+        setStaticPages(response);
+        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+      } else {
+        setStaticPages(response.staticPages || []);
+        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadStaticPagesFailed"));
     } finally {
@@ -301,8 +324,13 @@ export function StaticPagesPage() {
     }
   };
 
+  // Wait for tenant context to initialize
+  if (isTenantLoading) {
+    return <LoadingSpinnerComponent isLoading={true} />;
+  }
+
   if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.selectTenantFirst")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
   return (
@@ -538,6 +566,16 @@ export function StaticPagesPage() {
           </table>
           {staticPages.length === 0 && (
             <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
+          )}
+          {pagination.total > 0 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            />
           )}
         </div>
       ) : null}

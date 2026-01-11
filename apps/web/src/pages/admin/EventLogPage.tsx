@@ -59,10 +59,11 @@ export function EventLogPage() {
     limit: 50,
   });
 
-  // Track previous filters to avoid duplicate calls
   const prevFiltersRef = useRef<string>("");
   const hasLoadedInitial = useRef(false);
   const errorShownRef = useRef(false);
+  const isDeletingRef = useRef(false); // Flag to prevent useEffect from running during delete
+  const deleteCompletedRef = useRef(false); // Flag to track when delete just completed
 
   // Initial load - load data and logs
   useEffect(() => {
@@ -141,9 +142,22 @@ export function EventLogPage() {
     }
   }, [selectedTenantId]);
 
-  // Load logs when filters change (but skip initial load)
+  // Load logs when filters change (but skip initial load and delete operations)
   useEffect(() => {
     if (!hasLoadedInitial.current) {
+      return;
+    }
+
+    // Skip if we're currently deleting (to prevent reload during delete)
+    if (isDeletingRef.current) {
+      console.log("[EventLogPage] Skipping loadLogs - delete in progress");
+      return;
+    }
+    
+    // Skip if delete just completed (one cycle grace period)
+    if (deleteCompletedRef.current) {
+      console.log("[EventLogPage] Skipping loadLogs - delete just completed");
+      deleteCompletedRef.current = false;
       return;
     }
 
@@ -152,6 +166,7 @@ export function EventLogPage() {
     
     // Only call loadLogs if filters actually changed
     if (prevFiltersRef.current !== filtersKey) {
+      console.log("[EventLogPage] Filters changed, reloading logs");
       prevFiltersRef.current = filtersKey;
       // Call loadLogs with current filters
       loadLogs();
@@ -179,16 +194,21 @@ export function EventLogPage() {
     }
   };
 
-  const loadLogs = async () => {
-    // Prevent multiple simultaneous calls
-    if (isLoading) {
-      return;
+  const loadLogs = async (customFilters?: EventLogFilterDto, showLoading: boolean = true) => {
+    if (showLoading) {
+      setIsLoading(true);
     }
-    
-    setIsLoading(true);
     setError(null);
+    const filtersToUse = customFilters || filters;
+    
+    console.log("[EventLogPage] Loading logs with filters:", JSON.stringify(filtersToUse, null, 2));
+    
     try {
-      const response = await getEventLogs(filters);
+      const response = await getEventLogs(filtersToUse);
+      console.log("[EventLogPage] Loaded logs:", response.logs?.length || 0, "total:", response.pagination?.total || 0);
+      console.log("[EventLogPage] First log ID:", response.logs?.[0]?.id);
+      console.log("[EventLogPage] Last log ID:", response.logs?.[response.logs?.length - 1]?.id);
+      
       setLogs(response.logs || []);
       setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
       // Reset error shown flag on success
@@ -196,7 +216,9 @@ export function EventLogPage() {
     } catch (err) {
       // If session expired error, don't show toast (redirect will happen)
       if (err instanceof Error && err.message.includes("Session expired")) {
-        setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        }
         return;
       }
       const errorMessage = err instanceof Error ? err.message : t("admin.errors.loadEventLogsFailed");
@@ -207,7 +229,9 @@ export function EventLogPage() {
         errorShownRef.current = true;
       }
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -241,19 +265,55 @@ export function EventLogPage() {
       return;
     }
 
+    console.log("[EventLogPage] Starting delete, current visible logs:", logs.length);
+    
     setIsDeleting(true);
+    isDeletingRef.current = true; // Prevent useEffect from triggering reload
+    
     try {
-      const result = await deleteEventLogs(filters);
+      // Remove page and limit from delete filters
+      const deleteFilters = {
+        tenantId: filters.tenantId,
+        userId: filters.userId,
+        action: filters.action,
+        entityType: filters.entityType,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      };
+      
+      const result = await deleteEventLogs(deleteFilters);
+      console.log("[EventLogPage] Deleted", result.count, "log(s)");
+      
       showToast(
         t("admin.eventLog.deleteSuccess", { count: result.count }),
         "success"
       );
-      await loadLogs();
+      
+      // Update prevFiltersRef FIRST to prevent useEffect from triggering
+      const currentFiltersKey = JSON.stringify(filters);
+      prevFiltersRef.current = currentFiltersKey;
+      console.log("[EventLogPage] Updated prevFiltersRef to:", currentFiltersKey);
+      
+      // Set delete completed flag to skip next useEffect cycle
+      deleteCompletedRef.current = true;
+      
+      // Simple optimistic update: just clear the list
+      setLogs([]);
+      setPagination({ page: 1, limit: 50, total: 0, totalPages: 0 });
+      
+      console.log("[EventLogPage] Delete complete - NO RELOAD");
+      
     } catch (err) {
+      console.error("[EventLogPage] Delete error:", err);
       const errorMessage = err instanceof Error ? err.message : t("admin.errors.deleteFailed");
       showToast(errorMessage, "error");
     } finally {
       setIsDeleting(false);
+      // Wait for next tick to ensure all state updates are processed
+      requestAnimationFrame(() => {
+        isDeletingRef.current = false;
+        console.log("[EventLogPage] Delete cleanup complete, isDeletingRef reset");
+      });
     }
   };
 

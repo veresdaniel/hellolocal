@@ -25,14 +25,37 @@ export interface UpdatePriceBandDto {
 export class AdminPriceBandService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
-    return this.prisma.priceBand.findMany({
-      where: { tenantId },
+  async findAll(tenantId: string, page?: number, limit?: number) {
+    // Default pagination values
+    const pageNum = page ? parseInt(String(page)) : 1;
+    const limitNum = limit ? parseInt(String(limit)) : 50;
+    
+    const where = { tenantId };
+    
+    // Get total count
+    const total = await this.prisma.priceBand.count({ where });
+    
+    // Get paginated results
+    const priceBands = await this.prisma.priceBand.findMany({
+      where,
       include: {
         translations: true,
       },
       orderBy: { createdAt: "desc" },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
     });
+    
+    // Always return paginated response
+    return {
+      priceBands,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+      },
+    };
   }
 
   async findOne(id: string, tenantId: string) {
