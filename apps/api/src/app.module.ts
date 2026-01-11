@@ -1,5 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { PlacesModule } from "./places/places.module";
@@ -20,6 +22,12 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 perc (milliszekundumban)
+        limit: 10, // 10 kérés percenként (globális limit)
+      },
+    ]),
     PrismaModule,
     TenantModule,
     SlugModule,
@@ -36,7 +44,13 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
     NotificationsModule, // Push notifications
   ],
   controllers: [HealthController],
-  providers: [SeoInjectorMiddleware],
+  providers: [
+    SeoInjectorMiddleware,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

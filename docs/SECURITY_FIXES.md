@@ -1,7 +1,28 @@
 # 🔒 Biztonsági Javítások - Production Előtt
 
 **Dátum**: 2026-01-11  
-**Státusz**: ⚠️ Production deployment előtt kötelezően javítandó
+**Utolsó frissítés**: 2026-01-11  
+**Státusz**: ✅ **KRITIKUS JAVÍTÁSOK ELKÉSZÜLTEK** - Production deployment előkészítve
+
+---
+
+## ✅ Elkészült Javítások Összefoglalója
+
+Minden kritikus biztonsági javítás **elkészült és implementálva**:
+
+1. ✅ **CORS konfiguráció javítása** - Csak megbízható origin-ek engedélyezve
+2. ✅ **Input validáció hozzáadása** - `class-validator` + `ValidationPipe` implementálva
+3. ✅ **Rate limiting implementálása** - `@nestjs/throttler` beállítva auth végpontokon
+4. ✅ **JWT Secret ellenőrzés és javítás** - Production ellenőrzés hozzáadva
+5. ✅ **Security headers (Helmet.js)** - Biztonsági fejlécek beállítva
+
+**Telepítendő csomagok** (ha még nem telepítetted):
+```bash
+cd apps/api
+pnpm install
+```
+
+**Fontos**: Production deployment előtt ellenőrizd a `CORS_ORIGIN` és `JWT_SECRET` environment változókat!
 
 ---
 
@@ -9,541 +30,153 @@
 
 ### 🔴 KRITIKUS (Production előtt kötelező)
 
-1. [ ] **CORS konfiguráció javítása**
-2. [ ] **Input validáció hozzáadása**
-3. [ ] **Rate limiting implementálása**
-4. [ ] **JWT Secret ellenőrzés és javítás**
-5. [ ] **Security headers (Helmet.js)**
+1. [x] **CORS konfiguráció javítása**
+2. [x] **Input validáció hozzáadása**
+3. [x] **Rate limiting implementálása**
+4. [x] **JWT Secret ellenőrzés és javítás**
+5. [x] **Security headers (Helmet.js)**
 
-### 🟡 FONTOS (Rövidtávon)
+### 🟡 FONTOS (Rövidtávon - Értékelve)
 
-6. [ ] **CSRF védelem** (opcionális, de ajánlott)
-7. [ ] **Token tárolás átgondolása** (opcionális)
-
----
-
-## 1️⃣ CORS Konfiguráció Javítása
-
-### Probléma
-Jelenleg minden origin hozzáférhet az API-hoz (`origin: "*"`), ami productionban biztonsági kockázat.
-
-### Lépések
-
-#### 1.1. Frissítsd a `apps/api/src/main.ts` fájlt
-
-```typescript
-import "reflect-metadata";
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // CORS konfiguráció - productionban csak megbízható domain-ek
-  const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-    : process.env.NODE_ENV === 'production'
-    ? [] // Productionban NINCS default, kötelező beállítani!
-    : ['http://localhost:5173', 'http://localhost:3000']; // Dev default
-
-  app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  });
-
-  // Global exception filter for consistent error responses
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  const port = process.env.PORT ? Number(process.env.PORT) : 3002;
-  await app.listen(port, "0.0.0.0");
-}
-bootstrap();
-```
-
-#### 1.2. Frissítsd az environment változókat
-
-**`apps/api/env.example`**:
-```env
-# CORS Configuration
-# Productionban: csak a megbízható domain-ek (vesszővel elválasztva)
-# Példa: CORS_ORIGIN=https://hellolocal.com,https://www.hellolocal.com
-CORS_ORIGIN=http://localhost:5173,http://localhost:3000
-```
-
-**Production deployment** (Render.com, stb.):
-- Állítsd be a `CORS_ORIGIN` environment változót:
-  ```
-  CORS_ORIGIN=https://hellolocal.com,https://www.hellolocal.com
-  ```
-
-#### 1.3. Tesztelés
-
-```bash
-# Dev környezetben
-curl -H "Origin: http://localhost:5173" http://localhost:3002/api/health
-# ✅ Működik
-
-# Dev környezetben - másik origin
-curl -H "Origin: http://evil.com" http://localhost:3002/api/health
-# ⚠️ Devben működik (de productionban NEM fog)
-```
+6. [x] **CSRF védelem** - **ÉRTÉKELVE: Nem szükséges JWT token-based auth esetén**
+7. [x] **Token tárolás átgondolása** - **ÉRTÉKELVE: Jelenlegi megoldás elfogadható, dokumentálva**
 
 ---
 
-## 2️⃣ Input Validáció Hozzáadása
+## 📦 Telepített Csomagok
 
-### Probléma
-Nincs input validáció, a DTO-kban nincsenek validációs dekorátorok.
+A következő csomagok lettek hozzáadva a `apps/api/package.json`-hoz:
 
-### Lépések
+**Dependencies:**
+- `class-validator` - Input validáció
+- `class-transformer` - DTO transzformáció
+- `@nestjs/throttler` - Rate limiting
+- `helmet` - Security headers
 
-#### 2.1. Telepítsd a szükséges package-eket
-
-```bash
-cd apps/api
-pnpm add class-validator class-transformer
-```
-
-#### 2.2. Frissítsd a `apps/api/src/main.ts` fájlt
-
-```typescript
-import "reflect-metadata";
-import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
-import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // ... CORS konfiguráció ...
-
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip unknown properties
-      forbidNonWhitelisted: true, // Throw error on unknown properties
-      transform: true, // Auto-transform payloads to DTO instances
-      transformOptions: {
-        enableImplicitConversion: true, // Auto-convert types
-      },
-    })
-  );
-
-  // Global exception filter
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  // ... port és listen ...
-}
-bootstrap();
-```
-
-#### 2.3. Frissítsd a DTO fájlokat
-
-**`apps/api/src/auth/dto/login.dto.ts`**:
-```typescript
-import { IsEmail, IsString, MinLength, IsOptional, Length } from 'class-validator';
-
-export class LoginDto {
-  @IsEmail({}, { message: 'Email must be a valid email address' })
-  email!: string;
-
-  @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
-  password!: string;
-
-  @IsOptional()
-  @IsString()
-  @Length(6, 6, { message: '2FA token must be exactly 6 digits' })
-  twoFactorToken?: string;
-}
-```
-
-**`apps/api/src/auth/dto/register.dto.ts`**:
-```typescript
-import { IsEmail, IsString, MinLength, IsOptional, MaxLength } from 'class-validator';
-
-export class RegisterDto {
-  @IsString()
-  @MinLength(3, { message: 'Username must be at least 3 characters' })
-  @MaxLength(50, { message: 'Username must be at most 50 characters' })
-  username!: string;
-
-  @IsEmail({}, { message: 'Email must be a valid email address' })
-  email!: string;
-
-  @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
-  password!: string;
-
-  @IsString()
-  @MinLength(1, { message: 'First name is required' })
-  @MaxLength(100, { message: 'First name must be at most 100 characters' })
-  firstName!: string;
-
-  @IsString()
-  @MinLength(1, { message: 'Last name is required' })
-  @MaxLength(100, { message: 'Last name must be at most 100 characters' })
-  lastName!: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500, { message: 'Bio must be at most 500 characters' })
-  bio?: string;
-
-  @IsOptional()
-  @IsString()
-  tenantId?: string;
-}
-```
-
-**`apps/api/src/auth/dto/forgot-password.dto.ts`**:
-```typescript
-import { IsEmail } from 'class-validator';
-
-export class ForgotPasswordDto {
-  @IsEmail({}, { message: 'Email must be a valid email address' })
-  email!: string;
-}
-```
-
-**`apps/api/src/auth/dto/reset-password.dto.ts`**:
-```typescript
-import { IsString, MinLength } from 'class-validator';
-
-export class ResetPasswordDto {
-  @IsString()
-  token!: string;
-
-  @IsString()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
-  newPassword!: string;
-}
-```
-
-**`apps/api/src/auth/dto/refresh-token.dto.ts`**:
-```typescript
-import { IsString } from 'class-validator';
-
-export class RefreshTokenDto {
-  @IsString()
-  refreshToken!: string;
-}
-```
-
-#### 2.4. Tesztelés
-
-```bash
-# Érvénytelen email
-curl -X POST http://localhost:3002/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "invalid-email", "password": "test123"}'
-# ✅ 400 Bad Request - "Email must be a valid email address"
-
-# Rövid jelszó
-curl -X POST http://localhost:3002/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com", "password": "123"}'
-# ✅ 400 Bad Request - "Password must be at least 6 characters"
-```
+**DevDependencies:**
+- `@types/helmet` - TypeScript típusok Helmet-hez
 
 ---
 
-## 3️⃣ Rate Limiting Implementálása
+## 🔍 Implementáció Részletei
 
-### Probléma
-Auth végpontok védetlenek brute-force támadások ellen.
+### Módosított Fájlok
 
-### Lépések
+1. **`apps/api/src/main.ts`**
+   - Helmet.js security headers
+   - CORS konfiguráció (csak megbízható origin-ek)
+   - ValidationPipe globális beállítás
 
-#### 3.1. Telepítsd a szükséges package-eket
+2. **`apps/api/src/app.module.ts`**
+   - ThrottlerModule konfiguráció
+   - ThrottlerGuard globális guard
 
-```bash
-cd apps/api
-pnpm add @nestjs/throttler
-```
+3. **`apps/api/src/auth/auth.controller.ts`**
+   - Rate limiting dekorátorok minden auth végponton (`@Throttle({ default: { limit, ttl } })`)
 
-#### 3.2. Frissítsd az `apps/api/src/app.module.ts` fájlt
+4. **`apps/api/src/auth/strategies/jwt.strategy.ts`**
+   - JWT secret production ellenőrzés
 
-```typescript
-import { Module, MiddlewareConsumer, NestModule } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
-// ... többi import ...
+5. **`apps/api/src/auth/auth.module.ts`**
+   - JWT secret ellenőrzés a factory-ban
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 perc (milliszekundumban)
-      limit: 10, // 10 kérés percenként
-    }]),
-    PrismaModule,
-    // ... többi modul ...
-  ],
-  controllers: [HealthController],
-  providers: [
-    SeoInjectorMiddleware,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
-})
-export class AppModule implements NestModule {
-  // ... configure metódus ...
-}
-```
+6. **`apps/api/src/auth/dto/*.ts`** (összes DTO)
+   - Validációs dekorátorok hozzáadva (`@IsEmail`, `@MinLength`, stb.)
 
-#### 3.3. Frissítsd az `apps/api/src/auth/auth.controller.ts` fájlt
+7. **`apps/api/package.json`**
+   - Új csomagok hozzáadva
 
-```typescript
-import { Body, Controller, Post, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
-import { Throttle } from "@nestjs/throttler";
-import { AuthService } from "./auth.service";
-// ... többi import ...
-
-@Controller("/api/auth")
-export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Post("/register")
-  @Throttle(3, 60) // 3 kérés percenként
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
-  }
-
-  @Post("/login")
-  @HttpCode(HttpStatus.OK)
-  @Throttle(5, 60) // 5 kérés percenként (brute-force védelem)
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
-  }
-
-  @Post("/forgot-password")
-  @HttpCode(HttpStatus.OK)
-  @Throttle(3, 60) // 3 kérés percenként
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(dto);
-  }
-
-  @Post("/reset-password")
-  @HttpCode(HttpStatus.OK)
-  @Throttle(3, 60) // 3 kérés percenként
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
-  }
-
-  @Post("/refresh")
-  @HttpCode(HttpStatus.OK)
-  @Throttle(10, 60) // 10 kérés percenként (normál használat)
-  async refreshToken(@Body() dto: RefreshTokenDto) {
-    return this.authService.refreshToken(dto);
-  }
-
-  // ... logout ...
-}
-```
-
-#### 3.4. Tesztelés
-
-```bash
-# Próbáld ki, hogy 6 kérést küldesz 1 perc alatt
-for i in {1..6}; do
-  curl -X POST http://localhost:3002/api/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"email": "test@example.com", "password": "wrong"}'
-  echo ""
-done
-
-# ✅ Az 5. után 429 Too Many Requests választ kell kapnod
-```
+8. **`apps/api/env.example`**
+   - `CORS_ORIGIN` példa hozzáadva
 
 ---
 
-## 4️⃣ JWT Secret Ellenőrzés és Javítás
+## 6️⃣ CSRF Védelem (Értékelve)
 
-### Probléma
-Gyenge fallback secret a kódban, productionban kötelező erős secret.
+### ✅ Értékelés Eredménye: **NEM SZÜKSÉGES**
 
-### Lépések
+**Indoklás:**
+- Jelenlegi autentikáció: **JWT token-based** (Authorization header)
+- Tokenek **NEM cookie-kban** vannak tárolva
+- CSRF támadások **cookie-based authentication** esetén jelentkeznek
+- JWT tokenek Authorization header-ben küldése **CSRF-immune**
 
-#### 4.1. Frissítsd a `apps/api/src/auth/strategies/jwt.strategy.ts` fájlt
+**Jelenlegi implementáció:**
+- Tokenek `localStorage`-ban tárolva
+- Minden API kérés `Authorization: Bearer <token>` header-rel megy
+- CORS konfigurálva (csak megbízható origin-ek)
+- Rate limiting bekapcsolva
 
-```typescript
-import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { PassportStrategy } from "@nestjs/passport";
-import { ExtractJwt, Strategy } from "passport-jwt";
-import { ConfigService } from "@nestjs/config";
-import { AuthService, JwtPayload } from "../auth.service";
+**Következtetés:**
+✅ **CSRF védelem NEM szükséges** a jelenlegi JWT token-based authentication esetén.
 
-@Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly authService: AuthService
-  ) {
-    const jwtSecret = configService.get<string>("JWT_SECRET");
-    
-    // Productionban kötelező JWT_SECRET
-    if (!jwtSecret) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(
-          'JWT_SECRET must be set in production! ' +
-          'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
-        );
-      }
-      console.warn('⚠️  WARNING: JWT_SECRET not set, using weak default. Only for development!');
-    }
-
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: jwtSecret || "dev-secret-key-change-in-production",
-    });
-  }
-
-  async validate(payload: JwtPayload) {
-    const user = await this.authService.validateUser(payload);
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-    return user;
-  }
-}
-```
-
-#### 4.2. Generálj erős JWT Secret-et
-
-```bash
-# Generálj egy erős, random secret-et
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-#### 4.3. Frissítsd az environment változókat
-
-**Production deployment** (Render.com, stb.):
-- Állítsd be a `JWT_SECRET` environment változót a generált értékkel
-- **NE** commitold a `.env` fájlt git-be!
-
-#### 4.4. Ellenőrzés
-
-```bash
-# Production környezetben indítsd el az API-t
-# Ha nincs JWT_SECRET, akkor hibát kell dobjon indításkor
-```
+**Ha később httpOnly cookie-kra váltasz:**
+- Akkor **kötelező** lesz CSRF védelem implementálása
+- Használd a `csurf` vagy `@nestjs/csrf` package-et
+- Double Submit Cookie pattern vagy SameSite cookie attribútumok
 
 ---
 
-## 5️⃣ Security Headers (Helmet.js)
+## 7️⃣ Token Tárolás Átgondolása (Értékelve)
 
-### Probléma
-A backend nem küld biztonsági headereket.
+### ✅ Értékelés Eredménye: **JELENLEGI MEGOLDÁS ELFOGADHATÓ**
 
-### Lépések
+**Jelenlegi implementáció:**
+- Tokenek `localStorage`-ban tárolva (`accessToken`, `refreshToken`)
+- User adatok `localStorage`-ban (`user` objektum JSON-ként)
+- Tokenek minden API kérésnél `Authorization: Bearer <token>` header-ben küldve
 
-#### 5.1. Telepítsd a Helmet.js-t
+**Biztonsági kockázatok:**
+- ⚠️ **XSS (Cross-Site Scripting)**: Ha XSS támadás történik, a localStorage elérhető
+- ✅ **CSRF**: Nincs CSRF kockázat (tokenek nem cookie-kban)
+- ✅ **CORS**: Megfelelően konfigurálva
 
-```bash
-cd apps/api
-pnpm add helmet
-pnpm add -D @types/helmet
-```
+**XSS védelem jelenleg:**
+- ✅ Helmet.js security headers (X-XSS-Protection, CSP)
+- ✅ Input validáció (class-validator)
+- ✅ React automatikus escaping
+- ⚠️ **Javaslat**: Content Security Policy (CSP) finomhangolása
 
-#### 5.2. Frissítsd a `apps/api/src/main.ts` fájlt
+**Alternatívák:**
 
-```typescript
-import "reflect-metadata";
-import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
-import helmet from "helmet";
-import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+### 1. **httpOnly Cookies** (Ajánlott hosszú távon)
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+**Előnyök:**
+- ✅ JavaScript nem fér hozzá (XSS védelem)
+- ✅ Automatikus küldés minden kérésnél
+- ✅ SameSite attribútummal CSRF védelem
 
-  // Security headers
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
-      },
-    },
-    crossOriginEmbedderPolicy: false, // Ha szükséges a CORS miatt
-  }));
+**Hátrányok:**
+- ⚠️ Backend módosítás szükséges (cookie küldés)
+- ⚠️ Frontend refactoring (localStorage eltávolítás)
+- ⚠️ CSRF védelem kötelező lesz
+- ⚠️ CORS konfiguráció módosítása (credentials: true)
 
-  // ... CORS konfiguráció ...
-  // ... ValidationPipe ...
-  // ... Exception filter ...
-  // ... port és listen ...
-}
-bootstrap();
-```
+### 2. **Maradjon localStorage** (Jelenlegi megoldás) ✅
 
-#### 5.3. Tesztelés
+**Előnyök:**
+- ✅ Nincs backend módosítás szükséges
+- ✅ Egyszerű implementáció
+- ✅ Nincs CSRF kockázat
+- ✅ Jól működik SPA-kban
 
-```bash
-# Ellenőrizd a headereket
-curl -I http://localhost:3002/api/health
+**Hátrányok:**
+- ⚠️ XSS kockázat (de jelenlegi védelemmel kezelt)
 
-# ✅ Látnod kell:
-# X-Content-Type-Options: nosniff
-# X-Frame-Options: SAMEORIGIN
-# X-XSS-Protection: 1; mode=block
-# Strict-Transport-Security: max-age=31536000; includeSubDomains
-```
+**Javasolt továbbfejlesztések:**
+1. ✅ **CSP (Content Security Policy) finomhangolása** - Helmet.js-ben már be van állítva
+2. ✅ **Input sanitization** - React automatikusan escape-el
+3. ⚠️ **Token encryption** (opcionális): localStorage-ban encrypted tokenek tárolása
+4. ⚠️ **Token rotation**: Gyakori refresh token rotáció
 
----
+**Következtetés:**
+✅ **Jelenlegi megoldás (localStorage) elfogadható** a jelenlegi biztonsági intézkedésekkel.
+✅ **httpOnly cookie-kra váltás** hosszú távon ajánlott, de **nem kritikus**.
 
-## 6️⃣ CSRF Védelem (Opcionális)
-
-### Megjegyzés
-JWT token-based authentication esetén kevésbé kritikus, de érdemes implementálni, ha cookie-kat is használsz.
-
-### Lépések (ha szükséges)
-
-#### 6.1. Telepítsd a szükséges package-eket
-
-```bash
-cd apps/api
-pnpm add csurf
-pnpm add -D @types/csurf
-```
-
-#### 6.2. Implementáció
-
-```typescript
-// Csak akkor szükséges, ha cookie-based authentication-re váltasz
-// JWT token esetén általában nem szükséges
-```
-
----
-
-## 7️⃣ Token Tárolás Átgondolása (Opcionális)
-
-### Megjegyzés
-Jelenleg localStorage-ban tárolod a tokeneket, ami XSS kockázatot jelent. 
-
-### Alternatívák
-
-1. **httpOnly Cookies** (ajánlott, de backend módosítás szükséges)
-2. **Maradjon localStorage** (jelenlegi megoldás) + erős XSS védelem
-
-### Ha httpOnly cookie-kra váltasz:
-
-1. Backend módosítás: cookie-k küldése login/refresh után
-2. Frontend módosítás: ne tárold localStorage-ban, a cookie automatikusan küldődik
-3. CSRF védelem kötelező lesz
-
-**Jelenlegi állapot**: A jelenlegi megoldás (localStorage + XSS védelem) elfogadható, de érdemes átgondolni hosszú távon.
+**Prioritás:**
+- **Rövid táv**: Maradjon localStorage (jelenlegi megoldás)
+- **Középtáv**: CSP finomhangolása, token rotation
+- **Hosszú táv**: httpOnly cookie-kra váltás (ha szükséges)
 
 ---
 
@@ -551,15 +184,15 @@ Jelenleg localStorage-ban tárolod a tokeneket, ami XSS kockázatot jelent.
 
 ### Backend (API)
 
-- [ ] **CORS_ORIGIN** beállítva (csak megbízható domain-ek)
-- [ ] **JWT_SECRET** beállítva (erős, random generált, min. 32 karakter)
-- [ ] **DATABASE_URL** beállítva (production adatbázis)
-- [ ] Input validáció implementálva (`ValidationPipe` + `class-validator`)
-- [ ] Rate limiting bekapcsolva (különösen auth végpontokon)
-- [ ] Helmet.js beállítva (security headers)
-- [ ] Admin jelszavak megváltoztatva (ne használd a seed értékeket!)
-- [ ] `NODE_ENV=production` beállítva
-- [ ] Minden environment változó ellenőrizve (nincs default érték productionban)
+- [x] ✅ **CORS_ORIGIN** beállítva (csak megbízható domain-ek) - **IMPLEMENTÁLVA**
+- [x] ✅ **JWT_SECRET** beállítva (erős, random generált, min. 32 karakter) - **IMPLEMENTÁLVA** (ellenőrzés hozzáadva)
+- [ ] **DATABASE_URL** beállítva (production adatbázis) - **MANUÁLISAN BEÁLLÍTANDÓ**
+- [x] ✅ Input validáció implementálva (`ValidationPipe` + `class-validator`) - **IMPLEMENTÁLVA**
+- [x] ✅ Rate limiting bekapcsolva (különösen auth végpontokon) - **IMPLEMENTÁLVA**
+- [x] ✅ Helmet.js beállítva (security headers) - **IMPLEMENTÁLVA**
+- [ ] Admin jelszavak megváltoztatva (ne használd a seed értékeket!) - **MANUÁLISAN BEÁLLÍTANDÓ**
+- [ ] `NODE_ENV=production` beállítva - **MANUÁLISAN BEÁLLÍTANDÓ**
+- [ ] Minden environment változó ellenőrizve (nincs default érték productionban) - **MANUÁLISAN BEÁLLÍTANDÓ**
 
 ### Frontend (Web)
 
@@ -647,16 +280,9 @@ curl -I http://localhost:3002/api/health
 - **Production deployment előtt**: Futtasd le a security audit-ot (`pnpm audit`)
 - **Environment változók**: **SOHA** ne commitold a `.env` fájlt git-be!
 - **JWT Secret**: Generálj új secret-et minden production környezethez
+- **CORS_ORIGIN**: Productionban csak a megbízható domain-eket add meg (vesszővel elválasztva)
 
 ---
 
-## 🚀 Deployment Sorrend
-
-1. **Először**: CORS + JWT Secret (kritikus)
-2. **Másodszor**: Input validáció + Rate limiting (fontos)
-3. **Harmadszor**: Helmet.js (biztonsági fejlécek)
-4. **Opcionális**: CSRF védelem (ha szükséges)
-
----
-
-**Utolsó frissítés**: 2026-01-11
+**Utolsó frissítés**: 2026-01-11  
+**Implementáció státusza**: ✅ **KÉSZ**

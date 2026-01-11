@@ -10,10 +10,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
     private readonly authService: AuthService
   ) {
+    const jwtSecret = configService.get<string>("JWT_SECRET");
+
+    // Productionban kötelező JWT_SECRET
+    if (!jwtSecret) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(
+          "JWT_SECRET must be set in production! " +
+            'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+        );
+      }
+      console.warn("⚠️  WARNING: JWT_SECRET not set, using weak default. Only for development!");
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>("JWT_SECRET") ?? "your-secret-key-change-in-production",
+      secretOrKey: jwtSecret || "dev-secret-key-change-in-production",
     });
   }
 
