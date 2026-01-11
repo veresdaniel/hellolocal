@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
+import { getSiteSettings } from "../../api/places.api";
 import { useTenantContext } from "../../app/tenant/useTenantContext";
 import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 import type { Lang } from "../../app/config";
@@ -32,6 +33,30 @@ export function Footer({
   });
 
   const hasStaticPages = staticPages.length > 0;
+  const queryClient = useQueryClient();
+
+  // Load site name and brand badge icon from settings
+  const { data: siteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, effectiveTenantSlug],
+    queryFn: () => getSiteSettings(lang, effectiveTenantSlug),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, effectiveTenantSlug, queryClient]);
+
+  const siteName = siteSettings?.siteName;
+  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -69,10 +94,25 @@ export function Footer({
           }}
         >
           {/* Brand - Always on left */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: isMobile ? 18 : 20 }}>📍</span>
-            <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>HelloLocal</span>
-          </div>
+          {(siteName || brandBadgeIcon) && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {brandBadgeIcon && (
+                <img 
+                  src={brandBadgeIcon} 
+                  alt={siteName || ""}
+                  style={{ 
+                    width: isMobile ? 18 : 20, 
+                    height: isMobile ? 18 : 20, 
+                    objectFit: "contain",
+                    borderRadius: 4,
+                  }}
+                />
+              )}
+              {siteName && (
+                <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>{siteName}</span>
+              )}
+            </div>
+          )}
 
           {/* Links - Desktop only */}
           {!isMobile && (
@@ -186,31 +226,44 @@ export function Footer({
           }}
         >
           {/* Brand Section */}
-          <div>
-            <h3
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                marginBottom: 12,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span style={{ fontSize: 24 }}>📍</span>
-              HelloLocal
-            </h3>
-            <p
-              style={{
-                fontSize: 14,
-                opacity: 0.9,
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
-            </p>
-          </div>
+          {(siteName || brandBadgeIcon) && (
+            <div>
+              <h3
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  marginBottom: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {brandBadgeIcon && (
+                  <img 
+                    src={brandBadgeIcon} 
+                    alt={siteName || ""}
+                    style={{ 
+                      width: 24, 
+                      height: 24, 
+                      objectFit: "contain",
+                      borderRadius: 4,
+                    }}
+                  />
+                )}
+                {siteName && <span>{siteName}</span>}
+              </h3>
+              <p
+                style={{
+                  fontSize: 14,
+                  opacity: 0.9,
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
+                {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
+              </p>
+            </div>
+          )}
 
           {/* Legal Links */}
           <div>
