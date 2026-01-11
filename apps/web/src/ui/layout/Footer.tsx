@@ -32,8 +32,10 @@ export function Footer({
     return (
       <footer
         style={{
-          marginTop: isMobile ? 0 : "auto",
-          margin: 0,
+          marginTop: 0,
+          marginBottom: 0,
+          marginLeft: 0,
+          marginRight: 0,
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           color: "white",
           borderTop: "none",

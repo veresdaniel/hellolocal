@@ -113,6 +113,7 @@
     "distance": "Távolság",
     "routeDistance": "útvonal",
     "walkingTime": "Sétálási idő",
+    "calculatingRoute": "Útvonal számítása...",
     "clickAgainToNavigate": "Kattints újra a navigációhoz",
     "tooFarAway": "Túl messze ({{distance}} km-nél távolabb)",
     "hour": "óra",

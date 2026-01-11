@@ -113,6 +113,7 @@
     "distance": "Distance",
     "routeDistance": "route",
     "walkingTime": "Walking time",
+    "calculatingRoute": "Calculating route...",
     "clickAgainToNavigate": "Click again to navigate",
     "tooFarAway": "Too far away (more than {{distance}} km)",
     "hour": "hour",

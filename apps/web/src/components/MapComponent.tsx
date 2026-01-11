@@ -563,17 +563,22 @@ export function MapComponent({
 
 
   // Calculate distances for markers
-  // Use route distance if available, otherwise use straight-line distance
+  // ONLY use route distance from API - don't show straight-line distance
+  // Wait for API to return route before showing distance
   // Only calculate if showUserLocation is enabled
   const markersWithDistance = useMemo(() => {
     if (!showUserLocation || !userLocation) return markers;
     
     return markers.map(marker => {
-      // Check if we have a route distance for this marker
-      const route = routes.find(r => r.markerId === marker.id);
-      const distance = route?.distance ?? calculateDistance(userLocation.lat, userLocation.lng, marker.lat, marker.lng);
-      const walkingTime = route?.duration ?? calculateWalkingTime(distance);
-      const cyclingTime = calculateCyclingTime(distance);
+      // Only use route distance for the currently selected marker
+      // This prevents showing stale route data when switching between markers
+      const route = (selectedMarkerId === marker.id) ? routes.find(r => r.markerId === marker.id) : null;
+      
+      // Only show distance if we have route data from API
+      // Don't use fallback straight-line calculation
+      const distance = route?.distance;
+      const walkingTime = route?.duration;
+      const cyclingTime = distance !== undefined ? calculateCyclingTime(distance) : undefined;
       
       return {
         ...marker,
@@ -583,7 +588,7 @@ export function MapComponent({
         isRouteDistance: !!route?.distance, // Flag to indicate if this is route distance or straight-line
       };
     });
-  }, [markers, userLocation, routes]);
+  }, [markers, userLocation, routes, selectedMarkerId, showUserLocation]);
 
   // Handle marker click - behavior depends on showUserLocation
   // If showUserLocation is false: navigate immediately (single click)
@@ -727,7 +732,8 @@ export function MapComponent({
         mapStyle={memoizedMapStyle}
         cursor={interactive && onLocationChange ? "crosshair" : "default"}
         dragRotate={false}
-        touchZoomRotate={false}
+        touchZoomRotate={true}
+        touchPitch={false}
         transitionDuration={300}
       >
         {/* User location marker - only show if showUserLocation is enabled */}
@@ -1044,8 +1050,8 @@ export function MapComponent({
                           </span>
                         )}
                         {marker.distance === undefined && (
-                          <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>
-                            {t("public.clickAgainToNavigate")}
+                          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
+                            ⏳ {t("public.calculatingRoute") || "Útvonal számítása..."}
                           </span>
                         )}
                       </>
@@ -1109,11 +1115,29 @@ export function MapComponent({
             userSelect: "none",
             WebkitUserSelect: "none",
             touchAction: "manipulation",
+            // Make entire label area clickable on mobile
+            padding: isDesktop ? 0 : "4px 0",
+            margin: isDesktop ? 0 : "-4px 0",
           }}
           onMouseDown={isDesktop ? (e) => {
             // Allow drag on desktop when clicking on label (but not on checkbox)
             if ((e.target as HTMLElement).tagName !== "INPUT") {
               e.preventDefault(); // Prevent text selection
+            }
+          } : undefined}
+          onClick={!isDesktop ? (e) => {
+            // On mobile: make entire badge clickable by toggling checkbox programmatically
+            // This gives a much larger tap target
+            if (hasDraggedLocationControl) {
+              // If user was dragging, don't toggle
+              return;
+            }
+            const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (checkbox && (e.target as HTMLElement).tagName !== "INPUT") {
+              // Prevent default label behavior and manually toggle
+              e.preventDefault();
+              e.stopPropagation();
+              checkbox.click(); // Trigger checkbox click which will fire onChange
             }
           } : undefined}
         >

@@ -624,7 +624,7 @@ export function HomePage() {
             style={{ 
               ...(isMobile 
                 ? { 
-                    height: `calc(100vh - 52px)`,
+                    height: "100vh",
                     position: "relative",
                     overflow: "hidden",
                     margin: 0,
@@ -646,7 +646,7 @@ export function HomePage() {
               markers={markers}
               userLocation={userLocation || useFiltersStore.getState().userLocation}
               showRoutes={false}
-              height={isMobile && typeof window !== "undefined" ? window.innerHeight - 52 : mapHeight}
+              height={isMobile && typeof window !== "undefined" ? window.innerHeight : mapHeight}
               interactive={true}
               defaultZoom={defaultZoom}
               mapStyle="default"
