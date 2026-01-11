@@ -137,7 +137,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
           </h3>
         </div>
 
-        {(staticPage.shortDescription || staticPage.content) && (
+        {staticPage.shortDescription && (
           <div
             style={{
               fontSize: 14,
@@ -153,7 +153,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               wordWrap: "break-word",
               overflowWrap: "break-word",
             }}
-            dangerouslySetInnerHTML={{ __html: staticPage.shortDescription || staticPage.content || "" }}
+            dangerouslySetInnerHTML={{ __html: staticPage.shortDescription }}
           />
         )}
 

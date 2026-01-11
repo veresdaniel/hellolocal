@@ -447,6 +447,8 @@
     "disable2FA": "2FA deaktivieren",
     "primaryDomain": "Primäre Domain",
     "shortDescription": "Kurze Beschreibung",
+    "shortDescriptionPlaceholder": "Kurze Beschreibung für die Kartenansicht (Richtext)",
+    "shortDescriptionHint": "Dieses Feld wird in der Kartenansicht angezeigt",
     "roles": {
       "viewer": "Betrachter",
       "editor": "Bearbeiter",

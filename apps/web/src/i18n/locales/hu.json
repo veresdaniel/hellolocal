@@ -476,6 +476,7 @@
     "primaryDomain": "Elsődleges domain",
     "shortDescription": "Rövid leírás",
     "shortDescriptionPlaceholder": "Rövid, két soros leírás",
+    "shortDescriptionHint": "Ez a mező jelenik meg a lista oldali kártyákon",
     "startDate": "Kezdés dátuma",
     "endDate": "Befejezés dátuma",
     "isPinned": "Rögzített",

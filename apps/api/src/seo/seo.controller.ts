@@ -203,6 +203,7 @@ export class SeoController {
       const description = stripHtml(rawDescription);
       // Use SEO image, then hero image, then default placeholder detail hero image
       const image = translation?.seoImage || event.heroImage || siteSettings.defaultPlaceholderDetailHeroImage || "";
+      const keywords = translation?.seoKeywords || [];
       const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${tenant.lang}${tenant.canonicalTenantKey ? `/${tenant.canonicalTenantKey}` : ""}/event/${slugResult.canonicalSlug}`;
 
       // Generate basic Event schema.org data
@@ -292,6 +293,7 @@ export class SeoController {
         title: `${title} - ${siteName}`,
         description,
         image,
+        keywords,
         url,
         type: "website",
         siteName,

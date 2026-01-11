@@ -377,6 +377,7 @@ export class PlacesService {
         category: categoryName,
         categoryColor: categoryColor,
         name: placeTranslation?.name ?? "(missing translation)",
+        shortDescription: placeTranslation?.shortDescription ?? null, // HTML - for list view cards
         description: placeTranslation?.description ?? null,
         heroImage: p.heroImage ?? null,
         gallery: p.gallery,

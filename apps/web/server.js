@@ -72,10 +72,16 @@ function injectMetaTags(html, seoData) {
   const imageWidth = seoData.imageWidth || '1200';
   const imageHeight = seoData.imageHeight || '630';
 
+  // Format keywords as comma-separated string if array is provided
+  const keywordsContent = Array.isArray(seoData.keywords) && seoData.keywords.length > 0
+    ? escapeHtml(seoData.keywords.join(", "))
+    : seoData.keywords || "";
+
   const metaTags = `
     <!-- SEO Meta Tags (injected by server middleware) -->
     <title>${title}</title>
     <meta name="description" content="${description}">
+    ${keywordsContent ? `<meta name="keywords" content="${keywordsContent}">` : ''}
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:type" content="${seoData.type || 'website'}">

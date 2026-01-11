@@ -453,6 +453,8 @@
     "disable2FA": "Disable 2FA",
     "primaryDomain": "Primary Domain",
     "shortDescription": "Short Description",
+    "shortDescriptionPlaceholder": "Short description for the list view card (richtext)",
+    "shortDescriptionHint": "This field appears on the list view cards",
     "roles": {
       "viewer": "Viewer",
       "editor": "Editor",
