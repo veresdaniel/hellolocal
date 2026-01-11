@@ -367,16 +367,26 @@ export class AdminAppSettingsService {
     }
 
     if (settings.defaultPlaceholderCardImage !== undefined) {
-      // Validate and sanitize URL
-      const sanitizedUrl = sanitizeImageUrl(settings.defaultPlaceholderCardImage);
-      if (settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid image URL. Only http:// and https:// URLs are allowed.");
+      // Handle null or empty string - delete the setting
+      if (!settings.defaultPlaceholderCardImage || settings.defaultPlaceholderCardImage.trim() === "") {
+        try {
+          await this.delete(`defaultPlaceholderCardImage_${tenantId}`);
+        } catch {
+          // Ignore if doesn't exist
+        }
+      } else {
+        // Validate and sanitize URL
+        const trimmedUrl = settings.defaultPlaceholderCardImage.trim();
+        const sanitizedUrl = sanitizeImageUrl(trimmedUrl);
+        if (!sanitizedUrl) {
+          throw new BadRequestException(`Invalid image URL: "${trimmedUrl}". Only http:// and https:// URLs are allowed.`);
+        }
+        updates.push(this.upsert(`defaultPlaceholderCardImage_${tenantId}`, {
+          value: sanitizedUrl,
+          type: "string",
+          description: "Default placeholder image URL for place cards",
+        }));
       }
-      updates.push(this.upsert(`defaultPlaceholderCardImage_${tenantId}`, {
-        value: sanitizedUrl || "",
-        type: "string",
-        description: "Default placeholder image URL for place cards",
-      }));
     }
 
     if (settings.defaultPlaceholderDetailHeroImage !== undefined) {

@@ -215,6 +215,7 @@ export function TenantsListPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   width: "100%",
+                  maxWidth: "100%",
                   padding: "14px 20px",
                   fontSize: 16,
                   border: "2px solid #e0e0e0",
@@ -222,6 +223,7 @@ export function TenantsListPage() {
                   background: "white",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                   transition: "all 0.2s",
+                  boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = "#667eea";

@@ -77,6 +77,8 @@ export function AdminResponsiveTable<T>({
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [swipedCardId, setSwipedCardId] = useState<string | null>(null);
   const [currentMobileIndex, setCurrentMobileIndex] = useState(0);
+  const [previousMobileIndex, setPreviousMobileIndex] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
 
   // Handle window resize
   useEffect(() => {
@@ -91,6 +93,12 @@ export function AdminResponsiveTable<T>({
   const filteredData = searchQuery
     ? data.filter((item) => filterFn(item, searchQuery))
     : data;
+
+  // Helper function to update index with previous tracking
+  const updateMobileIndex = (newIndex: number) => {
+    setPreviousMobileIndex(currentMobileIndex);
+    setCurrentMobileIndex(newIndex);
+  };
 
   // Reset mobile index when data changes
   useEffect(() => {
@@ -113,7 +121,7 @@ export function AdminResponsiveTable<T>({
             value={searchQuery}
             onChange={(e) => {
               onSearchChange(e.target.value);
-              setCurrentMobileIndex(0); // Reset to first card when searching
+              updateMobileIndex(0); // Reset to first card when searching
             }}
             placeholder={searchPlaceholder || t("admin.searchPlaceholder")}
             style={{
@@ -370,12 +378,14 @@ export function AdminResponsiveTable<T>({
               >
                 <button
                   onClick={() => {
+                    setSwipeDirection("left");
                     // Infinite loop: go to last if at first
                     if (currentMobileIndex === 0) {
-                      setCurrentMobileIndex(filteredData.length - 1);
+                      updateMobileIndex(filteredData.length - 1);
                     } else {
-                      setCurrentMobileIndex(currentMobileIndex - 1);
+                      updateMobileIndex(currentMobileIndex - 1);
                     }
+                    setTimeout(() => setSwipeDirection(null), 400);
                   }}
                   style={{
                     padding: "8px 16px",
@@ -395,12 +405,14 @@ export function AdminResponsiveTable<T>({
                 </span>
                 <button
                   onClick={() => {
+                    setSwipeDirection("right");
                     // Infinite loop: go to first if at last
                     if (currentMobileIndex === filteredData.length - 1) {
-                      setCurrentMobileIndex(0);
+                      updateMobileIndex(0);
                     } else {
-                      setCurrentMobileIndex(currentMobileIndex + 1);
+                      updateMobileIndex(currentMobileIndex + 1);
                     }
+                    setTimeout(() => setSwipeDirection(null), 400);
                   }}
                   style={{
                     padding: "8px 16px",
@@ -448,6 +460,11 @@ export function AdminResponsiveTable<T>({
                 // Only handle container swipe if no card has actions open
                 if (swipedCardId) return;
                 
+                // Check if the touch was on a card content (let card handler take priority)
+                const target = e.target as HTMLElement;
+                const isCardContent = target.closest('[data-card-content]');
+                if (isCardContent) return; // Let card handler process this
+                
                 const touch = e.changedTouches[0];
                 const startX = (e.currentTarget as any).swipeStartX || 0;
                 const startY = (e.currentTarget as any).swipeStartY || 0;
@@ -462,21 +479,25 @@ export function AdminResponsiveTable<T>({
                 ) {
                   // Swipe right (diffX > 0) = next card (infinite)
                   if (diffX > 50 && timeDiff < 400) {
+                    setSwipeDirection("right");
                     if (currentMobileIndex === filteredData.length - 1) {
-                      setCurrentMobileIndex(0); // Loop to first
+                      updateMobileIndex(0); // Loop to first
                     } else {
-                      setCurrentMobileIndex(currentMobileIndex + 1);
+                      updateMobileIndex(currentMobileIndex + 1);
                     }
                     setSwipedCardId(null);
+                    setTimeout(() => setSwipeDirection(null), 400);
                   } 
                   // Swipe left (diffX < 0) = previous card (infinite)
                   else if (diffX < -50 && timeDiff < 400) {
+                    setSwipeDirection("left");
                     if (currentMobileIndex === 0) {
-                      setCurrentMobileIndex(filteredData.length - 1); // Loop to last
+                      updateMobileIndex(filteredData.length - 1); // Loop to last
                     } else {
-                      setCurrentMobileIndex(currentMobileIndex - 1);
+                      updateMobileIndex(currentMobileIndex - 1);
                     }
                     setSwipedCardId(null);
+                    setTimeout(() => setSwipeDirection(null), 400);
                   }
                 }
 
@@ -489,9 +510,13 @@ export function AdminResponsiveTable<T>({
 
                 // Calculate position relative to current index
                 const offset = index - currentMobileIndex;
+                const previousOffset = index - previousMobileIndex;
                 const isVisible = Math.abs(offset) <= 2;
 
                 if (!isVisible) return null;
+
+                // Check if this card is transitioning in (was offset 1/-1, now offset 0)
+                const isTransitioningIn = offset === 0 && previousOffset !== 0 && swipeDirection !== null;
 
                 // Styling based on position
                 const getCardStyle = () => {
@@ -503,20 +528,91 @@ export function AdminResponsiveTable<T>({
                   };
 
                   if (offset === 0) {
+                    // Current card
+                    if (isTransitioningIn) {
+                      // Card is transitioning in: show starting position based on direction
+                      if (swipeDirection === "right" && previousOffset === 1) {
+                        // Was offset 1, sliding in from left
+                        return {
+                          ...baseStyle,
+                          zIndex: 30,
+                          transform: "translateX(-100%) translateY(0) scale(1)",
+                          opacity: 0,
+                        };
+                      } else if (swipeDirection === "left" && previousOffset === -1) {
+                        // Was offset -1, sliding in from right
+                        return {
+                          ...baseStyle,
+                          zIndex: 30,
+                          transform: "translateX(100%) translateY(0) scale(1)",
+                          opacity: 0,
+                        };
+                      }
+                    }
+                    
+                    // Current card sliding out or final position
+                    if (swipeDirection === "right" && !isTransitioningIn) {
+                      // Swiping right (next) = current card slides out to the right
+                      return {
+                        ...baseStyle,
+                        zIndex: 30,
+                        transform: "translateX(100%) translateY(0) scale(1)",
+                        opacity: 0,
+                      };
+                    } else if (swipeDirection === "left" && !isTransitioningIn) {
+                      // Swiping left (previous) = current card slides out to the left
+                      return {
+                        ...baseStyle,
+                        zIndex: 30,
+                        transform: "translateX(-100%) translateY(0) scale(1)",
+                        opacity: 0,
+                      };
+                    } else {
+                      // No swipe direction or animation complete = normal position
+                      return {
+                        ...baseStyle,
+                        zIndex: 30,
+                        transform: "translateX(0) translateY(0) scale(1)",
+                        opacity: 1,
+                      };
+                    }
+                  } else if (offset === 1 && swipeDirection === "right" && previousOffset === 0) {
+                    // Previous current card sliding out to the right when going to next
                     return {
                       ...baseStyle,
-                      zIndex: 30,
-                      transform: "translateY(0) scale(1)",
-                      opacity: 1,
-                    };
-                  } else if (offset === 1) {
-                    return {
-                      ...baseStyle,
-                      zIndex: 20,
-                      transform: "translateY(12px) scale(0.95)",
-                      opacity: 0.6,
+                      zIndex: 5,
+                      transform: "translateX(100%) translateY(12px) scale(0.9)",
+                      opacity: 0,
                       pointerEvents: "none" as const,
                     };
+                  } else if (offset === -1 && swipeDirection === "left" && previousOffset === 0) {
+                    // Previous current card sliding out to the left when going to previous
+                    return {
+                      ...baseStyle,
+                      zIndex: 5,
+                      transform: "translateX(-100%) translateY(-12px) scale(0.9)",
+                      opacity: 0,
+                      pointerEvents: "none" as const,
+                    };
+                  } else if (offset === 1) {
+                    // Next card: slide in from left when swiping right
+                    if (swipeDirection === "right") {
+                      return {
+                        ...baseStyle,
+                        zIndex: 20,
+                        transform: "translateX(-100%) translateY(12px) scale(0.95)",
+                        opacity: 0.6,
+                        pointerEvents: "none" as const,
+                      };
+                    } else {
+                      return {
+                        ...baseStyle,
+                        zIndex: 20,
+                        transform: "translateX(100%) translateY(12px) scale(0.95)",
+                        opacity: 0.6,
+                        pointerEvents: "none" as const,
+                      };
+                    }
                   } else if (offset === 2) {
                     return {
                       ...baseStyle,
@@ -526,13 +622,24 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    return {
-                      ...baseStyle,
-                      zIndex: 5,
-                      transform: "translateX(-20%) translateY(-12px) scale(0.9)",
-                      opacity: 0,
-                      pointerEvents: "none" as const,
-                    };
+                    // Previous card: slide in from right when swiping left
+                    if (swipeDirection === "left") {
+                      return {
+                        ...baseStyle,
+                        zIndex: 20,
+                        transform: "translateX(100%) translateY(-12px) scale(0.95)",
+                        opacity: 0.6,
+                        pointerEvents: "none" as const,
+                      };
+                    } else {
+                      return {
+                        ...baseStyle,
+                        zIndex: 5,
+                        transform: "translateX(-100%) translateY(-12px) scale(0.9)",
+                        opacity: 0,
+                        pointerEvents: "none" as const,
+                      };
+                    }
                   } else {
                     return {
                       ...baseStyle,
@@ -693,6 +800,7 @@ export function AdminResponsiveTable<T>({
 
                       {/* Card content (DOES NOT MOVE) - PONTOSAN AZ EVENTSPAGE-RŐL */}
                       <div
+                        data-card-content
                         onClick={() => {
                           if (offset === 0) {
                             if (isOpen) {
@@ -721,20 +829,27 @@ export function AdminResponsiveTable<T>({
                           // Left swipe (diffX > 0) = actions slide in
                           if (diffX > 60 && timeDiff < 300) {
                             // Deliberate left swipe = show actions
+                            e.preventDefault(); // Prevent container swipe handler
                             setSwipedCardId(itemId);
                           } 
                           // Right swipe (diffX < 0) = navigate to next card (infinite)
                           else if (diffX < -50 && timeDiff < 300) {
+                            // Set swipe direction for animation
+                            e.preventDefault(); // Prevent container swipe handler
+                            setSwipeDirection("right");
                             // Navigate to next card (infinite loop)
                             if (currentMobileIndex === filteredData.length - 1) {
-                              setCurrentMobileIndex(0); // Loop to first
+                              updateMobileIndex(0); // Loop to first
                             } else {
-                              setCurrentMobileIndex(currentMobileIndex + 1);
+                              updateMobileIndex(currentMobileIndex + 1);
                             }
                             setSwipedCardId(null);
+                            // Reset swipe direction after animation
+                            setTimeout(() => setSwipeDirection(null), 400);
                           } 
                           // Small right swipe = close actions only
                           else if (diffX < -30 && diffX > -50) {
+                            e.preventDefault(); // Prevent container swipe handler
                             setSwipedCardId(null);
                           }
                         }}
