@@ -382,7 +382,7 @@ export function AdminResponsiveTable<T>({
               >
                 <button
                   onClick={() => {
-                    setSwipeDirection("left");
+                    setSwipeDirection("right"); // Previous button = swipe right
                     // Infinite loop: go to last if at first
                     if (currentMobileIndex === 0) {
                       updateMobileIndex(filteredData.length - 1);
@@ -409,7 +409,7 @@ export function AdminResponsiveTable<T>({
                 </span>
                 <button
                   onClick={() => {
-                    setSwipeDirection("right");
+                    setSwipeDirection("left"); // Next button = swipe left
                     // Infinite loop: go to first if at last
                     if (currentMobileIndex === filteredData.length - 1) {
                       updateMobileIndex(0);
@@ -498,27 +498,29 @@ export function AdminResponsiveTable<T>({
                   const FAST_SWIPE_VELOCITY = 0.5;
                   const quickSwipe = timeDiff < 300;
                   
-                  // Swipe right (diffX > 0) = next card (infinite)
+                  // Swipe right (diffX > 0) = previous card (infinite)
+                  // Current card goes right, previous card comes from right
                   if (diffX > SWIPE_THRESHOLD || (diffX > QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
-                    setSwipeDirection("right");
-                    if (currentMobileIndex === filteredData.length - 1) {
-                      updateMobileIndex(0); // Loop to first
-                    } else {
-                      updateMobileIndex(currentMobileIndex + 1);
-                    }
-                    setSwipedCardId(null);
-                    setTimeout(() => setSwipeDirection(null), 350);
-                  } 
-                  // Swipe left (diffX < 0) = previous card (infinite)
-                  else if (diffX < -SWIPE_THRESHOLD || (diffX < -QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
-                    setSwipeDirection("left");
+                    setSwipeDirection("right"); // Swipe right = previous card
                     if (currentMobileIndex === 0) {
                       updateMobileIndex(filteredData.length - 1); // Loop to last
                     } else {
                       updateMobileIndex(currentMobileIndex - 1);
                     }
                     setSwipedCardId(null);
-                    setTimeout(() => setSwipeDirection(null), 350);
+                    setTimeout(() => setSwipeDirection(null), 400);
+                  } 
+                  // Swipe left (diffX < 0) = next card (infinite)
+                  // Current card goes left, next card comes from left
+                  else if (diffX < -SWIPE_THRESHOLD || (diffX < -QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
+                    setSwipeDirection("left"); // Swipe left = next card
+                    if (currentMobileIndex === filteredData.length - 1) {
+                      updateMobileIndex(0); // Loop to first
+                    } else {
+                      updateMobileIndex(currentMobileIndex + 1);
+                    }
+                    setSwipedCardId(null);
+                    setTimeout(() => setSwipeDirection(null), 400);
                   }
                 }
 
@@ -544,7 +546,8 @@ export function AdminResponsiveTable<T>({
                   const baseStyle = {
                     position: "absolute" as const,
                     width: "100%",
-                    transition: isDragging ? "none" : "all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)", // Smooth ease-out
+                    // Natural spring-like animation (like iOS/Android homescreen)
+                    transition: isDragging ? "none" : "all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)", // iOS-like ease-in-out
                     transformOrigin: "center center",
                   };
 
@@ -554,17 +557,12 @@ export function AdminResponsiveTable<T>({
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const dragPercent = dragOffsetX / screenWidth;
                       
-                      // Minimal resistance: only very slight resistance at edges (like phone homescreen)
-                      let resistance = 1;
-                      if (Math.abs(dragPercent) > 0.8) {
-                        const excess = Math.abs(dragPercent) - 0.8;
-                        resistance = 1 - (excess * 0.2); // Very minimal resistance
-                      }
-                      const adjustedDragX = dragOffsetX * resistance;
+                      // No resistance - completely smooth following (like modern phones)
+                      const adjustedDragX = dragOffsetX;
                       
-                      // Opacity based on drag distance (no scale, no rotation - like phone homescreen)
+                      // Very subtle opacity change - cards stay mostly visible
                       const absDragPercent = Math.abs(dragPercent);
-                      const opacity = Math.max(0.3, 1 - absDragPercent * 0.5); // Less opacity change
+                      const opacity = Math.max(0.5, 1 - absDragPercent * 0.3); // Minimal opacity change
                       
                       return {
                         ...baseStyle,
@@ -575,44 +573,44 @@ export function AdminResponsiveTable<T>({
                     }
                     
                     if (isTransitioningIn) {
-                      // Card is transitioning in: start from side, animate to center
-                      if (swipeDirection === "right" && previousOffset === 1) {
-                        // Was offset 1, sliding in from left to center
+                      // Card is transitioning in: start from side, animate to center smoothly
+                      if (swipeDirection === "left" && previousOffset === 1) {
+                        // Swipe left = next card: was offset 1, sliding in from left to center
                         // Start at left, CSS transition will animate to center when swipeDirection clears
                         return {
                           ...baseStyle,
                           zIndex: 30,
                           transform: "translateX(-100%) translateY(0) scale(1)",
-                          opacity: 0,
+                          opacity: 0.3, // Start with some visibility for smoother transition
                         };
-                      } else if (swipeDirection === "left" && previousOffset === -1) {
-                        // Was offset -1, sliding in from right to center
+                      } else if (swipeDirection === "right" && previousOffset === -1) {
+                        // Swipe right = previous card: was offset -1, sliding in from right to center
                         // Start at right, CSS transition will animate to center when swipeDirection clears
                         return {
                           ...baseStyle,
                           zIndex: 30,
                           transform: "translateX(100%) translateY(0) scale(1)",
-                          opacity: 0,
+                          opacity: 0.3, // Start with some visibility for smoother transition
                         };
                       }
                     }
                     
                     // Current card sliding out or final position
-                    if (swipeDirection === "right" && !isTransitioningIn) {
-                      // Swiping right (next) = current card slides out to the right from center
-                      return {
-                        ...baseStyle,
-                        zIndex: 30,
-                        transform: "translateX(100%) translateY(0) scale(1)",
-                        opacity: 0,
-                      };
-                    } else if (swipeDirection === "left" && !isTransitioningIn) {
-                      // Swiping left (previous) = current card slides out to the left from center
+                    if (swipeDirection === "left" && !isTransitioningIn) {
+                      // Swiping left = next card: current card slides out to the left
                       return {
                         ...baseStyle,
                         zIndex: 30,
                         transform: "translateX(-100%) translateY(0) scale(1)",
-                        opacity: 0,
+                        opacity: 0.2, // Keep some visibility for smoother transition
+                      };
+                    } else if (swipeDirection === "right" && !isTransitioningIn) {
+                      // Swiping right = previous card: current card slides out to the right
+                      return {
+                        ...baseStyle,
+                        zIndex: 30,
+                        transform: "translateX(100%) translateY(0) scale(1)",
+                        opacity: 0.2, // Keep some visibility for smoother transition
                       };
                     } else {
                       // No swipe direction or animation complete = normal position
@@ -623,18 +621,8 @@ export function AdminResponsiveTable<T>({
                         opacity: 1,
                       };
                     }
-                  } else if (offset === 1 && swipeDirection === "right" && previousOffset === 0) {
-                    // Previous current card sliding out to the right when going to next
-                    // Side-by-side: same Y level
-                    return {
-                      ...baseStyle,
-                      zIndex: 5,
-                      transform: "translateX(100%) translateY(0) scale(0.9)",
-                      opacity: 0,
-                      pointerEvents: "none" as const,
-                    };
-                  } else if (offset === -1 && swipeDirection === "left" && previousOffset === 0) {
-                    // Previous current card sliding out to the left when going to previous
+                  } else if (offset === 1 && swipeDirection === "left" && previousOffset === 0) {
+                    // Swipe left = next: previous current card sliding out to the left
                     // Side-by-side: same Y level
                     return {
                       ...baseStyle,
@@ -643,24 +631,31 @@ export function AdminResponsiveTable<T>({
                       opacity: 0,
                       pointerEvents: "none" as const,
                     };
+                  } else if (offset === -1 && swipeDirection === "right" && previousOffset === 0) {
+                    // Swipe right = previous: previous current card sliding out to the right
+                    // Side-by-side: same Y level
+                    return {
+                      ...baseStyle,
+                      zIndex: 5,
+                      transform: "translateX(100%) translateY(0) scale(0.9)",
+                      opacity: 0,
+                      pointerEvents: "none" as const,
+                    };
                   } else if (offset === 1) {
-                    // Next card - move exactly like phone homescreen (side-by-side, immediate response)
-                    // Start moving immediately when dragging starts (even with tiny movement)
+                    // Next card - natural side-by-side movement
                     if (isDragging && dragOffsetX < 0) {
                       // Dragging left (swiping to next): next card comes in from left
-                      // The next card moves exactly opposite to current card movement
-                      // If current card moves -100px, next card moves +100px (from -100% to -100% + 100px)
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const absDragX = Math.abs(dragOffsetX);
                       
-                      // Direct pixel-to-pixel mapping: next card moves exactly opposite
+                      // Perfect 1:1 movement - next card moves exactly as current card moves
                       // Next card starts at -100% (completely off-screen left)
                       // As current card moves left by X pixels, next card moves right by X pixels
                       const translateX = -screenWidth + absDragX; // From -100% to 0px
                       
-                      // Opacity increases as card comes in (no scale - like phone homescreen)
+                      // Smooth opacity transition - starts visible earlier
                       const dragPercent = Math.min(absDragX / screenWidth, 1);
-                      const opacity = 0.1 + (dragPercent * 0.9); // From 0.1 to 1
+                      const opacity = 0.3 + (dragPercent * 0.7); // From 0.3 to 1 (starts more visible)
                       
                       // During drag: same Y level (side-by-side), no vertical offset, no scale
                       return {
@@ -672,23 +667,23 @@ export function AdminResponsiveTable<T>({
                       };
                     }
                     
-                    if (swipeDirection === "right" && previousOffset === 1) {
-                      // Currently transitioning in from left to center
-                      // Side-by-side: same Y level
+                    if (swipeDirection === "left" && previousOffset === 1) {
+                      // Swipe left = next: currently transitioning in from left to center
+                      // Side-by-side: same Y level, fully visible
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: "translateX(-100%) translateY(0) scale(0.95)",
-                        opacity: 0.6,
+                        transform: "translateX(-100%) translateY(0) scale(1)",
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
-                    } else if (swipeDirection === "right") {
-                      // Waiting to slide in from left - side-by-side
+                    } else if (swipeDirection === "left") {
+                      // Swipe left = next: waiting to slide in from left - side-by-side
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: "translateX(-100%) translateY(0) scale(0.95)",
-                        opacity: 0.6,
+                        transform: "translateX(-100%) translateY(0) scale(1)",
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
                     } else {
@@ -710,23 +705,20 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card - move exactly like phone homescreen (side-by-side, immediate response)
-                    // Start moving immediately when dragging starts (even with tiny movement)
+                    // Previous card - natural side-by-side movement
                     if (isDragging && dragOffsetX > 0) {
                       // Dragging right (swiping to previous): previous card comes in from right
-                      // The previous card moves exactly opposite to current card movement
-                      // If current card moves +100px, previous card moves -100px (from +100% to +100% - 100px)
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const absDragX = Math.abs(dragOffsetX);
                       
-                      // Direct pixel-to-pixel mapping: previous card moves exactly opposite
+                      // Perfect 1:1 movement - previous card moves exactly as current card moves
                       // Previous card starts at +100% (completely off-screen right)
                       // As current card moves right by X pixels, previous card moves left by X pixels
                       const translateX = screenWidth - absDragX; // From +100% to 0px
                       
-                      // Opacity increases as card comes in (no scale - like phone homescreen)
+                      // Smooth opacity transition - starts visible earlier
                       const dragPercent = Math.min(absDragX / screenWidth, 1);
-                      const opacity = 0.1 + (dragPercent * 0.9); // From 0.1 to 1
+                      const opacity = 0.3 + (dragPercent * 0.7); // From 0.3 to 1 (starts more visible)
                       
                       // During drag: same Y level (side-by-side), no vertical offset, no scale
                       return {
@@ -738,23 +730,23 @@ export function AdminResponsiveTable<T>({
                       };
                     }
                     
-                    if (swipeDirection === "left" && previousOffset === -1) {
-                      // Currently transitioning in from right to center
-                      // Side-by-side: same Y level
+                    if (swipeDirection === "right" && previousOffset === -1) {
+                      // Swipe right = previous: currently transitioning in from right to center
+                      // Side-by-side: same Y level, fully visible
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: "translateX(100%) translateY(0) scale(0.95)",
-                        opacity: 0.6,
+                        transform: "translateX(100%) translateY(0) scale(1)",
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
-                    } else if (swipeDirection === "left") {
-                      // Waiting to slide in from right - side-by-side
+                    } else if (swipeDirection === "right") {
+                      // Swipe right = previous: waiting to slide in from right - side-by-side
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: "translateX(100%) translateY(0) scale(0.95)",
-                        opacity: 0.6,
+                        transform: "translateX(100%) translateY(0) scale(1)",
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
                     } else {
@@ -986,11 +978,12 @@ export function AdminResponsiveTable<T>({
                             setSwipedCardId(itemId);
                             setDragOffsetX(0);
                           } 
-                          // Right swipe (diffX < 0) = navigate to next card (infinite)
+                          // Swipe left (diffX < 0) = navigate to next card (infinite)
+                          // Current card goes left, next card comes from left
                           else if (diffX < -SWIPE_THRESHOLD || (diffX < -QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
                             // Set swipe direction for animation
                             e.preventDefault();
-                            setSwipeDirection("right");
+                            setSwipeDirection("left"); // Swipe left = next card
                             // Navigate to next card (infinite loop)
                             if (currentMobileIndex === filteredData.length - 1) {
                               updateMobileIndex(0); // Loop to first
@@ -999,8 +992,8 @@ export function AdminResponsiveTable<T>({
                             }
                             setSwipedCardId(null);
                             setDragOffsetX(0);
-                            // Reset swipe direction after animation
-                            setTimeout(() => setSwipeDirection(null), 350);
+                            // Reset swipe direction after animation (match transition duration)
+                            setTimeout(() => setSwipeDirection(null), 400);
                           } 
                           // Small right swipe = close actions only
                           else if (diffX < -30 && diffX > -SWIPE_THRESHOLD) {
