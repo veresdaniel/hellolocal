@@ -431,6 +431,21 @@
       "deleteEvent": "Biztosan törölni szeretnéd ezt az eseményt?",
       "disable2FA": "Biztosan letiltod a 2FA-t ennél a felhasználónál?"
     },
+    "messages": {
+      "categoryCreated": "Kategória sikeresen létrehozva",
+      "categoryUpdated": "Kategória sikeresen frissítve",
+      "categoryDeleted": "Kategória sikeresen törölve",
+      "categoriesReordered": "Kategóriák sikeresen újrarendezve",
+      "tagCreated": "Címke sikeresen létrehozva",
+      "tagUpdated": "Címke sikeresen frissítve",
+      "tagDeleted": "Címke sikeresen törölve",
+      "placeCreated": "Hely sikeresen létrehozva",
+      "placeUpdated": "Hely sikeresen frissítve",
+      "placeDeleted": "Hely sikeresen törölve",
+      "priceBandCreated": "Ár szint sikeresen létrehozva",
+      "priceBandUpdated": "Ár szint sikeresen frissítve",
+      "priceBandDeleted": "Ár szint sikeresen törölve"
+    },
     "fields": {
       "firstName": "Keresztnév",
       "lastName": "Vezetéknév",

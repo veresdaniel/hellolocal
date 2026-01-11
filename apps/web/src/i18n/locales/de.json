@@ -381,6 +381,21 @@
       "deleteEvent": "Möchten Sie diese Veranstaltung wirklich löschen?",
       "disable2FA": "Möchten Sie 2FA für diesen Benutzer wirklich deaktivieren?"
     },
+    "messages": {
+      "categoryCreated": "Kategorie erfolgreich erstellt",
+      "categoryUpdated": "Kategorie erfolgreich aktualisiert",
+      "categoryDeleted": "Kategorie erfolgreich gelöscht",
+      "categoriesReordered": "Kategorien erfolgreich neu sortiert",
+      "tagCreated": "Tag erfolgreich erstellt",
+      "tagUpdated": "Tag erfolgreich aktualisiert",
+      "tagDeleted": "Tag erfolgreich gelöscht",
+      "placeCreated": "Ort erfolgreich erstellt",
+      "placeUpdated": "Ort erfolgreich aktualisiert",
+      "placeDeleted": "Ort erfolgreich gelöscht",
+      "priceBandCreated": "Preisklasse erfolgreich erstellt",
+      "priceBandUpdated": "Preisklasse erfolgreich aktualisiert",
+      "priceBandDeleted": "Preisklasse erfolgreich gelöscht"
+    },
     "fields": {
       "firstName": "Vorname",
       "lastName": "Nachname",

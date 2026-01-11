@@ -387,6 +387,21 @@
       "deleteEvent": "Are you sure you want to delete this event?",
       "disable2FA": "Are you sure you want to disable 2FA for this user?"
     },
+    "messages": {
+      "categoryCreated": "Category successfully created",
+      "categoryUpdated": "Category successfully updated",
+      "categoryDeleted": "Category successfully deleted",
+      "categoriesReordered": "Categories successfully reordered",
+      "tagCreated": "Tag successfully created",
+      "tagUpdated": "Tag successfully updated",
+      "tagDeleted": "Tag successfully deleted",
+      "placeCreated": "Place successfully created",
+      "placeUpdated": "Place successfully updated",
+      "placeDeleted": "Place successfully deleted",
+      "priceBandCreated": "Price band successfully created",
+      "priceBandUpdated": "Price band successfully updated",
+      "priceBandDeleted": "Price band successfully deleted"
+    },
     "fields": {
       "firstName": "First Name",
       "lastName": "Last Name",
