@@ -1,5 +1,5 @@
 // src/pages/StaticPagesListPage.tsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
@@ -14,12 +14,27 @@ export function StaticPagesListPage() {
   const { t } = useTranslation();
   const { lang, tenantSlug } = useTenantContext();
   const [selectedCategory, setSelectedCategory] = useState<"blog" | "tudastar" | "infok" | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   const { data: staticPages = [], isLoading, isError } = useQuery({
     queryKey: ["staticPages", lang, tenantKey, selectedCategory],
     queryFn: () => getStaticPages(lang, tenantKey, selectedCategory === "all" ? undefined : selectedCategory),
   });
+
+  // Filter static pages by search query
+  const filteredStaticPages = useMemo(() => {
+    if (!searchQuery.trim()) return staticPages;
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    return staticPages.filter((page) => {
+      const titleMatch = page.title.toLowerCase().includes(lowerQuery);
+      // Strip HTML tags for content search
+      const contentText = page.content.replace(/<[^>]*>/g, " ").toLowerCase();
+      const contentMatch = contentText.includes(lowerQuery);
+      return titleMatch || contentMatch;
+    });
+  }, [staticPages, searchQuery]);
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
@@ -114,6 +129,38 @@ export function StaticPagesListPage() {
           >
             {t("public.staticPages.title")}
           </h1>
+
+          {/* Search Bar */}
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="text"
+              placeholder={t("public.searchPlaces") || "Keresés..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                padding: "14px 20px",
+                fontSize: 16,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
+                border: "2px solid #e0e0e0",
+                borderRadius: 12,
+                background: "white",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                transition: "all 0.2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#667eea";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#e0e0e0";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04)";
+              }}
+            />
+          </div>
 
           {/* Category Filter */}
           <div style={{ marginBottom: 24 }}>
@@ -251,14 +298,14 @@ export function StaticPagesListPage() {
             <div style={{ textAlign: "center", padding: "64px 0", color: "#c00" }}>
               {t("public.errorLoadingPlaces") || "Hiba a statikus oldalak betöltésekor"}
             </div>
-          ) : !isLoading && staticPages.length === 0 ? (
+          ) : !isLoading && filteredStaticPages.length === 0 ? (
             <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
-              {getNoResultsMessage()}
+              {searchQuery ? (t("public.noResults") || "Nincs találat") : getNoResultsMessage()}
             </div>
           ) : isLoading && staticPages.length === 0 ? null : (
             <div className="static-pages-grid">
-              {staticPages.map((staticPage) => (
-                <StaticPageCard key={staticPage.id} staticPage={staticPage} />
+              {filteredStaticPages.map((staticPage, index) => (
+                <StaticPageCard key={staticPage.id} staticPage={staticPage} index={index} />
               ))}
             </div>
           )}

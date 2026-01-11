@@ -1,25 +1,31 @@
-import { useParams } from "react-router-dom";
+// src/pages/StaticPageDetailPage.tsx
 import { useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
-import { useLegalPage } from "../hooks/useLegalPage";
+import { getStaticPage } from "../api/static-pages.api";
+import { getSiteSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
-import { getSiteSettings } from "../api/places.api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FloatingHeader } from "../components/FloatingHeader";
+import { HAS_MULTIPLE_TENANTS } from "../app/config";
 
-type Props = {
-  pageKey: "imprint" | "terms" | "privacy";
-};
-
-export function LegalPage({ pageKey }: Props) {
+export function StaticPageDetailPage() {
   const { t } = useTranslation();
+  const { id } = useParams<{ id: string }>();
   const { lang, tenantSlug } = useTenantContext();
   const safeLang = lang ?? "hu";
 
-  const { data, isLoading, error } = useLegalPage(safeLang, pageKey);
+  // Get tenantKey for API call (only if multi-tenant mode)
+  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+
+  const { data: staticPage, isLoading, error } = useQuery({
+    queryKey: ["staticPage", safeLang, id, tenantKey],
+    queryFn: () => getStaticPage(safeLang, id!, tenantKey),
+    enabled: !!id,
+  });
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
@@ -34,31 +40,30 @@ export function LegalPage({ pageKey }: Props) {
     return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   };
 
-  const pageUrl = window.location.href;
-  const siteUrl = window.location.origin;
+  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-  // Use SEO from data if available, otherwise use i18n fallback
-  const seo = data?.seo ? {
-    ...data.seo,
-    // Ensure keywords are included
-    keywords: data.seo.keywords || [],
+  // Use SEO from data if available, otherwise use fallback
+  const seo = staticPage?.seo ? {
+    ...staticPage.seo,
+    keywords: staticPage.seo.keywords || [],
     og: {
-      type: "article",
-      title: data.seo.og?.title || data.seo.title,
-      description: data.seo.og?.description || data.seo.description,
-      image: data.seo.og?.image || data.seo.image,
+      type: "article" as const,
+      title: staticPage.seo.og?.title || staticPage.seo.title,
+      description: staticPage.seo.og?.description || staticPage.seo.description,
+      image: staticPage.seo.og?.image || staticPage.seo.image,
     },
     twitter: {
-      card: data.seo.image ? "summary_large_image" as const : "summary" as const,
-      title: data.seo.twitter?.title || data.seo.title,
-      description: data.seo.twitter?.description || data.seo.description,
-      image: data.seo.twitter?.image || data.seo.image,
+      card: staticPage.seo.image ? "summary_large_image" as const : "summary" as const,
+      title: staticPage.seo.twitter?.title || staticPage.seo.title,
+      description: staticPage.seo.twitter?.description || staticPage.seo.description,
+      image: staticPage.seo.twitter?.image || staticPage.seo.image,
     },
     schemaOrg: {
       type: "WebPage" as const,
       data: {
-        name: data.seo.title || data.title,
-        description: stripHtml(data.seo.description),
+        name: staticPage.seo.title || staticPage.title,
+        description: stripHtml(staticPage.seo.description),
         url: pageUrl,
         inLanguage: safeLang,
         isPartOf: siteSettings?.siteName
@@ -70,19 +75,19 @@ export function LegalPage({ pageKey }: Props) {
       },
     },
   } : {
-    title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-    description: siteSettings?.seoDescription || "",
+    title: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+    description: siteSettings?.seoDescription || stripHtml(staticPage?.content) || "",
     keywords: [],
     og: {
       type: "article" as const,
-      title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-      description: siteSettings?.seoDescription || "",
+      title: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+      description: siteSettings?.seoDescription || stripHtml(staticPage?.content) || "",
     },
     schemaOrg: {
       type: "WebPage" as const,
       data: {
-        name: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-        description: stripHtml(siteSettings?.seoDescription),
+        name: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+        description: stripHtml(siteSettings?.seoDescription || staticPage?.content),
         url: pageUrl,
         inLanguage: safeLang,
         isPartOf: siteSettings?.siteName
@@ -150,14 +155,18 @@ export function LegalPage({ pageKey }: Props) {
     };
 
     makeMediaResponsive(contentRef.current);
-  }, [data?.content]);
+  }, [staticPage?.content]);
 
-  if (error || !data) {
+  if (error || (!isLoading && !staticPage)) {
     return (
       <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
         <p>{t("public.errorLoadingPlace")}</p>
       </div>
     );
+  }
+
+  if (!staticPage) {
+    return <LoadingSpinner isLoading={true} />;
   }
 
   return (
@@ -188,7 +197,7 @@ export function LegalPage({ pageKey }: Props) {
               lineHeight: 1.3,
             }}
           >
-            {data.title}
+            {staticPage.title}
           </h1>
           <div
             ref={contentRef}
@@ -197,7 +206,7 @@ export function LegalPage({ pageKey }: Props) {
               lineHeight: 1.8,
               color: "#333",
             }}
-            dangerouslySetInnerHTML={{ __html: data.content }}
+            dangerouslySetInnerHTML={{ __html: staticPage.content }}
           />
         </article>
       </div>

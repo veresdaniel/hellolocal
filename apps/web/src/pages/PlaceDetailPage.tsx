@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -58,6 +58,63 @@ export function PlaceDetailPage() {
       window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
     };
   }, [lang, tenantSlug, queryClient]);
+
+  // Refs for HTML content containers
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const addressRef = useRef<HTMLDivElement>(null);
+  const accessibilityRef = useRef<HTMLDivElement>(null);
+
+  // Make images and videos responsive in HTML content
+  useEffect(() => {
+    const makeMediaResponsive = (container: HTMLElement | null) => {
+      if (!container) return;
+      
+      // Make all images responsive
+      const images = container.querySelectorAll("img");
+      images.forEach((img) => {
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+        img.style.display = "block";
+        img.style.margin = "16px auto";
+      });
+      
+      // Make all videos responsive
+      const videos = container.querySelectorAll("video");
+      videos.forEach((video) => {
+        video.style.maxWidth = "100%";
+        video.style.height = "auto";
+        video.style.display = "block";
+        video.style.margin = "16px auto";
+      });
+      
+      // Make iframes responsive (for embedded videos)
+      const iframes = container.querySelectorAll("iframe");
+      iframes.forEach((iframe) => {
+        iframe.style.maxWidth = "100%";
+        iframe.style.height = "auto";
+        iframe.style.display = "block";
+        iframe.style.margin = "16px auto";
+        // Maintain aspect ratio for iframes (16:9)
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+        wrapper.style.paddingBottom = "56.25%"; // 16:9 aspect ratio
+        wrapper.style.height = "0";
+        wrapper.style.overflow = "hidden";
+        wrapper.style.margin = "16px auto";
+        iframe.style.position = "absolute";
+        iframe.style.top = "0";
+        iframe.style.left = "0";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.parentNode?.insertBefore(wrapper, iframe);
+        wrapper.appendChild(iframe);
+      });
+    };
+
+    makeMediaResponsive(descriptionRef.current);
+    makeMediaResponsive(addressRef.current);
+    makeMediaResponsive(accessibilityRef.current);
+  }, [place?.description, place?.contact?.address, place?.accessibility]);
 
   const seo = useMemo(() => {
     if (!place) {
@@ -235,6 +292,7 @@ export function PlaceDetailPage() {
           {/* Description */}
           {place.description && (
             <div
+              ref={descriptionRef}
               style={{
                 fontSize: 18,
                 lineHeight: 1.8,
@@ -298,6 +356,7 @@ export function PlaceDetailPage() {
                       {t("public.address")}
                     </strong>
                     <div
+                      ref={addressRef}
                       style={{ color: "white", fontSize: 16, lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
                       dangerouslySetInnerHTML={{ __html: place.contact.address }}
                     />
@@ -526,29 +585,29 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
-                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
-                margin: "0 16px 32px",
+                padding: "clamp(12px, 3vw, 20px)",
+                borderRadius: 12,
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                margin: "0 16px 24px",
                 border: "1px solid rgba(102, 126, 234, 0.1)",
               }}
             >
               <h3
                 style={{
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: 600,
                   fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#1a1a1a",
-                  marginBottom: 16,
+                  marginBottom: 12,
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
+                  gap: 8,
                 }}
               >
-                <span style={{ fontSize: 22 }}>🕐</span>
+                <span style={{ fontSize: 18 }}>🕐</span>
                 {t("public.openingHours")}
               </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {place.openingHours.map((oh, index) => {
                   const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
                   const isToday = (() => {
@@ -564,9 +623,9 @@ export function PlaceDetailPage() {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        padding: "12px 16px",
+                        padding: "8px 12px",
                         background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
-                        borderRadius: 8,
+                        borderRadius: 6,
                         border: isToday ? "1px solid rgba(102, 126, 234, 0.2)" : "1px solid transparent",
                       }}
                     >
@@ -575,15 +634,15 @@ export function PlaceDetailPage() {
                           fontWeight: isToday ? 500 : 400,
                           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           color: isToday ? "#667eea" : "#333",
-                          fontSize: 16,
+                          fontSize: 14,
                         }}
                       >
                         {dayName}
                         {isToday && (
                           <span
                             style={{
-                              marginLeft: 8,
-                              fontSize: 12,
+                              marginLeft: 6,
+                              fontSize: 11,
                               color: "#667eea",
                               fontWeight: 500,
                               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -596,7 +655,7 @@ export function PlaceDetailPage() {
                       <span
                         style={{
                           color: oh.isClosed ? "#999" : "#333",
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: 400,
                           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
@@ -646,6 +705,7 @@ export function PlaceDetailPage() {
                 {t("public.accessibility")}
               </h3>
               <div
+                ref={accessibilityRef}
                 style={{ color: "#333", fontSize: 16, lineHeight: 1.8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
                 dangerouslySetInnerHTML={{ __html: place.accessibility }}
               />

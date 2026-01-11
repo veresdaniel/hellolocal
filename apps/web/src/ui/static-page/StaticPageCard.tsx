@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTenantContext } from "../../app/tenant/useTenantContext";
 import { buildPath } from "../../app/routing/buildPath";
+import { useTranslation } from "react-i18next";
+import { getSiteSettings } from "../../api/places.api";
+import { sanitizeImageUrl } from "../../utils/urlValidation";
+import { Badge } from "../../components/Badge";
 import type { StaticPage } from "../../api/static-pages.api";
 
 interface StaticPageCardProps {
   staticPage: StaticPage;
+  index?: number;
 }
 
 function getCategoryLabel(category: string): string {
@@ -33,46 +39,25 @@ function getCategoryColor(category: string): string {
   }
 }
 
-export function StaticPageCard({ staticPage }: StaticPageCardProps) {
+export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
   const { lang, tenantSlug } = useTenantContext();
+  const { t } = useTranslation();
   const categoryColor = getCategoryColor(staticPage.category);
   const categoryLabel = getCategoryLabel(staticPage.category);
 
-  // Strip HTML tags for preview
-  const textContent = staticPage.content.replace(/<[^>]*>/g, "").trim();
-  const preview = textContent.length > 150 ? textContent.substring(0, 150) + "..." : textContent;
+  // Load site settings for default placeholder image
+  const { data: siteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
-  return (
-    <Link
-      to={buildPath({ tenantSlug, lang, path: `static-page/${staticPage.id}` })}
-      style={{
-        display: "block",
-        textDecoration: "none",
-        color: "inherit",
-        background: "white",
-        borderRadius: 12,
-        overflow: "hidden",
-        border: "1px solid #e0e0e0",
-        transition: "all 0.3s ease",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
-        const readMore = e.currentTarget.querySelector(".card-read-more") as HTMLElement;
-        if (readMore) {
-          readMore.style.transform = "translateX(4px)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
-        const readMore = e.currentTarget.querySelector(".card-read-more") as HTMLElement;
-        if (readMore) {
-          readMore.style.transform = "translateX(0)";
-        }
-      }}
-    >
+  // Use default placeholder image if available
+  const imageUrl = sanitizeImageUrl(siteSettings?.defaultPlaceholderCardImage) || null;
+
+  // Common article content
+  const articleContent = (
+    <>
       <div
         style={{
           width: "100%",
@@ -82,31 +67,48 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
           position: "relative",
         }}
       >
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={staticPage.title}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transition: "transform 0.4s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          />
+        )}
         {/* Category badge overlay on image */}
         <div
           style={{
             position: "absolute",
             top: 12,
             right: 12,
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(8px)",
-            padding: "6px 14px",
-            borderRadius: 20,
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
             zIndex: 10,
           }}
         >
-          <span
+          <Badge
+            variant="category"
+            color={categoryColor}
+            backgroundColor="rgba(255, 255, 255, 0.95)"
+            textColor={categoryColor}
+            size="small"
+            uppercase={true}
             style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: categoryColor,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              backdropFilter: "blur(8px)",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
             }}
           >
             {categoryLabel}
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -116,7 +118,8 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
             style={{
               margin: 0,
               fontSize: 20,
-              fontWeight: 700,
+              fontWeight: 600,
+              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#1a1a1a",
               lineHeight: 1.3,
               flex: 1,
@@ -127,20 +130,21 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
           </h3>
         </div>
 
-        {preview && (
+        {staticPage.content && (
           <div
             style={{
               fontSize: 14,
               color: "#666",
               lineHeight: 1.6,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontWeight: 400,
               overflow: "hidden",
               display: "-webkit-box",
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
             }}
-          >
-            {preview}
-          </div>
+            dangerouslySetInnerHTML={{ __html: staticPage.content }}
+          />
         )}
 
         {/* Footer: Link button */}
@@ -159,11 +163,12 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
               gap: 8,
               color: categoryColor,
               fontSize: 14,
-              fontWeight: 600,
+              fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
             }}
           >
-            <span>Tovább</span>
+            <span>{t("public.open") || "Tovább"}</span>
             <span
               style={{
                 transition: "transform 0.3s ease",
@@ -175,7 +180,65 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </>
+  );
+
+  return (
+    <div
+      style={{
+        opacity: 0,
+        transform: "translateY(20px)",
+        animation: `fadeInUp 0.6s ease-out ${index * 0.1}s forwards`,
+      }}
+    >
+      <style>{`
+        @keyframes fadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        article:hover .card-read-more span:last-child {
+          transform: translateX(4px);
+        }
+      `}</style>
+      <Link
+        to={buildPath({ tenantSlug, lang, path: `static-page/${staticPage.id}` })}
+        style={{
+          textDecoration: "none",
+          color: "inherit",
+          display: "block",
+        }}
+      >
+        <article
+          style={{
+            background: "white",
+            borderRadius: 16,
+            overflow: "hidden",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            cursor: "pointer",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            borderBottom: `3px solid ${categoryColor}`,
+            position: "relative",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
+            e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.15)";
+            e.currentTarget.style.borderBottomWidth = "4px";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0) scale(1)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+            e.currentTarget.style.borderBottomWidth = "3px";
+          }}
+        >
+          {articleContent}
+        </article>
+      </Link>
+    </div>
   );
 }
 

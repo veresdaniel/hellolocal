@@ -1,5 +1,5 @@
 // src/pages/EventDetailPage.tsx
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -58,6 +58,59 @@ export function EventDetailPage() {
       window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
     };
   }, [lang, tenantSlug, queryClient]);
+
+  // Ref for HTML content container
+  const descriptionRef = useRef<HTMLDivElement>(null);
+
+  // Make images and videos responsive in HTML content
+  useEffect(() => {
+    const makeMediaResponsive = (container: HTMLElement | null) => {
+      if (!container) return;
+      
+      // Make all images responsive
+      const images = container.querySelectorAll("img");
+      images.forEach((img) => {
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+        img.style.display = "block";
+        img.style.margin = "16px auto";
+      });
+      
+      // Make all videos responsive
+      const videos = container.querySelectorAll("video");
+      videos.forEach((video) => {
+        video.style.maxWidth = "100%";
+        video.style.height = "auto";
+        video.style.display = "block";
+        video.style.margin = "16px auto";
+      });
+      
+      // Make iframes responsive (for embedded videos)
+      const iframes = container.querySelectorAll("iframe");
+      iframes.forEach((iframe) => {
+        iframe.style.maxWidth = "100%";
+        iframe.style.height = "auto";
+        iframe.style.display = "block";
+        iframe.style.margin = "16px auto";
+        // Maintain aspect ratio for iframes (16:9)
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+        wrapper.style.paddingBottom = "56.25%"; // 16:9 aspect ratio
+        wrapper.style.height = "0";
+        wrapper.style.overflow = "hidden";
+        wrapper.style.margin = "16px auto";
+        iframe.style.position = "absolute";
+        iframe.style.top = "0";
+        iframe.style.left = "0";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.parentNode?.insertBefore(wrapper, iframe);
+        wrapper.appendChild(iframe);
+      });
+    };
+
+    makeMediaResponsive(descriptionRef.current);
+  }, [event?.description]);
 
   const seo = useMemo(() => {
     if (!event) {
@@ -359,6 +412,7 @@ export function EventDetailPage() {
           {/* Description */}
           {event.description && (
             <div
+              ref={descriptionRef}
               style={{
                 fontSize: 16,
                 lineHeight: 1.8,

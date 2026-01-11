@@ -13,6 +13,7 @@ import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
+import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
 import { TenantsListPage } from "../pages/TenantsListPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
@@ -49,6 +50,7 @@ const createPublicRoutes = () => {
     { path: "place/:slug", element: <PlaceDetailPage /> },
     { path: "event/:slug", element: <EventDetailPage /> },
     { path: "static-pages", element: <StaticPagesRouteGuard /> },
+    { path: "static-page/:id", element: <StaticPageDetailPage /> },
     // Tenants page - use language from URL, not from path
     { path: "teruletek", element: <TenantsListPage /> },
     { path: "regions", element: <TenantsListPage /> },
