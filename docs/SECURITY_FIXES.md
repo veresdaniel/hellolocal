@@ -68,15 +68,18 @@ A következő csomagok lettek hozzáadva a `apps/api/package.json`-hoz:
    - ValidationPipe globális beállítás
 
 2. **`apps/api/src/app.module.ts`**
-   - ThrottlerModule konfiguráció
+   - ThrottlerModule konfiguráció (két throttler: "default" 50 kérés/perc, "strict" 5 kérés/perc)
    - ThrottlerGuard globális guard
+   - **Fontos**: Globális limit 50 kérés/perc (növelve frontend betöltéshez, amely egyszerre 7-8 kérést küld)
 
 3. **`apps/api/src/health.controller.ts`**
    - Health check endpoint-ok kizárva a rate limiting alól (`@SkipThrottle()`)
    - Fontos: Render.com health check-ek nem lesznek blokkolva
 
 4. **`apps/api/src/auth/auth.controller.ts`**
-   - Rate limiting dekorátorok minden auth végponton (`@Throttle({ default: { limit, ttl } })`)
+   - Rate limiting dekorátorok minden auth végponton (`@Throttle({ strict: { limit, ttl } })`)
+   - Auth endpoint-ok "strict" throttler-t használnak (5 kérés/perc login-hoz, 3 kérés/perc register/forgot-password-hoz)
+   - Public endpoint-ok a lazább "default" throttler-t használják (50 kérés/perc)
 
 5. **`apps/api/src/auth/strategies/jwt.strategy.ts`**
    - JWT secret production ellenőrzés

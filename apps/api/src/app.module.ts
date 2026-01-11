@@ -24,8 +24,14 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
       {
+        name: "default",
         ttl: 60000, // 1 perc (milliszekundumban)
-        limit: 10, // 10 kérés percenként (globális limit)
+        limit: 50, // 50 kérés percenként (globális limit - növelve frontend betöltéshez)
+      },
+      {
+        name: "strict",
+        ttl: 60000, // 1 perc
+        limit: 5, // 5 kérés percenként (auth endpoint-okhoz)
       },
     ]),
     PrismaModule,

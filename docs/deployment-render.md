@@ -300,7 +300,19 @@ npm install -g pnpm@10.27.0 && ...
 Ha még mindig 429-es hibát kapsz:
 - Ellenőrizd, hogy a legfrissebb kód deploy-olva van (a `health.controller.ts` tartalmazza a `@SkipThrottle()` dekorátorokat)
 - Várd meg 1-2 percet, hogy a rate limit cache lejárjon
-- Ha továbbra is probléma van, növeld meg a rate limit értékét az `app.module.ts`-ben (pl. `limit: 20`)
+
+### 5a. Frontend 429-es hibák (Too Many Requests)
+
+**Probléma**: A frontend betöltéskor sok API kérés 429-es hibát kap.
+
+**Ok**: A frontend betöltéskor egyszerre 7-8 API kérést küld (map-settings, site-settings, events, places, stb.), és a korábbi 10 kérés/perc limit túl szigorú volt.
+
+**Megoldás**: ✅ **JAVÍTVA** - A globális rate limit 10-ről 50-re növelve. Most már a frontend betöltéskor nem lesznek 429-es hibák.
+
+**Rate limiting konfiguráció**:
+- **Public endpoint-ok** (places, events, site-settings, stb.): 50 kérés/perc
+- **Auth endpoint-ok** (login, register, stb.): 5 kérés/perc (brute-force védelem)
+- **Health check endpoint-ok**: Rate limiting kikapcsolva
 
 ### 6. Free Tier "Spins Down" Inaktivitás Után
 

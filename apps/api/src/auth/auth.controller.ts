@@ -22,7 +22,7 @@ export class AuthController {
    * If tenantId is not provided, user is assigned to default tenant.
    */
   @Post("/register")
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 kérés percenként
+  @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
@@ -33,7 +33,7 @@ export class AuthController {
    */
   @Post("/login")
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 kérés percenként (brute-force védelem)
+  @Throttle({ strict: { limit: 5, ttl: 60000 } }) // 5 kérés percenként (brute-force védelem, strict throttler)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -44,7 +44,7 @@ export class AuthController {
    */
   @Post("/forgot-password")
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 kérés percenként
+  @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
@@ -54,7 +54,7 @@ export class AuthController {
    */
   @Post("/reset-password")
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 kérés percenként
+  @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
@@ -64,7 +64,7 @@ export class AuthController {
    */
   @Post("/refresh")
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 kérés percenként (normál használat)
+  @Throttle({ strict: { limit: 10, ttl: 60000 } }) // 10 kérés percenként (normál használat, strict throttler)
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto);
   }
