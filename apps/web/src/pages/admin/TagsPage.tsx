@@ -160,11 +160,9 @@ export function TagsPage() {
       setEditingId(null);
       resetForm();
       await loadTags();
-      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
+      // Invalidate places and events cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       showToast(t("admin.messages.tagUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"), "error");
@@ -177,11 +175,9 @@ export function TagsPage() {
     try {
       await deleteTag(id, selectedTenantId || undefined);
       await loadTags();
-      // Invalidate and refetch places and events cache to refresh place cards, event cards and lists (all languages and filter combinations)
+      // Invalidate places and events cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       showToast(t("admin.messages.tagDeleted"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"), "error");

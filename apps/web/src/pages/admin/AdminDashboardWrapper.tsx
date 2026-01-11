@@ -1,6 +1,6 @@
 // src/pages/admin/AdminDashboardWrapper.tsx
 // Wrapper component to force re-render when user changes
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { AdminDashboard } from "./AdminDashboard";
 
@@ -8,27 +8,25 @@ export function AdminDashboardWrapper() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
   const [renderKey, setRenderKey] = useState(0);
+  const prevUserIdRef = useRef<string | null>(null);
+  const prevUserRoleRef = useRef<string | null>(null);
 
-  // Debug: Log user changes
+  // Force re-render when user ID or role changes (not the entire user object)
+  // This prevents infinite loops if the user object reference changes but content is the same
   useEffect(() => {
-    console.log("[AdminDashboardWrapper] User changed:", user);
-    console.log("[AdminDashboardWrapper] User role:", user?.role);
-    console.log("[AdminDashboardWrapper] Current renderKey:", renderKey);
-  }, [user, renderKey]);
-
-  // Force re-render when user changes (especially after login)
-  // Use the entire user object as dependency to catch any changes
-  useEffect(() => {
-    console.log("[AdminDashboardWrapper] useEffect triggered, user:", user);
-    if (user) {
-      console.log("[AdminDashboardWrapper] Setting new renderKey due to user change");
-      setRenderKey((prev) => {
-        const newKey = prev + 1;
-        console.log("[AdminDashboardWrapper] New renderKey:", newKey);
-        return newKey;
-      });
+    const currentUserId = user?.id || null;
+    const currentUserRole = user?.role || null;
+    
+    // Only update if user ID or role actually changed
+    if (prevUserIdRef.current !== currentUserId || prevUserRoleRef.current !== currentUserRole) {
+      prevUserIdRef.current = currentUserId;
+      prevUserRoleRef.current = currentUserRole;
+      
+      if (user) {
+        setRenderKey((prev) => prev + 1);
+      }
     }
-  }, [user]); // Use entire user object as dependency
+  }, [user?.id, user?.role]); // Only depend on user ID and role, not the entire object
 
   return <AdminDashboard key={renderKey} />;
 }

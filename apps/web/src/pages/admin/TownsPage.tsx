@@ -260,9 +260,8 @@ export function TownsPage() {
       setEditingId(null);
       resetForm();
       await loadTowns();
-      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
+      // Invalidate places cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateTownFailed"));
     }
@@ -274,9 +273,8 @@ export function TownsPage() {
     try {
       await deleteTown(id, selectedTenantId || undefined);
       await loadTowns();
-      // Invalidate and refetch places cache to refresh lists (all languages and filter combinations)
+      // Invalidate places cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteTownFailed"));
     }

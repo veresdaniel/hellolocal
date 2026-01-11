@@ -258,10 +258,18 @@ export function MapComponent({
     
     const handleMouseUp = () => {
       setIsDraggingLocationControl(false);
+      // Reset drag flag after a short delay to allow click to work if no drag occurred
+      setTimeout(() => {
+        setHasDraggedLocationControl(false);
+      }, 100);
     };
     
     const handleTouchEnd = () => {
       setIsDraggingLocationControl(false);
+      // Reset drag flag after a short delay to allow click to work if no drag occurred
+      setTimeout(() => {
+        setHasDraggedLocationControl(false);
+      }, 100);
     };
     
     document.addEventListener("mousemove", handleMouseMove);
@@ -576,6 +584,14 @@ export function MapComponent({
     }
   }, [markers, selectedMarkerId]);
 
+  // Clear selected marker when geolocation is disabled
+  useEffect(() => {
+    if (!showUserLocation && selectedMarkerId) {
+      setSelectedMarkerId(null);
+      setRoutes([]);
+      lastRouteFetchPosition.current = null;
+    }
+  }, [showUserLocation, selectedMarkerId]);
 
   // Calculate distances for markers
   // ONLY use route distance from API - don't show straight-line distance
@@ -1131,10 +1147,11 @@ export function MapComponent({
               e.preventDefault(); // Prevent text selection
             }
           } : undefined}
-          onClick={!isDesktop ? (e) => {
-            // On mobile: make entire badge clickable by toggling checkbox programmatically
-            // This gives a much larger tap target
-            if (hasDraggedLocationControl) {
+          onClick={(e) => {
+            // Make entire label area clickable on both mobile and desktop
+            // This gives a much larger tap/click target
+            // Only toggle if user didn't drag (hasDraggedLocationControl is checked in mouseUp/touchEnd)
+            if (hasDraggedLocationControl || isDraggingLocationControl) {
               // If user was dragging, don't toggle
               return;
             }
@@ -1145,7 +1162,7 @@ export function MapComponent({
               e.stopPropagation();
               checkbox.click(); // Trigger checkbox click which will fire onChange
             }
-          } : undefined}
+          }}
         >
           <div 
             style={{ position: "relative", display: "inline-block" }}

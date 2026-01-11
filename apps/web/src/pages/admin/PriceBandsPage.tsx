@@ -160,9 +160,8 @@ export function PriceBandsPage() {
       setEditingId(null);
       resetForm();
       await loadPriceBands();
-      // Invalidate and refetch places cache to refresh filters and lists (all languages and filter combinations)
+      // Invalidate places cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       showToast(t("admin.messages.priceBandUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"), "error");
@@ -175,9 +174,8 @@ export function PriceBandsPage() {
     try {
       await deletePriceBand(id, selectedTenantId || undefined);
       await loadPriceBands();
-      // Invalidate and refetch places cache to refresh filters and lists (all languages and filter combinations)
+      // Invalidate places cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       showToast(t("admin.messages.priceBandDeleted"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"), "error");

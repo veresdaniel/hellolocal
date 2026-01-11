@@ -290,9 +290,8 @@ export function EventsPage() {
       setEditingId(null);
       resetForm();
       await loadData();
-      // Invalidate and refetch events cache to refresh lists (all languages and tenant combinations)
+      // Invalidate events cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       // Invalidate individual event cache (all languages)
       await queryClient.invalidateQueries({ queryKey: ["event"] });
     } catch (err) {

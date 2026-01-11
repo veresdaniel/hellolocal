@@ -289,7 +289,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 tenantIds: freshUser.tenants?.map((ut: { tenantId: string }) => ut.tenantId) || [],
               };
               localStorage.setItem("user", JSON.stringify(userData));
-              setUser(userData);
+              
+              // Only update user state if data actually changed (prevent unnecessary re-renders)
+              setUser((prevUser) => {
+                if (!prevUser || 
+                    prevUser.id !== userData.id || 
+                    prevUser.role !== userData.role ||
+                    JSON.stringify(prevUser.tenantIds) !== JSON.stringify(userData.tenantIds)) {
+                  return userData;
+                }
+                // Data is the same, return previous reference to prevent re-render
+                return prevUser;
+              });
             })
             .catch((err) => {
               console.error("Failed to refresh user data", err);
@@ -297,7 +308,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // For other errors, keep the stored user if it exists and role is valid
               if (err.message !== "Unauthorized - session expired" && parsedUser?.role) {
                 parsedUser.role = parsedUser.role.toLowerCase();
-                setUser(parsedUser);
+                // Only update if user actually changed
+                setUser((prevUser) => {
+                  if (!prevUser || prevUser.id !== parsedUser.id || prevUser.role !== parsedUser.role) {
+                    return parsedUser;
+                  }
+                  return prevUser;
+                });
               } else {
                 // Clear user if unauthorized or no valid stored user
                 setUser(null);

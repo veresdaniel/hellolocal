@@ -13,61 +13,50 @@ export function useAdminCache() {
   useEffect(() => {
     const handlePlacesChanged = async () => {
       // Invalidate all places-related caches (including public API caches)
-      // This will force refetch of all places queries regardless of filters or tenant
+      // invalidateQueries already triggers refetch for active queries, no need for separate refetchQueries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["place"] });
       // Events can be linked to places, so invalidate events too
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       await queryClient.invalidateQueries({ queryKey: ["event"] });
     };
 
     const handleEventsChanged = async () => {
       // Invalidate all events-related caches
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       await queryClient.invalidateQueries({ queryKey: ["event"] });
     };
 
     const handleCategoriesChanged = async () => {
       // Categories affect places and events
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
     };
 
     const handleTownsChanged = async () => {
       // Towns affect places
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
     };
 
     const handlePriceBandsChanged = async () => {
       // Price bands affect places
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
     };
 
     const handleTagsChanged = async () => {
       // Tags affect places and events
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
     };
 
     const handleSiteSettingsChanged = async () => {
       // Site settings affect public pages
       await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
-      await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
     };
 
     const handleMapSettingsChanged = async () => {
       // Map settings affect map display
       await queryClient.invalidateQueries({ queryKey: ["mapSettings"] });
-      await queryClient.refetchQueries({ queryKey: ["mapSettings"] });
     };
 
     // Register event listeners

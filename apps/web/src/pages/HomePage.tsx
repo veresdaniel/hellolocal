@@ -77,9 +77,8 @@ export function HomePage() {
   // Listen for place changes from admin panel to refresh map view
   useEffect(() => {
     const handlePlacesChanged = async () => {
-      // Invalidate and refetch places cache to show new places on map
+      // Invalidate places cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
     };
 
     window.addEventListener("admin:places:changed", handlePlacesChanged);
@@ -142,19 +141,16 @@ export function HomePage() {
       selectedCategories.length > 0 ? selectedCategories : undefined,
       selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
-    staleTime: 0, // Always consider data stale to ensure fresh data
+    staleTime: 60 * 1000, // Consider data fresh for 60 seconds
     refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true, // Refetch when component mounts
-    refetchInterval: 30 * 1000, // Refetch every 30 seconds in background
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes in background (reduced from 30s)
     retry: false, // Don't retry on error (404 is expected for some languages)
-    // Remove placeholderData to ensure fresh data is always shown
-    // placeholderData can cause stale data to persist
   });
   
 
   // Get user location - always try to get it if available, not just for filter
   const [locationPermission, setLocationPermission] = useState<"prompt" | "granted" | "denied">("prompt");
-  const watchIdRef = useRef<number | null>(null);
   const hasRequestedLocation = useRef(false);
   
   // Wait for store to hydrate before using userLocation
@@ -189,13 +185,9 @@ export function HomePage() {
   
   // Clear userLocation when showUserLocation is disabled
   // Or restore it from localStorage when enabled
+  // NOTE: watchPosition is handled entirely by MapComponent to prevent duplicate watches and infinite loops
   useEffect(() => {
     if (!showUserLocation) {
-      // Clear any existing watch
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
       // Reset hasRequestedLocation so we can request again when enabled
       hasRequestedLocation.current = false;
       // Clear userLocation from store when disabled
@@ -219,52 +211,13 @@ export function HomePage() {
     }
   }, [showUserLocation, setUserLocation]);
   
-  // Note: Geolocation is now handled by MapComponent checkbox onChange (user gesture context)
-  // This effect only watches for updates if we already have a location
+  // Update locationPermission when userLocation changes (for UI feedback)
+  // This doesn't trigger watchPosition, just updates permission state
   useEffect(() => {
-    if (!navigator.geolocation || !showUserLocation) {
-      return;
+    if (userLocation && typeof userLocation.lat === "number" && typeof userLocation.lng === "number") {
+      setLocationPermission("granted");
     }
-    
-    // Only watch for updates if we already have a userLocation
-    // Don't request new location here - MapComponent handles that in user gesture context
-    const storeState = useFiltersStore.getState();
-    const currentUserLocation = userLocation || storeState.userLocation;
-    
-    if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
-      // Only start watching if we're not already watching
-      if (watchIdRef.current === null) {
-        setLocationPermission("granted");
-        // Start watching for updates
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (updatedPosition) => {
-            setUserLocation({
-              lat: updatedPosition.coords.latitude,
-              lng: updatedPosition.coords.longitude,
-            });
-          },
-          (error) => {
-            if (error.code === error.PERMISSION_DENIED) {
-              setLocationPermission("denied");
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 30000,
-            timeout: 10000,
-          }
-        );
-      }
-    }
-    
-    // Cleanup watch on unmount
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
-  }, [userLocation, setUserLocation, showUserLocation, _hasHydrated]);
+  }, [userLocation]);
 
   // Also handle within30Minutes filter requirement
   useEffect(() => {

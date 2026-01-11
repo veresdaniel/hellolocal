@@ -184,11 +184,9 @@ export function CategoriesPage() {
       setEditingId(null);
       resetForm();
       await loadCategories();
-      // Invalidate and refetch places and events cache to refresh filters and lists (all languages and filter combinations)
+      // Invalidate places and events cache - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
-      await queryClient.refetchQueries({ queryKey: ["events"] });
       showToast(t("admin.messages.categoryUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"), "error");
