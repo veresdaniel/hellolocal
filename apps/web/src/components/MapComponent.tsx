@@ -237,6 +237,7 @@ export function MapComponent({
     
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
+      e.preventDefault(); // Prevent scroll only during drag
       const touch = e.touches[0];
       const moved = Math.abs(touch.clientX - dragStartPosLocationControlRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosLocationControlRef.current.y) > 5;
       if (moved) {
@@ -265,8 +266,9 @@ export function MapComponent({
     
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+    // Use passive: false only during actual drag to prevent scroll
     document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
     
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
@@ -611,18 +613,12 @@ export function MapComponent({
   //   - Second click on same marker: navigates to place detail page
   const handleMarkerClick = useCallback((marker: typeof markersWithDistance[0], event: React.MouseEvent | React.TouchEvent) => {
     event.stopPropagation(); // Prevent map click
-    event.preventDefault(); // Prevent default behavior
+    // Don't preventDefault - it can block navigation
     
     if (!showUserLocation) {
       // If user location is disabled, navigate immediately on first click
       if (marker.onClick) {
-        setTimeout(() => {
-          try {
-            marker.onClick();
-          } catch (error) {
-            console.error("Error during navigation:", error);
-          }
-        }, 0);
+        marker.onClick();
       }
       return;
     }
@@ -631,13 +627,7 @@ export function MapComponent({
     if (selectedMarkerId === marker.id) {
       // Second click on same marker - navigate (only if onClick exists)
       if (marker.onClick) {
-        setTimeout(() => {
-          try {
-            marker.onClick();
-          } catch (error) {
-            console.error("Error during navigation:", error);
-          }
-        }, 0);
+        marker.onClick();
       }
     } else {
       // Click on different marker (or first click if no marker selected) - switch immediately
@@ -927,12 +917,11 @@ export function MapComponent({
                 }}
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent map click
-                  e.preventDefault(); // Prevent default
                   handleMarkerClick(marker, e as any);
                 }}
                 onTouchEnd={(e) => {
                   e.stopPropagation(); // Prevent map click
-                  e.preventDefault(); // Prevent default
+                  // Don't preventDefault - it blocks navigation on second tap
                   handleMarkerClick(marker, e as any);
                 }}
                 onMouseDown={(e) => {
@@ -1251,6 +1240,10 @@ export function MapComponent({
                   }
                   setShowUserLocation(false);
                   setUserLocation(null);
+                  // Clear selected marker and routes
+                  setSelectedMarkerId(null);
+                  setRoutes([]);
+                  lastRouteFetchPosition.current = null;
                 }
               }}
               onClick={(e) => {

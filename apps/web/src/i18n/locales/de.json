@@ -185,6 +185,7 @@
     "role": "Rolle",
     "noTenants": "Keine Gebiete verfügbar",
     "sessionExpiring": "Sitzung läuft ab",
+    "sessionExpired": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
     "defaultLanguage": "Standardsprache",
     "defaultLanguageDescription": "Diese Sprache wird die Standardsprache für sowohl die öffentliche als auch die Admin-Oberfläche sein.",
     "languageNames": {

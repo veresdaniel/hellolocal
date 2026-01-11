@@ -361,6 +361,8 @@ model PlaceTranslation {
   phone           String?
   email           String?
   website         String?
+  facebook        String? // Facebook page URL
+  whatsapp        String? // WhatsApp number or link
 
   openingHours    String? // HTML
   accessibility   String? // HTML

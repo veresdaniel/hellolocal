@@ -111,11 +111,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0 }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflow: "hidden" }}>
       <style>{`
         body {
           margin: 0 !important;
           padding: 0 !important;
+          overflow-x: hidden !important;
+          width: 100% !important;
+        }
+        html {
+          overflow-x: hidden !important;
+          width: 100% !important;
+        }
+        * {
+          box-sizing: border-box !important;
+        }
+        /* Prevent all direct children from overflowing */
+        body > * {
+          max-width: 100vw !important;
+          overflow-x: hidden !important;
         }
         @keyframes slideDown {
           from {
@@ -134,11 +148,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         style={{
           background: "white",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          padding: "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
+          padding: isMobile ? "12px 16px" : "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
           position: "sticky",
           top: 0,
           zIndex: 1000,
-          position: "relative",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -505,11 +520,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       
       {/* Main Content */}
       <main style={{ 
-        padding: "clamp(16px, 4vw, 24px)", 
+        padding: isMobile ? "16px" : "clamp(16px, 4vw, 24px)", 
         margin: 0,
         maxWidth: 1400,
         marginLeft: "auto",
         marginRight: "auto",
+        width: "100%",
+        boxSizing: "border-box",
+        overflow: "hidden",
       }}>
         {children}
       </main>

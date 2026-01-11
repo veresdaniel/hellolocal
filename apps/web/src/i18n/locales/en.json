@@ -185,6 +185,7 @@
     "role": "Role",
     "noTenants": "No regions available",
     "sessionExpiring": "Session expiring",
+    "sessionExpired": "Session expired. Please login again.",
     "defaultLanguage": "Default Language",
     "defaultLanguageDescription": "This language will be the default for both the public and admin interfaces.",
     "languageNames": {

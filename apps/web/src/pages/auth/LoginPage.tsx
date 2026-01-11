@@ -41,14 +41,21 @@ export function LoginPage() {
     }
   };
 
-  // Check if user was manually logged out
+  // Check if user was manually logged out or session expired
   useEffect(() => {
-    const manualLogoutFlag = localStorage.getItem("wasManualLogout");
+    const manualLogoutFlag = sessionStorage.getItem("wasManualLogout");
+    const sessionExpiredFlag = sessionStorage.getItem("sessionExpired");
+    
     if (manualLogoutFlag === "true") {
       setWasManualLogout(true);
-      localStorage.removeItem("wasManualLogout");
+      sessionStorage.removeItem("wasManualLogout");
     }
-  }, []);
+    
+    if (sessionExpiredFlag === "true") {
+      setError(t("admin.sessionExpired") || "Session expired. Please login again.");
+      sessionStorage.removeItem("sessionExpired");
+    }
+  }, [t]);
 
   // Sync i18n language with URL parameter
   useEffect(() => {

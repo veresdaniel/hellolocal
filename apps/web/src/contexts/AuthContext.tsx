@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Manual logout from admin: redirect to admin login with current language
         const logoutLang = localStorage.getItem("logoutRedirectLang") || lang;
         localStorage.removeItem("logoutRedirectLang");
-        localStorage.setItem("wasManualLogout", "true"); // Flag for login page
+        sessionStorage.setItem("wasManualLogout", "true"); // Use sessionStorage instead of localStorage
         
         if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
           return;
@@ -73,11 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Redirect to admin login page
         window.location.href = `/${logoutLang}/admin/login`;
       } else {
-        // Automatic logout (session expired): check if already on admin login
+        // Automatic logout (session expired): only redirect if we're in admin area
+        const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+        
+        if (!isInAdminArea) {
+          // Not in admin area, don't redirect to login
+          return;
+        }
+        
         if (currentPath.startsWith(`/${lang}/admin/login`)) {
           return;
         }
-        // Redirect to admin login
+        // Redirect to admin login only if session expired while in admin
+        sessionStorage.setItem("sessionExpired", "true");
         window.location.href = `/${lang}/admin/login`;
       }
     }
@@ -85,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check token expiration periodically and handle logout event
   useEffect(() => {
+    let hasInitialCheckRun = false; // Track if initial check has run
+    
     const checkTokenExpiration = () => {
       const accessToken = localStorage.getItem("accessToken");
       const refreshTokenValue = localStorage.getItem("refreshToken");
@@ -106,6 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // No tokens, ensure user is logged out
         if (user) {
           handleLogout(false); // Automatic logout
+        } else if (hasInitialCheckRun) {
+          // Only redirect if this is NOT the initial load
+          // On initial load without tokens, don't redirect
+          return;
         }
         return;
       }
@@ -128,6 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           handleLogout(false); // Automatic logout
         }
       }
+      
+      hasInitialCheckRun = true;
     };
 
     // Check immediately

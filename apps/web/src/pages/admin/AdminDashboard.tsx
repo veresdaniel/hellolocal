@@ -45,7 +45,7 @@ export function AdminDashboard() {
   console.log("[AdminDashboard] showEventLog:", showEventLog);
 
   return (
-    <div style={{ padding: "clamp(16px, 4vw, 24px)" }}>
+    <div>
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <h1 style={{ 
           fontSize: "clamp(20px, 4vw, 28px)",
@@ -76,6 +76,8 @@ export function AdminDashboard() {
           : "repeat(auto-fit, minmax(240px, 1fr))",
         gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
         width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
       }}>
         <DashboardCard
           title={t("admin.dashboardCards.events")}

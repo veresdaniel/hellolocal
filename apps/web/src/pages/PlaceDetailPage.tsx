@@ -96,16 +96,17 @@ export function PlaceDetailPage() {
             width: "100%",
           }}
         >
-          {/* Hero Image - use default placeholder if no image */}
+          {/* Hero Image with Category Badges - use default placeholder if no image */}
           {(sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(siteSettings?.defaultPlaceholderDetailHeroImage)) && (
             <div
               style={{
                 width: "calc(100% - 32px)",
-                margin: "0 16px 24px",
+                margin: "0 16px 16px",
                 height: "clamp(250px, 50vw, 400px)",
                 borderRadius: 16,
                 overflow: "hidden",
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                position: "relative",
               }}
             >
               <img
@@ -118,79 +119,113 @@ export function PlaceDetailPage() {
                   display: "block",
                 }}
               />
+              
+              {/* Category badges overlaid on image */}
+              {place.category && (
+                <div style={{ 
+                  position: "absolute", 
+                  top: 12,     // Felülre
+                  left: 12,    // Balra
+                  display: "flex", 
+                  gap: 8, 
+                  flexWrap: "wrap",
+                  justifyContent: "flex-start",
+                }}>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "white",
+                      background: "rgba(102, 126, 234, 0.95)",
+                      backdropFilter: "blur(8px)",
+                      padding: "6px 14px",
+                      borderRadius: 8,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                    }}
+                  >
+                    {place.category}
+                  </span>
+                  {place.priceBand && (
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "white",
+                        background: "rgba(118, 75, 162, 0.95)",
+                        backdropFilter: "blur(8px)",
+                        padding: "6px 14px",
+                        borderRadius: 8,
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      {place.priceBand}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
+          {/* Tags and Social Share in one row */}
+          <div style={{ 
+            margin: "0 16px 24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}>
+            {/* Tags on the left */}
+            {place.tags && place.tags.length > 0 && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
+                {place.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "#666",
+                      background: "#f5f5f5",
+                      border: "1px solid #e0e0e0",
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            {/* Social Share on the right */}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <SocialShareButtons
+                url={window.location.href}
+                title={place.name}
+                description={place.description || place.teaser || ""}
+                image={place.heroImage || undefined}
+              />
+            </div>
+          </div>
+
           {/* Header */}
           <div style={{ margin: "0 16px 32px" }}>
-            <div
+            <h1
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 24,
-                marginBottom: 16,
-                flexWrap: "wrap",
+                margin: 0,
+                fontSize: "clamp(28px, 5vw, 42px)",
+                fontWeight: 700,
+                color: "#1a1a1a",
+                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+                wordWrap: "break-word",
+                overflowWrap: "break-word",
               }}
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontSize: "clamp(28px, 5vw, 42px)",
-                    fontWeight: 700,
-                    color: "#1a1a1a",
-                    lineHeight: 1.2,
-                    letterSpacing: "-0.02em",
-                    marginBottom: 12,
-                    wordWrap: "break-word",
-                    overflowWrap: "break-word",
-                  }}
-                >
-                  {place.name}
-                </h1>
-                {place.category && (
-                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "#667eea",
-                        background: "rgba(102, 126, 234, 0.1)",
-                        padding: "6px 16px",
-                        borderRadius: 16,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {place.category}
-                    </span>
-                    {place.priceBand && (
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 500,
-                          color: "#764ba2",
-                          background: "rgba(118, 75, 162, 0.1)",
-                          padding: "6px 16px",
-                          borderRadius: 16,
-                        }}
-                      >
-                        {place.priceBand}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Social Share Buttons */}
-            <SocialShareButtons
-              url={window.location.href}
-              title={place.name}
-              description={place.description || place.teaser || ""}
-              image={place.heroImage || undefined}
-            />
+              {place.name}
+            </h1>
           </div>
 
           {/* Description */}
@@ -210,113 +245,263 @@ export function PlaceDetailPage() {
             />
           )}
 
-          {/* Tags */}
-          {place.tags && place.tags.length > 0 && (
-            <div style={{ margin: "0 16px 48px" }}>
-              <h3
-                style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: "#666",
-                  marginBottom: 16,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                {t("public.tags")}
-              </h3>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {place.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: "#666",
-                      background: "#f5f5f5",
-                      border: "1px solid #e0e0e0",
-                      padding: "8px 16px",
-                      borderRadius: 20,
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Contact Information */}
           {place.contact && (
             <div
               style={{
-                background: "white",
-                padding: "clamp(16px, 4vw, 32px)",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                padding: "clamp(20px, 4vw, 32px)",
                 borderRadius: 16,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                boxShadow: "0 8px 24px rgba(102, 126, 234, 0.25)",
                 margin: "0 16px 32px",
+                color: "white",
               }}
             >
               <h3
                 style={{
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: 700,
-                  color: "#1a1a1a",
+                  color: "white",
                   marginBottom: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
                 }}
               >
+                <span style={{ fontSize: 24 }}>📞</span>
                 {t("public.contact") || "Kapcsolat"}
               </h3>
-              <div style={{ display: "grid", gap: 16 }}>
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr",
+                gap: 16,
+              }}>
                 {place.contact.address && (
-                  <div>
-                    <strong style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>📍</span>
                       {t("public.address")}
                     </strong>
                     <div
-                      style={{ color: "#333", fontSize: 16 }}
+                      style={{ color: "white", fontSize: 16, lineHeight: 1.6 }}
                       dangerouslySetInnerHTML={{ __html: place.contact.address }}
                     />
                   </div>
                 )}
                 {place.contact.phone && (
-                  <div>
-                    <strong style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>📱</span>
                       {t("public.phone")}
                     </strong>
                     <a
-                      href={`tel:${place.contact.phone}`}
-                      style={{ color: "#667eea", textDecoration: "none", fontSize: 16 }}
+                      href={`tel:${place.contact.phone.replace(/\s/g, '')}`}
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 18,
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
                     >
                       {place.contact.phone}
+                      <span style={{ fontSize: 14 }}>→</span>
                     </a>
                   </div>
                 )}
                 {place.contact.email && (
-                  <div>
-                    <strong style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>✉️</span>
                       {t("public.email")}
                     </strong>
                     <a
                       href={`mailto:${place.contact.email}`}
-                      style={{ color: "#667eea", textDecoration: "none", fontSize: 16 }}
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 16,
+                        fontWeight: 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        wordBreak: "break-word",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
                     >
                       {place.contact.email}
+                      <span style={{ fontSize: 14 }}>→</span>
                     </a>
                   </div>
                 )}
                 {place.contact.website && (
-                  <div>
-                    <strong style={{ color: "#666", fontSize: 14, display: "block", marginBottom: 4 }}>
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>🌐</span>
                       {t("public.website")}
                     </strong>
                     <a
                       href={place.contact.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#667eea", textDecoration: "none", fontSize: 16 }}
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 16,
+                        fontWeight: 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        wordBreak: "break-all",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
                     >
-                      {place.contact.website}
+                      {place.contact.website.replace(/^https?:\/\//i, '')}
+                      <span style={{ fontSize: 14 }}>↗</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.facebook && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>📘</span>
+                      Facebook
+                    </strong>
+                    <a
+                      href={place.contact.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 16,
+                        fontWeight: 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        wordBreak: "break-all",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '')}
+                      <span style={{ fontSize: 14 }}>↗</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.whatsapp && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                      <span>💬</span>
+                      WhatsApp
+                    </strong>
+                    <a
+                      href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 18,
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.whatsapp}
+                      <span style={{ fontSize: 14 }}>→</span>
                     </a>
                   </div>
                 )}
@@ -329,10 +514,11 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: "clamp(16px, 4vw, 32px)",
+                padding: "clamp(20px, 4vw, 32px)",
                 borderRadius: 16,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
+                border: "1px solid rgba(102, 126, 234, 0.1)",
               }}
             >
               <h3
@@ -341,8 +527,12 @@ export function PlaceDetailPage() {
                   fontWeight: 700,
                   color: "#1a1a1a",
                   marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
                 }}
               >
+                <span style={{ fontSize: 22 }}>🕐</span>
                 {t("public.openingHours")}
               </h3>
               <div
@@ -357,10 +547,11 @@ export function PlaceDetailPage() {
             <div
               style={{
                 background: "white",
-                padding: "clamp(16px, 4vw, 32px)",
+                padding: "clamp(20px, 4vw, 32px)",
                 borderRadius: 16,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
+                border: "1px solid rgba(102, 126, 234, 0.1)",
               }}
             >
               <h3
@@ -369,8 +560,12 @@ export function PlaceDetailPage() {
                   fontWeight: 700,
                   color: "#1a1a1a",
                   marginBottom: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
                 }}
               >
+                <span style={{ fontSize: 22 }}>♿</span>
                 {t("public.accessibility")}
               </h3>
               <div

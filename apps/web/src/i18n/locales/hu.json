@@ -214,6 +214,7 @@
     "role": "Szerepkör",
     "noTenants": "Nincs elérhető terület",
     "sessionExpiring": "Munkamenet lejár",
+    "sessionExpired": "Munkamenet lejárt. Kérlek jelentkezz be újra.",
     "defaultLanguage": "Alapértelmezett nyelv",
     "defaultLanguageDescription": "Ez a nyelv lesz az alapértelmezett a public felületen és az admin felületen is.",
     "languageNames": {

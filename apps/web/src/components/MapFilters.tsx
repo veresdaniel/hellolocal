@@ -182,9 +182,9 @@ export function MapFilters({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
+      if (!e.touches[0]) return;
+      e.preventDefault(); // Prevent scroll only during drag
       const touch = e.touches[0];
-      if (!touch) return;
 
       // Detect if we've actually moved (dragged)
       const moved = Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
@@ -219,8 +219,9 @@ export function MapFilters({
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    // Use passive: false only during actual drag to prevent scroll
     window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);

@@ -35,6 +35,8 @@ export type Place = {
     phone?: string;
     email?: string;
     website?: string;
+    facebook?: string;
+    whatsapp?: string;
     // HTML stringet tartalmazhat
     address?: string;
   };

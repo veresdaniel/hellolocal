@@ -41,6 +41,8 @@ interface Place {
     phone: string | null;
     email: string | null;
     website: string | null;
+    facebook: string | null;
+    whatsapp: string | null;
     accessibility: string | null;
   }>;
 }
@@ -86,6 +88,8 @@ export function PlacesPage() {
     phone: "",
     email: "",
     website: "",
+    facebook: "",
+    whatsapp: "",
     openingHours: [] as OpeningHour[],
     accessibilityHu: "",
     accessibilityEn: "",
@@ -192,9 +196,11 @@ export function PlacesPage() {
           teaser: formData.teaserHu || null,
           description: formData.descriptionHu || null,
           address: formData.addressHu || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityHu || null,
         },
       ];
@@ -205,9 +211,11 @@ export function PlacesPage() {
           teaser: formData.teaserEn || null,
           description: formData.descriptionEn || null,
           address: formData.addressEn || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityEn || null,
         });
       }
@@ -218,9 +226,11 @@ export function PlacesPage() {
           teaser: formData.teaserDe || null,
           description: formData.descriptionDe || null,
           address: formData.addressDe || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityDe || null,
         });
       }
@@ -278,9 +288,11 @@ export function PlacesPage() {
                 teaser: formData.teaserHu || null,
                 description: formData.descriptionHu || null,
                 address: formData.addressHu || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityHu || null,
               },
             ];
@@ -291,9 +303,11 @@ export function PlacesPage() {
                 teaser: formData.teaserEn || null,
                 description: formData.descriptionEn || null,
                 address: formData.addressEn || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityEn || null,
               });
             }
@@ -304,9 +318,11 @@ export function PlacesPage() {
                 teaser: formData.teaserDe || null,
                 description: formData.descriptionDe || null,
                 address: formData.addressDe || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        website: formData.website || null,
+        facebook: formData.facebook || null,
+        whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityDe || null,
               });
             }
@@ -370,6 +386,8 @@ export function PlacesPage() {
       phone: hu?.phone || "",
       email: hu?.email || "",
       website: hu?.website || "",
+      facebook: hu?.facebook || "",
+      whatsapp: hu?.whatsapp || "",
       openingHours: place.openingHours || [],
       accessibilityHu: hu?.accessibility || "",
       accessibilityEn: en?.accessibility || "",
@@ -402,6 +420,8 @@ export function PlacesPage() {
       phone: "",
       email: "",
       website: "",
+      facebook: "",
+      whatsapp: "",
       openingHours: [],
       accessibilityHu: "",
       accessibilityEn: "",
@@ -802,33 +822,56 @@ export function PlacesPage() {
             )}
           </LanguageAwareForm>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            {/* Bal oszlop: Telefon, Email, Weboldal */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={labelStyle}>{t("public.phone")}</label>
+                <label style={labelStyle}>📱 {t("public.phone")}</label>
                 <input
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+36 30 123 4567"
                   style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 />
               </div>
               <div>
-                <label style={labelStyle}>{t("public.email")}</label>
+                <label style={labelStyle}>✉️ {t("public.email")}</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="info@example.com"
                   style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 />
               </div>
               <div>
-                <label style={labelStyle}>{t("public.website")}</label>
+                <label style={labelStyle}>🌐 {t("public.website")}</label>
                 <input
                   type="url"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  placeholder="https://example.com"
+                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>📘 Facebook</label>
+                <input
+                  type="url"
+                  value={formData.facebook}
+                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                  placeholder="https://facebook.com/yourpage"
+                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>💬 WhatsApp</label>
+                <input
+                  type="text"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="+36 30 123 4567"
                   style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                 />
               </div>
