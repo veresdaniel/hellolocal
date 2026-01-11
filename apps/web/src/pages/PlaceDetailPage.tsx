@@ -361,24 +361,51 @@ export function PlaceDetailPage() {
           </div>
 
           {/* Contact and Opening Hours side by side */}
-          <div 
-            className="contact-opening-hours-grid"
-            style={{ 
-              margin: "0 16px 24px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 12,
-            }}
-          >
-            <style>{`
-              @media (max-width: 767px) {
-                .contact-opening-hours-grid {
-                  gridTemplateColumns: 1fr !important;
+          {(() => {
+            // Check if contact has any actual data (not just null/undefined fields)
+            const hasContact = place.contact && (
+              place.contact.address ||
+              place.contact.phone ||
+              place.contact.email ||
+              place.contact.website ||
+              place.contact.facebook ||
+              place.contact.whatsapp
+            );
+            const hasOpeningHours = place.openingHours && place.openingHours.length > 0;
+            
+            if (!hasContact && !hasOpeningHours) {
+              return null;
+            }
+            
+            return (
+              <div 
+                className="contact-opening-hours-grid"
+                style={{ 
+                  margin: "0 16px 24px",
+                  display: "grid",
+                  gridTemplateColumns: (hasContact && hasOpeningHours) ? "1fr 1fr" : "1fr",
+                  gap: 12,
+                }}
+              >
+              <style>{`
+                @media (max-width: 767px) {
+                  .contact-opening-hours-grid {
+                    gridTemplateColumns: 1fr !important;
+                  }
                 }
-              }
-            `}</style>
+              `}</style>
             {/* Contact Information - Left */}
-            {place.contact && (
+            {(() => {
+              const hasContact = place.contact && (
+                place.contact.address ||
+                place.contact.phone ||
+                place.contact.email ||
+                place.contact.website ||
+                place.contact.facebook ||
+                place.contact.whatsapp
+              );
+              
+              return hasContact ? (
               <div
                 style={{
                   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -645,7 +672,8 @@ export function PlaceDetailPage() {
                 )}
                 </div>
               </div>
-            )}
+              ) : null;
+            })()}
 
             {/* Opening Hours - Right */}
             {place.openingHours && place.openingHours.length > 0 && (
@@ -742,7 +770,9 @@ export function PlaceDetailPage() {
                 </div>
               </div>
             )}
-          </div>
+              </div>
+            );
+          })()}
 
           {/* Description */}
           {place.description && (

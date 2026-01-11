@@ -42,60 +42,61 @@ export function useFavicon() {
     }
 
     // Validate URL format
-    let faviconUrl: string;
+    let baseFaviconUrl: string;
     try {
-      const url = new URL(siteSettings.faviconUrl);
-      // Add cache-busting query parameter to force browser to reload favicon
-      // Use timestamp to ensure fresh load when favicon changes
-      url.searchParams.set('v', Date.now().toString());
-      faviconUrl = url.toString();
-      console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrl);
+      new URL(siteSettings.faviconUrl);
+      baseFaviconUrl = siteSettings.faviconUrl;
     } catch {
       console.warn("[useFavicon] Invalid favicon URL format:", siteSettings.faviconUrl);
       return;
     }
 
-    // Find existing favicon links (including apple-touch-icon)
-    const existingFavicons = document.querySelectorAll(
-      'link[rel="icon"]:not([href="/vite.svg"]), link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
-    );
+    // Add cache-busting query parameter to force browser to reload favicon
+    // Use timestamp to ensure fresh load - this will be different each time the effect runs
+    const url = new URL(baseFaviconUrl);
+    // Remove existing cache-busting param if present
+    url.searchParams.delete('v');
+    // Add new cache-busting param with current timestamp
+    url.searchParams.set('v', Date.now().toString());
+    const faviconUrl = url.toString();
+    
+    console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrl);
 
-    // Remove existing favicons
+    // Find and remove ALL existing favicon links (including default vite.svg if it's not the one we want)
+    const existingFavicons = document.querySelectorAll(
+      'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
+    );
     existingFavicons.forEach((link) => link.remove());
 
-    // Add error handling - revert to default if image fails
-    const img = new Image();
-    
-    img.onerror = () => {
-      // If custom favicon fails, don't add it (browser will use default)
-      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrl);
-    };
-    
-    img.onload = () => {
-      // Only add if image loads successfully
-      console.log("[useFavicon] Successfully loaded favicon:", faviconUrl);
-      
-      // Create standard favicon link with cache-busting
-      const link = document.createElement("link");
-      link.rel = "icon";
-      // Try to detect type from URL (remove query params for type detection)
-      const urlWithoutParams = faviconUrl.split('?')[0];
-      const isSvg = urlWithoutParams.toLowerCase().endsWith('.svg');
-      const isIco = urlWithoutParams.toLowerCase().endsWith('.ico');
-      link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
-      link.href = faviconUrl;
-      document.head.appendChild(link);
+    // Create new favicon link immediately (don't wait for image load)
+    // This forces browser to fetch the new favicon
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.id = "dynamic-favicon";
+    // Try to detect type from URL (remove query params for type detection)
+    const urlWithoutParams = baseFaviconUrl.split('?')[0];
+    const isSvg = urlWithoutParams.toLowerCase().endsWith('.svg');
+    const isIco = urlWithoutParams.toLowerCase().endsWith('.ico');
+    link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
+    link.href = faviconUrl;
+    document.head.appendChild(link);
 
-      // Also add apple-touch-icon for iOS devices
-      const appleLink = document.createElement("link");
-      appleLink.rel = "apple-touch-icon";
-      appleLink.href = faviconUrl;
-      document.head.appendChild(appleLink);
+    // Also add apple-touch-icon for iOS devices
+    const appleLink = document.createElement("link");
+    appleLink.rel = "apple-touch-icon";
+    appleLink.id = "dynamic-apple-touch-icon";
+    appleLink.href = faviconUrl;
+    document.head.appendChild(appleLink);
+
+    // Preload the image to verify it works (but don't block on it)
+    const img = new Image();
+    img.onerror = () => {
+      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrl);
+      // Don't remove the link - let browser handle it
     };
-    
-    // Try to load the image (with CORS if needed)
-    // Note: Some browsers may block cross-origin favicons, but we try anyway
-    // The cache-busting parameter in faviconUrl will force browser to reload
+    img.onload = () => {
+      console.log("[useFavicon] Successfully verified favicon:", faviconUrl);
+    };
     img.src = faviconUrl;
 
     // Cleanup function
