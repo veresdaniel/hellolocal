@@ -531,9 +531,30 @@ export function AdminResponsiveTable<T>({
                 const itemId = getItemId(item);
                 const isOpen = swipedCardId === itemId;
 
-                // Calculate position relative to current index
-                const offset = index - currentMobileIndex;
-                const previousOffset = index - previousMobileIndex;
+                // Calculate position relative to current index (with infinite loop support)
+                let offset = index - currentMobileIndex;
+                let previousOffset = index - previousMobileIndex;
+                
+                // Infinite loop: wrap offsets for seamless carousel
+                // Only normalize if offset is outside visible range [-2, 2]
+                if (filteredData.length > 0 && Math.abs(offset) > 2) {
+                  // Normalize offset to range [-2, 2] for infinite loop
+                  if (offset > 2) {
+                    offset = offset - filteredData.length;
+                  } else if (offset < -2) {
+                    offset = offset + filteredData.length;
+                  }
+                }
+                
+                // Normalize previousOffset similarly if needed
+                if (filteredData.length > 0 && Math.abs(previousOffset) > 2) {
+                  if (previousOffset > 2) {
+                    previousOffset = previousOffset - filteredData.length;
+                  } else if (previousOffset < -2) {
+                    previousOffset = previousOffset + filteredData.length;
+                  }
+                }
+                
                 const isVisible = Math.abs(offset) <= 2;
 
                 if (!isVisible) return null;
@@ -541,9 +562,10 @@ export function AdminResponsiveTable<T>({
                 // Check if this card is transitioning in (was offset 1/-1, now offset 0)
                 const isTransitioningIn = offset === 0 && previousOffset !== 0 && swipeDirection !== null;
 
-                // Styling based on position - Carousel layout (cards side by side)
+                // Styling based on position - Carousel layout (cards side by side with gap)
                 const getCardStyle = () => {
                   const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                  const CARD_GAP = 16; // Gap between cards in pixels
                   const baseStyle = {
                     position: "absolute" as const,
                     width: "100%",
@@ -572,12 +594,12 @@ export function AdminResponsiveTable<T>({
                       opacity: 1,
                     };
                   } else if (offset === 1) {
-                    // Next card - carousel layout (side by side)
+                    // Next card - carousel layout (side by side with gap)
                     if (isDragging && dragOffsetX < 0) {
                       // Dragging left: next card comes in from left
                       // Perfect 1:1 movement - next card moves exactly opposite to current
                       const absDragX = Math.abs(dragOffsetX);
-                      const translateX = -screenWidth + absDragX; // From -100% to 0px
+                      const translateX = -screenWidth - CARD_GAP + absDragX; // From -(100% + gap) to 0px
                       
                       return {
                         ...baseStyle,
@@ -588,21 +610,21 @@ export function AdminResponsiveTable<T>({
                       };
                     }
                     
-                    // Default position: off-screen left, ready to come in
+                    // Default position: off-screen left with gap, ready to come in
                     return {
                       ...baseStyle,
                       zIndex: 20,
-                      transform: "translateX(-100%) translateY(0) scale(1)",
+                      transform: `translateX(calc(-100% - ${CARD_GAP}px)) translateY(0) scale(1)`,
                       opacity: 1,
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card - carousel layout (side by side)
+                    // Previous card - carousel layout (side by side with gap)
                     if (isDragging && dragOffsetX > 0) {
                       // Dragging right: previous card comes in from right
                       // Perfect 1:1 movement - previous card moves exactly opposite to current
                       const absDragX = Math.abs(dragOffsetX);
-                      const translateX = screenWidth - absDragX; // From +100% to 0px
+                      const translateX = screenWidth + CARD_GAP - absDragX; // From +(100% + gap) to 0px
                       
                       return {
                         ...baseStyle,
@@ -613,11 +635,11 @@ export function AdminResponsiveTable<T>({
                       };
                     }
                     
-                    // Default position: off-screen right, ready to come in
+                    // Default position: off-screen right with gap, ready to come in
                     return {
                       ...baseStyle,
                       zIndex: 20,
-                      transform: "translateX(100%) translateY(0) scale(1)",
+                      transform: `translateX(calc(100% + ${CARD_GAP}px)) translateY(0) scale(1)`,
                       opacity: 1,
                       pointerEvents: "none" as const,
                     };
@@ -626,7 +648,7 @@ export function AdminResponsiveTable<T>({
                     return {
                       ...baseStyle,
                       zIndex: 10,
-                      transform: "translateX(-200%) translateY(0) scale(1)",
+                      transform: `translateX(calc(-200% - ${CARD_GAP * 2}px)) translateY(0) scale(1)`,
                       opacity: 0,
                       pointerEvents: "none" as const,
                     };
@@ -635,7 +657,7 @@ export function AdminResponsiveTable<T>({
                     return {
                       ...baseStyle,
                       zIndex: 10,
-                      transform: "translateX(200%) translateY(0) scale(1)",
+                      transform: `translateX(calc(200% + ${CARD_GAP * 2}px)) translateY(0) scale(1)`,
                       opacity: 0,
                       pointerEvents: "none" as const,
                     };
