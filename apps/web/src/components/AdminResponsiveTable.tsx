@@ -502,24 +502,28 @@ export function AdminResponsiveTable<T>({
                   // Current card goes right, previous card comes from right
                   if (diffX > SWIPE_THRESHOLD || (diffX > QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
                     setSwipeDirection("right"); // Swipe right = previous card
+                    setDragOffsetX(0); // Reset drag offset immediately for smooth transition
                     if (currentMobileIndex === 0) {
                       updateMobileIndex(filteredData.length - 1); // Loop to last
                     } else {
                       updateMobileIndex(currentMobileIndex - 1);
                     }
                     setSwipedCardId(null);
+                    // Reset swipe direction after animation completes
                     setTimeout(() => setSwipeDirection(null), 400);
                   } 
                   // Swipe left (diffX < 0) = next card (infinite)
                   // Current card goes left, next card comes from left
                   else if (diffX < -SWIPE_THRESHOLD || (diffX < -QUICK_SWIPE_THRESHOLD && (quickSwipe || velocity > FAST_SWIPE_VELOCITY))) {
                     setSwipeDirection("left"); // Swipe left = next card
+                    setDragOffsetX(0); // Reset drag offset immediately for smooth transition
                     if (currentMobileIndex === filteredData.length - 1) {
                       updateMobileIndex(0); // Loop to first
                     } else {
                       updateMobileIndex(currentMobileIndex + 1);
                     }
                     setSwipedCardId(null);
+                    // Reset swipe direction after animation completes
                     setTimeout(() => setSwipeDirection(null), 400);
                   }
                 }
@@ -531,37 +535,28 @@ export function AdminResponsiveTable<T>({
                 const itemId = getItemId(item);
                 const isOpen = swipedCardId === itemId;
 
-                // Calculate position relative to current index (with infinite loop support)
-                let offset = index - currentMobileIndex;
-                let previousOffset = index - previousMobileIndex;
+                // Calculate position relative to current index
+                const offset = index - currentMobileIndex;
+                const previousOffset = index - previousMobileIndex;
                 
-                // Infinite loop: handle wraparound for seamless carousel
-                // When at first card (index 0), last card should be visible as previous (offset -1)
-                // When at last card (index length-1), first card should be visible as next (offset 1)
+                // For infinite loop: show adjacent cards even when wrapping
+                // This allows seamless carousel without jumps
+                let displayOffset = offset;
                 if (filteredData.length > 0) {
-                  // If we're at the first card and this is the last card, it's the previous card
-                  if (currentMobileIndex === 0 && index === filteredData.length - 1) {
-                    offset = -1;
-                  }
-                  // If we're at the last card and this is the first card, it's the next card
-                  else if (currentMobileIndex === filteredData.length - 1 && index === 0) {
-                    offset = 1;
-                  }
-                  
-                  // Same for previousOffset
-                  if (previousMobileIndex === 0 && index === filteredData.length - 1) {
-                    previousOffset = -1;
-                  } else if (previousMobileIndex === filteredData.length - 1 && index === 0) {
-                    previousOffset = 1;
+                  // If offset is too large, wrap it for display (but keep original for smooth transition)
+                  if (Math.abs(offset) > filteredData.length / 2) {
+                    displayOffset = offset > 0 
+                      ? offset - filteredData.length 
+                      : offset + filteredData.length;
                   }
                 }
                 
-                const isVisible = Math.abs(offset) <= 2;
+                const isVisible = Math.abs(displayOffset) <= 2;
 
                 if (!isVisible) return null;
 
                 // Check if this card is transitioning in (was offset 1/-1, now offset 0)
-                const isTransitioningIn = offset === 0 && previousOffset !== 0 && swipeDirection !== null;
+                const isTransitioningIn = displayOffset === 0 && previousOffset !== 0 && swipeDirection !== null;
 
                 // Styling based on position - Carousel layout (cards side by side with gap)
                 const getCardStyle = () => {
@@ -571,11 +566,14 @@ export function AdminResponsiveTable<T>({
                     position: "absolute" as const,
                     width: "100%",
                     // Smooth carousel transition
-                    transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                    transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                     transformOrigin: "center center",
                   };
 
-                  if (offset === 0) {
+                  // Use displayOffset for styling to handle infinite loop smoothly
+                  const styleOffset = displayOffset;
+
+                  if (styleOffset === 0) {
                     // Current card - center position
                     if (isDragging) {
                       // During drag: follow finger exactly
@@ -594,7 +592,7 @@ export function AdminResponsiveTable<T>({
                       transform: "translateX(0) translateY(0) scale(1)",
                       opacity: 1,
                     };
-                  } else if (offset === 1) {
+                  } else if (styleOffset === 1) {
                     // Next card - carousel layout (side by side with gap)
                     if (isDragging && dragOffsetX < 0) {
                       // Dragging left: next card comes in from left
@@ -619,7 +617,7 @@ export function AdminResponsiveTable<T>({
                       opacity: 1,
                       pointerEvents: "none" as const,
                     };
-                  } else if (offset === -1) {
+                  } else if (styleOffset === -1) {
                     // Previous card - carousel layout (side by side with gap)
                     if (isDragging && dragOffsetX > 0) {
                       // Dragging right: previous card comes in from right
@@ -644,7 +642,7 @@ export function AdminResponsiveTable<T>({
                       opacity: 1,
                       pointerEvents: "none" as const,
                     };
-                  } else if (offset === 2) {
+                  } else if (styleOffset === 2) {
                     // Card 2 positions ahead - off screen left
                     return {
                       ...baseStyle,
@@ -653,7 +651,7 @@ export function AdminResponsiveTable<T>({
                       opacity: 0,
                       pointerEvents: "none" as const,
                     };
-                  } else if (offset === -2) {
+                  } else if (styleOffset === -2) {
                     // Card 2 positions behind - off screen right
                     return {
                       ...baseStyle,
@@ -887,6 +885,7 @@ export function AdminResponsiveTable<T>({
                             // Set swipe direction for animation
                             e.preventDefault();
                             setSwipeDirection("left"); // Swipe left = next card
+                            setDragOffsetX(0); // Reset drag offset immediately for smooth transition
                             // Navigate to next card (infinite loop)
                             if (currentMobileIndex === filteredData.length - 1) {
                               updateMobileIndex(0); // Loop to first
@@ -894,8 +893,7 @@ export function AdminResponsiveTable<T>({
                               updateMobileIndex(currentMobileIndex + 1);
                             }
                             setSwipedCardId(null);
-                            setDragOffsetX(0);
-                            // Reset swipe direction after animation (match transition duration)
+                            // Reset swipe direction after animation completes
                             setTimeout(() => setSwipeDirection(null), 400);
                           } 
                           // Small right swipe = close actions only
