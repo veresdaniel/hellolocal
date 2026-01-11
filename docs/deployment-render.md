@@ -278,21 +278,31 @@ npm install -g pnpm@10.27.0 && ...
 - Ellenőrizd, hogy a `pnpm prisma migrate deploy` szerepel a Start Command-ban
 - Nézd meg a logokat részletekért
 
-### 4. CORS Error Frontend-en (MissingAllowOriginHeader)
+### 4. CORS Error Frontend-en (MissingAllowOriginHeader / PreflightMissingAllowOriginHeader)
 
-**Probléma**: A frontend kérések `CORS error: MissingAllowOriginHeader` hibát kapnak.
+**Probléma**: A frontend kérések `CORS error: MissingAllowOriginHeader` vagy `PreflightMissingAllowOriginHeader` hibát kapnak.
 
-**Ok**: A backend nem küldi a `Access-Control-Allow-Origin` header-t, mert a `CORS_ORIGIN` environment változó nincs beállítva production módban.
+**Ok**: A backend nem küldi a `Access-Control-Allow-Origin` header-t, mert a `CORS_ORIGIN` environment változó nincs beállítva production módban, vagy nem egyezik a frontend origin-jével.
 
-**Megoldás**: 
-- **Ellenőrizd, hogy a backend `CORS_ORIGIN` változó be van állítva!** ⚠️
-  - A biztonsági beállítások után production módban kötelező
-  - Formátum: `https://hellolocal-frontend.onrender.com` (nincs trailing slash!)
-  - Több origin esetén: `https://hellolocal-frontend.onrender.com,https://hellolocal.com`
-- Ellenőrizd, hogy a backend `FRONTEND_URL` jól van beállítva (fallback-ként használható)
-- Ellenőrizd, hogy a frontend `API_URL` vagy `VITE_API_URL` helyesen van beállítva
-- Ha még mindig CORS hibát kapsz, ellenőrizd a böngésző konzoljában az exact origin-t, amit a frontend küld
-- **Fontos**: A backend logokban figyelmeztetés jelenik meg, ha a `CORS_ORIGIN` nincs beállítva production módban
+**Gyors Megoldás**: 
+1. Menj a **Backend API** service-hez (`hellolocal-api`) a Render.com Dashboard-on
+2. Kattints az **"Environment"** tab-ra
+3. Add hozzá vagy frissítsd a `CORS_ORIGIN` változót:
+   ```
+   CORS_ORIGIN=https://hellolocal-fe.onrender.com
+   ```
+   **Fontos**: 
+   - A frontend URL-nek **pontosan** egyeznie kell! (nincs trailing slash!)
+   - Ha a frontend `https://hellolocal-fe.onrender.com`, akkor pontosan ezt add meg
+   - Több origin esetén: `https://hellolocal-fe.onrender.com,https://hellolocal.com`
+4. Kattints **"Save Changes"** gombra
+5. A backend automatikusan újraindul
+
+**Részletes hibaelhárítás**: Lásd [`docs/CORS_TROUBLESHOOTING.md`](./CORS_TROUBLESHOOTING.md)
+
+**Ellenőrzés**:
+- A backend logokban látnod kell: `✅ CORS enabled for origins: https://hellolocal-fe.onrender.com`
+- Ha blokkolva van egy kérés, látni fogod: `❌ CORS blocked: Origin "..." not in allowed list`
 
 ### 4a. 503 Service Unavailable
 

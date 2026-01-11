@@ -4,7 +4,7 @@ import { checkVersionChange, handleVersionUpdate, fetchVersionInfo, type Version
 import { useToast } from "../contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 
-const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
+const VERSION_CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes (reduced frequency)
 
 export function useVersionCheck() {
   const { showToast } = useToast();
@@ -21,7 +21,8 @@ export function useVersionCheck() {
       try {
         const hasChanged = await checkVersionChange();
         if (hasChanged) {
-          const serverVersion = await fetchVersionInfo();
+          // checkVersionChange already fetched the version, get it from cache
+          const serverVersion = await fetchVersionInfo(false);
           if (serverVersion) {
             setVersionInfo(serverVersion);
             showToast(
@@ -30,13 +31,8 @@ export function useVersionCheck() {
             );
             await handleVersionUpdate(serverVersion.version);
           }
-        } else {
-          // Update version info even if no change
-          const info = await fetchVersionInfo();
-          if (info) {
-            setVersionInfo(info);
-          }
         }
+        // Don't fetch again if no change - checkVersionChange already fetched and cached it
       } catch (error) {
         console.error("[useVersionCheck] Error checking version:", error);
       } finally {
@@ -44,8 +40,8 @@ export function useVersionCheck() {
       }
     };
 
-    // Initial check after 2 seconds
-    const initialTimer = setTimeout(performCheck, 2000);
+    // Initial check after 5 seconds (increased to avoid immediate request on page load)
+    const initialTimer = setTimeout(performCheck, 5000);
 
     // Periodic checks
     const interval = setInterval(performCheck, VERSION_CHECK_INTERVAL);

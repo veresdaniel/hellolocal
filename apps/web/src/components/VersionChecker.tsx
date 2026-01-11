@@ -15,13 +15,26 @@ export function VersionChecker() {
   const currentVersionRef = useRef<VersionInfo | null>(null);
   const checkIntervalRef = useRef<number | null>(null);
 
-  // Check for updates every 5 minutes
-  const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  // Check for updates every 15 minutes (reduced frequency to avoid too many requests)
+  const CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
+  const lastFetchTimeRef = useRef<number>(0);
+  const FETCH_THROTTLE = 60 * 1000; // Throttle: max 1 request per minute
 
   const fetchVersion = async (): Promise<VersionInfo | null> => {
+    // Throttle requests - don't fetch if we fetched recently
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < FETCH_THROTTLE) {
+      return currentVersionRef.current;
+    }
+    lastFetchTimeRef.current = now;
+
     try {
-      // Add timestamp to bust cache
-      const response = await fetch(`/version.json?t=${Date.now()}`);
+      // Only add timestamp on first fetch or if version changed (cache-busting)
+      const cacheBust = !currentVersionRef.current ? `?t=${Date.now()}` : '';
+      const response = await fetch(`/version.json${cacheBust}`, {
+        cache: currentVersionRef.current ? 'default' : 'no-store',
+      });
       if (!response.ok) {
         console.warn("[VersionChecker] Failed to fetch version.json:", response.status);
         return null;
@@ -70,11 +83,11 @@ export function VersionChecker() {
 
   const handleDismiss = () => {
     setShowUpdateNotification(false);
-    // Check again in 1 minute (shorter interval after dismiss)
+    // Check again in 5 minutes (reduced from 1 minute to avoid too many requests)
     if (checkIntervalRef.current) {
       window.clearInterval(checkIntervalRef.current);
     }
-    checkIntervalRef.current = window.setInterval(checkForUpdates, 60 * 1000);
+    checkIntervalRef.current = window.setInterval(checkForUpdates, 5 * 60 * 1000);
   };
 
   useEffect(() => {
@@ -84,9 +97,19 @@ export function VersionChecker() {
     // Set up periodic checks
     checkIntervalRef.current = window.setInterval(checkForUpdates, CHECK_INTERVAL);
 
-    // Check on window focus (user returns to tab)
+    // Check on window focus (user returns to tab) - with debouncing
+    let focusTimeout: number | null = null;
     const handleFocus = () => {
-      checkForUpdates();
+      // Debounce: only check if we haven't checked in the last 2 minutes
+      if (focusTimeout) {
+        window.clearTimeout(focusTimeout);
+      }
+      focusTimeout = window.setTimeout(() => {
+        const timeSinceLastCheck = Date.now() - lastFetchTimeRef.current;
+        if (timeSinceLastCheck > 2 * 60 * 1000) { // Only if last check was > 2 minutes ago
+          checkForUpdates();
+        }
+      }, 1000); // Wait 1 second after focus before checking
     };
     window.addEventListener("focus", handleFocus);
 
@@ -95,6 +118,9 @@ export function VersionChecker() {
         window.clearInterval(checkIntervalRef.current);
       }
       window.removeEventListener("focus", handleFocus);
+      if (focusTimeout) {
+        window.clearTimeout(focusTimeout);
+      }
     };
   }, []);
 

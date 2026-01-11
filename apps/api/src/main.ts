@@ -40,14 +40,53 @@ async function bootstrap() {
     console.warn(
       "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hellolocal-frontend.onrender.com)"
     );
+  } else if (allowedOrigins.length > 0) {
+    console.log(`✅ CORS enabled for origins: ${allowedOrigins.join(", ")}`);
   }
 
+  // CORS origin validation function - dinamikusan ellenőrzi az origin-eket
+  const originValidator = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.length === 0) {
+      // Production mode without CORS_ORIGIN - deny all
+      console.warn(`❌ CORS blocked: Origin "${origin}" not allowed (CORS_ORIGIN not set)`);
+      return callback(null, false);
+    }
+
+    const isAllowed = allowedOrigins.some((allowedOrigin) => {
+      // Exact match
+      if (origin === allowedOrigin) {
+        return true;
+      }
+      // Support wildcard subdomains (e.g., *.render.com)
+      if (allowedOrigin.startsWith("*.")) {
+        const domain = allowedOrigin.substring(2);
+        return origin.endsWith(`.${domain}`) || origin === `https://${domain}` || origin === `http://${domain}`;
+      }
+      return false;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`❌ CORS blocked: Origin "${origin}" not in allowed list: [${allowedOrigins.join(", ")}]`);
+      callback(null, false);
+    }
+  };
+
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+    origin: allowedOrigins.length > 0 ? originValidator : false,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     exposedHeaders: ["Content-Type", "Authorization"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
   });
 
   // Global validation pipe

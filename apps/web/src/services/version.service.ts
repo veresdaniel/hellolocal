@@ -8,7 +8,7 @@ export interface VersionInfo {
 }
 
 const VERSION_STORAGE_KEY = "hellolocal_app_version";
-const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
+const VERSION_CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes (reduced frequency)
 const VERSION_JSON_PATH = "/version.json";
 
 /**
@@ -27,30 +27,50 @@ export function storeVersion(version: string): void {
   localStorage.setItem(VERSION_STORAGE_KEY, version);
 }
 
+// Throttle version.json requests - cache last fetch time
+let lastFetchTime = 0;
+let cachedVersion: VersionInfo | null = null;
+const FETCH_THROTTLE = 60 * 1000; // Max 1 request per minute
+
 /**
- * Fetch version info from server
+ * Fetch version info from server (with throttling)
  */
-export async function fetchVersionInfo(): Promise<VersionInfo | null> {
+export async function fetchVersionInfo(forceRefresh = false): Promise<VersionInfo | null> {
+  const now = Date.now();
+  
+  // Return cached version if we fetched recently and not forcing refresh
+  if (!forceRefresh && cachedVersion && (now - lastFetchTime < FETCH_THROTTLE)) {
+    return cachedVersion;
+  }
+
   try {
-    const response = await fetch(`${VERSION_JSON_PATH}?t=${Date.now()}`, {
-      cache: "no-store",
-      headers: {
+    // Only use cache-busting on first fetch or forced refresh
+    const cacheBust = forceRefresh || !cachedVersion ? `?t=${Date.now()}` : '';
+    const response = await fetch(`${VERSION_JSON_PATH}${cacheBust}`, {
+      cache: cachedVersion ? 'default' : 'no-store',
+      headers: cachedVersion ? {} : {
         "Cache-Control": "no-cache",
       },
     });
     if (!response.ok) {
       console.warn("[VersionService] Failed to fetch version.json:", response.status);
-      return null;
+      return cachedVersion; // Return cached version on error
     }
     const data = await response.json();
-    return {
+    const versionInfo: VersionInfo = {
       version: data.version || APP_VERSION,
       buildHash: data.buildHash || "",
       timestamp: data.timestamp || Date.now(),
     };
+    
+    // Cache the result
+    cachedVersion = versionInfo;
+    lastFetchTime = now;
+    
+    return versionInfo;
   } catch (error) {
     console.warn("[VersionService] Error fetching version info:", error);
-    return null;
+    return cachedVersion; // Return cached version on error
   }
 }
 
