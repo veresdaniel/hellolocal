@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -15,6 +15,7 @@ import { AppSettingsModule } from "./app-settings/app-settings.module";
 import { TwoFactorModule } from "./two-factor/two-factor.module";
 import { SeoModule } from "./seo/seo.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middleware";
 
 @Module({
   imports: [
@@ -35,5 +36,13 @@ import { NotificationsModule } from "./notifications/notifications.module";
     NotificationsModule, // Push notifications
   ],
   controllers: [HealthController],
+  providers: [SeoInjectorMiddleware],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply SEO injector middleware to all routes except API and admin
+    consumer
+      .apply(SeoInjectorMiddleware)
+      .forRoutes("*");
+  }
+}

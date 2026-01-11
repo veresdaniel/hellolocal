@@ -1,11 +1,35 @@
 services:
+  # Backend API Service
+  - type: web
+    name: hellolocal-api
+    env: node
+    rootDir: apps/api
+    buildCommand: npm install -g pnpm@10.27.0 && pnpm install && pnpm prisma generate && pnpm run build
+    startCommand: pnpm prisma migrate deploy && node dist/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      # DATABASE_URL - Set in Render Dashboard (Internal Database URL)
+      # JWT_SECRET - Set in Render Dashboard (generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+      # JWT_EXPIRES_IN - Set in Render Dashboard (default: 7d)
+      # FRONTEND_URL - Set in Render Dashboard after frontend is deployed
+      # VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT - Optional, set in Render Dashboard
+
+  # Frontend Web Service
   - type: web
     name: hellolocal-frontend
     env: node
     rootDir: apps/web
-    buildCommand: pnpm install && pnpm build
+    buildCommand: npm install -g pnpm@10.27.0 && pnpm install && pnpm build
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
+      # API_URL - Set in Render Dashboard (Backend API URL, e.g. https://hellolocal-api.onrender.com)
+      # FRONTEND_URL - Set in Render Dashboard (Frontend URL, e.g. https://hellolocal-frontend.onrender.com)
+      # VITE_API_URL - Alternative to API_URL (for Vite build-time)
+      # VITE_FRONTEND_URL - Alternative to FRONTEND_URL (for Vite build-time)
+      # VITE_VAPID_PUBLIC_KEY - Optional, set in Render Dashboard (should match backend VAPID_PUBLIC_KEY)
 

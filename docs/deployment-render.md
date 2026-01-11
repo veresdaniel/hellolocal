@@ -19,6 +19,39 @@ Ez az útmutató lépésről lépésre bemutatja, hogyan telepítsd a HelloLocal
 
 ## 🚀 Deployment Lépések
 
+### 0. Render.yaml használata (Gyors deployment)
+
+Ha a `render.yaml` fájl a repository-ban van, Render automatikusan felismeri és felajánlja a service-ek létrehozását:
+
+1. **Push-old a kódot** GitHub-ra (ha még nem tetted)
+2. **Jelentkezz be** Render Dashboard-ra: https://dashboard.render.com
+3. Kattints a **"New +"** gombra → **"Blueprint"**
+4. **Connect a repository** és válaszd ki a `hellolocal` repository-t
+5. Render automatikusan felismeri a `render.yaml` fájlt
+6. **Állítsd be az Environment Variables**-t (lásd alább)
+7. Kattints **"Apply"** gombra
+8. Render automatikusan létrehozza mindkét service-t
+
+**Fontos**: Az adatbázist **manuálisan** kell létrehozni (lásd 1. lépés), mert a `render.yaml` nem tartalmazza.
+
+**Environment Variables beállítása** (Blueprint után):
+
+**Backend (`hellolocal-api`)**:
+- `DATABASE_URL` - Internal Database URL
+- `JWT_SECRET` - Generálj egy random stringet
+- `JWT_EXPIRES_IN` - `7d` (opcionális)
+- `FRONTEND_URL` - Frontend URL (később, miután a frontend deploy-olva van)
+
+**Frontend (`hellolocal-frontend`)**:
+- `API_URL` - Backend API URL (pl: `https://hellolocal-api.onrender.com`)
+- `FRONTEND_URL` - Frontend URL (pl: `https://hellolocal-frontend.onrender.com`)
+- `VITE_API_URL` - Ugyanaz, mint `API_URL` (build-time változó)
+- `VITE_FRONTEND_URL` - Ugyanaz, mint `FRONTEND_URL` (build-time változó)
+
+---
+
+### Manuális Deployment (ha nem használod a render.yaml-t)
+
 ### 1. Adatbázis Létrehozása
 
 1. Jelentkezz be a Render Dashboard-ra: https://dashboard.render.com
@@ -90,39 +123,65 @@ Ez az útmutató lépésről lépésre bemutatja, hogyan telepítsd a HelloLocal
 
 ### 3. Frontend Deploy
 
-1. Kattints a **"New +"** gombra → **"Static Site"**
+1. Kattints a **"New +"** gombra → **"Web Service"**
 2. **Connect a repository**:
    - Válaszd ki ugyanazt a `hellolocal` repository-t
 3. Állítsd be:
-   - **Name**: `hellolocal`
+   - **Name**: `hellolocal-frontend`
+   - **Region**: Válaszd ugyanazt, mint az adatbázis (Frankfurt)
    - **Branch**: `main` (vagy `master`)
    - **Root Directory**: `apps/web`
+   - **Environment**: `Node`
    - **Build Command**:
      ```bash
-     npm install -g pnpm@10.27.0 && pnpm install && pnpm run build
+     npm install -g pnpm@10.27.0 && pnpm install && pnpm build
      ```
-   - **Publish Directory**: `dist`
+   - **Start Command**:
+     ```bash
+     node server.js
+     ```
+   - **Instance Type**: **Free** (0$/hó)
 
-4. **Environment Variables** beállítása:
+4. **Environment Variables** beállítása (Add Environment Variable):
    ```
-   VITE_API_URL=<Backend API URL amit kimásoltál, pl: https://hellolocal-api.onrender.com>
+   NODE_ENV=production
+   API_URL=<Backend API URL amit kimásoltál, pl: https://hellolocal-api.onrender.com>
+   FRONTEND_URL=<Frontend URL lesz később, pl: https://hellolocal-frontend.onrender.com>
+   VITE_API_URL=<Backend API URL - build-time változó, pl: https://hellolocal-api.onrender.com>
+   VITE_FRONTEND_URL=<Frontend URL - build-time változó, pl: https://hellolocal-frontend.onrender.com>
    VITE_VAPID_PUBLIC_KEY=<public key ha használod>
    ```
 
-5. Kattints **"Create Static Site"** gombra
-6. Várd meg az első deploy-t (~3-5 perc)
-7. **Másold ki** a Frontend URL-t (pl: `https://hellolocal.onrender.com`)
+   **Fontos**: A `VITE_*` változók build-time-ban vannak beégetve, ezért mindkettőt állítsd be!
 
-### 4. Backend FRONTEND_URL frissítése
+5. Kattints **"Create Web Service"** gombra
+6. Várd meg az első deploy-t (~5-10 perc)
+7. **Másold ki** a Frontend URL-t (pl: `https://hellolocal-frontend.onrender.com`)
+
+### 4. Környezeti változók frissítése
+
+#### Backend FRONTEND_URL frissítése
 
 1. Menj vissza a **Backend API** service-hez
 2. Kattints az **"Environment"** tab-ra
 3. Frissítsd a `FRONTEND_URL` változót az új frontend URL-re:
    ```
-   FRONTEND_URL=https://hellolocal.onrender.com
+   FRONTEND_URL=https://hellolocal-frontend.onrender.com
    ```
 4. Kattints **"Save Changes"** gombra
 5. A backend automatikusan újra fog indulni
+
+#### Frontend FRONTEND_URL frissítése
+
+1. Menj a **Frontend** service-hez
+2. Kattints az **"Environment"** tab-ra
+3. Frissítsd a `FRONTEND_URL` változót:
+   ```
+   FRONTEND_URL=https://hellolocal-frontend.onrender.com
+   VITE_FRONTEND_URL=https://hellolocal-frontend.onrender.com
+   ```
+4. Kattints **"Save Changes"** gombra
+5. **Fontos**: A `VITE_*` változók miatt újra kell build-elni! Kattints a **"Manual Deploy"** → **"Deploy latest commit"** gombra
 
 ## ✅ Tesztelés
 
@@ -136,11 +195,11 @@ Válasz: `{"status":"OK"}`
 ### Frontend Teszt
 Nyisd meg:
 ```
-https://hellolocal.onrender.com
+https://hellolocal-frontend.onrender.com
 ```
 
 ### Admin Bejelentkezés
-1. Menj: `https://hellolocal.onrender.com/login`
+1. Menj: `https://hellolocal-frontend.onrender.com/login`
 2. Email: `superadmin@hellolocal.com`
 3. Password: `password123`
 
@@ -198,6 +257,7 @@ npm install -g pnpm@10.27.0 && ...
 **Megoldás**: 
 - Ellenőrizd, hogy az **Internal Database URL**-t használod (nem az External-t)
 - Formátum: `postgresql://user:pass@dpg-xxxxx-INTERNAL/database`
+- A backend service-nek ugyanabban a régióban kell lennie, mint az adatbázis
 
 ### 3. Prisma Migration Failed
 
@@ -209,7 +269,8 @@ npm install -g pnpm@10.27.0 && ...
 
 **Megoldás**: 
 - Ellenőrizd, hogy a backend `FRONTEND_URL` jól van beállítva
-- Formátum: `https://hellolocal.onrender.com` (nincs trailing slash!)
+- Formátum: `https://hellolocal-frontend.onrender.com` (nincs trailing slash!)
+- Ellenőrizd, hogy a frontend `API_URL` vagy `VITE_API_URL` helyesen van beállítva
 
 ### 5. Free Tier "Spins Down" Inaktivitás Után
 
@@ -222,10 +283,10 @@ A Render ingyenes szolgáltatások **15 perc inaktivitás után alvó módba** k
 ## 💰 Költségek
 
 ### Ingyenes Tier (Free)
-- **Web Service**: 750 óra/hó INGYENES
-- **Static Site**: INGYENES, korlátlan
+- **Web Service**: 750 óra/hó INGYENES (mindkét service használja ezt a kvótát)
 - **PostgreSQL**: INGYENES, 90 nap inaktivitás után törlődik
 - **Bandwidth**: 100 GB/hó INGYENES
+- **Fontos**: Két Web Service esetén a 750 óra/hó megosztott (pl. 375 óra/service)
 
 ### Fizetős Tier (Starter - $7/hó/service)
 - **Nincs "spin down"** - mindig elérhető
