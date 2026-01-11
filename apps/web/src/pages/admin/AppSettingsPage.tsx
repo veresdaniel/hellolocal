@@ -272,7 +272,6 @@ export function AppSettingsPage() {
         return;
       }
       
-      console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
       if (!selectedTenantId) {
         showToast(t("admin.errors.noTenantSelected"), "error");
         return;
@@ -290,7 +289,6 @@ export function AppSettingsPage() {
         brandBadgeIcon: siteSettings.brandBadgeIcon,
         faviconUrl: siteSettings.faviconUrl,
       });
-      console.log('[AppSettingsPage] Received updated settings from backend:', JSON.stringify(updated, null, 2));
       
       // Update local state with the response, ensuring all fields are properly initialized
       // Use the exact values from the response, not defaults
@@ -321,7 +319,6 @@ export function AppSettingsPage() {
         brandBadgeIcon: updated.brandBadgeIcon ?? null,
         faviconUrl: updated.faviconUrl ?? null,
       };
-      console.log('[AppSettingsPage] Setting new state:', JSON.stringify(newState, null, 2));
       setSiteSettingsState(newState);
       
       // Invalidate React Query cache to refresh site settings on public pages
@@ -334,7 +331,6 @@ export function AppSettingsPage() {
       // But if you want to force a refresh of the map view, you can uncomment this:
       // await queryClient.invalidateQueries({ queryKey: ["places"] });
       
-      console.log('[AppSettingsPage] Site settings saved successfully!');
       showToast(t("admin.siteSettingsUpdated"), "success");
     } catch (err) {
       console.error('[AppSettingsPage] Error saving site settings:', err);

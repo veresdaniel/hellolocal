@@ -30,7 +30,6 @@ export class AdminAppSettingsService {
   async upsert(key: string, dto: Omit<AppSettingDto, "key">) {
     // Ensure value is always a string (never undefined)
     const value = dto.value ?? "";
-    console.log(`[AdminAppSettingsService] upsert called for key "${key}" with value:`, value);
     try {
       const result = await this.prisma.appSetting.upsert({
         where: { key },
@@ -46,7 +45,6 @@ export class AdminAppSettingsService {
           description: dto.description ?? null,
         },
       });
-      console.log(`[AdminAppSettingsService] upsert successful for key "${key}":`, result);
       return result;
     } catch (error) {
       console.error(`[AdminAppSettingsService] upsert failed for key "${key}":`, error);
@@ -272,18 +270,6 @@ export class AdminAppSettingsService {
     brandBadgeIcon?: string | null;
     faviconUrl?: string | null;
   }) {
-    console.log('[AdminAppSettingsService] setSiteSettings called with:', JSON.stringify(settings, null, 2));
-    console.log('[AdminAppSettingsService] Checking which fields are defined:', {
-      siteName: settings.siteName !== undefined,
-      siteDescription: settings.siteDescription !== undefined,
-      seoTitle: settings.seoTitle !== undefined,
-      seoDescription: settings.seoDescription !== undefined,
-      isCrawlable: settings.isCrawlable !== undefined,
-      defaultPlaceholderCardImage: settings.defaultPlaceholderCardImage !== undefined,
-      defaultPlaceholderDetailHeroImage: settings.defaultPlaceholderDetailHeroImage !== undefined,
-      brandBadgeIcon: settings.brandBadgeIcon !== undefined,
-      faviconUrl: settings.faviconUrl !== undefined,
-    });
     const updates: Promise<any>[] = [];
 
     // Note: Frontend always sends all fields, so we don't need to get current values
@@ -294,7 +280,6 @@ export class AdminAppSettingsService {
       const huValue = settings.siteName.hu ?? "HelloLocal";
       const enValue = settings.siteName.en ?? "HelloLocal";
       const deValue = settings.siteName.de ?? "HelloLocal";
-      console.log('[AdminAppSettingsService] Saving siteName:', { hu: huValue, en: enValue, de: deValue });
       updates.push(this.upsert(`siteName_hu_${tenantId}`, {
         value: huValue,
         type: "string",
@@ -429,15 +414,12 @@ export class AdminAppSettingsService {
       }));
     }
 
-    console.log(`[AdminAppSettingsService] About to execute ${updates.length} updates`);
     if (updates.length === 0) {
       console.warn('[AdminAppSettingsService] WARNING: No updates to execute! This should not happen.');
     }
     await Promise.all(updates);
-    console.log('[AdminAppSettingsService] Updates completed. Fetching fresh data...');
     // Return fresh data from database
     const result = await this.getSiteSettings(tenantId);
-    console.log('[AdminAppSettingsService] Returning:', JSON.stringify(result, null, 2));
     return result;
   }
 }

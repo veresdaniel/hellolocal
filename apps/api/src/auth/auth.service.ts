@@ -281,7 +281,6 @@ export class AuthService {
 
       // Log login event (use first tenant if available)
       // Add a small delay to prevent duplicate logs in development (React StrictMode)
-      console.log("[AuthService] Login successful for user:", user.email, "tenantIds:", tenantIds, "eventLogService available:", !!this.eventLogService);
       if (this.eventLogService && tenantIds.length > 0) {
         // Check if we already logged this login in the last 2 seconds to prevent duplicates
         try {
@@ -297,7 +296,6 @@ export class AuthService {
           });
 
           if (!recentLogin) {
-            console.log("[AuthService] Creating login event log entry...");
             this.eventLogService
               .create({
                 tenantId: tenantIds[0],
@@ -309,13 +307,12 @@ export class AuthService {
                   username: user.username,
                 },
               })
-              .then(() => console.log("[AuthService] Login event log created successfully"))
+              .then(() => {})
               .catch((err) => {
                 console.error("Failed to log login event:", err);
                 // Don't fail login if logging fails
               });
           } else {
-            console.log("[AuthService] Skipping duplicate login log entry");
           }
         } catch (err) {
           // If event log check fails, log error but don't fail login

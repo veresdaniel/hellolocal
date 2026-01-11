@@ -40,9 +40,6 @@ export function AdminDashboard() {
   const showEventLog = user && (user.role === "superadmin" || user.role === "admin");
   
   // Debug: Log render info
-  console.log("[AdminDashboard] Rendered with user:", user);
-  console.log("[AdminDashboard] User role:", user?.role);
-  console.log("[AdminDashboard] showEventLog:", showEventLog);
 
   return (
     <div>

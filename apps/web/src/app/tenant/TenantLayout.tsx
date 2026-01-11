@@ -68,7 +68,6 @@ export function TenantLayout() {
     // Extract the path after lang (everything after /lang)
     const pathAfterLang = location.pathname.split(`/${lang}`)[1] || "";
     const redirectPath = `/${lang}/${DEFAULT_TENANT_SLUG}${pathAfterLang}`;
-    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(adding tenant slug)");
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -78,7 +77,6 @@ export function TenantLayout() {
     // Extract the path after tenant slug (everything after /lang/tenantSlug)
     const pathAfterTenant = location.pathname.split(`/${lang}/${tenantParam}`)[1] || "";
     const redirectPath = `/${lang}${pathAfterTenant}`;
-    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(removing tenant slug)");
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -90,7 +88,6 @@ export function TenantLayout() {
     const pathWithoutTenant = tenantParam ? pathAfterLang.replace(`/${tenantParam}`, "") : pathAfterLang;
     const base = shouldShowTenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
     const redirectPath = `${base}${pathWithoutTenant}`;
-    console.log("TenantLayout: Redirecting from", location.pathname, "to", redirectPath, "(fixing lang)");
     return <Navigate to={redirectPath} replace />;
   }
 

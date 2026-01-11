@@ -14,10 +14,6 @@ function getApiBaseUrl(): string {
   // In production, use environment variable if set
   const apiUrl = import.meta.env.VITE_API_URL;
   
-  // Debug: log in development to help troubleshoot
-  if (import.meta.env.DEV) {
-    console.log("API Base URL:", apiUrl || "(using relative path - Vite proxy)");
-  }
   
   if (apiUrl) {
     // Remove trailing slash if present
@@ -550,7 +546,6 @@ export async function apiDelete<T>(path: string): Promise<T> {
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
   
-  console.log(`[apiDelete] Deleting: ${path}`);
   
   const res = await fetch(`${apiBaseUrl}/api${path}`, {
     method: "DELETE",
@@ -599,7 +594,6 @@ export async function apiDelete<T>(path: string): Promise<T> {
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
           const data = await retryRes.json() as T;
-          console.log(`[apiDelete] Success after retry:`, data);
           return data;
         } catch {
           // Refresh failed, clear tokens and redirect to login
@@ -666,7 +660,6 @@ export async function apiDelete<T>(path: string): Promise<T> {
 
   try {
     const data = await res.json() as T;
-    console.log(`[apiDelete] Success:`, data);
     return data;
   } catch (err) {
     // If response is empty or not JSON, return empty object or throw

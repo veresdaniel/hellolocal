@@ -84,7 +84,6 @@ export async function checkVersionChange(): Promise<boolean> {
  * Clear all caches (localStorage, sessionStorage, service worker, browser cache)
  */
 export async function clearAllCaches(): Promise<void> {
-  console.log("[VersionService] Clearing all caches...");
 
   // Clear localStorage (except version and auth-related data)
   const keysToKeep = [
@@ -111,7 +110,6 @@ export async function clearAllCaches(): Promise<void> {
       await Promise.all(
         cacheNames.map((cacheName) => caches.delete(cacheName))
       );
-      console.log("[VersionService] Service worker caches cleared");
     } catch (error) {
       console.warn("[VersionService] Error clearing service worker caches:", error);
     }
@@ -124,7 +122,6 @@ export async function clearAllCaches(): Promise<void> {
       await Promise.all(
         registrations.map((registration) => registration.unregister())
       );
-      console.log("[VersionService] Service workers unregistered");
     } catch (error) {
       console.warn("[VersionService] Error unregistering service workers:", error);
     }
@@ -144,7 +141,6 @@ export async function clearAllCaches(): Promise<void> {
  * Handle version update - clear caches and reload
  */
 export async function handleVersionUpdate(newVersion: string): Promise<void> {
-  console.log(`[VersionService] Version update detected: ${getStoredVersion()} -> ${newVersion}`);
   
   // Store new version
   storeVersion(newVersion);

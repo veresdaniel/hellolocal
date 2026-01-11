@@ -85,7 +85,6 @@ export const useFiltersStore = create<FiltersState>()(
         if (state && typeof state.showUserLocation === "undefined") {
           state.showUserLocation = false;
         }
-        console.log("Store rehydration complete, userLocation:", state?.userLocation, "showUserLocation:", state?.showUserLocation);
         state?.setHasHydrated(true);
       },
     }

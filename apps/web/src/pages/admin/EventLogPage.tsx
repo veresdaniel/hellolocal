@@ -150,13 +150,11 @@ export function EventLogPage() {
 
     // Skip if we're currently deleting (to prevent reload during delete)
     if (isDeletingRef.current) {
-      console.log("[EventLogPage] Skipping loadLogs - delete in progress");
       return;
     }
     
     // Skip if delete just completed (one cycle grace period)
     if (deleteCompletedRef.current) {
-      console.log("[EventLogPage] Skipping loadLogs - delete just completed");
       deleteCompletedRef.current = false;
       return;
     }
@@ -166,7 +164,6 @@ export function EventLogPage() {
     
     // Only call loadLogs if filters actually changed
     if (prevFiltersRef.current !== filtersKey) {
-      console.log("[EventLogPage] Filters changed, reloading logs");
       prevFiltersRef.current = filtersKey;
       // Call loadLogs with current filters
       loadLogs();
@@ -201,13 +198,9 @@ export function EventLogPage() {
     setError(null);
     const filtersToUse = customFilters || filters;
     
-    console.log("[EventLogPage] Loading logs with filters:", JSON.stringify(filtersToUse, null, 2));
     
     try {
       const response = await getEventLogs(filtersToUse);
-      console.log("[EventLogPage] Loaded logs:", response.logs?.length || 0, "total:", response.pagination?.total || 0);
-      console.log("[EventLogPage] First log ID:", response.logs?.[0]?.id);
-      console.log("[EventLogPage] Last log ID:", response.logs?.[response.logs?.length - 1]?.id);
       
       setLogs(response.logs || []);
       setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
@@ -265,7 +258,6 @@ export function EventLogPage() {
       return;
     }
 
-    console.log("[EventLogPage] Starting delete, current visible logs:", logs.length);
     
     setIsDeleting(true);
     isDeletingRef.current = true; // Prevent useEffect from triggering reload
@@ -282,7 +274,6 @@ export function EventLogPage() {
       };
       
       const result = await deleteEventLogs(deleteFilters);
-      console.log("[EventLogPage] Deleted", result.count, "log(s)");
       
       showToast(
         t("admin.eventLog.deleteSuccess", { count: result.count }),
@@ -292,7 +283,6 @@ export function EventLogPage() {
       // Update prevFiltersRef FIRST to prevent useEffect from triggering
       const currentFiltersKey = JSON.stringify(filters);
       prevFiltersRef.current = currentFiltersKey;
-      console.log("[EventLogPage] Updated prevFiltersRef to:", currentFiltersKey);
       
       // Set delete completed flag to skip next useEffect cycle
       deleteCompletedRef.current = true;
@@ -301,7 +291,6 @@ export function EventLogPage() {
       setLogs([]);
       setPagination({ page: 1, limit: 50, total: 0, totalPages: 0 });
       
-      console.log("[EventLogPage] Delete complete - NO RELOAD");
       
     } catch (err) {
       console.error("[EventLogPage] Delete error:", err);
@@ -312,7 +301,6 @@ export function EventLogPage() {
       // Wait for next tick to ensure all state updates are processed
       requestAnimationFrame(() => {
         isDeletingRef.current = false;
-        console.log("[EventLogPage] Delete cleanup complete, isDeletingRef reset");
       });
     }
   };

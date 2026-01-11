@@ -670,22 +670,14 @@ export function CategoriesPage() {
                       }
 
                       // Debug logging
-                      console.log("=== REORDER DEBUG ===");
-                      console.log("Tenant ID:", selectedTenantId);
-                      console.log("Updates count:", updates.length);
-                      console.log("Updates:", updates.map(u => ({ 
                         id: u.id, 
                         parentId: u.parentId, 
                         order: u.order 
                       })));
-                      console.log("All category IDs in updates:", updates.map(u => u.id));
-                      console.log("All parent IDs in updates:", updates.filter(u => u.parentId).map(u => u.parentId));
-                      console.log("Available categories:", categories.map(c => ({ 
                         id: c.id, 
                         parentId: c.parentId, 
                         order: c.order 
                       })));
-                      console.log("===================");
 
                       try {
                         // Double-check all IDs exist before sending

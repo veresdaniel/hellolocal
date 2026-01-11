@@ -22,7 +22,6 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       NotificationService.register().then((registered) => {
         if (registered) {
-          console.log("Service Worker and notifications registered");
         }
       });
     }

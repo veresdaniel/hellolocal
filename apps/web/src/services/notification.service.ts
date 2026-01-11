@@ -18,7 +18,6 @@ export class NotificationService {
         scope: "/",
       });
       this.registration = registration;
-      console.log("Service Worker registered:", registration);
 
       // Request notification permission
       if ("Notification" in window && Notification.permission === "default") {
@@ -146,7 +145,6 @@ export class NotificationService {
       // 1. Fetch events from API
       // 2. Compare with stored last checked timestamp
       // 3. Show notifications for new events
-      console.log("Checking for new events...");
     } catch (error) {
       console.error("Error checking for new events:", error);
     }

@@ -255,7 +255,6 @@ export function MapFilters({
 
   const priceBands = useMemo(() => {
     if (!places) return [];
-    console.log('[MapFilters] Processing places for price bands:', places.length);
     const priceBandMap = new Map<string, { id: string; name: string }>();
     places.forEach((place) => {
       if (place.priceBand) {
@@ -263,7 +262,6 @@ export function MapFilters({
         const priceBandId = place.priceBandId || place.priceBand;
         const priceBandName = place.priceBand;
         
-        console.log('[MapFilters] Place price band:', { 
           placeName: place.name, 
           priceBandId, 
           priceBandName 
@@ -276,7 +274,6 @@ export function MapFilters({
       }
     });
     const result = Array.from(priceBandMap.values());
-    console.log('[MapFilters] Final price bands:', result);
     return result;
   }, [places]);
 

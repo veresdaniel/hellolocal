@@ -18,7 +18,5 @@ async function bootstrap() {
   // later: add validation pipe, logging, etc.
   const port = process.env.PORT ? Number(process.env.PORT) : 3002;
   await app.listen(port, "0.0.0.0"); // Listen on all interfaces for Render.com
-  // eslint-disable-next-line no-console
-  console.log(`✅ API listening on http://0.0.0.0:${port}`);
 }
 bootstrap();

@@ -576,7 +576,6 @@ export function MapComponent({
     if (selectedMarkerId) {
       const markerStillExists = markers.find(m => m.id === selectedMarkerId);
       if (!markerStillExists) {
-        console.log('[MapComponent] Selected marker filtered out, clearing selection:', selectedMarkerId);
         setSelectedMarkerId(null);
         setRoutes([]);
         lastRouteFetchPosition.current = null;

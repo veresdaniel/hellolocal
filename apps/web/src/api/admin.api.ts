@@ -732,7 +732,6 @@ export function getEventLogs(filters: EventLogFilterDto) {
   }
   
   const queryString = params.toString();
-  console.log("[getEventLogs] Fetching with URL:", `/admin/event-logs?${queryString}`);
   return apiGet<EventLogResponse>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
 }
 
@@ -773,6 +772,5 @@ export function deleteEventLogs(filters: EventLogFilterDto) {
   // Explicitly exclude page and limit - we want to delete ALL matching records
 
   const queryString = params.toString();
-  console.log("[deleteEventLogs] Delete URL:", `/admin/event-logs${queryString ? `?${queryString}` : ""}`);
   return apiDelete<{ message: string; count: number }>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
 }

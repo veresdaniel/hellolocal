@@ -325,18 +325,21 @@ export function AdminResponsiveTable<T>({
                 }}
               >
                 <button
-                  onClick={() => setCurrentMobileIndex(Math.max(0, currentMobileIndex - 1))}
-                  disabled={currentMobileIndex === 0}
+                  onClick={() => {
+                    // Infinite loop: go to last if at first
+                    if (currentMobileIndex === 0) {
+                      setCurrentMobileIndex(filteredData.length - 1);
+                    } else {
+                      setCurrentMobileIndex(currentMobileIndex - 1);
+                    }
+                  }}
                   style={{
                     padding: "8px 16px",
-                    background:
-                      currentMobileIndex === 0
-                        ? "#e5e7eb"
-                        : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: currentMobileIndex === 0 ? "#9ca3af" : "white",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
                     border: "none",
                     borderRadius: 6,
-                    cursor: currentMobileIndex === 0 ? "not-allowed" : "pointer",
+                    cursor: "pointer",
                     fontSize: 18,
                     fontWeight: 600,
                   }}
@@ -347,21 +350,21 @@ export function AdminResponsiveTable<T>({
                   {currentMobileIndex + 1} / {filteredData.length}
                 </span>
                 <button
-                  onClick={() =>
-                    setCurrentMobileIndex(Math.min(filteredData.length - 1, currentMobileIndex + 1))
-                  }
-                  disabled={currentMobileIndex === filteredData.length - 1}
+                  onClick={() => {
+                    // Infinite loop: go to first if at last
+                    if (currentMobileIndex === filteredData.length - 1) {
+                      setCurrentMobileIndex(0);
+                    } else {
+                      setCurrentMobileIndex(currentMobileIndex + 1);
+                    }
+                  }}
                   style={{
                     padding: "8px 16px",
-                    background:
-                      currentMobileIndex === filteredData.length - 1
-                        ? "#e5e7eb"
-                        : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: currentMobileIndex === filteredData.length - 1 ? "#9ca3af" : "white",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
                     border: "none",
                     borderRadius: 6,
-                    cursor:
-                      currentMobileIndex === filteredData.length - 1 ? "not-allowed" : "pointer",
+                    cursor: "pointer",
                     fontSize: 18,
                     fontWeight: 600,
                   }}
@@ -411,12 +414,20 @@ export function AdminResponsiveTable<T>({
                   (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50)
                 ) {
                   if (diffX < -50 && timeDiff < 400) {
-                    setCurrentMobileIndex(
-                      Math.min(filteredData.length - 1, currentMobileIndex + 1)
-                    );
+                    // Swipe left = next card (infinite)
+                    if (currentMobileIndex === filteredData.length - 1) {
+                      setCurrentMobileIndex(0); // Loop to first
+                    } else {
+                      setCurrentMobileIndex(currentMobileIndex + 1);
+                    }
                     setSwipedCardId(null);
                   } else if (diffX > 50 && timeDiff < 400) {
-                    setCurrentMobileIndex(Math.max(0, currentMobileIndex - 1));
+                    // Swipe right = previous card (infinite)
+                    if (currentMobileIndex === 0) {
+                      setCurrentMobileIndex(filteredData.length - 1); // Loop to last
+                    } else {
+                      setCurrentMobileIndex(currentMobileIndex - 1);
+                    }
                     setSwipedCardId(null);
                   }
                 }
@@ -659,11 +670,24 @@ export function AdminResponsiveTable<T>({
                           const timeDiff =
                             Date.now() - ((e.currentTarget as any).cardTouchStartTime || 0);
 
-                          // Left swipe = actions slide in
+                          // Left swipe = actions slide in (only if not swiping right for navigation)
                           if ((diffX > 60 && timeDiff < 300) || diffX > 90) {
-                            setSwipedCardId(itemId);
-                          } else if (diffX < -30) {
-                            // Right swipe = close
+                            // Only show actions if we're not doing a navigation swipe
+                            // Check if this is a deliberate left swipe (not just a small movement)
+                            if (Math.abs(diffX) > 50 && diffX > 0) {
+                              setSwipedCardId(itemId);
+                            }
+                          } else if (diffX < -50 && timeDiff < 300) {
+                            // Right swipe = navigate to next card (infinite)
+                            // Don't close actions, just navigate
+                            if (currentMobileIndex === filteredData.length - 1) {
+                              setCurrentMobileIndex(0); // Loop to first
+                            } else {
+                              setCurrentMobileIndex(currentMobileIndex + 1);
+                            }
+                            setSwipedCardId(null);
+                          } else if (diffX < -30 && diffX > -50) {
+                            // Small right swipe = close actions only
                             setSwipedCardId(null);
                           }
                         }}

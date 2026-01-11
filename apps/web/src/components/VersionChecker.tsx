@@ -42,7 +42,6 @@ export function VersionChecker() {
     // First time - store current version
     if (!currentVersionRef.current) {
       currentVersionRef.current = newVersion;
-      console.log("[VersionChecker] Initial version:", newVersion.version, newVersion.buildHash.substring(0, 7));
       return;
     }
 
@@ -52,7 +51,6 @@ export function VersionChecker() {
       currentVersionRef.current.version !== newVersion.version;
 
     if (hasUpdate) {
-      console.log("[VersionChecker] Update detected!", {
         old: `${currentVersionRef.current.version} (${currentVersionRef.current.buildHash.substring(0, 7)})`,
         new: `${newVersion.version} (${newVersion.buildHash.substring(0, 7)})`
       });
@@ -67,7 +65,6 @@ export function VersionChecker() {
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log("[VersionChecker] Cleared", cacheNames.length, "cache(s)");
     }
 
     // Force reload from server (bypass cache)

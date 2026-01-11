@@ -31,7 +31,6 @@ export class AdminEventLogService {
    * Create a new event log entry
    */
   async create(dto: CreateEventLogDto) {
-    console.log("[AdminEventLogService] Creating event log:", JSON.stringify(dto, null, 2));
     const result = await this.prisma.eventLog.create({
       data: {
         tenantId: dto.tenantId,
@@ -60,7 +59,6 @@ export class AdminEventLogService {
         },
       },
     });
-    console.log("[AdminEventLogService] Event log created with ID:", result.id);
     return result;
   }
 
@@ -148,9 +146,6 @@ export class AdminEventLogService {
       this.prisma.eventLog.count({ where }),
     ]);
 
-    console.log("[AdminEventLogService] findAll - where:", JSON.stringify(where, null, 2));
-    console.log("[AdminEventLogService] findAll - found", logs.length, "logs, total:", total);
-    console.log("[AdminEventLogService] findAll - first log:", logs[0] ? { id: logs[0].id, action: logs[0].action, createdAt: logs[0].createdAt } : "none");
 
     return {
       logs,
@@ -321,12 +316,8 @@ export class AdminEventLogService {
       }
     }
 
-    // Log the final where clause
-    console.log('[EventLogService] Final where clause for deletion:', JSON.stringify(where, null, 2));
-    
     // Count total matching records (before applying any page/limit)
     const totalMatching = await this.prisma.eventLog.count({ where });
-    console.log(`[EventLogService] Total matching records: ${totalMatching}`);
     
     // If no filters except tenant, don't allow deletion (safety measure)
     const hasSpecificFilters = !!(filters.userId || filters.action || filters.entityType || filters.startDate || filters.endDate);
@@ -334,26 +325,15 @@ export class AdminEventLogService {
       throw new BadRequestException(`Cannot delete ${totalMatching} event logs without specific filters. Please add filters to narrow down the deletion.`);
     }
 
-    // Log what we're about to delete
-    console.log('[EventLogService] Deleting event logs with filters:', JSON.stringify(where, null, 2));
-    
     // Count before deletion for verification
     const countBefore = await this.prisma.eventLog.count({ where });
-    console.log(`[EventLogService] Found ${countBefore} event log(s) to delete`);
 
     const result = await this.prisma.eventLog.deleteMany({
       where,
     });
 
-    console.log(`[EventLogService] Successfully deleted ${result.count} event log(s)`);
-
     // Verify deletion by counting remaining records
     const countAfter = await this.prisma.eventLog.count({ where });
-    if (countAfter > 0) {
-      console.warn(`[EventLogService] WARNING: ${countAfter} event log(s) still exist after deletion!`);
-    } else {
-      console.log(`[EventLogService] Verification: All matching event logs deleted successfully`);
-    }
 
     return {
       message: `Deleted ${result.count} event log(s)`,
