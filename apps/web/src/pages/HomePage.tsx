@@ -53,8 +53,12 @@ export function HomePage() {
     setMapCenter,
   } = useViewStore();
   
-  const compactFooterHeight = 56; // Height of compact footer
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Calculate actual footer height on mobile
+  // Mobile: padding 12px top + 12px bottom + content height (font 14px + line height) = ~48-52px
+  // Desktop: padding 16px top + 16px bottom + content = ~56px
+  const compactFooterHeight = isMobile ? 52 : 56;
 
   // Detect mobile viewport
   useEffect(() => {
@@ -86,20 +90,15 @@ export function HomePage() {
   // Update map height when window resizes
   useEffect(() => {
     const handleResize = () => {
-      if (isMobile) {
-        // On mobile: map should fill viewport minus footer height
-        setMapHeight(window.innerHeight - compactFooterHeight);
-      } else {
-        // On desktop: map should fill viewport minus footer height
-        setMapHeight(window.innerHeight - compactFooterHeight);
-      }
+      const footerHeight = window.innerWidth < 768 ? 52 : 56;
+      setMapHeight(window.innerHeight - footerHeight);
     };
     if (typeof window !== "undefined") {
       handleResize(); // Set initial height
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
-  }, [setMapHeight, compactFooterHeight, isMobile]);
+  }, [setMapHeight, isMobile]);
 
   // Load map settings first to avoid flickering
   // Don't cache too aggressively - need to refresh on lang/tenant change
@@ -608,8 +607,8 @@ export function HomePage() {
   return (
     <div
       style={{
-        display: showMap ? "flex" : "block",
-        flexDirection: showMap ? "column" : undefined,
+        display: showMap ? (isMobile ? "block" : "flex") : "block",
+        flexDirection: showMap && !isMobile ? "column" : undefined,
         position: "relative",
         width: "100%",
         height: showMap ? "100vh" : "auto",
@@ -625,9 +624,12 @@ export function HomePage() {
             style={{ 
               ...(isMobile 
                 ? { 
-                    height: `calc(100vh - ${compactFooterHeight}px)`,
+                    height: `calc(100vh - 52px)`,
                     position: "relative",
-                    overflow: "hidden"
+                    overflow: "hidden",
+                    margin: 0,
+                    padding: 0,
+                    boxSizing: "border-box",
                   }
                 : {
                     flex: 1,
@@ -644,7 +646,7 @@ export function HomePage() {
               markers={markers}
               userLocation={userLocation || useFiltersStore.getState().userLocation}
               showRoutes={false}
-              height={isMobile && typeof window !== "undefined" ? window.innerHeight - compactFooterHeight : mapHeight}
+              height={isMobile && typeof window !== "undefined" ? window.innerHeight - 52 : mapHeight}
               interactive={true}
               defaultZoom={defaultZoom}
               mapStyle="default"
@@ -689,19 +691,25 @@ export function HomePage() {
               </button>
             </div>
           </div>
-          {/* Compact footer - absolute positioned at bottom on mobile */}
-          <div
-            style={{
-              position: isMobile ? "fixed" : "relative",
-              bottom: isMobile ? 0 : "auto",
-              left: 0,
-              right: 0,
-              width: "100%",
-              zIndex: isMobile ? 100 : "auto",
-            }}
-          >
+          {/* Compact footer - fixed positioned at bottom on mobile */}
+          {isMobile ? (
+            <div
+              style={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                width: "100%",
+                zIndex: 100,
+                margin: 0,
+                padding: 0,
+              }}
+            >
+              <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+            </div>
+          ) : (
             <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
-          </div>
+          )}
           {/* MapFilters at top level to be above footer */}
           <MapFilters
             selectedCategories={selectedCategories}
