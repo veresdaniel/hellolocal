@@ -1,4 +1,4 @@
-/* Admin input fields - unified sans-serif font and styling */
+/* Admin input fields - unified Inter font for body text readability */
 /* Apply to all input, textarea, select elements in admin pages */
 .admin-layout input[type="text"],
 .admin-layout input[type="url"],
@@ -8,26 +8,26 @@
 .admin-layout input[type="datetime-local"],
 .admin-layout textarea,
 .admin-layout select {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   font-size: 15px !important;
   color: #333 !important;
 }
 
-/* Label styling - unified font and color */
+/* Label styling - unified Inter font */
 .admin-layout label {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 
-/* Placeholder styling - unified color and font */
+/* Placeholder styling - unified color and Inter font */
 .admin-layout input::placeholder,
 .admin-layout textarea::placeholder {
   color: #999 !important;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   opacity: 1 !important;
 }
 
 /* Select option styling */
 .admin-layout select option {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   color: #333 !important;
 }

@@ -23,6 +23,7 @@ export interface CreateEventDto {
   isPublished?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean; // New: whether event is rain-safe
+  showOnMap?: boolean; // Whether to show event in map view event box
   startDate: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
@@ -50,6 +51,7 @@ export interface UpdateEventDto {
   isPublished?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean; // New: whether event is rain-safe
+  showOnMap?: boolean; // Whether to show event in map view event box
   startDate?: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
@@ -282,58 +284,66 @@ export class AdminEventService {
   }
 
   async findAll(tenantId: string, page?: number, limit?: number) {
-    // Default pagination values
-    const pageNum = page ? parseInt(String(page)) : 1;
-    const limitNum = limit ? parseInt(String(limit)) : 50;
-    
-    const where = { tenantId };
-    
-    // Get total count
-    const total = await this.prisma.event.count({ where });
-    
-    // Get paginated results
-    const events = await this.prisma.event.findMany({
-      where,
-      include: {
-        place: {
-          include: {
-            translations: true,
+    try {
+      // Default pagination values
+      const pageNum = page ? parseInt(String(page)) : 1;
+      const limitNum = limit ? parseInt(String(limit)) : 50;
+      
+      const where = { tenantId };
+      
+      // Get total count
+      const total = await this.prisma.event.count({ where });
+      
+      // Get paginated results
+      const events = await this.prisma.event.findMany({
+        where,
+        include: {
+          place: {
+            include: {
+              translations: true,
+            },
           },
-        },
-        category: {
-          include: {
-            translations: true,
+          category: {
+            include: {
+              translations: true,
+            },
           },
-        },
-        tags: {
-          include: {
-            tag: {
-              include: {
-                translations: true,
+          tags: {
+            include: {
+              tag: {
+                include: {
+                  translations: true,
+                },
               },
             },
           },
+          translations: true,
         },
-        translations: true,
-      },
-      orderBy: [
-        { isPinned: "desc" },
-        { startDate: "asc" },
-      ],
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum,
-    });
-    
-    // Always return paginated response
-    return {
-      events,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum) || 1,
-      },
-    };
+        orderBy: [
+          { isPinned: "desc" },
+          { startDate: "asc" },
+        ],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      });
+      
+      // Always return paginated response
+      return {
+        events,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum) || 1,
+        },
+      };
+    } catch (error) {
+      console.error("Error in AdminEventService.findAll:", error);
+      // Re-throw with more context
+      throw new BadRequestException(
+        `Failed to fetch events: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   async findOne(id: string, tenantId: string) {
@@ -400,6 +410,7 @@ export class AdminEventService {
         isActive: dto.isActive ?? true,
         isPinned: dto.isPinned ?? false,
         isRainSafe: dto.isRainSafe ?? false,
+        showOnMap: dto.showOnMap ?? true,
         gallery: dto.gallery ?? [],
         translations: {
           create: translations.map((t) => ({
@@ -576,6 +587,10 @@ export class AdminEventService {
     }
     if (dto.isRainSafe !== undefined) {
       updateData.isRainSafe = dto.isRainSafe;
+    }
+
+    if (dto.showOnMap !== undefined) {
+      updateData.showOnMap = dto.showOnMap;
     }
 
     const updated = await this.prisma.event.update({

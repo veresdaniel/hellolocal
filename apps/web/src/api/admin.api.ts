@@ -512,6 +512,7 @@ export interface SiteSettings {
   isCrawlable: boolean;
   defaultPlaceholderCardImage: string | null;
   defaultPlaceholderDetailHeroImage: string | null;
+  defaultEventPlaceholderCardImage: string | null;
   brandBadgeIcon: string | null;
   faviconUrl: string | null;
 }
@@ -524,6 +525,9 @@ export interface SetSiteSettingsDto {
   isCrawlable?: boolean;
   defaultPlaceholderCardImage?: string | null;
   defaultPlaceholderDetailHeroImage?: string | null;
+  defaultEventPlaceholderCardImage?: string | null;
+  brandBadgeIcon?: string | null;
+  faviconUrl?: string | null;
 }
 
 export function getSiteSettings(tenantId?: string) {
@@ -543,6 +547,8 @@ export interface Event {
   categoryId: string | null; // Legacy: kept for backward compatibility
   isActive: boolean;
   isPinned: boolean;
+  isRainSafe: boolean;
+  showOnMap: boolean;
   startDate: string;
   endDate: string | null;
   heroImage: string | null;
@@ -601,6 +607,8 @@ export interface CreateEventDto {
   }>;
   isActive?: boolean;
   isPinned?: boolean;
+  isRainSafe?: boolean;
+  showOnMap?: boolean;
   startDate: string;
   endDate?: string | null;
   heroImage?: string | null;
@@ -626,6 +634,8 @@ export interface UpdateEventDto {
   }>;
   isActive?: boolean;
   isPinned?: boolean;
+  isRainSafe?: boolean;
+  showOnMap?: boolean;
   startDate?: string;
   endDate?: string | null;
   heroImage?: string | null;

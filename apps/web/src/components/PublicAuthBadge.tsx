@@ -235,7 +235,7 @@ export function PublicAuthBadge() {
             boxShadow: "0 0 0 3px rgba(74, 222, 128, 0.3), 0 0 8px rgba(74, 222, 128, 0.5)",
           }}
         />
-        <span style={{ fontWeight: 600, whiteSpace: "nowrap" }}>
+        <span style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", whiteSpace: "nowrap" }}>
           {user.firstName} {user.lastName}
         </span>
         <span
@@ -245,7 +245,8 @@ export function PublicAuthBadge() {
             background: "rgba(255, 255, 255, 0.25)",
             color: "white",
             fontSize: 10,
-            fontWeight: 700,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             textTransform: "uppercase",
             letterSpacing: 0.5,
             backdropFilter: "blur(10px)",
@@ -277,7 +278,8 @@ export function PublicAuthBadge() {
             color: "white",
             border: "none",
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             cursor: "pointer",
             transition: "all 0.2s ease",
             display: "flex",
@@ -315,7 +317,8 @@ export function PublicAuthBadge() {
             color: "white",
             border: "none",
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             cursor: "pointer",
             transition: "all 0.2s ease",
             display: "flex",

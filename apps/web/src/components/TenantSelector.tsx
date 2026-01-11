@@ -43,7 +43,15 @@ export function TenantSelector() {
 
   if (tenants.length === 0) {
     return (
-      <div style={{ padding: "8px 16px", background: "#fee", borderRadius: 4, color: "#c00", fontSize: 14 }}>
+      <div style={{ 
+        padding: "8px 16px", 
+        background: "#fee", 
+        borderRadius: 4, 
+        color: "#c00", 
+        fontSize: 14,
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontWeight: 400,
+      }}>
         {t("admin.noTenants")}
       </div>
     );
@@ -73,7 +81,13 @@ export function TenantSelector() {
   if (tenants.length === 1) {
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4 }}>
+        <div style={{ 
+          padding: "8px 16px", 
+          background: "#f5f5f5", 
+          borderRadius: 4,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 400,
+        }}>
           {getTenantName(tenants[0])}
         </div>
         <button
@@ -90,6 +104,8 @@ export function TenantSelector() {
             alignItems: "center",
             gap: 6,
             minWidth: isSmallScreen ? "auto" : "fit-content",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 500,
           }}
           title={t("admin.openPublicPage")}
         >
@@ -112,6 +128,8 @@ export function TenantSelector() {
           border: "1px solid #ddd",
           background: "white",
           cursor: "pointer",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 400,
         }}
       >
         {tenants.map((tenant) => (
@@ -135,6 +153,8 @@ export function TenantSelector() {
           alignItems: "center",
           gap: 6,
           minWidth: isSmallScreen ? "auto" : "fit-content",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 500,
         }}
         title={t("admin.openPublicPage")}
       >

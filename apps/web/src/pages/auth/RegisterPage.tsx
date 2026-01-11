@@ -127,6 +127,7 @@ export function RegisterPage() {
             color: "#667eea",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {t("admin.register")}
@@ -137,6 +138,8 @@ export function RegisterPage() {
             color: "#666",
             marginBottom: "clamp(20px, 4vw, 32px)",
             fontSize: "clamp(13px, 3vw, 14px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
           }}
         >
           {t("admin.createAccount")}
@@ -153,6 +156,7 @@ export function RegisterPage() {
               border: "1px solid #fca5a5",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {error}
@@ -166,12 +170,13 @@ export function RegisterPage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#667eea",
-                fontWeight: 600,
-                fontSize: "clamp(13px, 3vw, 14px)",
-              }}
-            >
-              {t("admin.username")}
-            </label>
+              fontWeight: 600,
+              fontSize: "clamp(13px, 3vw, 14px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.username")}
+          </label>
             <input
               type="text"
               name="username"
@@ -186,10 +191,10 @@ export function RegisterPage() {
                 border: "2px solid #e0e7ff",
                 borderRadius: 8,
                 outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily: "inherit",
-                boxSizing: "border-box",
-              }}
+              transition: "all 0.3s ease",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              boxSizing: "border-box",
+            }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#667eea";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -245,9 +250,9 @@ export function RegisterPage() {
               }}
             />
             {emailError && (
-              <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500 }}>
-                {emailError}
-              </p>
+            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              {emailError}
+            </p>
             )}
           </div>
 
@@ -296,9 +301,9 @@ export function RegisterPage() {
               }}
             />
             {passwordError && (
-              <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500 }}>
-                {passwordError}
-              </p>
+            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              {passwordError}
+            </p>
             )}
           </div>
 
@@ -327,10 +332,10 @@ export function RegisterPage() {
                 border: "2px solid #e0e7ff",
                 borderRadius: 8,
                 outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily: "inherit",
-                boxSizing: "border-box",
-              }}
+              transition: "all 0.3s ease",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              boxSizing: "border-box",
+            }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#667eea";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -367,10 +372,10 @@ export function RegisterPage() {
                 border: "2px solid #e0e7ff",
                 borderRadius: 8,
                 outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily: "inherit",
-                boxSizing: "border-box",
-              }}
+              transition: "all 0.3s ease",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              boxSizing: "border-box",
+            }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#667eea";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -429,17 +434,18 @@ export function RegisterPage() {
             style={{
               width: "100%",
               padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
-              fontSize: "clamp(15px, 3.5vw, 16px)",
-              fontWeight: 600,
-              background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              cursor: isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
-              boxSizing: "border-box",
-            }}
+            fontSize: "clamp(15px, 3.5vw, 16px)",
+            fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: isLoading ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            boxSizing: "border-box",
+          }}
             onMouseEnter={(e) => {
               if (!isLoading) {
                 e.currentTarget.style.transform = "translateY(-2px)";
@@ -457,13 +463,14 @@ export function RegisterPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center", fontSize: "clamp(13px, 3vw, 14px)", color: "#666" }}>
+        <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center", fontSize: "clamp(13px, 3vw, 14px)", color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
           {t("admin.alreadyHaveAccount")}{" "}
           <Link 
             to={`/${lang}/admin/login`} 
             style={{ 
               color: "#667eea",
-              fontWeight: 600,
+              fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textDecoration: "none",
             }}
             onMouseEnter={(e) => {

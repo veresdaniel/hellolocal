@@ -12,6 +12,7 @@ import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { Badge } from "../components/Badge";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -146,37 +147,31 @@ export function PlaceDetailPage() {
                   flexWrap: "wrap",
                   justifyContent: "flex-start",
                 }}>
-                  <span
+                  <Badge
+                    variant="category"
+                    color="#667eea"
+                    size="medium"
+                    uppercase={true}
+                    opacity={0.95}
                     style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "white",
-                      background: "rgba(102, 126, 234, 0.95)",
                       backdropFilter: "blur(8px)",
-                      padding: "6px 14px",
-                      borderRadius: 8,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
                       boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                     }}
                   >
                     {place.category}
-                  </span>
+                  </Badge>
                   {place.priceBand && (
-                    <span
+                    <Badge
+                      variant="priceBand"
+                      size="medium"
+                      opacity={0.95}
                       style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "white",
-                        background: "rgba(118, 75, 162, 0.95)",
                         backdropFilter: "blur(8px)",
-                        padding: "6px 14px",
-                        borderRadius: 8,
                         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                       }}
                     >
                       {place.priceBand}
-                    </span>
+                    </Badge>
                   )}
                 </div>
               )}
@@ -196,20 +191,13 @@ export function PlaceDetailPage() {
             {place.tags && place.tags.length > 0 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
                 {place.tags.map((tag) => (
-                  <span
+                  <Badge
                     key={tag}
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "#666",
-                      background: "#f5f5f5",
-                      border: "1px solid #e0e0e0",
-                      padding: "6px 12px",
-                      borderRadius: 8,
-                    }}
+                    variant="tag"
+                    size="medium"
                   >
                     {tag}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
@@ -232,6 +220,7 @@ export function PlaceDetailPage() {
                 margin: 0,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 color: "#1a1a1a",
                 lineHeight: 1.2,
                 letterSpacing: "-0.02em",
@@ -249,6 +238,8 @@ export function PlaceDetailPage() {
               style={{
                 fontSize: 18,
                 lineHeight: 1.8,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
                 color: "#333",
                 margin: "0 16px 32px",
                 background: "white",
@@ -275,7 +266,8 @@ export function PlaceDetailPage() {
               <h3
                 style={{
                   fontSize: 22,
-                  fontWeight: 700,
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "white",
                   marginBottom: 24,
                   display: "flex",
@@ -301,12 +293,12 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>📍</span>
                       {t("public.address")}
                     </strong>
                     <div
-                      style={{ color: "white", fontSize: 16, lineHeight: 1.6 }}
+                      style={{ color: "white", fontSize: 16, lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
                       dangerouslySetInnerHTML={{ __html: place.contact.address }}
                     />
                   </div>
@@ -321,7 +313,7 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>📱</span>
                       {t("public.phone")}
                     </strong>
@@ -331,7 +323,8 @@ export function PlaceDetailPage() {
                         color: "white",
                         textDecoration: "none",
                         fontSize: 18,
-                        fontWeight: 600,
+                        fontWeight: 500,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
@@ -361,7 +354,7 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>✉️</span>
                       {t("public.email")}
                     </strong>
@@ -371,7 +364,8 @@ export function PlaceDetailPage() {
                         color: "white",
                         textDecoration: "none",
                         fontSize: 16,
-                        fontWeight: 500,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
@@ -402,7 +396,7 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>🌐</span>
                       {t("public.website")}
                     </strong>
@@ -414,7 +408,8 @@ export function PlaceDetailPage() {
                         color: "white",
                         textDecoration: "none",
                         fontSize: 16,
-                        fontWeight: 500,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
@@ -445,7 +440,7 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>📘</span>
                       Facebook
                     </strong>
@@ -457,7 +452,8 @@ export function PlaceDetailPage() {
                         color: "white",
                         textDecoration: "none",
                         fontSize: 16,
-                        fontWeight: 500,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
@@ -488,7 +484,7 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(255, 255, 255, 0.2)",
                     }}
                   >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       <span>💬</span>
                       WhatsApp
                     </strong>
@@ -500,7 +496,8 @@ export function PlaceDetailPage() {
                         color: "white",
                         textDecoration: "none",
                         fontSize: 18,
-                        fontWeight: 600,
+                        fontWeight: 500,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
@@ -539,7 +536,8 @@ export function PlaceDetailPage() {
               <h3
                 style={{
                   fontSize: 20,
-                  fontWeight: 700,
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#1a1a1a",
                   marginBottom: 16,
                   display: "flex",
@@ -574,7 +572,8 @@ export function PlaceDetailPage() {
                     >
                       <span
                         style={{
-                          fontWeight: isToday ? 600 : 500,
+                          fontWeight: isToday ? 500 : 400,
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           color: isToday ? "#667eea" : "#333",
                           fontSize: 16,
                         }}
@@ -586,7 +585,8 @@ export function PlaceDetailPage() {
                               marginLeft: 8,
                               fontSize: 12,
                               color: "#667eea",
-                              fontWeight: 600,
+                              fontWeight: 500,
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             }}
                           >
                             (Ma)
@@ -597,7 +597,8 @@ export function PlaceDetailPage() {
                         style={{
                           color: oh.isClosed ? "#999" : "#333",
                           fontSize: 16,
-                          fontWeight: oh.isClosed ? 400 : 500,
+                          fontWeight: 400,
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {oh.isClosed ? (
@@ -632,7 +633,8 @@ export function PlaceDetailPage() {
               <h3
                 style={{
                   fontSize: 20,
-                  fontWeight: 700,
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#1a1a1a",
                   marginBottom: 16,
                   display: "flex",
@@ -644,7 +646,7 @@ export function PlaceDetailPage() {
                 {t("public.accessibility")}
               </h3>
               <div
-                style={{ color: "#333", fontSize: 16, lineHeight: 1.8 }}
+                style={{ color: "#333", fontSize: 16, lineHeight: 1.8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
                 dangerouslySetInnerHTML={{ __html: place.accessibility }}
               />
             </div>
@@ -661,7 +663,8 @@ export function PlaceDetailPage() {
                 color: "#667eea",
                 textDecoration: "none",
                 fontSize: 16,
-                fontWeight: 500,
+                fontWeight: 400,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "color 0.2s",
               }}
               onMouseEnter={(e) => {

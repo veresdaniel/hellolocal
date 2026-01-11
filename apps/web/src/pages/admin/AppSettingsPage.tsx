@@ -53,6 +53,7 @@ export function AppSettingsPage() {
     isCrawlable: true,
     defaultPlaceholderCardImage: null,
     defaultPlaceholderDetailHeroImage: null,
+    defaultEventPlaceholderCardImage: null,
     brandBadgeIcon: null,
     faviconUrl: null,
   });
@@ -171,6 +172,7 @@ export function AppSettingsPage() {
           isCrawlable: data.isCrawlable ?? true,
           defaultPlaceholderCardImage: data.defaultPlaceholderCardImage ?? null,
           defaultPlaceholderDetailHeroImage: data.defaultPlaceholderDetailHeroImage ?? null,
+          defaultEventPlaceholderCardImage: data.defaultEventPlaceholderCardImage ?? null,
           brandBadgeIcon: data.brandBadgeIcon ?? null,
           faviconUrl: data.faviconUrl ?? null,
         });
@@ -261,6 +263,11 @@ export function AppSettingsPage() {
         setIsSavingSiteSettings(false);
         return;
       }
+      if (siteSettings.defaultEventPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultEventPlaceholderCardImage)) {
+        showToast(t("admin.validation.invalidImageUrl"), "error");
+        setIsSavingSiteSettings(false);
+        return;
+      }
       if (siteSettings.brandBadgeIcon && !isValidImageUrl(siteSettings.brandBadgeIcon)) {
         showToast(t("admin.validation.invalidImageUrl"), "error");
         setIsSavingSiteSettings(false);
@@ -284,10 +291,11 @@ export function AppSettingsPage() {
         seoTitle: siteSettings.seoTitle,
         seoDescription: siteSettings.seoDescription,
         isCrawlable: siteSettings.isCrawlable,
-        defaultPlaceholderCardImage: siteSettings.defaultPlaceholderCardImage,
-        defaultPlaceholderDetailHeroImage: siteSettings.defaultPlaceholderDetailHeroImage,
-        brandBadgeIcon: siteSettings.brandBadgeIcon,
-        faviconUrl: siteSettings.faviconUrl,
+        defaultPlaceholderCardImage: siteSettings.defaultPlaceholderCardImage?.trim() || null,
+        defaultPlaceholderDetailHeroImage: siteSettings.defaultPlaceholderDetailHeroImage?.trim() || null,
+        defaultEventPlaceholderCardImage: siteSettings.defaultEventPlaceholderCardImage?.trim() || null,
+        brandBadgeIcon: siteSettings.brandBadgeIcon?.trim() || null,
+        faviconUrl: siteSettings.faviconUrl?.trim() || null,
       });
       
       // Update local state with the response, ensuring all fields are properly initialized
@@ -316,6 +324,7 @@ export function AppSettingsPage() {
         isCrawlable: updated.isCrawlable ?? true,
         defaultPlaceholderCardImage: updated.defaultPlaceholderCardImage ?? null,
         defaultPlaceholderDetailHeroImage: updated.defaultPlaceholderDetailHeroImage ?? null,
+        defaultEventPlaceholderCardImage: updated.defaultEventPlaceholderCardImage ?? null,
         brandBadgeIcon: updated.brandBadgeIcon ?? null,
         faviconUrl: updated.faviconUrl ?? null,
       };
@@ -356,7 +365,7 @@ export function AppSettingsPage() {
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
         <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
         <div style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
-          <p style={{ color: "#666", fontSize: 16, margin: 0 }}>{t("admin.table.pleaseSelectTenant")}</p>
+          <p style={{ color: "#666", fontSize: 16, margin: 0, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.table.pleaseSelectTenant")}</p>
         </div>
         
         {/* Language Settings Section - available without tenant */}
@@ -377,7 +386,7 @@ export function AppSettingsPage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 24 }}>🌍</span>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.defaultLanguage")}</h2>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}</h2>
             </div>
             <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
           </button>
@@ -390,7 +399,7 @@ export function AppSettingsPage() {
               <LoadingSpinner isLoading={isLoading} />
               {!isLoading && (
                 <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-                  <label style={{ display: "block", minWidth: 150, fontWeight: 500 }}>{t("admin.defaultLanguage")}:</label>
+                  <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
                   <select
                     value={defaultLang}
                     onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
@@ -449,6 +458,7 @@ export function AppSettingsPage() {
         <h1 style={{ 
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           marginBottom: 8,
@@ -458,6 +468,8 @@ export function AppSettingsPage() {
         </h1>
         <p style={{ 
           fontSize: "clamp(13px, 3vw, 14px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 400,
           color: "#c0c0d0",
           margin: 0,
           textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
@@ -484,20 +496,20 @@ export function AppSettingsPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 24 }}>🌍</span>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.defaultLanguage")}</h2>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}</h2>
           </div>
           <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
         </button>
         {languageOpen && (
           <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-            <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+            <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("admin.defaultLanguageDescription")}
             </p>
 
             <LoadingSpinner isLoading={isLoading} />
             {!isLoading && (
               <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-                <label style={{ display: "block", minWidth: 150, fontWeight: 500 }}>{t("admin.defaultLanguage")}:</label>
+                <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
                 <select
                   value={defaultLang}
                   onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
@@ -569,13 +581,13 @@ export function AppSettingsPage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 24 }}>🗺️</span>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.mapSettings")}</h2>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.mapSettings")}</h2>
             </div>
             <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: mapOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
           </button>
           {mapOpen && (
             <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-              <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+              <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.mapSettingsDescription")}
               </p>
 
@@ -585,7 +597,7 @@ export function AppSettingsPage() {
               {/* Town selector - only if multiple towns exist */}
               {towns.length > 1 && (
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.defaultTown")}:
                   </label>
                   <select
@@ -800,13 +812,13 @@ export function AppSettingsPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 24 }}>⚙️</span>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t("admin.siteSettings")}</h2>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.siteSettings")}</h2>
           </div>
           <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: siteOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
         </button>
         {siteOpen && (
           <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-            <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+            <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t("admin.siteSettingsDescription")}
             </p>
 
@@ -817,7 +829,7 @@ export function AppSettingsPage() {
               {(selectedLang) => (
                 <>
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {t("admin.siteName")} ({selectedLang.toUpperCase()}) *:
                     </label>
                     <input
@@ -865,7 +877,7 @@ export function AppSettingsPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {t("admin.siteDescription")} ({selectedLang.toUpperCase()}):
 
                     </label>
@@ -916,7 +928,7 @@ export function AppSettingsPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {t("admin.seoTitle")} ({selectedLang.toUpperCase()}):
 
                     </label>
@@ -965,7 +977,7 @@ export function AppSettingsPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                    <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {t("admin.seoDescription")} ({selectedLang.toUpperCase()}):
 
                     </label>
@@ -1020,7 +1032,7 @@ export function AppSettingsPage() {
 
             {/* Crawlable setting - not language-specific */}
             <div style={{ marginBottom: 16, marginTop: 24, paddingTop: 24, borderTop: "1px solid #e0e0e0" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 <input
                   type="checkbox"
                   checked={siteSettings.isCrawlable}
@@ -1039,14 +1051,14 @@ export function AppSettingsPage() {
                 />
                 {t("admin.isCrawlable")}
               </label>
-              <p style={{ color: "#666", fontSize: 14, marginTop: 8, marginLeft: 26 }}>
+              <p style={{ color: "#666", fontSize: 14, marginTop: 8, marginLeft: 26, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.isCrawlableDescription")}
               </p>
             </div>
 
             {/* Default Placeholder Images */}
             <div style={{ marginBottom: 16, marginTop: 24, paddingTop: 24, borderTop: "1px solid #e0e0e0" }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.defaultPlaceholderImages") || "Default Placeholder Images"}
               </h3>
               
@@ -1058,17 +1070,18 @@ export function AppSettingsPage() {
                   type="text"
                   value={siteSettings.defaultPlaceholderCardImage || ""}
                   onChange={(e) => {
-                    const value = e.target.value.trim() || null;
+                    const value = e.target.value || null;
                     setSiteSettingsState((prev) => ({
                       ...prev,
                       defaultPlaceholderCardImage: value,
                     }));
                   }}
                   onBlur={(e) => {
-                    const value = e.target.value.trim();
-                    if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl"));
-                    }
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultPlaceholderCardImage: value,
+                    }));
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
                   placeholder={t("admin.imageUrlPlaceholder")}
@@ -1083,7 +1096,7 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 />
-                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.defaultPlaceholderCardImageDescription") || "Used for place cards when no image is set"}
                 </p>
                 {siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage) && (
@@ -1101,17 +1114,18 @@ export function AppSettingsPage() {
                   type="text"
                   value={siteSettings.defaultPlaceholderDetailHeroImage || ""}
                   onChange={(e) => {
-                    const value = e.target.value.trim() || null;
+                    const value = e.target.value || null;
                     setSiteSettingsState((prev) => ({
                       ...prev,
                       defaultPlaceholderDetailHeroImage: value,
                     }));
                   }}
                   onBlur={(e) => {
-                    const value = e.target.value.trim();
-                    if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl"));
-                    }
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultPlaceholderDetailHeroImage: value,
+                    }));
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
                   placeholder={t("admin.imageUrlPlaceholder")}
@@ -1126,10 +1140,54 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 />
-                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.defaultPlaceholderDetailHeroImageDescription") || "Used for place detail pages when no hero image is set"}
                 </p>
                 {siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage) && (
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    {t("admin.validation.invalidImageUrl")}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  {t("admin.defaultEventPlaceholderCardImage")}
+                </label>
+                <input
+                  type="text"
+                  value={siteSettings.defaultEventPlaceholderCardImage || ""}
+                  onChange={(e) => {
+                    const value = e.target.value || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultEventPlaceholderCardImage: value,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      defaultEventPlaceholderCardImage: value,
+                    }));
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  placeholder={t("admin.imageUrlPlaceholder")}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
+                  }}
+                />
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  {t("admin.defaultEventPlaceholderCardImageDescription")}
+                </p>
+                {siteSettings.defaultEventPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultEventPlaceholderCardImage) && (
                   <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>
@@ -1144,17 +1202,18 @@ export function AppSettingsPage() {
                   type="text"
                   value={siteSettings.brandBadgeIcon || ""}
                   onChange={(e) => {
-                    const value = e.target.value.trim() || null;
+                    const value = e.target.value || null;
                     setSiteSettingsState((prev) => ({
                       ...prev,
                       brandBadgeIcon: value,
                     }));
                   }}
                   onBlur={(e) => {
-                    const value = e.target.value.trim();
-                    if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl"));
-                    }
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      brandBadgeIcon: value,
+                    }));
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
                   placeholder={t("admin.imageUrlPlaceholder")}
@@ -1169,7 +1228,7 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 />
-                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.brandBadgeIconDescription") || "Icon displayed in the brand badge on public pages"}
                 </p>
                 {siteSettings.brandBadgeIcon && !isValidImageUrl(siteSettings.brandBadgeIcon) && (
@@ -1187,17 +1246,18 @@ export function AppSettingsPage() {
                   type="text"
                   value={siteSettings.faviconUrl || ""}
                   onChange={(e) => {
-                    const value = e.target.value.trim() || null;
+                    const value = e.target.value || null;
                     setSiteSettingsState((prev) => ({
                       ...prev,
                       faviconUrl: value,
                     }));
                   }}
                   onBlur={(e) => {
-                    const value = e.target.value.trim();
-                    if (value && !isValidImageUrl(value)) {
-                      setError(t("admin.validation.invalidImageUrl"));
-                    }
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      faviconUrl: value,
+                    }));
                   }}
                   disabled={!isAdmin || isSavingSiteSettings}
                   placeholder={t("admin.imageUrlPlaceholder")}
@@ -1212,7 +1272,7 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 />
-                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.faviconUrlDescription") || "Favicon displayed in browser tabs (recommended: 32x32px or 16x16px .ico, .png)"}
                 </p>
                 {siteSettings.faviconUrl && !isValidImageUrl(siteSettings.faviconUrl) && (

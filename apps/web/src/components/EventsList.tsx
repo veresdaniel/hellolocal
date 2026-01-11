@@ -7,6 +7,7 @@ import { useTenantContext } from "../app/tenant/useTenantContext";
 import { buildPath } from "../app/routing/buildPath";
 import { Link } from "react-router-dom";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { Badge } from "./Badge";
 
 interface EventsListProps {
   lang: string;
@@ -64,9 +65,12 @@ export function EventsList({ lang }: EventsListProps) {
     queryFn: () => getEvents(lang, undefined, undefined, 50, 0),
     staleTime: 5 * 60 * 1000, // 5 minutes
     select: (data) => {
-      // Filter out past events (events that have ended)
+      // Filter: only show events that have showOnMap = true and haven't ended
       const now = new Date();
       return data.filter((event) => {
+        // Only show if showOnMap is true (default to true if not set)
+        if (event.showOnMap === false) return false;
+        // Filter out past events (events that have ended)
         if (event.endDate) {
           return new Date(event.endDate) >= now;
         }
@@ -286,7 +290,8 @@ export function EventsList({ lang }: EventsListProps) {
           margin: 0, 
           color: "white", 
           fontSize: 15, 
-          fontWeight: 700,
+          fontWeight: 600,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -334,21 +339,49 @@ export function EventsList({ lang }: EventsListProps) {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {sortedEvents.map((event) => (
-                <Link
-                  key={event.id}
-                  to={buildPath({ tenantSlug, lang, path: `event/${event.slug}` })}
-                  style={{
-                    display: "block",
-                    padding: 14,
-                    background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
-                    borderRadius: 12,
-                    textDecoration: "none",
-                    color: "#3d2952",
-                    transition: "all 0.2s",
-                    backdropFilter: "blur(10px)",
-                    border: "1px solid rgba(102, 126, 234, 0.25)",
-                  }}
+              {sortedEvents.map((event) => {
+                // Only render link if event has a valid slug (not just the ID fallback)
+                // Backend returns event.id as slug fallback, so check if slug equals id
+                const hasValidSlug = event.slug && event.slug !== event.id;
+                if (!hasValidSlug) {
+                  return (
+                    <div
+                      key={event.id}
+                      style={{
+                        padding: 14,
+                        background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
+                        borderRadius: 12,
+                        color: "#3d2952",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid rgba(102, 126, 234, 0.25)",
+                        opacity: 0.7,
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, marginBottom: 4, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        {event.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                        {t("public.placeSlugMissing") || "Részletek hamarosan..."}
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={event.id}
+                    to={buildPath({ tenantSlug, lang, path: `event/${event.slug}` })}
+                    style={{
+                      display: "block",
+                      padding: 14,
+                      background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
+                      borderRadius: 12,
+                      textDecoration: "none",
+                      color: "#3d2952",
+                      transition: "all 0.2s",
+                      backdropFilter: "blur(10px)",
+                      border: "1px solid rgba(102, 126, 234, 0.25)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)";
                     e.currentTarget.style.transform = "translateY(-2px)";
@@ -364,7 +397,8 @@ export function EventsList({ lang }: EventsListProps) {
                   <h4 style={{ 
                     margin: "0 0 8px 0", 
                     fontSize: 16, 
-                    fontWeight: 700, 
+                    fontWeight: 600,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     lineHeight: 1.4,
                     letterSpacing: "-0.01em",
                     color: "#2d1f3d",
@@ -379,6 +413,7 @@ export function EventsList({ lang }: EventsListProps) {
                     color: "#4a3560",
                     marginBottom: 8,
                     fontWeight: 500,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     lineHeight: 1.5,
                   }}>
                     🗓️ {new Date(event.startDate).toLocaleDateString(
@@ -400,6 +435,7 @@ export function EventsList({ lang }: EventsListProps) {
                       color: "#4a3560",
                       marginBottom: 8,
                       fontWeight: 500,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       lineHeight: 1.5,
                     }}>
                       📍 {event.placeName}
@@ -409,23 +445,20 @@ export function EventsList({ lang }: EventsListProps) {
                   {/* First Tag as Badge */}
                   {event.tags && event.tags.length > 0 && (
                     <div style={{ marginTop: 8 }}>
-                      <span style={{
-                        display: "inline-block",
-                        padding: "4px 10px",
-                        background: "rgba(102, 126, 234, 0.2)",
-                        borderRadius: 12,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#2d1f3d",
-                      }}>
+                      <Badge
+                        variant="custom"
+                        backgroundColor="rgba(102, 126, 234, 0.2)"
+                        textColor="#2d1f3d"
+                        size="small"
+                        uppercase={true}
+                      >
                         {event.tags[0]}
-                      </span>
+                      </Badge>
                     </div>
                   )}
                 </Link>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

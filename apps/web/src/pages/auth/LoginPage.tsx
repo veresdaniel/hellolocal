@@ -160,6 +160,7 @@ export function LoginPage() {
             color: "#667eea",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {t("admin.login")}
@@ -170,6 +171,8 @@ export function LoginPage() {
             color: "#666",
             marginBottom: "clamp(20px, 4vw, 32px)",
             fontSize: "clamp(13px, 3vw, 14px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
           }}
         >
           {t("admin.loginDescription")}
@@ -189,7 +192,7 @@ export function LoginPage() {
             gap: 12,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(14px, 3.5vw, 16px)", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             <span style={{ fontSize: "clamp(16px, 4vw, 18px)" }}>✓</span>
             <span style={{ fontWeight: 500 }}>{t("admin.loggedOutSuccessfully")}</span>
           </div>
@@ -203,6 +206,7 @@ export function LoginPage() {
               borderRadius: 8,
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 600,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textAlign: "center",
               transition: "all 0.3s ease",
               display: "flex",
@@ -236,6 +240,7 @@ export function LoginPage() {
             border: requiresTwoFactor ? "1px solid #fcd34d" : "1px solid #fca5a5",
             fontSize: "clamp(13px, 3vw, 14px)",
             fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {error}
@@ -251,6 +256,7 @@ export function LoginPage() {
               color: emailError ? "#dc2626" : "#667eea",
               fontWeight: 600,
               fontSize: "clamp(13px, 3vw, 14px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("admin.email")}
@@ -270,7 +276,7 @@ export function LoginPage() {
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               boxSizing: "border-box",
               backgroundColor: emailError ? "#fef2f2" : "white",
             }}
@@ -288,7 +294,7 @@ export function LoginPage() {
             }}
           />
           {emailError && (
-            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500 }}>
+            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {emailError}
             </p>
           )}
@@ -302,6 +308,7 @@ export function LoginPage() {
               color: "#667eea",
               fontWeight: 600,
               fontSize: "clamp(13px, 3vw, 14px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("admin.password")}
@@ -319,7 +326,7 @@ export function LoginPage() {
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               boxSizing: "border-box",
             }}
             onFocus={(e) => {
@@ -342,6 +349,7 @@ export function LoginPage() {
                 color: "#667eea",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               {t("admin.twoFactorCode")}
@@ -377,7 +385,7 @@ export function LoginPage() {
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
-            <p style={{ marginTop: 8, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#666" }}>
+            <p style={{ marginTop: 8, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
               {t("admin.enter2FACodeDescription")}
             </p>
           </div>
@@ -391,6 +399,7 @@ export function LoginPage() {
             padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
             fontSize: "clamp(15px, 3.5vw, 16px)",
             fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
             border: "none",
@@ -423,6 +432,7 @@ export function LoginPage() {
           style={{ 
             color: "#667eea",
             fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             textDecoration: "none",
             fontSize: "clamp(13px, 3vw, 14px)",
           }}
@@ -437,13 +447,14 @@ export function LoginPage() {
         </Link>
       </div>
 
-      <div style={{ marginTop: "clamp(12px, 3vw, 16px)", textAlign: "center", fontSize: "clamp(13px, 3vw, 14px)", color: "#666" }}>
+      <div style={{ marginTop: "clamp(12px, 3vw, 16px)", textAlign: "center", fontSize: "clamp(13px, 3vw, 14px)", color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
         {t("admin.dontHaveAccount")}{" "}
         <Link 
           to={`/${lang}/admin/register`} 
           style={{ 
             color: "#667eea",
-            fontWeight: 600,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             textDecoration: "none",
           }}
           onMouseEnter={(e) => {

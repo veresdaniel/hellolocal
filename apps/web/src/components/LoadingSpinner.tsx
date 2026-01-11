@@ -67,6 +67,7 @@ export function LoadingSpinner({ isLoading, delay = 2000 }: LoadingSpinnerProps)
         style={{
           fontSize: 18,
           fontWeight: 500,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#667eea",
           letterSpacing: "0.02em",
         }}

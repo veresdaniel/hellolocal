@@ -88,7 +88,16 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
         setTenants([]);
       }
     } catch (err) {
-      console.error("[AdminTenantContext] Failed to load tenants", err);
+      // Only log error if it's not a network error (backend not running)
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+      
+      if (!isNetworkError) {
+        console.error("[AdminTenantContext] Failed to load tenants", err);
+      } else {
+        // Silently handle network errors - backend might not be running
+        console.debug("[AdminTenantContext] Backend not available, skipping tenant load");
+      }
       setTenants([]);
     } finally {
       setIsLoading(false);
@@ -106,7 +115,13 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
     // Only load tenants if user is logged in
     if (user) {
       loadTenants().catch((err) => {
-        console.error("[AdminTenantContext] loadTenants failed:", err);
+        // Only log error if it's not a network error (backend not running)
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+        
+        if (!isNetworkError) {
+          console.error("[AdminTenantContext] loadTenants failed:", err);
+        }
         // Ensure isLoading is set to false even if loadTenants fails
         setIsLoading(false);
       });

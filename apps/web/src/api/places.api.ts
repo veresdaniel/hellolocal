@@ -21,6 +21,7 @@ export interface SiteSettings {
   seoDescription: string;
   defaultPlaceholderCardImage: string | null;
   defaultPlaceholderDetailHeroImage: string | null;
+  defaultEventPlaceholderCardImage: string | null;
   brandBadgeIcon: string | null;
   faviconUrl: string | null;
 }
@@ -138,6 +139,7 @@ export interface Event {
   endDate: string | null;
   isPinned: boolean;
   isRainSafe: boolean;
+  showOnMap: boolean;
   tags: string[];
   seo: {
     title: string | null;

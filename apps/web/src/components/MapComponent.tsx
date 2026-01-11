@@ -537,6 +537,15 @@ export function MapComponent({
 
   // Keep track of last route fetch position to avoid excessive API calls
   const lastRouteFetchPosition = useRef<{ lat: number; lng: number; markerId: string } | null>(null);
+  
+  // Store fetchRoute in a ref to avoid dependency issues
+  const fetchRouteRef = useRef(fetchRoute);
+  useEffect(() => {
+    fetchRouteRef.current = fetchRoute;
+  }, [fetchRoute]);
+
+  // Track whether we should have routes to avoid unnecessary clears
+  const shouldHaveRoutesRef = useRef(false);
 
   // Fetch routes only for selected marker and if showUserLocation is enabled
   // Update route when userLocation changes significantly (>50m) for real-time tracking
@@ -561,15 +570,20 @@ export function MapComponent({
             lng: userLocation.lng, 
             markerId: selectedMarkerId 
           };
-          fetchRoute(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
+          fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
         }
+        shouldHaveRoutesRef.current = true;
       }
     } else {
       // Clear routes when no marker is selected or showUserLocation is disabled
-      setRoutes([]);
+      // Only clear if we previously had routes to avoid unnecessary re-renders
+      if (shouldHaveRoutesRef.current) {
+        setRoutes([]);
+        shouldHaveRoutesRef.current = false;
+      }
       lastRouteFetchPosition.current = null;
     }
-  }, [selectedMarkerId, userLocation, markers, fetchRoute, showUserLocation]);
+  }, [selectedMarkerId, userLocation, markers, showUserLocation]);
 
   // Clear selected marker if it's no longer in the markers list (filtered out)
   useEffect(() => {
@@ -835,7 +849,8 @@ export function MapComponent({
                   justifyContent: "center",
                   fontSize: 20,
                   color: "white",
-                  fontWeight: "bold",
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   position: "relative",
                   zIndex: 1001,
                   animation: "personPulse 2s ease-in-out infinite",
@@ -856,7 +871,8 @@ export function MapComponent({
                   padding: "4px 10px",
                   borderRadius: 8,
                   fontSize: 11,
-                  fontWeight: 600,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   whiteSpace: "nowrap",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                   pointerEvents: "none",
@@ -1055,6 +1071,7 @@ export function MapComponent({
                       borderRadius: 12,
                       fontSize: 13,
                       fontWeight: 500,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       whiteSpace: "nowrap",
                       boxShadow: isSelected
                         ? "0 4px 12px rgba(251, 191, 36, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)"
@@ -1074,23 +1091,23 @@ export function MapComponent({
                     }}
                   >
                     {marker.name && !isSelected && (
-                      <span style={{ fontWeight: 500 }}>
+                      <span style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                         {marker.name}
                       </span>
                     )}
                     {isSelected && (
                       <>
                         {marker.name && (
-                          <span style={{ fontWeight: 600 }}>
+                          <span style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                             {marker.name}
                           </span>
                         )}
                         {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
                           <>
-                            <span style={{ fontSize: 12, fontWeight: 500, opacity: 0.95 }}>
+                            <span style={{ fontSize: 12, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.95 }}>
                               {marker.isRouteDistance ? "🛣️" : "📍"} {formatDistance(marker.distance)}
                             </span>
-                            <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.9, display: "flex", gap: 8, alignItems: "center" }}>
+                            <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.9, display: "flex", gap: 8, alignItems: "center" }}>
                               {marker.walkingTime !== undefined && (
                                 <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>
                               )}
@@ -1098,18 +1115,18 @@ export function MapComponent({
                                 <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>
                               )}
                             </span>
-                            <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.8, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, marginTop: 2 }}>
                               {t("public.clickAgainToNavigate")}!
                             </span>
                           </>
                         )}
                         {marker.distance !== undefined && marker.distance > MAX_DISTANCE_KM && (
-                          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.8, fontStyle: "italic" }}>
+                          <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, fontStyle: "italic" }}>
                             {t("public.tooFarAway", { distance: MAX_DISTANCE_KM })}
                           </span>
                         )}
                         {marker.distance === undefined && (
-                          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
+                          <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
                             ⏳ {t("public.calculatingRoute") || "Útvonal számítása..."}
                           </span>
                         )}
@@ -1168,7 +1185,8 @@ export function MapComponent({
             cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "pointer",
             flex: 1,
             fontSize: 15,
-            fontWeight: 700,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             color: "white",
             whiteSpace: "nowrap",
             userSelect: "none",
@@ -1352,7 +1370,7 @@ export function MapComponent({
               </svg>
             )}
           </div>
-          <span style={{ fontWeight: 700, lineHeight: 1 }}>{t("public.showMyLocation") || "Mutasd a helyzetem"}</span>
+          <span style={{ fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.showMyLocation") || "Mutasd a helyzetem"}</span>
         </label>
       </div>
       
@@ -1366,6 +1384,7 @@ export function MapComponent({
             padding: "8px 12px",
             borderRadius: 4,
             fontSize: 12,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
             zIndex: 1,
           }}

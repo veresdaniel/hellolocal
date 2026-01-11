@@ -303,7 +303,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
             })
             .catch((err) => {
-              console.error("Failed to refresh user data", err);
+              // Only log error if it's not a network error (backend not running)
+              const errorMessage = err instanceof Error ? err.message : String(err);
+              const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+              
+              if (!isNetworkError) {
+                console.error("Failed to refresh user data", err);
+              } else {
+                // Silently handle network errors - backend might not be running
+                // Keep the stored user data if available
+                console.debug("[AuthContext] Backend not available, using stored user data");
+              }
+              
               // If 401, we already cleared tokens and set user to null
               // For other errors, keep the stored user if it exists and role is valid
               if (err.message !== "Unauthorized - session expired" && parsedUser?.role) {

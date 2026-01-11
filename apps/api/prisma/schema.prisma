@@ -531,6 +531,7 @@ model Event {
   isActive   Boolean  @default(true)
   isPinned   Boolean  @default(false) // Pinned events appear at top of lists
   isRainSafe Boolean  @default(false) // Whether the event is rain-safe (indoor or covered)
+  showOnMap  Boolean  @default(true) // Whether to show event in map view event box
   startDate  DateTime // Event start date/time
   endDate    DateTime? // Optional end date/time
   heroImage  String?  // Hero image URL

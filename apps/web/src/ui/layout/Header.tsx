@@ -238,7 +238,7 @@ export function Header() {
               />
             )}
             {siteName && (
-              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
+              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {siteName}
               </span>
             )}

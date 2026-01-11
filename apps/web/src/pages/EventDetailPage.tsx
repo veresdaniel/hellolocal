@@ -12,6 +12,7 @@ import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { Badge } from "../components/Badge";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
@@ -218,7 +219,8 @@ export function EventDetailPage() {
                 color: "#667eea",
                 textDecoration: "none",
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 24,
                 transition: "color 0.2s",
               }}
@@ -237,6 +239,7 @@ export function EventDetailPage() {
                 marginBottom: 16,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 color: "#1a1a1a",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.2,
@@ -248,7 +251,7 @@ export function EventDetailPage() {
               {event.name}
             </h1>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 16, color: "#666", fontWeight: 500 }}>
+              <div style={{ fontSize: 16, color: "#666", fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 📅 {new Date(event.startDate).toLocaleDateString(
                   lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                   {
@@ -276,18 +279,14 @@ export function EventDetailPage() {
                 )}
               </div>
               {event.category && (
-                <span
-                  style={{
-                    padding: "6px 12px",
-                    background: "#667eea",
-                    color: "white",
-                    borderRadius: 20,
-                    fontSize: 14,
-                    fontWeight: 600,
-                  }}
+                <Badge
+                  variant="category"
+                  color="#667eea"
+                  size="medium"
+                  opacity={0.9}
                 >
                   {event.category}
-                </span>
+                </Badge>
               )}
             </div>
             {event.placeName && (
@@ -301,7 +300,8 @@ export function EventDetailPage() {
                     color: "#667eea",
                     textDecoration: "none",
                     fontSize: 16,
-                    fontWeight: 500,
+                    fontWeight: 400,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "color 0.2s",
                   }}
                   onMouseEnter={(e) => {
@@ -318,18 +318,13 @@ export function EventDetailPage() {
             {event.tags && event.tags.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
                 {event.tags.map((tag) => (
-                  <span
+                  <Badge
                     key={tag}
-                    style={{
-                      padding: "4px 12px",
-                      background: "#f0f0f0",
-                      color: "#666",
-                      borderRadius: 16,
-                      fontSize: 13,
-                    }}
+                    variant="tag"
+                    size="small"
                   >
                     #{tag}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}
@@ -351,9 +346,10 @@ export function EventDetailPage() {
               style={{
                 fontSize: 18,
                 lineHeight: 1.8,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
                 color: "#333",
                 margin: "0 16px 32px",
-                fontWeight: 400,
               }}
             >
               {event.shortDescription}
@@ -366,6 +362,8 @@ export function EventDetailPage() {
               style={{
                 fontSize: 16,
                 lineHeight: 1.8,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
                 color: "#555",
                 margin: "0 16px 32px",
               }}
@@ -376,7 +374,7 @@ export function EventDetailPage() {
           {/* Gallery */}
           {event.gallery && event.gallery.length > 0 && (
             <div style={{ margin: "0 16px 32px" }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16, color: "#1a1a1a" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginBottom: 16, color: "#1a1a1a" }}>
                 {t("public.gallery")}
               </h2>
               <div
@@ -407,7 +405,7 @@ export function EventDetailPage() {
           {/* Location */}
           {event.location && (
             <div style={{ margin: "0 16px 32px" }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16, color: "#1a1a1a" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginBottom: 16, color: "#1a1a1a" }}>
                 {t("public.location")}
               </h2>
               <div

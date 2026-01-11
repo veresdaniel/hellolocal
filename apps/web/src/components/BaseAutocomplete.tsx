@@ -195,7 +195,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   background: "#e7f3ff",
                   color: "#007bff",
                   fontWeight: 500,
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: 15,
                 }}
               >
@@ -211,7 +211,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                     padding: "8px 12px",
                     cursor: "pointer",
                     borderBottom: "1px solid #f0f0f0",
-                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: 15,
                     color: "#333",
                   }}
@@ -231,7 +231,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   padding: "8px 12px",
                   color: "#999",
                   fontStyle: "italic",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: 15,
                 }}
               >
@@ -254,7 +254,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             color: error ? "#dc2626" : "#667eea",
             fontWeight: 600,
             fontSize: "clamp(13px, 3vw, 14px)",
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {label} {required && "*"}
           </label>
@@ -282,7 +282,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 alignItems: "center",
                 justifyContent: "space-between",
                 fontSize: 15,
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               <span>{getItemName(selectedItem)}</span>
@@ -345,12 +345,11 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 border: "none",
                 outline: "none",
                 borderRadius: 8,
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 background: "transparent",
                 boxSizing: "border-box",
                 color: "#333",
               }}
-              placeholder={selectedItem ? "" : placeholder}
             />
           )}
         </div>
@@ -399,7 +398,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   padding: "8px 12px",
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: 15,
                   color: "#333",
                 }}
@@ -419,7 +418,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   padding: "8px 12px",
                   color: "#999",
                   fontStyle: "italic",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: 15,
                 }}
               >
@@ -444,7 +443,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           color: error ? "#dc2626" : "#667eea",
           fontWeight: 600,
           fontSize: "clamp(13px, 3vw, 14px)",
-          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {label} {required && "*"}
         </label>
@@ -481,10 +480,9 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             padding: "2px 4px",
             fontSize: 15,
             minWidth: 120,
-            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             color: "#333",
           }}
-          placeholder={safeSelectedItemIds.length === 0 ? placeholder : ""}
         />
       </div>
       {error && (
@@ -517,7 +515,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 padding: "8px 12px",
                 cursor: "pointer",
                 borderBottom: "1px solid #f0f0f0",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontSize: 15,
                 color: "#333",
               }}

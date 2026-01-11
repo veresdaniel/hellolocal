@@ -54,7 +54,7 @@ export function LanguageSelector() {
         border: "1px solid rgba(0, 0, 0, 0.1)",
         background: "transparent",
         cursor: "pointer",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: "#333",
         fontWeight: 500,
         outline: "none",

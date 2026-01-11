@@ -225,6 +225,7 @@ export class EventsService {
           endDate: event.endDate?.toISOString() ?? null,
           isPinned: event.isPinned,
           isRainSafe: event.isRainSafe ?? false,
+          showOnMap: event.showOnMap ?? true,
           tags: tagNames,
           seo: {
             title: eventTranslation?.seoTitle ?? null,

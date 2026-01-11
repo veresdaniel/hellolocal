@@ -203,6 +203,7 @@ export class AdminAppSettingsService {
       isCrawlableSetting,
       defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage,
+      defaultEventPlaceholderCardImage,
       brandBadgeIcon,
       faviconUrl,
     ] = await Promise.all([
@@ -221,6 +222,7 @@ export class AdminAppSettingsService {
       this.findOne(`isCrawlable_${tenantId}`),
       this.findOne(`defaultPlaceholderCardImage_${tenantId}`),
       this.findOne(`defaultPlaceholderDetailHeroImage_${tenantId}`),
+      this.findOne(`defaultEventPlaceholderCardImage_${tenantId}`),
       this.findOne(`brandBadgeIcon_${tenantId}`),
       this.findOne(`faviconUrl_${tenantId}`),
     ]);
@@ -251,6 +253,7 @@ export class AdminAppSettingsService {
         : isCrawlableSetting.value === "true" || isCrawlableSetting.value === "1", // Parse boolean value
       defaultPlaceholderCardImage: defaultPlaceholderCardImage?.value && defaultPlaceholderCardImage.value.trim() !== "" ? defaultPlaceholderCardImage.value : null,
       defaultPlaceholderDetailHeroImage: defaultPlaceholderDetailHeroImage?.value && defaultPlaceholderDetailHeroImage.value.trim() !== "" ? defaultPlaceholderDetailHeroImage.value : null,
+      defaultEventPlaceholderCardImage: defaultEventPlaceholderCardImage?.value && defaultEventPlaceholderCardImage.value.trim() !== "" ? defaultEventPlaceholderCardImage.value : null,
       brandBadgeIcon: brandBadgeIcon?.value && brandBadgeIcon.value.trim() !== "" ? brandBadgeIcon.value : null,
       faviconUrl: faviconUrl?.value && faviconUrl.value.trim() !== "" ? faviconUrl.value : null,
     };
@@ -267,6 +270,7 @@ export class AdminAppSettingsService {
     isCrawlable?: boolean;
     defaultPlaceholderCardImage?: string | null;
     defaultPlaceholderDetailHeroImage?: string | null;
+    defaultEventPlaceholderCardImage?: string | null;
     brandBadgeIcon?: string | null;
     faviconUrl?: string | null;
   }) {
@@ -386,6 +390,33 @@ export class AdminAppSettingsService {
         type: "string",
         description: "Default placeholder hero image URL for place detail pages",
       }));
+    }
+
+    if (settings.defaultEventPlaceholderCardImage !== undefined) {
+      // Handle null or empty string - delete the setting
+      if (!settings.defaultEventPlaceholderCardImage || settings.defaultEventPlaceholderCardImage.trim() === "") {
+        try {
+          await this.delete(`defaultEventPlaceholderCardImage_${tenantId}`);
+        } catch {
+          // Ignore if doesn't exist
+        }
+      } else {
+        // Validate and sanitize URL
+        const trimmedUrl = settings.defaultEventPlaceholderCardImage.trim();
+        console.log(`[AdminAppSettingsService] Processing defaultEventPlaceholderCardImage: "${trimmedUrl}"`);
+        const sanitizedUrl = sanitizeImageUrl(trimmedUrl);
+        console.log(`[AdminAppSettingsService] Sanitized URL: "${sanitizedUrl}"`);
+        if (!sanitizedUrl) {
+          console.error(`[AdminAppSettingsService] Invalid URL for defaultEventPlaceholderCardImage: "${trimmedUrl}"`);
+          throw new BadRequestException(`Invalid image URL: "${trimmedUrl}". Only http:// and https:// URLs are allowed.`);
+        }
+        console.log(`[AdminAppSettingsService] Adding update for defaultEventPlaceholderCardImage_${tenantId} with value: "${sanitizedUrl}"`);
+        updates.push(this.upsert(`defaultEventPlaceholderCardImage_${tenantId}`, {
+          value: sanitizedUrl,
+          type: "string",
+          description: "Default placeholder image URL for event cards",
+        }));
+      }
     }
 
     if (settings.brandBadgeIcon !== undefined) {

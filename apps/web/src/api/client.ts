@@ -115,21 +115,32 @@ export async function apiGet<T>(path: string): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
   
   // Add cache-busting headers and options for GET requests
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    method: "GET",
-    cache: "no-store", // Prevent browser cache
-    headers: {
-      Accept: "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Pragma": "no-cache",
-      "Expires": "0",
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      method: "GET",
+      cache: "no-store", // Prevent browser cache
+      headers: {
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
-    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more, then redirect to login if still fails
-    if (res.status === 401 || res.status === 403 || res.status === 500) {
+    // If 401 (unauthorized), try to refresh token once more, then redirect to login if still fails
+    if (res.status === 401) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -137,20 +148,31 @@ export async function apiGet<T>(path: string): Promise<T> {
           localStorage.setItem("accessToken", data.accessToken);
           localStorage.setItem("refreshToken", data.refreshToken);
           // Retry the original request with cache-busting
-          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
-            method: "GET",
-            cache: "no-store", // Prevent browser cache
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${data.accessToken}`,
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache",
-              "Expires": "0",
-            },
-          });
+          let retryRes: Response;
+          try {
+            retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
+              method: "GET",
+              cache: "no-store", // Prevent browser cache
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${data.accessToken}`,
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+              },
+            });
+          } catch (err) {
+            // Handle network errors during retry
+            const isDev = import.meta.env.DEV;
+            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const errorMessage = isDev
+              ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+              : "Failed to connect to the server. Please check your internet connection or try again later.";
+            throw new Error(errorMessage);
+          }
           if (!retryRes.ok) {
-            // If still 401/403/500 after refresh, redirect to login
-            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+            // If still 401 after refresh, redirect to login
+            if (retryRes.status === 401) {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
@@ -204,21 +226,8 @@ export async function apiGet<T>(path: string): Promise<T> {
       }
     }
     
-    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
-    const lowerMessage = errorMessage.toLowerCase();
-    const isSessionError = 
-      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
-      lowerMessage.includes("session expired") ||
-      lowerMessage.includes("unauthorized") ||
-      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
-    
-    if (isSessionError) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      redirectToLogin();
-      throw new Error("Session expired. Please log in again.");
-    }
+    // Only redirect to login for 401 errors, not for 500 or other errors
+    // 500 errors should be displayed to the user, not cause a redirect
     
     throw new Error(errorMessage);
   }
@@ -240,11 +249,22 @@ export async function apiGet<T>(path: string): Promise<T> {
  */
 export async function apiGetPublic<T>(path: string): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
     let errorMessage = `Request failed: ${res.status}`;
@@ -270,14 +290,25 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
  */
 export async function apiPostPublic<T>(path: string, data: unknown): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
     let errorMessage = `Request failed: ${res.status}`;
@@ -302,15 +333,26 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(data),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
     // If 401, try to refresh token once more
@@ -322,18 +364,29 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: `Bearer ${refreshData.accessToken}`,
-            },
-            body: JSON.stringify(data),
-          });
+          let retryRes: Response;
+          try {
+            retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${refreshData.accessToken}`,
+              },
+              body: JSON.stringify(data),
+            });
+          } catch (err) {
+            // Handle network errors during retry
+            const isDev = import.meta.env.DEV;
+            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const errorMessage = isDev
+              ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+              : "Failed to connect to the server. Please check your internet connection or try again later.";
+            throw new Error(errorMessage);
+          }
           if (!retryRes.ok) {
-            // If still 401/403/500 after refresh, redirect to login
-            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+            // If still 401 after refresh, redirect to login
+            if (retryRes.status === 401) {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
@@ -389,21 +442,8 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
       }
     }
     
-    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
-    const lowerMessage = errorMessage.toLowerCase();
-    const isSessionError = 
-      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
-      lowerMessage.includes("session expired") ||
-      lowerMessage.includes("unauthorized") ||
-      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
-    
-    if (isSessionError) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      redirectToLogin();
-      throw new Error("Session expired. Please log in again.");
-    }
+    // Only redirect to login for 401 errors, not for 500 or other errors
+    // 500 errors should be displayed to the user, not cause a redirect
     
     const error = new Error(errorMessage) as Error & { status?: number; response?: { message?: string } | null };
     error.status = res.status;
@@ -419,19 +459,30 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(data),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
-    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more
-    if (res.status === 401 || res.status === 403 || res.status === 500) {
+    // If 401 (unauthorized), try to refresh token once more
+    if (res.status === 401) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -439,18 +490,29 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request
-          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: `Bearer ${refreshData.accessToken}`,
-            },
-            body: JSON.stringify(data),
-          });
+          let retryRes: Response;
+          try {
+            retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${refreshData.accessToken}`,
+              },
+              body: JSON.stringify(data),
+            });
+          } catch (err) {
+            // Handle network errors during retry
+            const isDev = import.meta.env.DEV;
+            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const errorMessage = isDev
+              ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+              : "Failed to connect to the server. Please check your internet connection or try again later.";
+            throw new Error(errorMessage);
+          }
           if (!retryRes.ok) {
-            // If still 401/403/500 after refresh, redirect to login
-            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+            // If still 401 after refresh, redirect to login
+            if (retryRes.status === 401) {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
@@ -510,21 +572,8 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
       }
     }
     
-    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
-    const lowerMessage = errorMessage.toLowerCase();
-    const isSessionError = 
-      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
-      lowerMessage.includes("session expired") ||
-      lowerMessage.includes("unauthorized") ||
-      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
-    
-    if (isSessionError) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      redirectToLogin();
-      throw new Error("Session expired. Please log in again.");
-    }
+    // Only redirect to login for 401 errors, not for 500 or other errors
+    // 500 errors should be displayed to the user, not cause a redirect
     
     throw new Error(errorMessage);
   }
@@ -546,23 +595,33 @@ export async function apiDelete<T>(path: string): Promise<T> {
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
   
-  
-  const res = await fetch(`${apiBaseUrl}/api${path}`, {
-    method: "DELETE",
-    cache: "no-store", // Prevent browser cache
-    headers: {
-      Accept: "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      // Add cache-busting headers
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Pragma": "no-cache",
-      "Expires": "0",
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl}/api${path}`, {
+      method: "DELETE",
+      cache: "no-store", // Prevent browser cache
+      headers: {
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        // Add cache-busting headers
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    });
+  } catch (err) {
+    // Handle network errors (server not running, CORS, etc.)
+    const isDev = import.meta.env.DEV;
+    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const errorMessage = isDev
+      ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+      : "Failed to connect to the server. Please check your internet connection or try again later.";
+    throw new Error(errorMessage);
+  }
 
   if (!res.ok) {
-    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more
-    if (res.status === 401 || res.status === 403 || res.status === 500) {
+    // If 401 (unauthorized), try to refresh token once more
+    if (res.status === 401) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -570,20 +629,31 @@ export async function apiDelete<T>(path: string): Promise<T> {
           localStorage.setItem("accessToken", refreshData.accessToken);
           localStorage.setItem("refreshToken", refreshData.refreshToken);
           // Retry the original request with cache-busting
-          const retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
-            method: "DELETE",
-            cache: "no-store", // Prevent browser cache
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${refreshData.accessToken}`,
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache",
-              "Expires": "0",
-            },
-          });
+          let retryRes: Response;
+          try {
+            retryRes = await fetch(`${apiBaseUrl}/api${path}`, {
+              method: "DELETE",
+              cache: "no-store", // Prevent browser cache
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${refreshData.accessToken}`,
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+              },
+            });
+          } catch (err) {
+            // Handle network errors during retry
+            const isDev = import.meta.env.DEV;
+            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const errorMessage = isDev
+              ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
+              : "Failed to connect to the server. Please check your internet connection or try again later.";
+            throw new Error(errorMessage);
+          }
           if (!retryRes.ok) {
-            // If still 401/403/500 after refresh, redirect to login
-            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+            // If still 401 after refresh, redirect to login
+            if (retryRes.status === 401) {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
@@ -638,21 +708,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
       }
     }
     
-    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
-    const lowerMessage = errorMessage.toLowerCase();
-    const isSessionError = 
-      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
-      lowerMessage.includes("session expired") ||
-      lowerMessage.includes("unauthorized") ||
-      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
-    
-    if (isSessionError) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      redirectToLogin();
-      throw new Error("Session expired. Please log in again.");
-    }
+    // Only redirect to login for 401 errors, not for 500 or other errors
+    // 500 errors should be displayed to the user, not cause a redirect
     
     console.error(`[apiDelete] Failed: ${errorMessage}`);
     throw new Error(errorMessage);

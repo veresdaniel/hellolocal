@@ -47,6 +47,7 @@ export function AdminDashboard() {
         <h1 style={{ 
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#e0e0ff",
           margin: 0,
           marginBottom: 8,
@@ -56,6 +57,8 @@ export function AdminDashboard() {
         </h1>
         <p style={{ 
           fontSize: "clamp(13px, 3vw, 14px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 400,
           color: "#c0c0d0",
           margin: 0,
           textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
@@ -208,6 +211,7 @@ function DashboardCard({
         <div style={{
           fontSize: "clamp(12px, 2.8vw, 14px)",
           fontWeight: 600,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#a8b3ff",
           textAlign: "center",
           lineHeight: 1.2,
@@ -270,6 +274,7 @@ function DashboardCard({
           margin: "0 0 3px 0",
           fontSize: "clamp(15px, 3vw, 16px)",
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#a8b3ff",
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -281,6 +286,7 @@ function DashboardCard({
           margin: 0, 
           color: "rgba(255, 255, 255, 0.75)",
           fontSize: "clamp(12px, 2.5vw, 13px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           lineHeight: 1.3,
           fontWeight: 400,
           display: "-webkit-box",

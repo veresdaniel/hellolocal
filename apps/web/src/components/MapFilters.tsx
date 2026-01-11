@@ -334,11 +334,12 @@ export function MapFilters({
           borderRadius: isMobile && !isOpen ? 12 : 0,
         }}
       >
-        <h3 style={{ 
-          margin: 0, 
-          color: "white", 
-          fontSize: isMobile && !isOpen ? 20 : 15, 
+        <h3 style={{
+          margin: 0,
+          color: "white",
+          fontSize: isMobile && !isOpen ? 20 : 15,
           fontWeight: 700,
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -382,7 +383,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               Kategóriák
@@ -437,9 +438,9 @@ export function MapFilters({
                       style={{
                         fontSize: 15,
                         color: isSelected ? "#3d2952" : "#5a3d7a",
-                        fontWeight: isSelected ? 600 : 500,
+                        fontWeight: isSelected ? 500 : 400,
                         lineHeight: 1.5,
-                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
                       {category.name}
@@ -460,7 +461,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               Ár sávok
@@ -516,9 +517,9 @@ export function MapFilters({
                         style={{
                           fontSize: 15,
                           color: isSelected ? "#3d2952" : "#5a3d7a",
-                          fontWeight: isSelected ? 600 : 500,
+                          fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.5,
-                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {priceBand.name}
@@ -527,7 +528,7 @@ export function MapFilters({
                   );
                 })
               ) : (
-                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
+                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Nincs elérhető ár sáv
                 </div>
               )}
@@ -544,7 +545,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               Kontextus alapú szűrők
@@ -563,7 +564,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!isOpenNow) {
@@ -591,7 +592,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!hasEventToday) {
@@ -620,7 +621,7 @@ export function MapFilters({
                     transition: "all 0.2s",
                     textAlign: "left",
                     border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                   onMouseEnter={(e) => {
                     if (!within30Minutes) {
@@ -649,7 +650,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!rainSafe) {

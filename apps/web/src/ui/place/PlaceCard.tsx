@@ -6,6 +6,7 @@ import { buildPath } from "../../app/routing/buildPath";
 import { useTranslation } from "react-i18next";
 import { getSiteSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
+import { Badge } from "../../components/Badge";
 
 // Function to get color for category
 function getCategoryColor(categoryName: string | null | undefined): string {
@@ -115,25 +116,23 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 position: "absolute",
                 top: 12,
                 right: 12,
-                background: "rgba(255, 255, 255, 0.95)",
-                backdropFilter: "blur(8px)",
-                padding: "6px 14px",
-                borderRadius: 20,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                 zIndex: 10,
               }}
             >
-              <span
+              <Badge
+                variant="category"
+                color={categoryColor}
+                backgroundColor="rgba(255, 255, 255, 0.95)"
+                textColor={categoryColor}
+                size="small"
+                uppercase={true}
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: categoryColor,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                 }}
               >
                 {categoryName}
-              </span>
+              </Badge>
             </div>
           )}
         </div>
@@ -145,7 +144,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
             style={{
               margin: 0,
               fontSize: 20,
-              fontWeight: 700,
+              fontWeight: 600,
+              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#1a1a1a",
               lineHeight: 1.3,
               flex: 1,
@@ -162,6 +162,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               fontSize: 14,
               color: "#666",
               lineHeight: 1.6,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontWeight: 400,
               overflow: "hidden",
               display: "-webkit-box",
               WebkitLineClamp: 3,
@@ -173,35 +175,26 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "auto" }}>
           {place.priceBand && (
-            <span
+            <Badge
+              variant="priceBand"
+              size="small"
+              opacity={0.1}
               style={{
-                fontSize: 12,
-                fontWeight: 500,
                 color: "#764ba2",
-                background: "rgba(118, 75, 162, 0.1)",
                 border: "1px solid rgba(118, 75, 162, 0.2)",
-                borderRadius: 12,
-                padding: "4px 10px",
               }}
             >
               {place.priceBand || ""}
-            </span>
+            </Badge>
           )}
           {place.tags?.slice(0, 3).map((tag) => (
-            <span
+            <Badge
               key={tag}
-              style={{
-                fontSize: 12,
-                fontWeight: 500,
-                color: "#666",
-                background: "#f5f5f5",
-                border: "1px solid #e0e0e0",
-                borderRadius: 12,
-                padding: "4px 10px",
-              }}
+              variant="tag"
+              size="small"
             >
               {tag}
-            </span>
+            </Badge>
           ))}
         </div>
 
@@ -222,7 +215,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 gap: 8,
                 color: categoryColor,
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "all 0.3s ease",
               }}
             >
@@ -244,6 +238,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 gap: 8,
                 color: "#999",
                 fontSize: 14,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
                 fontStyle: "italic",
               }}
             >

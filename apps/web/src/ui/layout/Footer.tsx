@@ -126,14 +126,14 @@ export function Footer({
                 />
               )}
               {siteName && (
-                <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>{siteName}</span>
+                <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{siteName}</span>
               )}
             </div>
           )}
 
           {/* Links - Desktop only */}
           {!isMobile && (
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14, fontWeight: 500 }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {hasStaticPages && (
                 <Link
                   to={`${base}/static-pages`}
@@ -208,7 +208,7 @@ export function Footer({
           )}
 
           {/* Copyright - Always on right */}
-          <div style={{ fontSize: isMobile ? 14 : 14, opacity: 0.8, textAlign: "right", fontWeight: 500 }}>
+          <div style={{ fontSize: isMobile ? 14 : 14, opacity: 0.8, textAlign: "right", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             © {currentYear}
           </div>
         </div>
@@ -249,6 +249,7 @@ export function Footer({
                 style={{
                   fontSize: 20,
                   fontWeight: 700,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   marginBottom: 12,
                   display: "flex",
                   alignItems: "center",
@@ -281,10 +282,11 @@ export function Footer({
               <p
                 style={{
                   fontSize: 15,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   lineHeight: 1.6,
                   margin: 0,
-                  fontWeight: 500,
+                  fontWeight: 400,
                 }}
               >
                 {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
@@ -298,6 +300,7 @@ export function Footer({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -314,6 +317,7 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -335,6 +339,7 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -356,6 +361,7 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -379,6 +385,7 @@ export function Footer({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -395,6 +402,7 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -444,6 +452,7 @@ export function Footer({
             textAlign: "center",
             fontSize: 15,
             fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             opacity: 0.8,
           }}
         >

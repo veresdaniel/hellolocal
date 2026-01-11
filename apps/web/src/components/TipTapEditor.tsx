@@ -254,14 +254,14 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
         <style>{`
           .tiptap-editor {
             outline: none;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 15px;
             color: #333;
             line-height: 1.6;
           }
           .tiptap-editor p {
             margin: 0.5em 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           .tiptap-editor p.is-editor-empty:first-child::before {
             color: #999;
@@ -269,17 +269,17 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
             float: left;
             height: 0;
             pointer-events: none;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           .tiptap-editor ul, .tiptap-editor ol {
             padding-left: 1.5em;
             margin: 0.5em 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           .tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
             margin: 1em 0 0.5em 0;
-            font-weight: bold;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 600;
+            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           .tiptap-editor h1 {
             font-size: 2em;

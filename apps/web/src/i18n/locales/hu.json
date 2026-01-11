@@ -63,6 +63,7 @@
       }
     },
     "open": "Megnyitás",
+    "readMore": "Tovább",
     "category": "Kategória",
     "priceBand": "Ár szint",
     "tags": "Címkék",
@@ -344,6 +345,8 @@
     "defaultPlaceholderCardImageDescription": "Ez a kép jelenik meg a helyek kártyáin, ha nincs beállítva kép",
     "defaultPlaceholderDetailHeroImage": "Alapértelmezett helyettesítő hero kép részletekhez",
     "defaultPlaceholderDetailHeroImageDescription": "Ez a kép jelenik meg a helyek részletező oldalán, ha nincs beállítva hero kép",
+    "defaultEventPlaceholderCardImage": "Alapértelmezett helyettesítő kép esemény kártyákhoz",
+    "defaultEventPlaceholderCardImageDescription": "Ez a kép jelenik meg az esemény kártyákon, ha nincs beállítva kép",
     "brandBadgeIcon": "Brand badge ikon",
     "brandBadgeIconDescription": "Ez az ikon jelenik meg a brand badge-ben a publikus oldalakon",
     "faviconUrl": "Favicon URL",
@@ -476,6 +479,8 @@
     "startDate": "Kezdés dátuma",
     "endDate": "Befejezés dátuma",
     "isPinned": "Rögzített",
+    "showOnMap": "Megjelenítés a térkép nézetben",
+    "showOnMapHint": "Megjelenik-e az esemény a térkép nézetben lévő esemény dobozban",
     "selectPlace": "Válassz helyet",
     "place": "Hely",
     "roles": {

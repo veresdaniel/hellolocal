@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getPlaces, getEvents, type Event } from "../api/places.api";
+import { getPlaces, getEvents, type Event, getSiteSettings } from "../api/places.api";
 import type { Place } from "../types/place";
 import { PlaceCard } from "../ui/place/PlaceCard";
 import { MapFilters } from "./MapFilters";
@@ -13,6 +13,8 @@ import { buildPath } from "../app/routing/buildPath";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { Badge } from "./Badge";
+import { sanitizeImageUrl } from "../utils/urlValidation";
 
 interface PlacesListViewProps {
   onMapViewClick: () => void;
@@ -112,6 +114,13 @@ export function PlacesListView({
   const { data: eventsData = [] } = useQuery({
     queryKey: ["events", lang, tenantKey],
     queryFn: () => getEvents(lang, undefined, undefined, 100, 0, tenantKey),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch site settings for placeholder image
+  const { data: siteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantKey),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -341,6 +350,7 @@ export function PlacesListView({
               marginBottom: 24,
               fontSize: "clamp(24px, 5vw, 36px)",
               fontWeight: 700,
+              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#1a1a1a",
               letterSpacing: "-0.02em",
               wordWrap: "break-word",
@@ -361,6 +371,8 @@ export function PlacesListView({
                 width: "100%",
                 padding: "14px 20px",
                 fontSize: 16,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
                 border: "2px solid #e0e0e0",
                 borderRadius: 12,
                 background: "white",
@@ -425,6 +437,104 @@ export function PlacesListView({
                   return <PlaceCard key={place.slug || place.id} place={place} index={index} />;
                 } else {
                   const event = item.data as Event;
+                  // Only render link if event has a valid slug (not just the ID fallback)
+                  // Backend returns event.id as slug fallback, so check if slug equals id
+                  const hasValidSlug = event.slug && event.slug !== event.id;
+                  if (!hasValidSlug) {
+                    return (
+                      <div
+                        key={event.id}
+                        style={{
+                          background: "white",
+                          borderRadius: 12,
+                          overflow: "hidden",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                          borderBottom: event.category ? `3px solid #667eea` : "none",
+                          opacity: 0.7,
+                        }}
+                      >
+                        {(event.heroImage || siteSettings?.defaultEventPlaceholderCardImage) && (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: 200,
+                              backgroundImage: `url(${event.heroImage || siteSettings?.defaultEventPlaceholderCardImage || ""})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                              position: "relative",
+                            }}
+                          >
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: 12,
+                                left: 12,
+                                zIndex: 10,
+                              }}
+                            >
+                              <Badge
+                                variant="custom"
+                                backgroundColor="rgba(102, 126, 234, 0.95)"
+                                textColor="white"
+                                size="small"
+                                uppercase={true}
+                                style={{
+                                  backdropFilter: "blur(8px)",
+                                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                                }}
+                              >
+                                {t("public.events") || "Esemény"}
+                              </Badge>
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ padding: 20 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
+                            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>
+                              {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
+                              {event.name}
+                            </h3>
+                            {!event.heroImage && (
+                              <Badge
+                                variant="custom"
+                                backgroundColor="rgba(102, 126, 234, 0.95)"
+                                textColor="white"
+                                size="small"
+                                uppercase={true}
+                              >
+                                {t("public.events") || "Esemény"}
+                              </Badge>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 14, color: "#666", marginBottom: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            {new Date(event.startDate).toLocaleDateString(
+                              lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </div>
+                          {event.shortDescription && (
+                            <p style={{ fontSize: 14, color: "#666", margin: "8px 0", lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                              {event.shortDescription}
+                            </p>
+                          )}
+                          {event.placeName && (
+                            <div style={{ fontSize: 13, color: "#667eea", marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                              📍 {event.placeName}
+                            </div>
+                          )}
+                          <div style={{ marginTop: 12, fontSize: 13, color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            {t("public.placeSlugMissing") || "Részletek hamarosan..."}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <Link
                       key={event.id}
@@ -450,26 +560,61 @@ export function PlacesListView({
                           e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
                         }}
                       >
-                        {event.heroImage && (
+                        {(event.heroImage || siteSettings?.defaultEventPlaceholderCardImage) && (
                           <div
                             style={{
                               width: "100%",
                               height: 200,
-                              backgroundImage: `url(${event.heroImage})`,
+                              backgroundImage: `url(${event.heroImage || siteSettings?.defaultEventPlaceholderCardImage || ""})`,
                               backgroundSize: "cover",
                               backgroundPosition: "center",
                               position: "relative",
                             }}
-                          />
+                          >
+                            {/* Event badge overlay */}
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: 12,
+                                left: 12,
+                                zIndex: 10,
+                              }}
+                            >
+                              <Badge
+                                variant="custom"
+                                backgroundColor="rgba(102, 126, 234, 0.95)"
+                                textColor="white"
+                                size="small"
+                                uppercase={true}
+                                style={{
+                                  backdropFilter: "blur(8px)",
+                                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                                }}
+                              >
+                                {t("public.events") || "Esemény"}
+                              </Badge>
+                            </div>
+                          </div>
                         )}
                         <div style={{ padding: 20 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
+                            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>
                               {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
                               {event.name}
                             </h3>
+                            {!event.heroImage && (
+                              <Badge
+                                variant="custom"
+                                backgroundColor="rgba(102, 126, 234, 0.95)"
+                                textColor="white"
+                                size="small"
+                                uppercase={true}
+                              >
+                                {t("public.events") || "Esemény"}
+                              </Badge>
+                            )}
                           </div>
-                          <div style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>
+                          <div style={{ fontSize: 14, color: "#666", marginBottom: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
                             {new Date(event.startDate).toLocaleDateString(
                               lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                               {
@@ -482,17 +627,17 @@ export function PlacesListView({
                             )}
                           </div>
                           {event.shortDescription && (
-                            <p style={{ fontSize: 14, color: "#666", margin: "8px 0", lineHeight: 1.6 }}>
+                            <p style={{ fontSize: 14, color: "#666", margin: "8px 0", lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
                               {event.shortDescription}
                             </p>
                           )}
                           {event.placeName && (
-                            <div style={{ fontSize: 13, color: "#667eea", marginTop: 8 }}>
+                            <div style={{ fontSize: 13, color: "#667eea", marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
                               📍 {event.placeName}
                             </div>
                           )}
                           <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-                            <span style={{ fontSize: 14, fontWeight: 600, color: "#667eea" }}>
+                            <span style={{ fontSize: 14, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#667eea" }}>
                               {t("public.readMore")} →
                             </span>
                           </div>

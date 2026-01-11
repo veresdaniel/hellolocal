@@ -100,6 +100,7 @@ export function ForgotPasswordPage() {
             color: "#667eea",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {t("admin.forgotPassword")}
@@ -110,6 +111,8 @@ export function ForgotPasswordPage() {
             color: "#666",
             marginBottom: "clamp(20px, 4vw, 32px)",
             fontSize: "clamp(13px, 3vw, 14px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
           }}
         >
           {t("admin.forgotPasswordDescription")}
@@ -126,6 +129,7 @@ export function ForgotPasswordPage() {
               border: "1px solid #fca5a5",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {error}
@@ -143,6 +147,7 @@ export function ForgotPasswordPage() {
               border: "1px solid #6ee7b7",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               whiteSpace: "pre-wrap",
             }}
           >
@@ -157,12 +162,13 @@ export function ForgotPasswordPage() {
                 display: "block", 
                 marginBottom: 8,
                 color: emailError ? "#dc2626" : "#667eea",
-                fontWeight: 600,
-                fontSize: "clamp(13px, 3vw, 14px)",
-              }}
-            >
-              {t("admin.email")}
-            </label>
+              fontWeight: 600,
+              fontSize: "clamp(13px, 3vw, 14px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.email")}
+          </label>
             <input
               type="email"
               value={email}
@@ -175,11 +181,11 @@ export function ForgotPasswordPage() {
                 border: `2px solid ${emailError ? "#fca5a5" : "#e0e7ff"}`,
                 borderRadius: 8,
                 outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily: "inherit",
-                boxSizing: "border-box",
-                backgroundColor: emailError ? "#fef2f2" : "white",
-              }}
+              transition: "all 0.3s ease",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              boxSizing: "border-box",
+              backgroundColor: emailError ? "#fef2f2" : "white",
+            }}
               onFocus={(e) => {
                 if (!emailError) {
                   e.currentTarget.style.borderColor = "#667eea";
@@ -194,9 +200,9 @@ export function ForgotPasswordPage() {
               }}
             />
             {emailError && (
-              <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500 }}>
-                {emailError}
-              </p>
+            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              {emailError}
+            </p>
             )}
           </div>
 
@@ -206,17 +212,18 @@ export function ForgotPasswordPage() {
             style={{
               width: "100%",
               padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
-              fontSize: "clamp(15px, 3.5vw, 16px)",
-              fontWeight: 600,
-              background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: 8,
-              cursor: isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
-              boxSizing: "border-box",
-            }}
+            fontSize: "clamp(15px, 3.5vw, 16px)",
+            fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: isLoading ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            boxSizing: "border-box",
+          }}
             onMouseEnter={(e) => {
               if (!isLoading) {
                 e.currentTarget.style.transform = "translateY(-2px)";
@@ -240,6 +247,7 @@ export function ForgotPasswordPage() {
             style={{ 
               color: "#667eea",
               fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textDecoration: "none",
               fontSize: "clamp(13px, 3vw, 14px)",
             }}

@@ -236,7 +236,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   />
                 )}
                 {siteName && (
-                  <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, letterSpacing: "-0.02em" }}>
+                  <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: "-0.02em" }}>
                     {siteName}
                   </span>
                 )}
@@ -272,7 +272,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       textDecoration: "none",
                       color: isActive(adminPath(link.path)) ? "#667eea" : "#666",
                       fontSize: 14,
-                      fontWeight: isActive(adminPath(link.path)) ? 600 : 400,
+                      fontWeight: isActive(adminPath(link.path)) ? 500 : 400,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       padding: "8px 12px",
                       borderRadius: 6,
                       background: isActive(adminPath(link.path)) ? "#f0f0ff" : "transparent",
@@ -313,6 +314,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 6,
                   fontSize: 13,
                   fontWeight: 600,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
@@ -346,6 +348,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 14,
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.2s ease",
                   display: "flex",
                   alignItems: "center",
@@ -390,7 +393,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 6,
                   cursor: "pointer",
                   fontSize: 20,
-                  fontWeight: "bold",
+                  fontWeight: 700,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -433,6 +437,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 8,
                   fontSize: 14,
                   fontWeight: 600,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   marginBottom: 16,
                   textAlign: "center",
                   border: "1px solid #ffc107",
@@ -455,7 +460,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     color: isActive(adminPath(link.path)) ? "#667eea" : "#333",
                     textDecoration: "none",
                     fontSize: 16,
-                    fontWeight: isActive(adminPath(link.path)) ? 600 : 400,
+                    fontWeight: isActive(adminPath(link.path)) ? 500 : 400,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: isActive(adminPath(link.path)) ? "#f0f0ff" : "transparent",
                     borderRadius: 8,
                     marginBottom: 6,
@@ -481,7 +487,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 borderRadius: 8,
                 border: "1px solid #e0e0ff",
               }}>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600 }}>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.language")}
                 </div>
                 <LanguageSelector />
@@ -494,7 +500,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 8,
                   border: "1px solid #e0e0ff",
                 }}>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600 }}>
+                  <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.tenant")}
                   </div>
                   <TenantSelector />
@@ -507,7 +513,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 borderRadius: 8,
                 border: "1px solid #e0e0ff",
               }}>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600 }}>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.userInfo")}
                 </div>
                 <UserInfoDropdown />
@@ -524,6 +530,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 16,
                   fontWeight: 600,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   width: "100%",
                   transition: "all 0.2s ease",
                   boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
@@ -571,6 +578,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 16,
                   fontWeight: 600,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   width: "100%",
                   transition: "all 0.2s ease",
                   boxShadow: "0 2px 8px rgba(220, 53, 69, 0.2)",

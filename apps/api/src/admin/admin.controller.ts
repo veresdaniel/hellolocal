@@ -1302,6 +1302,7 @@ export class AdminController {
       isCrawlable?: boolean;
       defaultPlaceholderCardImage?: string | null;
       defaultPlaceholderDetailHeroImage?: string | null;
+      defaultEventPlaceholderCardImage?: string | null;
       brandBadgeIcon?: string | null;
       faviconUrl?: string | null;
     },
@@ -1321,6 +1322,7 @@ export class AdminController {
       isCrawlable: dto.isCrawlable,
       defaultPlaceholderCardImage: dto.defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage: dto.defaultPlaceholderDetailHeroImage,
+      defaultEventPlaceholderCardImage: dto.defaultEventPlaceholderCardImage,
       brandBadgeIcon: dto.brandBadgeIcon,
       faviconUrl: dto.faviconUrl,
     });
