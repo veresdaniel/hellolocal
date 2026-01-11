@@ -44,9 +44,12 @@ export function useFavicon() {
     // Validate URL format
     let faviconUrl: string;
     try {
-      new URL(siteSettings.faviconUrl);
-      faviconUrl = siteSettings.faviconUrl;
-      console.log("[useFavicon] Setting favicon URL:", faviconUrl);
+      const url = new URL(siteSettings.faviconUrl);
+      // Add cache-busting query parameter to force browser to reload favicon
+      // Use timestamp to ensure fresh load when favicon changes
+      url.searchParams.set('v', Date.now().toString());
+      faviconUrl = url.toString();
+      console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrl);
     } catch {
       console.warn("[useFavicon] Invalid favicon URL format:", siteSettings.faviconUrl);
       return;
@@ -72,12 +75,13 @@ export function useFavicon() {
       // Only add if image loads successfully
       console.log("[useFavicon] Successfully loaded favicon:", faviconUrl);
       
-      // Create standard favicon link
+      // Create standard favicon link with cache-busting
       const link = document.createElement("link");
       link.rel = "icon";
-      // Try to detect type from URL
-      const isSvg = faviconUrl.toLowerCase().endsWith('.svg');
-      const isIco = faviconUrl.toLowerCase().endsWith('.ico');
+      // Try to detect type from URL (remove query params for type detection)
+      const urlWithoutParams = faviconUrl.split('?')[0];
+      const isSvg = urlWithoutParams.toLowerCase().endsWith('.svg');
+      const isIco = urlWithoutParams.toLowerCase().endsWith('.ico');
       link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
       link.href = faviconUrl;
       document.head.appendChild(link);
@@ -91,6 +95,7 @@ export function useFavicon() {
     
     // Try to load the image (with CORS if needed)
     // Note: Some browsers may block cross-origin favicons, but we try anyway
+    // The cache-busting parameter in faviconUrl will force browser to reload
     img.src = faviconUrl;
 
     // Cleanup function
