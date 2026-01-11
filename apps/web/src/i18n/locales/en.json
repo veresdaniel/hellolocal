@@ -122,6 +122,10 @@
     "minutes": "min",
     "locationPermissionDenied": "Location sharing denied. Please enable location sharing in your browser settings.",
     "locationPermissionPrompt": "Please enable location sharing to show your position.",
+    "updateAvailable": "Update Available!",
+    "updateDescription": "Refresh the app to get the latest features.",
+    "refresh": "Refresh",
+    "later": "Later",
     "footer": {
       "tagline": "Discover local treasures",
       "legal": "Legal Information",

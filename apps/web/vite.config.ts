@@ -43,7 +43,16 @@ const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "ut
 const appVersion = packageJson.version || "0.1.0-beta";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'generate-version',
+      buildStart() {
+        // Generate version.json at the start of each build
+        generateVersionJson();
+      },
+    },
+  ],
   define: {
     // Inject version from package.json at build time
     __APP_VERSION__: JSON.stringify(appVersion),

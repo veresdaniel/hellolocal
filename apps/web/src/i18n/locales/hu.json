@@ -122,6 +122,10 @@
     "minutes": "perc",
     "locationPermissionDenied": "A helyzet megosztása elutasítva. Engedélyezd a böngésző beállításaiban a helyzet megosztását.",
     "locationPermissionPrompt": "A helyzeted megjelenítéséhez engedélyezd a helyzet megosztását.",
+    "updateAvailable": "Új verzió érhető el!",
+    "updateDescription": "Frissítsd az alkalmazást a legújabb funkciók eléréséhez.",
+    "refresh": "Frissítés",
+    "later": "Később",
     "footer": {
       "tagline": "Fedezd fel a helyi kincseket",
       "legal": "Jogi információk",
