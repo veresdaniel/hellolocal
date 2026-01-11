@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useToast } from "../../contexts/ToastContext";
 import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
@@ -26,10 +27,10 @@ export function PriceBandsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   usePageTitle("admin.priceBands");
   const [priceBands, setPriceBands] = useState<PriceBand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,12 +56,11 @@ export function PriceBandsPage() {
   const loadPriceBands = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
-    setError(null);
     try {
       const data = await getPriceBands(selectedTenantId);
       setPriceBands(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadPriceBandsFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadPriceBandsFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +98,9 @@ export function PriceBandsPage() {
       await loadPriceBands();
       // Notify global cache manager that price bands have changed
       notifyEntityChanged("priceBands");
+      showToast(t("admin.messages.priceBandCreated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"), "error");
     }
   };
 
@@ -130,8 +131,9 @@ export function PriceBandsPage() {
       // Invalidate and refetch places cache to refresh filters and lists (all languages and filter combinations)
       await queryClient.invalidateQueries({ queryKey: ["places"] });
       await queryClient.refetchQueries({ queryKey: ["places"] });
+      showToast(t("admin.messages.priceBandUpdated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"), "error");
     }
   };
 
@@ -144,8 +146,9 @@ export function PriceBandsPage() {
       // Invalidate and refetch places cache to refresh filters and lists (all languages and filter combinations)
       await queryClient.invalidateQueries({ queryKey: ["places"] });
       await queryClient.refetchQueries({ queryKey: ["places"] });
+      showToast(t("admin.messages.priceBandDeleted"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"), "error");
     }
   };
 
@@ -206,12 +209,6 @@ export function PriceBandsPage() {
           + {t("admin.forms.newPriceBand")}
         </button>
       </div>
-
-      {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
-          {error}
-        </div>
-      )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>

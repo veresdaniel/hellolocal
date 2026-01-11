@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
   getCategories,
@@ -37,9 +38,9 @@ export function CategoriesPage() {
   usePageTitle("admin.categories");
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -116,8 +117,9 @@ export function CategoriesPage() {
       await loadCategories();
       // Notify global cache manager that categories have changed
       notifyEntityChanged("categories");
+      showToast(t("admin.messages.categoryCreated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createCategoryFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.createCategoryFailed"), "error");
     }
   };
 
@@ -153,8 +155,9 @@ export function CategoriesPage() {
       await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
       await queryClient.refetchQueries({ queryKey: ["events"] });
+      showToast(t("admin.messages.categoryUpdated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"), "error");
     }
   };
 
@@ -166,8 +169,9 @@ export function CategoriesPage() {
       await loadCategories();
       // Notify global cache manager that categories have changed
       notifyEntityChanged("categories");
+      showToast(t("admin.messages.categoryDeleted"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deleteCategoryFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.deleteCategoryFailed"), "error");
     }
   };
 
@@ -235,11 +239,6 @@ export function CategoriesPage() {
         </button>
       </div>
 
-      {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
-          {error}
-        </div>
-      )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
@@ -631,7 +630,7 @@ export function CategoriesPage() {
                       if (missingIds.length > 0) {
                         console.error("Missing category IDs:", missingIds);
                         console.error("Available categories:", categories.map(c => c.id));
-                        setError(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingIds.join(", ")}`);
+                        showToast(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingIds.join(", ")}`, "error");
                         setDraggedId(null);
                         setDragOverId(null);
                         return;
@@ -671,7 +670,7 @@ export function CategoriesPage() {
                         
                         if (missingCategoryIds.length > 0) {
                           console.error("Missing category IDs before send:", missingCategoryIds);
-                          setError(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingCategoryIds.join(", ")}`);
+                          showToast(t("admin.errors.invalidCategoryIds") || `Invalid category IDs: ${missingCategoryIds.join(", ")}`, "error");
                           setDraggedId(null);
                           setDragOverId(null);
                           return;
@@ -679,7 +678,7 @@ export function CategoriesPage() {
                         
                         if (missingParentIds.length > 0) {
                           console.error("Missing parent category IDs before send:", missingParentIds);
-                          setError(t("admin.errors.parentCategoriesNotFound") || `Invalid parent category IDs: ${missingParentIds.join(", ")}`);
+                          showToast(t("admin.errors.parentCategoriesNotFound") || `Invalid parent category IDs: ${missingParentIds.join(", ")}`, "error");
                           setDraggedId(null);
                           setDragOverId(null);
                           return;
@@ -688,7 +687,7 @@ export function CategoriesPage() {
                         await reorderCategories(selectedTenantId!, updates);
                         await loadCategories();
                         notifyEntityChanged("categories");
-                        setError(null);
+                        showToast(t("admin.messages.categoriesReordered"), "success");
                       } catch (err) {
                         console.error("=== REORDER ERROR ===");
                         console.error("Error object:", err);
@@ -715,7 +714,7 @@ export function CategoriesPage() {
                           errorMessage = t("admin.errors.reorderFailed") + " (404 - Endpoint nem található. Ellenőrizd, hogy a backend fut-e a 3002-es porton és hogy az /api/admin/categories/reorder route létezik-e)";
                         }
                         
-                        setError(errorMessage);
+                        showToast(errorMessage, "error");
                       }
 
                       setDraggedId(null);

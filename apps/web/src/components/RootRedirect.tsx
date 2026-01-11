@@ -11,7 +11,25 @@ export function RootRedirect() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   
-  // Fetch default language from app settings
+  // For admin routes without language code, redirect immediately to default language
+  // This handles /admin, /admin/login, /admin/register, etc.
+  if (isAdminRoute) {
+    // Extract the path after /admin (e.g., "/login" from "/admin/login", or "" from "/admin")
+    // Handle both "/admin" and "/admin/login" cases
+    let adminPath = location.pathname.replace(/^\/admin/, "") || "";
+    
+    // Ensure adminPath starts with / if it's not empty
+    if (adminPath && !adminPath.startsWith("/")) {
+      adminPath = `/${adminPath}`;
+    }
+    
+    // Use DEFAULT_LANG immediately for admin routes (no API call needed)
+    const finalPath = `/${DEFAULT_LANG}/admin${adminPath}`;
+    
+    return <Navigate to={finalPath} replace />;
+  }
+  
+  // Fetch default language from app settings (only for public routes)
   const { data: defaultLang, isLoading: isLoadingLang } = useQuery({
     queryKey: ["publicDefaultLanguage"],
     queryFn: async () => {
@@ -29,15 +47,11 @@ export function RootRedirect() {
   // Fetch active tenants count to determine if tenant slug should be shown
   const { data: tenantsCountData, isLoading: isLoadingTenantsCount } = useActiveTenantsCount();
 
-  // If this is an admin route, redirect to language-specific admin route
-  // (Don't wait for tenants count for admin routes)
-  if (isAdminRoute && defaultLang) {
-    const adminPath = location.pathname.replace("/admin", "");
-    return <Navigate to={`/${defaultLang}/admin${adminPath}`} replace />;
-  }
+  // Use default language (from API or fallback to DEFAULT_LANG)
+  const lang = defaultLang || DEFAULT_LANG;
 
-  // Show loading spinner while fetching default language and tenants count
-  if (isLoadingLang || !defaultLang || isLoadingTenantsCount) {
+  // Show loading spinner while fetching default language and tenants count (only for public routes)
+  if (isLoadingLang || isLoadingTenantsCount) {
     return <LoadingSpinner isLoading={true} delay={0} />;
   }
 

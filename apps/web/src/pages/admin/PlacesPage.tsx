@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags } from "../../api/admin.api";
@@ -44,6 +45,7 @@ interface Place {
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
+  const { showToast } = useToast();
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -51,7 +53,6 @@ export function PlacesPage() {
   const [priceBands, setPriceBands] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -99,7 +100,6 @@ export function PlacesPage() {
   const loadData = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
-    setError(null);
     try {
       const [placesData, categoriesData, townsData, priceBandsData, tagsData] = await Promise.all([
         getPlaces(selectedTenantId),
@@ -114,7 +114,7 @@ export function PlacesPage() {
       setPriceBands(priceBandsData);
       setTags(tagsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -206,8 +206,9 @@ export function PlacesPage() {
       await loadData();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
+      showToast(t("admin.messages.placeCreated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createPlaceFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.createPlaceFailed"), "error");
     }
   };
 
@@ -290,8 +291,9 @@ export function PlacesPage() {
       await loadData();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
+      showToast(t("admin.messages.placeUpdated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updatePlaceFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updatePlaceFailed"), "error");
     }
   };
 
@@ -303,8 +305,9 @@ export function PlacesPage() {
       await loadData();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
+      showToast(t("admin.messages.placeDeleted"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deletePlaceFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.deletePlaceFailed"), "error");
     }
   };
 
@@ -410,11 +413,6 @@ export function PlacesPage() {
         </button>
       </div>
 
-      {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
-          {error}
-        </div>
-      )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>

@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useToast } from "../../contexts/ToastContext";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditor } from "../../components/TipTapEditor";
@@ -26,10 +27,10 @@ export function TagsPage() {
   const { t, i18n } = useTranslation();
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   usePageTitle("admin.tags");
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,12 +56,11 @@ export function TagsPage() {
   const loadTags = async () => {
     if (!selectedTenantId) return;
     setIsLoading(true);
-    setError(null);
     try {
       const data = await getTags(selectedTenantId);
       setTags(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadTagsFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadTagsFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +98,9 @@ export function TagsPage() {
       await loadTags();
       // Notify global cache manager that tags have changed
       notifyEntityChanged("tags");
+      showToast(t("admin.messages.tagCreated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createTagFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.createTagFailed"), "error");
     }
   };
 
@@ -132,8 +133,9 @@ export function TagsPage() {
       await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
       await queryClient.refetchQueries({ queryKey: ["events"] });
+      showToast(t("admin.messages.tagUpdated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"), "error");
     }
   };
 
@@ -148,8 +150,9 @@ export function TagsPage() {
       await queryClient.refetchQueries({ queryKey: ["places"] });
       await queryClient.invalidateQueries({ queryKey: ["events"] });
       await queryClient.refetchQueries({ queryKey: ["events"] });
+      showToast(t("admin.messages.tagDeleted"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"), "error");
     }
   };
 
@@ -210,12 +213,6 @@ export function TagsPage() {
           + {t("admin.forms.newTag")}
         </button>
       </div>
-
-      {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
-          {error}
-        </div>
-      )}
 
       {(isCreating || editingId) && (
         <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>

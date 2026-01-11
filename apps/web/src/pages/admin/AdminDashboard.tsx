@@ -1,11 +1,23 @@
 // src/pages/admin/AdminDashboard.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
 
 export function AdminDashboard() {
   const { t } = useTranslation();
+  const { lang: langParam } = useParams<{ lang?: string }>();
   usePageTitle("admin.dashboard");
+  
+  // Get language from URL or use default
+  const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  
+  // Helper to build admin paths with language
+  const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
@@ -17,55 +29,55 @@ export function AdminDashboard() {
         <DashboardCard
           title={t("admin.dashboardCards.events")}
           description={t("admin.dashboardCards.eventsDesc")}
-          link="/admin/events"
+          link={adminPath("/events")}
           icon="📅"
         />
         <DashboardCard
           title={t("admin.dashboardCards.places")}
           description={t("admin.dashboardCards.placesDesc")}
-          link="/admin/places"
+          link={adminPath("/places")}
           icon="📍"
         />
         <DashboardCard
           title={t("admin.dashboardCards.priceBands")}
           description={t("admin.dashboardCards.priceBandsDesc")}
-          link="/admin/price-bands"
+          link={adminPath("/price-bands")}
           icon="💰"
         />
         <DashboardCard
           title={t("admin.dashboardCards.categories")}
           description={t("admin.dashboardCards.categoriesDesc")}
-          link="/admin/categories"
+          link={adminPath("/categories")}
           icon="📁"
         />
         <DashboardCard
           title={t("admin.dashboardCards.tags")}
           description={t("admin.dashboardCards.tagsDesc")}
-          link="/admin/tags"
+          link={adminPath("/tags")}
           icon="🏷️"
         />
         <DashboardCard
           title={t("admin.dashboardCards.towns")}
           description={t("admin.dashboardCards.townsDesc")}
-          link="/admin/towns"
+          link={adminPath("/towns")}
           icon="🏘️"
         />
         <DashboardCard
           title={t("admin.dashboardCards.legalPages")}
           description={t("admin.dashboardCards.legalPagesDesc")}
-          link="/admin/legal"
+          link={adminPath("/legal")}
           icon="📄"
         />
         <DashboardCard
           title={t("admin.dashboardCards.staticPages")}
           description={t("admin.dashboardCards.staticPagesDesc")}
-          link="/admin/static-pages"
+          link={adminPath("/static-pages")}
           icon="📝"
         />
         <DashboardCard
           title={t("admin.dashboardCards.userProfile")}
           description={t("admin.dashboardCards.userProfileDesc")}
-          link="/admin/profile"
+          link={adminPath("/profile")}
           icon="👤"
         />
       </div>

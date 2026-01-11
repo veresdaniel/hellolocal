@@ -4,9 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
 import { useAdminCache } from "../hooks/useAdminCache";
+import { useVersionCheck } from "../hooks/useVersionCheck";
 import { TenantSelector } from "./TenantSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
+import { ToastContainer } from "./Toast";
+import { VersionDisplay } from "./VersionDisplay";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, type Lang } from "../app/config";
@@ -24,6 +27,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { t, i18n } = useTranslation();
   // Initialize global cache management for all admin pages
   useAdminCache();
+  // Version check - will check for updates and show toast if new version available
+  useVersionCheck();
   const { user, logout } = useAuth();
   const location = useLocation();
   const { showWarning, secondsRemaining } = useSessionWarning();
@@ -51,120 +56,121 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-      <nav
-        style={{
-          background: "white",
-          borderBottom: "1px solid #ddd",
-          padding: "16px 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <Link to={`/${lang}`} style={{ textDecoration: "none", color: "inherit" }}>
-            <h2 style={{ margin: 0 }}>Admin</h2>
-          </Link>
-          <div style={{ display: "flex", gap: 16 }}>
-            <Link
-              to={adminPath("")}
-              style={{
-                textDecoration: "none",
-                color: isActive(adminPath("")) ? "#007bff" : "#666",
-                fontWeight: isActive(adminPath("")) ? "bold" : "normal",
-              }}
-            >
-              {t("admin.dashboard")}
+        <nav
+          style={{
+            background: "white",
+            borderBottom: "1px solid #ddd",
+            padding: "16px 24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+            <Link to={adminPath("")} style={{ textDecoration: "none", color: "inherit" }}>
+              <h2 style={{ margin: 0 }}>Admin</h2>
             </Link>
-            <Link
-              to={adminPath("/profile")}
-              style={{
-                textDecoration: "none",
-                color: isActive(adminPath("/profile")) ? "#007bff" : "#666",
-                fontWeight: isActive(adminPath("/profile")) ? "bold" : "normal",
-              }}
-            >
-              {t("admin.profileMenu")}
-            </Link>
-            {user?.role === "superadmin" && (
-              <>
-                <Link
-                  to={adminPath("/app-settings")}
-                  style={{
-                    textDecoration: "none",
-                    color: isActive(adminPath("/app-settings")) ? "#007bff" : "#666",
-                    fontWeight: isActive(adminPath("/app-settings")) ? "bold" : "normal",
-                  }}
-                >
-                  {t("admin.appSettings")}
-                </Link>
-                <Link
-                  to={adminPath("/users")}
-                  style={{
-                    textDecoration: "none",
-                    color: isActive(adminPath("/users")) ? "#007bff" : "#666",
-                    fontWeight: isActive(adminPath("/users")) ? "bold" : "normal",
-                  }}
-                >
-                  {t("admin.users")}
-                </Link>
-                {HAS_MULTIPLE_TENANTS && (
+            <div style={{ display: "flex", gap: 16 }}>
+              <Link
+                to={adminPath("")}
+                style={{
+                  textDecoration: "none",
+                  color: isActive(adminPath("")) ? "#007bff" : "#666",
+                  fontWeight: isActive(adminPath("")) ? "bold" : "normal",
+                }}
+              >
+                {t("admin.dashboard")}
+              </Link>
+              <Link
+                to={adminPath("/profile")}
+                style={{
+                  textDecoration: "none",
+                  color: isActive(adminPath("/profile")) ? "#007bff" : "#666",
+                  fontWeight: isActive(adminPath("/profile")) ? "bold" : "normal",
+                }}
+              >
+                {t("admin.profileMenu")}
+              </Link>
+              {user?.role === "superadmin" && (
+                <>
                   <Link
-                    to={adminPath("/tenants")}
+                    to={adminPath("/app-settings")}
                     style={{
                       textDecoration: "none",
-                      color: isActive(adminPath("/tenants")) ? "#007bff" : "#666",
-                      fontWeight: isActive(adminPath("/tenants")) ? "bold" : "normal",
+                      color: isActive(adminPath("/app-settings")) ? "#007bff" : "#666",
+                      fontWeight: isActive(adminPath("/app-settings")) ? "bold" : "normal",
                     }}
                   >
-                    {t("admin.tenants")}
+                    {t("admin.appSettings")}
                   </Link>
-                )}
-              </>
-            )}
+                  <Link
+                    to={adminPath("/users")}
+                    style={{
+                      textDecoration: "none",
+                      color: isActive(adminPath("/users")) ? "#007bff" : "#666",
+                      fontWeight: isActive(adminPath("/users")) ? "bold" : "normal",
+                    }}
+                  >
+                    {t("admin.users")}
+                  </Link>
+                  {HAS_MULTIPLE_TENANTS && (
+                    <Link
+                      to={adminPath("/tenants")}
+                      style={{
+                        textDecoration: "none",
+                        color: isActive(adminPath("/tenants")) ? "#007bff" : "#666",
+                        fontWeight: isActive(adminPath("/tenants")) ? "bold" : "normal",
+                      }}
+                    >
+                      {t("admin.tenants")}
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <LanguageSelector />
-          {HAS_MULTIPLE_TENANTS && <TenantSelector />}
-          {showWarning && (
-            <div
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <LanguageSelector />
+            {HAS_MULTIPLE_TENANTS && <TenantSelector />}
+            {showWarning && (
+              <div
+                style={{
+                  padding: "8px 16px",
+                  background: "#ffc107",
+                  color: "#856404",
+                  borderRadius: 4,
+                  fontSize: 14,
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  animation: "pulse 1s infinite",
+                }}
+              >
+                <span>⏱️</span>
+                <span>
+                  {t("admin.sessionExpiring")}: {secondsRemaining}s
+                </span>
+              </div>
+            )}
+            <UserInfoDropdown />
+            <button
+              onClick={handleLogout}
               style={{
                 padding: "8px 16px",
-                background: "#ffc107",
-                color: "#856404",
+                background: "#dc3545",
+                color: "white",
+                border: "none",
                 borderRadius: 4,
-                fontSize: 14,
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                animation: "pulse 1s infinite",
+                cursor: "pointer",
               }}
             >
-              <span>⏱️</span>
-              <span>
-                {t("admin.sessionExpiring")}: {secondsRemaining}s
-              </span>
-            </div>
-          )}
-          <UserInfoDropdown />
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "8px 16px",
-              background: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            {t("admin.logout")}
-          </button>
-        </div>
-      </nav>
-      <main style={{ padding: 24 }}>{children}</main>
-    </div>
+              {t("admin.logout")}
+            </button>
+          </div>
+        </nav>
+        <main style={{ padding: 24 }}>{children}</main>
+        <VersionDisplay />
+      </div>
   );
 }

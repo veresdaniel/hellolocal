@@ -12,6 +12,7 @@ import { Footer } from "../../ui/layout/Footer";
 import { usePublicDefaultLanguage } from "../../hooks/usePublicDefaultLanguage";
 import { PublicAuthBadge } from "../../components/PublicAuthBadge";
 import { useActiveTenantsCount } from "../../hooks/useActiveTenantsCount";
+import { useVersionCheck } from "../../hooks/useVersionCheck";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -23,9 +24,20 @@ export function TenantLayout() {
     tenantSlug?: string;
   }>();
   const location = useLocation();
+  
+  // Skip tenant logic entirely for admin routes
+  // Admin routes should be handled by their own layout  
+  if (location.pathname.includes('/admin')) {
+    // Return null - admin routes have their own layout structure
+    return null;
+  }
+  
   const { i18n } = useTranslation();
   const defaultLangFromSettings = usePublicDefaultLanguage();
   const { data: tenantsCountData, isLoading: isLoadingTenantsCount } = useActiveTenantsCount();
+  
+  // Version check for public pages - will check for updates and show toast if new version available
+  useVersionCheck();
 
   const lang: Lang = isLang(langParam) ? langParam : defaultLangFromSettings;
 

@@ -1,8 +1,53 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { readFileSync, writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { createHash } from "crypto";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Generate version.json before build
+function generateVersionJson() {
+  try {
+    const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf-8"));
+    const version = packageJson.version || "0.1.0-beta";
+    const buildHash = createHash("md5")
+      .update(`${Date.now()}-${Math.random()}`)
+      .digest("hex");
+    
+    const versionInfo = {
+      version,
+      buildHash,
+      timestamp: Date.now(),
+    };
+    
+    writeFileSync(
+      join(__dirname, "public/version.json"),
+      JSON.stringify(versionInfo, null, 2),
+      "utf-8"
+    );
+    
+    console.log(`[Vite] Generated version.json: ${version} (${buildHash.substring(0, 7)})`);
+  } catch (error) {
+    console.warn("[Vite] Failed to generate version.json:", error);
+  }
+}
+
+// Generate version.json on config load
+generateVersionJson();
+
+// Read version from package.json for Vite define
+const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf-8"));
+const appVersion = packageJson.version || "0.1.0-beta";
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // Inject version from package.json at build time
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   resolve: {
     alias: {
       "mapbox-gl": "maplibre-gl",

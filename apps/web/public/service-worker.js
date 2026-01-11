@@ -1,5 +1,22 @@
 // public/service-worker.js
-const CACHE_NAME = "hellolocal-v1";
+// Cache name includes version to force cache invalidation on version change
+let CACHE_NAME = "hellolocal-v1";
+
+// Fetch version and set cache name
+fetch("/version.json?t=" + Date.now())
+  .then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error("Failed to fetch version");
+  })
+  .then((data) => {
+    CACHE_NAME = `hellolocal-${data.version}-${data.buildHash.substring(0, 7)}`;
+    console.log("[SW] Cache name set to:", CACHE_NAME);
+  })
+  .catch((e) => {
+    console.warn("[SW] Failed to fetch version, using default cache name:", e);
+  });
 const urlsToCache = [
   "/",
   "/index.html",
@@ -22,19 +39,39 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter((cacheName) => !cacheName.startsWith("hellolocal-") || cacheName !== CACHE_NAME)
           .map((cacheName) => caches.delete(cacheName))
       );
+    }).then(() => {
+      return self.clients.claim();
     })
   );
-  return self.clients.claim();
 });
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  // Don't cache version.json - always fetch fresh
+  if (event.request.url.includes("/version.json")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      return response || fetch(event.request).then((fetchResponse) => {
+        // Cache successful responses
+        if (fetchResponse.ok) {
+          const responseClone = fetchResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return fetchResponse;
+      });
+    })
+    .catch(() => {
+      // If both cache and network fail, return a basic response
+      return new Response("Offline", { status: 503 });
     })
   );
 });

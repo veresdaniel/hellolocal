@@ -1,6 +1,6 @@
 // src/app/routes.tsx
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import { HAS_MULTIPLE_TENANTS } from "./config";
 import { TenantLayout } from "./tenant/TenantLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
@@ -38,36 +38,69 @@ const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ d
 const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
 const AdminLayout = lazy(() => import("../components/AdminLayout").then(m => ({ default: m.AdminLayout })));
 
-// If multi-tenant is enabled, tenant slug is optional (will be determined dynamically)
-const tenantSuffix = HAS_MULTIPLE_TENANTS ? "/:tenantSlug?" : "";
+// If multi-tenant is enabled, we need two separate routes
+// One with tenant slug and one without
+// IMPORTANT: These routes should NOT match /admin paths
+const createPublicRoutes = () => {
+  const baseChildren = [
+    { index: true, element: <HomePage /> },
+    { path: "place/:slug", element: <PlaceDetailPage /> },
+    { path: "event/:slug", element: <EventDetailPage /> },
+    { path: "static-pages", element: <StaticPagesListPage /> },
+    { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
+    { path: "aszf", element: <LegalPage pageKey="terms" /> },
+    { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+  ];
+
+  if (HAS_MULTIPLE_TENANTS) {
+    // Return two routes: one with tenant slug, one without
+    // The tenant slug route should NOT match "admin"
+    return [
+      {
+        path: `/:lang`,
+        element: <TenantLayout />,
+        errorElement: <ErrorPage />,
+        children: baseChildren,
+      },
+      {
+        // This route should only match tenant slugs, not "admin"
+        // We can't exclude "admin" directly, but the admin routes should be matched first
+        path: `/:lang/:tenantSlug`,
+        element: <TenantLayout />,
+        errorElement: <ErrorPage />,
+        children: baseChildren,
+      },
+    ];
+  } else {
+    // Single tenant mode - just one route without tenant slug
+    return [
+      {
+        path: `/:lang`,
+        element: <TenantLayout />,
+        errorElement: <ErrorPage />,
+        children: baseChildren,
+      },
+    ];
+  }
+};
 
 export const router = createBrowserRouter([
   // root -> default nyelv (dynamically loaded from app settings)
   { path: "/", element: <RootRedirect /> },
   
   // Legacy admin routes redirect to language-specific routes
+  // IMPORTANT: These MUST be defined BEFORE any other routes that could match /admin/*
   { path: "/admin", element: <RootRedirect /> },
+  { path: "/admin/login", element: <RootRedirect /> },
+  { path: "/admin/register", element: <RootRedirect /> },
+  { path: "/admin/forgot-password", element: <RootRedirect /> },
+  { path: "/admin/reset-password", element: <RootRedirect /> },
   { path: "/admin/*", element: <RootRedirect /> },
 
-  {
-    path: `/:lang${tenantSuffix}`,
-    element: <TenantLayout />,
-    errorElement: <ErrorPage />,
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: "place/:slug", element: <PlaceDetailPage /> },
-      { path: "event/:slug", element: <EventDetailPage /> },
-      { path: "static-pages", element: <StaticPagesListPage /> },
-
-      { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
-      { path: "aszf", element: <LegalPage pageKey="terms" /> },
-      { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
-    ],
-  },
-
-  // Admin routes (with language prefix)
+  // Admin routes (with language prefix) - MUST come before /:lang route to avoid conflicts
   {
     path: `/:lang/admin`,
+    element: <Outlet />, // Add explicit Outlet to prevent TenantLayout from being used
     errorElement: <ErrorPage />,
     children: [
       {
@@ -85,18 +118,6 @@ export const router = createBrowserRouter([
       {
         path: "reset-password",
         element: <ResetPasswordPage />,
-      },
-      {
-        path: "",
-        element: (
-          <ProtectedRoute requiredRole="viewer">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            </Suspense>
-          </ProtectedRoute>
-        ),
       },
       {
         path: "",
@@ -258,6 +279,9 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  // Public tenant routes (with language prefix) - MUST come after admin routes
+  ...createPublicRoutes(),
 
   { path: "*", element: <NotFoundPage /> },
 ]);

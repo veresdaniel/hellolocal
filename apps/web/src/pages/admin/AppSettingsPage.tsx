@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useToast } from "../../contexts/ToastContext";
 import { getDefaultLanguage, setDefaultLanguage, getMapSettings, setMapSettings, getTowns, getSiteSettings, setSiteSettings, type MapSettings, type SiteSettings } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { MapComponent } from "../../components/MapComponent";
@@ -18,12 +19,11 @@ export function AppSettingsPage() {
   const { user } = useAuth();
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   usePageTitle("admin.appSettings");
   const [defaultLang, setDefaultLangState] = useState<"hu" | "en" | "de">("hu");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   
   // Collapse state for sections
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -63,7 +63,7 @@ export function AppSettingsPage() {
       const data = await getDefaultLanguage();
       setDefaultLangState(data.defaultLanguage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadDefaultLanguageFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.loadDefaultLanguageFailed"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -181,16 +181,14 @@ export function AppSettingsPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      setError(null);
-      setSuccess(null);
       await setDefaultLanguage(defaultLang);
-      setSuccess(t("admin.errors.defaultLanguageUpdated"));
+      showToast(t("admin.errors.defaultLanguageUpdated"), "success");
       // Reload the page after a short delay to apply the new default language
       setTimeout(() => {
         window.location.reload();
       }, 1000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateDefaultLanguageFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateDefaultLanguageFailed"), "error");
     } finally {
       setIsSaving(false);
     }
@@ -221,8 +219,6 @@ export function AppSettingsPage() {
     if (!selectedTenantId) return;
     try {
       setIsSavingMapSettings(true);
-      setError(null);
-      setSuccess(null);
       await setMapSettings({
         tenantId: selectedTenantId,
         townId: mapSettings.townId,
@@ -236,9 +232,9 @@ export function AppSettingsPage() {
       // Notify global cache manager that map settings have changed
       notifyEntityChanged("mapSettings");
       
-      setSuccess(t("admin.mapSettingsUpdated"));
+      showToast(t("admin.mapSettingsUpdated"), "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateMapSettingsFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateMapSettingsFailed"), "error");
     } finally {
       setIsSavingMapSettings(false);
     }
@@ -247,24 +243,22 @@ export function AppSettingsPage() {
   const handleSaveSiteSettings = async () => {
     try {
       setIsSavingSiteSettings(true);
-      setError(null);
-      setSuccess(null);
       
       // Validate image URLs before saving
       if (siteSettings.defaultPlaceholderCardImage && !isValidImageUrl(siteSettings.defaultPlaceholderCardImage)) {
-        setError(t("admin.validation.invalidImageUrl"));
+        showToast(t("admin.validation.invalidImageUrl"), "error");
         setIsSavingSiteSettings(false);
         return;
       }
       if (siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage)) {
-        setError(t("admin.validation.invalidImageUrl"));
+        showToast(t("admin.validation.invalidImageUrl"), "error");
         setIsSavingSiteSettings(false);
         return;
       }
       
       console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
       if (!selectedTenantId) {
-        setError(t("admin.errors.noTenantSelected"));
+        showToast(t("admin.errors.noTenantSelected"), "error");
         return;
       }
       
@@ -323,10 +317,10 @@ export function AppSettingsPage() {
       // await queryClient.invalidateQueries({ queryKey: ["places"] });
       
       console.log('[AppSettingsPage] Site settings saved successfully!');
-      setSuccess(t("admin.siteSettingsUpdated"));
+      showToast(t("admin.siteSettingsUpdated"), "success");
     } catch (err) {
       console.error('[AppSettingsPage] Error saving site settings:', err);
-      setError(err instanceof Error ? err.message : t("admin.errors.updateSiteSettingsFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateSiteSettingsFailed"), "error");
     } finally {
       setIsSavingSiteSettings(false);
     }
@@ -431,18 +425,6 @@ export function AppSettingsPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
       <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
-
-      {error && (
-        <div style={{ padding: 16, marginBottom: 24, background: "#fee", color: "#c00", borderRadius: 8, border: "1px solid #fcc" }}>
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div style={{ padding: 16, marginBottom: 24, background: "#dfd", color: "#060", borderRadius: 8, border: "1px solid #beb" }}>
-          {success}
-        </div>
-      )}
 
       {/* Language Settings Section */}
       <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>

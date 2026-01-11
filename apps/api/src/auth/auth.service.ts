@@ -95,6 +95,14 @@ export class AuthService {
         });
       } catch (updateError) {
         console.error("Failed to update refresh token in database:", updateError);
+        // Log the full error for debugging
+        if (updateError instanceof Error) {
+          console.error("Update error details:", {
+            message: updateError.message,
+            stack: updateError.stack,
+            userId: payload.sub,
+          });
+        }
         // Continue even if update fails - tokens are still valid
       }
 
@@ -225,18 +233,39 @@ export class AuthService {
       }
 
       // Check if 2FA is enabled for this user
-      if (user.isTwoFactorEnabled && this.twoFactorService) {
+      if (user.isTwoFactorEnabled) {
+        if (!this.twoFactorService) {
+          console.error("2FA is enabled for user but TwoFactorService is not available");
+          throw new UnauthorizedException("2FA service is not available");
+        }
+        
         if (!dto.twoFactorToken) {
-          throw new BadRequestException("2FA token required");
+          throw new BadRequestException("2FA verification required. Please provide a 2FA token.");
         }
 
-        const isValid = await this.twoFactorService.verifyTwoFactorCode(user.id, dto.twoFactorToken);
-        if (!isValid) {
-          throw new UnauthorizedException("Invalid 2FA token");
+        try {
+          const isValid = await this.twoFactorService.verifyTwoFactorCode(user.id, dto.twoFactorToken);
+          if (!isValid) {
+            throw new UnauthorizedException("Invalid 2FA token");
+          }
+        } catch (error) {
+          // If it's already a known exception, re-throw it
+          if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+            throw error;
+          }
+          // Otherwise, log and throw a generic error
+          console.error("2FA verification error:", error);
+          throw new UnauthorizedException("2FA verification failed");
         }
       }
 
-      const tenantIds = user.tenants.map((t) => t.tenantId);
+      const tenantIds = user.tenants?.map((t) => t.tenantId) || [];
+
+      // Ensure tenantIds is always an array (even if empty)
+      if (!Array.isArray(tenantIds)) {
+        console.error("Invalid tenantIds format:", tenantIds);
+        throw new UnauthorizedException("User tenant configuration is invalid");
+      }
 
       const payload: JwtPayload = {
         sub: user.id,
@@ -262,12 +291,21 @@ export class AuthService {
         },
       };
     } catch (error) {
-      // Log error for debugging
+      // Log error for debugging with more details
       console.error("Login error:", error);
+      if (error instanceof Error) {
+        console.error("Login error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
+      }
       // Re-throw BadRequestException (for 2FA requirement) and UnauthorizedException
       if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
         throw error;
       }
+      // For other errors, throw a generic error but log the original
+      console.error("Unexpected login error:", error);
       throw new UnauthorizedException("Login failed");
     }
   }

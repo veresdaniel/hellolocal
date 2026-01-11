@@ -88,6 +88,37 @@ export function ErrorPage() {
 
   const errorTitle = getErrorTitle(statusCode);
 
+  // Determine gradient and colors based on status code
+  const getErrorTheme = (code: number) => {
+    if (code >= 500) {
+      return {
+        gradient: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+        accentColor: "rgba(255, 255, 255, 0.2)",
+        textColor: "white",
+      };
+    } else if (code === 404) {
+      return {
+        gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        accentColor: "rgba(255, 255, 255, 0.2)",
+        textColor: "white",
+      };
+    } else if (code >= 400) {
+      return {
+        gradient: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+        accentColor: "#fed7aa",
+        textColor: "white",
+      };
+    } else {
+      return {
+        gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        accentColor: "rgba(255, 255, 255, 0.2)",
+        textColor: "white",
+      };
+    }
+  };
+
+  const theme = getErrorTheme(statusCode);
+
   return (
     <div
       style={{
@@ -98,29 +129,113 @@ export function ErrorPage() {
         justifyContent: "center",
         padding: 24,
         textAlign: "center",
-        background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+        background: theme.gradient,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ maxWidth: 700 }}>
-        <h1
+      {/* Animated background elements */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-50%",
+          left: "-50%",
+          width: "200%",
+          height: "200%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "50px 50px",
+          animation: "float 20s infinite linear",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "20%",
+          right: "10%",
+          width: "300px",
+          height: "300px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "50%",
+          filter: "blur(40px)",
+          animation: "pulse 4s infinite ease-in-out",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10%",
+          left: "10%",
+          width: "200px",
+          height: "200px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "50%",
+          filter: "blur(30px)",
+          animation: "pulse 6s infinite ease-in-out",
+          animationDelay: "2s",
+        }}
+      />
+
+      <style>
+        {`
+          @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-50px, -50px) rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+          }
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+          }
+        `}
+      </style>
+
+      <div
+        style={{
+          maxWidth: 700,
+          position: "relative",
+          zIndex: 1,
+          animation: "slideIn 0.6s ease-out",
+        }}
+      >
+        <div
           style={{
-            fontSize: "clamp(48px, 10vw, 120px)",
-            fontWeight: 700,
+            fontSize: "clamp(120px, 20vw, 200px)",
+            fontWeight: 900,
             margin: 0,
-            color: statusCode >= 500 ? "#dc3545" : statusCode >= 400 ? "#ffc107" : "#667eea",
+            color: "rgba(255, 255, 255, 0.95)",
             lineHeight: 1,
             marginBottom: 16,
+            textShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
+            animation: statusCode >= 500 ? "shake 0.5s ease-in-out" : "none",
+            letterSpacing: "-0.05em",
+            WebkitTextStroke: "2px rgba(255, 255, 255, 0.3)",
           }}
         >
           {statusCode}
-        </h1>
+        </div>
         <h2
           style={{
-            fontSize: "clamp(24px, 5vw, 36px)",
-            fontWeight: 600,
+            fontSize: "clamp(28px, 5vw, 42px)",
+            fontWeight: 700,
             margin: 0,
-            color: "#1a1a1a",
+            color: theme.textColor,
             marginBottom: 16,
+            textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
           }}
         >
           {errorTitle}
@@ -128,9 +243,10 @@ export function ErrorPage() {
         <p
           style={{
             fontSize: "clamp(16px, 3vw, 20px)",
-            color: "#666",
-            marginBottom: 24,
+            color: "rgba(255, 255, 255, 0.9)",
+            marginBottom: 40,
             lineHeight: 1.6,
+            textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
           }}
         >
           {errorMessage}
@@ -177,20 +293,24 @@ export function ErrorPage() {
           <Link
             to={homePath}
             style={{
-              padding: "12px 24px",
-              background: "#667eea",
-              color: "white",
+              padding: "14px 32px",
+              background: "white",
+              color: statusCode === 404 ? "#667eea" : "#667eea",
               textDecoration: "none",
-              borderRadius: 8,
-              fontWeight: 500,
+              borderRadius: "12px",
+              fontWeight: 600,
               fontSize: 16,
-              transition: "background 0.2s",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
+              display: "inline-block",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#5568d3";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#667eea";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
             }}
           >
             {t("error.goHome")}
@@ -198,22 +318,27 @@ export function ErrorPage() {
           <button
             onClick={() => navigate(-1)}
             style={{
-              padding: "12px 24px",
-              background: "white",
-              color: "#667eea",
-              border: "2px solid #667eea",
+              padding: "14px 32px",
+              background: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              border: "2px solid rgba(255, 255, 255, 0.5)",
               textDecoration: "none",
-              borderRadius: 8,
-              fontWeight: 500,
+              borderRadius: "12px",
+              fontWeight: 600,
               fontSize: 16,
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "all 0.3s ease",
+              backdropFilter: "blur(10px)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f0f0ff";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.8)";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "white";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             {t("error.goBack")}
@@ -221,22 +346,27 @@ export function ErrorPage() {
           <button
             onClick={() => window.location.reload()}
             style={{
-              padding: "12px 24px",
-              background: "white",
-              color: "#667eea",
-              border: "2px solid #667eea",
+              padding: "14px 32px",
+              background: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              border: "2px solid rgba(255, 255, 255, 0.5)",
               textDecoration: "none",
-              borderRadius: 8,
-              fontWeight: 500,
+              borderRadius: "12px",
+              fontWeight: 600,
               fontSize: 16,
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "all 0.3s ease",
+              backdropFilter: "blur(10px)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f0f0ff";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.8)";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "white";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             {t("error.reload")}

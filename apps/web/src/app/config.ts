@@ -9,3 +9,8 @@ export const DEFAULT_TENANT_SLUG = "etyek-budai";
 
 // ha később több tenant lesz (Mockoon /tenants alapján), ezt true-ra állítod runtime:
 export const HAS_MULTIPLE_TENANTS = true;
+
+// App version - automatically read from package.json at build time
+// This is used for version checking and cache invalidation
+// The version is injected by Vite during build from package.json via define plugin
+export const APP_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0-beta";
