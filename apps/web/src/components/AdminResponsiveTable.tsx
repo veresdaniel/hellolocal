@@ -552,23 +552,14 @@ export function AdminResponsiveTable<T>({
                   };
 
                   if (offset === 0) {
-                    // Current card - follow drag in real-time (like phone homescreen swipe)
+                    // Current card - pixel-perfect following (exactly like phone homescreen)
                     if (isDragging) {
-                      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
-                      const dragPercent = dragOffsetX / screenWidth;
-                      
-                      // No resistance - completely smooth following (like modern phones)
-                      const adjustedDragX = dragOffsetX;
-                      
-                      // Very subtle opacity change - cards stay mostly visible
-                      const absDragPercent = Math.abs(dragPercent);
-                      const opacity = Math.max(0.5, 1 - absDragPercent * 0.3); // Minimal opacity change
-                      
+                      // No resistance, no opacity change - just pure pixel-perfect movement
                       return {
                         ...baseStyle,
                         zIndex: 30,
-                        transform: `translateX(${adjustedDragX}px) translateY(0) scale(1)`,
-                        opacity,
+                        transform: `translateX(${dragOffsetX}px) translateY(0) scale(1)`,
+                        opacity: 1, // No opacity change during drag
                       };
                     }
                     
@@ -581,7 +572,7 @@ export function AdminResponsiveTable<T>({
                           ...baseStyle,
                           zIndex: 30,
                           transform: "translateX(-100%) translateY(0) scale(1)",
-                          opacity: 0.3, // Start with some visibility for smoother transition
+                          opacity: 1, // Fully visible during transition
                         };
                       } else if (swipeDirection === "right" && previousOffset === -1) {
                         // Swipe right = previous card: was offset -1, sliding in from right to center
@@ -590,7 +581,7 @@ export function AdminResponsiveTable<T>({
                           ...baseStyle,
                           zIndex: 30,
                           transform: "translateX(100%) translateY(0) scale(1)",
-                          opacity: 0.3, // Start with some visibility for smoother transition
+                          opacity: 1, // Fully visible during transition
                         };
                       }
                     }
@@ -602,7 +593,7 @@ export function AdminResponsiveTable<T>({
                         ...baseStyle,
                         zIndex: 30,
                         transform: "translateX(-100%) translateY(0) scale(1)",
-                        opacity: 0.2, // Keep some visibility for smoother transition
+                        opacity: 1, // Fully visible during slide out
                       };
                     } else if (swipeDirection === "right" && !isTransitioningIn) {
                       // Swiping right = previous card: current card slides out to the right
@@ -610,7 +601,7 @@ export function AdminResponsiveTable<T>({
                         ...baseStyle,
                         zIndex: 30,
                         transform: "translateX(100%) translateY(0) scale(1)",
-                        opacity: 0.2, // Keep some visibility for smoother transition
+                        opacity: 1, // Fully visible during slide out
                       };
                     } else {
                       // No swipe direction or animation complete = normal position
@@ -642,27 +633,25 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === 1) {
-                    // Next card - natural side-by-side movement
+                    // Next card - perfect 1:1 movement (exactly like phone homescreen)
                     if (isDragging && dragOffsetX < 0) {
                       // Dragging left (swiping to next): next card comes in from left
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const absDragX = Math.abs(dragOffsetX);
                       
-                      // Perfect 1:1 movement - next card moves exactly as current card moves
-                      // Next card starts at -100% (completely off-screen left)
+                      // Perfect 1:1 pixel mapping - exactly like phone homescreen
+                      // Next card starts at -screenWidth (completely off-screen left)
                       // As current card moves left by X pixels, next card moves right by X pixels
                       const translateX = -screenWidth + absDragX; // From -100% to 0px
                       
-                      // Smooth opacity transition - starts visible earlier
-                      const dragPercent = Math.min(absDragX / screenWidth, 1);
-                      const opacity = 0.3 + (dragPercent * 0.7); // From 0.3 to 1 (starts more visible)
+                      // No opacity change - just pure movement (like phone)
                       
-                      // During drag: same Y level (side-by-side), no vertical offset, no scale
+                      // During drag: same Y level (side-by-side), no vertical offset, no scale, no opacity change
                       return {
                         ...baseStyle,
                         zIndex: 20,
                         transform: `translateX(${translateX}px) translateY(0) scale(1)`,
-                        opacity: Math.min(1, opacity),
+                        opacity: 1, // Fully visible, no opacity change
                         pointerEvents: "none" as const,
                       };
                     }
@@ -705,27 +694,25 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card - natural side-by-side movement
+                    // Previous card - perfect 1:1 movement (exactly like phone homescreen)
                     if (isDragging && dragOffsetX > 0) {
                       // Dragging right (swiping to previous): previous card comes in from right
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const absDragX = Math.abs(dragOffsetX);
                       
-                      // Perfect 1:1 movement - previous card moves exactly as current card moves
-                      // Previous card starts at +100% (completely off-screen right)
+                      // Perfect 1:1 pixel mapping - exactly like phone homescreen
+                      // Previous card starts at +screenWidth (completely off-screen right)
                       // As current card moves right by X pixels, previous card moves left by X pixels
                       const translateX = screenWidth - absDragX; // From +100% to 0px
                       
-                      // Smooth opacity transition - starts visible earlier
-                      const dragPercent = Math.min(absDragX / screenWidth, 1);
-                      const opacity = 0.3 + (dragPercent * 0.7); // From 0.3 to 1 (starts more visible)
+                      // No opacity change - just pure movement (like phone)
                       
-                      // During drag: same Y level (side-by-side), no vertical offset, no scale
+                      // During drag: same Y level (side-by-side), no vertical offset, no scale, no opacity change
                       return {
                         ...baseStyle,
                         zIndex: 20,
                         transform: `translateX(${translateX}px) translateY(0) scale(1)`,
-                        opacity: Math.min(1, opacity),
+                        opacity: 1, // Fully visible, no opacity change
                         pointerEvents: "none" as const,
                       };
                     }
