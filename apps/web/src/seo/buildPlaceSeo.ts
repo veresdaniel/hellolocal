@@ -5,22 +5,41 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   const town = ctx.townName ? ` – ${ctx.townName}` : "";
   const placeImage = base?.image || place.heroImage;
   
+  // Helper to extract first 2 sentences from HTML/text
+  const getFirstSentences = (html: string | undefined, count: number = 2): string => {
+    if (!html) return "";
+    // Remove HTML tags
+    const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    // Split by sentence endings (. ! ?)
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+    return sentences.slice(0, count).join(" ").trim();
+  };
+  
+  // Fallback title: name + town
+  const fallbackTitle = `${place.name}${town}`;
+  
+  // Fallback description: first 2 sentences from description or teaser
+  const fallbackDescription = 
+    getFirstSentences(place.description, 2) || 
+    getFirstSentences(place.teaser, 2) || 
+    `Fedezd fel: ${place.name}${town}.`;
+  
   const seo: Seo = {
-    title: base?.title ?? `${place.name}${town}`,
-    description: base?.description ?? `Fedezd fel: ${place.name}${town}.`,
+    title: base?.title || fallbackTitle,
+    description: base?.description || fallbackDescription,
     image: placeImage,
     keywords: base?.keywords ?? [],
     canonical: base?.canonical ?? ctx.canonical,
     og: { 
       type: "article",
-      title: base?.og?.title ?? base?.title ?? `${place.name}${town}`,
-      description: base?.og?.description ?? base?.description ?? `Fedezd fel: ${place.name}${town}.`,
+      title: base?.og?.title || base?.title || fallbackTitle,
+      description: base?.og?.description || base?.description || fallbackDescription,
       image: base?.og?.image ?? placeImage,
     },
     twitter: { 
       card: placeImage ? "summary_large_image" : "summary",
-      title: base?.twitter?.title ?? base?.title ?? `${place.name}${town}`,
-      description: base?.twitter?.description ?? base?.description ?? `Fedezd fel: ${place.name}${town}.`,
+      title: base?.twitter?.title || base?.title || fallbackTitle,
+      description: base?.twitter?.description || base?.description || fallbackDescription,
       image: base?.twitter?.image ?? placeImage,
     },
   };

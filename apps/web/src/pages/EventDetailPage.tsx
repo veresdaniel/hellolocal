@@ -49,23 +49,41 @@ export function EventDetailPage() {
         description: siteSettings?.seoDescription || t("public.event.description"),
       };
     }
+    
+    // Helper to extract first 2 sentences from HTML/text
+    const getFirstSentences = (html: string | undefined, count: number = 2): string => {
+      if (!html) return "";
+      // Remove HTML tags
+      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      // Split by sentence endings (. ! ?)
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+      return sentences.slice(0, count).join(" ").trim();
+    };
+    
     const eventImage = event.seo?.image || event.heroImage;
+    const fallbackDescription = 
+      getFirstSentences(event.description, 2) || 
+      getFirstSentences(event.shortDescription, 2) || 
+      event.shortDescription || 
+      event.description || 
+      "";
+    
     return {
       title: event.seo?.title || event.name,
-      description: event.seo?.description || event.shortDescription || event.description || "",
+      description: event.seo?.description || fallbackDescription,
       keywords: event.seo?.keywords || [],
       image: eventImage,
       canonical: window.location.href,
       og: {
         type: "article",
         title: event.seo?.title || event.name,
-        description: event.seo?.description || event.shortDescription || event.description || "",
+        description: event.seo?.description || fallbackDescription,
         image: eventImage,
       },
       twitter: {
         card: eventImage ? "summary_large_image" : "summary",
         title: event.seo?.title || event.name,
-        description: event.seo?.description || event.shortDescription || event.description || "",
+        description: event.seo?.description || fallbackDescription,
         image: eventImage,
       },
     };

@@ -44,6 +44,10 @@ interface Place {
     facebook: string | null;
     whatsapp: string | null;
     accessibility: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+    seoImage: string | null;
+    seoKeywords: string[];
   }>;
 }
 
@@ -94,6 +98,18 @@ export function PlacesPage() {
     accessibilityHu: "",
     accessibilityEn: "",
     accessibilityDe: "",
+    seoTitleHu: "",
+    seoTitleEn: "",
+    seoTitleDe: "",
+    seoDescriptionHu: "",
+    seoDescriptionEn: "",
+    seoDescriptionDe: "",
+    seoImageHu: "",
+    seoImageEn: "",
+    seoImageDe: "",
+    seoKeywordsHu: [] as string[],
+    seoKeywordsEn: [] as string[],
+    seoKeywordsDe: [] as string[],
     heroImage: "",
     lat: "",
     lng: "",
@@ -188,7 +204,13 @@ export function PlacesPage() {
         phone: string | null;
         email: string | null;
         website: string | null;
+        facebook: string | null;
+        whatsapp: string | null;
         accessibility: string | null;
+        seoTitle: string | null;
+        seoDescription: string | null;
+        seoImage: string | null;
+        seoKeywords: string[];
       }> = [
         {
           lang: "hu",
@@ -202,6 +224,10 @@ export function PlacesPage() {
         facebook: formData.facebook || null,
         whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityHu || null,
+          seoTitle: formData.seoTitleHu || null,
+          seoDescription: formData.seoDescriptionHu || null,
+          seoImage: formData.seoImageHu || null,
+          seoKeywords: formData.seoKeywordsHu || [],
         },
       ];
       if (formData.nameEn.trim()) {
@@ -217,6 +243,10 @@ export function PlacesPage() {
         facebook: formData.facebook || null,
         whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityEn || null,
+          seoTitle: formData.seoTitleEn || null,
+          seoDescription: formData.seoDescriptionEn || null,
+          seoImage: formData.seoImageEn || null,
+          seoKeywords: formData.seoKeywordsEn || [],
         });
       }
       if (formData.nameDe.trim()) {
@@ -232,6 +262,10 @@ export function PlacesPage() {
         facebook: formData.facebook || null,
         whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityDe || null,
+          seoTitle: formData.seoTitleDe || null,
+          seoDescription: formData.seoDescriptionDe || null,
+          seoImage: formData.seoImageDe || null,
+          seoKeywords: formData.seoKeywordsDe || [],
         });
       }
 
@@ -392,6 +426,18 @@ export function PlacesPage() {
       accessibilityHu: hu?.accessibility || "",
       accessibilityEn: en?.accessibility || "",
       accessibilityDe: de?.accessibility || "",
+      seoTitleHu: hu?.seoTitle || "",
+      seoTitleEn: en?.seoTitle || "",
+      seoTitleDe: de?.seoTitle || "",
+      seoDescriptionHu: hu?.seoDescription || "",
+      seoDescriptionEn: en?.seoDescription || "",
+      seoDescriptionDe: de?.seoDescription || "",
+      seoImageHu: hu?.seoImage || "",
+      seoImageEn: en?.seoImage || "",
+      seoImageDe: de?.seoImage || "",
+      seoKeywordsHu: hu?.seoKeywords || [],
+      seoKeywordsEn: en?.seoKeywords || [],
+      seoKeywordsDe: de?.seoKeywords || [],
       heroImage: place.heroImage || "",
       lat: place.lat?.toString() || "",
       lng: place.lng?.toString() || "",
@@ -426,6 +472,18 @@ export function PlacesPage() {
       accessibilityHu: "",
       accessibilityEn: "",
       accessibilityDe: "",
+      seoTitleHu: "",
+      seoTitleEn: "",
+      seoTitleDe: "",
+      seoDescriptionHu: "",
+      seoDescriptionEn: "",
+      seoDescriptionDe: "",
+      seoImageHu: "",
+      seoImageEn: "",
+      seoImageDe: "",
+      seoKeywordsHu: [],
+      seoKeywordsEn: [],
+      seoKeywordsDe: [],
       heroImage: "",
       lat: "",
       lng: "",
@@ -817,6 +875,116 @@ export function PlacesPage() {
                     placeholder={t("public.accessibility")}
                     height={150}
                   />
+                </div>
+
+                {/* SEO Fields Section */}
+                <div style={{ 
+                  marginTop: 24, 
+                  padding: 16, 
+                  background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                  borderRadius: 8,
+                  border: "1px solid #667eea30"
+                }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea" }}>
+                    🔍 SEO {t("admin.settings")}
+                  </h3>
+                  
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>SEO {t("common.title")}</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoTitleHu
+                          : selectedLang === "en"
+                          ? formData.seoTitleEn
+                          : formData.seoTitleDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoTitleHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
+                        else setFormData({ ...formData, seoTitleDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoTitleHint") || "If empty, place name will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>SEO {t("common.description")}</label>
+                    <textarea
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoDescriptionHu
+                          : selectedLang === "en"
+                          ? formData.seoDescriptionEn
+                          : formData.seoDescriptionDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoDescriptionHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
+                        else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoDescriptionPlaceholder") || "SEO description (leave empty for auto)"}
+                      rows={3}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from description will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>SEO {t("common.image")}</label>
+                    <input
+                      type="url"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoImageHu
+                          : selectedLang === "en"
+                          ? formData.seoImageEn
+                          : formData.seoImageDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoImageHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
+                        else setFormData({ ...formData, seoImageDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoImagePlaceholder") || "SEO image URL (leave empty for hero image)"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoImageHint") || "If empty, hero image will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={labelStyle}>SEO Keywords</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoKeywordsHu.join(", ")
+                          : selectedLang === "en"
+                          ? formData.seoKeywordsEn.join(", ")
+                          : formData.seoKeywordsDe.join(", ")
+                      }
+                      onChange={(e) => {
+                        const keywords = e.target.value.split(",").map(k => k.trim()).filter(Boolean);
+                        if (selectedLang === "hu") setFormData({ ...formData, seoKeywordsHu: keywords });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: keywords });
+                        else setFormData({ ...formData, seoKeywordsDe: keywords });
+                      }}
+                      placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                    </small>
+                  </div>
                 </div>
               </div>
             )}

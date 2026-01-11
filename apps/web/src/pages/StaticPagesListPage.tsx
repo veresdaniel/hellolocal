@@ -21,14 +21,31 @@ export function StaticPagesListPage() {
     queryFn: () => getStaticPages(lang, tenantKey, selectedCategory === "all" ? undefined : selectedCategory),
   });
 
+  // Load site settings for SEO
+  const { data: siteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => import("../api/places.api").then(m => m.getSiteSettings(lang, tenantSlug)),
+    staleTime: 5 * 60 * 1000,
+  });
+
   useSeo({
-    title: t("admin.staticPages"),
-    description: t("admin.staticPages"),
+    title: siteSettings?.seoTitle || t("admin.staticPages"),
+    description: siteSettings?.seoDescription || t("admin.staticPages"),
+    image: siteSettings?.defaultPlaceholderCardImage || undefined,
     og: {
       type: "website",
-      title: t("admin.staticPages"),
-      description: t("admin.staticPages"),
+      title: siteSettings?.seoTitle || t("admin.staticPages"),
+      description: siteSettings?.seoDescription || t("admin.staticPages"),
+      image: siteSettings?.defaultPlaceholderCardImage || undefined,
     },
+    twitter: {
+      card: siteSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+      title: siteSettings?.seoTitle || t("admin.staticPages"),
+      description: siteSettings?.seoDescription || t("admin.staticPages"),
+      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    },
+  }, {
+    siteName: siteSettings?.siteName,
   });
 
   const getCategoryLabel = (category: string) => {

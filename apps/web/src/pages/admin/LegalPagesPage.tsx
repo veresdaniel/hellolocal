@@ -479,6 +479,112 @@ export function LegalPagesPage() {
                     height={300}
                   />
                 </div>
+
+                {/* SEO Fields Section */}
+                <div style={{ 
+                  marginTop: 24, 
+                  padding: 16, 
+                  background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                  borderRadius: 8,
+                  border: "1px solid #667eea30"
+                }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea" }}>
+                    🔍 SEO {t("admin.settings")}
+                  </h3>
+                  
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.title")}</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoTitleHu
+                          : selectedLang === "en"
+                          ? formData.seoTitleEn
+                          : formData.seoTitleDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoTitleHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
+                        else setFormData({ ...formData, seoTitleDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoTitleHint") || "If empty, page title will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.description")}</label>
+                    <textarea
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoDescriptionHu
+                          : selectedLang === "en"
+                          ? formData.seoDescriptionEn
+                          : formData.seoDescriptionDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoDescriptionHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
+                        else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoDescriptionPlaceholder") || "SEO description (leave empty for auto)"}
+                      rows={3}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from content will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>SEO {t("common.image")}</label>
+                    <input
+                      type="url"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoImageHu
+                          : selectedLang === "en"
+                          ? formData.seoImageEn
+                          : formData.seoImageDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoImageHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
+                        else setFormData({ ...formData, seoImageDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoImagePlaceholder") || "SEO image URL"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>SEO Keywords</label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.seoKeywordsHu
+                          : selectedLang === "en"
+                          ? formData.seoKeywordsEn
+                          : formData.seoKeywordsDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, seoKeywordsHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: e.target.value });
+                        else setFormData({ ...formData, seoKeywordsDe: e.target.value });
+                      }}
+                      placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
+                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    />
+                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                    </small>
+                  </div>
+                </div>
               </>
             )}
           </LanguageAwareForm>

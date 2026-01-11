@@ -241,16 +241,24 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     return (
       <div ref={containerRef} style={{ position: "relative" }}>
         {label && (
-          <label style={{ display: "block", marginBottom: 4 }}>
+          <label style={{ 
+            display: "block", 
+            marginBottom: 8,
+            color: error ? "#dc2626" : "#667eea",
+            fontWeight: 600,
+            fontSize: "clamp(13px, 3vw, 14px)",
+          }}>
             {label} {required && "*"}
           </label>
         )}
         <div
           style={{
             position: "relative",
-            border: error ? "1px solid #dc3545" : "1px solid #ddd",
-            borderRadius: 4,
-            background: "white",
+            border: error ? "2px solid #fca5a5" : "2px solid #e0e7ff",
+            borderRadius: 8,
+            background: error ? "#fef2f2" : "white",
+            transition: "all 0.3s ease",
+            boxSizing: "border-box",
           }}
         >
           {!showSuggestions && selectedItem && (
@@ -260,11 +268,13 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 inputRef.current?.focus();
               }}
               style={{
-                padding: 8,
+                padding: "12px 16px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                fontSize: 15,
+                fontFamily: "inherit",
               }}
             >
               <span>{getItemName(selectedItem)}</span>
@@ -292,7 +302,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 >
                   ×
                 </button>
-                <span style={{ color: "#999" }}>▼</span>
+                <span style={{ color: "#999", fontSize: 12 }}>▼</span>
               </div>
             </div>
           )}
@@ -302,23 +312,40 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
               type="text"
               value={inputValue}
               onChange={handleInputChange}
-              onFocus={handleInputFocus}
+              onFocus={(e) => {
+                handleInputFocus();
+                const parent = e.target.parentElement;
+                if (parent) {
+                  parent.style.borderColor = "#667eea";
+                  parent.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                }
+              }}
+              onBlur={(e) => {
+                const parent = e.target.parentElement;
+                if (parent && !error) {
+                  parent.style.borderColor = "#e0e7ff";
+                  parent.style.boxShadow = "none";
+                }
+              }}
               onKeyDown={handleKeyDown}
               placeholder={selectedItem ? "" : placeholder}
               autoFocus={showSuggestions}
               style={{
                 width: "100%",
-                padding: 8,
-                fontSize: 16,
+                padding: "12px 16px",
+                fontSize: 15,
                 border: "none",
                 outline: "none",
-                borderRadius: 4,
+                borderRadius: 8,
+                fontFamily: "inherit",
+                background: "transparent",
+                boxSizing: "border-box",
               }}
             />
           )}
         </div>
         {error && (
-          <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+          <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
             {error}
           </div>
         )}
