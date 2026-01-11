@@ -74,6 +74,17 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMobileMenuOpen]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobile && isMobileMenuOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isMobile, isMobileMenuOpen]);
+
   // Always show - this component is only called from PlacesListView and PlaceDetailPage
   // which are already in list/detail view context
 
@@ -84,7 +95,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 100,
+        zIndex: isMobileMenuOpen ? 10001 : 100,
         background: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
@@ -220,58 +231,68 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
         )}
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - Full Screen */}
       {isMobile && (
-        <>
-          <div
-            data-mobile-menu
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              zIndex: 1000,
-              opacity: isMobileMenuOpen ? 1 : 0,
-              visibility: isMobileMenuOpen ? "visible" : "hidden",
-              transition: "opacity 0.3s ease, visibility 0.3s ease",
-            }}
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <nav
-            data-mobile-menu
-            style={{
-              position: "fixed",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: "280px",
-              maxWidth: "85vw",
-              background: "white",
-              zIndex: 1001,
-              boxShadow: "-4px 0 24px rgba(0, 0, 0, 0.15)",
-              transform: isMobileMenuOpen ? "translateX(0)" : "translateX(100%)",
-              transition: "transform 0.3s ease",
-              padding: "80px 24px 24px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              overflowY: "auto",
-            }}
-          >
+        <nav
+          data-mobile-menu
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "white",
+            zIndex: 10000,
+            opacity: isMobileMenuOpen ? 1 : 0,
+            visibility: isMobileMenuOpen ? "visible" : "hidden",
+            transition: "opacity 0.3s ease, visibility 0.3s ease",
+            pointerEvents: isMobileMenuOpen ? "auto" : "none",
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            padding: "80px 24px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+          onClick={(e) => {
+            // Close menu when clicking on the overlay (not on menu items)
+            if (e.target === e.currentTarget) {
+              setIsMobileMenuOpen(false);
+            }
+          }}
+        >
             <Link
               to={buildPath({ tenantSlug, lang, path: "" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
                 color: "#1a1a1a",
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: 600,
-                padding: "16px 20px",
+                padding: "20px 24px",
+                minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
                 background: location.pathname === buildPath({ tenantSlug, lang, path: "" }) ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+              }}
+              onTouchStart={(e) => {
+                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
+                }
               }}
               onMouseEnter={(e) => {
                 if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
@@ -296,14 +317,27 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   background: "transparent",
                   border: "none",
                   color: "#1a1a1a",
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: 600,
-                  padding: "16px 20px",
+                  padding: "20px 24px",
+                  minHeight: "56px",
                   borderRadius: 12,
                   cursor: "pointer",
                   width: "100%",
                   textAlign: "left",
                   transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  touchAction: "manipulation",
+                  WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+                }}
+                onTouchStart={(e) => {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }}
+                onTouchEnd={(e) => {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
@@ -321,12 +355,29 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               style={{
                 textDecoration: "none",
                 color: "#1a1a1a",
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: 600,
-                padding: "16px 20px",
+                padding: "20px 24px",
+                minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
                 background: location.pathname.includes("impresszum") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+              }}
+              onTouchStart={(e) => {
+                if (!location.pathname.includes("impresszum")) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (!location.pathname.includes("impresszum")) {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
+                }
               }}
               onMouseEnter={(e) => {
                 if (!location.pathname.includes("impresszum")) {
@@ -347,12 +398,29 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               style={{
                 textDecoration: "none",
                 color: "#1a1a1a",
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: 600,
-                padding: "16px 20px",
+                padding: "20px 24px",
+                minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
                 background: location.pathname.includes("aszf") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+              }}
+              onTouchStart={(e) => {
+                if (!location.pathname.includes("aszf")) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (!location.pathname.includes("aszf")) {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
+                }
               }}
               onMouseEnter={(e) => {
                 if (!location.pathname.includes("aszf")) {
@@ -373,12 +441,29 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               style={{
                 textDecoration: "none",
                 color: "#1a1a1a",
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: 600,
-                padding: "16px 20px",
+                padding: "20px 24px",
+                minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
                 background: location.pathname.includes("adatvedelem") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+              }}
+              onTouchStart={(e) => {
+                if (!location.pathname.includes("adatvedelem")) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (!location.pathname.includes("adatvedelem")) {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
+                }
               }}
               onMouseEnter={(e) => {
                 if (!location.pathname.includes("adatvedelem")) {
@@ -393,8 +478,50 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
             >
               {t("public.legal.privacy.title")}
             </Link>
+            <Link
+              to={buildPath({ tenantSlug, lang, path: "static-pages" })}
+              onClick={() => setIsMobileMenuOpen(false)}
+              style={{
+                textDecoration: "none",
+                color: "#1a1a1a",
+                fontSize: 20,
+                fontWeight: 600,
+                padding: "20px 24px",
+                minHeight: "56px",
+                borderRadius: 12,
+                transition: "all 0.2s",
+                background: location.pathname.includes("static-pages") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+              }}
+              onTouchStart={(e) => {
+                if (!location.pathname.includes("static-pages")) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (!location.pathname.includes("static-pages")) {
+                  setTimeout(() => {
+                    e.currentTarget.style.background = "transparent";
+                  }, 150);
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (!location.pathname.includes("static-pages")) {
+                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!location.pathname.includes("static-pages")) {
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+            >
+              {t("admin.dashboardCards.staticPages")}
+            </Link>
           </nav>
-        </>
       )}
     </header>
   );

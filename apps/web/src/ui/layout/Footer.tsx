@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
 import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 import type { Lang } from "../../app/config";
 
@@ -15,6 +16,16 @@ export function Footer({
   const { t } = useTranslation();
   const base = HAS_MULTIPLE_TENANTS && tenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
   const currentYear = new Date().getFullYear();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Compact version for map view
   if (compact) {
@@ -31,96 +42,107 @@ export function Footer({
           style={{
             maxWidth: 1200,
             margin: "0 auto",
-            padding: "16px 24px",
+            padding: isMobile ? "12px 16px" : "16px 24px",
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: isMobile ? "flex-start" : "space-between",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: 16,
+            gap: isMobile ? 8 : 16,
           }}
         >
-          {/* Brand */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>📍</span>
-            <span style={{ fontSize: 16, fontWeight: 700 }}>HelloLocal</span>
+          {/* Brand and Copyright - Mobile: left side only */}
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: isMobile ? 18 : 20 }}>📍</span>
+              <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700 }}>HelloLocal</span>
+            </div>
+            {isMobile && (
+              <div style={{ fontSize: 11, opacity: 0.8 }}>
+                © {currentYear}
+              </div>
+            )}
           </div>
 
-          {/* Links */}
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
-            <Link
-              to={`${base}/static-pages`}
-              style={{
-                color: "white",
-                textDecoration: "none",
-                opacity: 0.9,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-            >
-              {t("admin.dashboardCards.staticPages")}
-            </Link>
-            <Link
-              to={`${base}/impresszum`}
-              style={{
-                color: "white",
-                textDecoration: "none",
-                opacity: 0.9,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-            >
-              {t("public.legal.imprint.title")}
-            </Link>
-            <Link
-              to={`${base}/aszf`}
-              style={{
-                color: "white",
-                textDecoration: "none",
-                opacity: 0.9,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-            >
-              {t("public.legal.terms.title")}
-            </Link>
-            <Link
-              to={`${base}/adatvedelem`}
-              style={{
-                color: "white",
-                textDecoration: "none",
-                opacity: 0.9,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-            >
-              {t("public.legal.privacy.title")}
-            </Link>
-          </div>
+          {/* Links - Desktop only */}
+          {!isMobile && (
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
+              <Link
+                to={`${base}/static-pages`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("admin.dashboardCards.staticPages")}
+              </Link>
+              <Link
+                to={`${base}/impresszum`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("public.legal.imprint.title")}
+              </Link>
+              <Link
+                to={`${base}/aszf`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("public.legal.terms.title")}
+              </Link>
+              <Link
+                to={`${base}/adatvedelem`}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("public.legal.privacy.title")}
+              </Link>
+            </div>
+          )}
 
-          {/* Copyright */}
-          <div style={{ fontSize: 12, opacity: 0.8, textAlign: "right" }}>
-            © {currentYear} HelloLocal
-          </div>
+          {/* Copyright - Desktop only */}
+          {!isMobile && (
+            <div style={{ fontSize: 12, opacity: 0.8, textAlign: "right" }}>
+              © {currentYear} HelloLocal
+            </div>
+          )}
         </div>
       </footer>
     );
