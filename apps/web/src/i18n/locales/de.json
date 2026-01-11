@@ -82,6 +82,13 @@
     "searchTenants": "Regionen suchen...",
     "errorLoadingTenants": "Fehler beim Laden der Regionen",
     "noTenantsFound": "Keine Regionen gefunden",
+    "staticPages": {
+      "title": "Statische Seiten",
+      "noStaticPagesFound": "Keine Seiten verfügbar",
+      "noBlogFound": "Keine Blog-Beiträge gefunden",
+      "noKnowledgeBaseFound": "Keine Wissensdatenbank-Artikel gefunden",
+      "noInfoPageFound": "Keine Info-Seiten gefunden"
+    },
     "errorLoadingPlace": "Fehler beim Laden des Ortes",
     "errorLoadingEvent": "Fehler beim Laden der Veranstaltung",
     "backToList": "Zurück zur Liste",

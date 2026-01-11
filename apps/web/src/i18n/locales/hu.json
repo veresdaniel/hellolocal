@@ -82,6 +82,13 @@
     "searchTenants": "Keresés területek között...",
     "errorLoadingTenants": "Hiba a területek betöltésekor",
     "noTenantsFound": "Nincs találat",
+    "staticPages": {
+      "title": "Statikus Oldalak",
+      "noStaticPagesFound": "Nincs megjeleníthető oldal",
+      "noBlogFound": "Nincs blog bejegyzés",
+      "noKnowledgeBaseFound": "Nincs tudástár cikk",
+      "noInfoPageFound": "Nincs információ oldal"
+    },
     "errorLoadingPlace": "Hiba a hely betöltésekor",
     "errorLoadingEvent": "Hiba az esemény betöltésekor",
     "backToList": "Vissza a listához",

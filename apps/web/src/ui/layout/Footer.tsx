@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getStaticPages } from "../../api/static-pages.api";
+import { useTenantContext } from "../../app/tenant/useTenantContext";
 import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 import type { Lang } from "../../app/config";
 
@@ -14,9 +17,21 @@ export function Footer({
   compact?: boolean;
 }) {
   const { t } = useTranslation();
-  const base = HAS_MULTIPLE_TENANTS && tenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
+  const { tenantSlug: contextTenantSlug } = useTenantContext();
+  const effectiveTenantSlug = tenantSlug || contextTenantSlug;
+  const tenantKey = HAS_MULTIPLE_TENANTS ? effectiveTenantSlug : undefined;
+  const base = HAS_MULTIPLE_TENANTS && effectiveTenantSlug ? `/${lang}/${effectiveTenantSlug}` : `/${lang}`;
   const currentYear = new Date().getFullYear();
   const [isMobile, setIsMobile] = useState(false);
+
+  // Check if there are any static pages
+  const { data: staticPages = [] } = useQuery({
+    queryKey: ["staticPages", lang, tenantKey, "all"],
+    queryFn: () => getStaticPages(lang, tenantKey),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const hasStaticPages = staticPages.length > 0;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -62,23 +77,25 @@ export function Footer({
           {/* Links - Desktop only */}
           {!isMobile && (
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
-              <Link
-                to={`${base}/static-pages`}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                }}
-              >
-                {t("admin.dashboardCards.staticPages")}
-              </Link>
+              {hasStaticPages && (
+                <Link
+                  to={`${base}/static-pages`}
+                  style={{
+                    color: "white",
+                    textDecoration: "none",
+                    opacity: 0.9,
+                    transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "0.9";
+                  }}
+                >
+                  {t("admin.dashboardCards.staticPages")}
+                </Link>
+              )}
               <Link
                 to={`${base}/impresszum`}
                 style={{
@@ -308,26 +325,28 @@ export function Footer({
               >
                 {t("public.home.title")}
               </Link>
-              <Link
-                to={`${base}/static-pages`}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 14,
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                Statikus Oldalak
-              </Link>
+              {hasStaticPages && (
+                <Link
+                  to={`${base}/static-pages`}
+                  style={{
+                    color: "white",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    opacity: 0.9,
+                    transition: "opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.textDecoration = "underline";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "0.9";
+                    e.currentTarget.style.textDecoration = "none";
+                  }}
+                >
+                  {t("public.staticPages.title")}
+                </Link>
+              )}
             </div>
           </div>
         </div>

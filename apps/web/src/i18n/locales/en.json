@@ -82,6 +82,13 @@
     "searchTenants": "Search regions...",
     "errorLoadingTenants": "Error loading regions",
     "noTenantsFound": "No regions found",
+    "staticPages": {
+      "title": "Static Pages",
+      "noStaticPagesFound": "No pages available",
+      "noBlogFound": "No blog posts found",
+      "noKnowledgeBaseFound": "No knowledge base articles found",
+      "noInfoPageFound": "No info pages found"
+    },
     "errorLoadingPlace": "Error loading place",
     "errorLoadingEvent": "Error loading event",
     "backToList": "Back to list",
