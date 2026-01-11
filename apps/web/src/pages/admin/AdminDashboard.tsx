@@ -68,15 +68,14 @@ export function AdminDashboard() {
       </div>
 
       <div style={{ 
-        display: "grid", 
+        display: "grid",
         gridTemplateColumns: isMobile 
-          ? "repeat(auto-fill, minmax(90px, 1fr))" 
+          ? "repeat(auto-fit, minmax(85px, 1fr))" 
           : isTablet
-          ? "repeat(auto-fill, minmax(180px, 1fr))"
-          : "repeat(auto-fill, minmax(clamp(240px, 45vw, 280px), 1fr))", 
+          ? "repeat(auto-fit, minmax(180px, 1fr))"
+          : "repeat(auto-fit, minmax(240px, 1fr))",
         gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-        maxWidth: "100%",
-        overflow: "hidden",
+        width: "100%",
       }}>
         <DashboardCard
           title={t("admin.dashboardCards.events")}
@@ -181,7 +180,6 @@ function DashboardCard({
           justifyContent: "center",
           gap: 6,
           aspectRatio: "1",
-          minWidth: 90,
           background: "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)",
           borderRadius: 16,
           textDecoration: "none",
@@ -191,6 +189,7 @@ function DashboardCard({
           border: "1px solid rgba(102, 126, 234, 0.3)",
           position: "relative",
           padding: 8,
+          boxSizing: "border-box",
         }}
         onTouchStart={(e) => {
           e.currentTarget.style.transform = "scale(0.95)";
@@ -202,13 +201,13 @@ function DashboardCard({
         }}
       >
         <div style={{ 
-          fontSize: "clamp(32px, 9vw, 40px)",
+          fontSize: "clamp(24px, 6vw, 30px)",
           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
         }}>
           {icon}
         </div>
         <div style={{
-          fontSize: "clamp(10px, 2.8vw, 12px)",
+          fontSize: "clamp(10px, 2.5vw, 12px)",
           fontWeight: 600,
           color: "#a8b3ff",
           textAlign: "center",

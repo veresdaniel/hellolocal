@@ -45,6 +45,7 @@ export function MapFilters({
   const userLocation = useFiltersStore((state) => state.userLocation);
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   // Default positions: jobb, listanézet alatt (right, below list view button)
   // List view button is at top: 16, so filters should be at top: ~80
@@ -70,6 +71,15 @@ export function MapFilters({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const filtersRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile viewport changes
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Load position when device type changes
   useEffect(() => {
@@ -283,11 +293,11 @@ export function MapFilters({
         background: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderRadius: 16,
+        borderRadius: isMobile ? 12 : 16,
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
         border: "1px solid rgba(0, 0, 0, 0.06)",
         overflow: "hidden",
-        minWidth: 280,
+        minWidth: isMobile && !isOpen ? "auto" : 280,
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
         transition: isDragging ? "none" : "box-shadow 0.2s ease",
@@ -314,36 +324,46 @@ export function MapFilters({
           setHasDragged(false);
         }}
         style={{
-          padding: 16,
+          padding: isMobile && !isOpen ? 10 : 16,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: isMobile && !isOpen ? "center" : "space-between",
           alignItems: "center",
           cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "pointer",
           userSelect: "none",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         }}
       >
-        <h3 style={{ margin: 0, color: "white", fontSize: 18, fontWeight: 700 }}>
-          🔍 {t("public.filtersTitle") || "Szűrők"}
+        <h3 style={{ 
+          margin: 0, 
+          color: "white", 
+          fontSize: isMobile && !isOpen ? 20 : 18, 
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          gap: isMobile && !isOpen ? 0 : 8,
+        }}>
+          🔍 {(!isMobile || isOpen) && (t("public.filtersTitle") || "Szűrők")}
         </h3>
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.2)",
-            border: "none",
-            borderRadius: 8,
-            width: 32,
-            height: 32,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontSize: 18,
-            transition: "background 0.2s",
-            pointerEvents: "none", // Let clicks pass through to parent
-          }}
-        >
-          {isOpen ? "−" : "+"}
-        </div>
+        {(!isMobile || isOpen) && (
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.2)",
+              border: "none",
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontSize: 18,
+              transition: "background 0.2s",
+              pointerEvents: "none", // Let clicks pass through to parent
+            }}
+          >
+            {isOpen ? "−" : "+"}
+          </div>
+        )}
       </div>
 
       {isOpen && (
