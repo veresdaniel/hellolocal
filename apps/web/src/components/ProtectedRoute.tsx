@@ -43,8 +43,9 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   });
   
   if (!authContext) {
-    // If AuthContext is not available, redirect to login
-    return <Navigate to={`/${lang}/admin/login`} replace />;
+    // If AuthContext is not available, wait a bit before redirecting
+    // This allows lazy-loaded modules to start loading
+    return <LoadingSpinner isLoading={true} delay={0} />;
   }
   
   const { user, isLoading } = authContext;
@@ -87,17 +88,14 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return () => clearInterval(interval);
   }, []);
 
-  // Redirect immediately if no tokens (before loading check)
-  if (shouldRedirect) {
-    return <Navigate to={`/${lang}/admin/login`} replace />;
-  }
-
+  // Wait for AuthContext to finish loading before redirecting
+  // This prevents blocking lazy-loaded modules
   if (isLoading) {
     return <LoadingSpinner isLoading={isLoading} delay={0} />;
   }
 
-  // Redirect to login if no user
-  if (!user) {
+  // Redirect to login if no tokens or no user (after loading is complete)
+  if (shouldRedirect || !user) {
     return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 

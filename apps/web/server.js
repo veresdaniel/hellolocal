@@ -234,13 +234,50 @@ async function handleBotRequest(req, res, next) {
 }
 
 // Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
+// This must come before other routes to ensure static files are served correctly
+app.use(express.static(path.join(__dirname, 'dist'), {
+  // Don't serve index.html for static file requests
+  index: false,
+  // Set proper MIME types
+  setHeaders: (res, filePath) => {
+    // Ensure JavaScript files have correct MIME type
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('.mjs')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    }
+  }
+}));
 
-// Apply SEO middleware before the catch-all route
-app.get('*', handleBotRequest);
+// Apply SEO middleware before the catch-all route (only for non-static files)
+app.get('*', (req, res, next) => {
+  // Skip SEO middleware for static assets (JS, CSS, images, etc.)
+  const staticExtensions = ['.js', '.mjs', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map'];
+  const isStaticFile = staticExtensions.some(ext => req.path.endsWith(ext));
+  
+  if (isStaticFile) {
+    // Let express.static handle it, or return 404 if not found
+    return next();
+  }
+  
+  // For non-static files, check if it's a bot request
+  handleBotRequest(req, res, next);
+});
 
-// Fallback: Rewrite all routes to index.html for React Router (non-bot requests)
-app.get('*', (req, res) => {
+// Fallback: Rewrite all routes to index.html for React Router (only if file doesn't exist)
+app.get('*', (req, res, next) => {
+  // Skip if this is a static file request (should have been handled by express.static)
+  const staticExtensions = ['.js', '.mjs', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map'];
+  const isStaticFile = staticExtensions.some(ext => req.path.endsWith(ext));
+  
+  if (isStaticFile) {
+    // Static file not found - return 404
+    return res.status(404).send('File not found');
+  }
+  
+  // For non-static files, serve index.html for SPA routing
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

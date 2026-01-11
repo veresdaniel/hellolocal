@@ -1302,6 +1302,8 @@ export class AdminController {
       isCrawlable?: boolean;
       defaultPlaceholderCardImage?: string | null;
       defaultPlaceholderDetailHeroImage?: string | null;
+      brandBadgeIcon?: string | null;
+      faviconUrl?: string | null;
     },
     @CurrentUser() user: { tenantIds: string[] }
   ) {
@@ -1319,6 +1321,8 @@ export class AdminController {
       isCrawlable: dto.isCrawlable,
       defaultPlaceholderCardImage: dto.defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage: dto.defaultPlaceholderDetailHeroImage,
+      brandBadgeIcon: dto.brandBadgeIcon,
+      faviconUrl: dto.faviconUrl,
     });
   }
 

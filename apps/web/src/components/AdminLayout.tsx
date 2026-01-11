@@ -111,7 +111,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto" }}>
       <style>{`
         body {
           margin: 0 !important;
@@ -154,6 +154,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           zIndex: 1000,
           width: "100%",
           boxSizing: "border-box",
+          pointerEvents: "auto",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -166,6 +167,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 color: "#667eea",
                 fontSize: "clamp(20px, 4vw, 24px)",
                 transition: "opacity 0.2s ease",
+                pointerEvents: "auto",
+                position: "relative",
+                zIndex: 1002,
               }}
               title={t("admin.dashboard")}
               onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
@@ -176,7 +180,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             
             {/* Desktop Navigation */}
             {!isMobile && (
-              <div style={{ display: "flex", gap: 12, flexWrap: "nowrap", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 12, flexWrap: "nowrap", alignItems: "center", pointerEvents: "auto", position: "relative", zIndex: 1001 }}>
                 {navLinks.map((link) => (
                   <Link
                     key={link.path}
@@ -191,6 +195,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       background: isActive(adminPath(link.path)) ? "#f0f0ff" : "transparent",
                       transition: "all 0.2s ease",
                       whiteSpace: "nowrap",
+                      pointerEvents: "auto",
+                      position: "relative",
+                      zIndex: 1002,
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive(adminPath(link.path))) {
@@ -527,7 +534,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         marginRight: "auto",
         width: "100%",
         boxSizing: "border-box",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: "auto",
       }}>
         {children}
       </main>

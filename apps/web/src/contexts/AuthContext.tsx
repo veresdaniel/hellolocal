@@ -270,6 +270,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (res.ok) {
                 return res.json();
               }
+              // If 401, token is invalid - clear everything
+              if (res.status === 401) {
+                localStorage.removeItem("user");
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                setUser(null);
+                throw new Error("Unauthorized - session expired");
+              }
               throw new Error("Failed to fetch user");
             })
             .then((freshUser) => {
@@ -285,10 +293,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             .catch((err) => {
               console.error("Failed to refresh user data", err);
-              // Keep the stored user if API call fails, but ensure role is lowercase
-              if (parsedUser.role) {
+              // If 401, we already cleared tokens and set user to null
+              // For other errors, keep the stored user if it exists and role is valid
+              if (err.message !== "Unauthorized - session expired" && parsedUser?.role) {
                 parsedUser.role = parsedUser.role.toLowerCase();
                 setUser(parsedUser);
+              } else {
+                // Clear user if unauthorized or no valid stored user
+                setUser(null);
               }
             })
             .finally(() => {

@@ -248,7 +248,9 @@ export class AdminAppSettingsService {
         en: seoDescriptionEn?.value ?? "",
         de: seoDescriptionDe?.value ?? "",
       },
-      isCrawlable: isCrawlableSetting?.value === "true" || isCrawlableSetting?.value === "1" || isCrawlableSetting === null, // Default to true if not set
+      isCrawlable: isCrawlableSetting === null || isCrawlableSetting === undefined 
+        ? true // Default to true if not set
+        : isCrawlableSetting.value === "true" || isCrawlableSetting.value === "1", // Parse boolean value
       defaultPlaceholderCardImage: defaultPlaceholderCardImage?.value && defaultPlaceholderCardImage.value.trim() !== "" ? defaultPlaceholderCardImage.value : null,
       defaultPlaceholderDetailHeroImage: defaultPlaceholderDetailHeroImage?.value && defaultPlaceholderDetailHeroImage.value.trim() !== "" ? defaultPlaceholderDetailHeroImage.value : null,
       brandBadgeIcon: brandBadgeIcon?.value && brandBadgeIcon.value.trim() !== "" ? brandBadgeIcon.value : null,
@@ -293,17 +295,17 @@ export class AdminAppSettingsService {
       const enValue = settings.siteName.en ?? "HelloLocal";
       const deValue = settings.siteName.de ?? "HelloLocal";
       console.log('[AdminAppSettingsService] Saving siteName:', { hu: huValue, en: enValue, de: deValue });
-      updates.push(this.upsert("siteName_hu", {
+      updates.push(this.upsert(`siteName_hu_${tenantId}`, {
         value: huValue,
         type: "string",
         description: "Site name in Hungarian",
       }));
-      updates.push(this.upsert("siteName_en", {
+      updates.push(this.upsert(`siteName_en_${tenantId}`, {
         value: enValue,
         type: "string",
         description: "Site name in English",
       }));
-      updates.push(this.upsert("siteName_de", {
+      updates.push(this.upsert(`siteName_de_${tenantId}`, {
         value: deValue,
         type: "string",
         description: "Site name in German",
@@ -368,7 +370,7 @@ export class AdminAppSettingsService {
     }
 
     if (settings.isCrawlable !== undefined) {
-      updates.push(this.upsert("isCrawlable", {
+      updates.push(this.upsert(`isCrawlable_${tenantId}`, {
         value: settings.isCrawlable ? "true" : "false",
         type: "boolean",
         description: "Whether search engines should crawl the site",
