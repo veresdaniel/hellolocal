@@ -6,7 +6,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { getTenants, createTenant, updateTenant, deleteTenant, type Tenant } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
@@ -598,7 +598,7 @@ export function TenantsPage() {
                     }}>
                       {t("common.description")} ({selectedLang.toUpperCase()})
                     </label>
-                    <TipTapEditor
+                    <TipTapEditorWithUpload
                       value={
                         selectedLang === "hu"
                           ? formData.descriptionHu
@@ -613,6 +613,7 @@ export function TenantsPage() {
                       }}
                       placeholder={t("common.description")}
                       height={200}
+                      uploadFolder="editor/tenants"
                     />
                   </div>
 

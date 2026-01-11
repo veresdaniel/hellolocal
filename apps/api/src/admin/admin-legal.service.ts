@@ -25,6 +25,7 @@ export interface UpdateLegalPageDto {
   translations?: Array<{
     lang: Lang;
     title: string;
+    shortDescription?: string | null; // HTML - for list view cards
     content?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;

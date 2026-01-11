@@ -10,7 +10,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
@@ -912,7 +912,7 @@ export function PlacesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={labelStyle}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.shortDescriptionHu
@@ -927,6 +927,7 @@ export function PlacesPage() {
                     }}
                     placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
                     height={150}
+                    uploadFolder="editor/places"
                   />
                   <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
@@ -935,7 +936,7 @@ export function PlacesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={labelStyle}>{t("common.description")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
@@ -950,6 +951,7 @@ export function PlacesPage() {
                     }}
                     placeholder={t("common.description")}
                     height={200}
+                    uploadFolder="editor/places"
                   />
                 </div>
 
@@ -963,7 +965,7 @@ export function PlacesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={labelStyle}>{t("public.accessibility")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.accessibilityHu
@@ -978,6 +980,7 @@ export function PlacesPage() {
                     }}
                     placeholder={t("public.accessibility")}
                     height={150}
+                    uploadFolder="editor/places"
                   />
                 </div>
 

@@ -13,7 +13,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 
 export function EventsPage() {
   const { t, i18n } = useTranslation();
@@ -842,7 +842,7 @@ export function EventsPage() {
                   }}>
                     {t("admin.shortDescription") || "Rövid leírás (lista oldal)"} ({selectedLang.toUpperCase()})
                   </label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.shortDescriptionHu
@@ -857,6 +857,7 @@ export function EventsPage() {
                     }}
                     placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
                     height={150}
+                    uploadFolder="editor/events"
                   />
                   <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
@@ -874,7 +875,7 @@ export function EventsPage() {
                   }}>
                     {t("common.description")} ({selectedLang.toUpperCase()})
                   </label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
@@ -887,6 +888,8 @@ export function EventsPage() {
                       else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: html });
                       else setFormData({ ...formData, descriptionDe: html });
                     }}
+                    uploadFolder="editor/events"
+                    enableVideo={true}
                   />
                 </div>
               </div>

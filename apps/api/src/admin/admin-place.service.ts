@@ -53,6 +53,7 @@ export interface UpdatePlaceDto {
   translations?: Array<{
     lang: Lang;
     name: string;
+    shortDescription?: string | null; // HTML - for list view cards
     description?: string | null;
     address?: string | null;
     phone?: string | null;

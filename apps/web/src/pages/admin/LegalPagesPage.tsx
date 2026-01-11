@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { getLegalPages, createLegalPage, updateLegalPage, deleteLegalPage } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
@@ -478,7 +478,7 @@ export function LegalPagesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.shortDescriptionHu
@@ -493,6 +493,7 @@ export function LegalPagesPage() {
                     }}
                     placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
                     height={150}
+                    uploadFolder="editor/legal"
                   />
                   <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
@@ -501,7 +502,7 @@ export function LegalPagesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.content")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.contentHu
@@ -516,6 +517,7 @@ export function LegalPagesPage() {
                     }}
                     placeholder={t("admin.content")}
                     height={300}
+                    uploadFolder="editor/legal"
                   />
                 </div>
 

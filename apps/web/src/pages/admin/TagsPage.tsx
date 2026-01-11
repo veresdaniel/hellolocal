@@ -8,7 +8,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
@@ -322,7 +322,7 @@ export function TagsPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
@@ -337,6 +337,7 @@ export function TagsPage() {
                     }}
                     placeholder={t("common.description")}
                     height={200}
+                    uploadFolder="editor/tags"
                   />
                 </div>
               </>

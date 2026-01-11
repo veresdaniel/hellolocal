@@ -1,6 +1,6 @@
 // src/components/LanguageAwareEditor.tsx
 import { useState, useEffect } from "react";
-import { TipTapEditor } from "./TipTapEditor";
+import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
 
 type Lang = "hu" | "en" | "de";
 
@@ -61,11 +61,12 @@ export function LanguageAwareEditor({
           ))}
         </select>
       </div>
-      <TipTapEditor
+      <TipTapEditorWithUpload
         value={values[selectedLang]}
         onChange={(value) => onChange(selectedLang, value)}
         placeholder={placeholder ? `${placeholder} (${LANGUAGES.find((l) => l.code === selectedLang)?.name})` : undefined}
         height={height}
+        uploadFolder="editor"
       />
     </div>
   );

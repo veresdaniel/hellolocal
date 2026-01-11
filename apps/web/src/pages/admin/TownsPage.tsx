@@ -7,7 +7,7 @@ import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { MapComponent } from "../../components/MapComponent";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
@@ -437,7 +437,7 @@ export function TownsPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
@@ -452,6 +452,7 @@ export function TownsPage() {
                     }}
                     placeholder={t("common.description")}
                     height={200}
+                    uploadFolder="editor/towns"
                   />
                 </div>
 

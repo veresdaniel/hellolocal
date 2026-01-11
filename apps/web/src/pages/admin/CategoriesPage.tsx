@@ -17,7 +17,7 @@ import {
   reorderCategories,
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
-import { TipTapEditor } from "../../components/TipTapEditor";
+import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 
 interface Category {
   id: string;
@@ -352,7 +352,7 @@ export function CategoriesPage() {
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
-                  <TipTapEditor
+                  <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
@@ -367,6 +367,7 @@ export function CategoriesPage() {
                     }}
                     placeholder={t("common.description")}
                     height={200}
+                    uploadFolder="editor/categories"
                   />
                 </div>
               </>
