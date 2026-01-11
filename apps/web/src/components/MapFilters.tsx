@@ -71,6 +71,8 @@ export function MapFilters({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const filtersRef = useRef<HTMLDivElement>(null);
+  const [shouldAnimateUp, setShouldAnimateUp] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Detect mobile viewport changes
   useEffect(() => {
@@ -109,6 +111,27 @@ export function MapFilters({
       localStorage.removeItem(`mapFiltersPosition_${deviceKey}`);
     }
   }, [position, isDesktop]);
+
+  // Lock body scroll when drawer is open (best practice)
+  useEffect(() => {
+    if (isOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore scroll position
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !filtersRef.current) return;
@@ -295,10 +318,20 @@ export function MapFilters({
         border: "1px solid rgba(0, 0, 0, 0.06)",
         overflow: "hidden",
         minWidth: isMobile && !isOpen ? "auto" : 280,
+        maxWidth: isMobile && !isOpen ? 44 : 320,
+        maxHeight: isOpen ? (isMobile ? "85vh" : "80vh") : "auto",
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
-        transition: isDragging ? "none" : "box-shadow 0.2s ease",
+        transition: isDragging 
+          ? "none" 
+          : shouldAnimateUp 
+            ? "top 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease"
+            : isOpen
+              ? "box-shadow 0.2s ease, transform 0.3s ease-out"
+              : "box-shadow 0.2s ease",
         touchAction: "none", // Prevent default touch behaviors
+        display: "flex",
+        flexDirection: "column",
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
@@ -316,7 +349,31 @@ export function MapFilters({
         onClick={() => {
           // Only toggle if we didn't drag
           if (!hasDragged) {
-            setIsOpen(!isOpen);
+            const wasOpen = isOpen;
+            const willBeOpen = !isOpen;
+            
+            // If opening and position is low (near bottom), animate up
+            if (!wasOpen && willBeOpen) {
+              const viewportHeight = window.innerHeight;
+              const elementHeight = filtersRef.current?.offsetHeight || 200;
+              const isNearBottom = position.top > viewportHeight - elementHeight - 100;
+              
+              if (isNearBottom) {
+                setIsAnimating(true);
+                setShouldAnimateUp(true);
+                // Calculate optimal position (near top but not too high)
+                const optimalTop = Math.min(80, viewportHeight * 0.1);
+                setPosition(prev => ({ ...prev, top: optimalTop }));
+                
+                // Reset animation flag after transition
+                setTimeout(() => {
+                  setShouldAnimateUp(false);
+                  setIsAnimating(false);
+                }, 500);
+              }
+            }
+            
+            setIsOpen(willBeOpen);
           }
           setHasDragged(false);
         }}
@@ -372,15 +429,45 @@ export function MapFilters({
       </div>
 
       {isOpen && (
-        <div style={{ padding: 20 }}>
+        <div 
+          style={{ 
+            padding: 16,
+            overflowY: "auto",
+            overflowX: "hidden",
+            flex: 1,
+            // Custom scrollbar styling
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(90, 61, 122, 0.3) transparent",
+          }}
+          // Webkit scrollbar styling
+          onScroll={(e) => {
+            // Prevent scroll from propagating to parent
+            e.stopPropagation();
+          }}
+        >
+          <style>{`
+            div::-webkit-scrollbar {
+              width: 6px;
+            }
+            div::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            div::-webkit-scrollbar-thumb {
+              background-color: rgba(90, 61, 122, 0.3);
+              border-radius: 3px;
+            }
+            div::-webkit-scrollbar-thumb:hover {
+              background-color: rgba(90, 61, 122, 0.5);
+            }
+          `}</style>
           {/* Categories */}
-          <div style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 18 }}>
             <h3
               style={{
                 fontSize: 14,
                 fontWeight: 600,
                 color: "#5a3d7a",
-                marginBottom: 12,
+                marginBottom: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -388,7 +475,7 @@ export function MapFilters({
             >
               Kategóriák
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {categories?.map((category) => {
                 const isSelected = selectedCategories.includes(category.id);
                 return (
@@ -397,9 +484,9 @@ export function MapFilters({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 10,
-                      padding: "8px 10px",
-                      borderRadius: 8,
+                      gap: 8,
+                      padding: "6px 8px",
+                      borderRadius: 6,
                       cursor: "pointer",
                       background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                       transition: "all 0.2s",
@@ -427,8 +514,8 @@ export function MapFilters({
                         }
                       }}
                       style={{
-                        width: 16,
-                        height: 16,
+                        width: 14,
+                        height: 14,
                         cursor: "pointer",
                         accentColor: "#5a3d7a",
                         flexShrink: 0,
@@ -436,10 +523,10 @@ export function MapFilters({
                     />
                     <span
                       style={{
-                        fontSize: 15,
+                        fontSize: 14,
                         color: isSelected ? "#3d2952" : "#5a3d7a",
                         fontWeight: isSelected ? 500 : 400,
-                        lineHeight: 1.5,
+                        lineHeight: 1.4,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
@@ -452,13 +539,13 @@ export function MapFilters({
           </div>
 
           {/* Price Bands */}
-          <div>
+          <div style={{ marginBottom: 18 }}>
             <h3
               style={{
                 fontSize: 14,
                 fontWeight: 600,
                 color: "#5a3d7a",
-                marginBottom: 12,
+                marginBottom: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -466,7 +553,7 @@ export function MapFilters({
             >
               Ár sávok
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {priceBands && priceBands.length > 0 ? (
                 priceBands.map((priceBand) => {
                   const isSelected = selectedPriceBands.includes(priceBand.id);
@@ -476,9 +563,9 @@ export function MapFilters({
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 10,
-                        padding: "8px 10px",
-                        borderRadius: 8,
+                        gap: 8,
+                        padding: "6px 8px",
+                        borderRadius: 6,
                         cursor: "pointer",
                         background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                         transition: "all 0.2s",
@@ -515,10 +602,10 @@ export function MapFilters({
                       />
                       <span
                         style={{
-                          fontSize: 15,
+                          fontSize: 14,
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
-                          lineHeight: 1.5,
+                          lineHeight: 1.4,
                           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
@@ -542,7 +629,7 @@ export function MapFilters({
                 fontSize: 14,
                 fontWeight: 600,
                 color: "#5a3d7a",
-                marginBottom: 12,
+                marginBottom: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -550,12 +637,12 @@ export function MapFilters({
             >
               Kontextus alapú szűrők
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <button
                 onClick={() => onOpenNowChange(!isOpenNow)}
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
+                  padding: "8px 12px",
+                  borderRadius: 6,
                   cursor: "pointer",
                   background: isOpenNow ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: isOpenNow ? "#3d2952" : "#5a3d7a",
@@ -582,8 +669,8 @@ export function MapFilters({
               <button
                 onClick={() => onHasEventTodayChange(!hasEventToday)}
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
+                  padding: "8px 12px",
+                  borderRadius: 6,
                   cursor: "pointer",
                   background: hasEventToday ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: hasEventToday ? "#3d2952" : "#5a3d7a",
@@ -611,8 +698,8 @@ export function MapFilters({
                 <button
                   onClick={() => onWithin30MinutesChange(!within30Minutes)}
                   style={{
-                    padding: "10px 14px",
-                    borderRadius: 8,
+                    padding: "8px 12px",
+                    borderRadius: 6,
                     cursor: "pointer",
                     background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                     color: within30Minutes ? "#3d2952" : "#5a3d7a",
@@ -640,8 +727,8 @@ export function MapFilters({
               <button
                 onClick={() => onRainSafeChange(!rainSafe)}
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
+                  padding: "8px 12px",
+                  borderRadius: 6,
                   cursor: "pointer",
                   background: rainSafe ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: rainSafe ? "#3d2952" : "#5a3d7a",
