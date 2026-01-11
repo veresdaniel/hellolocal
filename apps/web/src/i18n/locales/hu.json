@@ -115,7 +115,8 @@
       "rainSafe": "Esőbiztos program",
       "contextFilters": "Kontextus alapú szűrők"
     },
-    "yourLocation": "Itt vagyok",
+    "yourLocation": "Itt vagy most",
+    "showMyLocation": "Mutasd a helyzetem",
     "showRoute": "Útvonal mutatása",
     "hideRoute": "Útvonal elrejtése",
     "distance": "Távolság",

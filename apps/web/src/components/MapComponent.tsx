@@ -1352,7 +1352,7 @@ export function MapComponent({
               </svg>
             )}
           </div>
-          <span style={{ fontWeight: 700, lineHeight: 1 }}>{t("public.yourLocation") || "Saját helyzet"}</span>
+          <span style={{ fontWeight: 700, lineHeight: 1 }}>{t("public.showMyLocation") || "Mutasd a helyzetem"}</span>
         </label>
       </div>
       
