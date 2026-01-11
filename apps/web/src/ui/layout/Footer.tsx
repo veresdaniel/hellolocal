@@ -464,7 +464,7 @@ export function Footer({
             opacity: 0.8,
           }}
         >
-          © {currentYear} HelloLocal. {t("public.footer.rights") || "Minden jog fenntartva."}
+          © {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}. {t("public.footer.rights") || "Minden jog fenntartva."}
         </div>
       </div>
     </footer>

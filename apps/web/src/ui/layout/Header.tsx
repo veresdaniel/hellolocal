@@ -62,7 +62,7 @@ export function Header() {
     };
   }, [lang, tenantSlug]);
 
-  const siteName = siteSettings?.siteName || "HelloLocal";
+  const siteName = siteSettings?.siteName || t("common.siteName", { defaultValue: "" });
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
 
   // Load position when device type changes

@@ -34,7 +34,7 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
     if (!seo) return;
 
     // Get site name from i18n or use provided siteName or default
-    const siteName = opts?.siteName || t("common.siteName", { defaultValue: "HelloLocal" });
+    const siteName = opts?.siteName || t("common.siteName", { defaultValue: "" });
     const fullTitle = seo.title ? `${seo.title} - ${siteName}` : siteName;
     
     document.title = fullTitle;

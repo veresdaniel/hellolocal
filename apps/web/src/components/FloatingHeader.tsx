@@ -43,7 +43,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
     };
   }, [lang, tenantSlug, queryClient]);
 
-  const siteName = siteSettings?.siteName || "HelloLocal";
+  const siteName = siteSettings?.siteName || t("common.siteName", { defaultValue: "" });
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
   const [logoError, setLogoError] = useState(false);
   

@@ -15,7 +15,7 @@
     "search": "Keresés",
     "filter": "Szűrés",
     "actions": "Műveletek",
-    "siteName": "HelloLocal",
+    "siteName": "",
     "title": "Cím",
     "image": "Kép",
     "none": "Nincs",
@@ -144,6 +144,7 @@
     }
   },
   "admin": {
+    "titleSuffix": "Admin",
     "dashboard": "Irányítópult",
     "dashboardWelcome": "Üdvözlünk az admin felületen",
     "openPublicPage": "Publikus oldal",

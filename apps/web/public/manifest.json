@@ -1,6 +1,6 @@
 {
-  "name": "HelloLocal",
-  "short_name": "HelloLocal",
+  "name": "",
+  "short_name": "",
   "description": "Local tourism discovery platform",
   "start_url": "/",
   "display": "standalone",

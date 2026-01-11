@@ -15,7 +15,7 @@
     "search": "Suchen",
     "filter": "Filter",
     "actions": "Aktionen",
-    "siteName": "HelloLocal",
+    "siteName": "",
     "title": "Titel",
     "image": "Bild",
     "none": "Keine",
@@ -144,6 +144,7 @@
     }
   },
   "admin": {
+    "titleSuffix": "Admin",
     "dashboard": "Dashboard",
     "categories": "Kategorien",
     "tags": "Tags",

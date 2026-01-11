@@ -46,7 +46,7 @@ export function AppSettingsPage() {
 
   // Site settings state
   const [siteSettings, setSiteSettingsState] = useState<SiteSettings>({
-    siteName: { hu: "HelloLocal", en: "HelloLocal", de: "HelloLocal" },
+    siteName: { hu: "", en: "", de: "" },
     siteDescription: { hu: "", en: "", de: "" },
     seoTitle: { hu: "", en: "", de: "" },
     seoDescription: { hu: "", en: "", de: "" },
@@ -150,9 +150,9 @@ export function AppSettingsPage() {
         // Ensure all fields are properly initialized
         setSiteSettingsState({
           siteName: {
-            hu: data.siteName?.hu || "HelloLocal",
-            en: data.siteName?.en || "HelloLocal",
-            de: data.siteName?.de || "HelloLocal",
+            hu: data.siteName?.hu || "",
+            en: data.siteName?.en || "",
+            de: data.siteName?.de || "",
           },
           siteDescription: {
             hu: data.siteDescription?.hu || "",
@@ -302,9 +302,9 @@ export function AppSettingsPage() {
       // Use the exact values from the response, not defaults
       const newState = {
         siteName: {
-          hu: updated.siteName?.hu ?? "HelloLocal",
-          en: updated.siteName?.en ?? "HelloLocal",
-          de: updated.siteName?.de ?? "HelloLocal",
+          hu: updated.siteName?.hu ?? "",
+          en: updated.siteName?.en ?? "",
+          de: updated.siteName?.de ?? "",
         },
         siteDescription: {
           hu: updated.siteDescription?.hu ?? "",

@@ -100,7 +100,7 @@ self.addEventListener("fetch", (event) => {
 // Push event - handle push notifications
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "HelloLocal";
+  const title = data.title || "";
   const options = {
     body: data.body || "Új esemény érkezett!",
     icon: data.icon || "/vite.svg",
