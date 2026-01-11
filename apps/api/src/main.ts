@@ -88,6 +88,7 @@ async function bootstrap() {
       "Authorization",
       "X-Requested-With",
       "Cache-Control", // Allow cache-control header for version.json requests
+      "Pragma", // Allow pragma header (browser may send this)
     ],
     exposedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: false,
