@@ -1,14 +1,11 @@
 // src/components/LanguageAwareForm.tsx
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 
 type Lang = "hu" | "en" | "de";
 
-const LANGUAGES: { code: Lang; name: string }[] = [
-  { code: "hu", name: "Hungarian" },
-  { code: "en", name: "English" },
-  { code: "de", name: "German" },
-];
+const LANGUAGES: Lang[] = ["hu", "en", "de"];
 
 interface LanguageAwareFormProps {
   children: (selectedLang: Lang) => ReactNode;
@@ -16,12 +13,13 @@ interface LanguageAwareFormProps {
 }
 
 export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwareFormProps) {
+  const { t } = useTranslation();
   const [selectedLang, setSelectedLang] = useState<Lang>(defaultLang);
 
   return (
     <div>
       <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <label style={{ fontWeight: "bold", fontSize: 14 }}>Language:</label>
+        <label style={{ fontWeight: "bold", fontSize: 14 }}>{t("admin.language")}:</label>
         <select
           value={selectedLang}
           onChange={(e) => setSelectedLang(e.target.value as Lang)}
@@ -35,8 +33,8 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
           }}
         >
           {LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.name}
+            <option key={lang} value={lang}>
+              {t(`admin.languageNames.${lang}`)}
             </option>
           ))}
         </select>

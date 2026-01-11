@@ -29,6 +29,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const location = useLocation();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
   
   // Initialize global cache management for all admin pages
   useAdminCache();
@@ -41,7 +46,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     // If AuthContext is not available, show error or redirect
     return <div>Error: Authentication context not available</div>;
   }
-  const { user, logout } = authContext;
+  const { user, logout, isLoading } = authContext;
   
   // Get selected tenant from AdminTenantContext
   const tenantContext = useContext(AdminTenantContext);
@@ -49,12 +54,24 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const tenants = tenantContext?.tenants ?? [];
   const currentTenant = tenants.find((t) => t.id === selectedTenantId);
   
-  const location = useLocation();
   const { showWarning, secondsRemaining } = useSessionWarning();
-  const { lang: langParam } = useParams<{ lang?: string }>();
 
-  // Get language from URL or use current i18n language or default
-  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+  // If no user and not loading, redirect to login (should not happen if ProtectedRoute works correctly, but safety check)
+  if (!isLoading && !user) {
+    window.location.href = `/${lang}/admin/login`;
+    return null;
+  }
+  
+  // If still loading, show loading spinner
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  // If no user after loading, should not happen but safety check
+  if (!user) {
+    window.location.href = `/${lang}/admin/login`;
+    return null;
+  }
 
   // Check screen size for responsive behavior
   useEffect(() => {

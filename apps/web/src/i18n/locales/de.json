@@ -160,6 +160,7 @@
     "appSettings": "App-Einstellungen",
     "profileMenu": "Profil",
     "logout": "Abmelden",
+    "language": "Sprache",
     "login": "Anmelden",
     "register": "Registrieren",
     "registering": "Registrierung läuft...",
@@ -357,6 +358,19 @@
       "categoriesNotFound": "Einige Kategorien wurden nicht gefunden oder gehören nicht zum Gebiet",
       "parentCategoriesNotFound": "Einige übergeordnete Kategorien wurden nicht gefunden oder gehören nicht zum Gebiet",
       "oneOrMoreCategoriesNotFound": "Eine oder mehrere Kategorien wurden während der Aktualisierung nicht gefunden"
+    },
+    "searchPlaceholder": "Suche nach Name oder Ort...",
+    "searchPlaceholders": {
+      "tenants": "Suche unter Gebieten (Name, Slug)...",
+      "users": "Suche unter Benutzern (Name, E-Mail, Rolle)...",
+      "places": "Suche unter Orten (Name, Kategorie, Stadt)...",
+      "categories": "Suche unter Kategorien...",
+      "tags": "Suche unter Tags...",
+      "towns": "Suche unter Städten...",
+      "staticPages": "Suche unter statischen Seiten (Titel, Kategorie)...",
+      "legalPages": "Suche unter rechtlichen Seiten (Titel, Typ)...",
+      "priceBands": "Suche unter Preisklassen...",
+      "events": "Suche unter Veranstaltungen (Name, Beschreibung)..."
     },
     "validation": {
       "hungarianNameRequired": "Ungarischer Name ist erforderlich",

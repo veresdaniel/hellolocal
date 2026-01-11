@@ -42,9 +42,27 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return false;
   });
   
+  // If we should redirect (no tokens or expired tokens), redirect immediately
+  // Don't wait for AuthContext to load
+  if (shouldRedirect) {
+    return <Navigate to={`/${lang}/admin/login`} replace />;
+  }
+
   if (!authContext) {
-    // If AuthContext is not available, wait a bit before redirecting
-    // This allows lazy-loaded modules to start loading
+    // If AuthContext is not available, check tokens again
+    // If no tokens, redirect immediately
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshTokenValue = localStorage.getItem("refreshToken");
+    if (!accessToken && !refreshTokenValue) {
+      return <Navigate to={`/${lang}/admin/login`} replace />;
+    }
+    // If tokens exist but expired, check if refresh token is also expired
+    if (accessToken && isTokenExpired(accessToken)) {
+      if (!refreshTokenValue || isTokenExpired(refreshTokenValue)) {
+        return <Navigate to={`/${lang}/admin/login`} replace />;
+      }
+    }
+    // Wait a bit for AuthContext to load if tokens might be valid
     return <LoadingSpinner isLoading={true} delay={0} />;
   }
   
@@ -88,14 +106,31 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return () => clearInterval(interval);
   }, []);
 
-  // Wait for AuthContext to finish loading before redirecting
+  // If shouldRedirect is true, redirect immediately (don't wait for loading)
+  if (shouldRedirect) {
+    return <Navigate to={`/${lang}/admin/login`} replace />;
+  }
+
+  // Wait for AuthContext to finish loading before checking user
   // This prevents blocking lazy-loaded modules
   if (isLoading) {
+    // But check tokens again while loading - if no tokens, redirect immediately
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshTokenValue = localStorage.getItem("refreshToken");
+    if (!accessToken && !refreshTokenValue) {
+      return <Navigate to={`/${lang}/admin/login`} replace />;
+    }
+    // If tokens exist but expired, check if refresh token is also expired
+    if (accessToken && isTokenExpired(accessToken)) {
+      if (!refreshTokenValue || isTokenExpired(refreshTokenValue)) {
+        return <Navigate to={`/${lang}/admin/login`} replace />;
+      }
+    }
     return <LoadingSpinner isLoading={isLoading} delay={0} />;
   }
 
-  // Redirect to login if no tokens or no user (after loading is complete)
-  if (shouldRedirect || !user) {
+  // Redirect to login if no user (after loading is complete)
+  if (!user) {
     return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 

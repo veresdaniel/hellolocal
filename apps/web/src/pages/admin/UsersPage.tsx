@@ -1,6 +1,7 @@
 // src/pages/admin/UsersPage.tsx
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -24,6 +25,7 @@ import { AdminResponsiveTable, type TableColumn, type CardField } from "../../co
 
 export function UsersPage() {
   const { t } = useTranslation();
+  const location = useLocation();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedTenantId } = useAdminTenant();
@@ -47,6 +49,7 @@ export function UsersPage() {
     tenantIds: [] as string[],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const previousPathnameRef = useRef<string>(location.pathname);
 
   useEffect(() => {
     loadData();
@@ -58,6 +61,38 @@ export function UsersPage() {
       loadData();
     }
   }, []);
+
+  // Reset edit state when navigating away from this page
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const previousPath = previousPathnameRef.current;
+    
+    // Only reset if pathname actually changed AND we're no longer on users page
+    if (currentPath !== previousPath) {
+      previousPathnameRef.current = currentPath;
+      
+      const isOnUsersPage = currentPath.includes("/admin/users");
+      
+      // Only reset if we're NOT on the users page AND we have edit state active
+      if (!isOnUsersPage && (editingId || isCreating)) {
+        setEditingId(null);
+        setIsCreating(false);
+        // Reset form data directly to avoid dependency issues
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          firstName: "",
+          lastName: "",
+          bio: "",
+          role: "viewer",
+          isActive: true,
+          tenantIds: [],
+        });
+        setFormErrors({});
+      }
+    }
+  }, [location.pathname, editingId, isCreating]);
 
   const loadData = async () => {
     setIsLoading(true);

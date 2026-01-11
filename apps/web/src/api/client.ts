@@ -1,5 +1,6 @@
 import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
+import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
 
 /**
  * Get API base URL from environment variable or use relative path for development
@@ -36,6 +37,57 @@ function recordApiInteraction() {
 }
 
 /**
+ * Helper function to extract language code from URL or localStorage
+ */
+function getLanguageCode(): Lang {
+  const currentPath = window.location.pathname;
+  // Try to extract lang from URL (e.g., /hu/admin or /en/admin)
+  const pathMatch = currentPath.match(/^\/(hu|en|de)(\/|$)/);
+  if (pathMatch && APP_LANGS.includes(pathMatch[1] as Lang)) {
+    return pathMatch[1] as Lang;
+  }
+  // Fallback to localStorage i18nextLng
+  const storedLang = localStorage.getItem("i18nextLng");
+  if (storedLang && APP_LANGS.includes(storedLang as Lang)) {
+    return storedLang as Lang;
+  }
+  // Final fallback to default
+  return DEFAULT_LANG;
+}
+
+/**
+ * Redirects to login page when session expires
+ */
+function redirectToLogin() {
+  const currentPath = window.location.pathname;
+  const lang = getLanguageCode();
+  
+  // Only redirect if we're in admin area
+  const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+  
+  if (!isInAdminArea) {
+    // Not in admin area, don't redirect to login
+    return;
+  }
+  
+  if (currentPath.startsWith(`/${lang}/admin/login`)) {
+    // Already on login page
+    return;
+  }
+  
+  // Clear tokens and user data
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+  
+  // Set session expired flag
+  sessionStorage.setItem("sessionExpired", "true");
+  
+  // Redirect to login page
+  window.location.href = `/${lang}/admin/login`;
+}
+
+/**
  * Refreshes the access token if it's expired
  */
 async function ensureValidToken(): Promise<void> {
@@ -53,12 +105,8 @@ async function ensureValidToken(): Promise<void> {
       localStorage.setItem("refreshToken", data.refreshToken);
       recordApiInteraction(); // Record interaction after successful refresh
     } catch {
-      // Refresh failed, clear tokens and redirect to login
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      // Trigger logout by dispatching a custom event (will redirect to /admin/login)
-      window.dispatchEvent(new CustomEvent("auth:logout"));
+      // Refresh failed, redirect to login immediately
+      redirectToLogin();
       throw new Error("Session expired. Please log in again.");
     }
   }
@@ -84,8 +132,8 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    // If 401 or 403, try to refresh token once more, then redirect to login if still fails
-    if (res.status === 401 || res.status === 403) {
+    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more, then redirect to login if still fails
+    if (res.status === 401 || res.status === 403 || res.status === 500) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -105,12 +153,12 @@ export async function apiGet<T>(path: string): Promise<T> {
             },
           });
           if (!retryRes.ok) {
-            // If still 401/403 after refresh, redirect to login
-            if (retryRes.status === 401 || retryRes.status === 403) {
+            // If still 401/403/500 after refresh, redirect to login
+            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
-              window.dispatchEvent(new CustomEvent("auth:logout"));
+              redirectToLogin();
               throw new Error("Session expired. Please log in again.");
             }
             const text = await retryRes.text().catch(() => "");
@@ -118,11 +166,8 @@ export async function apiGet<T>(path: string): Promise<T> {
           }
           return (await retryRes.json()) as T;
         } catch (err) {
-          // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
-          window.dispatchEvent(new CustomEvent("auth:logout"));
+          // Refresh failed, redirect to login immediately
+          redirectToLogin();
           if (err instanceof Error && err.message.includes("Session expired")) {
             throw err;
           }
@@ -130,10 +175,7 @@ export async function apiGet<T>(path: string): Promise<T> {
         }
       } else {
         // No refresh token, redirect to login immediately
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        window.dispatchEvent(new CustomEvent("auth:logout"));
+        redirectToLogin();
         throw new Error("Session expired. Please log in again.");
       }
     }
@@ -164,6 +206,22 @@ export async function apiGet<T>(path: string): Promise<T> {
       } catch {
         errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
+    }
+    
+    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
+    const lowerMessage = errorMessage.toLowerCase();
+    const isSessionError = 
+      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
+      lowerMessage.includes("session expired") ||
+      lowerMessage.includes("unauthorized") ||
+      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
+    
+    if (isSessionError) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      redirectToLogin();
+      throw new Error("Session expired. Please log in again.");
     }
     
     throw new Error(errorMessage);
@@ -278,6 +336,14 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
             body: JSON.stringify(data),
           });
           if (!retryRes.ok) {
+            // If still 401/403/500 after refresh, redirect to login
+            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("user");
+              redirectToLogin();
+              throw new Error("Session expired. Please log in again.");
+            }
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
@@ -287,9 +353,13 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
-          window.dispatchEvent(new CustomEvent("auth:logout"));
+          redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }
+      } else {
+        // No refresh token, redirect to login immediately
+        redirectToLogin();
+        throw new Error("Session expired. Please log in again.");
       }
     }
     let errorMessage = `Request failed: ${res.status}`;
@@ -323,6 +393,22 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
       }
     }
     
+    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
+    const lowerMessage = errorMessage.toLowerCase();
+    const isSessionError = 
+      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
+      lowerMessage.includes("session expired") ||
+      lowerMessage.includes("unauthorized") ||
+      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
+    
+    if (isSessionError) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      redirectToLogin();
+      throw new Error("Session expired. Please log in again.");
+    }
+    
     const error = new Error(errorMessage) as Error & { status?: number; response?: { message?: string } | null };
     error.status = res.status;
     error.response = errorResponse;
@@ -348,8 +434,8 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   });
 
   if (!res.ok) {
-    // If 401, try to refresh token once more
-    if (res.status === 401) {
+    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more
+    if (res.status === 401 || res.status === 403 || res.status === 500) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -367,6 +453,14 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
             body: JSON.stringify(data),
           });
           if (!retryRes.ok) {
+            // If still 401/403/500 after refresh, redirect to login
+            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("user");
+              redirectToLogin();
+              throw new Error("Session expired. Please log in again.");
+            }
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
@@ -376,9 +470,13 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
-          window.dispatchEvent(new CustomEvent("auth:logout"));
+          redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }
+      } else {
+        // No refresh token, redirect to login immediately
+        redirectToLogin();
+        throw new Error("Session expired. Please log in again.");
       }
     }
     let errorMessage = `Request failed: ${res.status}`;
@@ -414,6 +512,22 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           errorMessage = res.statusText || `Request failed: ${res.status}`;
         }
       }
+    }
+    
+    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
+    const lowerMessage = errorMessage.toLowerCase();
+    const isSessionError = 
+      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
+      lowerMessage.includes("session expired") ||
+      lowerMessage.includes("unauthorized") ||
+      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
+    
+    if (isSessionError) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      redirectToLogin();
+      throw new Error("Session expired. Please log in again.");
     }
     
     throw new Error(errorMessage);
@@ -452,8 +566,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    // If 401, try to refresh token once more
-    if (res.status === 401) {
+    // If 401, 403, or 500 (which might indicate session expired), try to refresh token once more
+    if (res.status === 401 || res.status === 403 || res.status === 500) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -473,6 +587,14 @@ export async function apiDelete<T>(path: string): Promise<T> {
             },
           });
           if (!retryRes.ok) {
+            // If still 401/403/500 after refresh, redirect to login
+            if (retryRes.status === 401 || retryRes.status === 403 || retryRes.status === 500) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("user");
+              redirectToLogin();
+              throw new Error("Session expired. Please log in again.");
+            }
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
@@ -484,9 +606,13 @@ export async function apiDelete<T>(path: string): Promise<T> {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
-          window.dispatchEvent(new CustomEvent("auth:logout"));
+          redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }
+      } else {
+        // No refresh token, redirect to login immediately
+        redirectToLogin();
+        throw new Error("Session expired. Please log in again.");
       }
     }
     let errorMessage = `Request failed: ${res.status}`;
@@ -516,6 +642,22 @@ export async function apiDelete<T>(path: string): Promise<T> {
       } catch {
         errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
+    }
+    
+    // Check if error indicates session expired (500 with session-related message, or any unauthorized message)
+    const lowerMessage = errorMessage.toLowerCase();
+    const isSessionError = 
+      (res.status === 500 && (lowerMessage.includes("session") || lowerMessage.includes("expired") || lowerMessage.includes("unauthorized"))) ||
+      lowerMessage.includes("session expired") ||
+      lowerMessage.includes("unauthorized") ||
+      lowerMessage.includes("token") && (lowerMessage.includes("expired") || lowerMessage.includes("invalid"));
+    
+    if (isSessionError) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      redirectToLogin();
+      throw new Error("Session expired. Please log in again.");
     }
     
     console.error(`[apiDelete] Failed: ${errorMessage}`);

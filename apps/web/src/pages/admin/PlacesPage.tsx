@@ -1,6 +1,7 @@
 // src/pages/admin/PlacesPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
@@ -52,6 +53,7 @@ interface Place {
 
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
   const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
   const { showToast } = useToast();
   usePageTitle("admin.places");
@@ -112,6 +114,7 @@ export function PlacesPage() {
     isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const previousPathnameRef = useRef<string>(location.pathname);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -136,6 +139,7 @@ export function PlacesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId, pagination.page, pagination.limit]);
+
 
   const loadData = async () => {
     if (!selectedTenantId) return;
@@ -491,6 +495,67 @@ export function PlacesPage() {
     });
     setFormErrors({});
   };
+
+  // Reset edit state when navigating away from this page
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const previousPath = previousPathnameRef.current;
+    
+    // Only reset if pathname actually changed AND we're no longer on places page
+    if (currentPath !== previousPath) {
+      previousPathnameRef.current = currentPath;
+      
+      const isOnPlacesPage = currentPath.includes("/admin/places");
+      
+      // Only reset if we're NOT on the places page AND we have edit state active
+      if (!isOnPlacesPage && (editingId || isCreating)) {
+        setEditingId(null);
+        setIsCreating(false);
+        // Reset form data directly to avoid dependency issues
+        setFormData({
+          categoryId: "",
+          townId: "",
+          priceBandId: "",
+          tagIds: [],
+          nameHu: "",
+          nameEn: "",
+          nameDe: "",
+          descriptionHu: "",
+          descriptionEn: "",
+          descriptionDe: "",
+          addressHu: "",
+          addressEn: "",
+          addressDe: "",
+          phone: "",
+          email: "",
+          website: "",
+          facebook: "",
+          whatsapp: "",
+          openingHours: [],
+          accessibilityHu: "",
+          accessibilityEn: "",
+          accessibilityDe: "",
+          seoTitleHu: "",
+          seoTitleEn: "",
+          seoTitleDe: "",
+          seoDescriptionHu: "",
+          seoDescriptionEn: "",
+          seoDescriptionDe: "",
+          seoImageHu: "",
+          seoImageEn: "",
+          seoImageDe: "",
+          seoKeywordsHu: [],
+          seoKeywordsEn: [],
+          seoKeywordsDe: [],
+          heroImage: "",
+          lat: "",
+          lng: "",
+          isActive: true,
+        });
+        setFormErrors({});
+      }
+    }
+  }, [location.pathname, editingId, isCreating]);
 
   // Wait for tenant context to initialize
   if (isTenantLoading) {

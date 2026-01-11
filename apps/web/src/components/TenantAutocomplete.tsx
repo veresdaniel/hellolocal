@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Tenant } from "../api/admin.api";
 
@@ -14,8 +14,9 @@ export function TenantAutocomplete({ selectedTenantIds, onTenantIdsChange, allTe
   const [suggestions, setSuggestions] = useState<Tenant[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const availableTenants = allTenants.filter(
-    (tenant) => !selectedTenantIds.includes(tenant.id)
+  const availableTenants = useMemo(() => 
+    allTenants.filter((tenant) => !selectedTenantIds.includes(tenant.id)),
+    [allTenants, selectedTenantIds]
   );
 
   useEffect(() => {

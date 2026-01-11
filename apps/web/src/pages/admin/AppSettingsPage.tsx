@@ -407,9 +407,9 @@ export function AppSettingsPage() {
                       minWidth: 200,
                     }}
                   >
-                    <option value="hu">🇭🇺 {t("admin.languageNames.hu")} (Magyar)</option>
+                    <option value="hu">🇭🇺 {t("admin.languageNames.hu")}</option>
                     <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
-                    <option value="de">🇩🇪 {t("admin.languageNames.de")} (Deutsch)</option>
+                    <option value="de">🇩🇪 {t("admin.languageNames.de")}</option>
                   </select>
                   {isAdmin && (
                     <button
@@ -517,9 +517,9 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 >
-                  <option value="hu">🇭🇺 {t("admin.languageNames.hu")} (Magyar)</option>
+                  <option value="hu">🇭🇺 {t("admin.languageNames.hu")}</option>
                   <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
-                  <option value="de">🇩🇪 {t("admin.languageNames.de")} (Deutsch)</option>
+                  <option value="de">🇩🇪 {t("admin.languageNames.de")}</option>
                 </select>
                 {isAdmin && (
                   <button
