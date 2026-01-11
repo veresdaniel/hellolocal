@@ -96,10 +96,24 @@ export function MapComponent({
   mapStyle = "default",
 }: MapComponentProps) {
   const { t } = useTranslation();
-  const { showUserLocation, setShowUserLocation, userLocation: userLocationFromStore } = useFiltersStore();
+  const { showUserLocation, setShowUserLocation, userLocation: userLocationFromStore, setUserLocation } = useFiltersStore();
   
   // Use userLocation from store if available, otherwise use prop
   const userLocation = userLocationFromStore || userLocationProp;
+  
+  // Watch ID ref for geolocation
+  const watchIdRef = useRef<number | null>(null);
+  
+  // Cleanup geolocation watch on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, []);
+  
   const [routes, setRoutes] = useState<Array<{ coordinates: number[][]; markerId: string; distance?: number; duration?: number }>>([]);
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const routesRef = useRef<Array<{ coordinates: number[][]; markerId: string; distance?: number; duration?: number }>>([]);
@@ -1099,7 +1113,77 @@ export function MapComponent({
               type="checkbox"
               checked={showUserLocation}
               onChange={(e) => {
-                setShowUserLocation(e.target.checked);
+                const checked = e.target.checked;
+                if (checked) {
+                  // First, enable the checkbox immediately (user gesture context)
+                  setShowUserLocation(true);
+                  
+                  // Then request geolocation in user gesture context
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (position) => {
+                        setUserLocation({
+                          lat: position.coords.latitude,
+                          lng: position.coords.longitude,
+                        });
+                        
+                        // Start watching for updates
+                        if (watchIdRef.current !== null) {
+                          navigator.geolocation.clearWatch(watchIdRef.current);
+                        }
+                        watchIdRef.current = navigator.geolocation.watchPosition(
+                          (updatedPosition) => {
+                            setUserLocation({
+                              lat: updatedPosition.coords.latitude,
+                              lng: updatedPosition.coords.longitude,
+                            });
+                          },
+                          (error) => {
+                            if (error.code === error.PERMISSION_DENIED) {
+                              setShowUserLocation(false);
+                              setUserLocation(null);
+                            }
+                          },
+                          {
+                            enableHighAccuracy: true,
+                            maximumAge: 30000,
+                            timeout: 10000,
+                          }
+                        );
+                      },
+                      (error) => {
+                        // Permission denied or error - disable
+                        setShowUserLocation(false);
+                        setUserLocation(null);
+                        
+                        // Log error for debugging
+                        if (error.code === error.PERMISSION_DENIED) {
+                          // Permission denied - user needs to allow in browser settings
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                          // Position unavailable
+                        } else if (error.code === error.TIMEOUT) {
+                          // Timeout
+                        }
+                      },
+                      {
+                        enableHighAccuracy: true,
+                        maximumAge: 300000,
+                        timeout: 15000,
+                      }
+                    );
+                  } else {
+                    // Geolocation not available
+                    setShowUserLocation(false);
+                  }
+                } else {
+                  // Disable: clear watch and location
+                  if (watchIdRef.current !== null) {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                    watchIdRef.current = null;
+                  }
+                  setShowUserLocation(false);
+                  setUserLocation(null);
+                }
               }}
               onClick={(e) => {
                 // Prevent drag when clicking directly on checkbox

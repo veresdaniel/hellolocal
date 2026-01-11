@@ -88,21 +88,18 @@ export function ExplorePage() {
     }
   }, [showUserLocation, setUserLocation]);
   
+  // Note: Geolocation is now handled by MapComponent checkbox onChange (user gesture context)
+  // This effect only watches for updates if we already have a location
   useEffect(() => {
-    if (!navigator.geolocation) {
+    if (!navigator.geolocation || !showUserLocation) {
       return;
     }
     
-    // Don't request geolocation if showUserLocation is disabled
-    if (!showUserLocation) {
-      return;
-    }
-    
-    // Check store state directly as fallback (don't wait for hydration if showUserLocation is enabled)
+    // Only watch for updates if we already have a userLocation
+    // Don't request new location here - MapComponent handles that in user gesture context
     const storeState = useFiltersStore.getState();
     const currentUserLocation = userLocation || storeState.userLocation;
     
-    // If we already have a userLocation (from localStorage or store), use it and start watching
     if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
       // Only start watching if we're not already watching
       if (watchIdRef.current === null) {
@@ -123,52 +120,8 @@ export function ExplorePage() {
             timeout: 10000,
           }
         );
-        hasRequestedLocation.current = true;
       }
-      return;
     }
-    
-    // If we're already watching, don't request again
-    if (watchIdRef.current !== null || hasRequestedLocation.current) {
-      return;
-    }
-    
-    hasRequestedLocation.current = true;
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        
-        // Watch position for updates (especially useful on mobile)
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (updatedPosition) => {
-            setUserLocation({
-              lat: updatedPosition.coords.latitude,
-              lng: updatedPosition.coords.longitude,
-            });
-          },
-          (error) => {
-            // Geolocation watch error
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 30000,
-            timeout: 10000,
-          }
-        );
-      },
-      (error) => {
-        // Geolocation error
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 300000, // Accept cached position up to 5 minutes old (for page refresh)
-        timeout: 15000,
-      }
-    );
     
     // Cleanup watch on unmount
     return () => {
