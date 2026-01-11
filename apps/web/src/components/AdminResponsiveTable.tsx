@@ -530,9 +530,10 @@ export function AdminResponsiveTable<T>({
                   if (offset === 0) {
                     // Current card
                     if (isTransitioningIn) {
-                      // Card is transitioning in: show starting position based on direction
+                      // Card is transitioning in: start from side, animate to center
                       if (swipeDirection === "right" && previousOffset === 1) {
-                        // Was offset 1, sliding in from left
+                        // Was offset 1, sliding in from left to center
+                        // Start at left, CSS transition will animate to center when swipeDirection clears
                         return {
                           ...baseStyle,
                           zIndex: 30,
@@ -540,7 +541,8 @@ export function AdminResponsiveTable<T>({
                           opacity: 0,
                         };
                       } else if (swipeDirection === "left" && previousOffset === -1) {
-                        // Was offset -1, sliding in from right
+                        // Was offset -1, sliding in from right to center
+                        // Start at right, CSS transition will animate to center when swipeDirection clears
                         return {
                           ...baseStyle,
                           zIndex: 30,
@@ -552,7 +554,7 @@ export function AdminResponsiveTable<T>({
                     
                     // Current card sliding out or final position
                     if (swipeDirection === "right" && !isTransitioningIn) {
-                      // Swiping right (next) = current card slides out to the right
+                      // Swiping right (next) = current card slides out to the right from center
                       return {
                         ...baseStyle,
                         zIndex: 30,
@@ -560,7 +562,7 @@ export function AdminResponsiveTable<T>({
                         opacity: 0,
                       };
                     } else if (swipeDirection === "left" && !isTransitioningIn) {
-                      // Swiping left (previous) = current card slides out to the left
+                      // Swiping left (previous) = current card slides out to the left from center
                       return {
                         ...baseStyle,
                         zIndex: 30,
@@ -595,8 +597,19 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === 1) {
-                    // Next card: slide in from left when swiping right
-                    if (swipeDirection === "right") {
+                    // Next card
+                    if (swipeDirection === "right" && previousOffset === 1) {
+                      // Currently transitioning in from left to center
+                      // Start at left, will animate to final position when swipeDirection clears
+                      return {
+                        ...baseStyle,
+                        zIndex: 20,
+                        transform: "translateX(-100%) translateY(12px) scale(0.95)",
+                        opacity: 0.6,
+                        pointerEvents: "none" as const,
+                      };
+                    } else if (swipeDirection === "right") {
+                      // Waiting to slide in from left
                       return {
                         ...baseStyle,
                         zIndex: 20,
@@ -605,6 +618,7 @@ export function AdminResponsiveTable<T>({
                         pointerEvents: "none" as const,
                       };
                     } else {
+                      // No swipe or other direction
                       return {
                         ...baseStyle,
                         zIndex: 20,
@@ -622,8 +636,19 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card: slide in from right when swiping left
-                    if (swipeDirection === "left") {
+                    // Previous card
+                    if (swipeDirection === "left" && previousOffset === -1) {
+                      // Currently transitioning in from right to center
+                      // Start at right, will animate to final position when swipeDirection clears
+                      return {
+                        ...baseStyle,
+                        zIndex: 20,
+                        transform: "translateX(100%) translateY(-12px) scale(0.95)",
+                        opacity: 0.6,
+                        pointerEvents: "none" as const,
+                      };
+                    } else if (swipeDirection === "left") {
+                      // Waiting to slide in from right
                       return {
                         ...baseStyle,
                         zIndex: 20,
@@ -632,6 +657,7 @@ export function AdminResponsiveTable<T>({
                         pointerEvents: "none" as const,
                       };
                     } else {
+                      // No swipe or other direction
                       return {
                         ...baseStyle,
                         zIndex: 5,
