@@ -253,6 +253,11 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     const url = escapeHtml(seoData.url);
     const siteName = escapeHtml(seoData.siteName);
 
+    // Default image dimensions (Facebook recommended: 1200x630px)
+    // If image dimensions are provided in seoData, use them; otherwise use defaults
+    const imageWidth = (seoData as any).imageWidth || "1200";
+    const imageHeight = (seoData as any).imageHeight || "630";
+
     // Build meta tags
     const metaTags = `
     <!-- SEO Meta Tags (injected by middleware) -->
@@ -264,6 +269,8 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     <meta property="og:url" content="${url}">
     <meta property="og:site_name" content="${siteName}">
     ${image ? `<meta property="og:image" content="${image}">` : ""}
+    ${image ? `<meta property="og:image:width" content="${imageWidth}">` : ""}
+    ${image ? `<meta property="og:image:height" content="${imageHeight}">` : ""}
     <meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">
     <meta name="twitter:title" content="${title}">
     <meta name="twitter:description" content="${description}">

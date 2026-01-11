@@ -67,6 +67,11 @@ function injectMetaTags(html, seoData) {
   const url = escapeHtml(seoData.url);
   const siteName = escapeHtml(seoData.siteName);
 
+  // Default image dimensions (Facebook recommended: 1200x630px)
+  // If image dimensions are provided in seoData, use them; otherwise use defaults
+  const imageWidth = seoData.imageWidth || '1200';
+  const imageHeight = seoData.imageHeight || '630';
+
   const metaTags = `
     <!-- SEO Meta Tags (injected by server middleware) -->
     <title>${title}</title>
@@ -77,6 +82,8 @@ function injectMetaTags(html, seoData) {
     <meta property="og:url" content="${url}">
     <meta property="og:site_name" content="${siteName}">
     ${image ? `<meta property="og:image" content="${image}">` : ''}
+    ${image ? `<meta property="og:image:width" content="${imageWidth}">` : ''}
+    ${image ? `<meta property="og:image:height" content="${imageHeight}">` : ''}
     <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">
     <meta name="twitter:title" content="${title}">
     <meta name="twitter:description" content="${description}">
@@ -155,7 +162,14 @@ async function handleBotRequest(req, res, next) {
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        seoData = await response.json();
+        const jsonData = await response.json();
+        // Validate response structure
+        if (jsonData && typeof jsonData === 'object' && 'title' in jsonData) {
+          seoData = jsonData;
+          console.log(`[SEO] Successfully fetched SEO data for ${req.path}`);
+        } else {
+          console.warn(`[SEO] Invalid SEO data structure received for ${req.path}`);
+        }
       } else {
         console.warn(`[SEO] Failed to fetch SEO data: ${response.status} ${response.statusText}`);
       }
@@ -178,7 +192,24 @@ async function handleBotRequest(req, res, next) {
 
     // Inject meta tags if SEO data is available
     if (seoData) {
+      // Override URL if backend returned localhost (backend FRONTEND_URL not set)
+      if (seoData.url && seoData.url.includes('localhost')) {
+        const protocol = req.protocol || 'https';
+        const host = req.get('host') || FRONTEND_URL.replace(/^https?:\/\//, '');
+        const fullUrl = `${protocol}://${host}${req.path}`;
+        seoData.url = fullUrl;
+        console.log(`[SEO] Overriding localhost URL with: ${seoData.url}`);
+      }
+      
+      console.log(`[SEO] Injecting meta tags for ${req.path}:`, {
+        title: seoData.title,
+        description: seoData.description?.substring(0, 50) + '...',
+        image: seoData.image,
+        url: seoData.url,
+      });
       html = injectMetaTags(html, seoData);
+    } else {
+      console.warn(`[SEO] No SEO data available for ${req.path}`);
     }
 
     // Send modified HTML
