@@ -189,7 +189,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = await refreshToken({ refreshToken: refreshTokenValue });
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem("refreshToken", data.refreshToken);
-            console.log("[Auth] Session extended due to user activity");
           } catch (error) {
             console.error("[Auth] Failed to refresh session on activity", error);
             // Don't logout here, let the normal expiration check handle it
@@ -321,8 +320,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...response.user,
       role: response.user.role.toLowerCase() as User["role"],
     };
-    console.log("[AuthContext] Login successful, setting user:", userData);
-    console.log("[AuthContext] User role after login:", userData.role);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   }, []);

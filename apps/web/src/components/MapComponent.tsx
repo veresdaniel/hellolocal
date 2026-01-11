@@ -300,7 +300,6 @@ export function MapComponent({
     
     // On initial mount, set the viewState from props
     if (isInitialMount.current && latitude != null && longitude != null) {
-      console.log("MapComponent: Initial mount, setting viewState from props:", { latitude, longitude, defaultZoom });
       setViewState({
         longitude,
         latitude,
@@ -318,7 +317,6 @@ export function MapComponent({
     
     // If props changed (e.g., lang switch causing remount), force update
     if (propsChanged && latitude != null && longitude != null) {
-      console.log("MapComponent: Props changed, forcing viewState update:", { latitude, longitude, defaultZoom, "prevLatProp": prevLatPropRef.current, "prevLngProp": prevLngPropRef.current, "prevZoomProp": prevZoomPropRef.current });
       setViewState({
         longitude,
         latitude,
@@ -349,7 +347,6 @@ export function MapComponent({
         // Update if difference is significant (more than 0.0001 degrees, ~10m)
         // This allows updates when mapSettings change (lang/tenant switch) but prevents flickering during filter changes
         if (latDiff > 0.0001 || lngDiff > 0.0001) {
-          console.log("MapComponent: Updating viewState from props:", { latitude, longitude, defaultZoom, "prevLat": prevLat, "prevLng": prevLng, "latDiff": latDiff, "lngDiff": lngDiff });
           setViewState((prev) => ({
             ...prev,
             latitude,
@@ -357,12 +354,9 @@ export function MapComponent({
             zoom: defaultZoom, // Also update zoom when center changes
           }));
           prevZoomRef.current = defaultZoom;
-        } else {
-          console.log("MapComponent: Skipping update (difference too small):", { latitude, longitude, "prevLat": prevLat, "prevLng": prevLng, "latDiff": latDiff, "lngDiff": lngDiff });
         }
       } else {
         // First time setting coordinates
-        console.log("MapComponent: Setting initial viewState from props:", { latitude, longitude, defaultZoom });
         setViewState((prev) => ({
           ...prev,
           latitude,
@@ -387,7 +381,6 @@ export function MapComponent({
   useEffect(() => {
     if (defaultZoom != null && prevZoomRef.current !== defaultZoom) {
       // Only update zoom if it actually changed
-      console.log("MapComponent: Updating zoom:", defaultZoom);
       setViewState((prev) => ({
         ...prev,
         zoom: defaultZoom,
@@ -400,7 +393,6 @@ export function MapComponent({
     (event: { lngLat: { lng: number; lat: number } }) => {
       // Deselect marker when clicking on map
       if (selectedMarkerId) {
-        console.log("Map clicked, deselecting marker:", selectedMarkerId);
         setSelectedMarkerId(null);
       }
       
@@ -452,11 +444,9 @@ export function MapComponent({
   // OSRM is free and doesn't require an API key
   const fetchRoute = useCallback(async (markerLat: number, markerLng: number, markerId: string) => {
     if (!userLocation) {
-      console.warn("Cannot fetch route: userLocation is null");
       return;
     }
     
-    console.log("fetchRoute called for marker:", markerId, "from:", userLocation, "to:", markerLat, markerLng);
     setLoadingRoutes(prev => new Set(prev).add(markerId));
     
     try {
@@ -495,9 +485,7 @@ export function MapComponent({
         
         setRoutes(prev => {
           const filtered = prev.filter(r => r.markerId !== markerId);
-          const updated = [...filtered, newRoute];
-          console.log(`Route fetched successfully for marker ${markerId}, distance: ${distance.toFixed(2)} km, walking time: ${walkingDuration.toFixed(1)} min. Routes array length: ${updated.length}`);
-          return updated;
+          return [...filtered, newRoute];
         });
         
         // Remove from loading set
@@ -529,11 +517,8 @@ export function MapComponent({
   // Fetch routes only for selected marker and if showUserLocation is enabled
   // Update route when userLocation changes significantly (>50m) for real-time tracking
   useEffect(() => {
-    console.log("Route fetch effect triggered - selectedMarkerId:", selectedMarkerId, "userLocation:", userLocation, "showUserLocation:", showUserLocation, "markers count:", markers.length);
-    
     if (showUserLocation && selectedMarkerId && userLocation && userLocation.lat && userLocation.lng) {
       const selectedMarker = markers.find(m => m.id === selectedMarkerId);
-      console.log("Selected marker found:", selectedMarker);
       
       if (selectedMarker && selectedMarker.lat && selectedMarker.lng) {
         const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
@@ -545,42 +530,23 @@ export function MapComponent({
                             Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
                             Math.abs(lastFetch.lng - userLocation.lng) > 0.0005;
         
-        console.log("Route check - isLoading:", isLoading, "shouldUpdate:", shouldUpdate, "lastFetch:", lastFetch);
-        
         // Fetch route when marker changes or position changes significantly
         if (!isLoading && shouldUpdate) {
-          console.log("Fetching/updating route for selected marker:", selectedMarkerId, "from", userLocation, "to", selectedMarker.lat, selectedMarker.lng);
           lastRouteFetchPosition.current = { 
             lat: userLocation.lat, 
             lng: userLocation.lng, 
             markerId: selectedMarkerId 
           };
           fetchRoute(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
-        } else {
-          console.log("Route is loading or position change is too small, skipping fetch");
         }
-      } else {
-        console.warn("Selected marker not found or missing coordinates in markers array");
       }
     } else {
       // Clear routes when no marker is selected or showUserLocation is disabled
-      console.log("No marker selected or no userLocation or showUserLocation disabled, clearing routes. selectedMarkerId:", selectedMarkerId, "userLocation:", userLocation, "showUserLocation:", showUserLocation);
       setRoutes([]);
       lastRouteFetchPosition.current = null;
     }
   }, [selectedMarkerId, userLocation, markers, fetchRoute, showUserLocation]);
 
-  // Debug: log userLocation (always log for debugging)
-  useEffect(() => {
-    console.log("MapComponent - userLocation prop:", userLocation);
-    console.log("MapComponent - userLocation check:", userLocation && userLocation.lat && userLocation.lng);
-    if (userLocation) {
-      console.log("MapComponent received userLocation:", userLocation);
-      console.log("MapComponent - Will render marker at:", userLocation.lat, userLocation.lng);
-    } else {
-      console.log("MapComponent: userLocation is null/undefined");
-    }
-  }, [userLocation]);
 
   // Calculate distances for markers
   // Use route distance if available, otherwise use straight-line distance
@@ -607,16 +573,16 @@ export function MapComponent({
 
   // Handle marker click - behavior depends on showUserLocation
   // If showUserLocation is false: navigate immediately (single click)
-  // If showUserLocation is true: first click selects, second click navigates (two-click)
-  const handleMarkerClick = useCallback((marker: typeof markersWithDistance[0], event: React.MouseEvent) => {
+  // If showUserLocation is true: 
+  //   - First click on a marker: selects it and calculates route
+  //   - Click on different marker: switches to that marker immediately
+  //   - Second click on same marker: navigates to place detail page
+  const handleMarkerClick = useCallback((marker: typeof markersWithDistance[0], event: React.MouseEvent | React.TouchEvent) => {
     event.stopPropagation(); // Prevent map click
     event.preventDefault(); // Prevent default behavior
     
-    console.log("handleMarkerClick called for marker:", marker.id, "showUserLocation:", showUserLocation, "current selectedMarkerId:", selectedMarkerId, "has onClick:", !!marker.onClick);
-    
     if (!showUserLocation) {
       // If user location is disabled, navigate immediately on first click
-      console.log("User location disabled, navigating immediately:", marker.id);
       if (marker.onClick) {
         setTimeout(() => {
           try {
@@ -632,9 +598,7 @@ export function MapComponent({
     // If user location is enabled, use two-click behavior
     if (selectedMarkerId === marker.id) {
       // Second click on same marker - navigate (only if onClick exists)
-      console.log("Second click on marker, navigating:", marker.id);
       if (marker.onClick) {
-        console.log("Calling marker.onClick() for navigation");
         setTimeout(() => {
           try {
             marker.onClick();
@@ -642,12 +606,12 @@ export function MapComponent({
             console.error("Error during navigation:", error);
           }
         }, 0);
-      } else {
-        console.warn("Marker has no onClick callback, cannot navigate");
       }
     } else {
-      // First click - select marker (always works, even without onClick)
-      console.log("First click on marker, selecting:", marker.id);
+      // Click on different marker (or first click if no marker selected) - switch immediately
+      // Clear all previous routes when selecting a new marker
+      setRoutes([]); // Clear all routes when selecting a new marker
+      lastRouteFetchPosition.current = null; // Reset route fetch position tracking
       setSelectedMarkerId(marker.id);
     }
   }, [selectedMarkerId, markersWithDistance, showUserLocation]);
@@ -833,7 +797,6 @@ export function MapComponent({
 
         {/* Route lines from user location to selected marker only - only show if showUserLocation is enabled */}
         {showUserLocation && selectedMarkerId && userLocation && routes.length > 0 && routes.map((route) => {
-          console.log("Rendering route for marker:", route.markerId, "coordinates count:", route.coordinates.length);
           return (
             <Source
               key={`route-${route.markerId}`}
@@ -926,13 +889,21 @@ export function MapComponent({
                   cursor: "pointer",
                 }}
                 onClick={(e) => {
-                  console.log("Marker div clicked:", marker.id, "isClickable:", isClickable);
+                  e.stopPropagation(); // Prevent map click
+                  e.preventDefault(); // Prevent default
+                  handleMarkerClick(marker, e as any);
+                }}
+                onTouchEnd={(e) => {
                   e.stopPropagation(); // Prevent map click
                   e.preventDefault(); // Prevent default
                   handleMarkerClick(marker, e as any);
                 }}
                 onMouseDown={(e) => {
                   // Also stop propagation on mousedown to prevent map click
+                  e.stopPropagation();
+                }}
+                onTouchStart={(e) => {
+                  // Also stop propagation on touchstart to prevent map click
                   e.stopPropagation();
                 }}
               >
@@ -1128,7 +1099,6 @@ export function MapComponent({
               type="checkbox"
               checked={showUserLocation}
               onChange={(e) => {
-                console.log("Checkbox changed:", e.target.checked);
                 setShowUserLocation(e.target.checked);
               }}
               onClick={(e) => {

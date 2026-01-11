@@ -33,14 +33,12 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
   const loadTenants = async () => {
     // Don't load if user is not logged in
     if (!user) {
-      console.log("[AdminTenantContext] No user, skipping tenant load");
       setIsLoading(false);
       setTenants([]);
       setSelectedTenantIdState(null);
       return;
     }
     
-    console.log("[AdminTenantContext] Loading tenants for user:", user.id, "role:", user.role);
     // Ensure isLoading is true when starting to load
     setIsLoading(true);
     
@@ -48,22 +46,18 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
       // Only superadmin and admin can call getTenants to see all tenants
       if (user.role === "superadmin" || user.role === "admin") {
         const data = await getTenants();
-        console.log("[AdminTenantContext] Loaded tenants (admin/superadmin):", data.length);
         setTenants(data);
         // Auto-select first tenant if none selected
         if (data.length > 0) {
           const stored = localStorage.getItem("adminSelectedTenantId");
           if (stored && data.some((t) => t.id === stored)) {
-            console.log("[AdminTenantContext] Using stored tenant:", stored);
             setSelectedTenantIdState(stored);
           } else {
             // Always select first tenant if none selected
-            console.log("[AdminTenantContext] Auto-selecting first tenant:", data[0].id);
             setSelectedTenantIdState(data[0].id);
             localStorage.setItem("adminSelectedTenantId", data[0].id);
           }
         } else {
-          console.log("[AdminTenantContext] No tenants found");
           setTenants([]);
         }
       } else if (user.tenantIds && user.tenantIds.length > 0) {
@@ -77,20 +71,16 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
         );
         const tenantResults = await Promise.all(tenantPromises);
         const userTenants = tenantResults.filter((t: Tenant | null): t is Tenant => t !== null);
-        console.log("[AdminTenantContext] Loaded tenants (regular user):", userTenants.length);
         setTenants(userTenants);
         if (userTenants.length > 0) {
           const stored = localStorage.getItem("adminSelectedTenantId");
           if (stored && userTenants.some((t) => t.id === stored)) {
-            console.log("[AdminTenantContext] Using stored tenant:", stored);
             setSelectedTenantIdState(stored);
           } else {
-            console.log("[AdminTenantContext] Auto-selecting first tenant:", userTenants[0].id);
             setSelectedTenantIdState(userTenants[0].id);
             localStorage.setItem("adminSelectedTenantId", userTenants[0].id);
           }
         } else {
-          console.log("[AdminTenantContext] No tenants found for user");
           setTenants([]);
         }
       } else {
@@ -101,7 +91,6 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
       console.error("[AdminTenantContext] Failed to load tenants", err);
       setTenants([]);
     } finally {
-      console.log("[AdminTenantContext] Tenant loading complete, isLoading = false");
       setIsLoading(false);
     }
   };
@@ -110,17 +99,12 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
     // Wait for AuthContext to finish loading before trying to load tenants
     if (authIsLoading) {
       // Still loading auth, keep tenant loading state but don't try to load tenants yet
-      console.log("[AdminTenantContext] Waiting for AuthContext to initialize...");
       // Don't set isLoading here - it's already true from initial state
       return;
     }
     
-    // AuthContext is done loading, now we can proceed
-    console.log("[AdminTenantContext] AuthContext initialized, user:", user ? user.id : "null", "authIsLoading:", authIsLoading);
-    
     // Only load tenants if user is logged in
     if (user) {
-      console.log("[AdminTenantContext] User exists, loading tenants...");
       loadTenants().catch((err) => {
         console.error("[AdminTenantContext] loadTenants failed:", err);
         // Ensure isLoading is set to false even if loadTenants fails
@@ -129,7 +113,6 @@ export function AdminTenantProvider({ children }: { children: ReactNode }) {
     } else {
       // If no user after auth is done, set loading to false immediately
       // This prevents infinite loading state
-      console.log("[AdminTenantContext] No user after auth init, setting isLoading to false");
       setIsLoading(false);
       setTenants([]);
       setSelectedTenantIdState(null);

@@ -87,11 +87,6 @@ export function PlacesListView({
       const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
       const priceBandParam = selectedPriceBands.length > 0 ? selectedPriceBands : undefined;
       
-      console.log('[PlacesListView] Filtering with:', { 
-        categories: categoryParam, 
-        priceBands: priceBandParam,
-      });
-      
       const places = await getPlaces(
         lang,
         tenantKey,

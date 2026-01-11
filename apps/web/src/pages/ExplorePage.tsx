@@ -41,7 +41,6 @@ export function ExplorePage() {
           const timeoutId = setTimeout(() => {
             const storeState = useFiltersStore.getState();
             if (!storeState._hasHydrated && persistedLocation) {
-              console.log("ExplorePage: Manually setting hydration flag, userLocation:", persistedLocation);
               useFiltersStore.getState().setHasHydrated(true);
               if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
                 setUserLocation(persistedLocation);
@@ -52,10 +51,8 @@ export function ExplorePage() {
           return () => clearTimeout(timeoutId);
         }
       } catch (e) {
-        console.warn("ExplorePage: Failed to check localStorage for hydration:", e);
+        // Failed to check localStorage for hydration
       }
-    } else if (_hasHydrated && userLocation && userLocation.lat && userLocation.lng) {
-      console.log("ExplorePage: Store hydrated, userLocation available:", userLocation);
     }
   }, [_hasHydrated, userLocation, setUserLocation]);
   
@@ -63,7 +60,6 @@ export function ExplorePage() {
   // Or restore it from localStorage when enabled
   useEffect(() => {
     if (!showUserLocation) {
-      console.log("ExplorePage: showUserLocation disabled, clearing userLocation");
       // Clear any existing watch
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
@@ -75,34 +71,30 @@ export function ExplorePage() {
       setUserLocation(null);
     } else {
       // When enabled, try to restore from localStorage immediately
-      console.log("ExplorePage: showUserLocation enabled, checking for saved location");
       try {
         const stored = localStorage.getItem("home-filters-storage");
         if (stored) {
           const parsed = JSON.parse(stored);
           const savedLocation = parsed.state?.userLocation;
           if (savedLocation && savedLocation.lat && savedLocation.lng) {
-            console.log("ExplorePage: Restoring saved location from localStorage:", savedLocation);
             setUserLocation(savedLocation);
             // Reset hasRequestedLocation to allow new request
             hasRequestedLocation.current = false;
           }
         }
       } catch (e) {
-        console.warn("ExplorePage: Failed to restore location from localStorage:", e);
+        // Failed to restore location from localStorage
       }
     }
   }, [showUserLocation, setUserLocation]);
   
   useEffect(() => {
     if (!navigator.geolocation) {
-      console.log("Geolocation not available");
       return;
     }
     
     // Don't request geolocation if showUserLocation is disabled
     if (!showUserLocation) {
-      console.log("ExplorePage: User location disabled, not requesting geolocation");
       return;
     }
     
@@ -114,18 +106,16 @@ export function ExplorePage() {
     if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
       // Only start watching if we're not already watching
       if (watchIdRef.current === null) {
-        console.log("ExplorePage: Using existing userLocation from store:", currentUserLocation);
         // Start watching for updates
         watchIdRef.current = navigator.geolocation.watchPosition(
           (updatedPosition) => {
-            console.log("ExplorePage: Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
             setUserLocation({
               lat: updatedPosition.coords.latitude,
               lng: updatedPosition.coords.longitude,
             });
           },
           (error) => {
-            console.warn("ExplorePage: Geolocation watch error:", error);
+            // Geolocation watch error
           },
           {
             enableHighAccuracy: true,
@@ -143,12 +133,10 @@ export function ExplorePage() {
       return;
     }
     
-    console.log("ExplorePage: Requesting geolocation...");
     hasRequestedLocation.current = true;
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("ExplorePage: Geolocation success:", position.coords.latitude, position.coords.longitude);
         setUserLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -157,14 +145,13 @@ export function ExplorePage() {
         // Watch position for updates (especially useful on mobile)
         watchIdRef.current = navigator.geolocation.watchPosition(
           (updatedPosition) => {
-            console.log("ExplorePage: Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
             setUserLocation({
               lat: updatedPosition.coords.latitude,
               lng: updatedPosition.coords.longitude,
             });
           },
           (error) => {
-            console.warn("ExplorePage: Geolocation watch error:", error);
+            // Geolocation watch error
           },
           {
             enableHighAccuracy: true,
@@ -174,10 +161,7 @@ export function ExplorePage() {
         );
       },
       (error) => {
-        console.warn("ExplorePage: Geolocation error:", error);
-        if (error.code === error.PERMISSION_DENIED) {
-          console.log("ExplorePage: Location permission denied");
-        }
+        // Geolocation error
       },
       {
         enableHighAccuracy: true,
@@ -189,7 +173,6 @@ export function ExplorePage() {
     // Cleanup watch on unmount
     return () => {
       if (watchIdRef.current !== null) {
-        console.log("ExplorePage: Clearing geolocation watch");
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
@@ -222,7 +205,6 @@ export function ExplorePage() {
     name: place.name,
     onClick: place.slug ? () => {
       const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
-      console.log("ExplorePage: Navigating to place:", place.slug, "path:", path, "tenantSlug:", tenantSlug, "lang:", lang);
       navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));

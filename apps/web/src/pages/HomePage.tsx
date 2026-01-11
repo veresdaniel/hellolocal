@@ -98,9 +98,7 @@ export function HomePage() {
   const { data: mapSettings, isLoading: isLoadingMapSettings, dataUpdatedAt } = useQuery({
     queryKey: ["mapSettings", lang, tenantKey],
     queryFn: async () => {
-      console.log("Fetching mapSettings for lang:", lang, "tenantKey:", tenantKey);
       const result = await getMapSettings(lang, tenantKey);
-      console.log("mapSettings fetched:", result, "for lang:", lang, "tenantKey:", tenantKey);
       return result;
     },
     staleTime: 0, // Always consider stale to ensure fresh data on lang/tenant change
@@ -145,12 +143,6 @@ export function HomePage() {
     // placeholderData can cause stale data to persist
   });
   
-  // Log error if places query fails
-  useEffect(() => {
-    if (isPlacesError) {
-      console.warn("Places query error:", placesError, "lang:", lang, "tenantKey:", tenantKey);
-    }
-  }, [isPlacesError, placesError, lang, tenantKey]);
 
   // Get user location - always try to get it if available, not just for filter
   const [locationPermission, setLocationPermission] = useState<"prompt" | "granted" | "denied">("prompt");
@@ -172,7 +164,6 @@ export function HomePage() {
           const timeoutId = setTimeout(() => {
             const storeState = useFiltersStore.getState();
             if (!storeState._hasHydrated && persistedLocation) {
-              console.log("Manually setting hydration flag, userLocation:", persistedLocation);
               useFiltersStore.getState().setHasHydrated(true);
               if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
                 setUserLocation(persistedLocation);
@@ -183,10 +174,8 @@ export function HomePage() {
           return () => clearTimeout(timeoutId);
         }
       } catch (e) {
-        console.warn("Failed to check localStorage for hydration:", e);
+        // Failed to check localStorage for hydration
       }
-    } else if (_hasHydrated && userLocation && userLocation.lat && userLocation.lng) {
-      console.log("Store hydrated, userLocation available:", userLocation);
     }
   }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
   
@@ -194,7 +183,6 @@ export function HomePage() {
   // Or restore it from localStorage when enabled
   useEffect(() => {
     if (!showUserLocation) {
-      console.log("showUserLocation disabled, clearing userLocation");
       // Clear any existing watch
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
@@ -206,34 +194,30 @@ export function HomePage() {
       setUserLocation(null);
     } else {
       // When enabled, try to restore from localStorage immediately
-      console.log("showUserLocation enabled, checking for saved location");
       try {
         const stored = localStorage.getItem("home-filters-storage");
         if (stored) {
           const parsed = JSON.parse(stored);
           const savedLocation = parsed.state?.userLocation;
           if (savedLocation && savedLocation.lat && savedLocation.lng) {
-            console.log("Restoring saved location from localStorage:", savedLocation);
             setUserLocation(savedLocation);
             // Reset hasRequestedLocation to allow new request
             hasRequestedLocation.current = false;
           }
         }
       } catch (e) {
-        console.warn("Failed to restore location from localStorage:", e);
+        // Failed to restore location from localStorage
       }
     }
   }, [showUserLocation, setUserLocation]);
   
   useEffect(() => {
     if (!navigator.geolocation) {
-      console.log("Geolocation not available");
       return;
     }
     
     // Don't request geolocation if showUserLocation is disabled
     if (!showUserLocation) {
-      console.log("User location disabled, not requesting geolocation");
       return;
     }
     
@@ -245,19 +229,16 @@ export function HomePage() {
     if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
       // Only start watching if we're not already watching
       if (watchIdRef.current === null) {
-        console.log("Using existing userLocation from store:", currentUserLocation);
         setLocationPermission("granted");
         // Start watching for updates
         watchIdRef.current = navigator.geolocation.watchPosition(
           (updatedPosition) => {
-            console.log("Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
             setUserLocation({
               lat: updatedPosition.coords.latitude,
               lng: updatedPosition.coords.longitude,
             });
           },
           (error) => {
-            console.warn("Geolocation watch error:", error);
             if (error.code === error.PERMISSION_DENIED) {
               setLocationPermission("denied");
             }
@@ -275,22 +256,18 @@ export function HomePage() {
     
     // If we're already watching, don't request again
     if (watchIdRef.current !== null) {
-      console.log("Already watching position, skipping new request");
       return;
     }
     
     if (hasRequestedLocation.current) {
-      console.log("Already requested location, skipping new request. watchIdRef:", watchIdRef.current);
       return;
     }
     
-    console.log("Requesting geolocation... showUserLocation:", showUserLocation, "hasRequestedLocation:", hasRequestedLocation.current);
     hasRequestedLocation.current = true;
     
     // Try to get current position
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("Geolocation success:", position.coords.latitude, position.coords.longitude);
         setUserLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -300,14 +277,12 @@ export function HomePage() {
         // Watch position for updates (especially useful on mobile)
         watchIdRef.current = navigator.geolocation.watchPosition(
           (updatedPosition) => {
-            console.log("Position updated:", updatedPosition.coords.latitude, updatedPosition.coords.longitude);
             setUserLocation({
               lat: updatedPosition.coords.latitude,
               lng: updatedPosition.coords.longitude,
             });
           },
           (error) => {
-            console.warn("Geolocation watch error:", error);
             if (error.code === error.PERMISSION_DENIED) {
               setLocationPermission("denied");
             }
@@ -320,14 +295,8 @@ export function HomePage() {
         );
       },
       (error) => {
-        console.warn("Geolocation error:", error);
         if (error.code === error.PERMISSION_DENIED) {
           setLocationPermission("denied");
-          console.log("Location permission denied");
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          console.log("Position unavailable");
-        } else if (error.code === error.TIMEOUT) {
-          console.log("Geolocation timeout");
         }
       },
       {
@@ -340,7 +309,6 @@ export function HomePage() {
     // Cleanup watch on unmount
     return () => {
       if (watchIdRef.current !== null) {
-        console.log("Clearing geolocation watch");
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
@@ -360,7 +328,6 @@ export function HomePage() {
           setLocationPermission("granted");
         },
         (error) => {
-          console.warn("Geolocation error:", error);
           if (error.code === error.PERMISSION_DENIED) {
             setLocationPermission("denied");
           }
@@ -499,7 +466,6 @@ export function HomePage() {
     name: place.name,
     onClick: place.slug ? () => {
       const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
-      console.log("Navigating to place:", place.slug, "path:", path, "tenantSlug:", tenantSlug, "lang:", lang);
       navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));
@@ -517,7 +483,6 @@ export function HomePage() {
   // Force reset and update when lang or tenant changes (ensures fresh initialization)
   useEffect(() => {
     // Reset flags when lang or tenant changes
-    console.log("Lang or tenant changed, resetting flags. lang:", lang, "tenantKey:", tenantKey);
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
   }, [lang, tenantKey]);
@@ -533,7 +498,6 @@ export function HomePage() {
   useEffect(() => {
     // Wait for mapSettings to load
     if (isLoadingMapSettings) {
-      console.log("Waiting for mapSettings to load... lang:", lang, "tenantKey:", tenantKey);
       return;
     }
     
@@ -549,9 +513,6 @@ export function HomePage() {
     
     // Update refs
     if (isInitialMount || langChanged || tenantKeyChanged) {
-      if (langChanged || tenantKeyChanged) {
-        console.log("Lang or tenantKey changed, forcing map center update. lang:", lang, "tenantKey:", tenantKey, "prevLang:", prevLangRef.current, "prevTenantKey:", prevTenantKeyRef.current);
-      }
       prevLangRef.current = lang;
       prevTenantKeyRef.current = tenantKey;
     }
@@ -565,30 +526,23 @@ export function HomePage() {
         Math.abs(mapCenter.lng - mapSettings.lng) < 0.0001;
       
       if (isInitialMount || langChanged || tenantKeyChanged || mapSettingsChanged || !hasInitializedCenter.current || !currentCenterMatches) {
-        console.log("Updating map center from mapSettings:", mapSettings, "lang:", lang, "tenantKey:", tenantKey, "dataUpdatedAt:", dataUpdatedAt, "current mapCenter:", mapCenter, "isInitialMount:", isInitialMount, "langChanged:", langChanged, "tenantKeyChanged:", tenantKeyChanged, "mapSettingsChanged:", mapSettingsChanged, "hasInitializedCenter:", hasInitializedCenter.current, "currentCenterMatches:", currentCenterMatches);
         setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
         hasInitializedCenter.current = true;
         prevMapSettingsRef.current = { lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? null };
         return; // Exit early if we have map settings
-      } else {
-        console.log("Skipping map center update (no change detected):", { mapSettings, lang, tenantKey, "prevMapSettings": prevMapSettingsRef.current, "hasInitializedCenter": hasInitializedCenter.current, "currentCenterMatches": currentCenterMatches });
       }
-    } else {
-      console.warn("mapSettings has no lat/lng:", mapSettings, "lang:", lang, "tenantKey:", tenantKey);
     }
     
     // Fallback: only use places center if we don't have map settings and haven't initialized yet
     if (!hasInitializedCenter.current && !initialPlacesLoaded.current && allPlacesWithCoordinates.length > 0 && !isLoadingPlaces) {
       const avgLat = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / allPlacesWithCoordinates.length;
       const avgLng = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / allPlacesWithCoordinates.length;
-      console.log("Using places center as fallback:", { lat: avgLat, lng: avgLng });
       setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
       hasInitializedCenter.current = true;
       initialPlacesLoaded.current = true;
       previousMarkersCount.current = allPlacesWithCoordinates.length;
     } else if (!hasInitializedCenter.current && !isLoadingPlaces && !isLoadingMapSettings) {
       // Default to Budapest only if we have no settings and no places yet
-      console.log("Using default Budapest center");
       setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
       hasInitializedCenter.current = true;
     }
@@ -668,7 +622,6 @@ export function HomePage() {
     
     // Fallback to mapSettings if available
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
-      console.log("Using mapSettings as fallback for center calculation:", mapSettings);
       return {
         centerLat: mapSettings.lat,
         centerLng: mapSettings.lng,
@@ -690,7 +643,6 @@ export function HomePage() {
   useEffect(() => {
     if (!isLoadingMapSettings && mapSettings && mapSettings.lat != null && mapSettings.lng != null) {
       if (!mapCenter || Math.abs(mapCenter.lat - mapSettings.lat) > 0.0001 || Math.abs(mapCenter.lng - mapSettings.lng) > 0.0001) {
-        console.log("Setting mapCenter immediately from mapSettings:", mapSettings, "current mapCenter:", mapCenter);
         setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
         hasInitializedCenter.current = true;
       }
