@@ -278,16 +278,45 @@ npm install -g pnpm@10.27.0 && ...
 - Ellenőrizd, hogy a `pnpm prisma migrate deploy` szerepel a Start Command-ban
 - Nézd meg a logokat részletekért
 
-### 4. CORS Error Frontend-en
+### 4. CORS Error Frontend-en (MissingAllowOriginHeader)
+
+**Probléma**: A frontend kérések `CORS error: MissingAllowOriginHeader` hibát kapnak.
+
+**Ok**: A backend nem küldi a `Access-Control-Allow-Origin` header-t, mert a `CORS_ORIGIN` environment változó nincs beállítva production módban.
 
 **Megoldás**: 
 - **Ellenőrizd, hogy a backend `CORS_ORIGIN` változó be van állítva!** ⚠️
   - A biztonsági beállítások után production módban kötelező
   - Formátum: `https://hellolocal-frontend.onrender.com` (nincs trailing slash!)
   - Több origin esetén: `https://hellolocal-frontend.onrender.com,https://hellolocal.com`
-- Ellenőrizd, hogy a backend `FRONTEND_URL` jól van beállítva
+- Ellenőrizd, hogy a backend `FRONTEND_URL` jól van beállítva (fallback-ként használható)
 - Ellenőrizd, hogy a frontend `API_URL` vagy `VITE_API_URL` helyesen van beállítva
 - Ha még mindig CORS hibát kapsz, ellenőrizd a böngésző konzoljában az exact origin-t, amit a frontend küld
+- **Fontos**: A backend logokban figyelmeztetés jelenik meg, ha a `CORS_ORIGIN` nincs beállítva production módban
+
+### 4a. 503 Service Unavailable
+
+**Probléma**: A backend API 503-as hibát ad vissza (Service Unavailable).
+
+**Ok**: 
+- A Render.com free tier service-ek **15 perc inaktivitás után alvó módba** kerülnek
+- Vagy a backend service le van állítva / nem elérhető
+- Vagy a health check sikertelen volt, és a service "unhealthy" státuszban van
+
+**Megoldás**:
+1. **Várd meg 1-2 percet** - Ha a service "spinned down" volt, akkor az első kérés után ~1 percbe telik felébredni
+2. **Ellenőrizd a Render.com Dashboard-on**:
+   - Menj a backend service-hez (`hellolocal-api`)
+   - Nézd meg a **Logs** tab-ot - vannak-e hibák?
+   - Nézd meg a **Metrics** tab-ot - fut-e a service?
+   - Ellenőrizd a **Events** tab-ot - volt-e health check failure?
+3. **Ha a service "unhealthy"**:
+   - Ellenőrizd a health check endpoint-ot: `https://hellolocal-api.onrender.com/health`
+   - Ha 429-es hibát kapsz, akkor a health check endpoint nincs kizárva a rate limiting alól (frissítsd a kódot)
+   - Ha más hibát kapsz, nézd meg a logokat
+4. **Ha továbbra is probléma van**:
+   - Próbáld meg manuálisan újraindítani a service-t (Render Dashboard → Manual Deploy)
+   - Vagy upgrade-elj fizetős tervre, amely nem "spins down" inaktivitás után
 
 ### 5. Health Check Failed - Status Code 429
 

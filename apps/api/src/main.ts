@@ -32,11 +32,22 @@ async function bootstrap() {
     ? [] // Productionban NINCS default, kötelező beállítani CORS_ORIGIN vagy FRONTEND_URL!
     : ["http://localhost:5173", "http://localhost:3000"]; // Dev default
 
+  // Figyelmeztetés ha production módban nincs beállítva CORS_ORIGIN
+  if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
+    console.warn(
+      "⚠️  WARNING: CORS_ORIGIN and FRONTEND_URL are not set! CORS will be disabled and frontend requests will fail!"
+    );
+    console.warn(
+      "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hellolocal-frontend.onrender.com)"
+    );
+  }
+
   app.enableCors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Content-Type", "Authorization"],
   });
 
   // Global validation pipe
