@@ -61,14 +61,16 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
   const inputStyle: React.CSSProperties = {
     padding: "clamp(10px, 2vw, 12px)",
     fontSize: "clamp(13px, 3vw, 14px)",
-    border: "1px solid #4c4f69",
+    border: "2px solid #e0e7ff",
     borderRadius: "8px",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    color: "#f0f0ff",
+    backgroundColor: "white",
+    color: "#1a1a1a",
     outline: "none",
     transition: "all 0.3s ease",
     width: "100%",
     boxSizing: "border-box",
+    fontFamily: "inherit",
+    fontWeight: 500,
   };
 
   const checkboxStyle: React.CSSProperties = {
@@ -92,9 +94,9 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
         flexDirection: "column",
         gap: "clamp(12px, 2vw, 16px)",
         padding: "clamp(16px, 3vw, 20px)",
-        background: "rgba(255, 255, 255, 0.03)",
+        background: "white",
         borderRadius: "12px",
-        border: "1px solid rgba(102, 126, 234, 0.2)",
+        border: "2px solid #e0e7ff",
       }}
     >
       <div
@@ -158,15 +160,37 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
                   type="time"
                   value={hour.openTime}
                   onChange={(e) => handleDayChange(index, "openTime", e.target.value)}
-                  style={{ ...inputStyle, maxWidth: "120px" }}
+                  style={{ 
+                    ...inputStyle, 
+                    maxWidth: "120px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
                   placeholder={t("common.openTime")}
                 />
-                <span style={{ color: "#666", fontSize: "14px", fontWeight: 500 }}>-</span>
+                <span style={{ color: "#666", fontSize: "14px", fontWeight: 600 }}>-</span>
                 <input
                   type="time"
                   value={hour.closeTime}
                   onChange={(e) => handleDayChange(index, "closeTime", e.target.value)}
-                  style={{ ...inputStyle, maxWidth: "120px" }}
+                  style={{ 
+                    ...inputStyle, 
+                    maxWidth: "120px",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
                   placeholder={t("common.closeTime")}
                 />
               </>

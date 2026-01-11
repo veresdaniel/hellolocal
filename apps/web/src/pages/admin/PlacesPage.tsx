@@ -314,7 +314,13 @@ export function PlacesPage() {
               phone: string | null;
               email: string | null;
               website: string | null;
+              facebook: string | null;
+              whatsapp: string | null;
               accessibility: string | null;
+              seoTitle: string | null;
+              seoDescription: string | null;
+              seoImage: string | null;
+              seoKeywords: string[];
             }> = [
               {
                 lang: "hu",
@@ -322,12 +328,16 @@ export function PlacesPage() {
                 teaser: formData.teaserHu || null,
                 description: formData.descriptionHu || null,
                 address: formData.addressHu || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+                phone: formData.phone || null,
+                email: formData.email || null,
+                website: formData.website || null,
+                facebook: formData.facebook || null,
+                whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityHu || null,
+                seoTitle: formData.seoTitleHu || null,
+                seoDescription: formData.seoDescriptionHu || null,
+                seoImage: formData.seoImageHu || null,
+                seoKeywords: formData.seoKeywordsHu || [],
               },
             ];
             if (formData.nameEn.trim()) {
@@ -337,12 +347,16 @@ export function PlacesPage() {
                 teaser: formData.teaserEn || null,
                 description: formData.descriptionEn || null,
                 address: formData.addressEn || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+                phone: formData.phone || null,
+                email: formData.email || null,
+                website: formData.website || null,
+                facebook: formData.facebook || null,
+                whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityEn || null,
+                seoTitle: formData.seoTitleEn || null,
+                seoDescription: formData.seoDescriptionEn || null,
+                seoImage: formData.seoImageEn || null,
+                seoKeywords: formData.seoKeywordsEn || [],
               });
             }
             if (formData.nameDe.trim()) {
@@ -352,12 +366,16 @@ export function PlacesPage() {
                 teaser: formData.teaserDe || null,
                 description: formData.descriptionDe || null,
                 address: formData.addressDe || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+                phone: formData.phone || null,
+                email: formData.email || null,
+                website: formData.website || null,
+                facebook: formData.facebook || null,
+                whatsapp: formData.whatsapp || null,
                 accessibility: formData.accessibilityDe || null,
+                seoTitle: formData.seoTitleDe || null,
+                seoDescription: formData.seoDescriptionDe || null,
+                seoImage: formData.seoImageDe || null,
+                seoKeywords: formData.seoKeywordsDe || [],
               });
             }
             return translations;

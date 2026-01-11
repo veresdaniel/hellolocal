@@ -510,7 +510,7 @@ export function PlaceDetailPage() {
           )}
 
           {/* Opening Hours */}
-          {place.openingHours && (
+          {place.openingHours && place.openingHours.length > 0 && (
             <div
               style={{
                 background: "white",
@@ -535,10 +535,70 @@ export function PlaceDetailPage() {
                 <span style={{ fontSize: 22 }}>🕐</span>
                 {t("public.openingHours")}
               </h3>
-              <div
-                style={{ color: "#333", fontSize: 16, lineHeight: 1.8 }}
-                dangerouslySetInnerHTML={{ __html: place.openingHours }}
-              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {place.openingHours.map((oh, index) => {
+                  const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
+                  const isToday = (() => {
+                    const now = new Date();
+                    const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
+                    return oh.dayOfWeek === currentDayOfWeek;
+                  })();
+
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "12px 16px",
+                        background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
+                        borderRadius: 8,
+                        border: isToday ? "1px solid rgba(102, 126, 234, 0.2)" : "1px solid transparent",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: isToday ? 600 : 500,
+                          color: isToday ? "#667eea" : "#333",
+                          fontSize: 16,
+                        }}
+                      >
+                        {dayName}
+                        {isToday && (
+                          <span
+                            style={{
+                              marginLeft: 8,
+                              fontSize: 12,
+                              color: "#667eea",
+                              fontWeight: 600,
+                            }}
+                          >
+                            (Ma)
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        style={{
+                          color: oh.isClosed ? "#999" : "#333",
+                          fontSize: 16,
+                          fontWeight: oh.isClosed ? 400 : 500,
+                        }}
+                      >
+                        {oh.isClosed ? (
+                          <span style={{ fontStyle: "italic" }}>
+                            {t("common.closed") || "Zárva"}
+                          </span>
+                        ) : oh.openTime && oh.closeTime ? (
+                          `${oh.openTime} - ${oh.closeTime}`
+                        ) : (
+                          "-"
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
