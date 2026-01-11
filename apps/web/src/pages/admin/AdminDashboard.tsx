@@ -203,13 +203,13 @@ function DashboardCard({
         }}
       >
         <div style={{ 
-          fontSize: "clamp(24px, 6vw, 30px)",
+          fontSize: "clamp(26px, 6vw, 32px)",
           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
         }}>
           {icon}
         </div>
         <div style={{
-          fontSize: "clamp(10px, 2.5vw, 12px)",
+          fontSize: "clamp(12px, 2.8vw, 14px)",
           fontWeight: 600,
           color: "#a8b3ff",
           textAlign: "center",
@@ -262,7 +262,7 @@ function DashboardCard({
       }}
     >
       <div style={{ 
-        fontSize: "clamp(28px, 5vw, 32px)", 
+        fontSize: "clamp(30px, 5vw, 34px)", 
         filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
         flexShrink: 0,
       }}>
@@ -271,7 +271,7 @@ function DashboardCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         <h3 style={{ 
           margin: "0 0 3px 0",
-          fontSize: "clamp(13px, 2.8vw, 14px)",
+          fontSize: "clamp(15px, 3vw, 16px)",
           fontWeight: 700,
           color: "#a8b3ff",
           whiteSpace: "nowrap",
@@ -283,7 +283,7 @@ function DashboardCard({
         <p style={{ 
           margin: 0, 
           color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "clamp(10px, 2.3vw, 11px)",
+          fontSize: "clamp(12px, 2.5vw, 13px)",
           lineHeight: 1.3,
           fontWeight: 400,
           display: "-webkit-box",
