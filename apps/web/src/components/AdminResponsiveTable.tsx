@@ -535,23 +535,24 @@ export function AdminResponsiveTable<T>({
                 let offset = index - currentMobileIndex;
                 let previousOffset = index - previousMobileIndex;
                 
-                // Infinite loop: wrap offsets for seamless carousel
-                // Only normalize if offset is outside visible range [-2, 2]
-                if (filteredData.length > 0 && Math.abs(offset) > 2) {
-                  // Normalize offset to range [-2, 2] for infinite loop
-                  if (offset > 2) {
-                    offset = offset - filteredData.length;
-                  } else if (offset < -2) {
-                    offset = offset + filteredData.length;
+                // Infinite loop: handle wraparound for seamless carousel
+                // When at first card (index 0), last card should be visible as previous (offset -1)
+                // When at last card (index length-1), first card should be visible as next (offset 1)
+                if (filteredData.length > 0) {
+                  // If we're at the first card and this is the last card, it's the previous card
+                  if (currentMobileIndex === 0 && index === filteredData.length - 1) {
+                    offset = -1;
                   }
-                }
-                
-                // Normalize previousOffset similarly if needed
-                if (filteredData.length > 0 && Math.abs(previousOffset) > 2) {
-                  if (previousOffset > 2) {
-                    previousOffset = previousOffset - filteredData.length;
-                  } else if (previousOffset < -2) {
-                    previousOffset = previousOffset + filteredData.length;
+                  // If we're at the last card and this is the first card, it's the next card
+                  else if (currentMobileIndex === filteredData.length - 1 && index === 0) {
+                    offset = 1;
+                  }
+                  
+                  // Same for previousOffset
+                  if (previousMobileIndex === 0 && index === filteredData.length - 1) {
+                    previousOffset = -1;
+                  } else if (previousMobileIndex === filteredData.length - 1 && index === 0) {
+                    previousOffset = 1;
                   }
                 }
                 
