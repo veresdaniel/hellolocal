@@ -71,22 +71,26 @@ A következő csomagok lettek hozzáadva a `apps/api/package.json`-hoz:
    - ThrottlerModule konfiguráció
    - ThrottlerGuard globális guard
 
-3. **`apps/api/src/auth/auth.controller.ts`**
+3. **`apps/api/src/health.controller.ts`**
+   - Health check endpoint-ok kizárva a rate limiting alól (`@SkipThrottle()`)
+   - Fontos: Render.com health check-ek nem lesznek blokkolva
+
+4. **`apps/api/src/auth/auth.controller.ts`**
    - Rate limiting dekorátorok minden auth végponton (`@Throttle({ default: { limit, ttl } })`)
 
-4. **`apps/api/src/auth/strategies/jwt.strategy.ts`**
+5. **`apps/api/src/auth/strategies/jwt.strategy.ts`**
    - JWT secret production ellenőrzés
 
-5. **`apps/api/src/auth/auth.module.ts`**
+6. **`apps/api/src/auth/auth.module.ts`**
    - JWT secret ellenőrzés a factory-ban
 
-6. **`apps/api/src/auth/dto/*.ts`** (összes DTO)
+7. **`apps/api/src/auth/dto/*.ts`** (összes DTO)
    - Validációs dekorátorok hozzáadva (`@IsEmail`, `@MinLength`, stb.)
 
-7. **`apps/api/package.json`**
+8. **`apps/api/package.json`**
    - Új csomagok hozzáadva
 
-8. **`apps/api/env.example`**
+9. **`apps/api/env.example`**
    - `CORS_ORIGIN` példa hozzáadva
 
 ---

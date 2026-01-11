@@ -289,7 +289,20 @@ npm install -g pnpm@10.27.0 && ...
 - Ellenőrizd, hogy a frontend `API_URL` vagy `VITE_API_URL` helyesen van beállítva
 - Ha még mindig CORS hibát kapsz, ellenőrizd a böngésző konzoljában az exact origin-t, amit a frontend küld
 
-### 5. Free Tier "Spins Down" Inaktivitás Után
+### 5. Health Check Failed - Status Code 429
+
+**Probléma**: A Render.com health check-je 429-es hibát kap (Too Many Requests).
+
+**Ok**: A rate limiting globálisan alkalmazva van, és a health check endpoint-ok is rate limitálva vannak. A Render.com health check-je túl gyakran hívja meg az endpoint-ot.
+
+**Megoldás**: ✅ **JAVÍTVA** - A health check endpoint-ok (`/health` és `/api/health`) kizárva lettek a rate limiting alól a `@SkipThrottle()` dekorátorral.
+
+Ha még mindig 429-es hibát kapsz:
+- Ellenőrizd, hogy a legfrissebb kód deploy-olva van (a `health.controller.ts` tartalmazza a `@SkipThrottle()` dekorátorokat)
+- Várd meg 1-2 percet, hogy a rate limit cache lejárjon
+- Ha továbbra is probléma van, növeld meg a rate limit értékét az `app.module.ts`-ben (pl. `limit: 20`)
+
+### 6. Free Tier "Spins Down" Inaktivitás Után
 
 A Render ingyenes szolgáltatások **15 perc inaktivitás után alvó módba** kerülnek. Az első kérés után ~1 percbe telik felébredni.
 
