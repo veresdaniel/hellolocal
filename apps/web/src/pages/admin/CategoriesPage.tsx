@@ -8,6 +8,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
+import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import {
   getCategories,
   createCategory,
@@ -42,6 +43,8 @@ export function CategoriesPage() {
   const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -75,6 +78,15 @@ export function CategoriesPage() {
       setIsLoading(false);
     }
   }, [selectedTenantId]);
+
+  // Handle window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (selectedTenantId) {
@@ -243,33 +255,53 @@ export function CategoriesPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>{t("admin.categories")}</h1>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setIsCreating(true);
-            resetForm();
-          }}
-          disabled={!!editingId || isCreating}
-          style={{
-            padding: "12px 24px",
-            background: editingId || isCreating ? "#999" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            opacity: editingId || isCreating ? 0.6 : 1,
-          }}
-        >
-          + {t("admin.forms.newCategory")}
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
+        <h1 style={{ 
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          margin: 0,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.categories")}
+        </h1>
+        
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {(isCreating || editingId) ? (
+            <>
+              <button onClick={() => editingId ? handleUpdate(editingId) : handleCreate()} style={{ padding: "12px 24px", background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)"; }}>
+                {editingId ? t("common.update") : t("common.create")}
+              </button>
+              <button onClick={() => { setIsCreating(false); setEditingId(null); resetForm(); }} style={{ padding: "12px 24px", background: "#6c757d", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#5a6268"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#6c757d"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)"; }}>
+                {t("common.cancel")}
+              </button>
+            </>
+          ) : (
+            <button onClick={() => { setEditingId(null); setIsCreating(true); resetForm(); }} style={{ padding: "12px 24px", background: "white", color: "#667eea", border: "2px solid #667eea", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)"; e.currentTarget.style.background = "#f8f8ff"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)"; e.currentTarget.style.background = "white"; }}>
+              + {t("admin.forms.newCategory")}
+            </button>
+          )}
+        </div>
       </div>
 
 
       {(isCreating || editingId) && (
-        <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editCategory") : t("admin.forms.newCategory")}</h2>
+        <div style={{ 
+          padding: "clamp(24px, 5vw, 32px)", 
+          background: "white", 
+          borderRadius: 16, 
+          marginBottom: 32, 
+          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          border: "1px solid rgba(102, 126, 234, 0.1)",
+        }}>
+          <h2 style={{ 
+            marginBottom: 24, 
+            color: "#667eea",
+            fontSize: "clamp(20px, 5vw, 24px)",
+            fontWeight: 700,
+          }}>
+            {editingId ? t("admin.forms.editCategory") : t("admin.forms.newCategory")}
+          </h2>
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -434,44 +466,13 @@ export function CategoriesPage() {
               {t("admin.categoryColorDescription") || "Ez a szín jelenik meg a kártya alján. Hex formátum (pl. #667eea)"}
             </p>
           </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
-              style={{
-                padding: "12px 24px",
-                background: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {editingId ? t("common.update") : t("common.create")}
-            </button>
-            <button
-              onClick={() => {
-                setIsCreating(false);
-                setEditingId(null);
-                resetForm();
-              }}
-              style={{
-                padding: "12px 24px",
-                background: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
         </div>
       )}
 
       <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
+      
+      {/* Desktop: Drag & Drop Table */}
+      {!isLoading && !isCreating && !editingId && !isMobile && (
         <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
           <div style={{ padding: 12, background: "#f5f5f5", borderBottom: "1px solid #ddd", fontSize: 12, color: "#666" }}>
             {t("admin.dragToReorder") || "Húzd a kategóriákat a rendezéshez. Húzd egy kategória alá, hogy gyermek kategóriává tedd."}
@@ -502,25 +503,25 @@ export function CategoriesPage() {
                 return (
                   <tr
                     key={category.id}
-                    draggable
-                    onDragStart={(e) => {
+                    draggable={!isMobile}
+                    onDragStart={!isMobile ? (e) => {
                       setDraggedId(category.id);
                       e.dataTransfer.effectAllowed = "move";
                       e.dataTransfer.setData("text/plain", category.id);
-                    }}
-                    onDragOver={(e) => {
+                    } : undefined}
+                    onDragOver={!isMobile ? (e) => {
                       e.preventDefault();
                       e.dataTransfer.dropEffect = "move";
                       if (dragOverId !== category.id && draggedId !== category.id) {
                         setDragOverId(category.id);
                       }
-                    }}
-                    onDragLeave={() => {
+                    } : undefined}
+                    onDragLeave={!isMobile ? () => {
                       if (dragOverId === category.id) {
                         setDragOverId(null);
                       }
-                    }}
-                    onDrop={async (e) => {
+                    } : undefined}
+                    onDrop={!isMobile ? async (e) => {
                       e.preventDefault();
                       const draggedCategoryId = e.dataTransfer.getData("text/plain");
                       if (!draggedCategoryId || draggedCategoryId === category.id) {
@@ -746,16 +747,16 @@ export function CategoriesPage() {
 
                       setDraggedId(null);
                       setDragOverId(null);
-                    }}
-                    onDragEnd={() => {
+                    } : undefined}
+                    onDragEnd={!isMobile ? () => {
                       setDraggedId(null);
                       setDragOverId(null);
-                    }}
+                    } : undefined}
                     style={{
                       borderBottom: "1px solid #eee",
                       opacity: isDragging ? 0.5 : 1,
                       background: isDragOver ? "#e3f2fd" : "transparent",
-                      cursor: "move",
+                      cursor: isMobile ? "default" : "move",
                     }}
                   >
                     <td style={{ padding: 12, textAlign: "center", color: "#999" }}>
@@ -831,7 +832,118 @@ export function CategoriesPage() {
             />
           )}
         </div>
-      ) : null}
+      )}
+      
+      {/* Mobile: AdminResponsiveTable */}
+      {!isLoading && !isCreating && !editingId && isMobile && (
+        <AdminResponsiveTable<Category>
+          data={categories}
+          getItemId={(category) => category.id}
+          searchQuery={searchQuery}
+          searchPlaceholder={t("admin.searchPlaceholders.categories")}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            setPagination(prev => ({ ...prev, page: 1 }));
+          }}
+          filterFn={(category, query) => {
+            const lowerQuery = query.toLowerCase();
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = category.translations.find((t) => t.lang === currentLang) || 
+                               category.translations.find((t) => t.lang === "hu");
+            return translation?.name.toLowerCase().includes(lowerQuery) || false;
+          }}
+          columns={[
+            {
+              key: "name",
+              label: t("common.name"),
+              render: (category) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const translation = category.translations.find((t) => t.lang === currentLang) || 
+                                   category.translations.find((t) => t.lang === "hu");
+                return translation?.name || "-";
+              },
+            },
+            {
+              key: "parent",
+              label: t("admin.parentCategory") || "Szülő",
+              render: (category) => {
+                if (!category.parent) return "-";
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const parentTranslation = category.parent.translations.find((t) => t.lang === currentLang) || 
+                                         category.parent.translations.find((t) => t.lang === "hu");
+                return parentTranslation?.name || "-";
+              },
+            },
+            {
+              key: "status",
+              label: t("admin.table.status"),
+              render: (category) => (
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: category.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {category.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          cardTitle={(category) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = category.translations.find((t) => t.lang === currentLang) || 
+                               category.translations.find((t) => t.lang === "hu");
+            return translation?.name || "-";
+          }}
+          cardSubtitle={(category) => {
+            if (!category.parent) return null;
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const parentTranslation = category.parent.translations.find((t) => t.lang === currentLang) || 
+                                     category.parent.translations.find((t) => t.lang === "hu");
+            return parentTranslation ? `↳ ${parentTranslation.name}` : null;
+          }}
+          cardFields={[
+            {
+              key: "order",
+              render: (category) => (
+                <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
+                  #{category.order}
+                </div>
+              ),
+            },
+            {
+              key: "status",
+              render: (category) => (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    background: category.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {category.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          onEdit={startEdit}
+          onDelete={(category) => handleDelete(category.id)}
+          isLoading={isLoading}
+          error={null}
+        />
+      )}
     </div>
   );
 }

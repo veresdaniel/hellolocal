@@ -62,12 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Skip redirect if already on the target page
       if (isManualLogout) {
-        // Manual logout: check if already on home page
-        if (currentPath === `/${lang}` || currentPath === `/${lang}/`) {
+        // Manual logout from admin: redirect to admin login with current language
+        const logoutLang = localStorage.getItem("logoutRedirectLang") || lang;
+        localStorage.removeItem("logoutRedirectLang");
+        localStorage.setItem("wasManualLogout", "true"); // Flag for login page
+        
+        if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
           return;
         }
-        // Redirect to home page
-        window.location.href = `/${lang}`;
+        // Redirect to admin login page
+        window.location.href = `/${logoutLang}/admin/login`;
       } else {
         // Automatic logout (session expired): check if already on admin login
         if (currentPath.startsWith(`/${lang}/admin/login`)) {

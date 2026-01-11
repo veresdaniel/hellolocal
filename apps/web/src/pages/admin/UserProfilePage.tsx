@@ -187,77 +187,226 @@ export function UserProfilePage() {
   return (
     <>
       <LoadingSpinner isLoading={isLoading} />
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>{t("admin.profile.title")}</h1>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        {/* Header matching AdminDashboard style */}
+        <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+          <h1 style={{ 
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            color: "#e0e0ff",
+            margin: 0,
+            marginBottom: 8,
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          }}>
+            {t("admin.profile.title")}
+          </h1>
+          <p style={{ 
+            fontSize: "clamp(13px, 3vw, 14px)",
+            color: "#c0c0d0",
+            margin: 0,
+            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+          }}>
+            {user.username} • {user.email}
+          </p>
+        </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
+        <div style={{ 
+          padding: "clamp(12px, 3vw, 16px)",
+          marginBottom: 24,
+          background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+          color: "#991b1b",
+          borderRadius: 12,
+          border: "1px solid #fca5a5",
+          fontSize: "clamp(13px, 3vw, 14px)",
+          fontWeight: 500,
+        }}>
           {error}
         </div>
       )}
 
       {success && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#efe", color: "#0a0", borderRadius: 4 }}>
+        <div style={{ 
+          padding: "clamp(12px, 3vw, 16px)",
+          marginBottom: 24,
+          background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
+          color: "#065f46",
+          borderRadius: 12,
+          border: "1px solid #6ee7b7",
+          fontSize: "clamp(13px, 3vw, 14px)",
+          fontWeight: 500,
+        }}>
           {t("admin.profile.profileUpdatedSuccess")}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
+        gap: 24 
+      }}>
         <div>
-          <h2 style={{ marginBottom: 16 }}>{t("admin.profile.profileInformation")}</h2>
+          <h2 style={{ 
+            marginBottom: 16,
+            color: "#e0e0ff",
+            fontSize: "clamp(18px, 4vw, 20px)",
+            fontWeight: 700,
+          }}>
+            {t("admin.profile.profileInformation")}
+          </h2>
           <form onSubmit={handleSubmit}>
+            <div style={{ 
+              padding: "clamp(20px, 4vw, 24px)", 
+              background: "white", 
+              borderRadius: 12,
+              boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
+              border: "1px solid rgba(102, 126, 234, 0.1)",
+            }}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.username")}</label>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#4b5563",
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontWeight: 600,
+              }}>
+                {t("admin.username")}
+              </label>
               <input
                 type="text"
                 value={user.username}
                 disabled
-                style={{ width: "100%", padding: 8, fontSize: 16, background: "#f5f5f5" }}
+                style={{ 
+                  width: "100%", 
+                  padding: "clamp(10px, 2vw, 12px)", 
+                  fontSize: "clamp(14px, 3vw, 15px)",
+                  background: "#f5f5f5",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  color: "#6b7280",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.email")}</label>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#4b5563",
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontWeight: 600,
+              }}>
+                {t("admin.email")}
+              </label>
               <input
                 type="email"
                 value={user.email}
                 disabled
-                style={{ width: "100%", padding: 8, fontSize: 16, background: "#f5f5f5" }}
+                style={{ 
+                  width: "100%", 
+                  padding: "clamp(10px, 2vw, 12px)", 
+                  fontSize: "clamp(14px, 3vw, 15px)",
+                  background: "#f5f5f5",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  color: "#6b7280",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.fields.firstName")}</label>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#4b5563",
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontWeight: 600,
+              }}>
+                {t("admin.fields.firstName")}
+              </label>
               <input
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                style={{ width: "100%", padding: 8, fontSize: 16 }}
+                style={{ 
+                  width: "100%", 
+                  padding: "clamp(10px, 2vw, 12px)", 
+                  fontSize: "clamp(14px, 3vw, 15px)",
+                  border: "2px solid #e0e7ff",
+                  borderRadius: 8,
+                  transition: "all 0.2s ease",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#667eea"}
+                onBlur={(e) => e.target.style.borderColor = "#e0e7ff"}
               />
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.fields.lastName")}</label>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#4b5563",
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontWeight: 600,
+              }}>
+                {t("admin.fields.lastName")}
+              </label>
               <input
                 type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                style={{ width: "100%", padding: 8, fontSize: 16 }}
+                style={{ 
+                  width: "100%", 
+                  padding: "clamp(10px, 2vw, 12px)", 
+                  fontSize: "clamp(14px, 3vw, 15px)",
+                  border: "2px solid #e0e7ff",
+                  borderRadius: 8,
+                  transition: "all 0.2s ease",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#667eea"}
+                onBlur={(e) => e.target.style.borderColor = "#e0e7ff"}
               />
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.fields.bio")}</label>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#4b5563",
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontWeight: 600,
+              }}>
+                {t("admin.fields.bio")}
+              </label>
               <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
                 rows={4}
-                style={{ width: "100%", padding: 8, fontSize: 16 }}
+                style={{ 
+                  width: "100%", 
+                  padding: "clamp(10px, 2vw, 12px)", 
+                  fontSize: "clamp(14px, 3vw, 15px)",
+                  border: "2px solid #e0e7ff",
+                  borderRadius: 8,
+                  transition: "all 0.2s ease",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#667eea"}
+                onBlur={(e) => e.target.style.borderColor = "#e0e7ff"}
               />
             </div>
 
@@ -266,72 +415,140 @@ export function UserProfilePage() {
               disabled={isSaving}
               style={{
                 padding: "12px 24px",
-                fontSize: 16,
-                background: "#007bff",
-                color: "white",
+                fontSize: 15,
+                fontWeight: 600,
+                background: isSaving ? "#ddd" : "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
+                color: isSaving ? "#999" : "white",
                 border: "none",
-                borderRadius: 4,
+                borderRadius: 8,
                 cursor: isSaving ? "not-allowed" : "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: isSaving ? "none" : "0 4px 12px rgba(40, 167, 69, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                if (!isSaving) {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSaving) {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
+                }
               }}
             >
               {isSaving ? t("admin.profile.saving") : t("admin.profile.saveChanges")}
             </button>
+            </div>
           </form>
         </div>
 
         <div>
-          <h2 style={{ marginBottom: 16 }}>{t("admin.profile.accountInformation")}</h2>
-          <div style={{ padding: 16, background: "#f5f5f5", borderRadius: 4 }}>
-            <div style={{ marginBottom: 12 }}>
-              <strong>{t("admin.role")}:</strong>{" "}
+          <h2 style={{ 
+            marginBottom: 16,
+            color: "#e0e0ff",
+            fontSize: "clamp(18px, 4vw, 20px)",
+            fontWeight: 700,
+          }}>
+            {t("admin.profile.accountInformation")}
+          </h2>
+          <div style={{ 
+            padding: "clamp(20px, 4vw, 24px)", 
+            background: "white",
+            borderRadius: 12,
+            marginBottom: 24,
+            boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}>
+            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb" }}>
+              <strong style={{ color: "#4b5563", fontSize: 14 }}>{t("admin.role")}:</strong>{" "}
               <span
                 style={{
-                  padding: "4px 8px",
-                  borderRadius: 4,
+                  padding: "4px 12px",
+                  borderRadius: 6,
                   background:
                     user.role === "superadmin"
-                      ? "#dc3545"
+                      ? "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
                       : user.role === "admin"
-                      ? "#007bff"
+                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                       : user.role === "editor"
-                      ? "#28a745"
+                      ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)"
                       : "#6c757d",
                   color: "white",
                   fontSize: 12,
+                  fontWeight: 600,
+                  display: "inline-block",
+                  marginLeft: 8,
                 }}
               >
                 {user.role}
               </span>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <strong>{t("admin.table.status")}:</strong> {user.isActive ? t("common.active") : t("common.inactive")}
+            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb", fontSize: 14 }}>
+              <strong style={{ color: "#4b5563" }}>{t("admin.table.status")}:</strong>{" "}
+              <span style={{ 
+                color: user.isActive ? "#059669" : "#dc2626",
+                fontWeight: 600,
+              }}>
+                {user.isActive ? t("common.active") : t("common.inactive")}
+              </span>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <strong>{t("admin.profile.memberSince")}:</strong> {new Date(user.createdAt).toLocaleDateString()}
+            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb", fontSize: 14 }}>
+              <strong style={{ color: "#4b5563" }}>{t("admin.profile.memberSince")}:</strong>{" "}
+              <span style={{ color: "#6b7280" }}>{new Date(user.createdAt).toLocaleDateString()}</span>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <strong>{t("admin.profile.lastUpdated")}:</strong> {new Date(user.updatedAt).toLocaleDateString()}
+            <div style={{ fontSize: 14 }}>
+              <strong style={{ color: "#4b5563" }}>{t("admin.profile.lastUpdated")}:</strong>{" "}
+              <span style={{ color: "#6b7280" }}>{new Date(user.updatedAt).toLocaleDateString()}</span>
             </div>
           </div>
 
-          <h3 style={{ marginTop: 24, marginBottom: 16 }}>{t("admin.tenants")}</h3>
-          <div style={{ padding: 16, background: "#f5f5f5", borderRadius: 4 }}>
+          <h3 style={{ 
+            marginBottom: 16,
+            color: "#e0e0ff",
+            fontSize: "clamp(16px, 3vw, 18px)",
+            fontWeight: 700,
+          }}>
+            {t("admin.tenants")}
+          </h3>
+          <div style={{ 
+            padding: "clamp(16px, 3vw, 20px)", 
+            background: "white",
+            borderRadius: 12,
+            marginBottom: 24,
+            boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}>
             {!user.tenants || user.tenants.length === 0 ? (
-              <div>{t("admin.profile.noTenantsAssigned")}</div>
+              <div style={{ color: "#6b7280", fontSize: 14 }}>{t("admin.profile.noTenantsAssigned")}</div>
             ) : (
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <ul style={{ margin: 0, paddingLeft: 20, color: "#374151" }}>
                 {user.tenants.map((ut: any) => (
-                  <li key={ut.id}>
+                  <li key={ut.id} style={{ marginBottom: 8, fontSize: 14 }}>
                     {ut.tenant.slug}
-                    {ut.isPrimary && <span style={{ marginLeft: 8, color: "#007bff" }}>({t("admin.profile.primary")})</span>}
+                    {ut.isPrimary && <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>★ {t("admin.profile.primary")}</span>}
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          <h3 style={{ marginTop: 32, marginBottom: 16, fontSize: 18, fontWeight: 600 }}>{t("admin.profile.twoFactorAuthentication")}</h3>
-          <div style={{ padding: 20, background: "#fff", border: "1px solid #e0e0e0", borderRadius: 8, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+          <h3 style={{ 
+            marginBottom: 16,
+            color: "#e0e0ff",
+            fontSize: "clamp(16px, 3vw, 18px)",
+            fontWeight: 700,
+          }}>
+            {t("admin.profile.twoFactorAuthentication")}
+          </h3>
+          <div style={{ 
+            padding: "clamp(16px, 3vw, 20px)", 
+            background: "white",
+            borderRadius: 12,
+            boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}>
             {twoFactorError && (
               <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 6, fontSize: 14, border: "1px solid #fcc" }}>
                 {twoFactorError}
@@ -359,13 +576,26 @@ export function UserProfilePage() {
                   style={{
                     padding: "10px 20px",
                     fontSize: 14,
-                    fontWeight: 500,
-                    background: isTwoFactorLoading ? "#ccc" : "#dc3545",
+                    fontWeight: 600,
+                    background: isTwoFactorLoading ? "#ddd" : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                     color: "white",
                     border: "none",
-                    borderRadius: 6,
+                    borderRadius: 8,
                     cursor: isTwoFactorLoading ? "not-allowed" : "pointer",
-                    transition: "background 0.2s",
+                    transition: "all 0.2s ease",
+                    boxShadow: isTwoFactorLoading ? "none" : "0 4px 12px rgba(245, 87, 108, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isTwoFactorLoading) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(245, 87, 108, 0.4)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isTwoFactorLoading) {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 87, 108, 0.3)";
+                    }
                   }}
                 >
                   {isTwoFactorLoading ? t("admin.twoFactor.disabling") : t("admin.twoFactor.disable")}
@@ -384,13 +614,26 @@ export function UserProfilePage() {
                       style={{
                         padding: "12px 24px",
                         fontSize: 15,
-                        fontWeight: 500,
-                        background: isTwoFactorLoading ? "#ccc" : "#007bff",
+                        fontWeight: 600,
+                        background: isTwoFactorLoading ? "#ddd" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                         color: "white",
                         border: "none",
-                        borderRadius: 6,
+                        borderRadius: 8,
                         cursor: isTwoFactorLoading ? "not-allowed" : "pointer",
-                        transition: "background 0.2s",
+                        transition: "all 0.2s ease",
+                        boxShadow: isTwoFactorLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isTwoFactorLoading) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.4)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isTwoFactorLoading) {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                        }
                       }}
                     >
                       {isTwoFactorLoading ? t("admin.twoFactor.settingUp") : t("admin.twoFactor.enable")}
@@ -437,6 +680,7 @@ export function UserProfilePage() {
                           borderRadius: 6,
                           outline: "none",
                           transition: "border-color 0.2s",
+                          boxSizing: "border-box",
                         }}
                         onFocus={(e) => (e.target.style.borderColor = "#007bff")}
                         onBlur={(e) => (e.target.style.borderColor = "#ddd")}
@@ -450,13 +694,26 @@ export function UserProfilePage() {
                           flex: 1,
                           padding: "12px 20px",
                           fontSize: 15,
-                          fontWeight: 500,
-                          background: verificationToken.length === 6 && !isVerifying ? "#28a745" : "#ccc",
+                          fontWeight: 600,
+                          background: verificationToken.length === 6 && !isVerifying ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)" : "#ddd",
                           color: "white",
                           border: "none",
-                          borderRadius: 6,
+                          borderRadius: 8,
                           cursor: verificationToken.length === 6 && !isVerifying ? "pointer" : "not-allowed",
-                          transition: "background 0.2s",
+                          transition: "all 0.2s ease",
+                          boxShadow: verificationToken.length === 6 && !isVerifying ? "0 4px 12px rgba(40, 167, 69, 0.3)" : "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (verificationToken.length === 6 && !isVerifying) {
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (verificationToken.length === 6 && !isVerifying) {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
+                          }
                         }}
                       >
                         {isVerifying ? t("admin.twoFactor.verifying") : t("admin.twoFactor.verifyAndEnable")}
@@ -472,16 +729,22 @@ export function UserProfilePage() {
                         style={{
                           padding: "12px 20px",
                           fontSize: 15,
-                          fontWeight: 500,
-                          background: "#6c757d",
-                          color: "white",
-                          border: "none",
-                          borderRadius: 6,
+                          fontWeight: 600,
+                          background: "white",
+                          color: "#6c757d",
+                          border: "2px solid #6c757d",
+                          borderRadius: 8,
                           cursor: "pointer",
-                          transition: "background 0.2s",
+                          transition: "all 0.2s ease",
                         }}
-                        onMouseOver={(e) => (e.currentTarget.style.background = "#5a6268")}
-                        onMouseOut={(e) => (e.currentTarget.style.background = "#6c757d")}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#f8f9fa";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "white";
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }}
                       >
                         {t("common.cancel")}
                       </button>

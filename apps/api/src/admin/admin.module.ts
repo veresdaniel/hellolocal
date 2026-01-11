@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
+import { EventLogModule } from "../event-log/event-log.module";
 import { AdminController } from "./admin.controller";
 import { AdminCategoryService } from "./admin-category.service";
 import { AdminTagService } from "./admin-tag.service";
@@ -12,12 +13,11 @@ import { AdminStaticPageService } from "./admin-static-page.service";
 import { AdminTenantService } from "./admin-tenant.service";
 import { AdminAppSettingsService } from "./admin-app-settings.service";
 import { AdminEventService } from "./admin-event.service";
-import { AdminEventLogService } from "./admin-eventlog.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule],
   controllers: [AdminController],
   providers: [
     AdminCategoryService,
@@ -31,7 +31,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,
-    AdminEventLogService,
+    // AdminEventLogService is now provided by EventLogModule
   ],
   exports: [
     AdminCategoryService,
@@ -45,7 +45,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,
-    AdminEventLogService,
+    // AdminEventLogService is now exported by EventLogModule
   ],
 })
 export class AdminModule {}

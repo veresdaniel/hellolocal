@@ -11,6 +11,7 @@ import { StaticPageCategoryAutocomplete } from "../../components/StaticPageCateg
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
+import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 interface StaticPage {
   id: string;
@@ -37,6 +38,8 @@ export function StaticPagesPage() {
   const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -68,6 +71,12 @@ export function StaticPagesPage() {
     isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (selectedTenantId) {
@@ -334,9 +343,25 @@ export function StaticPagesPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>{t("admin.staticPages")}</h1>
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "clamp(24px, 5vw, 32px)",
+        flexWrap: "wrap",
+        gap: 16,
+      }}>
+        <h1 style={{
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          margin: 0,
+        }}>
+          {t("admin.staticPages")}
+        </h1>
         <button
           onClick={() => {
             setEditingId(null);
@@ -346,15 +371,32 @@ export function StaticPagesPage() {
           disabled={!!editingId || isCreating}
           style={{
             padding: "12px 24px",
-            background: editingId || isCreating ? "#999" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
+            background: editingId || isCreating ? "#ccc" : "white",
+            color: editingId || isCreating ? "#999" : "#667eea",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
+            borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            opacity: editingId || isCreating ? 0.6 : 1,
+            fontSize: "clamp(14px, 3vw, 15px)",
+            fontWeight: 700,
+            boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!editingId && !isCreating) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+              e.currentTarget.style.background = "#f8f8ff";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!editingId && !isCreating) {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+              e.currentTarget.style.background = "white";
+            }
           }}
         >
-          + {t("admin.forms.newStaticPage")}
+          {t("admin.forms.newStaticPage")}
         </button>
       </div>
 
@@ -493,92 +535,110 @@ export function StaticPagesPage() {
       )}
 
       <LoadingSpinnerComponent isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
-        <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5" }}>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.category")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.title")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
-                <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staticPages.map((staticPage) => {
-                // Get current language or fallback to Hungarian
+      {!isLoading && !isCreating && !editingId && (
+        <AdminResponsiveTable<StaticPage>
+          data={staticPages}
+          getItemId={(staticPage) => staticPage.id}
+          searchQuery={searchQuery}
+          searchPlaceholder={t("admin.searchPlaceholders.staticPages")}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            setPagination(prev => ({ ...prev, page: 1 }));
+          }}
+          filterFn={(staticPage, query) => {
+            const lowerQuery = query.toLowerCase();
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
+                               staticPage.translations.find((t) => t.lang === "hu");
+            return (
+              getCategoryLabel(staticPage.category).toLowerCase().includes(lowerQuery) ||
+              translation?.title.toLowerCase().includes(lowerQuery) || false
+            );
+          }}
+          columns={[
+            {
+              key: "category",
+              label: t("admin.category"),
+              render: (staticPage) => getCategoryLabel(staticPage.category),
+            },
+            {
+              key: "title",
+              label: t("common.title"),
+              render: (staticPage) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
                                    staticPage.translations.find((t) => t.lang === "hu");
-                return (
-                  <tr key={staticPage.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 12 }}>{getCategoryLabel(staticPage.category)}</td>
-                    <td style={{ padding: 12 }}>{translation?.title || "-"}</td>
-                    <td style={{ padding: 12 }}>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          background: staticPage.isActive ? "#28a745" : "#dc3545",
-                          color: "white",
-                          fontSize: 12,
-                        }}
-                      >
-                        {staticPage.isActive ? t("common.active") : t("common.inactive")}
-                      </span>
-                    </td>
-                    <td style={{ padding: 12, textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => startEdit(staticPage)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#007bff",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.edit")}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(staticPage.id)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.delete")}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {staticPages.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
-          )}
-          {pagination.total > 0 && (
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              total={pagination.total}
-              limit={pagination.limit}
-              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
-            />
-          )}
+                return translation?.title || "-";
+              },
+            },
+            {
+              key: "status",
+              label: t("admin.table.status"),
+              render: (staticPage) => (
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: staticPage.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {staticPage.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          cardTitle={(staticPage) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
+                               staticPage.translations.find((t) => t.lang === "hu");
+            return translation?.title || "-";
+          }}
+          cardSubtitle={(staticPage) => getCategoryLabel(staticPage.category)}
+          cardFields={[
+            {
+              key: "status",
+              render: (staticPage) => (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    background: staticPage.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {staticPage.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          onEdit={startEdit}
+          onDelete={(staticPage) => handleDelete(staticPage.id)}
+          isLoading={isLoading}
+          error={error}
+        />
+      )}
+      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+          />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

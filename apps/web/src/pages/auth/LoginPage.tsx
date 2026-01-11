@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, type Lang } from "../../app/config";
+import { buildPath } from "../../app/routing/buildPath";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -16,6 +17,8 @@ export function LoginPage() {
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [wasManualLogout, setWasManualLogout] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +27,28 @@ export function LoginPage() {
 
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+
+  // Email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Validate email on change
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (value && !emailRegex.test(value)) {
+      setEmailError(t("admin.invalidEmail"));
+    } else {
+      setEmailError(null);
+    }
+  };
+
+  // Check if user was manually logged out
+  useEffect(() => {
+    const manualLogoutFlag = localStorage.getItem("wasManualLogout");
+    if (manualLogoutFlag === "true") {
+      setWasManualLogout(true);
+      localStorage.removeItem("wasManualLogout");
+    }
+  }, []);
 
   // Sync i18n language with URL parameter
   useEffect(() => {
@@ -36,6 +61,13 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    // Validate email before submitting
+    if (!emailRegex.test(email)) {
+      setEmailError(t("admin.invalidEmail"));
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -83,51 +115,230 @@ export function LoginPage() {
     }
   }, [requiresTwoFactor]);
 
+  // Build public page path
+  const publicPagePath = buildPath({ 
+    tenantSlug: DEFAULT_TENANT_SLUG, 
+    lang, 
+    path: "" 
+  });
+
   return (
-    <div style={{ maxWidth: 400, margin: "50px auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>{t("admin.login")}</h1>
+    <div 
+      style={{ 
+        minHeight: "100vh",
+        minWidth: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        padding: "16px",
+        margin: 0,
+        boxSizing: "border-box",
+      }}
+    >
+      <div 
+        style={{ 
+          maxWidth: 440, 
+          width: "100%",
+          background: "white",
+          borderRadius: 16,
+          padding: "clamp(24px, 5vw, 40px)",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <h1 
+          style={{ 
+            marginBottom: 8,
+            textAlign: "center",
+            color: "#667eea",
+            fontSize: "clamp(24px, 6vw, 32px)",
+            fontWeight: 700,
+          }}
+        >
+          {t("admin.login")}
+        </h1>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#666",
+            marginBottom: "clamp(20px, 4vw, 32px)",
+            fontSize: "clamp(13px, 3vw, 14px)",
+          }}
+        >
+          {t("admin.loginDescription")}
+        </p>
+
+      {wasManualLogout && (
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: "clamp(16px, 4vw, 24px)",
+            background: "linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)",
+            color: "#5b21b6",
+            borderRadius: 12,
+            border: "1px solid #c4b5fd",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+            <span style={{ fontSize: "clamp(16px, 4vw, 18px)" }}>✓</span>
+            <span style={{ fontWeight: 500 }}>{t("admin.loggedOutSuccessfully")}</span>
+          </div>
+          <Link
+            to={publicPagePath}
+            style={{
+              padding: "clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)",
+              background: "#667eea",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: 8,
+              fontSize: "clamp(13px, 3vw, 14px)",
+              fontWeight: 600,
+              textAlign: "center",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#5568d3";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#667eea";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)" }}>🌐</span>
+            <span>{t("admin.openPublicPage")}</span>
+          </Link>
+        </div>
+      )}
 
       {error && (
         <div
           style={{
-            padding: 12,
-            marginBottom: 16,
-            background: requiresTwoFactor ? "#fff3cd" : "#fee",
-            color: requiresTwoFactor ? "#856404" : "#c00",
-            borderRadius: 4,
-            border: requiresTwoFactor ? "1px solid #ffc107" : "1px solid #fcc",
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: "clamp(16px, 4vw, 24px)",
+            background: requiresTwoFactor ? "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)" : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+            color: requiresTwoFactor ? "#92400e" : "#991b1b",
+            borderRadius: 12,
+            border: requiresTwoFactor ? "1px solid #fcd34d" : "1px solid #fca5a5",
+            fontSize: "clamp(13px, 3vw, 14px)",
+            fontWeight: 500,
           }}
         >
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.email")}</label>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
+        <div>
+          <label 
+            style={{ 
+              display: "block", 
+              marginBottom: 8,
+              color: emailError ? "#dc2626" : "#667eea",
+              fontWeight: 600,
+              fontSize: "clamp(13px, 3vw, 14px)",
+            }}
+          >
+            {t("admin.email")}
+          </label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => handleEmailChange(e.target.value)}
             required
-            style={{ width: "100%", padding: 8, fontSize: 16 }}
+            pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+            title={t("admin.enterValidEmail")}
+            style={{ 
+              width: "100%", 
+              padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
+              fontSize: "clamp(14px, 3.5vw, 15px)",
+              border: `2px solid ${emailError ? "#fca5a5" : "#e0e7ff"}`,
+              borderRadius: 8,
+              outline: "none",
+              transition: "all 0.3s ease",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+              backgroundColor: emailError ? "#fef2f2" : "white",
+            }}
+            onFocus={(e) => {
+              if (!emailError) {
+                e.currentTarget.style.borderColor = "#667eea";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+              }
+            }}
+            onBlur={(e) => {
+              if (!emailError) {
+                e.currentTarget.style.borderColor = "#e0e7ff";
+                e.currentTarget.style.boxShadow = "none";
+              }
+            }}
           />
+          {emailError && (
+            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500 }}>
+              {emailError}
+            </p>
+          )}
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: "block", marginBottom: 4 }}>{t("admin.password")}</label>
+        <div>
+          <label 
+            style={{ 
+              display: "block", 
+              marginBottom: 8,
+              color: "#667eea",
+              fontWeight: 600,
+              fontSize: "clamp(13px, 3vw, 14px)",
+            }}
+          >
+            {t("admin.password")}
+          </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ width: "100%", padding: 8, fontSize: 16 }}
+            style={{ 
+              width: "100%", 
+              padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
+              fontSize: "clamp(14px, 3.5vw, 15px)",
+              border: "2px solid #e0e7ff",
+              borderRadius: 8,
+              outline: "none",
+              transition: "all 0.3s ease",
+              fontFamily: "inherit",
+              boxSizing: "border-box",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#667eea";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e0e7ff";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
         </div>
 
         {requiresTwoFactor && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>{t("admin.twoFactorCode")}</label>
+          <div>
+            <label 
+              style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#667eea",
+                fontWeight: 600,
+                fontSize: "clamp(13px, 3vw, 14px)",
+              }}
+            >
+              {t("admin.twoFactorCode")}
+            </label>
             <input
               ref={twoFactorInputRef}
               type="text"
@@ -139,14 +350,27 @@ export function LoginPage() {
               autoFocus
               style={{
                 width: "100%",
-                padding: 8,
-                fontSize: 16,
+                padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
+                fontSize: "clamp(16px, 4vw, 18px)",
                 textAlign: "center",
-                letterSpacing: 4,
+                letterSpacing: "clamp(4px, 1.5vw, 8px)",
                 fontFamily: "monospace",
+                border: "2px solid #e0e7ff",
+                borderRadius: 8,
+                outline: "none",
+                transition: "all 0.3s ease",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#667eea";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#e0e7ff";
+                e.currentTarget.style.boxShadow = "none";
               }}
             />
-            <p style={{ marginTop: 4, fontSize: 12, color: "#666" }}>
+            <p style={{ marginTop: 8, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#666" }}>
               {t("admin.enter2FACodeDescription")}
             </p>
           </div>
@@ -157,29 +381,77 @@ export function LoginPage() {
           disabled={isLoading}
           style={{
             width: "100%",
-            padding: 12,
-            fontSize: 16,
-            background: "#007bff",
+            padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(15px, 3.5vw, 16px)",
+            fontWeight: 600,
+            background: isLoading ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
             border: "none",
-            borderRadius: 4,
+            borderRadius: 8,
             cursor: isLoading ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+            boxSizing: "border-box",
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoading) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoading) {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+            }
           }}
         >
           {isLoading ? t("admin.loggingIn") : t("admin.login")}
         </button>
       </form>
 
-      <div style={{ marginTop: 16, textAlign: "center" }}>
-        <Link to={`/${lang}/admin/forgot-password`} style={{ color: "#007bff" }}>
+      <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center" }}>
+        <Link 
+          to={`/${lang}/admin/forgot-password`} 
+          style={{ 
+            color: "#667eea",
+            fontWeight: 500,
+            textDecoration: "none",
+            fontSize: "clamp(13px, 3vw, 14px)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.textDecoration = "underline";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = "none";
+          }}
+        >
           {t("admin.forgotPassword")}
         </Link>
       </div>
 
-      <div style={{ marginTop: 16, textAlign: "center" }}>
-        {t("admin.dontHaveAccount")} <Link to={`/${lang}/admin/register`} style={{ color: "#007bff" }}>{t("admin.register")}</Link>
+      <div style={{ marginTop: "clamp(12px, 3vw, 16px)", textAlign: "center", fontSize: "clamp(13px, 3vw, 14px)", color: "#666" }}>
+        {t("admin.dontHaveAccount")}{" "}
+        <Link 
+          to={`/${lang}/admin/register`} 
+          style={{ 
+            color: "#667eea",
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.textDecoration = "underline";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = "none";
+          }}
+        >
+          {t("admin.register")}
+        </Link>
+      </div>
       </div>
     </div>
   );
 }
+
 

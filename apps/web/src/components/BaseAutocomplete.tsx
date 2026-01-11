@@ -396,7 +396,13 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       {label && (
-        <label style={{ display: "block", marginBottom: 4 }}>
+        <label style={{ 
+          display: "block", 
+          marginBottom: 8,
+          color: error ? "#dc2626" : "#667eea",
+          fontWeight: 600,
+          fontSize: "clamp(13px, 3vw, 14px)",
+        }}>
           {label} {required && "*"}
         </label>
       )}
@@ -405,12 +411,13 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           display: "flex",
           flexWrap: "wrap",
           gap: 8,
-          padding: 8,
-          border: error ? "1px solid #dc3545" : "1px solid #ddd",
-          borderRadius: 4,
-          minHeight: 40,
+          padding: "10px 16px",
+          border: error ? "2px solid #fca5a5" : "2px solid #e0e7ff",
+          borderRadius: 8,
+          minHeight: 47,
           background: "white",
           alignItems: "center",
+          boxSizing: "border-box",
         }}
       >
         {selectedItems.map((item) =>
@@ -428,14 +435,15 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             flex: 1,
             border: "none",
             outline: "none",
-            padding: 4,
-            fontSize: 14,
+            padding: "2px 4px",
+            fontSize: 15,
             minWidth: 120,
+            fontFamily: "inherit",
           }}
         />
       </div>
       {error && (
-        <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+        <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
           {error}
         </div>
       )}

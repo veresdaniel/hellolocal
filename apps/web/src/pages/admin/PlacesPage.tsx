@@ -13,6 +13,7 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
+import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 interface Place {
   id: string;
@@ -54,6 +55,8 @@ export function PlacesPage() {
   const [priceBands, setPriceBands] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -94,6 +97,12 @@ export function PlacesPage() {
     isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (selectedTenantId) {
@@ -428,91 +437,258 @@ export function PlacesPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>{t("admin.places")}</h1>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setIsCreating(true);
-            resetForm();
-          }}
-          disabled={!!editingId || isCreating}
-          style={{
-            padding: "12px 24px",
-            background: editingId || isCreating ? "#999" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            opacity: editingId || isCreating ? 0.6 : 1,
-          }}
-        >
-          + {t("admin.forms.newPlace")}
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
+        <h1 style={{
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          margin: 0,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.places")}
+        </h1>
+        
+        {/* Action buttons */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {(isCreating || editingId) ? (
+            <>
+              <button
+                onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
+                style={{
+                  padding: "12px 24px",
+                  background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
+                }}
+              >
+                {editingId ? t("common.update") : t("common.create")}
+              </button>
+              <button
+                onClick={() => {
+                  setIsCreating(false);
+                  setEditingId(null);
+                  resetForm();
+                }}
+                style={{
+                  padding: "12px 24px",
+                  background: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#5a6268";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#6c757d";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)";
+                }}
+              >
+                {t("common.cancel")}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setIsCreating(true);
+                resetForm();
+              }}
+              style={{
+                padding: "12px 24px",
+                background: "white",
+                color: "#667eea",
+                border: "2px solid #667eea",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 15,
+                fontWeight: 700,
+                boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)";
+                e.currentTarget.style.background = "#f8f8ff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)";
+                e.currentTarget.style.background = "white";
+              }}
+            >
+              + {t("admin.forms.newPlace")}
+            </button>
+          )}
+        </div>
       </div>
 
 
       {(isCreating || editingId) && (
-        <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}</h2>
+        <div style={{ 
+          padding: "clamp(24px, 5vw, 32px)", 
+          background: "white", 
+          borderRadius: 16, 
+          marginBottom: 32, 
+          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          border: "1px solid rgba(102, 126, 234, 0.1)",
+        }}>
+          <h2 style={{ 
+            marginBottom: 24, 
+            color: "#667eea",
+            fontSize: "clamp(20px, 5vw, 24px)",
+            fontWeight: 700,
+          }}>
+            {editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}
+          </h2>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Category, Town, PriceBand Row */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+              <div>
+                <CategoryAutocomplete
+                  categories={categories}
+                  selectedCategoryId={formData.categoryId}
+                  onChange={(categoryId) => setFormData({ ...formData, categoryId })}
+                  placeholder={t("admin.selectCategory")}
+                  label={t("admin.categories")}
+                  required
+                  error={formErrors.categoryId}
+                />
+              </div>
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(13px, 3vw, 14px)",
+                }}>
+                  {t("admin.towns")}
+                </label>
+                <select
+                  value={formData.townId}
+                  onChange={(e) => setFormData({ ...formData, townId: e.target.value })}
+                  style={{ 
+                    width: "100%", 
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                    fontFamily: "inherit",
+                    background: "white",
+                    cursor: "pointer",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="">{t("admin.selectTown")}</option>
+                  {towns.map((town) => (
+                    <option key={town.id} value={town.id}>
+                      {town.translations.find((t: any) => t.lang === "hu")?.name || town.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(13px, 3vw, 14px)",
+                }}>
+                  {t("admin.priceBands")}
+                </label>
+                <select
+                  value={formData.priceBandId}
+                  onChange={(e) => setFormData({ ...formData, priceBandId: e.target.value })}
+                  style={{ 
+                    width: "100%", 
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                    fontFamily: "inherit",
+                    background: "white",
+                    cursor: "pointer",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="">{t("admin.selectPriceBand")}</option>
+                  {priceBands.map((pb) => (
+                    <option key={pb.id} value={pb.id}>
+                      {pb.translations.find((t: any) => t.lang === "hu")?.name || pb.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Tags */}
             <div>
-              <CategoryAutocomplete
-                categories={categories}
-                selectedCategoryId={formData.categoryId}
-                onChange={(categoryId) => setFormData({ ...formData, categoryId })}
-                placeholder={t("admin.selectCategory")}
-                label={t("admin.categories")}
-                required
-                error={formErrors.categoryId}
+              <TagAutocomplete
+                tags={tags}
+                selectedTagIds={formData.tagIds}
+                onChange={(tagIds) => setFormData({ ...formData, tagIds })}
               />
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.towns")}</label>
-              <select
-                value={formData.townId}
-                onChange={(e) => setFormData({ ...formData, townId: e.target.value })}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              >
-                <option value="">{t("admin.selectTown")}</option>
-                {towns.map((town) => (
-                  <option key={town.id} value={town.id}>
-                    {town.translations.find((t: any) => t.lang === "hu")?.name || town.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={{ display: "block", marginBottom: 4 }}>{t("admin.priceBands")}</label>
-              <select
-                value={formData.priceBandId}
-                onChange={(e) => setFormData({ ...formData, priceBandId: e.target.value })}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
-              >
-                <option value="">{t("admin.selectPriceBand")}</option>
-                {priceBands.map((pb) => (
-                  <option key={pb.id} value={pb.id}>
-                    {pb.translations.find((t: any) => t.lang === "hu")?.name || pb.id}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <TagAutocomplete
-              tags={tags}
-              selectedTagIds={formData.tagIds}
-              onChange={(tagIds) => setFormData({ ...formData, tagIds })}
-            />
-          </div>
 
           <LanguageAwareForm>
             {(selectedLang) => (
-              <>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Name */}
+                <div>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: 8,
+                    color: ((selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(13px, 3vw, 14px)",
+                  }}>
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -531,28 +707,51 @@ export function PlacesPage() {
                     }}
                     style={{
                       width: "100%",
-                      padding: 8,
-                      fontSize: 16,
+                      padding: "12px 16px",
+                      fontSize: 15,
                       border:
-                        (selectedLang === "hu" && formErrors.nameHu) ||
+                        ((selectedLang === "hu" && formErrors.nameHu) ||
                         (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe)
-                          ? "1px solid #dc3545"
-                          : "1px solid #ddd",
-                      borderRadius: 4,
+                        (selectedLang === "de" && formErrors.nameDe))
+                          ? "2px solid #fca5a5"
+                          : "2px solid #e0e7ff",
+                      borderRadius: 8,
+                      outline: "none",
+                      transition: "all 0.3s ease",
+                      fontFamily: "inherit",
+                      background: ((selectedLang === "hu" && formErrors.nameHu) ||
+                                   (selectedLang === "en" && formErrors.nameEn) ||
+                                   (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
+                                       (selectedLang === "en" && formErrors.nameEn) ||
+                                       (selectedLang === "de" && formErrors.nameDe);
+                      if (!hasError) {
+                        e.target.style.borderColor = "#667eea";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
+                                       (selectedLang === "en" && formErrors.nameEn) ||
+                                       (selectedLang === "de" && formErrors.nameDe);
+                      e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
+                      e.target.style.boxShadow = "none";
                     }}
                   />
-                  {(selectedLang === "hu" && formErrors.nameHu) ||
+                  {((selectedLang === "hu" && formErrors.nameHu) ||
                     (selectedLang === "en" && formErrors.nameEn) ||
-                    (selectedLang === "de" && formErrors.nameDe) ? (
-                    <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    (selectedLang === "de" && formErrors.nameDe)) && (
+                    <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
                       {selectedLang === "hu"
                         ? formErrors.nameHu
                         : selectedLang === "en"
                         ? formErrors.nameEn
                         : formErrors.nameDe}
                     </div>
-                  ) : null}
+                  )}
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
@@ -614,7 +813,7 @@ export function PlacesPage() {
                     height={150}
                   />
                 </div>
-              </>
+              </div>
             )}
           </LanguageAwareForm>
 
@@ -709,138 +908,156 @@ export function PlacesPage() {
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
               />
-              {t("common.active")}
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
-              style={{
-                padding: "12px 24px",
-                background: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {editingId ? t("common.update") : t("common.create")}
-            </button>
-            <button
-              onClick={() => {
-                setIsCreating(false);
-                setEditingId(null);
-                resetForm();
-              }}
-              style={{
-                padding: "12px 24px",
-                background: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
+        </div>
         </div>
       )}
 
       <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
-        <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5" }}>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.name")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.categories")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.towns")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
-                <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {places.map((place) => {
-                // Get current language or fallback to Hungarian
+      {!isLoading && !isCreating && !editingId && (
+        <AdminResponsiveTable<Place>
+          data={places}
+          getItemId={(place) => place.id}
+          searchQuery={searchQuery}
+          searchPlaceholder={t("admin.searchPlaceholders.places")}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            setPagination(prev => ({ ...prev, page: 1 }));
+          }}
+          filterFn={(place, query) => {
+            const lowerQuery = query.toLowerCase();
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = place.translations.find((t) => t.lang === currentLang) || 
+                               place.translations.find((t) => t.lang === "hu");
+            const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
+                                       place.category.translations.find((t) => t.lang === "hu");
+            const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
+                                   place.town?.translations.find((t) => t.lang === "hu");
+            return (
+              translation?.name.toLowerCase().includes(lowerQuery) ||
+              categoryTranslation?.name.toLowerCase().includes(lowerQuery) ||
+              townTranslation?.name.toLowerCase().includes(lowerQuery)
+            );
+          }}
+          columns={[
+            {
+              key: "name",
+              label: t("common.name"),
+              render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = place.translations.find((t) => t.lang === currentLang) || 
                                    place.translations.find((t) => t.lang === "hu");
+                return translation?.name || "-";
+              },
+            },
+            {
+              key: "category",
+              label: t("admin.categories"),
+              render: (place) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
                                            place.category.translations.find((t) => t.lang === "hu");
+                return categoryTranslation?.name || "-";
+              },
+            },
+            {
+              key: "town",
+              label: t("admin.towns"),
+              render: (place) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
                                        place.town?.translations.find((t) => t.lang === "hu");
-                return (
-                  <tr key={place.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 12 }}>{translation?.name || "-"}</td>
-                    <td style={{ padding: 12 }}>{categoryTranslation?.name || "-"}</td>
-                    <td style={{ padding: 12 }}>{townTranslation?.name || "-"}</td>
-                    <td style={{ padding: 12 }}>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          background: place.isActive ? "#28a745" : "#dc3545",
-                          color: "white",
-                          fontSize: 12,
-                        }}
-                      >
-                        {place.isActive ? t("common.active") : t("common.inactive")}
-                      </span>
-                    </td>
-                    <td style={{ padding: 12, textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => startEdit(place)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#007bff",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.edit")}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(place.id)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.delete")}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {places.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
-          )}
-          {pagination.total > 0 && (
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              total={pagination.total}
-              limit={pagination.limit}
-              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
-            />
-          )}
+                return townTranslation?.name || "-";
+              },
+            },
+            {
+              key: "status",
+              label: t("admin.table.status"),
+              render: (place) => (
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: place.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {place.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          cardTitle={(place) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = place.translations.find((t) => t.lang === currentLang) || 
+                               place.translations.find((t) => t.lang === "hu");
+            return translation?.name || "-";
+          }}
+          cardSubtitle={(place) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
+                                       place.category.translations.find((t) => t.lang === "hu");
+            return categoryTranslation?.name || "-";
+          }}
+          cardFields={[
+            {
+              key: "town",
+              render: (place) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
+                                       place.town?.translations.find((t) => t.lang === "hu");
+                return townTranslation ? (
+                  <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
+                    📍 {townTranslation.name}
+                  </div>
+                ) : null;
+              },
+            },
+            {
+              key: "status",
+              render: (place) => (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    background: place.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {place.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          onEdit={startEdit}
+          onDelete={(place) => handleDelete(place.id)}
+          isLoading={isLoading}
+          error={null}
+        />
+      )}
+      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+          />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

@@ -29,24 +29,37 @@ export function Pagination({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "16px 24px",
+        padding: "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
         borderTop: "1px solid #ddd",
         background: "#f9fafb",
+        flexWrap: "wrap",
+        gap: 12,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ color: "#666", fontSize: 14 }}>
+      {/* Megjelenítés info + limit selector */}
+      <div style={{ 
+        display: "flex", 
+        alignItems: "center", 
+        gap: 8,
+        flexWrap: "wrap",
+      }}>
+        <span style={{ 
+          color: "#666", 
+          fontSize: "clamp(12px, 3vw, 14px)",
+          whiteSpace: "nowrap",
+        }}>
           {t("admin.pagination.showing", { start: startItem, end: endItem, total })}
         </span>
         <select
           value={limit}
           onChange={(e) => onLimitChange(parseInt(e.target.value))}
           style={{
-            padding: "4px 8px",
-            fontSize: 14,
+            padding: "6px 10px",
+            fontSize: "clamp(12px, 3vw, 14px)",
             border: "1px solid #ddd",
-            borderRadius: 4,
+            borderRadius: 6,
             cursor: "pointer",
+            background: "white",
           }}
         >
           <option value={10}>10 / {t("admin.pagination.page")}</option>
@@ -56,25 +69,36 @@ export function Pagination({
         </select>
       </div>
 
+      {/* Navigációs gombok */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           style={{
-            padding: "6px 12px",
-            background: currentPage === 1 ? "#e5e7eb" : "#3b82f6",
+            padding: "8px 16px",
+            background: currentPage === 1 
+              ? "#e5e7eb" 
+              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: currentPage === 1 ? "#9ca3af" : "white",
             border: "none",
-            borderRadius: 4,
+            borderRadius: 6,
             cursor: currentPage === 1 ? "not-allowed" : "pointer",
-            fontSize: 14,
-            fontWeight: 500,
+            fontSize: "clamp(12px, 3vw, 14px)",
+            fontWeight: 600,
+            transition: "all 0.2s ease",
+            boxShadow: currentPage === 1 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}
         >
           {t("admin.pagination.previous")}
         </button>
 
-        <span style={{ fontSize: 14, color: "#666", minWidth: 100, textAlign: "center" }}>
+        <span style={{ 
+          fontSize: "clamp(12px, 3vw, 14px)", 
+          color: "#666", 
+          minWidth: "clamp(80px, 20vw, 100px)", 
+          textAlign: "center",
+          fontWeight: 600,
+        }}>
           {t("admin.pagination.pageInfo", { current: currentPage, total: totalPages })}
         </span>
 
@@ -82,14 +106,18 @@ export function Pagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || totalPages === 0}
           style={{
-            padding: "6px 12px",
-            background: currentPage === totalPages || totalPages === 0 ? "#e5e7eb" : "#3b82f6",
+            padding: "8px 16px",
+            background: currentPage === totalPages || totalPages === 0 
+              ? "#e5e7eb" 
+              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: currentPage === totalPages || totalPages === 0 ? "#9ca3af" : "white",
             border: "none",
-            borderRadius: 4,
+            borderRadius: 6,
             cursor: currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
-            fontSize: 14,
-            fontWeight: 500,
+            fontSize: "clamp(12px, 3vw, 14px)",
+            fontWeight: 600,
+            transition: "all 0.2s ease",
+            boxShadow: currentPage === totalPages || totalPages === 0 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}
         >
           {t("admin.pagination.next")}

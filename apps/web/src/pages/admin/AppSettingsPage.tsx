@@ -430,8 +430,27 @@ export function AppSettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
+    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+        <h1 style={{ 
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          margin: 0,
+          marginBottom: 8,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.appSettings")}
+        </h1>
+        <p style={{ 
+          fontSize: "clamp(13px, 3vw, 14px)",
+          color: "#c0c0d0",
+          margin: 0,
+          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+        }}>
+          {t("admin.appSettingsDesc")}
+        </p>
+      </div>
 
       {/* Language Settings Section */}
       <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
@@ -470,13 +489,16 @@ export function AppSettingsPage() {
                   onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
                   disabled={!isAdmin || isSaving}
                   style={{
-                    padding: "10px 16px",
+                    padding: "12px 16px",
                     fontSize: 15,
-                    borderRadius: 6,
-                    border: "1px solid #ddd",
+                    borderRadius: 8,
+                    border: "2px solid #e0e7ff",
                     background: "white",
                     cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
                     minWidth: 200,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
                   }}
                 >
                   <option value="hu">🇭🇺 {t("admin.languageNames.hu")} (Magyar)</option>
@@ -557,14 +579,17 @@ export function AppSettingsPage() {
                     onChange={(e) => handleTownChange(e.target.value || null)}
                     disabled={!isAdmin || isSavingMapSettings}
                     style={{
-                      padding: "8px 16px",
-                      fontSize: 16,
-                      borderRadius: 4,
-                      border: "1px solid #ddd",
+                      padding: "12px 16px",
+                      fontSize: 15,
+                      borderRadius: 8,
+                      border: "2px solid #e0e7ff",
                       background: "white",
                       cursor: isAdmin && !isSavingMapSettings ? "pointer" : "not-allowed",
-                      minWidth: 300,
+                      minWidth: 200,
                       width: "100%",
+                      boxSizing: "border-box",
+                      transition: "all 0.2s ease",
+                      outline: "none",
                     }}
                   >
                     <option value="">{t("admin.noTownSelected")}</option>
@@ -620,13 +645,16 @@ export function AppSettingsPage() {
                   }}
                   disabled={!isAdmin || isSavingMapSettings}
                   style={{
-                    padding: "8px 16px",
-                    fontSize: 16,
-                    borderRadius: 4,
-                    border: "1px solid #ddd",
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    borderRadius: 8,
+                    border: "2px solid #e0e7ff",
                     background: "white",
                     width: "100%",
                     maxWidth: 200,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
                   }}
                 />
                 <p style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
@@ -653,12 +681,15 @@ export function AppSettingsPage() {
                     }}
                     disabled={!isAdmin || isSavingMapSettings}
                     style={{
-                      padding: "8px 12px",
-                      fontSize: 14,
-                      borderRadius: 4,
-                      border: "1px solid #ddd",
+                      padding: "12px 16px",
+                      fontSize: 15,
+                      borderRadius: 8,
+                      border: "2px solid #e0e7ff",
                       background: "white",
                       width: "100%",
+                      boxSizing: "border-box",
+                      transition: "all 0.2s ease",
+                      outline: "none",
                     }}
                   />
                 </div>
@@ -677,12 +708,15 @@ export function AppSettingsPage() {
                     }}
                     disabled={!isAdmin || isSavingMapSettings}
                     style={{
-                      padding: "8px 12px",
-                      fontSize: 14,
-                      borderRadius: 4,
-                      border: "1px solid #ddd",
+                      padding: "12px 16px",
+                      fontSize: 15,
+                      borderRadius: 8,
+                      border: "2px solid #e0e7ff",
                       background: "white",
                       width: "100%",
+                      boxSizing: "border-box",
+                      transition: "all 0.2s ease",
+                      outline: "none",
                     }}
                   />
                 </div>
@@ -695,12 +729,27 @@ export function AppSettingsPage() {
                   disabled={isSavingMapSettings}
                   style={{
                     padding: "12px 24px",
-                    fontSize: 16,
-                    background: isSavingMapSettings ? "#999" : "#007bff",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    background: isSavingMapSettings ? "#ccc" : "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
                     color: "white",
                     border: "none",
-                    borderRadius: 4,
+                    borderRadius: 8,
                     cursor: isSavingMapSettings ? "not-allowed" : "pointer",
+                    boxShadow: isSavingMapSettings ? "none" : "0 4px 12px rgba(40, 167, 69, 0.3)",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSavingMapSettings) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(40, 167, 69, 0.4)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSavingMapSettings) {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
+                    }
                   }}
                 >
                   {isSavingMapSettings ? t("common.loading") : t("common.save")}
@@ -787,12 +836,15 @@ export function AppSettingsPage() {
                       disabled={!isAdmin || isSavingSiteSettings}
                       style={{
                         width: "100%",
-                        padding: "8px 16px",
-                        fontSize: 16,
-                        borderRadius: 4,
-                        border: "1px solid #ddd",
+                        padding: "12px 16px",
+                        fontSize: 15,
+                        borderRadius: 8,
+                        border: "2px solid #e0e7ff",
                         background: "white",
                         cursor: isAdmin && !isSavingSiteSettings ? "text" : "not-allowed",
+                        boxSizing: "border-box",
+                        transition: "all 0.2s ease",
+                        outline: "none",
                       }}
                       placeholder={t("admin.siteNamePlaceholder")}
                     />
@@ -832,14 +884,18 @@ export function AppSettingsPage() {
                       disabled={!isAdmin || isSavingSiteSettings}
                       style={{
                         width: "100%",
-                        padding: "8px 16px",
-                        fontSize: 16,
-                        borderRadius: 4,
-                        border: "1px solid #ddd",
+                        padding: "12px 16px",
+                        fontSize: 15,
+                        borderRadius: 8,
+                        border: "2px solid #e0e7ff",
                         background: "white",
                         cursor: isAdmin && !isSavingSiteSettings ? "text" : "not-allowed",
                         minHeight: 100,
                         resize: "vertical",
+                        boxSizing: "border-box",
+                        fontFamily: "inherit",
+                        transition: "all 0.2s ease",
+                        outline: "none",
                       }}
                       placeholder={t("admin.siteDescriptionPlaceholder")}
                     />
@@ -880,12 +936,15 @@ export function AppSettingsPage() {
                       disabled={!isAdmin || isSavingSiteSettings}
                       style={{
                         width: "100%",
-                        padding: "8px 16px",
-                        fontSize: 16,
-                        borderRadius: 4,
-                        border: "1px solid #ddd",
+                        padding: "12px 16px",
+                        fontSize: 15,
+                        borderRadius: 8,
+                        border: "2px solid #e0e7ff",
                         background: "white",
                         cursor: isAdmin && !isSavingSiteSettings ? "text" : "not-allowed",
+                        boxSizing: "border-box",
+                        transition: "all 0.2s ease",
+                        outline: "none",
                       }}
                       placeholder={t("admin.seoTitlePlaceholder")}
                     />
@@ -925,14 +984,18 @@ export function AppSettingsPage() {
                       disabled={!isAdmin || isSavingSiteSettings}
                       style={{
                         width: "100%",
-                        padding: "8px 16px",
-                        fontSize: 16,
-                        borderRadius: 4,
-                        border: "1px solid #ddd",
+                        padding: "12px 16px",
+                        fontSize: 15,
+                        borderRadius: 8,
+                        border: "2px solid #e0e7ff",
                         background: "white",
                         cursor: isAdmin && !isSavingSiteSettings ? "text" : "not-allowed",
                         minHeight: 100,
                         resize: "vertical",
+                        boxSizing: "border-box",
+                        fontFamily: "inherit",
+                        transition: "all 0.2s ease",
+                        outline: "none",
                       }}
                       placeholder={t("admin.seoDescriptionPlaceholder")}
                     />
@@ -997,10 +1060,13 @@ export function AppSettingsPage() {
                   placeholder={t("admin.imageUrlPlaceholder")}
                   style={{
                     width: "100%",
-                    padding: 8,
-                    fontSize: 14,
-                    border: "1px solid #ddd",
-                    borderRadius: 4,
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
                   }}
                 />
                 <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
@@ -1037,10 +1103,13 @@ export function AppSettingsPage() {
                   placeholder={t("admin.imageUrlPlaceholder")}
                   style={{
                     width: "100%",
-                    padding: 8,
-                    fontSize: 14,
-                    border: "1px solid #ddd",
-                    borderRadius: 4,
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
                   }}
                 />
                 <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
@@ -1061,13 +1130,28 @@ export function AppSettingsPage() {
                 disabled={isSavingSiteSettings}
                 style={{
                   padding: "12px 24px",
-                  fontSize: 16,
-                  background: isSavingSiteSettings ? "#999" : "#007bff",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  background: isSavingSiteSettings ? "#ccc" : "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
                   color: "white",
                   border: "none",
-                  borderRadius: 4,
+                  borderRadius: 8,
                   cursor: isSavingSiteSettings ? "not-allowed" : "pointer",
                   marginTop: 16,
+                  boxShadow: isSavingSiteSettings ? "none" : "0 4px 12px rgba(40, 167, 69, 0.3)",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSavingSiteSettings) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(40, 167, 69, 0.4)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSavingSiteSettings) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
+                  }
                 }}
               >
                 {isSavingSiteSettings ? t("common.loading") : t("common.save")}

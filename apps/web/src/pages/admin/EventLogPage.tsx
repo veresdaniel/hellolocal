@@ -348,10 +348,25 @@ export function EventLogPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1>{t("admin.eventLog")}</h1>
-        <p style={{ color: "#666", marginTop: 8 }}>
+    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+        <h1 style={{
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          margin: 0,
+          marginBottom: 8,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.eventLog")}
+        </h1>
+        <p style={{ 
+          fontSize: "clamp(13px, 3vw, 14px)",
+          color: "#c0c0d0",
+          margin: 0,
+          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+        }}>
           {t("admin.eventLog.description")}
         </p>
       </div>

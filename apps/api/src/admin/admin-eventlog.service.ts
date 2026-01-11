@@ -31,7 +31,8 @@ export class AdminEventLogService {
    * Create a new event log entry
    */
   async create(dto: CreateEventLogDto) {
-    return this.prisma.eventLog.create({
+    console.log("[AdminEventLogService] Creating event log:", JSON.stringify(dto, null, 2));
+    const result = await this.prisma.eventLog.create({
       data: {
         tenantId: dto.tenantId,
         userId: dto.userId,
@@ -59,6 +60,8 @@ export class AdminEventLogService {
         },
       },
     });
+    console.log("[AdminEventLogService] Event log created with ID:", result.id);
+    return result;
   }
 
   /**
@@ -144,6 +147,10 @@ export class AdminEventLogService {
       }),
       this.prisma.eventLog.count({ where }),
     ]);
+
+    console.log("[AdminEventLogService] findAll - where:", JSON.stringify(where, null, 2));
+    console.log("[AdminEventLogService] findAll - found", logs.length, "logs, total:", total);
+    console.log("[AdminEventLogService] findAll - first log:", logs[0] ? { id: logs[0].id, action: logs[0].action, createdAt: logs[0].createdAt } : "none");
 
     return {
       logs,

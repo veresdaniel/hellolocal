@@ -1,6 +1,6 @@
 // src/components/TenantSelector.tsx
 import { useTranslation } from "react-i18next";
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AdminTenantContext } from "../contexts/AdminTenantContext";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { buildPath } from "../app/routing/buildPath";
@@ -8,6 +8,20 @@ import { buildPath } from "../app/routing/buildPath";
 export function TenantSelector() {
   const { t } = useTranslation();
   const context = useContext(AdminTenantContext);
+  
+  // Responsive: show only icon on small screens
+  // IMPORTANT: All hooks must be called before any conditional returns
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
   
   // If context is not available, don't render anything (or render a placeholder)
   if (!context) {
@@ -75,11 +89,12 @@ export function TenantSelector() {
             display: "flex",
             alignItems: "center",
             gap: 6,
+            minWidth: isSmallScreen ? "auto" : "fit-content",
           }}
           title={t("admin.openPublicPage")}
         >
           <span style={{ fontSize: 18 }}>🌐</span>
-          {t("admin.openPublicPage")}
+          {!isSmallScreen && <span>{t("admin.openPublicPage")}</span>}
         </button>
       </div>
     );
@@ -119,11 +134,12 @@ export function TenantSelector() {
           display: "flex",
           alignItems: "center",
           gap: 6,
+          minWidth: isSmallScreen ? "auto" : "fit-content",
         }}
         title={t("admin.openPublicPage")}
       >
         <span style={{ fontSize: 18 }}>🌐</span>
-        {t("admin.openPublicPage")}
+        {!isSmallScreen && <span>{t("admin.openPublicPage")}</span>}
       </button>
     </div>
   );

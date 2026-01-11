@@ -20,6 +20,7 @@ import {
 import { TenantAutocomplete } from "../../components/TenantAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HAS_MULTIPLE_TENANTS } from "../../app/config";
+import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -31,6 +32,7 @@ export function UsersPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
@@ -192,8 +194,16 @@ export function UsersPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>{t("admin.usersManagement")}</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
+        <h1 style={{ 
+          fontSize: "clamp(20px, 4vw, 28px)", 
+          fontWeight: 700, 
+          color: "#e0e0ff", 
+          margin: 0,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.usersManagement")}
+        </h1>
         <button
           onClick={() => {
             setEditingId(null);
@@ -203,12 +213,29 @@ export function UsersPage() {
           disabled={!!editingId || isCreating}
           style={{
             padding: "12px 24px",
-            background: editingId || isCreating ? "#999" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
+            background: editingId || isCreating ? "#e0e0e0" : "white",
+            color: editingId || isCreating ? "#999" : "#667eea",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
+            borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            opacity: editingId || isCreating ? 0.6 : 1,
+            fontSize: 15,
+            fontWeight: 700,
+            boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(0, 0, 0, 0.2)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!editingId && !isCreating) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
+              e.currentTarget.style.background = "#f8f9fa";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!editingId && !isCreating) {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+              e.currentTarget.style.background = "white";
+            }
           }}
         >
           + {t("admin.forms.newUser")}
@@ -449,125 +476,197 @@ export function UsersPage() {
       )}
 
       <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
-        <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5" }}>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.username")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("public.email")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.name")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.role")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.tenants")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
-                <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 12 }}>{user.username}</td>
-                  <td style={{ padding: 12 }}>{user.email}</td>
-                  <td style={{ padding: 12 }}>
-                    {user.firstName} {user.lastName}
-                  </td>
-                  <td style={{ padding: 12 }}>
-                    <select
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"])}
-                      disabled={user.role === "superadmin" && user.id !== currentUser?.id}
-                      style={{
-                        padding: "4px 8px",
-                        fontSize: 14,
-                        borderRadius: 4,
-                        border: "1px solid #ddd",
-                        cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
-                        background:
-                          user.role === "superadmin"
-                            ? "#9c27b0"
-                            : user.role === "admin"
-                            ? "#dc3545"
-                            : user.role === "editor"
-                            ? "#28a745"
-                            : "#6c757d",
-                        color: "white",
-                      }}
-                    >
-                      <option value="viewer">{t("admin.roles.viewer")}</option>
-                      <option value="editor">{t("admin.roles.editor")}</option>
-                      <option value="admin">{t("admin.roles.admin")}</option>
-                      <option value="superadmin">{t("admin.roles.superadmin")}</option>
-                    </select>
-                  </td>
-                  <td style={{ padding: 12 }}>
-                    {user.tenants.length === 0 ? (
-                      <span style={{ color: "#999" }}>{t("common.none")}</span>
-                    ) : (
-                      <div>
-                        {user.tenants.map((ut) => (
-                          <div key={ut.id} style={{ marginBottom: 4 }}>
-                            {ut.tenant.slug}
-                            {ut.isPrimary && <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>}
-                          </div>
-                        ))}
+      {!isLoading && !isCreating && !editingId && (
+        <AdminResponsiveTable<User>
+          data={users}
+          getItemId={(user) => user.id}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder={t("admin.searchPlaceholders.users")}
+          filterFn={(user, query) => {
+            const lowerQuery = query.toLowerCase();
+            return (
+              user.username.toLowerCase().includes(lowerQuery) ||
+              user.email.toLowerCase().includes(lowerQuery) ||
+              `${user.firstName} ${user.lastName}`.toLowerCase().includes(lowerQuery) ||
+              user.role.toLowerCase().includes(lowerQuery)
+            );
+          }}
+          columns={[
+            {
+              key: "username",
+              label: t("admin.username"),
+              render: (user) => user.username,
+            },
+            {
+              key: "email",
+              label: t("public.email"),
+              render: (user) => user.email,
+            },
+            {
+              key: "name",
+              label: t("common.name"),
+              render: (user) => `${user.firstName} ${user.lastName}`,
+            },
+            {
+              key: "role",
+              label: t("admin.role"),
+              render: (user) => (
+                <select
+                  value={user.role}
+                  onChange={(e) => handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"])}
+                  disabled={user.role === "superadmin" && user.id !== currentUser?.id}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: 14,
+                    borderRadius: 4,
+                    border: "1px solid #ddd",
+                    cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
+                    background:
+                      user.role === "superadmin"
+                        ? "#9c27b0"
+                        : user.role === "admin"
+                        ? "#dc3545"
+                        : user.role === "editor"
+                        ? "#28a745"
+                        : "#6c757d",
+                    color: "white",
+                  }}
+                >
+                  <option value="viewer">{t("admin.roles.viewer")}</option>
+                  <option value="editor">{t("admin.roles.editor")}</option>
+                  <option value="admin">{t("admin.roles.admin")}</option>
+                  <option value="superadmin">{t("admin.roles.superadmin")}</option>
+                </select>
+              ),
+            },
+            {
+              key: "tenants",
+              label: t("admin.tenants"),
+              render: (user) =>
+                user.tenants.length === 0 ? (
+                  <span style={{ color: "#999" }}>{t("common.none")}</span>
+                ) : (
+                  <div>
+                    {user.tenants.map((ut) => (
+                      <div key={ut.id} style={{ marginBottom: 4 }}>
+                        {ut.tenant.slug}
+                        {ut.isPrimary && <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>}
                       </div>
-                    )}
-                  </td>
-                  <td style={{ padding: 12 }}>
-                    <span
-                      style={{
-                        padding: "4px 8px",
-                        borderRadius: 4,
-                        background: user.isActive ? "#28a745" : "#dc3545",
-                        color: "white",
-                        fontSize: 12,
-                      }}
-                    >
-                      {user.isActive ? t("common.active") : t("common.inactive")}
-                    </span>
-                  </td>
-                    <td style={{ padding: 12, textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                      <button
-                        onClick={() => startEdit(user)}
-                        style={{
-                          padding: "4px 8px",
-                          background: "#007bff",
-                          color: "white",
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                          fontSize: 12,
-                        }}
-                      >
-                        {t("common.edit")}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        disabled={user.role === "superadmin"}
-                        style={{
-                          padding: "4px 8px",
-                          background: user.role === "superadmin" ? "#999" : "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: user.role === "superadmin" ? "not-allowed" : "pointer",
-                          fontSize: 12,
-                        }}
-                      >
-                        {t("common.delete")}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {users.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.noUsersFound")}</div>
-          )}
-        </div>
-      ) : null}
+                    ))}
+                  </div>
+                ),
+            },
+            {
+              key: "status",
+              label: t("admin.table.status"),
+              render: (user) => (
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: user.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {user.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          cardTitle={(user) => `${user.firstName} ${user.lastName}`}
+          cardSubtitle={(user) => user.username}
+          cardFields={[
+            {
+              key: "email",
+              render: (user) => (
+                <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
+                  📧 {user.email}
+                </div>
+              ),
+            },
+            {
+              key: "role",
+              render: (user) => (
+                <div style={{ marginBottom: 8 }}>
+                  <select
+                    value={user.role}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"]);
+                    }}
+                    disabled={user.role === "superadmin" && user.id !== currentUser?.id}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: 13,
+                      borderRadius: 6,
+                      border: "1px solid #ddd",
+                      cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
+                      background:
+                        user.role === "superadmin"
+                          ? "#9c27b0"
+                          : user.role === "admin"
+                          ? "#dc3545"
+                          : user.role === "editor"
+                          ? "#28a745"
+                          : "#6c757d",
+                      color: "white",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <option value="viewer">{t("admin.roles.viewer")}</option>
+                    <option value="editor">{t("admin.roles.editor")}</option>
+                    <option value="admin">{t("admin.roles.admin")}</option>
+                    <option value="superadmin">{t("admin.roles.superadmin")}</option>
+                  </select>
+                </div>
+              ),
+            },
+            {
+              key: "tenants",
+              render: (user) =>
+                user.tenants.length > 0 ? (
+                  <div style={{ marginBottom: 8, fontSize: 13, color: "#666" }}>
+                    <strong>{t("admin.tenants")}:</strong>{" "}
+                    {user.tenants.map((ut) => ut.tenant.slug + (ut.isPrimary ? " ★" : "")).join(", ")}
+                  </div>
+                ) : null,
+            },
+            {
+              key: "status",
+              render: (user) => (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    background: user.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {user.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          onEdit={startEdit}
+          onDelete={(user) => {
+            if (user.role !== "superadmin") {
+              handleDelete(user.id);
+            }
+          }}
+          isLoading={isLoading}
+          error={error}
+        />
+      )}
     </div>
   );
 }

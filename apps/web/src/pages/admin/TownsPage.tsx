@@ -11,6 +11,7 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 import { MapComponent } from "../../components/MapComponent";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
+import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 interface Town {
   id: string;
@@ -39,6 +40,8 @@ export function TownsPage() {
   const [towns, setTowns] = useState<Town[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -74,6 +77,12 @@ export function TownsPage() {
     isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (selectedTenantId) {
@@ -347,38 +356,39 @@ export function TownsPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1>{t("admin.towns")}</h1>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setIsCreating(true);
-            resetForm();
-          }}
-          disabled={!!editingId || isCreating}
-          style={{
-            padding: "12px 24px",
-            background: editingId || isCreating ? "#999" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            opacity: editingId || isCreating ? 0.6 : 1,
-          }}
-        >
-          + {t("admin.newItem")} {t("admin.towns")}
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
+        <h1 style={{ fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700, color: "#e0e0ff", margin: 0, textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)" }}>
+          {t("admin.towns")}
+        </h1>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {(isCreating || editingId) ? (
+            <>
+              <button onClick={() => editingId ? handleUpdate(editingId) : handleCreate()} style={{ padding: "12px 24px", background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)"; }}>
+                {editingId ? t("common.update") : t("common.create")}
+              </button>
+              <button onClick={() => { setIsCreating(false); setEditingId(null); resetForm(); }} style={{ padding: "12px 24px", background: "#6c757d", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#5a6268"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#6c757d"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)"; }}>
+                {t("common.cancel")}
+              </button>
+            </>
+          ) : (
+            <button onClick={() => { setEditingId(null); setIsCreating(true); resetForm(); }} style={{ padding: "12px 24px", background: "white", color: "#667eea", border: "2px solid #667eea", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)"; e.currentTarget.style.background = "#f8f8ff"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)"; e.currentTarget.style.background = "white"; }}>
+              + {t("admin.forms.newTown")}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4 }}>
+        <div style={{ padding: "clamp(12px, 3vw, 16px)", marginBottom: 24, background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)", color: "#991b1b", borderRadius: 12, border: "1px solid #fca5a5", fontSize: "clamp(13px, 3vw, 14px)", fontWeight: 500 }}>
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16 }}>{editingId ? t("admin.editItem") : t("admin.newItem")}</h2>
+        <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
+          <h2 style={{ marginBottom: 24, color: "#667eea", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700 }}>
+            {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
+          </h2>
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -522,127 +532,106 @@ export function TownsPage() {
               {t("common.active")}
             </label>
           </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
-              style={{
-                padding: "12px 24px",
-                background: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {editingId ? t("common.update") : t("common.create")}
-            </button>
-            <button
-              onClick={() => {
-                setIsCreating(false);
-                setEditingId(null);
-                resetForm();
-              }}
-              style={{
-                padding: "12px 24px",
-                background: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
         </div>
       )}
 
       <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
-        <div style={{ background: "white", borderRadius: 8, overflow: "hidden", border: "1px solid #ddd" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-            <thead>
-              <tr style={{ background: "#f5f5f5" }}>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("common.name")}</th>
-                <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>{t("admin.table.status")}</th>
-                <th style={{ padding: 12, textAlign: "right", borderBottom: "2px solid #ddd", width: "1%", whiteSpace: "nowrap" }}>{t("admin.table.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {towns.map((town) => {
-                // Get current language or fallback to Hungarian
+      {!isLoading && !isCreating && !editingId && (
+        <AdminResponsiveTable<Town>
+          data={towns}
+          getItemId={(town) => town.id}
+          searchQuery={searchQuery}
+          searchPlaceholder={t("admin.searchPlaceholders.towns")}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            setPagination(prev => ({ ...prev, page: 1 }));
+          }}
+          filterFn={(town, query) => {
+            const lowerQuery = query.toLowerCase();
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = town.translations.find((t) => t.lang === currentLang) || 
+                               town.translations.find((t) => t.lang === "hu");
+            return translation?.name.toLowerCase().includes(lowerQuery);
+          }}
+          columns={[
+            {
+              key: "name",
+              label: t("common.name"),
+              render: (town) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = town.translations.find((t) => t.lang === currentLang) || 
                                    town.translations.find((t) => t.lang === "hu");
-                return (
-                  <tr key={town.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 12 }}>{translation?.name || "-"}</td>
-                    <td style={{ padding: 12 }}>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          background: town.isActive ? "#28a745" : "#dc3545",
-                          color: "white",
-                          fontSize: 12,
-                        }}
-                      >
-                        {town.isActive ? t("common.active") : t("common.inactive")}
-                      </span>
-                    </td>
-                    <td style={{ padding: 12, textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => startEdit(town)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#007bff",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.edit")}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(town.id)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#dc3545",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.delete")}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {towns.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>{t("admin.table.noData")}</div>
-          )}
-          {pagination.total > 0 && (
-            <Pagination
-              currentPage={pagination.page}
-              totalPages={pagination.totalPages}
-              total={pagination.total}
-              limit={pagination.limit}
-              onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-              onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
-            />
-          )}
+                return translation?.name || "-";
+              },
+            },
+            {
+              key: "status",
+              label: t("admin.table.status"),
+              render: (town) => (
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: town.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {town.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          cardTitle={(town) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = town.translations.find((t) => t.lang === currentLang) || 
+                               town.translations.find((t) => t.lang === "hu");
+            return translation?.name || "-";
+          }}
+          cardSubtitle={(town) => town.lat && town.lng ? `📍 ${town.lat.toFixed(4)}, ${town.lng.toFixed(4)}` : ""}
+          cardFields={[
+            {
+              key: "status",
+              render: (town) => (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    background: town.isActive
+                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                      : "#6c757d",
+                    color: "white",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {town.isActive ? t("common.active") : t("common.inactive")}
+                </span>
+              ),
+            },
+          ]}
+          onEdit={startEdit}
+          onDelete={(town) => handleDelete(town.id)}
+          isLoading={isLoading}
+          error={error}
+        />
+      )}
+      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={pagination.limit}
+            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+          />
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

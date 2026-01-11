@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { Link, useParams } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
 
@@ -16,6 +16,16 @@ export function AdminDashboard() {
   const user = authContext?.user ?? null;
   const { lang: langParam } = useParams<{ lang?: string }>();
   usePageTitle("admin.dashboard");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   
   // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
@@ -32,65 +42,95 @@ export function AdminDashboard() {
   console.log("[AdminDashboard] showEventLog:", showEventLog);
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1>{t("admin.dashboard")}</h1>
+    <div style={{ padding: "clamp(16px, 4vw, 24px)" }}>
+      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+        <h1 style={{ 
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          color: "#e0e0ff",
+          margin: 0,
+          marginBottom: 8,
+          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        }}>
+          {t("admin.dashboard")}
+        </h1>
+        <p style={{ 
+          fontSize: "clamp(13px, 3vw, 14px)",
+          color: "#c0c0d0",
+          margin: 0,
+          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+        }}>
+          {t("admin.dashboardWelcome")}
+        </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}>
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: isMobile ? "repeat(4, 1fr)" : "repeat(auto-fill, minmax(clamp(240px, 45vw, 280px), 1fr))", 
+        gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+      }}>
         <DashboardCard
           title={t("admin.dashboardCards.events")}
           description={t("admin.dashboardCards.eventsDesc")}
           link={adminPath("/events")}
           icon="📅"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.places")}
           description={t("admin.dashboardCards.placesDesc")}
           link={adminPath("/places")}
           icon="📍"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.priceBands")}
           description={t("admin.dashboardCards.priceBandsDesc")}
           link={adminPath("/price-bands")}
           icon="💰"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.categories")}
           description={t("admin.dashboardCards.categoriesDesc")}
           link={adminPath("/categories")}
           icon="📁"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.tags")}
           description={t("admin.dashboardCards.tagsDesc")}
           link={adminPath("/tags")}
           icon="🏷️"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.towns")}
           description={t("admin.dashboardCards.townsDesc")}
           link={adminPath("/towns")}
           icon="🏘️"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.legalPages")}
           description={t("admin.dashboardCards.legalPagesDesc")}
           link={adminPath("/legal")}
           icon="📄"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.staticPages")}
           description={t("admin.dashboardCards.staticPagesDesc")}
           link={adminPath("/static-pages")}
           icon="📝"
+          isMobile={isMobile}
         />
         <DashboardCard
           title={t("admin.dashboardCards.userProfile")}
           description={t("admin.dashboardCards.userProfileDesc")}
           link={adminPath("/profile")}
           icon="👤"
+          isMobile={isMobile}
         />
         {showEventLog && (
           <DashboardCard
@@ -98,6 +138,7 @@ export function AdminDashboard() {
             description={t("admin.dashboardCards.eventLogDesc")}
             link={adminPath("/event-log")}
             icon="📋"
+            isMobile={isMobile}
           />
         )}
       </div>
@@ -111,35 +152,124 @@ function DashboardCard({
   description,
   link,
   icon,
+  isMobile = false,
 }: {
   title: string;
   description: string;
   link: string;
   icon: string;
+  isMobile?: boolean;
 }) {
+  // Mobile: iPhone-style small icon-only cards
+  if (isMobile) {
+    return (
+      <Link
+        to={link}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          aspectRatio: "1",
+          background: "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)",
+          borderRadius: 16,
+          textDecoration: "none",
+          color: "white",
+          transition: "all 0.2s ease",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
+          border: "1px solid rgba(102, 126, 234, 0.3)",
+          position: "relative",
+          padding: 8,
+        }}
+        onTouchStart={(e) => {
+          e.currentTarget.style.transform = "scale(0.95)";
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
+        }}
+        onTouchEnd={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
+        }}
+      >
+        <div style={{ 
+          fontSize: 32,
+          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
+        }}>
+          {icon}
+        </div>
+        <div style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: "#a8b3ff",
+          textAlign: "center",
+          lineHeight: 1.2,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          width: "100%",
+        }}>
+          {title}
+        </div>
+      </Link>
+    );
+  }
+
+  // Desktop: Original card style with title and description
   return (
     <Link
       to={link}
       style={{
-        display: "block",
-        padding: 24,
-        background: "white",
-        border: "1px solid #ddd",
-        borderRadius: 8,
+        display: "flex",
+        flexDirection: "column",
+        padding: "clamp(16px, 3vw, 20px)",
+        background: "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)",
+        borderRadius: 12,
         textDecoration: "none",
-        color: "inherit",
-        transition: "box-shadow 0.2s",
+        color: "white",
+        transition: "all 0.3s ease",
+        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
+        minHeight: 140,
+        border: "1px solid rgba(102, 126, 234, 0.3)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
+        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 2px #667eea";
+        e.currentTarget.style.borderColor = "#667eea";
+        e.currentTarget.style.background = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0) scale(1)";
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
+        e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+        e.currentTarget.style.background = "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)";
       }}
     >
-      <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
-      <h3 style={{ margin: "0 0 8px 0" }}>{title}</h3>
-      <p style={{ margin: 0, color: "#666" }}>{description}</p>
+      <div style={{ 
+        fontSize: "clamp(36px, 7vw, 42px)", 
+        marginBottom: "clamp(10px, 2.5vw, 12px)",
+        filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
+      }}>
+        {icon}
+      </div>
+      <h3 style={{ 
+        margin: "0 0 6px 0",
+        fontSize: "clamp(15px, 3.5vw, 17px)",
+        fontWeight: 700,
+        color: "#a8b3ff",
+      }}>
+        {title}
+      </h3>
+      <p style={{ 
+        margin: 0, 
+        color: "rgba(255, 255, 255, 0.85)",
+        fontSize: "clamp(12px, 2.8vw, 13px)",
+        lineHeight: 1.4,
+        fontWeight: 400,
+      }}>
+        {description}
+      </p>
     </Link>
   );
 }
