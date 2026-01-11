@@ -49,16 +49,36 @@ export function LanguageSelector() {
       onChange={(e) => handleLanguageChange(e.target.value as "hu" | "en" | "de")}
       style={{
         padding: "8px 16px",
-        fontSize: 16,
-        borderRadius: 4,
-        border: "1px solid #ddd",
-        background: "white",
+        fontSize: 14,
+        borderRadius: 8,
+        border: "1px solid rgba(0, 0, 0, 0.1)",
+        background: "transparent",
         cursor: "pointer",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        color: "#333",
+        fontWeight: 500,
+        outline: "none",
+        transition: "all 0.2s",
+        height: "auto",
+        lineHeight: 1,
+        boxSizing: "border-box",
+      }}
+      onMouseEnter={(e) => {
+        // No style change on hover - keep default state
+      }}
+      onMouseLeave={(e) => {
+        // No style change on leave - keep default state
+      }}
+      onFocus={(e) => {
+        // No style change on focus - keep default state
+      }}
+      onBlur={(e) => {
+        // No style change on blur - keep default state
       }}
     >
-      <option value="hu">🇭🇺 HU</option>
-      <option value="en">🇬🇧 EN</option>
-      <option value="de">🇩🇪 DE</option>
+      <option value="hu">HU</option>
+      <option value="en">EN</option>
+      <option value="de">DE</option>
     </select>
   );
 }

@@ -6,6 +6,7 @@ import { useTenantContext } from "../app/tenant/useTenantContext";
 import { buildPath } from "../app/routing/buildPath";
 import { Link, useLocation } from "react-router-dom";
 import { getSiteSettings } from "../api/places.api";
+import { LanguageSelector } from "./LanguageSelector";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
@@ -119,7 +120,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
         top: 0,
         left: 0,
         right: 0,
-        zIndex: isMobileMenuOpen ? 10001 : 100,
+        zIndex: isMobileMenuOpen ? 10001 : 1000,
         background: "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
@@ -139,98 +140,96 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
           alignItems: "center",
         }}
       >
-        {(siteName || brandBadgeIcon) && (
-          <Link
-            to={buildPath({ tenantSlug, lang, path: "" })}
-            style={{
-              textDecoration: "none",
-              color: "#1a1a1a",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {brandBadgeIcon && !logoError && (
-              <img 
-                src={brandBadgeIcon} 
-                alt={siteName || ""}
-                style={{ 
-                  height: 32, 
-                  width: "auto",
-                  objectFit: "contain",
-                  borderRadius: 4,
-                  display: "block",
-                }}
-                onError={(e) => {
-                  console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
-                  setLogoError(true);
-                  e.currentTarget.style.display = "none";
-                }}
-                onLoad={() => {
-                  setLogoError(false);
-                }}
-              />
-            )}
-            {siteName && (
-              <span>{siteName}</span>
-            )}
-          </Link>
-        )}
-
-        {/* Desktop Navigation */}
-        <nav style={{ display: isMobile ? "none" : "flex", gap: 24, alignItems: "center" }}>
-          {!onMapViewClick && (
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {(siteName || brandBadgeIcon) && (
             <Link
               to={buildPath({ tenantSlug, lang, path: "" })}
               style={{
                 textDecoration: "none",
-                color: "#666",
-                fontSize: 14,
-                fontWeight: 500,
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#667eea";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#666";
-              }}
-            >
-              {t("public.home.title")}
-            </Link>
-          )}
-          {onMapViewClick && (
-            <button
-              onClick={onMapViewClick}
-              style={{
-                background: "rgba(102, 126, 234, 0.1)",
-                border: "1px solid rgba(102, 126, 234, 0.3)",
-                borderRadius: 8,
-                color: "#667eea",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                padding: "8px 16px",
-                transition: "all 0.2s",
+                color: "#1a1a1a",
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                gap: 10,
+                fontSize: 20,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
               }}
             >
-              📍 {t("public.mapView")}
-            </button>
+              {brandBadgeIcon && !logoError && (
+                <img 
+                  src={brandBadgeIcon} 
+                  alt={siteName || ""}
+                  style={{ 
+                    height: 32, 
+                    width: "auto",
+                    objectFit: "contain",
+                    borderRadius: 4,
+                    display: "block",
+                  }}
+                  onError={(e) => {
+                    console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                    setLogoError(true);
+                    e.currentTarget.style.display = "none";
+                  }}
+                  onLoad={() => {
+                    setLogoError(false);
+                  }}
+                />
+              )}
+              {siteName && (
+                <span>{siteName}</span>
+              )}
+            </Link>
           )}
+        </div>
+
+        {/* Desktop Navigation */}
+        <nav style={{ display: isMobile ? "none" : "flex", gap: 24, alignItems: "center", marginLeft: "auto" }}>
+          {/* Map view button - only show on list view */}
+          {onMapViewClick && (
+            <>
+              <button
+                onClick={onMapViewClick}
+                style={{
+                  background: "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 8,
+                  color: "#667eea",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  height: "auto",
+                  lineHeight: 1,
+                  boxSizing: "border-box",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                }}
+              >
+                📍 {t("public.mapView")}
+              </button>
+              {/* Vertical separator */}
+              <div
+                style={{
+                  width: 1,
+                  height: 24,
+                  background: "rgba(0, 0, 0, 0.08)",
+                }}
+              />
+            </>
+          )}
+          {/* Language selector on list view - on the right side */}
+          <LanguageSelector />
         </nav>
 
         {/* Mobile Menu Button */}
@@ -366,94 +365,10 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               }}
             />
           </button>
-            {!onMapViewClick && (
-              <Link
-                to={buildPath({ tenantSlug, lang, path: "" })}
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  textDecoration: "none",
-                  color: "#1a1a1a",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  padding: "20px 24px",
-                  minHeight: "56px",
-                  borderRadius: 12,
-                  transition: "all 0.2s",
-                  background: location.pathname === buildPath({ tenantSlug, lang, path: "" }) ? "rgba(102, 126, 234, 0.1)" : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  touchAction: "manipulation",
-                  WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
-                }}
-                onTouchStart={(e) => {
-                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                    e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                  }
-                }}
-                onTouchEnd={(e) => {
-                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                    setTimeout(() => {
-                      e.currentTarget.style.background = "transparent";
-                    }, 150);
-                  }
-                }}
-                onMouseEnter={(e) => {
-                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                    e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                    e.currentTarget.style.background = "transparent";
-                  }
-                }}
-              >
-                {t("public.home.title")}
-              </Link>
-            )}
-            {onMapViewClick && (
-              <button
-                onClick={() => {
-                  onMapViewClick();
-                  setIsMobileMenuOpen(false);
-                }}
-                style={{
-                  background: "rgba(102, 126, 234, 0.1)",
-                  border: "1px solid rgba(102, 126, 234, 0.3)",
-                  borderRadius: 12,
-                  color: "#667eea",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  padding: "20px 24px",
-                  minHeight: "56px",
-                  cursor: "pointer",
-                  width: "100%",
-                  textAlign: "left",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  touchAction: "manipulation",
-                  WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
-                }}
-                onTouchStart={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                }}
-                onTouchEnd={(e) => {
-                  setTimeout(() => {
-                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                  }, 150);
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                }}
-              >
-                📍 {t("public.mapView")}
-              </button>
-            )}
+            {/* Language selector in mobile menu */}
+            <div style={{ padding: "20px 24px", borderTop: "1px solid rgba(0, 0, 0, 0.1)", marginTop: 12 }}>
+              <LanguageSelector />
+            </div>
             <Link
               to={buildPath({ tenantSlug, lang, path: "impresszum" })}
               onClick={() => setIsMobileMenuOpen(false)}

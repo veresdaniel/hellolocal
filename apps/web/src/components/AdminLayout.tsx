@@ -18,6 +18,7 @@ import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, typ
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSiteSettings } from "../api/places.api";
 import "../styles/sessionWarning.css";
+import "../styles/admin-inputs.css";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -155,7 +156,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto" }}>
+    <div className="admin-layout" style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto" }}>
       <style>{`
         body {
           margin: 0 !important;

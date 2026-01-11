@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTenantContext } from "../../app/tenant/useTenantContext";
 import { buildPath } from "../../app/routing/buildPath";
 import { getSiteSettings } from "../../api/places.api";
+import { LanguageSelector } from "../../components/LanguageSelector";
 
 export function Header() {
   const { lang, tenantSlug } = useTenantContext();
@@ -182,6 +183,7 @@ export function Header() {
         top: position.top,
         left: position.left,
         zIndex: currentZIndex, // Dynamic z-index based on active state
+        overflow: "visible", // Allow dropdown to overflow
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         borderRadius: isMobile ? 12 : 16,
         padding: "12px 16px",
@@ -205,42 +207,77 @@ export function Header() {
         }
       }}
     >
-      {(siteName || brandBadgeIcon) && (
-        <Link
-          to={buildPath({ tenantSlug, lang, path: "" })}
-          style={{
-            textDecoration: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            color: "white",
-            pointerEvents: isDragging ? "none" : "auto",
-          }}
-          onClick={(e) => {
-            if (isDragging) {
-              e.preventDefault();
-            }
-          }}
-        >
-          {brandBadgeIcon && (
-            <img 
-              src={brandBadgeIcon} 
-              alt={siteName || ""}
-              style={{ 
-                width: 28, 
-                height: 28, 
-                objectFit: "contain",
-                borderRadius: 4,
-              }}
-            />
-          )}
-          {siteName && (
-            <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
-              {siteName}
-            </span>
-          )}
-        </Link>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {(siteName || brandBadgeIcon) && (
+          <Link
+            to={buildPath({ tenantSlug, lang, path: "" })}
+            style={{
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              color: "white",
+              pointerEvents: isDragging ? "none" : "auto",
+            }}
+            onClick={(e) => {
+              if (isDragging) {
+                e.preventDefault();
+              }
+            }}
+          >
+            {brandBadgeIcon && (
+              <img 
+                src={brandBadgeIcon} 
+                alt={siteName || ""}
+                style={{ 
+                  width: 28, 
+                  height: 28, 
+                  objectFit: "contain",
+                  borderRadius: 4,
+                }}
+              />
+            )}
+            {siteName && (
+              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
+                {siteName}
+              </span>
+            )}
+          </Link>
+        )}
+        {/* Language selector after site name */}
+        {(siteName || brandBadgeIcon) && (
+          <div 
+            style={{ 
+              paddingLeft: 4, 
+              pointerEvents: isDragging ? "none" : "auto",
+              position: "relative",
+              zIndex: currentZIndex + 1, // Higher z-index for dropdown
+              touchAction: "auto", // Allow touch interactions for select
+            }}
+            onMouseDown={(e) => e.stopPropagation()} // Prevent header drag when clicking on language selector
+            onTouchStart={(e) => e.stopPropagation()} // Prevent header drag when touching language selector
+          >
+            <div style={{ 
+              position: "relative",
+            }}>
+              <LanguageSelector />
+              <style>{`
+                /* White text and border for language selector in map view header */
+                header select {
+                  color: white !important;
+                  border-color: rgba(255, 255, 255, 0.3) !important;
+                  padding: 4px 12px !important;
+                  height: auto !important;
+                }
+                header select option {
+                  color: #333 !important;
+                  background: white !important;
+                }
+              `}</style>
+            </div>
+          </div>
+        )}
+      </div>
     </header>
   );
 }

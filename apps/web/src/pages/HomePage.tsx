@@ -633,13 +633,13 @@ export function HomePage() {
                 onClick={() => setShowMap(false)}
                 style={{
                   padding: "8px 16px",
-                  background: "rgba(255, 255, 255, 0.98)",
+                  background: "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(20px)",
                   WebkitBackdropFilter: "blur(20px)",
-                  border: "1px solid #764ba2",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
                   borderRadius: 8,
                   cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(118, 75, 162, 0.2)",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
                   fontSize: 14,
                   fontWeight: 600,
                   color: "#333",
@@ -650,11 +650,13 @@ export function HomePage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(118, 75, 162, 0.3)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 1)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(118, 75, 162, 0.2)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
                 }}
               >
                 📋 {t("public.listView")}
