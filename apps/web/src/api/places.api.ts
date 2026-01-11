@@ -78,10 +78,54 @@ export interface PriceBand {
 
 // Note: These would need to be added to the backend as public endpoints
 // For now, we'll use a workaround by fetching from the places data
-export async function getCategories(lang: string): Promise<Category[]> {
-  // This is a placeholder - in a real implementation, you'd have a public endpoint
-  // For now, we'll extract unique categories from places
-  const places = await getPlaces(lang, undefined);
+// OPTIMIZED: Use cached places data if available to avoid duplicate API calls
+let cachedPlacesForExtraction: { lang: string; tenantKey?: string; places: Place[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+export async function getCategories(lang: string, tenantKey?: string, useCachedPlaces?: Place[]): Promise<Category[]> {
+  // If places are provided, use them directly (no API call needed)
+  if (useCachedPlaces) {
+    const categoryMap = new Map<string, Category>();
+    useCachedPlaces.forEach((place) => {
+      if (place.category) {
+        const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+        const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
+        if (!categoryMap.has(categoryId)) {
+          categoryMap.set(categoryId, {
+            id: categoryId,
+            name: categoryName,
+          });
+        }
+      }
+    });
+    return Array.from(categoryMap.values());
+  }
+
+  // Check cache first
+  if (cachedPlacesForExtraction && 
+      cachedPlacesForExtraction.lang === lang && 
+      cachedPlacesForExtraction.tenantKey === tenantKey &&
+      Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
+    const categoryMap = new Map<string, Category>();
+    cachedPlacesForExtraction.places.forEach((place) => {
+      if (place.category) {
+        const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+        const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
+        if (!categoryMap.has(categoryId)) {
+          categoryMap.set(categoryId, {
+            id: categoryId,
+            name: categoryName,
+          });
+        }
+      }
+    });
+    return Array.from(categoryMap.values());
+  }
+
+  // Fetch places and cache them
+  const places = await getPlaces(lang, tenantKey);
+  cachedPlacesForExtraction = { lang, tenantKey, places, timestamp: Date.now() };
+  
   const categoryMap = new Map<string, Category>();
   places.forEach((place) => {
     if (place.category) {
@@ -98,15 +142,55 @@ export async function getCategories(lang: string): Promise<Category[]> {
   return Array.from(categoryMap.values());
 }
 
-export async function getPriceBands(lang: string): Promise<PriceBand[]> {
-  // This is a placeholder - in a real implementation, you'd have a public endpoint
-  // For now, we'll extract unique price bands from places
-  const places = await getPlaces(lang, undefined);
+export async function getPriceBands(lang: string, tenantKey?: string, useCachedPlaces?: Place[]): Promise<PriceBand[]> {
+  // If places are provided, use them directly (no API call needed)
+  if (useCachedPlaces) {
+    const priceBandMap = new Map<string, PriceBand>();
+    useCachedPlaces.forEach((place) => {
+      if (place.priceBand) {
+        const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+        const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
+        if (!priceBandMap.has(priceBandId)) {
+          priceBandMap.set(priceBandId, {
+            id: priceBandId,
+            name: priceBandName,
+          });
+        }
+      }
+    });
+    return Array.from(priceBandMap.values());
+  }
+
+  // Check cache first
+  if (cachedPlacesForExtraction && 
+      cachedPlacesForExtraction.lang === lang && 
+      cachedPlacesForExtraction.tenantKey === tenantKey &&
+      Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
+    const priceBandMap = new Map<string, PriceBand>();
+    cachedPlacesForExtraction.places.forEach((place) => {
+      if (place.priceBand) {
+        const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+        const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
+        if (!priceBandMap.has(priceBandId)) {
+          priceBandMap.set(priceBandId, {
+            id: priceBandId,
+            name: priceBandName,
+          });
+        }
+      }
+    });
+    return Array.from(priceBandMap.values());
+  }
+
+  // Fetch places and cache them
+  const places = await getPlaces(lang, tenantKey);
+  cachedPlacesForExtraction = { lang, tenantKey, places, timestamp: Date.now() };
+  
   const priceBandMap = new Map<string, PriceBand>();
   places.forEach((place) => {
     if (place.priceBand) {
       const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
-      const priceBandId = priceBandName.toLowerCase().replace(/\s+/g, "-");
+      const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
       if (!priceBandMap.has(priceBandId)) {
         priceBandMap.set(priceBandId, {
           id: priceBandId,

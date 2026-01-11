@@ -184,9 +184,8 @@ export function CategoriesPage() {
       setEditingId(null);
       resetForm();
       await loadCategories();
-      // Invalidate places and events cache - this will automatically refetch active queries
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Notify global cache manager that categories have changed
+      notifyEntityChanged("categories");
       showToast(t("admin.messages.categoryUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateCategoryFailed"), "error");

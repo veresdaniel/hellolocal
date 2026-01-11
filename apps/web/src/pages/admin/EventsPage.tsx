@@ -293,10 +293,8 @@ export function EventsPage() {
       setEditingId(null);
       resetForm();
       await loadData();
-      // Invalidate events cache - this will automatically refetch active queries
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      // Invalidate individual event cache (all languages)
-      await queryClient.invalidateQueries({ queryKey: ["event"] });
+      // Notify global cache manager that events have changed
+      notifyEntityChanged("events");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateEventFailed"));
     }

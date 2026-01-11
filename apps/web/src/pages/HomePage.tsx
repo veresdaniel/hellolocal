@@ -136,10 +136,10 @@ export function HomePage() {
       selectedCategories.length > 0 ? selectedCategories : undefined,
       selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
-    staleTime: 60 * 1000, // Consider data fresh for 60 seconds
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes (increased from 60s)
+    refetchOnWindowFocus: false, // Don't refetch on window focus (reduce API calls)
     refetchOnMount: false, // Don't refetch on mount if data is fresh
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes in background (reduced from 30s)
+    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes in background (increased from 5min)
     retry: false, // Don't retry on error (404 is expected for some languages)
   });
   

@@ -26,7 +26,7 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
       {
         name: "default",
         ttl: 60000, // 1 perc (milliszekundumban)
-        limit: 50, // 50 kérés percenként (globális limit - növelve frontend betöltéshez)
+        limit: 100, // 100 kérés percenként (növelve a places API hívásokhoz)
       },
       {
         name: "strict",

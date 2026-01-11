@@ -160,9 +160,8 @@ export function TagsPage() {
       setEditingId(null);
       resetForm();
       await loadTags();
-      // Invalidate places and events cache - this will automatically refetch active queries
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Notify global cache manager that tags have changed
+      notifyEntityChanged("tags");
       showToast(t("admin.messages.tagUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateTagFailed"), "error");
@@ -175,9 +174,8 @@ export function TagsPage() {
     try {
       await deleteTag(id, selectedTenantId || undefined);
       await loadTags();
-      // Invalidate places and events cache - this will automatically refetch active queries
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      // Notify global cache manager that tags have changed
+      notifyEntityChanged("tags");
       showToast(t("admin.messages.tagDeleted"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.deleteTagFailed"), "error");
