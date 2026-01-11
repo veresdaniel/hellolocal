@@ -669,15 +669,6 @@ export function CategoriesPage() {
                         return;
                       }
 
-                      // Debug logging
-                        id: u.id, 
-                        parentId: u.parentId, 
-                        order: u.order 
-                      })));
-                        id: c.id, 
-                        parentId: c.parentId, 
-                        order: c.order 
-                      })));
 
                       try {
                         // Double-check all IDs exist before sending

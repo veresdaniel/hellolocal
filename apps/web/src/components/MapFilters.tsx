@@ -262,11 +262,6 @@ export function MapFilters({
         const priceBandId = place.priceBandId || place.priceBand;
         const priceBandName = place.priceBand;
         
-          placeName: place.name, 
-          priceBandId, 
-          priceBandName 
-        });
-        
         // Use ID/name as key to avoid duplicates
         if (!priceBandMap.has(priceBandId)) {
           priceBandMap.set(priceBandId, { id: priceBandId, name: priceBandName });

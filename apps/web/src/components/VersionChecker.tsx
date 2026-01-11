@@ -51,9 +51,6 @@ export function VersionChecker() {
       currentVersionRef.current.version !== newVersion.version;
 
     if (hasUpdate) {
-        old: `${currentVersionRef.current.version} (${currentVersionRef.current.buildHash.substring(0, 7)})`,
-        new: `${newVersion.version} (${newVersion.buildHash.substring(0, 7)})`
-      });
       setShowUpdateNotification(true);
     }
   };
