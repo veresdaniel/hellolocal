@@ -3,10 +3,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
+import { useLocation, useParams, Navigate } from "react-router-dom";
 import { getTenants } from "../api/places.api";
 import { TenantCard } from "../ui/tenant/TenantCard";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG } from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useSeo } from "../seo/useSeo";
 import { useQuery } from "@tanstack/react-query";
@@ -14,9 +15,52 @@ import { getSiteSettings } from "../api/places.api";
 
 const ITEMS_PER_PAGE = 12;
 
+// Map of path to language
+const PATH_TO_LANG: Record<string, "hu" | "en" | "de"> = {
+  teruletek: "hu",
+  regions: "en",
+  regionen: "de",
+};
+
+// Map of language to path
+const LANG_TO_PATH: Record<"hu" | "en" | "de", string> = {
+  hu: "teruletek",
+  en: "regions",
+  de: "regionen",
+};
+
 export function TenantsListPage() {
-  const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const { lang: contextLang, tenantSlug } = useTenantContext();
+  
+  // Get the current path (last segment of URL)
+  const pathSegments = location.pathname.split("/").filter(Boolean);
+  const currentPath = pathSegments[pathSegments.length - 1];
+  
+  // Determine correct language based on path
+  const pathLang = PATH_TO_LANG[currentPath];
+  
+  // Use path language if available, otherwise use context language
+  const lang = pathLang || contextLang;
+  
+  // If path language is different from context language, redirect to correct URL
+  if (pathLang && pathLang !== contextLang) {
+    const tenantPart = HAS_MULTIPLE_TENANTS && tenantSlug && tenantSlug !== DEFAULT_TENANT_SLUG 
+      ? `/${tenantSlug}` 
+      : "";
+    const redirectPath = `/${pathLang}${tenantPart}/${LANG_TO_PATH[pathLang]}`;
+    return <Navigate to={redirectPath} replace />;
+  }
+  
+  // Sync i18n language with the determined language
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+      localStorage.setItem("i18nextLng", lang);
+    }
+  }, [lang, i18n]);
+  
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   const [searchQuery, setSearchQuery] = useState("");

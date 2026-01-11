@@ -49,10 +49,10 @@ const createPublicRoutes = () => {
     { path: "place/:slug", element: <PlaceDetailPage /> },
     { path: "event/:slug", element: <EventDetailPage /> },
     { path: "static-pages", element: <StaticPagesListPage /> },
-    // Language-specific routes for tenants page
-    { path: "teruletek", element: <TenantsListPage /> }, // Hungarian
-    { path: "regions", element: <TenantsListPage /> }, // English
-    { path: "regionen", element: <TenantsListPage /> }, // German
+    // Tenants page - use language from URL, not from path
+    { path: "teruletek", element: <TenantsListPage /> },
+    { path: "regions", element: <TenantsListPage /> },
+    { path: "regionen", element: <TenantsListPage /> },
     { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
     { path: "aszf", element: <LegalPage pageKey="terms" /> },
     { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },

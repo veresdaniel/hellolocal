@@ -126,7 +126,6 @@ export function VersionChecker() {
         maxWidth: 600,
         margin: "0 auto",
         animation: "slideDown 0.3s ease-out",
-        position: "relative",
       }}
     >
       {/* Close button (X) */}
