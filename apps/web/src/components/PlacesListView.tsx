@@ -339,21 +339,28 @@ export function PlacesListView({
           grid-template-columns: 1fr;
           gap: 20px;
           margin-bottom: 32px;
+          width: 100%;
+          max-width: 100%;
         }
         @media (min-width: 640px) {
           .places-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 24px;
+            max-width: 100%;
           }
         }
         @media (min-width: 900px) {
           .places-grid {
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
           }
         }
         .places-grid > * {
           width: 100%;
+          max-width: 100%;
         }
       `}</style>
       <div

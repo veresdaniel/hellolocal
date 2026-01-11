@@ -353,6 +353,7 @@ model PlaceTranslation {
 
   name            String
   // HTML content
+  shortDescription String? // HTML - for list view cards
   description     String? // full HTML for detail
 
   // Contact-ish fields (can be HTML or plain)
@@ -400,6 +401,7 @@ model LegalPageTranslation {
   lang            Lang
 
   title           String
+  shortDescription String? // HTML - for list view cards
   content         String? // HTML
 
   // SEO
@@ -436,6 +438,7 @@ model StaticPageTranslation {
   lang            Lang
 
   title           String
+  shortDescription String? // HTML - for list view cards
   content         String? // HTML
 
   // SEO

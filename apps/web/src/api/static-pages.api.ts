@@ -5,6 +5,7 @@ export interface StaticPage {
   id: string;
   category: "blog" | "tudastar" | "infok";
   title: string;
+  shortDescription?: string | null; // HTML - for list view cards
   content: string;
   createdAt: string;
   updatedAt: string;

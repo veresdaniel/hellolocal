@@ -60,6 +60,7 @@ export class StaticPagesService {
         id: page.id,
         category: page.category,
         title: translation.title,
+        shortDescription: translation.shortDescription ?? null,
         content: translation.content ?? "",
         createdAt: page.createdAt,
         updatedAt: page.updatedAt,
@@ -133,6 +134,7 @@ export class StaticPagesService {
       id: staticPage.id,
       category: staticPage.category,
       title: translation.title,
+      shortDescription: translation.shortDescription ?? null,
       content: translation.content ?? "",
       seo: {
         title: translation.seoTitle ?? translation.title,

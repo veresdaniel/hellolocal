@@ -11,6 +11,7 @@ export interface CreateLegalPageDto {
   translations: Array<{
     lang: Lang;
     title: string;
+    shortDescription?: string | null; // HTML - for list view cards
     content?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
@@ -118,6 +119,7 @@ export class AdminLegalService {
           create: dto.translations.map((t) => ({
             lang: t.lang,
             title: t.title,
+            shortDescription: t.shortDescription ?? null,
             content: t.content ?? null,
             seoTitle: t.seoTitle ?? null,
             seoDescription: t.seoDescription ?? null,
@@ -156,6 +158,7 @@ export class AdminLegalService {
           },
           update: {
             title: translation.title,
+            shortDescription: translation.shortDescription ?? null,
             content: translation.content ?? null,
             seoTitle: translation.seoTitle ?? null,
             seoDescription: translation.seoDescription ?? null,
@@ -166,6 +169,7 @@ export class AdminLegalService {
             legalPageId: id,
             lang: translation.lang,
             title: translation.title,
+            shortDescription: translation.shortDescription ?? null,
             content: translation.content ?? null,
             seoTitle: translation.seoTitle ?? null,
             seoDescription: translation.seoDescription ?? null,

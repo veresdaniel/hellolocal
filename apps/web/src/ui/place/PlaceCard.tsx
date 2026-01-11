@@ -160,7 +160,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
           </h3>
         </div>
 
-        {place.description && (
+        {(place.shortDescription || place.description) && (
           <div
             style={{
               fontSize: 14,
@@ -173,7 +173,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
             }}
-            dangerouslySetInnerHTML={{ __html: place.description }}
+            dangerouslySetInnerHTML={{ __html: place.shortDescription || place.description || "" }}
           />
         )}
 

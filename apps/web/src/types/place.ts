@@ -23,6 +23,7 @@ export type Place = {
   name: string;
 
   // HTML stringet tartalmazhat
+  shortDescription?: string; // HTML - for list view cards
   description?: string;
 
   heroImage?: string;

@@ -36,6 +36,7 @@ interface Place {
   translations: Array<{
     lang: string;
     name: string;
+    shortDescription: string | null;
     description: string | null;
     address: string | null;
     phone: string | null;
@@ -81,6 +82,9 @@ export function PlacesPage() {
     nameHu: "",
     nameEn: "",
     nameDe: "",
+    shortDescriptionHu: "",
+    shortDescriptionEn: "",
+    shortDescriptionDe: "",
     descriptionHu: "",
     descriptionEn: "",
     descriptionDe: "",
@@ -214,6 +218,7 @@ export function PlacesPage() {
         {
           lang: "hu",
           name: formData.nameHu,
+          shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
           address: formData.addressHu || null,
         phone: formData.phone || null,
@@ -232,6 +237,7 @@ export function PlacesPage() {
         translations.push({
           lang: "en",
           name: formData.nameEn,
+          shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
           address: formData.addressEn || null,
         phone: formData.phone || null,
@@ -250,6 +256,7 @@ export function PlacesPage() {
         translations.push({
           lang: "de",
           name: formData.nameDe,
+          shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
           address: formData.addressDe || null,
         phone: formData.phone || null,
@@ -320,6 +327,7 @@ export function PlacesPage() {
               {
                 lang: "hu",
                 name: formData.nameHu,
+                shortDescription: formData.shortDescriptionHu || null,
                 description: formData.descriptionHu || null,
                 address: formData.addressHu || null,
                 phone: formData.phone || null,
@@ -338,6 +346,7 @@ export function PlacesPage() {
               translations.push({
                 lang: "en",
                 name: formData.nameEn,
+                shortDescription: formData.shortDescriptionEn || null,
                 description: formData.descriptionEn || null,
                 address: formData.addressEn || null,
                 phone: formData.phone || null,
@@ -356,6 +365,7 @@ export function PlacesPage() {
               translations.push({
                 lang: "de",
                 name: formData.nameDe,
+                shortDescription: formData.shortDescriptionDe || null,
                 description: formData.descriptionDe || null,
                 address: formData.addressDe || null,
                 phone: formData.phone || null,
@@ -418,6 +428,9 @@ export function PlacesPage() {
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
       nameDe: de?.name || "",
+      shortDescriptionHu: hu?.shortDescription || "",
+      shortDescriptionEn: en?.shortDescription || "",
+      shortDescriptionDe: de?.shortDescription || "",
       descriptionHu: hu?.description || "",
       descriptionEn: en?.description || "",
       descriptionDe: de?.description || "",
@@ -895,6 +908,29 @@ export function PlacesPage() {
                         : formErrors.nameDe}
                     </div>
                   )}
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
+                  <TipTapEditor
+                    value={
+                      selectedLang === "hu"
+                        ? formData.shortDescriptionHu
+                        : selectedLang === "en"
+                        ? formData.shortDescriptionEn
+                        : formData.shortDescriptionDe
+                    }
+                    onChange={(value) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
+                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
+                      else setFormData({ ...formData, shortDescriptionDe: value });
+                    }}
+                    placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
+                    height={150}
+                  />
+                  <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
+                  </small>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>

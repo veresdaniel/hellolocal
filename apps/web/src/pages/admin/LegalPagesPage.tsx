@@ -20,6 +20,7 @@ interface LegalPage {
     id: string;
     lang: string;
     title: string;
+    shortDescription: string | null;
     content: string | null;
     seoTitle: string | null;
     seoDescription: string | null;
@@ -51,6 +52,9 @@ export function LegalPagesPage() {
     titleHu: "",
     titleEn: "",
     titleDe: "",
+    shortDescriptionHu: "",
+    shortDescriptionEn: "",
+    shortDescriptionDe: "",
     contentHu: "",
     contentEn: "",
     contentDe: "",
@@ -135,6 +139,7 @@ export function LegalPagesPage() {
           const translations: Array<{
             lang: string;
             title: string;
+            shortDescription: string | null;
             content: string | null;
             seoTitle: string | null;
             seoDescription: string | null;
@@ -144,6 +149,7 @@ export function LegalPagesPage() {
             {
               lang: "hu",
               title: formData.titleHu,
+              shortDescription: formData.shortDescriptionHu || null,
               content: formData.contentHu || null,
               seoTitle: formData.seoTitleHu || null,
               seoDescription: formData.seoDescriptionHu || null,
@@ -155,6 +161,7 @@ export function LegalPagesPage() {
             translations.push({
               lang: "en",
               title: formData.titleEn,
+              shortDescription: formData.shortDescriptionEn || null,
               content: formData.contentEn || null,
               seoTitle: formData.seoTitleEn || null,
               seoDescription: formData.seoDescriptionEn || null,
@@ -166,6 +173,7 @@ export function LegalPagesPage() {
             translations.push({
               lang: "de",
               title: formData.titleDe,
+              shortDescription: formData.shortDescriptionDe || null,
               content: formData.contentDe || null,
               seoTitle: formData.seoTitleDe || null,
               seoDescription: formData.seoDescriptionDe || null,
@@ -198,6 +206,7 @@ export function LegalPagesPage() {
             const translations: Array<{
               lang: string;
               title: string;
+              shortDescription: string | null;
               content: string | null;
               seoTitle: string | null;
               seoDescription: string | null;
@@ -207,6 +216,7 @@ export function LegalPagesPage() {
               {
                 lang: "hu",
                 title: formData.titleHu,
+                shortDescription: formData.shortDescriptionHu || null,
                 content: formData.contentHu || null,
                 seoTitle: formData.seoTitleHu || null,
                 seoDescription: formData.seoDescriptionHu || null,
@@ -218,6 +228,7 @@ export function LegalPagesPage() {
               translations.push({
                 lang: "en",
                 title: formData.titleEn,
+                shortDescription: formData.shortDescriptionEn || null,
                 content: formData.contentEn || null,
                 seoTitle: formData.seoTitleEn || null,
                 seoDescription: formData.seoDescriptionEn || null,
@@ -229,6 +240,7 @@ export function LegalPagesPage() {
               translations.push({
                 lang: "de",
                 title: formData.titleDe,
+                shortDescription: formData.shortDescriptionDe || null,
                 content: formData.contentDe || null,
                 seoTitle: formData.seoTitleDe || null,
                 seoDescription: formData.seoDescriptionDe || null,
@@ -275,6 +287,9 @@ export function LegalPagesPage() {
       titleHu: hu?.title || "",
       titleEn: en?.title || "",
       titleDe: de?.title || "",
+      shortDescriptionHu: hu?.shortDescription || "",
+      shortDescriptionEn: en?.shortDescription || "",
+      shortDescriptionDe: de?.shortDescription || "",
       contentHu: hu?.content || "",
       contentEn: en?.content || "",
       contentDe: de?.content || "",
@@ -459,6 +474,29 @@ export function LegalPagesPage() {
                         : formErrors.titleDe}
                     </div>
                   ) : null}
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
+                  <TipTapEditor
+                    value={
+                      selectedLang === "hu"
+                        ? formData.shortDescriptionHu
+                        : selectedLang === "en"
+                        ? formData.shortDescriptionEn
+                        : formData.shortDescriptionDe
+                    }
+                    onChange={(value) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
+                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
+                      else setFormData({ ...formData, shortDescriptionDe: value });
+                    }}
+                    placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
+                    height={150}
+                  />
+                  <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
+                  </small>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>

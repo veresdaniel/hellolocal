@@ -8,6 +8,6 @@ export type Event = BaseEntity & {
   startDate: string; // ISO date string
   endDate?: string | null; // ISO date string
   isPinned: boolean;
-  shortDescription?: string; // 2-line description
+  shortDescription?: string; // HTML - for list view cards
 };
 

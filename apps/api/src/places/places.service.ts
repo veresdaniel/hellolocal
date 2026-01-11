@@ -512,6 +512,7 @@ export class PlacesService {
       category: categoryName,
       categoryColor: categoryColor,
       name: placeTranslation?.name ?? "(missing translation)",
+      shortDescription: placeTranslation?.shortDescription ?? null,
       description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,
       gallery: place.gallery,

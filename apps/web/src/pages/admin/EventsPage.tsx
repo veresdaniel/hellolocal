@@ -840,9 +840,9 @@ export function EventsPage() {
                     fontWeight: 600,
                     fontSize: "clamp(13px, 3vw, 14px)",
                   }}>
-                    {t("admin.shortDescription")} ({selectedLang.toUpperCase()})
+                    {t("admin.shortDescription") || "Rövid leírás (lista oldal)"} ({selectedLang.toUpperCase()})
                   </label>
-                  <textarea
+                  <TipTapEditor
                     value={
                       selectedLang === "hu"
                         ? formData.shortDescriptionHu
@@ -850,34 +850,17 @@ export function EventsPage() {
                         ? formData.shortDescriptionEn
                         : formData.shortDescriptionDe
                     }
-                    onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: e.target.value });
-                      else setFormData({ ...formData, shortDescriptionDe: e.target.value });
+                    onChange={(value) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
+                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
+                      else setFormData({ ...formData, shortDescriptionDe: value });
                     }}
-                    style={{ 
-                      width: "100%", 
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border: "2px solid #e0e7ff",
-                      borderRadius: 8,
-                      minHeight: 80,
-                      fontFamily: "inherit",
-                      resize: "vertical",
-                      outline: "none",
-                      transition: "all 0.3s ease",
-                      boxSizing: "border-box",
-                    }}
-                    placeholder={t("admin.shortDescriptionPlaceholder")}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#e0e7ff";
-                      e.target.style.boxShadow = "none";
-                    }}
+                    placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
+                    height={150}
                   />
+                  <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
+                  </small>
                 </div>
 
                 {/* Description (TipTap Editor) */}

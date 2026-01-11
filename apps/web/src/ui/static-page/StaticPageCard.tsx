@@ -134,7 +134,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
           </h3>
         </div>
 
-        {staticPage.content && (
+        {(staticPage.shortDescription || staticPage.content) && (
           <div
             style={{
               fontSize: 14,
@@ -147,7 +147,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
             }}
-            dangerouslySetInnerHTML={{ __html: staticPage.content }}
+            dangerouslySetInnerHTML={{ __html: staticPage.shortDescription || staticPage.content || "" }}
           />
         )}
 

@@ -3,6 +3,7 @@ import { apiGetPublic } from "./client";
 export type LegalPageDto = {
   key: "imprint" | "terms" | "privacy";
   title: string;
+  shortDescription?: string | null; // HTML - for list view cards
   content: string; // HTML
   seo: {
     title: string | null;

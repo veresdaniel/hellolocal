@@ -83,21 +83,28 @@ export function StaticPagesListPage() {
           grid-template-columns: 1fr;
           gap: 20px;
           margin-bottom: 32px;
+          width: 100%;
+          max-width: 100%;
         }
         @media (min-width: 640px) {
           .static-pages-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 24px;
+            max-width: 100%;
           }
         }
         @media (min-width: 900px) {
           .static-pages-grid {
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
           }
         }
         .static-pages-grid > * {
           width: 100%;
+          max-width: 100%;
         }
       `}</style>
       <div

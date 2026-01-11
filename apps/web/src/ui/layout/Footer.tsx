@@ -39,12 +39,15 @@ export function Footer({
   const { data: siteSettings } = useQuery({
     queryKey: ["siteSettings", lang, effectiveTenantSlug],
     queryFn: () => getSiteSettings(lang, effectiveTenantSlug),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 0, // Always consider stale to ensure fresh data on changes
+    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   // Listen for site settings changes from admin
   useEffect(() => {
     const handleSiteSettingsChanged = () => {
+      console.log("[Footer] Site settings changed, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
       queryClient.refetchQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
     };
@@ -57,6 +60,11 @@ export function Footer({
 
   const siteName = siteSettings?.siteName;
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  
+  // Debug: log when siteName changes
+  useEffect(() => {
+    console.log("[Footer] siteName changed:", siteName);
+  }, [siteName]);
   const [logoError, setLogoError] = useState(false);
   
   // Log when brandBadgeIcon changes

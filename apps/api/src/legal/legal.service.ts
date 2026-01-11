@@ -87,6 +87,7 @@ export class LegalService {
     return {
       key,
       title: t.title,
+      shortDescription: t.shortDescription ?? null,
       content: t.content ?? "",
       seo: {
         title: t.seoTitle ?? t.title,
