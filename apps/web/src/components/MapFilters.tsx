@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
 import { getPlaces } from "../api/places.api";
+import { useFiltersStore } from "../stores/useFiltersStore";
 
 interface MapFiltersProps {
   selectedCategories: string[];
@@ -41,6 +42,7 @@ export function MapFilters({
   const { tenantSlug } = useTenantContext();
   const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
   const { t } = useTranslation();
+  const userLocation = useFiltersStore((state) => state.userLocation);
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   
@@ -544,7 +546,7 @@ export function MapFilters({
                   }
                 }}
               >
-                🕐 Most nyitva
+                🕐 {t("public.filters.openNow")}
               </button>
               <button
                 onClick={() => onHasEventTodayChange(!hasEventToday)}
@@ -571,35 +573,37 @@ export function MapFilters({
                   }
                 }}
               >
-                📅 Ma van esemény
+                📅 {t("public.filters.eventToday")}
               </button>
-              <button
-                onClick={() => onWithin30MinutesChange(!within30Minutes)}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
-                  color: within30Minutes ? "#3d2952" : "#5a3d7a",
-                  fontWeight: within30Minutes ? 600 : 500,
-                  fontSize: 14,
-                  transition: "all 0.2s",
-                  textAlign: "left",
-                  border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                }}
-                onMouseEnter={(e) => {
-                  if (!within30Minutes) {
-                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!within30Minutes) {
-                    e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
-                  }
-                }}
-              >
-                🚗 30 percen belül elérhető
-              </button>
+              {userLocation && (
+                <button
+                  onClick={() => onWithin30MinutesChange(!within30Minutes)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                    color: within30Minutes ? "#3d2952" : "#5a3d7a",
+                    fontWeight: within30Minutes ? 600 : 500,
+                    fontSize: 14,
+                    transition: "all 0.2s",
+                    textAlign: "left",
+                    border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!within30Minutes) {
+                      e.currentTarget.style.background = "rgba(90, 61, 122, 0.1)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!within30Minutes) {
+                      e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
+                    }
+                  }}
+                >
+                  🚶 {t("public.filters.within10MinutesWalk")}
+                </button>
+              )}
               <button
                 onClick={() => onRainSafeChange(!rainSafe)}
                 style={{
@@ -625,7 +629,7 @@ export function MapFilters({
                   }
                 }}
               >
-                ☂️ Esőbiztos program
+                ☂️ {t("public.filters.rainSafe")}
               </button>
             </div>
           </div>

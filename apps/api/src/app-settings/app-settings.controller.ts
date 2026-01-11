@@ -66,7 +66,7 @@ export class AppSettingsController {
     
     const allSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
     
-    // Return only the requested language's settings, plus default placeholder images
+    // Return only the requested language's settings, plus default placeholder images and brand assets
     return {
       siteName: allSettings.siteName[lang as "hu" | "en" | "de"],
       siteDescription: allSettings.siteDescription[lang as "hu" | "en" | "de"],
@@ -74,6 +74,8 @@ export class AppSettingsController {
       seoDescription: allSettings.seoDescription[lang as "hu" | "en" | "de"],
       defaultPlaceholderCardImage: allSettings.defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage: allSettings.defaultPlaceholderDetailHeroImage,
+      brandBadgeIcon: allSettings.brandBadgeIcon,
+      faviconUrl: allSettings.faviconUrl,
     };
   }
 

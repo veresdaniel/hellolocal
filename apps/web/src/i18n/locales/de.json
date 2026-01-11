@@ -17,7 +17,23 @@
     "actions": "Aktionen",
     "siteName": "HelloLocal",
     "title": "Titel",
-    "none": "Keine"
+    "none": "Keine",
+    "openingHoursEditor": "Öffnungszeiten",
+    "openingHoursHint": "Legen Sie die Öffnungszeiten für jeden Tag fest. Wenn ein Tag geschlossen ist, aktivieren Sie das Kontrollkästchen 'Geschlossen'.",
+    "dayOfWeek": {
+      "0": "Montag",
+      "1": "Dienstag",
+      "2": "Mittwoch",
+      "3": "Donnerstag",
+      "4": "Freitag",
+      "5": "Samstag",
+      "6": "Sonntag"
+    },
+    "openTime": "Öffnung",
+    "closeTime": "Schließung",
+    "closed": "Geschlossen",
+    "isRainSafe": "Regensicheres Programm",
+    "isRainSafeHint": "Innen- oder überdachtes Event, das bei Regen stattfinden kann"
   },
   "public": {
     "home": {
@@ -58,6 +74,13 @@
     "searchPlaces": "Suchen...",
     "errorLoadingPlaces": "Fehler beim Laden der Orte",
     "noPlacesFound": "Keine Orte gefunden",
+    "tenants": {
+      "title": "Regionen",
+      "description": "Regionen entdecken"
+    },
+    "searchTenants": "Regionen suchen...",
+    "errorLoadingTenants": "Fehler beim Laden der Regionen",
+    "noTenantsFound": "Keine Regionen gefunden",
     "errorLoadingPlace": "Fehler beim Laden des Ortes",
     "errorLoadingEvent": "Fehler beim Laden der Veranstaltung",
     "backToList": "Zurück zur Liste",
@@ -80,7 +103,7 @@
       "all": "Alle",
       "openNow": "Jetzt geöffnet",
       "eventToday": "Heute Veranstaltung",
-      "within30Minutes": "Innerhalb von 30 Minuten erreichbar",
+      "within10MinutesWalk": "10 Minuten zu Fuß",
       "rainSafe": "Regensicheres Programm",
       "contextFilters": "Kontextbasierte Filter"
     },
@@ -255,6 +278,10 @@
     "defaultPlaceholderCardImageDescription": "Dieses Bild wird auf Ortskarten angezeigt, wenn kein Bild festgelegt ist",
     "defaultPlaceholderDetailHeroImage": "Standard-Platzhalter-Hero-Bild für Details",
     "defaultPlaceholderDetailHeroImageDescription": "Dieses Bild wird auf Ortsdetailseiten angezeigt, wenn kein Hero-Bild festgelegt ist",
+    "brandBadgeIcon": "Markenabzeichen-Symbol",
+    "brandBadgeIconDescription": "Symbol, das im Markenabzeichen auf öffentlichen Seiten angezeigt wird",
+    "faviconUrl": "Favicon-URL",
+    "faviconUrlDescription": "Favicon, das in Browser-Tabs angezeigt wird (empfohlen: 32x32px oder 16x16px .ico, .png)",
     "imageUrlPlaceholder": "https://example.com/bild.jpg",
     "errors": {
       "userNotFound": "Benutzer nicht gefunden",
@@ -365,6 +392,7 @@
     "selectPlace": "Ort auswählen",
     "place": "Ort",
     "heroImage": "Hero-Bild",
+    "heroImageDescription": "URL für das auf der Karte angezeigte Bild",
     "urlPlaceholder": "URL",
     "accessDenied": "Zugriff verweigert. Superadmin-Rolle erforderlich.",
     "disable2FA": "2FA deaktivieren",
@@ -515,6 +543,11 @@
     "goBack": "Zurück",
     "reload": "Seite neu laden",
     "errorDetails": "Fehlerdetails"
+  },
+  "cookieConsent": {
+    "message": "Diese Website verwendet Cookies, um die beste Benutzererfahrung zu bieten. Durch Fortfahren akzeptieren Sie die Verwendung von Cookies.",
+    "accept": "Akzeptieren",
+    "close": "Schließen"
   },
   "validation": {
     "required": "Pflichtfeld",

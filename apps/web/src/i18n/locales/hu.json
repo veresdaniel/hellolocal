@@ -17,7 +17,23 @@
     "actions": "Műveletek",
     "siteName": "HelloLocal",
     "title": "Cím",
-    "none": "Nincs"
+    "none": "Nincs",
+    "openingHoursEditor": "Nyitvatartás",
+    "openingHoursHint": "Állítsd be a nyitvatartást minden napra. Ha egy nap zárva van, jelöld be a 'Zárva' négyzetet.",
+    "dayOfWeek": {
+      "0": "Hétfő",
+      "1": "Kedd",
+      "2": "Szerda",
+      "3": "Csütörtök",
+      "4": "Péntek",
+      "5": "Szombat",
+      "6": "Vasárnap"
+    },
+    "openTime": "Nyitás",
+    "closeTime": "Zárás",
+    "closed": "Zárva",
+    "isRainSafe": "Esőbiztos program",
+    "isRainSafeHint": "Fedett vagy beltéri esemény, amely esőben is megtartható"
   },
   "public": {
     "home": {
@@ -58,6 +74,13 @@
     "searchPlaces": "Keresés...",
     "errorLoadingPlaces": "Hiba a helyek betöltésekor",
     "noPlacesFound": "Nincs találat",
+    "tenants": {
+      "title": "Területek",
+      "description": "Fedezd fel a területeket"
+    },
+    "searchTenants": "Keresés területek között...",
+    "errorLoadingTenants": "Hiba a területek betöltésekor",
+    "noTenantsFound": "Nincs találat",
     "errorLoadingPlace": "Hiba a hely betöltésekor",
     "errorLoadingEvent": "Hiba az esemény betöltésekor",
     "backToList": "Vissza a listához",
@@ -80,7 +103,7 @@
       "all": "Összes",
       "openNow": "Most nyitva",
       "eventToday": "Ma van esemény",
-      "within30Minutes": "30 percen belül elérhető",
+      "within10MinutesWalk": "10 perc séta ide",
       "rainSafe": "Esőbiztos program",
       "contextFilters": "Kontextus alapú szűrők"
     },
@@ -306,6 +329,10 @@
     "defaultPlaceholderCardImageDescription": "Ez a kép jelenik meg a helyek kártyáin, ha nincs beállítva kép",
     "defaultPlaceholderDetailHeroImage": "Alapértelmezett helyettesítő hero kép részletekhez",
     "defaultPlaceholderDetailHeroImageDescription": "Ez a kép jelenik meg a helyek részletező oldalán, ha nincs beállítva hero kép",
+    "brandBadgeIcon": "Brand badge ikon",
+    "brandBadgeIconDescription": "Ez az ikon jelenik meg a brand badge-ben a publikus oldalakon",
+    "faviconUrl": "Favicon URL",
+    "faviconUrlDescription": "A böngésző fülön megjelenő favicon (ajánlott: 32x32px vagy 16x16px .ico, .png)",
     "imageUrlPlaceholder": "https://example.com/kep.jpg",
     "errors": {
       "userNotFound": "Felhasználó nem található",
@@ -409,6 +436,7 @@
     "content": "Tartalom",
     "selectTenantFirst": "Kérjük, válassz először egy területet",
     "heroImage": "Hero kép",
+    "heroImageDescription": "URL a kártyán megjelenő képhez",
     "urlPlaceholder": "URL",
     "accessDenied": "Hozzáférés megtagadva. Superadmin szerepkör szükséges.",
     "disable2FA": "2FA letiltása",
@@ -565,6 +593,11 @@
     "goBack": "Vissza",
     "reload": "Oldal újratöltése",
     "errorDetails": "Hiba részletei"
+  },
+  "cookieConsent": {
+    "message": "Ez az oldal sütiket használ a legjobb felhasználói élmény biztosításához. A folytatással elfogadod a sütik használatát.",
+    "accept": "Elfogadom",
+    "close": "Bezárás"
   }
 }
 

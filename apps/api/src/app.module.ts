@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { PlacesModule } from "./places/places.module";
+import { TenantsModule } from "./tenants/tenants.module";
 import { EventsModule } from "./events/events.module";
 import { LegalModule } from "./legal/legal.module";
 import { StaticPagesModule } from "./static-pages/static-pages.module";
@@ -26,6 +27,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
     AppSettingsModule, // Public app settings (no auth required)
     AdminModule, // AdminModule must be imported before PlacesModule to ensure /api/admin routes take precedence
     PlacesModule,
+    TenantsModule,
     EventsModule,
     LegalModule,
     StaticPagesModule,

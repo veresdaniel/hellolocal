@@ -21,10 +21,13 @@ export interface SiteSettings {
   seoDescription: string;
   defaultPlaceholderCardImage: string | null;
   defaultPlaceholderDetailHeroImage: string | null;
+  brandBadgeIcon: string | null;
+  faviconUrl: string | null;
 }
 
-export function getSiteSettings(lang: string): Promise<SiteSettings> {
-  return apiGetPublic<SiteSettings>(`/${lang}/site-settings`);
+export function getSiteSettings(lang: string, tenantKey?: string): Promise<SiteSettings> {
+  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
+  return apiGetPublic<SiteSettings>(`/${lang}/site-settings${params}`);
 }
 
 export function getPlaces(
@@ -134,6 +137,7 @@ export interface Event {
   startDate: string;
   endDate: string | null;
   isPinned: boolean;
+  isRainSafe: boolean;
   tags: string[];
   seo: {
     title: string | null;
@@ -164,4 +168,41 @@ export function getEvents(
 export function getEvent(lang: string, slug: string, tenantKey?: string) {
   const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
   return apiGetPublic<Event>(`/${lang}/events/${slug}${params}`);
+}
+
+// Tenants
+export interface Tenant {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string | null;
+  description: string | null;
+  heroImage: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoImage: string | null;
+  seoKeywords: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getTenants(
+  lang: string,
+  tenantKey?: string,
+  searchQuery?: string,
+  limit?: number,
+  offset?: number
+) {
+  const params = new URLSearchParams();
+  if (tenantKey) params.append("tenantKey", tenantKey);
+  if (searchQuery) params.append("q", searchQuery);
+  if (limit) params.append("limit", limit.toString());
+  if (offset) params.append("offset", offset.toString());
+  const queryString = params.toString();
+  return apiGetPublic<Tenant[]>(`/${lang}/tenants${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getTenant(lang: string, slug: string, tenantKey?: string) {
+  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
+  return apiGetPublic<Tenant>(`/${lang}/tenants/${slug}${params}`);
 }

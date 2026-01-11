@@ -37,8 +37,8 @@ export function EventDetailPage() {
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang],
-    queryFn: () => getSiteSettings(lang),
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -49,12 +49,25 @@ export function EventDetailPage() {
         description: siteSettings?.seoDescription || t("public.event.description"),
       };
     }
+    const eventImage = event.seo?.image || event.heroImage;
     return {
       title: event.seo?.title || event.name,
       description: event.seo?.description || event.shortDescription || event.description || "",
       keywords: event.seo?.keywords || [],
-      image: event.seo?.image || event.heroImage,
+      image: eventImage,
       canonical: window.location.href,
+      og: {
+        type: "article",
+        title: event.seo?.title || event.name,
+        description: event.seo?.description || event.shortDescription || event.description || "",
+        image: eventImage,
+      },
+      twitter: {
+        card: eventImage ? "summary_large_image" : "summary",
+        title: event.seo?.title || event.name,
+        description: event.seo?.description || event.shortDescription || event.description || "",
+        image: eventImage,
+      },
     };
   }, [event, siteSettings, t]);
 

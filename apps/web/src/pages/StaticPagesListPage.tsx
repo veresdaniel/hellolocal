@@ -24,6 +24,11 @@ export function StaticPagesListPage() {
   useSeo({
     title: t("admin.staticPages"),
     description: t("admin.staticPages"),
+    og: {
+      type: "website",
+      title: t("admin.staticPages"),
+      description: t("admin.staticPages"),
+    },
   });
 
   const getCategoryLabel = (category: string) => {

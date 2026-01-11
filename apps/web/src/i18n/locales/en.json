@@ -17,7 +17,23 @@
     "actions": "Actions",
     "siteName": "HelloLocal",
     "title": "Title",
-    "none": "None"
+    "none": "None",
+    "openingHoursEditor": "Opening Hours",
+    "openingHoursHint": "Set opening hours for each day. If a day is closed, check the 'Closed' checkbox.",
+    "dayOfWeek": {
+      "0": "Monday",
+      "1": "Tuesday",
+      "2": "Wednesday",
+      "3": "Thursday",
+      "4": "Friday",
+      "5": "Saturday",
+      "6": "Sunday"
+    },
+    "openTime": "Open",
+    "closeTime": "Close",
+    "closed": "Closed",
+    "isRainSafe": "Rain-safe program",
+    "isRainSafeHint": "Indoor or covered event that can be held in rain"
   },
   "public": {
     "home": {
@@ -58,6 +74,13 @@
     "searchPlaces": "Search...",
     "errorLoadingPlaces": "Error loading places",
     "noPlacesFound": "No places found",
+    "tenants": {
+      "title": "Regions",
+      "description": "Discover regions"
+    },
+    "searchTenants": "Search regions...",
+    "errorLoadingTenants": "Error loading regions",
+    "noTenantsFound": "No regions found",
     "errorLoadingPlace": "Error loading place",
     "errorLoadingEvent": "Error loading event",
     "backToList": "Back to list",
@@ -80,7 +103,7 @@
       "all": "All",
       "openNow": "Open now",
       "eventToday": "Event today",
-      "within30Minutes": "Within 30 minutes",
+      "within10MinutesWalk": "10 minutes walk",
       "rainSafe": "Rain-safe program",
       "contextFilters": "Context-based filters"
     },
@@ -262,6 +285,10 @@
     "defaultPlaceholderCardImageDescription": "This image will be shown on place cards when no image is set",
     "defaultPlaceholderDetailHeroImage": "Default Placeholder Detail Hero Image",
     "defaultPlaceholderDetailHeroImageDescription": "This image will be shown on place detail pages when no hero image is set",
+    "brandBadgeIcon": "Brand Badge Icon",
+    "brandBadgeIconDescription": "Icon displayed in the brand badge on public pages",
+    "faviconUrl": "Favicon URL",
+    "faviconUrlDescription": "Favicon displayed in browser tabs (recommended: 32x32px or 16x16px .ico, .png)",
     "imageUrlPlaceholder": "https://example.com/image.jpg",
     "errors": {
       "loadFailed": "Failed to load",
@@ -371,6 +398,7 @@
     "selectPlace": "Select place",
     "place": "Place",
     "heroImage": "Hero Image",
+    "heroImageDescription": "URL for the image displayed on the card",
     "urlPlaceholder": "URL",
     "accessDenied": "Access denied. Superadmin role required.",
     "disable2FA": "Disable 2FA",
@@ -519,6 +547,11 @@
     "goBack": "Go Back",
     "reload": "Reload Page",
     "errorDetails": "Error Details"
+  },
+  "cookieConsent": {
+    "message": "This site uses cookies to provide the best user experience. By continuing, you accept the use of cookies.",
+    "accept": "Accept",
+    "close": "Close"
   },
   "validation": {
     "required": "Required field",

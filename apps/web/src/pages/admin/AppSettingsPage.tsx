@@ -53,6 +53,8 @@ export function AppSettingsPage() {
     isCrawlable: true,
     defaultPlaceholderCardImage: null,
     defaultPlaceholderDetailHeroImage: null,
+    brandBadgeIcon: null,
+    faviconUrl: null,
   });
   const [isLoadingSiteSettings, setIsLoadingSiteSettings] = useState(false); // Start as false, will be set to true when loading
   const [isSavingSiteSettings, setIsSavingSiteSettings] = useState(false);
@@ -169,6 +171,8 @@ export function AppSettingsPage() {
           isCrawlable: data.isCrawlable ?? true,
           defaultPlaceholderCardImage: data.defaultPlaceholderCardImage ?? null,
           defaultPlaceholderDetailHeroImage: data.defaultPlaceholderDetailHeroImage ?? null,
+          brandBadgeIcon: data.brandBadgeIcon ?? null,
+          faviconUrl: data.faviconUrl ?? null,
         });
       } catch (err) {
         console.error("Failed to load site settings", err);
@@ -257,6 +261,16 @@ export function AppSettingsPage() {
         setIsSavingSiteSettings(false);
         return;
       }
+      if (siteSettings.brandBadgeIcon && !isValidImageUrl(siteSettings.brandBadgeIcon)) {
+        showToast(t("admin.validation.invalidImageUrl"), "error");
+        setIsSavingSiteSettings(false);
+        return;
+      }
+      if (siteSettings.faviconUrl && !isValidImageUrl(siteSettings.faviconUrl)) {
+        showToast(t("admin.validation.invalidImageUrl"), "error");
+        setIsSavingSiteSettings(false);
+        return;
+      }
       
       console.log('[AppSettingsPage] Current site settings before save:', JSON.stringify(siteSettings, null, 2));
       if (!selectedTenantId) {
@@ -273,6 +287,8 @@ export function AppSettingsPage() {
         isCrawlable: siteSettings.isCrawlable,
         defaultPlaceholderCardImage: siteSettings.defaultPlaceholderCardImage,
         defaultPlaceholderDetailHeroImage: siteSettings.defaultPlaceholderDetailHeroImage,
+        brandBadgeIcon: siteSettings.brandBadgeIcon,
+        faviconUrl: siteSettings.faviconUrl,
       });
       console.log('[AppSettingsPage] Received updated settings from backend:', JSON.stringify(updated, null, 2));
       
@@ -302,6 +318,8 @@ export function AppSettingsPage() {
         isCrawlable: updated.isCrawlable ?? true,
         defaultPlaceholderCardImage: updated.defaultPlaceholderCardImage ?? null,
         defaultPlaceholderDetailHeroImage: updated.defaultPlaceholderDetailHeroImage ?? null,
+        brandBadgeIcon: updated.brandBadgeIcon ?? null,
+        faviconUrl: updated.faviconUrl ?? null,
       };
       console.log('[AppSettingsPage] Setting new state:', JSON.stringify(newState, null, 2));
       setSiteSettingsState(newState);
@@ -1116,6 +1134,92 @@ export function AppSettingsPage() {
                   {t("admin.defaultPlaceholderDetailHeroImageDescription") || "Used for place detail pages when no hero image is set"}
                 </p>
                 {siteSettings.defaultPlaceholderDetailHeroImage && !isValidImageUrl(siteSettings.defaultPlaceholderDetailHeroImage) && (
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    {t("admin.validation.invalidImageUrl")}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  {t("admin.brandBadgeIcon") || "Brand Badge Icon"}
+                </label>
+                <input
+                  type="text"
+                  value={siteSettings.brandBadgeIcon || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      brandBadgeIcon: value,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && !isValidImageUrl(value)) {
+                      setError(t("admin.validation.invalidImageUrl"));
+                    }
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  placeholder={t("admin.imageUrlPlaceholder")}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
+                  }}
+                />
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                  {t("admin.brandBadgeIconDescription") || "Icon displayed in the brand badge on public pages"}
+                </p>
+                {siteSettings.brandBadgeIcon && !isValidImageUrl(siteSettings.brandBadgeIcon) && (
+                  <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    {t("admin.validation.invalidImageUrl")}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+                  {t("admin.faviconUrl") || "Favicon URL"}
+                </label>
+                <input
+                  type="text"
+                  value={siteSettings.faviconUrl || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.trim() || null;
+                    setSiteSettingsState((prev) => ({
+                      ...prev,
+                      faviconUrl: value,
+                    }));
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && !isValidImageUrl(value)) {
+                      setError(t("admin.validation.invalidImageUrl"));
+                    }
+                  }}
+                  disabled={!isAdmin || isSavingSiteSettings}
+                  placeholder={t("admin.imageUrlPlaceholder")}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                    transition: "all 0.2s ease",
+                    outline: "none",
+                  }}
+                />
+                <p style={{ color: "#666", fontSize: 12, marginTop: 4 }}>
+                  {t("admin.faviconUrlDescription") || "Favicon displayed in browser tabs (recommended: 32x32px or 16x16px .ico, .png)"}
+                </p>
+                {siteSettings.faviconUrl && !isValidImageUrl(siteSettings.faviconUrl) && (
                   <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
                     {t("admin.validation.invalidImageUrl")}
                   </p>

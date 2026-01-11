@@ -13,6 +13,7 @@ import { TipTapEditor } from "../../components/TipTapEditor";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
+import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHoursEditor";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 interface Place {
@@ -30,6 +31,7 @@ interface Place {
   town: { translations: Array<{ lang: string; name: string }> } | null;
   priceBand: { translations: Array<{ lang: string; name: string }> } | null;
   tags: Array<{ tag: { id: string; translations: Array<{ lang: string; name: string }> } }>;
+  openingHours?: Array<OpeningHour>;
   translations: Array<{
     lang: string;
     name: string;
@@ -39,7 +41,6 @@ interface Place {
     phone: string | null;
     email: string | null;
     website: string | null;
-    openingHours: string | null;
     accessibility: string | null;
   }>;
 }
@@ -85,9 +86,7 @@ export function PlacesPage() {
     phone: "",
     email: "",
     website: "",
-    openingHoursHu: "",
-    openingHoursEn: "",
-    openingHoursDe: "",
+    openingHours: [] as OpeningHour[],
     accessibilityHu: "",
     accessibilityEn: "",
     accessibilityDe: "",
@@ -176,68 +175,64 @@ export function PlacesPage() {
     if (!validateForm()) return;
 
     try {
+      const translations: Array<{
+        lang: string;
+        name: string;
+        teaser: string | null;
+        description: string | null;
+        address: string | null;
+        phone: string | null;
+        email: string | null;
+        website: string | null;
+        accessibility: string | null;
+      }> = [
+        {
+          lang: "hu",
+          name: formData.nameHu,
+          teaser: formData.teaserHu || null,
+          description: formData.descriptionHu || null,
+          address: formData.addressHu || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          accessibility: formData.accessibilityHu || null,
+        },
+      ];
+      if (formData.nameEn.trim()) {
+        translations.push({
+          lang: "en",
+          name: formData.nameEn,
+          teaser: formData.teaserEn || null,
+          description: formData.descriptionEn || null,
+          address: formData.addressEn || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          accessibility: formData.accessibilityEn || null,
+        });
+      }
+      if (formData.nameDe.trim()) {
+        translations.push({
+          lang: "de",
+          name: formData.nameDe,
+          teaser: formData.teaserDe || null,
+          description: formData.descriptionDe || null,
+          address: formData.addressDe || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          accessibility: formData.accessibilityDe || null,
+        });
+      }
+
       await createPlace({
         tenantId: selectedTenantId,
         categoryId: formData.categoryId,
         townId: formData.townId || null,
         priceBandId: formData.priceBandId || null,
         tagIds: formData.tagIds,
-        translations: (() => {
-          const translations: Array<{
-            lang: string;
-            name: string;
-            teaser: string | null;
-            description: string | null;
-            address: string | null;
-            phone: string | null;
-            email: string | null;
-            website: string | null;
-            openingHours: string | null;
-            accessibility: string | null;
-          }> = [
-            {
-              lang: "hu",
-              name: formData.nameHu,
-              teaser: formData.teaserHu || null,
-              description: formData.descriptionHu || null,
-              address: formData.addressHu || null,
-              phone: formData.phone || null,
-              email: formData.email || null,
-              website: formData.website || null,
-              openingHours: formData.openingHoursHu || null,
-              accessibility: formData.accessibilityHu || null,
-            },
-          ];
-          if (formData.nameEn.trim()) {
-            translations.push({
-              lang: "en",
-              name: formData.nameEn,
-              teaser: formData.teaserEn || null,
-              description: formData.descriptionEn || null,
-              address: formData.addressEn || null,
-              phone: formData.phone || null,
-              email: formData.email || null,
-              website: formData.website || null,
-              openingHours: formData.openingHoursEn || null,
-              accessibility: formData.accessibilityEn || null,
-            });
-          }
-          if (formData.nameDe.trim()) {
-            translations.push({
-              lang: "de",
-              name: formData.nameDe,
-              teaser: formData.teaserDe || null,
-              description: formData.descriptionDe || null,
-              address: formData.addressDe || null,
-              phone: formData.phone || null,
-              email: formData.email || null,
-              website: formData.website || null,
-              openingHours: formData.openingHoursDe || null,
-              accessibility: formData.accessibilityDe || null,
-            });
-          }
-          return translations;
-        })(),
+        translations,
+        openingHours: formData.openingHours,
         heroImage: formData.heroImage || null,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
@@ -275,7 +270,6 @@ export function PlacesPage() {
               phone: string | null;
               email: string | null;
               website: string | null;
-              openingHours: string | null;
               accessibility: string | null;
             }> = [
               {
@@ -287,7 +281,6 @@ export function PlacesPage() {
                 phone: formData.phone || null,
                 email: formData.email || null,
                 website: formData.website || null,
-                openingHours: formData.openingHoursHu || null,
                 accessibility: formData.accessibilityHu || null,
               },
             ];
@@ -301,7 +294,6 @@ export function PlacesPage() {
                 phone: formData.phone || null,
                 email: formData.email || null,
                 website: formData.website || null,
-                openingHours: formData.openingHoursEn || null,
                 accessibility: formData.accessibilityEn || null,
               });
             }
@@ -315,12 +307,12 @@ export function PlacesPage() {
                 phone: formData.phone || null,
                 email: formData.email || null,
                 website: formData.website || null,
-                openingHours: formData.openingHoursDe || null,
                 accessibility: formData.accessibilityDe || null,
               });
             }
             return translations;
           })(),
+          openingHours: formData.openingHours,
           heroImage: formData.heroImage || null,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
@@ -378,9 +370,7 @@ export function PlacesPage() {
       phone: hu?.phone || "",
       email: hu?.email || "",
       website: hu?.website || "",
-      openingHoursHu: hu?.openingHours || "",
-      openingHoursEn: en?.openingHours || "",
-      openingHoursDe: de?.openingHours || "",
+      openingHours: place.openingHours || [],
       accessibilityHu: hu?.accessibility || "",
       accessibilityEn: en?.accessibility || "",
       accessibilityDe: de?.accessibility || "",
@@ -412,9 +402,7 @@ export function PlacesPage() {
       phone: "",
       email: "",
       website: "",
-      openingHoursHu: "",
-      openingHoursEn: "",
-      openingHoursDe: "",
+      openingHours: [],
       accessibilityHu: "",
       accessibilityEn: "",
       accessibilityDe: "",
@@ -434,6 +422,15 @@ export function PlacesPage() {
   if (!selectedTenantId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
+
+  // Common label style for better contrast on admin
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    marginBottom: 4,
+    fontSize: "clamp(13px, 3vw, 14px)",
+    fontWeight: 600,
+    color: "#333",
+  };
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
@@ -685,7 +682,7 @@ export function PlacesPage() {
                     marginBottom: 8,
                     color: ((selectedLang === "hu" && formErrors.nameHu) ||
                             (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#667eea",
+                            (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#333",
                     fontWeight: 600,
                     fontSize: "clamp(13px, 3vw, 14px)",
                   }}>
@@ -755,7 +752,7 @@ export function PlacesPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("common.description")}</label>
+                  <label style={labelStyle}>{t("common.description")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
@@ -775,27 +772,15 @@ export function PlacesPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("public.openingHours")}</label>
-                  <TipTapEditor
-                    value={
-                      selectedLang === "hu"
-                        ? formData.openingHoursHu
-                        : selectedLang === "en"
-                        ? formData.openingHoursEn
-                        : formData.openingHoursDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, openingHoursHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, openingHoursEn: value });
-                      else setFormData({ ...formData, openingHoursDe: value });
-                    }}
-                    placeholder={t("public.openingHours")}
-                    height={150}
+                  <label style={labelStyle}>{t("common.openingHoursEditor")}</label>
+                  <OpeningHoursEditor
+                    value={formData.openingHours}
+                    onChange={(hours) => setFormData({ ...formData, openingHours: hours })}
                   />
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>{t("public.accessibility")}</label>
+                  <label style={labelStyle}>{t("public.accessibility")}</label>
                   <TipTapEditor
                     value={
                       selectedLang === "hu"
@@ -821,7 +806,7 @@ export function PlacesPage() {
             {/* Bal oszlop: Telefon, Email, Weboldal */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={{ display: "block", marginBottom: 4 }}>{t("public.phone")}</label>
+                <label style={labelStyle}>{t("public.phone")}</label>
                 <input
                   type="text"
                   value={formData.phone}
@@ -830,7 +815,7 @@ export function PlacesPage() {
                 />
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: 4 }}>{t("public.email")}</label>
+                <label style={labelStyle}>{t("public.email")}</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -839,7 +824,7 @@ export function PlacesPage() {
                 />
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: 4 }}>{t("public.website")}</label>
+                <label style={labelStyle}>{t("public.website")}</label>
                 <input
                   type="url"
                   value={formData.website}
@@ -851,7 +836,7 @@ export function PlacesPage() {
 
             {/* Jobb oszlop: Térkép és koordináták */}
             <div>
-              <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
+              <label style={{ ...labelStyle, marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
               <div style={{ marginBottom: 16 }}>
                 <MapComponent
                   latitude={formData.lat ? parseFloat(formData.lat) : null}
@@ -865,7 +850,7 @@ export function PlacesPage() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
+                  <label style={{ ...labelStyle, fontSize: 14 }}>{t("admin.latitude")}</label>
                   <input
                     type="number"
                     step="any"
@@ -876,7 +861,7 @@ export function PlacesPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
+                  <label style={{ ...labelStyle, fontSize: 14 }}>{t("admin.longitude")}</label>
                   <input
                     type="number"
                     step="any"
@@ -892,7 +877,7 @@ export function PlacesPage() {
 
           {/* Hero kép teljes szélességben */}
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>{t("admin.heroImageUrl")}</label>
+            <label style={labelStyle}>{t("admin.heroImageUrl")}</label>
             <input
               type="url"
               value={formData.heroImage}

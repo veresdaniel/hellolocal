@@ -35,12 +35,13 @@ export function Header() {
 
   // Load site name from settings
   const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang],
-    queryFn: () => getSiteSettings(lang),
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const siteName = siteSettings?.siteName || "HelloLocal";
+  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
 
   // Load position when device type changes
   useEffect(() => {
@@ -198,7 +199,28 @@ export function Header() {
           }
         }}
       >
-        <span style={{ fontSize: 28 }}>📍</span>
+        {brandBadgeIcon ? (
+          <img 
+            src={brandBadgeIcon} 
+            alt={siteName}
+            style={{ 
+              width: 28, 
+              height: 28, 
+              objectFit: "contain",
+              borderRadius: 4,
+            }}
+            onError={(e) => {
+              // Fallback to emoji if image fails to load
+              e.currentTarget.style.display = "none";
+              const fallback = document.createElement("span");
+              fallback.style.fontSize = "28px";
+              fallback.textContent = "📍";
+              e.currentTarget.parentNode?.insertBefore(fallback, e.currentTarget);
+            }}
+          />
+        ) : (
+          <span style={{ fontSize: 28 }}>📍</span>
+        )}
         <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>
           {siteName}
         </span>

@@ -51,10 +51,13 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
     const ogDesc = seo.og?.description ?? seo.description;
     const ogImg = seo.og?.image ?? seo.image;
     const ogType = seo.og?.type ?? opts?.defaultOgType ?? "website";
+    const ogUrl = seo.canonical || window.location.href;
 
     upsertMeta(`meta[property="og:title"]`, { property: "og:title" }, ogTitle);
     upsertMeta(`meta[property="og:description"]`, { property: "og:description" }, ogDesc);
     upsertMeta(`meta[property="og:type"]`, { property: "og:type" }, ogType);
+    upsertMeta(`meta[property="og:url"]`, { property: "og:url" }, ogUrl);
+    if (siteName) upsertMeta(`meta[property="og:site_name"]`, { property: "og:site_name" }, siteName);
     if (ogImg) upsertMeta(`meta[property="og:image"]`, { property: "og:image" }, ogImg);
 
     // Twitter defaults

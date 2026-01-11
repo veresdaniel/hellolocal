@@ -3,14 +3,26 @@ import type { Place } from "../types/place";
 
 export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canonical: string; townName?: string }) {
   const town = ctx.townName ? ` – ${ctx.townName}` : "";
+  const placeImage = base?.image || place.heroImage;
+  
   const seo: Seo = {
     title: base?.title ?? `${place.name}${town}`,
     description: base?.description ?? `Fedezd fel: ${place.name}${town}.`,
-    image: base?.image,
+    image: placeImage,
     keywords: base?.keywords ?? [],
     canonical: base?.canonical ?? ctx.canonical,
-    og: { ...base?.og, type: base?.og?.type ?? "article" },
-    twitter: { ...base?.twitter },
+    og: { 
+      type: "article",
+      title: base?.og?.title ?? base?.title ?? `${place.name}${town}`,
+      description: base?.og?.description ?? base?.description ?? `Fedezd fel: ${place.name}${town}.`,
+      image: base?.og?.image ?? placeImage,
+    },
+    twitter: { 
+      card: placeImage ? "summary_large_image" : "summary",
+      title: base?.twitter?.title ?? base?.title ?? `${place.name}${town}`,
+      description: base?.twitter?.description ?? base?.description ?? `Fedezd fel: ${place.name}${town}.`,
+      image: base?.twitter?.image ?? placeImage,
+    },
   };
 
   // Category hint keywords
@@ -37,20 +49,6 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   }
 
   seo.keywords = uniq([...(seo.keywords ?? []), ...extraKw]);
-
-  // OG/Twitter derived
-  seo.og = {
-    ...seo.og,
-    title: seo.og?.title ?? seo.title,
-    description: seo.og?.description ?? seo.description,
-    image: seo.og?.image ?? seo.image,
-  };
-  seo.twitter = {
-    card: seo.twitter?.card ?? (seo.image ? "summary_large_image" : "summary"),
-    title: seo.twitter?.title ?? seo.title,
-    description: seo.twitter?.description ?? seo.description,
-    image: seo.twitter?.image ?? seo.image,
-  };
 
   return seo;
 }

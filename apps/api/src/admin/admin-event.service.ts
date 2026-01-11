@@ -22,6 +22,7 @@ export interface CreateEventDto {
   isActive?: boolean;
   isPublished?: boolean;
   isPinned?: boolean;
+  isRainSafe?: boolean; // New: whether event is rain-safe
   startDate: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
@@ -48,6 +49,7 @@ export interface UpdateEventDto {
   isActive?: boolean;
   isPublished?: boolean;
   isPinned?: boolean;
+  isRainSafe?: boolean; // New: whether event is rain-safe
   startDate?: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
@@ -397,6 +399,7 @@ export class AdminEventService {
         endDate: dto.endDate ? (typeof dto.endDate === "string" ? new Date(dto.endDate) : dto.endDate) : null,
         isActive: dto.isActive ?? true,
         isPinned: dto.isPinned ?? false,
+        isRainSafe: dto.isRainSafe ?? false,
         gallery: dto.gallery ?? [],
         translations: {
           create: translations.map((t) => ({
@@ -570,6 +573,9 @@ export class AdminEventService {
     }
     if (dto.gallery !== undefined) {
       updateData.gallery = dto.gallery;
+    }
+    if (dto.isRainSafe !== undefined) {
+      updateData.isRainSafe = dto.isRainSafe;
     }
 
     const updated = await this.prisma.event.update({

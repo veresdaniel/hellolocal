@@ -13,6 +13,7 @@ import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { StaticPagesListPage } from "../pages/StaticPagesListPage";
+import { TenantsListPage } from "../pages/TenantsListPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
 
@@ -48,6 +49,10 @@ const createPublicRoutes = () => {
     { path: "place/:slug", element: <PlaceDetailPage /> },
     { path: "event/:slug", element: <EventDetailPage /> },
     { path: "static-pages", element: <StaticPagesListPage /> },
+    // Language-specific routes for tenants page
+    { path: "teruletek", element: <TenantsListPage /> }, // Hungarian
+    { path: "regions", element: <TenantsListPage /> }, // English
+    { path: "regionen", element: <TenantsListPage /> }, // German
     { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
     { path: "aszf", element: <LegalPage pageKey="terms" /> },
     { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },

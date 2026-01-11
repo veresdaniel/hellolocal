@@ -240,6 +240,9 @@ export class PlacesService {
           },
         },
         translations: true, // Get all translations for fallback
+        openingHours: {
+          orderBy: { dayOfWeek: 'asc' },
+        },
       },
     });
 
@@ -441,6 +444,9 @@ export class PlacesService {
           },
         },
         translations: true, // Get all translations for fallback
+        openingHours: {
+          orderBy: { dayOfWeek: 'asc' },
+        },
       },
     });
 
@@ -516,7 +522,12 @@ export class PlacesService {
         website: placeTranslation?.website ?? null,
         address: placeTranslation?.address ?? null,
       },
-      openingHours: placeTranslation?.openingHours ?? null,
+      openingHours: place.openingHours?.map((oh) => ({
+        dayOfWeek: oh.dayOfWeek,
+        isClosed: oh.isClosed,
+        openTime: oh.openTime,
+        closeTime: oh.closeTime,
+      })) ?? null,
       accessibility: placeTranslation?.accessibility ?? null,
       priceBand: priceBandName,
       tags: tagNames,

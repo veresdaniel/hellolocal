@@ -512,6 +512,8 @@ export interface SiteSettings {
   isCrawlable: boolean;
   defaultPlaceholderCardImage: string | null;
   defaultPlaceholderDetailHeroImage: string | null;
+  brandBadgeIcon: string | null;
+  faviconUrl: string | null;
 }
 
 export interface SetSiteSettingsDto {

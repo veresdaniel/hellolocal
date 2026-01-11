@@ -111,8 +111,8 @@ export function HomePage() {
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang],
-    queryFn: () => getSiteSettings(lang),
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -379,6 +379,19 @@ export function HomePage() {
   useSeo({
     title: siteSettings?.seoTitle || t("public.home.title"),
     description: siteSettings?.seoDescription || t("public.home.description"),
+    image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    og: {
+      type: "website",
+      title: siteSettings?.seoTitle || siteSettings?.siteName || t("public.home.title"),
+      description: siteSettings?.seoDescription || t("public.home.description"),
+      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    },
+    twitter: {
+      card: siteSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+      title: siteSettings?.seoTitle || siteSettings?.siteName || t("public.home.title"),
+      description: siteSettings?.seoDescription || t("public.home.description"),
+      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    },
   }, {
     siteName: siteSettings?.siteName,
   });
@@ -396,13 +409,23 @@ export function HomePage() {
     return R * c;
   };
 
-  // Helper function to check if place is open now (simple check - if openingHours exists)
+  // Helper function to check if place is open now
   const isPlaceOpenNow = (place: typeof placesData[0]): boolean => {
-    if (!place.openingHours) return false;
-    // Simple heuristic: if openingHours contains HTML or text, assume it might be open
-    // In a real implementation, you'd parse the openingHours HTML/JSON
-    // For now, we'll just check if openingHours exists
-    return true; // Simplified - in production, parse actual hours
+    if (!place.openingHours || !Array.isArray(place.openingHours) || place.openingHours.length === 0) return false;
+    
+    const now = new Date();
+    const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // Find today's opening hours
+    const todayHours = place.openingHours.find((oh) => oh.dayOfWeek === currentDayOfWeek);
+    
+    if (!todayHours) return false;
+    if (todayHours.isClosed) return false;
+    if (!todayHours.openTime || !todayHours.closeTime) return false;
+    
+    // Check if current time is between open and close time
+    return currentTime >= todayHours.openTime && currentTime <= todayHours.closeTime;
   };
 
   // Helper function to check if place has event today
@@ -422,8 +445,8 @@ export function HomePage() {
     });
   };
 
-  // Helper function to check if place is within 30 minutes (assuming average speed of 50 km/h = ~25 km in 30 min)
-  const isWithin30Minutes = (place: typeof placesData[0]): boolean => {
+  // Helper function to check if place is within 10 minutes walking distance (~1 km)
+  const isWithin10MinutesWalk = (place: typeof placesData[0]): boolean => {
     if (!within30Minutes || !userLocation || !place.location) return false;
     const distance = calculateDistance(
       userLocation.lat,
@@ -431,21 +454,28 @@ export function HomePage() {
       place.location.lat,
       place.location.lng
     );
-    return distance <= 25; // 25 km ≈ 30 minutes at 50 km/h average
+    return distance <= 1; // 1 km ≈ 10 minutes walking at average pace
   };
 
-  // Helper function to check if place is rain-safe (check tags or extras)
+  // Helper function to check if place is rain-safe
+  // A place is rain-safe if it has at least one event today that is rain-safe
   const isRainSafe = (place: typeof placesData[0]): boolean => {
-    if (!rainSafe) return false;
-    // Check if place has tags that suggest indoor/covered activities
-    const rainSafeTags = ["fedett", "beltér", "indoor", "covered", "binnen", "innen"];
-    if (place.tags) {
-      const placeTags = place.tags.map((tag) => tag.toLowerCase());
-      return rainSafeTags.some((safeTag) =>
-        placeTags.some((placeTag) => placeTag.includes(safeTag))
-      );
-    }
-    return false;
+    if (!rainSafe || !eventsData || !place.id) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Check if place has a rain-safe event today
+    return eventsData.some((event) => {
+      if (event.placeId !== place.id) return false;
+      if (!event.isRainSafe) return false;
+      
+      const eventStart = new Date(event.startDate);
+      const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+      return eventStart < tomorrow && eventEnd >= today;
+    });
   };
 
   // Filter places based on context filters
@@ -455,7 +485,7 @@ export function HomePage() {
     return placesData.filter((place) => {
       if (isOpenNow && !isPlaceOpenNow(place)) return false;
       if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
-      if (within30Minutes && !isWithin30Minutes(place)) return false;
+      if (within30Minutes && !isWithin10MinutesWalk(place)) return false;
       if (rainSafe && !isRainSafe(place)) return false;
       return true;
     });

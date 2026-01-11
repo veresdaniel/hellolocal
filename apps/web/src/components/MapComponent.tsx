@@ -523,7 +523,11 @@ export function MapComponent({
     }
   }, [userLocation]);
 
+  // Keep track of last route fetch position to avoid excessive API calls
+  const lastRouteFetchPosition = useRef<{ lat: number; lng: number; markerId: string } | null>(null);
+
   // Fetch routes only for selected marker and if showUserLocation is enabled
+  // Update route when userLocation changes significantly (>50m) for real-time tracking
   useEffect(() => {
     console.log("Route fetch effect triggered - selectedMarkerId:", selectedMarkerId, "userLocation:", userLocation, "showUserLocation:", showUserLocation, "markers count:", markers.length);
     
@@ -532,17 +536,28 @@ export function MapComponent({
       console.log("Selected marker found:", selectedMarker);
       
       if (selectedMarker && selectedMarker.lat && selectedMarker.lng) {
-        // Only fetch if route doesn't exist yet (using refs to avoid dependency issues)
-        const existingRoute = routesRef.current.find(r => r.markerId === selectedMarkerId);
         const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
         
-        console.log("Route check - existingRoute:", existingRoute, "isLoading:", isLoading);
+        // Check if position has changed significantly (>50m or ~0.0005 degrees)
+        const lastFetch = lastRouteFetchPosition.current;
+        const shouldUpdate = !lastFetch || 
+                            lastFetch.markerId !== selectedMarkerId ||
+                            Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
+                            Math.abs(lastFetch.lng - userLocation.lng) > 0.0005;
         
-        if (!existingRoute && !isLoading) {
-          console.log("Fetching route for selected marker:", selectedMarkerId, "from", userLocation, "to", selectedMarker.lat, selectedMarker.lng);
+        console.log("Route check - isLoading:", isLoading, "shouldUpdate:", shouldUpdate, "lastFetch:", lastFetch);
+        
+        // Fetch route when marker changes or position changes significantly
+        if (!isLoading && shouldUpdate) {
+          console.log("Fetching/updating route for selected marker:", selectedMarkerId, "from", userLocation, "to", selectedMarker.lat, selectedMarker.lng);
+          lastRouteFetchPosition.current = { 
+            lat: userLocation.lat, 
+            lng: userLocation.lng, 
+            markerId: selectedMarkerId 
+          };
           fetchRoute(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
         } else {
-          console.log("Route already exists or is loading, skipping fetch");
+          console.log("Route is loading or position change is too small, skipping fetch");
         }
       } else {
         console.warn("Selected marker not found or missing coordinates in markers array");
@@ -551,6 +566,7 @@ export function MapComponent({
       // Clear routes when no marker is selected or showUserLocation is disabled
       console.log("No marker selected or no userLocation or showUserLocation disabled, clearing routes. selectedMarkerId:", selectedMarkerId, "userLocation:", userLocation, "showUserLocation:", showUserLocation);
       setRoutes([]);
+      lastRouteFetchPosition.current = null;
     }
   }, [selectedMarkerId, userLocation, markers, fetchRoute, showUserLocation]);
 

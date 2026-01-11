@@ -148,6 +148,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, handleLogout]);
 
+  // Proactive session extension on user interaction
+  useEffect(() => {
+    let lastActivityTime = Date.now();
+    let isRefreshing = false;
+
+    const refreshSessionOnActivity = async () => {
+      const currentPath = window.location.pathname;
+      const isPublicPage = 
+        currentPath.startsWith("/admin/login") ||
+        currentPath.startsWith("/admin/register") ||
+        currentPath.startsWith("/admin/forgot-password") ||
+        currentPath.startsWith("/admin/reset-password") ||
+        !currentPath.startsWith("/admin");
+
+      if (isPublicPage || isRefreshing) {
+        return;
+      }
+
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshTokenValue = localStorage.getItem("refreshToken");
+
+      if (!accessToken || !refreshTokenValue) {
+        return;
+      }
+
+      // Check if token is close to expiration (within 5 minutes)
+      // This allows proactive refresh before expiration
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        const expiresAt = payload.exp * 1000; // Convert to milliseconds
+        const now = Date.now();
+        const timeUntilExpiry = expiresAt - now;
+        const fiveMinutes = 5 * 60 * 1000;
+
+        // If token expires in less than 5 minutes, refresh it
+        if (timeUntilExpiry < fiveMinutes && timeUntilExpiry > 0) {
+          isRefreshing = true;
+          try {
+            const data = await refreshToken({ refreshToken: refreshTokenValue });
+            localStorage.setItem("accessToken", data.accessToken);
+            localStorage.setItem("refreshToken", data.refreshToken);
+            console.log("[Auth] Session extended due to user activity");
+          } catch (error) {
+            console.error("[Auth] Failed to refresh session on activity", error);
+            // Don't logout here, let the normal expiration check handle it
+          } finally {
+            isRefreshing = false;
+          }
+        }
+      } catch (error) {
+        // Invalid token format, ignore
+        console.error("[Auth] Invalid token format", error);
+      }
+    };
+
+    const handleActivity = () => {
+      const now = Date.now();
+      // Only refresh if at least 1 minute has passed since last activity
+      if (now - lastActivityTime > 60000) {
+        lastActivityTime = now;
+        refreshSessionOnActivity();
+      }
+    };
+
+    // Listen to user interactions
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, []);
+
   // Load user from localStorage on mount and refresh from API
   useEffect(() => {
     const storedUser = localStorage.getItem("user");

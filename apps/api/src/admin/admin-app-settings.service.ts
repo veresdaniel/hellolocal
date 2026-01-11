@@ -205,6 +205,8 @@ export class AdminAppSettingsService {
       isCrawlableSetting,
       defaultPlaceholderCardImage,
       defaultPlaceholderDetailHeroImage,
+      brandBadgeIcon,
+      faviconUrl,
     ] = await Promise.all([
       this.findOne(`siteName_hu_${tenantId}`),
       this.findOne(`siteName_en_${tenantId}`),
@@ -221,6 +223,8 @@ export class AdminAppSettingsService {
       this.findOne(`isCrawlable_${tenantId}`),
       this.findOne(`defaultPlaceholderCardImage_${tenantId}`),
       this.findOne(`defaultPlaceholderDetailHeroImage_${tenantId}`),
+      this.findOne(`brandBadgeIcon_${tenantId}`),
+      this.findOne(`faviconUrl_${tenantId}`),
     ]);
 
     return {
@@ -247,6 +251,8 @@ export class AdminAppSettingsService {
       isCrawlable: isCrawlableSetting?.value === "true" || isCrawlableSetting?.value === "1" || isCrawlableSetting === null, // Default to true if not set
       defaultPlaceholderCardImage: defaultPlaceholderCardImage?.value && defaultPlaceholderCardImage.value.trim() !== "" ? defaultPlaceholderCardImage.value : null,
       defaultPlaceholderDetailHeroImage: defaultPlaceholderDetailHeroImage?.value && defaultPlaceholderDetailHeroImage.value.trim() !== "" ? defaultPlaceholderDetailHeroImage.value : null,
+      brandBadgeIcon: brandBadgeIcon?.value && brandBadgeIcon.value.trim() !== "" ? brandBadgeIcon.value : null,
+      faviconUrl: faviconUrl?.value && faviconUrl.value.trim() !== "" ? faviconUrl.value : null,
     };
   }
 
@@ -261,6 +267,8 @@ export class AdminAppSettingsService {
     isCrawlable?: boolean;
     defaultPlaceholderCardImage?: string | null;
     defaultPlaceholderDetailHeroImage?: string | null;
+    brandBadgeIcon?: string | null;
+    faviconUrl?: string | null;
   }) {
     console.log('[AdminAppSettingsService] setSiteSettings called with:', JSON.stringify(settings, null, 2));
     console.log('[AdminAppSettingsService] Checking which fields are defined:', {
@@ -271,6 +279,8 @@ export class AdminAppSettingsService {
       isCrawlable: settings.isCrawlable !== undefined,
       defaultPlaceholderCardImage: settings.defaultPlaceholderCardImage !== undefined,
       defaultPlaceholderDetailHeroImage: settings.defaultPlaceholderDetailHeroImage !== undefined,
+      brandBadgeIcon: settings.brandBadgeIcon !== undefined,
+      faviconUrl: settings.faviconUrl !== undefined,
     });
     const updates: Promise<any>[] = [];
 
@@ -388,6 +398,32 @@ export class AdminAppSettingsService {
         value: sanitizedUrl || "",
         type: "string",
         description: "Default placeholder hero image URL for place detail pages",
+      }));
+    }
+
+    if (settings.brandBadgeIcon !== undefined) {
+      // Validate and sanitize URL
+      const sanitizedUrl = sanitizeImageUrl(settings.brandBadgeIcon);
+      if (settings.brandBadgeIcon && settings.brandBadgeIcon.trim() !== "" && !sanitizedUrl) {
+        throw new BadRequestException("Invalid image URL for brand badge icon. Only http:// and https:// URLs are allowed.");
+      }
+      updates.push(this.upsert(`brandBadgeIcon_${tenantId}`, {
+        value: sanitizedUrl || "",
+        type: "string",
+        description: "Brand badge icon URL",
+      }));
+    }
+
+    if (settings.faviconUrl !== undefined) {
+      // Validate and sanitize URL
+      const sanitizedUrl = sanitizeImageUrl(settings.faviconUrl);
+      if (settings.faviconUrl && settings.faviconUrl.trim() !== "" && !sanitizedUrl) {
+        throw new BadRequestException("Invalid favicon URL. Only http:// and https:// URLs are allowed.");
+      }
+      updates.push(this.upsert(`faviconUrl_${tenantId}`, {
+        value: sanitizedUrl || "",
+        type: "string",
+        description: "Favicon URL",
       }));
     }
 

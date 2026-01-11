@@ -72,6 +72,7 @@ export function EventsPage() {
     lng: "",
     isActive: true,
     isPinned: false,
+    isRainSafe: false,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -210,6 +211,7 @@ export function EventsPage() {
         translations,
         isActive: formData.isActive,
         isPinned: formData.isPinned,
+        isRainSafe: formData.isRainSafe,
         startDate: formData.startDate,
         endDate: formData.endDate || null,
         heroImage: formData.heroImage || null,
@@ -276,6 +278,7 @@ export function EventsPage() {
           translations,
           isActive: formData.isActive,
           isPinned: formData.isPinned,
+          isRainSafe: formData.isRainSafe,
           startDate: formData.startDate,
           endDate: formData.endDate || null,
           heroImage: formData.heroImage || null,
@@ -348,6 +351,7 @@ export function EventsPage() {
       lng: event.lng?.toString() || "",
       isActive: event.isActive,
       isPinned: event.isPinned,
+      isRainSafe: event.isRainSafe || false,
     });
   };
 
@@ -385,6 +389,7 @@ export function EventsPage() {
       lng: "",
       isActive: true,
       isPinned: false,
+      isRainSafe: false,
     });
     setFormErrors({});
   };
@@ -1059,6 +1064,18 @@ export function EventsPage() {
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isPinned")}</span>
             </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+              <input
+                type="checkbox"
+                checked={formData.isRainSafe}
+                onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
+                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#667eea" }}
+              />
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
+            </label>
+            <div style={{ fontSize: 12, color: "#666", marginTop: 4, marginLeft: 28 }}>
+              {t("common.isRainSafeHint")}
+            </div>
           </div>
         </div>
         </div>

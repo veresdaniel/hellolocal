@@ -39,8 +39,13 @@ export type Place = {
     address?: string;
   };
 
-  // HTML stringet tartalmazhat
-  openingHours?: string;
+  // Structured opening hours (new format)
+  openingHours?: Array<{
+    dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+    isClosed: boolean;
+    openTime: string | null; // Format: "HH:mm"
+    closeTime: string | null; // Format: "HH:mm"
+  }>;
 
   // HTML stringet tartalmazhat
   accessibility?: string;

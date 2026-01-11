@@ -11,6 +11,8 @@ import {
 import { Footer } from "../../ui/layout/Footer";
 import { usePublicDefaultLanguage } from "../../hooks/usePublicDefaultLanguage";
 import { PublicAuthBadge } from "../../components/PublicAuthBadge";
+import { CookieConsent } from "../../components/CookieConsent";
+import { useFavicon } from "../../hooks/useFavicon";
 import { useActiveTenantsCount } from "../../hooks/useActiveTenantsCount";
 import { useVersionCheck } from "../../hooks/useVersionCheck";
 
@@ -38,6 +40,9 @@ export function TenantLayout() {
   
   // Version check for public pages - will check for updates and show toast if new version available
   useVersionCheck();
+  
+  // Update favicon dynamically based on site settings
+  useFavicon();
 
   const lang: Lang = isLang(langParam) ? langParam : defaultLangFromSettings;
 
@@ -122,6 +127,7 @@ export function TenantLayout() {
       </div>
       {!isHomePage && <Footer lang={lang} tenantSlug={tenantSlug} />}
       <PublicAuthBadge />
+      <CookieConsent />
     </div>
   );
 }

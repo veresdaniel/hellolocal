@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useTenantContext } from "../app/tenant/useTenantContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { getSiteSettings } from "../api/places.api";
@@ -13,22 +14,41 @@ type Props = {
 
 export function LegalPage({ pageKey }: Props) {
   const { t } = useTranslation();
-  const { lang } = useParams<{ lang: string }>();
+  const { lang, tenantSlug } = useTenantContext();
   const safeLang = lang ?? "hu";
 
   const { data, isLoading, error } = useLegalPage(safeLang, pageKey);
 
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", safeLang],
-    queryFn: () => getSiteSettings(safeLang),
+    queryKey: ["siteSettings", safeLang, tenantSlug],
+    queryFn: () => getSiteSettings(safeLang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Use SEO from data if available, otherwise use i18n fallback
-  const seo = data?.seo || {
+  const seo = data?.seo ? {
+    ...data.seo,
+    og: {
+      type: "article",
+      title: data.seo.og?.title || data.seo.title,
+      description: data.seo.og?.description || data.seo.description,
+      image: data.seo.og?.image || data.seo.image,
+    },
+    twitter: {
+      card: data.seo.image ? "summary_large_image" as const : "summary" as const,
+      title: data.seo.twitter?.title || data.seo.title,
+      description: data.seo.twitter?.description || data.seo.description,
+      image: data.seo.twitter?.image || data.seo.image,
+    },
+  } : {
     title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
     description: siteSettings?.seoDescription || "",
+    og: {
+      type: "article" as const,
+      title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+      description: siteSettings?.seoDescription || "",
+    },
   };
 
   useSeo(seo, {

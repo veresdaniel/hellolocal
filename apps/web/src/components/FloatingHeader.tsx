@@ -22,8 +22,8 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
 
   // Load site name from settings
   const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang],
-    queryFn: () => getSiteSettings(lang),
+    queryKey: ["siteSettings", lang, tenantSlug],
+    queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 

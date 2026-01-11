@@ -613,6 +613,57 @@ export function TenantsPage() {
                       height={200}
                     />
                   </div>
+
+                  {/* Hero Image */}
+                  <div>
+                    <label style={{ 
+                      display: "block", 
+                      marginBottom: 8,
+                      color: "#667eea",
+                      fontWeight: 600,
+                      fontSize: "clamp(13px, 3vw, 14px)",
+                    }}>
+                      {t("admin.heroImage")} ({selectedLang.toUpperCase()})
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.heroImageHu
+                          : selectedLang === "en"
+                          ? formData.heroImageEn
+                          : formData.heroImageDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, heroImageHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, heroImageEn: e.target.value });
+                        else setFormData({ ...formData, heroImageDe: e.target.value });
+                      }}
+                      placeholder="https://example.com/image.jpg"
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        fontSize: 15,
+                        border: "2px solid #e0e7ff",
+                        borderRadius: 8,
+                        outline: "none",
+                        transition: "all 0.3s ease",
+                        fontFamily: "inherit",
+                        boxSizing: "border-box",
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "#667eea";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "#e0e7ff";
+                        e.target.style.boxShadow = "none";
+                      }}
+                    />
+                    <div style={{ fontSize: 12, color: "#666", marginTop: 6 }}>
+                      {t("admin.heroImageDescription") || "URL a kártyán megjelenő képhez"}
+                    </div>
+                  </div>
                 </div>
               )}
             </LanguageAwareForm>

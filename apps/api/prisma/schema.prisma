@@ -306,9 +306,28 @@ model Place {
   translations PlaceTranslation[]
   tags        PlaceTag[]
   events      Event[]
+  openingHours PlaceOpeningHours[]
 
   @@index([tenantId, categoryId])
   @@index([townId])
+}
+
+// Opening hours for places (one entry per day of week)
+model PlaceOpeningHours {
+  id        String   @id @default(cuid())
+  placeId   String
+  dayOfWeek Int      // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+  isClosed  Boolean  @default(false) // If true, place is closed on this day
+  openTime  String?  // Format: "HH:mm" (e.g., "09:00"), null if isClosed
+  closeTime String?  // Format: "HH:mm" (e.g., "17:30"), null if isClosed
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  @@unique([placeId, dayOfWeek])
+  @@index([placeId])
 }
 
 // Many-to-many relationship between Place and Tag
@@ -510,6 +529,7 @@ model Event {
   categoryId String?  // Optional: event can have a category
   isActive   Boolean  @default(true)
   isPinned   Boolean  @default(false) // Pinned events appear at top of lists
+  isRainSafe Boolean  @default(false) // Whether the event is rain-safe (indoor or covered)
   startDate  DateTime // Event start date/time
   endDate    DateTime? // Optional end date/time
   heroImage  String?  // Hero image URL
