@@ -815,13 +815,15 @@ export function MapComponent({
             <div
               style={{
                 position: "relative",
+                width: 50,
+                height: 50,
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
                 zIndex: 1000,
               }}
             >
-              {/* Pulsing circle animation */}
+              {/* Pulsing circle animation - centered */}
               <div
                 style={{
                   position: "absolute",
@@ -835,7 +837,7 @@ export function MapComponent({
                   transform: "translate(-50%, -50%)",
                 }}
               />
-              {/* User location marker - person icon (emoji) */}
+              {/* User location marker - person icon (emoji) - centered on pulsing circle */}
               <div
                 style={{
                   width: 35,
@@ -851,37 +853,59 @@ export function MapComponent({
                   color: "white",
                   fontWeight: 500,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  position: "relative",
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                   zIndex: 1001,
                   animation: "personPulse 2s ease-in-out infinite",
+                  boxSizing: "border-box",
                 }}
               >
                 👤
               </div>
-              {/* Label */}
+              {/* Label - centered horizontally with person icon center, very close to top of person icon circle */}
               <div
                 style={{
                   position: "absolute",
-                  bottom: "calc(100% + 8px)",
+                  top: "32.5%",
                   left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "rgba(251, 191, 36, 0.95)",
-                  backdropFilter: "blur(10px)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  fontSize: 11,
-                  fontWeight: 500,
+                  transform: "translate(calc(-50% + 17.5px), -100%)",
+                  background: "linear-gradient(135deg, rgba(251, 191, 36, 0.98) 0%, rgba(245, 158, 11, 0.98) 100%)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  padding: "6px 14px",
+                  borderRadius: 12,
+                  fontSize: 12,
+                  fontWeight: 600,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   whiteSpace: "nowrap",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                  boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
                   pointerEvents: "none",
                   color: "#1f2937",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  border: "1.5px solid rgba(255, 255, 255, 0.5)",
                   zIndex: 1002,
+                  boxSizing: "border-box",
+                  letterSpacing: "0.01em",
+                  marginBottom: "4px",
                 }}
               >
                 {t("public.yourLocation")}
+                {/* Small pointer arrow pointing down to the icon - centered on label */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-6px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 0,
+                    height: 0,
+                    borderLeft: "6px solid transparent",
+                    borderRight: "6px solid transparent",
+                    borderTop: "6px solid rgba(251, 191, 36, 0.98)",
+                    filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))",
+                  }}
+                />
               </div>
             </div>
           </Marker>
