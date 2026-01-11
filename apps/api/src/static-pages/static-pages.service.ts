@@ -103,6 +103,32 @@ export class StaticPagesService {
       throw new NotFoundException("Static page translation not found");
     }
 
+    // Helper to remove HTML tags and normalize whitespace
+    const stripHtml = (html: string | null | undefined): string => {
+      if (!html) return "";
+      // Remove HTML tags
+      const text = html.replace(/<[^>]*>/g, " ");
+      // Normalize whitespace (multiple spaces/newlines to single space)
+      return text.replace(/\s+/g, " ").trim();
+    };
+
+    // Helper to extract first 2 sentences from HTML/text
+    const getFirstSentences = (html: string | undefined, count: number = 2): string => {
+      if (!html) return "";
+      // Remove HTML tags
+      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      // Split by sentence endings (. ! ?)
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+      return sentences.slice(0, count).join(" ").trim();
+    };
+
+    // Fallback description: first 2 sentences from content
+    const fallbackDescription = getFirstSentences(translation.content, 2) || "";
+    // Strip HTML from seoDescription if present
+    const seoDescription = translation.seoDescription 
+      ? stripHtml(translation.seoDescription) 
+      : fallbackDescription;
+
     return {
       id: staticPage.id,
       category: staticPage.category,
@@ -110,7 +136,7 @@ export class StaticPagesService {
       content: translation.content ?? "",
       seo: {
         title: translation.seoTitle ?? translation.title,
-        description: translation.seoDescription ?? null,
+        description: seoDescription,
         image: translation.seoImage ?? null,
         keywords: translation.seoKeywords ?? [],
         canonical: null,

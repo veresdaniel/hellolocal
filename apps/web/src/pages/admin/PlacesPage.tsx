@@ -35,7 +35,6 @@ interface Place {
   translations: Array<{
     lang: string;
     name: string;
-    teaser: string | null;
     description: string | null;
     address: string | null;
     phone: string | null;
@@ -80,9 +79,6 @@ export function PlacesPage() {
     nameHu: "",
     nameEn: "",
     nameDe: "",
-    teaserHu: "",
-    teaserEn: "",
-    teaserDe: "",
     descriptionHu: "",
     descriptionEn: "",
     descriptionDe: "",
@@ -198,7 +194,6 @@ export function PlacesPage() {
       const translations: Array<{
         lang: string;
         name: string;
-        teaser: string | null;
         description: string | null;
         address: string | null;
         phone: string | null;
@@ -215,7 +210,6 @@ export function PlacesPage() {
         {
           lang: "hu",
           name: formData.nameHu,
-          teaser: formData.teaserHu || null,
           description: formData.descriptionHu || null,
           address: formData.addressHu || null,
         phone: formData.phone || null,
@@ -234,7 +228,6 @@ export function PlacesPage() {
         translations.push({
           lang: "en",
           name: formData.nameEn,
-          teaser: formData.teaserEn || null,
           description: formData.descriptionEn || null,
           address: formData.addressEn || null,
         phone: formData.phone || null,
@@ -253,7 +246,6 @@ export function PlacesPage() {
         translations.push({
           lang: "de",
           name: formData.nameDe,
-          teaser: formData.teaserDe || null,
           description: formData.descriptionDe || null,
           address: formData.addressDe || null,
         phone: formData.phone || null,
@@ -308,7 +300,6 @@ export function PlacesPage() {
             const translations: Array<{
               lang: string;
               name: string;
-              teaser: string | null;
               description: string | null;
               address: string | null;
               phone: string | null;
@@ -325,7 +316,6 @@ export function PlacesPage() {
               {
                 lang: "hu",
                 name: formData.nameHu,
-                teaser: formData.teaserHu || null,
                 description: formData.descriptionHu || null,
                 address: formData.addressHu || null,
                 phone: formData.phone || null,
@@ -344,7 +334,6 @@ export function PlacesPage() {
               translations.push({
                 lang: "en",
                 name: formData.nameEn,
-                teaser: formData.teaserEn || null,
                 description: formData.descriptionEn || null,
                 address: formData.addressEn || null,
                 phone: formData.phone || null,
@@ -363,7 +352,6 @@ export function PlacesPage() {
               translations.push({
                 lang: "de",
                 name: formData.nameDe,
-                teaser: formData.teaserDe || null,
                 description: formData.descriptionDe || null,
                 address: formData.addressDe || null,
                 phone: formData.phone || null,
@@ -426,9 +414,6 @@ export function PlacesPage() {
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
       nameDe: de?.name || "",
-      teaserHu: hu?.teaser || "",
-      teaserEn: en?.teaser || "",
-      teaserDe: de?.teaser || "",
       descriptionHu: hu?.description || "",
       descriptionEn: en?.description || "",
       descriptionDe: de?.description || "",
@@ -472,9 +457,6 @@ export function PlacesPage() {
       nameHu: "",
       nameEn: "",
       nameDe: "",
-      teaserHu: "",
-      teaserEn: "",
-      teaserDe: "",
       descriptionHu: "",
       descriptionEn: "",
       descriptionDe: "",

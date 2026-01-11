@@ -377,7 +377,7 @@ export class PlacesService {
         category: categoryName,
         categoryColor: categoryColor,
         name: placeTranslation?.name ?? "(missing translation)",
-        description: placeTranslation?.teaser ?? null,
+        description: placeTranslation?.description ?? null,
         heroImage: p.heroImage ?? null,
         gallery: p.gallery,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
@@ -535,7 +535,9 @@ export class PlacesService {
       rating: { avg: place.ratingAvg ?? null, count: place.ratingCount ?? null },
       seo: {
         title: placeTranslation?.seoTitle ?? null,
-        description: placeTranslation?.seoDescription ?? null,
+        description: placeTranslation?.seoDescription 
+          ? placeTranslation.seoDescription.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+          : null,
         image: placeTranslation?.seoImage ?? null,
         keywords: placeTranslation?.seoKeywords ?? [],
       },

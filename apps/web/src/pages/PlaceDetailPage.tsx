@@ -204,7 +204,7 @@ export function PlaceDetailPage() {
               <SocialShareButtons
                 url={window.location.href}
                 title={place.name}
-                description={place.description || place.teaser || ""}
+                description={place.description || ""}
                 image={place.heroImage || undefined}
               />
             </div>

@@ -21,7 +21,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@nestjs/common": "^11.1.11",
@@ -63,6 +63,6 @@
     "prettier": "^3.4.2"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   }
 }

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
+import { generateWebPageSchema } from "../seo/schemaOrg";
 import { getSiteSettings } from "../api/places.api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FloatingHeader } from "../components/FloatingHeader";
@@ -26,9 +27,20 @@ export function LegalPage({ pageKey }: Props) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Helper to strip HTML
+  const stripHtml = (html: string | null | undefined): string => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  };
+
+  const pageUrl = window.location.href;
+  const siteUrl = window.location.origin;
+
   // Use SEO from data if available, otherwise use i18n fallback
   const seo = data?.seo ? {
     ...data.seo,
+    // Ensure keywords are included
+    keywords: data.seo.keywords || [],
     og: {
       type: "article",
       title: data.seo.og?.title || data.seo.title,
@@ -41,13 +53,44 @@ export function LegalPage({ pageKey }: Props) {
       description: data.seo.twitter?.description || data.seo.description,
       image: data.seo.twitter?.image || data.seo.image,
     },
+    schemaOrg: {
+      type: "WebPage" as const,
+      data: {
+        name: data.seo.title || data.title,
+        description: stripHtml(data.seo.description),
+        url: pageUrl,
+        inLanguage: safeLang,
+        isPartOf: siteSettings?.siteName
+          ? {
+              name: siteSettings.siteName,
+              url: siteUrl,
+            }
+          : undefined,
+      },
+    },
   } : {
     title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
     description: siteSettings?.seoDescription || "",
+    keywords: [],
     og: {
       type: "article" as const,
       title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
       description: siteSettings?.seoDescription || "",
+    },
+    schemaOrg: {
+      type: "WebPage" as const,
+      data: {
+        name: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+        description: stripHtml(siteSettings?.seoDescription),
+        url: pageUrl,
+        inLanguage: safeLang,
+        isPartOf: siteSettings?.siteName
+          ? {
+              name: siteSettings.siteName,
+              url: siteUrl,
+            }
+          : undefined,
+      },
     },
   };
 

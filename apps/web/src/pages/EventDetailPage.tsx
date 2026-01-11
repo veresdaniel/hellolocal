@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getEvent, getSiteSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
+import { generateEventSchema } from "../seo/schemaOrg";
 import { buildPath } from "../app/routing/buildPath";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
@@ -68,12 +69,22 @@ export function EventDetailPage() {
       event.description || 
       "";
     
+    // Helper to strip HTML
+    const stripHtml = (html: string | null | undefined): string => {
+      if (!html) return "";
+      return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    };
+
+    const eventUrl = window.location.href;
+    const startDate = event.startDate ? new Date(event.startDate).toISOString() : "";
+    const endDate = event.endDate ? new Date(event.endDate).toISOString() : undefined;
+
     return {
       title: event.seo?.title || event.name,
       description: event.seo?.description || fallbackDescription,
       keywords: event.seo?.keywords || [],
       image: eventImage,
-      canonical: window.location.href,
+      canonical: eventUrl,
       og: {
         type: "article",
         title: event.seo?.title || event.name,
@@ -85,6 +96,32 @@ export function EventDetailPage() {
         title: event.seo?.title || event.name,
         description: event.seo?.description || fallbackDescription,
         image: eventImage,
+      },
+      schemaOrg: {
+        type: "Event",
+        data: {
+          name: event.name,
+          description: stripHtml(event.seo?.description || event.description || event.shortDescription),
+          image: eventImage,
+          url: eventUrl,
+          startDate,
+          endDate,
+          location: event.location
+            ? {
+                geo: {
+                  latitude: event.location.lat,
+                  longitude: event.location.lng,
+                },
+                ...(event.placeName && { name: event.placeName }),
+              }
+            : undefined,
+          organizer: siteSettings?.siteName
+            ? {
+                name: siteSettings.siteName,
+                url: window.location.origin,
+              }
+            : undefined,
+        },
       },
     };
   }, [event, siteSettings, t]);

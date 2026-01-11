@@ -91,13 +91,24 @@ function injectMetaTags(html, seoData) {
     <link rel="canonical" href="${url}">
     <!-- End SEO Meta Tags -->`;
 
-  // Inject into <head>
+  // Generate Schema.org JSON-LD if schemaOrg data is provided
+  let jsonLdScript = '';
+  if (seoData.schemaOrg) {
+    const jsonLd = JSON.stringify(seoData.schemaOrg, null, 2);
+    jsonLdScript = `
+    <!-- Schema.org JSON-LD (injected by server middleware) -->
+    <script type="application/ld+json">${jsonLd}</script>
+    <!-- End Schema.org JSON-LD -->`;
+  }
+
+  // Inject meta tags and JSON-LD into <head>
+  const allTags = metaTags + jsonLdScript;
   if (html.includes('<head>')) {
-    html = html.replace('<head>', `<head>${metaTags}`);
+    html = html.replace('<head>', `<head>${allTags}`);
   } else if (html.includes('</head>')) {
-    html = html.replace('</head>', `${metaTags}</head>`);
+    html = html.replace('</head>', `${allTags}</head>`);
   } else {
-    html = `<head>${metaTags}</head>${html}`;
+    html = `<head>${allTags}</head>${html}`;
   }
 
   // Update existing title

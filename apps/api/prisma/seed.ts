@@ -323,7 +323,6 @@ async function ensurePlace(args: {
   translations: Array<{
     lang: Lang;
     name: string;
-    teaser?: string | null;
     description?: string | null;
 
     address?: string | null;
@@ -383,7 +382,6 @@ async function ensurePlace(args: {
           create: translations.map((t) => ({
             lang: t.lang,
             name: t.name,
-            teaser: t.teaser ?? null,
             description: t.description ?? null,
             address: t.address ?? null,
             phone: t.phone ?? null,
@@ -441,7 +439,6 @@ async function ensurePlace(args: {
         where: { placeId_lang: { placeId: place.id, lang: t.lang } },
         update: {
           name: t.name,
-          teaser: t.teaser ?? null,
           description: t.description ?? null,
           address: t.address ?? null,
           phone: t.phone ?? null,
@@ -458,7 +455,6 @@ async function ensurePlace(args: {
           placeId: place.id,
           lang: t.lang,
           name: t.name,
-          teaser: t.teaser ?? null,
           description: t.description ?? null,
           address: t.address ?? null,
           phone: t.phone ?? null,
@@ -758,7 +754,6 @@ async function main() {
       {
         lang: "hu",
         name: "Hernák Estate",
-        teaser: "<p>Modern borászat Etyeken, kóstolóval.</p>",
         description: "<p><strong>Részletes leírás</strong>…</p>",
         address: "<p>Etyek, Magyarország</p>",
         website: "https://example.com",
@@ -770,7 +765,6 @@ async function main() {
       {
         lang: "en",
         name: "Hernák Estate",
-        teaser: "<p>Modern winery in Etyek with tastings.</p>",
         description: "<p><strong>Full description</strong>…</p>",
         address: "<p>Etyek, Hungary</p>",
         website: "https://example.com",
@@ -779,7 +773,6 @@ async function main() {
       {
         lang: "de",
         name: "Hernák Estate",
-        teaser: "<p>Modernes Weingut in Etyek.</p>",
         description: "<p><strong>Volle Beschreibung</strong>…</p>",
         address: "<p>Etyek, Ungarn</p>",
       },

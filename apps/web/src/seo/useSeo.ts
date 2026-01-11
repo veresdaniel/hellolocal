@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Seo } from "../types/seo";
+import { injectJsonLd, generateLocalBusinessSchema, generateEventSchema, generateArticleSchema, generateWebPageSchema, generateWebSiteSchema } from "./schemaOrg";
 
 function upsertMeta(sel: string, attrs: Record<string, string>, content?: string) {
   if (!content) return;
@@ -71,5 +72,30 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
     );
     const twImg = seo.twitter?.image ?? ogImg;
     if (twImg) upsertMeta(`meta[name="twitter:image"]`, { name: "twitter:image" }, twImg);
+
+    // Inject Schema.org JSON-LD if provided
+    if (seo.schemaOrg) {
+      let schema: any;
+      switch (seo.schemaOrg.type) {
+        case "LocalBusiness":
+          schema = generateLocalBusinessSchema(seo.schemaOrg.data);
+          break;
+        case "Event":
+          schema = generateEventSchema(seo.schemaOrg.data);
+          break;
+        case "Article":
+          schema = generateArticleSchema(seo.schemaOrg.data);
+          break;
+        case "WebPage":
+          schema = generateWebPageSchema(seo.schemaOrg.data);
+          break;
+        case "WebSite":
+          schema = generateWebSiteSchema(seo.schemaOrg.data);
+          break;
+        default:
+          return;
+      }
+      injectJsonLd(schema);
+    }
   }, [seo, opts?.defaultOgType, opts?.siteName, t]);
 }

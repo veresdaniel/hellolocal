@@ -353,7 +353,6 @@ model PlaceTranslation {
 
   name            String
   // HTML content
-  teaser          String? // short HTML for list
   description     String? // full HTML for detail
 
   // Contact-ish fields (can be HTML or plain)

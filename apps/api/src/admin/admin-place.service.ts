@@ -21,7 +21,6 @@ export interface CreatePlaceDto {
   translations: Array<{
     lang: Lang;
     name: string;
-    teaser?: string | null;
     description?: string | null;
     address?: string | null;
     phone?: string | null;
@@ -53,7 +52,6 @@ export interface UpdatePlaceDto {
   translations?: Array<{
     lang: Lang;
     name: string;
-    teaser?: string | null;
     description?: string | null;
     address?: string | null;
     phone?: string | null;
@@ -348,7 +346,6 @@ export class AdminPlaceService {
           create: translations.map((t) => ({
             lang: t.lang,
             name: t.name,
-            teaser: t.teaser ?? null,
             description: t.description ?? null,
             address: t.address ?? null,
             phone: t.phone ?? null,
@@ -493,7 +490,6 @@ export class AdminPlaceService {
           },
           update: {
             name: translation.name,
-            teaser: translation.teaser ?? null,
             description: translation.description ?? null,
             address: translation.address ?? null,
             phone: translation.phone ?? null,
@@ -509,7 +505,6 @@ export class AdminPlaceService {
             placeId: id,
             lang: translation.lang,
             name: translation.name,
-            teaser: translation.teaser ?? null,
             description: translation.description ?? null,
             address: translation.address ?? null,
             phone: translation.phone ?? null,

@@ -3,7 +3,7 @@
 > Modern, többnyelvű helyi turisztikai platformvezető rendszer eseménykezeléssel és térkép integrációval.
 
 [![Version](https://img.shields.io/badge/version-0.1.0--beta-blue.svg)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 ## 🌟 Főbb Funkciók
@@ -259,7 +259,7 @@ Production környezetben használd a Render.com vagy más szolgáltatás beépí
 
 ## 📄 Licenc
 
-MIT License - lásd [LICENSE](LICENSE) fájlt
+Proprietary License - All Rights Reserved. Lásd [LICENSE](LICENSE) fájlt
 
 ## 🐛 Ismert Problémák
 

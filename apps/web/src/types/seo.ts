@@ -20,4 +20,10 @@ export type Seo = {
       description?: string;
       image?: string;
     };
+
+    // Schema.org structured data
+    schemaOrg?: {
+      type: "LocalBusiness" | "Event" | "Article" | "WebPage" | "WebSite";
+      data: any; // Schema-specific data
+    };
   };

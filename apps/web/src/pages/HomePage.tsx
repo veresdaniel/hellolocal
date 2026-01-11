@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getPlaces, getEvents, getMapSettings, getSiteSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
+import { generateWebSiteSchema } from "../seo/schemaOrg";
 import { MapComponent } from "../components/MapComponent";
 import { MapFilters } from "../components/MapFilters";
 import { PlacesListView } from "../components/PlacesListView";
@@ -293,21 +294,40 @@ export function HomePage() {
     }
   }, [within30Minutes, mapCenter, userLocation]);
 
+  const siteUrl = window.location.origin;
+  const siteName = siteSettings?.siteName || t("common.siteName");
+
   useSeo({
     title: siteSettings?.seoTitle || t("public.home.title"),
     description: siteSettings?.seoDescription || t("public.home.description"),
     image: siteSettings?.defaultPlaceholderCardImage || undefined,
     og: {
       type: "website",
-      title: siteSettings?.seoTitle || siteSettings?.siteName || t("public.home.title"),
+      title: siteSettings?.seoTitle || siteName || t("public.home.title"),
       description: siteSettings?.seoDescription || t("public.home.description"),
       image: siteSettings?.defaultPlaceholderCardImage || undefined,
     },
     twitter: {
       card: siteSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: siteSettings?.seoTitle || siteSettings?.siteName || t("public.home.title"),
+      title: siteSettings?.seoTitle || siteName || t("public.home.title"),
       description: siteSettings?.seoDescription || t("public.home.description"),
       image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    },
+    schemaOrg: {
+      type: "WebSite",
+      data: {
+        name: siteName,
+        description: siteSettings?.seoDescription || t("public.home.description"),
+        url: siteUrl,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${siteUrl}/${lang}/?q={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
     },
   }, {
     siteName: siteSettings?.siteName,

@@ -58,13 +58,39 @@ export class LegalService {
 
     if (!t) throw new NotFoundException("Legal page translation not found");
 
+    // Helper to remove HTML tags and normalize whitespace
+    const stripHtml = (html: string | null | undefined): string => {
+      if (!html) return "";
+      // Remove HTML tags
+      const text = html.replace(/<[^>]*>/g, " ");
+      // Normalize whitespace (multiple spaces/newlines to single space)
+      return text.replace(/\s+/g, " ").trim();
+    };
+
+    // Helper to extract first 2 sentences from HTML/text
+    const getFirstSentences = (html: string | undefined, count: number = 2): string => {
+      if (!html) return "";
+      // Remove HTML tags
+      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      // Split by sentence endings (. ! ?)
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+      return sentences.slice(0, count).join(" ").trim();
+    };
+
+    // Fallback description: first 2 sentences from content
+    const fallbackDescription = getFirstSentences(t.content, 2) || "";
+    // Strip HTML from seoDescription if present
+    const seoDescription = t.seoDescription 
+      ? stripHtml(t.seoDescription) 
+      : fallbackDescription;
+
     return {
       key,
       title: t.title,
       content: t.content ?? "",
       seo: {
         title: t.seoTitle ?? t.title,
-        description: t.seoDescription ?? null,
+        description: seoDescription,
         image: t.seoImage ?? null,
         keywords: t.seoKeywords ?? [],
         canonical: null,
