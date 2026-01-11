@@ -84,6 +84,27 @@
    NODE_ENV=production
    ```
 
+### Opcionális (ha használod a Cloudinary-t):
+
+8. **`VITE_CLOUDINARY_CLOUD_NAME`**
+   ```
+   VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+   ```
+   - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
+   - Csak akkor szükséges, ha használod a TipTap editor-t képek/videók feltöltéséhez
+
+9. **`VITE_CLOUDINARY_API_KEY`**
+   ```
+   VITE_CLOUDINARY_API_KEY=your_api_key
+   ```
+   - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
+
+10. **`VITE_CLOUDINARY_UPLOAD_PRESET`**
+    ```
+    VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset_name
+    ```
+    - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
+
 ---
 
 ## 🔍 Gyors Diagnosztika

@@ -163,7 +163,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
           </h3>
         </div>
 
-        {(place.shortDescription || place.description) && (
+        {place.shortDescription && (
           <div
             style={{
               fontSize: 14,
@@ -179,7 +179,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               wordWrap: "break-word",
               overflowWrap: "break-word",
             }}
-            dangerouslySetInnerHTML={{ __html: place.shortDescription || place.description || "" }}
+            dangerouslySetInnerHTML={{ __html: place.shortDescription }}
           />
         )}
 

@@ -35,4 +35,7 @@ services:
       # VITE_API_URL - Alternative to API_URL (for Vite build-time)
       # VITE_FRONTEND_URL - Alternative to FRONTEND_URL (for Vite build-time)
       # VITE_VAPID_PUBLIC_KEY - Optional, set in Render Dashboard (should match backend VAPID_PUBLIC_KEY)
+      # VITE_CLOUDINARY_CLOUD_NAME - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
+      # VITE_CLOUDINARY_API_KEY - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
+      # VITE_CLOUDINARY_UPLOAD_PRESET - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
 

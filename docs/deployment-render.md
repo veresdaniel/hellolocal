@@ -158,9 +158,15 @@ Ha a `render.yaml` fájl a repository-ban van, Render automatikusan felismeri é
    VITE_API_URL=<Backend API URL - build-time változó, pl: https://hellolocal-api.onrender.com>
    VITE_FRONTEND_URL=<Frontend URL - build-time változó, pl: https://hellolocal-frontend.onrender.com>
    VITE_VAPID_PUBLIC_KEY=<public key ha használod>
+   VITE_CLOUDINARY_CLOUD_NAME=<cloud name ha használod Cloudinary-t>
+   VITE_CLOUDINARY_API_KEY=<api key ha használod Cloudinary-t>
+   VITE_CLOUDINARY_UPLOAD_PRESET=<upload preset ha használod Cloudinary-t>
    ```
 
-   **Fontos**: A `VITE_*` változók build-time-ban vannak beégetve, ezért mindkettőt állítsd be!
+   **Fontos**: 
+   - A `VITE_*` változók build-time-ban vannak beégetve, ezért mindkettőt állítsd be!
+   - **Változtatás után újra kell build-elni!** (Manual Deploy → Deploy latest commit)
+   - A Cloudinary változók csak akkor szükségesek, ha használod a TipTap editor-t képek/videók feltöltéséhez
 
 5. Kattints **"Create Web Service"** gombra
 6. Várd meg az első deploy-t (~5-10 perc)
