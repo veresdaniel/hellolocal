@@ -549,31 +549,27 @@ export function AdminResponsiveTable<T>({
                   };
 
                   if (offset === 0) {
-                    // Current card - follow drag in real-time with resistance effect
+                    // Current card - follow drag in real-time (like phone homescreen swipe)
                     if (isDragging) {
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                       const dragPercent = dragOffsetX / screenWidth;
                       
-                      // Resistance effect: harder to drag beyond 50% of screen
+                      // Minimal resistance: only very slight resistance at edges (like phone homescreen)
                       let resistance = 1;
-                      if (Math.abs(dragPercent) > 0.5) {
-                        const excess = Math.abs(dragPercent) - 0.5;
-                        resistance = 1 - (excess * 0.5); // Reduce movement by 50% of excess
+                      if (Math.abs(dragPercent) > 0.8) {
+                        const excess = Math.abs(dragPercent) - 0.8;
+                        resistance = 1 - (excess * 0.2); // Very minimal resistance
                       }
                       const adjustedDragX = dragOffsetX * resistance;
                       
-                      // Opacity and scale based on drag distance
+                      // Opacity based on drag distance (no scale, no rotation - like phone homescreen)
                       const absDragPercent = Math.abs(dragPercent);
-                      const opacity = Math.max(0.2, 1 - absDragPercent * 0.8);
-                      const scale = Math.max(0.85, 1 - absDragPercent * 0.15);
-                      
-                      // Slight rotation for natural feel (max 15 degrees)
-                      const rotation = dragPercent * 15;
+                      const opacity = Math.max(0.3, 1 - absDragPercent * 0.5); // Less opacity change
                       
                       return {
                         ...baseStyle,
                         zIndex: 30,
-                        transform: `translateX(${adjustedDragX}px) translateY(0) scale(${scale}) rotate(${rotation}deg)`,
+                        transform: `translateX(${adjustedDragX}px) translateY(0) scale(1)`,
                         opacity,
                       };
                     }
@@ -648,23 +644,29 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === 1) {
-                    // Next card - simulate side-by-side layout during swipe
+                    // Next card - move exactly like phone homescreen (side-by-side, immediate response)
+                    // Start moving immediately when dragging starts (even with tiny movement)
                     if (isDragging && dragOffsetX < 0) {
-                      // Dragging left (swiping to next): next card comes in from left, same Y level
+                      // Dragging left (swiping to next): next card comes in from left
+                      // The next card moves exactly opposite to current card movement
+                      // If current card moves -100px, next card moves +100px (from -100% to -100% + 100px)
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
-                      const dragPercent = Math.abs(dragOffsetX) / screenWidth;
+                      const absDragX = Math.abs(dragOffsetX);
                       
-                      // Smooth interpolation with easing
-                      const easedPercent = 1 - Math.pow(1 - Math.min(dragPercent, 1), 2); // Ease-out
-                      const translateX = -100 + (easedPercent * 100); // From -100% to 0%
-                      const opacity = 0.3 + (easedPercent * 0.7); // From 0.3 to 1
-                      const scale = 0.95 + (easedPercent * 0.05); // From 0.95 to 1
+                      // Direct pixel-to-pixel mapping: next card moves exactly opposite
+                      // Next card starts at -100% (completely off-screen left)
+                      // As current card moves left by X pixels, next card moves right by X pixels
+                      const translateX = -screenWidth + absDragX; // From -100% to 0px
                       
-                      // During drag: same Y level (side-by-side), no vertical offset
+                      // Opacity increases as card comes in (no scale - like phone homescreen)
+                      const dragPercent = Math.min(absDragX / screenWidth, 1);
+                      const opacity = 0.1 + (dragPercent * 0.9); // From 0.1 to 1
+                      
+                      // During drag: same Y level (side-by-side), no vertical offset, no scale
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: `translateX(${translateX}%) translateY(0) scale(${scale})`,
+                        transform: `translateX(${translateX}px) translateY(0) scale(1)`,
                         opacity: Math.min(1, opacity),
                         pointerEvents: "none" as const,
                       };
@@ -708,23 +710,29 @@ export function AdminResponsiveTable<T>({
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card - simulate side-by-side layout during swipe
+                    // Previous card - move exactly like phone homescreen (side-by-side, immediate response)
+                    // Start moving immediately when dragging starts (even with tiny movement)
                     if (isDragging && dragOffsetX > 0) {
-                      // Dragging right (swiping to previous): previous card comes in from right, same Y level
+                      // Dragging right (swiping to previous): previous card comes in from right
+                      // The previous card moves exactly opposite to current card movement
+                      // If current card moves +100px, previous card moves -100px (from +100% to +100% - 100px)
                       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
-                      const dragPercent = Math.abs(dragOffsetX) / screenWidth;
+                      const absDragX = Math.abs(dragOffsetX);
                       
-                      // Smooth interpolation with easing
-                      const easedPercent = 1 - Math.pow(1 - Math.min(dragPercent, 1), 2); // Ease-out
-                      const translateX = 100 - (easedPercent * 100); // From 100% to 0%
-                      const opacity = 0.3 + (easedPercent * 0.7); // From 0.3 to 1
-                      const scale = 0.95 + (easedPercent * 0.05); // From 0.95 to 1
+                      // Direct pixel-to-pixel mapping: previous card moves exactly opposite
+                      // Previous card starts at +100% (completely off-screen right)
+                      // As current card moves right by X pixels, previous card moves left by X pixels
+                      const translateX = screenWidth - absDragX; // From +100% to 0px
                       
-                      // During drag: same Y level (side-by-side), no vertical offset
+                      // Opacity increases as card comes in (no scale - like phone homescreen)
+                      const dragPercent = Math.min(absDragX / screenWidth, 1);
+                      const opacity = 0.1 + (dragPercent * 0.9); // From 0.1 to 1
+                      
+                      // During drag: same Y level (side-by-side), no vertical offset, no scale
                       return {
                         ...baseStyle,
                         zIndex: 20,
-                        transform: `translateX(${translateX}%) translateY(0) scale(${scale})`,
+                        transform: `translateX(${translateX}px) translateY(0) scale(1)`,
                         opacity: Math.min(1, opacity),
                         pointerEvents: "none" as const,
                       };
