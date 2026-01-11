@@ -361,6 +361,11 @@ export function PlacesListView({
         .places-grid > * {
           width: 100%;
           max-width: 100%;
+          min-width: 0;
+        }
+        .places-grid > * > article {
+          max-width: 100%;
+          min-width: 0;
         }
       `}</style>
       <div

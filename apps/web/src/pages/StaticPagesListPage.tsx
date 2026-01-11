@@ -105,6 +105,11 @@ export function StaticPagesListPage() {
         .static-pages-grid > * {
           width: 100%;
           max-width: 100%;
+          min-width: 0;
+        }
+        .static-pages-grid > * > article {
+          max-width: 100%;
+          min-width: 0;
         }
       `}</style>
       <div

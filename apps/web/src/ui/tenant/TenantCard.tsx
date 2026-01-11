@@ -66,7 +66,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
         </div>
       )}
 
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "space-between" }}>
+      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "space-between", minWidth: 0 }}>
         <h3
           style={{
             margin: 0,
@@ -76,6 +76,9 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
             lineHeight: 1.3,
             flex: 1,
             transition: "color 0.3s ease",
+            minWidth: 0,
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
           }}
         >
           {tenant.name}
@@ -156,6 +159,8 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
             flexDirection: "column",
             borderBottom: `3px solid ${defaultColor}`,
             position: "relative",
+            maxWidth: "100%",
+            minWidth: 0,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";

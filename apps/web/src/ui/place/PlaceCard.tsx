@@ -142,8 +142,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
         </div>
       )}
 
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
           <h3
             style={{
               margin: 0,
@@ -154,6 +154,9 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               lineHeight: 1.3,
               flex: 1,
               transition: "color 0.3s ease",
+              minWidth: 0,
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
             }}
           >
             {place.name}
@@ -172,6 +175,9 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               display: "-webkit-box",
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
+              minWidth: 0,
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
             }}
             dangerouslySetInnerHTML={{ __html: place.shortDescription || place.description || "" }}
           />
@@ -296,6 +302,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               flexDirection: "column",
               borderBottom: `3px solid ${categoryColor}`,
               position: "relative",
+              maxWidth: "100%",
+              minWidth: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
@@ -326,6 +334,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
             borderBottom: `3px solid ${categoryColor}`,
             position: "relative",
             opacity: 0.8,
+            maxWidth: "100%",
+            minWidth: 0,
           }}
         >
           {articleContent}

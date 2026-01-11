@@ -426,6 +426,8 @@ export function EventsList({ lang }: EventsListProps) {
                       border: "1px solid rgba(102, 126, 234, 0.25)",
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       overflow: "hidden",
+                      maxWidth: "100%",
+                      minWidth: 0,
                     }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)";
@@ -478,7 +480,7 @@ export function EventsList({ lang }: EventsListProps) {
                   )}
 
                   {/* Content */}
-                  <div style={{ padding: 14 }}>
+                  <div style={{ padding: 14, minWidth: 0 }}>
                     {/* Title */}
                     <h4 style={{ 
                       margin: "0 0 8px 0", 
@@ -488,6 +490,9 @@ export function EventsList({ lang }: EventsListProps) {
                       lineHeight: 1.4,
                       letterSpacing: "-0.01em",
                       color: "#2d1f3d",
+                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
+                      minWidth: 0,
                     }}>
                       {!hasImage && event.isPinned && <span style={{ marginRight: 6 }}>📌</span>}
                       {event.name}

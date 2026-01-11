@@ -158,21 +158,33 @@ export function TenantsListPage() {
           grid-template-columns: 1fr;
           gap: 20px;
           margin-bottom: 32px;
+          width: 100%;
+          max-width: 100%;
         }
         @media (min-width: 640px) {
           .tenants-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 24px;
+            max-width: 100%;
           }
         }
         @media (min-width: 900px) {
           .tenants-grid {
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
           }
         }
         .tenants-grid > * {
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+        }
+        .tenants-grid > * > article {
+          max-width: 100%;
+          min-width: 0;
         }
       `}</style>
       <div
@@ -241,9 +253,8 @@ export function TenantsListPage() {
         {/* Tenants Grid */}
         <div
           style={{
-            maxWidth: 960,
-            margin: "0 auto",
             width: "100%",
+            maxWidth: "100%",
           }}
         >
           <LoadingSpinner isLoading={isLoading && allTenants.length === 0} />
