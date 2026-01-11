@@ -222,19 +222,21 @@ function DashboardCard({
       to={link}
       style={{
         display: "flex",
-        flexDirection: "column",
-        padding: "clamp(16px, 3vw, 20px)",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: "clamp(10px, 2vw, 12px)",
+        padding: "clamp(10px, 2vw, 12px)",
         background: "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)",
         borderRadius: 12,
         textDecoration: "none",
         color: "white",
         transition: "all 0.3s ease",
         boxShadow: "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
-        minHeight: 140,
+        minHeight: 70,
         border: "1px solid rgba(102, 126, 234, 0.3)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+        e.currentTarget.style.transform = "translateY(-4px) scale(1.01)";
         e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 2px #667eea";
         e.currentTarget.style.borderColor = "#667eea";
         e.currentTarget.style.background = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
@@ -247,29 +249,38 @@ function DashboardCard({
       }}
     >
       <div style={{ 
-        fontSize: "clamp(36px, 7vw, 42px)", 
-        marginBottom: "clamp(10px, 2.5vw, 12px)",
+        fontSize: "clamp(28px, 5vw, 32px)", 
         filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
+        flexShrink: 0,
       }}>
         {icon}
       </div>
-      <h3 style={{ 
-        margin: "0 0 6px 0",
-        fontSize: "clamp(15px, 3.5vw, 17px)",
-        fontWeight: 700,
-        color: "#a8b3ff",
-      }}>
-        {title}
-      </h3>
-      <p style={{ 
-        margin: 0, 
-        color: "rgba(255, 255, 255, 0.85)",
-        fontSize: "clamp(12px, 2.8vw, 13px)",
-        lineHeight: 1.4,
-        fontWeight: 400,
-      }}>
-        {description}
-      </p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3 style={{ 
+          margin: "0 0 3px 0",
+          fontSize: "clamp(13px, 2.8vw, 14px)",
+          fontWeight: 700,
+          color: "#a8b3ff",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}>
+          {title}
+        </h3>
+        <p style={{ 
+          margin: 0, 
+          color: "rgba(255, 255, 255, 0.75)",
+          fontSize: "clamp(10px, 2.3vw, 11px)",
+          lineHeight: 1.3,
+          fontWeight: 400,
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}>
+          {description}
+        </p>
+      </div>
     </Link>
   );
 }

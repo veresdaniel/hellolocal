@@ -144,38 +144,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {/* Left section - Logo and Nav Links (Desktop) */}
           <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1 }}>
-            {isMobile ? (
-              <Link 
-                to={adminPath("")}
-                style={{ 
-                  textDecoration: "none", 
-                  color: "#667eea",
-                  fontSize: "clamp(20px, 4vw, 24px)",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }} 
-                title={t("admin.dashboard")}
-              >
-                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
-                <span>Admin</span>
-              </Link>
-            ) : (
-              <div
-                style={{ 
-                  color: "#667eea",
-                  fontSize: "clamp(20px, 4vw, 24px)",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }} 
-              >
-                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
-                <span>Admin</span>
-              </div>
-            )}
+            <Link
+              to={adminPath("")}
+              style={{
+                textDecoration: "none",
+                color: "#667eea",
+                fontSize: "clamp(20px, 4vw, 24px)",
+                transition: "opacity 0.2s ease",
+              }}
+              title={t("admin.dashboard")}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+            >
+              <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
+            </Link>
             
             {/* Desktop Navigation */}
             {!isMobile && (
@@ -251,26 +233,43 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <button
                 onClick={handleLogout}
                 style={{
-                  padding: "8px 16px",
-                  background: "#dc3545",
-                  color: "white",
-                  border: "none",
+                  padding: "8px 12px",
+                  background: "white",
+                  color: "#dc3545",
+                  border: "2px solid #dc3545",
                   borderRadius: 6,
                   cursor: "pointer",
                   fontSize: 14,
                   fontWeight: 500,
                   transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#c82333";
+                  e.currentTarget.style.background = "#fff5f5";
                   e.currentTarget.style.transform = "translateY(-2px)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#dc3545";
+                  e.currentTarget.style.background = "white";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
+                title={t("admin.logout")}
               >
-                {t("admin.logout")}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
               </button>
             )}
             
@@ -409,6 +408,53 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <UserInfoDropdown />
               </div>
               
+              <Link
+                to={publicPagePath}
+                style={{
+                  padding: "14px 16px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  width: "100%",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  textDecoration: "none",
+                }}
+                onTouchStart={(e) => {
+                  e.currentTarget.style.transform = "scale(0.98)";
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(102, 126, 234, 0.3)";
+                }}
+                onTouchEnd={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.2)";
+                }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                </svg>
+                {t("admin.backToPublicSite")}
+              </Link>
+              
               <button
                 onClick={handleLogout}
                 style={{
@@ -426,7 +472,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 8,
                 }}
                 onTouchStart={(e) => {
                   e.currentTarget.style.transform = "scale(0.98)";
@@ -436,10 +481,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   e.currentTarget.style.transform = "scale(1)";
                   e.currentTarget.style.boxShadow = "0 2px 8px rgba(220, 53, 69, 0.2)";
                 }}
+                title={t("admin.logout")}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="28"
+                  height="28"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -451,7 +497,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                {t("admin.logout")}
               </button>
             </div>
           </div>
