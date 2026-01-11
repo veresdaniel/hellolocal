@@ -776,6 +776,20 @@ export function MapComponent({
         touchZoomRotate={true}
         touchPitch={false}
         transitionDuration={300}
+        dragPan={{
+          linearity: 0.3, // Lower value = less sensitive pan movement (default is ~0.5)
+          easing: (t) => t, // Linear easing
+          maxSpeed: 1400, // Maximum drag velocity
+          deceleration: 2500 // Rate at which speed reduces after pan ends
+        }}
+        onLoad={(evt) => {
+          // Reduce scroll wheel zoom sensitivity
+          // Default is 1/450, using 1/800 makes it much less sensitive
+          const map = evt.target;
+          if (map && map.scrollZoom) {
+            map.scrollZoom.setWheelZoomRate(1 / 800);
+          }
+        }}
       >
         {/* User location marker - only show if showUserLocation is enabled */}
         {showUserLocation && userLocation && typeof userLocation.lat === "number" && typeof userLocation.lng === "number" && (
