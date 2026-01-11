@@ -44,6 +44,14 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
 
   const siteName = siteSettings?.siteName || "HelloLocal";
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  const [logoError, setLogoError] = useState(false);
+  
+  // Log when brandBadgeIcon changes
+  useEffect(() => {
+    if (brandBadgeIcon) {
+      console.log("[FloatingHeader] Setting brandBadgeIcon:", brandBadgeIcon);
+    }
+  }, [brandBadgeIcon]);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -145,15 +153,24 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               letterSpacing: "-0.02em",
             }}
           >
-            {brandBadgeIcon && (
+            {brandBadgeIcon && !logoError && (
               <img 
                 src={brandBadgeIcon} 
                 alt={siteName || ""}
                 style={{ 
-                  width: 24, 
-                  height: 24, 
+                  height: 32, 
+                  width: "auto",
                   objectFit: "contain",
                   borderRadius: 4,
+                  display: "block",
+                }}
+                onError={(e) => {
+                  console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                  setLogoError(true);
+                  e.currentTarget.style.display = "none";
+                }}
+                onLoad={() => {
+                  setLogoError(false);
                 }}
               />
             )}

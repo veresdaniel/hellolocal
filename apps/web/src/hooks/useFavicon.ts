@@ -32,32 +32,66 @@ export function useFavicon() {
   }, [lang, tenantSlug, queryClient]);
 
   useEffect(() => {
-    if (!siteSettings?.faviconUrl) return;
+    if (!siteSettings?.faviconUrl) {
+      // Remove any existing custom favicons if faviconUrl is cleared
+      const existingFavicons = document.querySelectorAll(
+        'link[rel="icon"]:not([href="/vite.svg"]), link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
+      );
+      existingFavicons.forEach((link) => link.remove());
+      return;
+    }
 
-    // Find existing favicon links
+    // Validate URL format
+    let faviconUrl: string;
+    try {
+      new URL(siteSettings.faviconUrl);
+      faviconUrl = siteSettings.faviconUrl;
+      console.log("[useFavicon] Setting favicon URL:", faviconUrl);
+    } catch {
+      console.warn("[useFavicon] Invalid favicon URL format:", siteSettings.faviconUrl);
+      return;
+    }
+
+    // Find existing favicon links (including apple-touch-icon)
     const existingFavicons = document.querySelectorAll(
-      'link[rel="icon"], link[rel="shortcut icon"]'
+      'link[rel="icon"]:not([href="/vite.svg"]), link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
     );
 
     // Remove existing favicons
     existingFavicons.forEach((link) => link.remove());
 
-    // Create new favicon link
-    const link = document.createElement("link");
-    link.rel = "icon";
-    link.href = siteSettings.faviconUrl;
-    
     // Add error handling - revert to default if image fails
     const img = new Image();
+    
     img.onerror = () => {
       // If custom favicon fails, don't add it (browser will use default)
-      console.warn("[useFavicon] Failed to load custom favicon:", siteSettings.faviconUrl);
+      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrl);
     };
+    
     img.onload = () => {
       // Only add if image loads successfully
+      console.log("[useFavicon] Successfully loaded favicon:", faviconUrl);
+      
+      // Create standard favicon link
+      const link = document.createElement("link");
+      link.rel = "icon";
+      // Try to detect type from URL
+      const isSvg = faviconUrl.toLowerCase().endsWith('.svg');
+      const isIco = faviconUrl.toLowerCase().endsWith('.ico');
+      link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
+      link.href = faviconUrl;
       document.head.appendChild(link);
+
+      // Also add apple-touch-icon for iOS devices
+      const appleLink = document.createElement("link");
+      appleLink.rel = "apple-touch-icon";
+      appleLink.href = faviconUrl;
+      document.head.appendChild(appleLink);
     };
-    img.src = siteSettings.faviconUrl;
+    
+    // Try to load the image (with CORS if needed)
+    // Note: Some browsers may block cross-origin favicons, but we try anyway
+    img.src = faviconUrl;
 
     // Cleanup function
     return () => {

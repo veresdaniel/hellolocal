@@ -57,6 +57,14 @@ export function Footer({
 
   const siteName = siteSettings?.siteName;
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  const [logoError, setLogoError] = useState(false);
+  
+  // Log when brandBadgeIcon changes
+  useEffect(() => {
+    if (brandBadgeIcon) {
+      console.log("[Footer] Setting brandBadgeIcon:", brandBadgeIcon);
+    }
+  }, [brandBadgeIcon]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -96,15 +104,24 @@ export function Footer({
           {/* Brand - Always on left */}
           {(siteName || brandBadgeIcon) && (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {brandBadgeIcon && (
-                <img 
-                  src={brandBadgeIcon} 
+              {brandBadgeIcon && !logoError && (
+                <img
+                  src={brandBadgeIcon}
                   alt={siteName || ""}
-                  style={{ 
-                    width: isMobile ? 18 : 20, 
-                    height: isMobile ? 18 : 20, 
+                  style={{
+                    height: isMobile ? 23 : 28,
+                    width: "auto",
                     objectFit: "contain",
                     borderRadius: 4,
+                    display: "block",
+                  }}
+                  onError={(e) => {
+                    console.warn("[Footer] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                    setLogoError(true);
+                    e.currentTarget.style.display = "none";
+                  }}
+                  onLoad={() => {
+                    setLogoError(false);
                   }}
                 />
               )}
@@ -238,15 +255,24 @@ export function Footer({
                   gap: 8,
                 }}
               >
-                {brandBadgeIcon && (
-                  <img 
-                    src={brandBadgeIcon} 
+                {brandBadgeIcon && !logoError && (
+                  <img
+                    src={brandBadgeIcon}
                     alt={siteName || ""}
-                    style={{ 
-                      width: 24, 
-                      height: 24, 
+                    style={{
+                      height: 32,
+                      width: "auto",
                       objectFit: "contain",
                       borderRadius: 4,
+                      display: "block",
+                    }}
+                    onError={(e) => {
+                      console.warn("[Footer] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                      setLogoError(true);
+                      e.currentTarget.style.display = "none";
+                    }}
+                    onLoad={() => {
+                      setLogoError(false);
                     }}
                   />
                 )}
