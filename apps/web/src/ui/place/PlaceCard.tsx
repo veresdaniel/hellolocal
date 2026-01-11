@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { getSiteSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import { Badge } from "../../components/Badge";
+import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 
 // Function to get color for category
 function getCategoryColor(categoryName: string | null | undefined): string {
@@ -92,7 +93,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
             position: "relative",
           }}
         >
-          <img
+          <ImageWithSkeleton
             src={imageUrl}
             alt={place.name}
             style={{
@@ -101,6 +102,9 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               objectFit: "cover",
               display: "block",
               transition: "transform 0.4s ease",
+            }}
+            skeletonStyle={{
+              borderRadius: 0,
             }}
             onMouseEnter={hasSlug ? (e) => {
               e.currentTarget.style.transform = "scale(1.1)";

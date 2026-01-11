@@ -13,6 +13,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 import { HAS_MULTIPLE_TENANTS } from "../app/config";
 import { Badge } from "../components/Badge";
+import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -69,13 +70,63 @@ export function PlaceDetailPage() {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
       
-      // Make all images responsive
+      // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
+        // Skip if already wrapped
+        if (img.parentElement?.classList.contains("image-skeleton-wrapper")) {
+          return;
+        }
+
         img.style.maxWidth = "100%";
         img.style.height = "auto";
         img.style.display = "block";
         img.style.margin = "16px auto";
+        img.style.opacity = "0";
+        img.style.transition = "opacity 0.3s ease-in-out";
+        
+        if (!img.hasAttribute("loading")) {
+          img.setAttribute("loading", "lazy");
+        }
+
+        // Create wrapper with skeleton
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-skeleton-wrapper";
+        wrapper.style.position = "relative";
+        wrapper.style.width = "100%";
+        wrapper.style.margin = "16px auto";
+        
+        // Create skeleton
+        const skeleton = document.createElement("div");
+        skeleton.className = "image-skeleton";
+        skeleton.style.width = "100%";
+        skeleton.style.height = img.getAttribute("height") || "auto";
+        skeleton.style.minHeight = "200px";
+        skeleton.style.background = "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)";
+        skeleton.style.backgroundSize = "200% 100%";
+        skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
+        skeleton.style.borderRadius = "4px";
+        
+        // Insert wrapper before image
+        img.parentNode?.insertBefore(wrapper, img);
+        wrapper.appendChild(skeleton);
+        wrapper.appendChild(img);
+        
+        // Handle image load
+        const handleLoad = () => {
+          img.style.opacity = "1";
+          skeleton.style.display = "none";
+        };
+        
+        if (img.complete) {
+          handleLoad();
+        } else {
+          img.addEventListener("load", handleLoad, { once: true });
+          img.addEventListener("error", () => {
+            skeleton.style.display = "none";
+            img.style.opacity = "1";
+          }, { once: true });
+        }
       });
       
       // Make all videos responsive
@@ -114,6 +165,23 @@ export function PlaceDetailPage() {
     makeMediaResponsive(descriptionRef.current);
     makeMediaResponsive(addressRef.current);
     makeMediaResponsive(accessibilityRef.current);
+    
+    // Add skeleton animation CSS if not already added
+    if (!document.getElementById("skeleton-animation-style")) {
+      const style = document.createElement("style");
+      style.id = "skeleton-animation-style";
+      style.textContent = `
+        @keyframes skeleton-loading {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }, [place?.description, place?.contact?.address, place?.accessibility]);
 
   const seo = useMemo(() => {
@@ -182,7 +250,7 @@ export function PlaceDetailPage() {
                 position: "relative",
               }}
             >
-              <img
+              <ImageWithSkeleton
                 src={sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(siteSettings?.defaultPlaceholderDetailHeroImage) || ""}
                 alt={place.name}
                 style={{
@@ -190,6 +258,9 @@ export function PlaceDetailPage() {
                   height: "100%",
                   objectFit: "cover",
                   display: "block",
+                }}
+                skeletonStyle={{
+                  borderRadius: 16,
                 }}
               />
               
@@ -271,7 +342,7 @@ export function PlaceDetailPage() {
           </div>
 
           {/* Header */}
-          <div style={{ margin: "0 16px 32px" }}>
+          <div style={{ margin: "0 16px 24px" }}>
             <h1
               style={{
                 margin: 0,
@@ -287,6 +358,390 @@ export function PlaceDetailPage() {
             >
               {place.name}
             </h1>
+          </div>
+
+          {/* Contact and Opening Hours side by side */}
+          <div 
+            className="contact-opening-hours-grid"
+            style={{ 
+              margin: "0 16px 24px",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
+            <style>{`
+              @media (max-width: 767px) {
+                .contact-opening-hours-grid {
+                  gridTemplateColumns: 1fr !important;
+                }
+              }
+            `}</style>
+            {/* Contact Information - Left */}
+            {place.contact && (
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  padding: "16px",
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)",
+                  color: "white",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    color: "white",
+                    marginBottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>📞</span>
+                  {t("public.contact") || "Kapcsolat"}
+                </h3>
+                <div style={{ 
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}>
+                {place.contact.address && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>📍</span>
+                      {t("public.address")}
+                    </strong>
+                    <div
+                      ref={addressRef}
+                      style={{ color: "white", fontSize: 13, lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
+                      dangerouslySetInnerHTML={{ __html: place.contact.address }}
+                    />
+                  </div>
+                )}
+                {place.contact.phone && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>📱</span>
+                      {t("public.phone")}
+                    </strong>
+                    <a
+                      href={`tel:${place.contact.phone.replace(/\s/g, '')}`}
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.phone}
+                      <span style={{ fontSize: 12 }}>→</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.email && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>✉️</span>
+                      {t("public.email")}
+                    </strong>
+                    <a
+                      href={`mailto:${place.contact.email}`}
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 13,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        wordBreak: "break-word",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.email}
+                      <span style={{ fontSize: 12 }}>→</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.website && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>🌐</span>
+                      {t("public.website")}
+                    </strong>
+                    <a
+                      href={place.contact.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 13,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        wordBreak: "break-all",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.website.replace(/^https?:\/\//i, '')}
+                      <span style={{ fontSize: 12 }}>↗</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.facebook && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>📘</span>
+                      Facebook
+                    </strong>
+                    <a
+                      href={place.contact.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 13,
+                        fontWeight: 400,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        wordBreak: "break-all",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '')}
+                      <span style={{ fontSize: 12 }}>↗</span>
+                    </a>
+                  </div>
+                )}
+                {place.contact.whatsapp && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.15)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>💬</span>
+                      WhatsApp
+                    </strong>
+                    <a
+                      href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "white",
+                        textDecoration: "none",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {place.contact.whatsapp}
+                      <span style={{ fontSize: 12 }}>→</span>
+                    </a>
+                  </div>
+                )}
+                </div>
+              </div>
+            )}
+
+            {/* Opening Hours - Right */}
+            {place.openingHours && place.openingHours.length > 0 && (
+              <div
+                style={{
+                  background: "white",
+                  padding: "16px",
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(102, 126, 234, 0.1)",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    color: "#1a1a1a",
+                    marginBottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>🕐</span>
+                  {t("public.openingHours")}
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {place.openingHours.map((oh, index) => {
+                    const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
+                    const isToday = (() => {
+                      const now = new Date();
+                      const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
+                      return oh.dayOfWeek === currentDayOfWeek;
+                    })();
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "6px 10px",
+                          background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
+                          borderRadius: 6,
+                          border: isToday ? "1px solid rgba(102, 126, 234, 0.2)" : "1px solid transparent",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: isToday ? 500 : 400,
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            color: isToday ? "#667eea" : "#333",
+                            fontSize: 13,
+                          }}
+                        >
+                          {dayName}
+                          {isToday && (
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                fontSize: 10,
+                                color: "#667eea",
+                                fontWeight: 500,
+                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              (Ma)
+                            </span>
+                          )}
+                        </span>
+                        <span
+                          style={{
+                            color: oh.isClosed ? "#999" : "#333",
+                            fontSize: 13,
+                            fontWeight: 400,
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {oh.isClosed ? (
+                            <span style={{ fontStyle: "italic" }}>
+                              {t("common.closed") || "Zárva"}
+                            </span>
+                          ) : oh.openTime && oh.closeTime ? (
+                            `${oh.openTime} - ${oh.closeTime}`
+                          ) : (
+                            "-"
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -307,374 +762,6 @@ export function PlaceDetailPage() {
               }}
               dangerouslySetInnerHTML={{ __html: place.description }}
             />
-          )}
-
-          {/* Contact Information */}
-          {place.contact && (
-            <div
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
-                boxShadow: "0 8px 24px rgba(102, 126, 234, 0.25)",
-                margin: "0 16px 32px",
-                color: "white",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 22,
-                  fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "white",
-                  marginBottom: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <span style={{ fontSize: 24 }}>📞</span>
-                {t("public.contact") || "Kapcsolat"}
-              </h3>
-              <div style={{ 
-                display: "grid", 
-                gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr",
-                gap: 16,
-              }}>
-                {place.contact.address && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📍</span>
-                      {t("public.address")}
-                    </strong>
-                    <div
-                      ref={addressRef}
-                      style={{ color: "white", fontSize: 16, lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
-                      dangerouslySetInnerHTML={{ __html: place.contact.address }}
-                    />
-                  </div>
-                )}
-                {place.contact.phone && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📱</span>
-                      {t("public.phone")}
-                    </strong>
-                    <a
-                      href={`tel:${place.contact.phone.replace(/\s/g, '')}`}
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: 18,
-                        fontWeight: 500,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.phone}
-                      <span style={{ fontSize: 14 }}>→</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.email && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>✉️</span>
-                      {t("public.email")}
-                    </strong>
-                    <a
-                      href={`mailto:${place.contact.email}`}
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: 16,
-                        fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        wordBreak: "break-word",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.email}
-                      <span style={{ fontSize: 14 }}>→</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.website && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>🌐</span>
-                      {t("public.website")}
-                    </strong>
-                    <a
-                      href={place.contact.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: 16,
-                        fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        wordBreak: "break-all",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.website.replace(/^https?:\/\//i, '')}
-                      <span style={{ fontSize: 14 }}>↗</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.facebook && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📘</span>
-                      Facebook
-                    </strong>
-                    <a
-                      href={place.contact.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: 16,
-                        fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        wordBreak: "break-all",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '')}
-                      <span style={{ fontSize: 14 }}>↗</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.whatsapp && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>💬</span>
-                      WhatsApp
-                    </strong>
-                    <a
-                      href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: 18,
-                        fontWeight: 500,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.whatsapp}
-                      <span style={{ fontSize: 14 }}>→</span>
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Opening Hours */}
-          {place.openingHours && place.openingHours.length > 0 && (
-            <div
-              style={{
-                background: "white",
-                padding: "clamp(12px, 3vw, 20px)",
-                borderRadius: 12,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                margin: "0 16px 24px",
-                border: "1px solid rgba(102, 126, 234, 0.1)",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: 16,
-                  fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#1a1a1a",
-                  marginBottom: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>🕐</span>
-                {t("public.openingHours")}
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {place.openingHours.map((oh, index) => {
-                  const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
-                  const isToday = (() => {
-                    const now = new Date();
-                    const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
-                    return oh.dayOfWeek === currentDayOfWeek;
-                  })();
-
-                  return (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "8px 12px",
-                        background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
-                        borderRadius: 6,
-                        border: isToday ? "1px solid rgba(102, 126, 234, 0.2)" : "1px solid transparent",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontWeight: isToday ? 500 : 400,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          color: isToday ? "#667eea" : "#333",
-                          fontSize: 14,
-                        }}
-                      >
-                        {dayName}
-                        {isToday && (
-                          <span
-                            style={{
-                              marginLeft: 6,
-                              fontSize: 11,
-                              color: "#667eea",
-                              fontWeight: 500,
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            (Ma)
-                          </span>
-                        )}
-                      </span>
-                      <span
-                        style={{
-                          color: oh.isClosed ? "#999" : "#333",
-                          fontSize: 14,
-                          fontWeight: 400,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        }}
-                      >
-                        {oh.isClosed ? (
-                          <span style={{ fontStyle: "italic" }}>
-                            {t("common.closed") || "Zárva"}
-                          </span>
-                        ) : oh.openTime && oh.closeTime ? (
-                          `${oh.openTime} - ${oh.closeTime}`
-                        ) : (
-                          "-"
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           )}
 
           {/* Accessibility */}

@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",
+    "@tiptap/extension-image": "^2.1.13",
     "@tiptap/extension-link": "^2.1.13",
     "@tiptap/extension-placeholder": "^2.1.13",
     "@tiptap/extension-underline": "^2.1.13",
+    "tiptap-extension-resize-image": "^1.0.2",
     "@tiptap/react": "^2.1.13",
     "@tiptap/starter-kit": "^2.1.13",
     "express": "^4.18.2",

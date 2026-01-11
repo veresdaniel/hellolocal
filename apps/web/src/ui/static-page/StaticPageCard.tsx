@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getSiteSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import { Badge } from "../../components/Badge";
+import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import type { StaticPage } from "../../api/static-pages.api";
 
 interface StaticPageCardProps {
@@ -68,7 +69,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
         }}
       >
         {imageUrl && (
-          <img
+          <ImageWithSkeleton
             src={imageUrl}
             alt={staticPage.title}
             style={{
@@ -77,6 +78,9 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               objectFit: "cover",
               display: "block",
               transition: "transform 0.4s ease",
+            }}
+            skeletonStyle={{
+              borderRadius: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.1)";

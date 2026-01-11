@@ -107,13 +107,63 @@ export function LegalPage({ pageKey }: Props) {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
       
-      // Make all images responsive
+      // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
+        // Skip if already wrapped
+        if (img.parentElement?.classList.contains("image-skeleton-wrapper")) {
+          return;
+        }
+
         img.style.maxWidth = "100%";
         img.style.height = "auto";
         img.style.display = "block";
         img.style.margin = "16px auto";
+        img.style.opacity = "0";
+        img.style.transition = "opacity 0.3s ease-in-out";
+        
+        if (!img.hasAttribute("loading")) {
+          img.setAttribute("loading", "lazy");
+        }
+
+        // Create wrapper with skeleton
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-skeleton-wrapper";
+        wrapper.style.position = "relative";
+        wrapper.style.width = "100%";
+        wrapper.style.margin = "16px auto";
+        
+        // Create skeleton
+        const skeleton = document.createElement("div");
+        skeleton.className = "image-skeleton";
+        skeleton.style.width = "100%";
+        skeleton.style.height = img.getAttribute("height") || "auto";
+        skeleton.style.minHeight = "200px";
+        skeleton.style.background = "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)";
+        skeleton.style.backgroundSize = "200% 100%";
+        skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
+        skeleton.style.borderRadius = "4px";
+        
+        // Insert wrapper before image
+        img.parentNode?.insertBefore(wrapper, img);
+        wrapper.appendChild(skeleton);
+        wrapper.appendChild(img);
+        
+        // Handle image load
+        const handleLoad = () => {
+          img.style.opacity = "1";
+          skeleton.style.display = "none";
+        };
+        
+        if (img.complete) {
+          handleLoad();
+        } else {
+          img.addEventListener("load", handleLoad, { once: true });
+          img.addEventListener("error", () => {
+            skeleton.style.display = "none";
+            img.style.opacity = "1";
+          }, { once: true });
+        }
       });
       
       // Make all videos responsive
@@ -150,6 +200,23 @@ export function LegalPage({ pageKey }: Props) {
     };
 
     makeMediaResponsive(contentRef.current);
+    
+    // Add skeleton animation CSS if not already added
+    if (!document.getElementById("skeleton-animation-style")) {
+      const style = document.createElement("style");
+      style.id = "skeleton-animation-style";
+      style.textContent = `
+        @keyframes skeleton-loading {
+          0% {
+            background-position: 200% 0;
+          }
+          100% {
+            background-position: -200% 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }, [data?.content]);
 
   if (error || !data) {

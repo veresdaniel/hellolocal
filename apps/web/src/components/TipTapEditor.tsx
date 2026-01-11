@@ -4,6 +4,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
+import Image from "@tiptap/extension-image";
+import ImageResize from "tiptap-extension-resize-image";
 import { useEffect, useState } from "react";
 
 interface TipTapEditorProps {
@@ -35,6 +37,14 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
         },
       }),
       Underline,
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: "tiptap-image",
+        },
+      }),
+      ImageResize,
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -399,13 +409,55 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
           onClick={() => {
             const url = window.prompt("Enter image URL:");
             if (url) {
-              editor.chain().focus().insertContent(`<img src="${url}" alt="" style="max-width: 100%; height: auto;" />`).run();
+              editor.chain().focus().setImage({ src: url, alt: "" }).run();
             }
           }}
           title="Insert Image"
         >
           🖼️
         </ToolbarButton>
+
+        {/* Image Formatting */}
+        {editor.isActive("image") && (
+          <>
+            <div style={{ width: 1, background: "#ddd", margin: "0 4px", height: 24 }} />
+            <ToolbarButton
+              onClick={() => {
+                const attrs = editor.getAttributes("image");
+                editor.chain().focus().setImage({ ...attrs, style: "float: left; margin: 0 16px 16px 0; max-width: 50%;" }).run();
+              }}
+              title="Align Left"
+            >
+              ⬅️
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => {
+                const attrs = editor.getAttributes("image");
+                editor.chain().focus().setImage({ ...attrs, style: "display: block; margin: 0 auto; max-width: 100%;" }).run();
+              }}
+              title="Align Center"
+            >
+              ⬆️
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => {
+                const attrs = editor.getAttributes("image");
+                editor.chain().focus().setImage({ ...attrs, style: "float: right; margin: 0 0 16px 16px; max-width: 50%;" }).run();
+              }}
+              title="Align Right"
+            >
+              ➡️
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => {
+                editor.chain().focus().deleteSelection().run();
+              }}
+              title="Delete Image"
+            >
+              🗑️
+            </ToolbarButton>
+          </>
+        )}
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           title="Horizontal Rule"
@@ -538,6 +590,56 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
             display: block;
             margin: 1em 0;
             border-radius: 4px;
+            cursor: pointer;
+          }
+          .tiptap-editor img.tiptap-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+          }
+          .tiptap-editor img.tiptap-image[style*="float"] {
+            margin: 0 16px 16px 0;
+          }
+          .tiptap-editor img.tiptap-image[style*="float: right"] {
+            margin: 0 0 16px 16px;
+          }
+          .tiptap-editor img.tiptap-image[style*="margin: 0 auto"] {
+            margin: 16px auto;
+          }
+          /* Image Resize Handle Styles */
+          .tiptap-editor .resize-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: nwse-resize;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          }
+          .tiptap-editor .resize-handle:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+          }
+          .tiptap-editor .resize-handle.bottom-right {
+            bottom: -4px;
+            right: -4px;
+            cursor: nwse-resize;
+          }
+          .tiptap-editor .resize-handle.bottom-left {
+            bottom: -4px;
+            left: -4px;
+            cursor: nesw-resize;
+          }
+          .tiptap-editor .resize-handle.top-right {
+            top: -4px;
+            right: -4px;
+            cursor: nesw-resize;
+          }
+          .tiptap-editor .resize-handle.top-left {
+            top: -4px;
+            left: -4px;
+            cursor: nwse-resize;
           }
           .tiptap-editor hr {
             border: none;

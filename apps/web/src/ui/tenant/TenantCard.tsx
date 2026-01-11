@@ -6,6 +6,7 @@ import { buildPath } from "../../app/routing/buildPath";
 import { useTranslation } from "react-i18next";
 import { getSiteSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
+import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 
 interface TenantCardProps {
   tenant: Tenant;
@@ -42,7 +43,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
             position: "relative",
           }}
         >
-          <img
+          <ImageWithSkeleton
             src={imageUrl}
             alt={tenant.name}
             style={{
@@ -51,6 +52,9 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
               objectFit: "cover",
               display: "block",
               transition: "transform 0.4s ease",
+            }}
+            skeletonStyle={{
+              borderRadius: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.1)";
