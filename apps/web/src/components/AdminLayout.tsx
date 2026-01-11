@@ -144,22 +144,38 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {/* Left section - Logo and Nav Links (Desktop) */}
           <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1 }}>
-            <Link 
-              to={isMobile ? adminPath("") : publicPagePath}
-              style={{ 
-                textDecoration: "none", 
-                color: "#667eea",
-                fontSize: "clamp(20px, 4vw, 24px)",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }} 
-              title={isMobile ? t("admin.dashboard") : t("admin.backToPublicSite")}
-            >
-              <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
-              <span>Admin</span>
-            </Link>
+            {isMobile ? (
+              <Link 
+                to={adminPath("")}
+                style={{ 
+                  textDecoration: "none", 
+                  color: "#667eea",
+                  fontSize: "clamp(20px, 4vw, 24px)",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }} 
+                title={t("admin.dashboard")}
+              >
+                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
+                <span>Admin</span>
+              </Link>
+            ) : (
+              <div
+                style={{ 
+                  color: "#667eea",
+                  fontSize: "clamp(20px, 4vw, 24px)",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }} 
+              >
+                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
+                <span>Admin</span>
+              </div>
+            )}
             
             {/* Desktop Navigation */}
             {!isMobile && (
