@@ -17,11 +17,14 @@ export function AdminDashboard() {
   const { lang: langParam } = useParams<{ lang?: string }>();
   usePageTitle("admin.dashboard");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -66,8 +69,14 @@ export function AdminDashboard() {
 
       <div style={{ 
         display: "grid", 
-        gridTemplateColumns: isMobile ? "repeat(4, 1fr)" : "repeat(auto-fill, minmax(clamp(240px, 45vw, 280px), 1fr))", 
+        gridTemplateColumns: isMobile 
+          ? "repeat(auto-fill, minmax(90px, 1fr))" 
+          : isTablet
+          ? "repeat(auto-fill, minmax(180px, 1fr))"
+          : "repeat(auto-fill, minmax(clamp(240px, 45vw, 280px), 1fr))", 
         gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+        maxWidth: "100%",
+        overflow: "hidden",
       }}>
         <DashboardCard
           title={t("admin.dashboardCards.events")}
@@ -172,6 +181,7 @@ function DashboardCard({
           justifyContent: "center",
           gap: 6,
           aspectRatio: "1",
+          minWidth: 90,
           background: "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)",
           borderRadius: 16,
           textDecoration: "none",
@@ -192,13 +202,13 @@ function DashboardCard({
         }}
       >
         <div style={{ 
-          fontSize: 32,
+          fontSize: "clamp(32px, 9vw, 40px)",
           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
         }}>
           {icon}
         </div>
         <div style={{
-          fontSize: 11,
+          fontSize: "clamp(10px, 2.8vw, 12px)",
           fontWeight: 600,
           color: "#a8b3ff",
           textAlign: "center",
@@ -209,6 +219,8 @@ function DashboardCard({
           WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical",
           width: "100%",
+          wordBreak: "break-word",
+          hyphens: "auto",
         }}>
           {title}
         </div>
