@@ -25,7 +25,7 @@ interface MapComponentProps {
   }>;
   userLocation?: { lat: number; lng: number } | null; // User's current location
   showRoutes?: boolean; // Whether to show routes to markers
-  height?: number;
+                            height?: number | string;
   interactive?: boolean;
   defaultZoom?: number;
   mapStyle?: "default" | "hand-drawn" | "pastel";
@@ -733,8 +733,31 @@ export function MapComponent({
     }
   }, [mapStyle]);
 
+  // Convert height to CSS value
+  const heightStyle = typeof height === "number" ? `${height}px` : height;
+  
   return (
-    <div style={{ width: "100%", height, position: "relative", overflow: "hidden", margin: 0, padding: 0 }}>
+    <div style={{ width: "100%", height: heightStyle, position: "relative", overflow: "hidden", margin: 0, padding: 0 }}>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.3;
+            transform: translate(-50%, -50%) scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: translate(-50%, -50%) scale(1.4);
+          }
+        }
+        @keyframes personPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+      `}</style>
       <Map
         {...viewState}
         onMove={(evt) => {
@@ -787,8 +810,8 @@ export function MapComponent({
               {/* User location marker - person icon (emoji) */}
               <div
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 35,
+                  height: 35,
                   borderRadius: "50%",
                   background: "#fbbf24",
                   border: "4px solid white",
@@ -796,11 +819,12 @@ export function MapComponent({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 18,
+                  fontSize: 20,
                   color: "white",
                   fontWeight: "bold",
                   position: "relative",
                   zIndex: 1001,
+                  animation: "personPulse 2s ease-in-out infinite",
                 }}
               >
                 👤
@@ -955,13 +979,13 @@ export function MapComponent({
                     height: isSelected ? 28 : 24,
                     borderRadius: "50% 50% 50% 0",
                     background: isSelected
-                      ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                      ? "#fbbf24"
                       : isClickable 
                       ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                       : "linear-gradient(135deg, #999 0%, #777 100%)",
                     border: isSelected ? "4px solid white" : "3px solid white",
                     boxShadow: isSelected
-                      ? "0 6px 16px rgba(245, 158, 11, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
+                      ? "0 6px 16px rgba(251, 191, 36, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
                       : isClickable
                       ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
                       : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -1019,13 +1043,13 @@ export function MapComponent({
                       fontWeight: 500,
                       whiteSpace: "nowrap",
                       boxShadow: isSelected
-                        ? "0 4px 12px rgba(245, 158, 11, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                        ? "0 4px 12px rgba(251, 191, 36, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)"
                         : "0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)",
                       marginBottom: 8,
                       pointerEvents: "none",
                       color: "#1a1a1a",
                       border: isSelected 
-                        ? "2px solid rgba(245, 158, 11, 1)"
+                        ? "2px solid rgba(251, 191, 36, 1)"
                         : "1px solid rgba(0, 0, 0, 0.05)",
                       letterSpacing: "-0.01em",
                       display: "flex",
@@ -1094,31 +1118,31 @@ export function MapComponent({
           position: "absolute",
           bottom: locationControlPosition.bottom,
           left: locationControlPosition.left,
-          zIndex: 1000,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          zIndex: isDraggingLocationControl ? 10000 : 1000, // Dynamic z-index: higher when dragging
+          background: "rgba(255, 255, 255, 0.98)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          borderRadius: 16,
-          boxShadow: "0 8px 32px rgba(102, 126, 234, 0.3), 0 2px 8px rgba(0, 0, 0, 0.08)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          padding: "10px 14px",
+          borderRadius: isDesktop ? 16 : 12,
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.06)",
+          padding: 0,
           cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "default",
           userSelect: "none",
           display: "flex",
           alignItems: "center",
-          gap: 10,
           minWidth: "auto",
+          minHeight: 48,
           transition: isDraggingLocationControl ? "none" : "box-shadow 0.2s ease",
           touchAction: "none",
         }}
         onMouseEnter={(e) => {
           if (isDesktop && !isDraggingLocationControl) {
-            e.currentTarget.style.boxShadow = "0 12px 40px rgba(102, 126, 234, 0.4), 0 4px 12px rgba(0, 0, 0, 0.1)";
+            e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
           }
         }}
         onMouseLeave={(e) => {
           if (!isDraggingLocationControl) {
-            e.currentTarget.style.boxShadow = "0 8px 32px rgba(102, 126, 234, 0.3), 0 2px 8px rgba(0, 0, 0, 0.08)";
+            e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
           }
         }}
       >
@@ -1129,16 +1153,19 @@ export function MapComponent({
             gap: 8,
             cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "pointer",
             flex: 1,
-            fontSize: 13,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 700,
             color: "white",
             whiteSpace: "nowrap",
             userSelect: "none",
             WebkitUserSelect: "none",
             touchAction: "manipulation",
-            // Make entire label area clickable on mobile
-            padding: isDesktop ? 0 : "4px 0",
-            margin: isDesktop ? 0 : "-4px 0",
+            margin: 0,
+            padding: "10px 20px 10px 20px",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: isDesktop ? 16 : 12,
+            minHeight: 48,
+            boxSizing: "border-box",
           }}
           onMouseDown={isDesktop ? (e) => {
             // Allow drag on desktop when clicking on label (but not on checkbox)
@@ -1164,26 +1191,45 @@ export function MapComponent({
           }}
         >
           <div 
-            style={{ position: "relative", display: "inline-block" }}
+            style={{ position: "relative", display: "inline-block", width: 16, height: 16 }}
           >
+            {showUserLocation && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: 16,
+                  height: 16,
+                  borderRadius: 3,
+                  backgroundColor: "rgba(102, 126, 234, 0.3)",
+                  animation: "pulse 2s ease-in-out infinite",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+            )}
             <input
               type="checkbox"
               checked={showUserLocation}
               style={{
-                width: 18,
-                height: 18,
+                width: 16,
+                height: 16,
                 cursor: "pointer",
                 margin: 0,
+                padding: 0,
                 appearance: "none",
                 WebkitAppearance: "none",
                 MozAppearance: "none",
-                backgroundColor: "white",
-                border: "2px solid rgba(255, 255, 255, 0.5)",
+                backgroundColor: showUserLocation ? "#667eea" : "white",
+                border: "2px solid rgba(255, 255, 255, 0.8)",
                 borderRadius: 3,
                 position: "relative",
                 touchAction: "manipulation",
                 WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
                 pointerEvents: "auto",
+                zIndex: 1,
               }}
               onChange={(e) => {
                 // Handle checkbox change for both iOS and desktop
@@ -1268,31 +1314,31 @@ export function MapComponent({
               }}
             />
             {showUserLocation && (
-              <div
-                style={{
+              <svg 
+                viewBox="0 0 12 12" 
+                style={{ 
+                  width: 9, 
+                  height: 9,
                   position: "absolute",
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  width: 12,
-                  height: 12,
                   pointerEvents: "none",
+                  zIndex: 2,
                 }}
               >
-                <svg viewBox="0 0 12 12" style={{ width: "100%", height: "100%" }}>
-                  <path
-                    d="M2 6 L5 9 L10 2"
-                    stroke="#667eea"
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+                <path
+                  d="M2 6 L5 9 L10 2"
+                  stroke="white"
+                  strokeWidth="3.5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             )}
           </div>
-          <span>{t("public.yourLocation") || "Saját helyzet"}</span>
+          <span style={{ fontWeight: 700, lineHeight: 1 }}>{t("public.yourLocation") || "Saját helyzet"}</span>
         </label>
       </div>
       

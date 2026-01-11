@@ -322,11 +322,11 @@ export function AppSettingsPage() {
       setSiteSettingsState(newState);
       
       // Invalidate React Query cache to refresh site settings on public pages
-      // Invalidate all siteSettings queries regardless of language - this will automatically refetch active queries
+      // Invalidate all siteSettings queries regardless of language/tenant - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
       // Also explicitly refetch all active siteSettings queries to ensure immediate update
       await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
-      // Notify global cache manager that site settings have changed
+      // Notify global cache manager that site settings have changed (triggers event listeners in Footer, Header, etc.)
       notifyEntityChanged("siteSettings");
       
       // Note: Site settings don't affect places data, so we don't need to invalidate places cache

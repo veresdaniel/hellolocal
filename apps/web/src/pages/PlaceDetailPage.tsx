@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getPlace, getSiteSettings } from "../api/places.api";
@@ -36,12 +36,27 @@ export function PlaceDetailPage() {
     }
   }, [place, slug, lang, tenantSlug, navigate]);
 
+  const queryClient = useQueryClient();
+
   // Load site settings for SEO
   const { data: siteSettings } = useQuery({
     queryKey: ["siteSettings", lang, tenantSlug],
     queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug, queryClient]);
 
   const seo = useMemo(() => {
     if (!place) {

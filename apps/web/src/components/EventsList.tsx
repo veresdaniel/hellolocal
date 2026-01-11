@@ -136,12 +136,12 @@ export function EventsList({ lang }: EventsListProps) {
       const newLeft = e.clientX - dragOffset.x;
       const newTop = e.clientY - dragOffset.y;
       
-      // Constrain to viewport
-      const maxLeft = window.innerWidth - eventsListRef.current.offsetWidth - 24;
-      const maxTop = window.innerHeight - eventsListRef.current.offsetHeight - 24;
+      // Constrain to viewport - allow dragging all the way to edges
+      const maxLeft = window.innerWidth - eventsListRef.current.offsetWidth;
+      const maxTop = window.innerHeight - eventsListRef.current.offsetHeight;
       
-      const clampedLeft = Math.max(24, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(24, Math.min(newTop, maxTop));
+      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
       
       setPosition({
         top: clampedTop,
@@ -166,12 +166,12 @@ export function EventsList({ lang }: EventsListProps) {
       const newLeft = touch.clientX - dragOffset.x;
       const newTop = touch.clientY - dragOffset.y;
       
-      // Constrain to viewport
-      const maxLeft = window.innerWidth - eventsListRef.current.offsetWidth - 24;
-      const maxTop = window.innerHeight - eventsListRef.current.offsetHeight - 24;
+      // Constrain to viewport - allow dragging all the way to edges
+      const maxLeft = window.innerWidth - eventsListRef.current.offsetWidth;
+      const maxTop = window.innerHeight - eventsListRef.current.offsetHeight;
       
-      const clampedLeft = Math.max(24, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(24, Math.min(newTop, maxTop));
+      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
       
       setPosition({
         top: clampedTop,
@@ -231,11 +231,14 @@ export function EventsList({ lang }: EventsListProps) {
         position: "fixed",
         top: `${position.top}px`,
         right: `${position.right}px`,
-        width: 320, // Fixed width, doesn't change when opening/closing
+        minWidth: isMobile && !isOpen ? "auto" : 280, // Same width as filters
         maxHeight: "calc(100vh - 48px)",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        borderRadius: 16,
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+        background: "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderRadius: isMobile ? 12 : 16,
+        border: "1px solid rgba(0, 0, 0, 0.06)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
         zIndex: currentZIndex, // Dynamic z-index based on active state
         cursor: isDragging ? "grabbing" : isDesktop ? "grab" : "default",
         display: "flex",
@@ -246,13 +249,13 @@ export function EventsList({ lang }: EventsListProps) {
         touchAction: "none", // Prevent default touch behaviors
       }}
       onMouseEnter={(e) => {
-        if (!isDragging) {
-          e.currentTarget.style.boxShadow = "0 12px 48px rgba(0, 0, 0, 0.3)";
+        if (!isDragging && isDesktop) {
+          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.2)";
+          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
     >
@@ -266,29 +269,43 @@ export function EventsList({ lang }: EventsListProps) {
           setHasDragged(false);
         }}
         style={{
-          padding: 16,
+          padding: 10,
+          paddingLeft: 16,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "pointer",
           userSelect: "none",
+          minHeight: 48,
+          boxSizing: "border-box",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          borderRadius: isOpen ? 0 : `${isMobile ? 12 : 16}px`,
         }}
       >
-        <h3 style={{ margin: 0, color: "white", fontSize: 18, fontWeight: 700 }}>
-          📅 {t("public.events")}
+        <h3 style={{ 
+          margin: 0, 
+          color: "white", 
+          fontSize: 15, 
+          fontWeight: 700,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}>
+          <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>📅</span>
+          <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{t("public.events")}</span>
         </h3>
         <div
           style={{
             background: "rgba(255, 255, 255, 0.2)",
             border: "none",
             borderRadius: 8,
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "white",
-            fontSize: 18,
+            fontSize: 16,
             transition: "background 0.2s",
             pointerEvents: "none", // Let clicks pass through to parent
           }}
@@ -302,16 +319,17 @@ export function EventsList({ lang }: EventsListProps) {
         <div
           style={{
             overflowY: "auto",
-            padding: "0 16px 16px",
+            padding: "16px 20px 20px",
             maxHeight: "200px", // Height for ~1.5 events
+            background: "rgba(255, 255, 255, 0.98)",
           }}
         >
           {isLoading ? (
-            <div style={{ color: "white", padding: 16, textAlign: "center" }}>
+            <div style={{ color: "#5a3d7a", padding: 16, textAlign: "center" }}>
               {t("common.loading")}
             </div>
           ) : sortedEvents.length === 0 ? (
-            <div style={{ color: "rgba(255, 255, 255, 0.8)", padding: 16, textAlign: "center" }}>
+            <div style={{ color: "#8a7a9a", padding: 16, textAlign: "center" }}>
               {t("public.noEvents")}
             </div>
           ) : (
@@ -323,21 +341,23 @@ export function EventsList({ lang }: EventsListProps) {
                   style={{
                     display: "block",
                     padding: 14,
-                    background: "rgba(255, 255, 255, 0.15)",
+                    background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
                     borderRadius: 12,
                     textDecoration: "none",
-                    color: "white",
+                    color: "#3d2952",
                     transition: "all 0.2s",
                     backdropFilter: "blur(10px)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(102, 126, 234, 0.25)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+                    e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)";
                     e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                    e.currentTarget.style.background = "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)";
                     e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 >
                   {/* Title */}
@@ -347,6 +367,7 @@ export function EventsList({ lang }: EventsListProps) {
                     fontWeight: 700, 
                     lineHeight: 1.4,
                     letterSpacing: "-0.01em",
+                    color: "#2d1f3d",
                   }}>
                     {event.isPinned && <span style={{ marginRight: 6 }}>📌</span>}
                     {event.name}
@@ -355,7 +376,7 @@ export function EventsList({ lang }: EventsListProps) {
                   {/* Date */}
                   <div style={{ 
                     fontSize: 14, 
-                    opacity: 0.95, 
+                    color: "#4a3560",
                     marginBottom: 8,
                     fontWeight: 500,
                     lineHeight: 1.5,
@@ -376,7 +397,7 @@ export function EventsList({ lang }: EventsListProps) {
                   {event.placeName && (
                     <div style={{ 
                       fontSize: 14, 
-                      opacity: 0.9, 
+                      color: "#4a3560",
                       marginBottom: 8,
                       fontWeight: 500,
                       lineHeight: 1.5,
@@ -391,12 +412,13 @@ export function EventsList({ lang }: EventsListProps) {
                       <span style={{
                         display: "inline-block",
                         padding: "4px 10px",
-                        background: "rgba(255, 255, 255, 0.25)",
+                        background: "rgba(102, 126, 234, 0.2)",
                         borderRadius: 12,
                         fontSize: 12,
                         fontWeight: 600,
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
+                        color: "#2d1f3d",
                       }}>
                         {event.tags[0]}
                       </span>

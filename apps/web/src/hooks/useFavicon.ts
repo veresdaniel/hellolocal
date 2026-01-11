@@ -1,6 +1,6 @@
 // src/hooks/useFavicon.ts
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getSiteSettings } from "../api/places.api";
 
@@ -9,12 +9,27 @@ import { getSiteSettings } from "../api/places.api";
  */
 export function useFavicon() {
   const { lang, tenantSlug } = useTenantContext();
+  const queryClient = useQueryClient();
   
   const { data: siteSettings } = useQuery({
     queryKey: ["siteSettings", lang, tenantSlug],
     queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      // Invalidate and refetch site settings to update favicon
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug, queryClient]);
 
   useEffect(() => {
     if (!siteSettings?.faviconUrl) return;

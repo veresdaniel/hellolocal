@@ -116,7 +116,7 @@ export function Footer({
 
           {/* Links - Desktop only */}
           {!isMobile && (
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14, fontWeight: 500 }}>
               {hasStaticPages && (
                 <Link
                   to={`${base}/static-pages`}
@@ -191,7 +191,7 @@ export function Footer({
           )}
 
           {/* Copyright - Always on right */}
-          <div style={{ fontSize: isMobile ? 11 : 12, opacity: 0.8, textAlign: "right" }}>
+          <div style={{ fontSize: isMobile ? 14 : 14, opacity: 0.8, textAlign: "right", fontWeight: 500 }}>
             © {currentYear}
           </div>
         </div>
@@ -254,10 +254,11 @@ export function Footer({
               </h3>
               <p
                 style={{
-                  fontSize: 14,
+                  fontSize: 15,
                   opacity: 0.9,
                   lineHeight: 1.6,
                   margin: 0,
+                  fontWeight: 500,
                 }}
               >
                 {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
@@ -269,8 +270,8 @@ export function Footer({
           <div>
             <h4
               style={{
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 700,
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -285,7 +286,8 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
-                  fontSize: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -305,7 +307,8 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
-                  fontSize: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -325,7 +328,8 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
-                  fontSize: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -347,8 +351,8 @@ export function Footer({
           <div>
             <h4
               style={{
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 700,
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -363,7 +367,8 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
-                  fontSize: 14,
+                  fontSize: 15,
+                  fontWeight: 500,
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -384,7 +389,8 @@ export function Footer({
                   style={{
                     color: "white",
                     textDecoration: "none",
-                    fontSize: 14,
+                    fontSize: 15,
+                    fontWeight: 500,
                     opacity: 0.9,
                     transition: "opacity 0.2s",
                   }}
@@ -410,7 +416,8 @@ export function Footer({
             paddingTop: 24,
             borderTop: "1px solid rgba(255, 255, 255, 0.2)",
             textAlign: "center",
-            fontSize: 13,
+            fontSize: 15,
+            fontWeight: 500,
             opacity: 0.8,
           }}
         >

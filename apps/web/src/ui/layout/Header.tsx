@@ -10,6 +10,7 @@ export function Header() {
   const { lang, tenantSlug } = useTenantContext();
   const queryClient = useQueryClient();
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   
   // Default positions: bal fent (top left)
   const defaultPositionDesktop = { top: 16, left: 16 };
@@ -33,6 +34,11 @@ export function Header() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const headerRef = useRef<HTMLElement>(null);
+
+  // Calculate dynamic z-index: higher only when actively dragging
+  const baseZIndex = 1000;
+  const activeZIndex = 10000; // High z-index when actively being used (dragging)
+  const currentZIndex = isDragging ? activeZIndex : baseZIndex;
 
   // Load site name from settings
   const { data: siteSettings } = useQuery({
@@ -175,13 +181,14 @@ export function Header() {
         position: "fixed",
         top: position.top,
         left: position.left,
-        zIndex: 1000,
+        zIndex: currentZIndex, // Dynamic z-index based on active state
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        borderRadius: 16,
+        borderRadius: isMobile ? 12 : 16,
         padding: "12px 16px",
-        boxShadow: "0 8px 24px rgba(102, 126, 234, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1)",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        backdropFilter: "blur(10px)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+        border: "1px solid rgba(0, 0, 0, 0.06)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
         transition: isDragging ? "none" : "box-shadow 0.2s ease",
@@ -189,12 +196,12 @@ export function Header() {
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(102, 126, 234, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15)";
+          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(102, 126, 234, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1)";
+          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
     >
@@ -205,7 +212,7 @@ export function Header() {
             textDecoration: "none",
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: 12,
             color: "white",
             pointerEvents: isDragging ? "none" : "auto",
           }}
@@ -228,7 +235,7 @@ export function Header() {
             />
           )}
           {siteName && (
-            <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>
               {siteName}
             </span>
           )}

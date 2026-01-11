@@ -55,11 +55,6 @@ export function HomePage() {
   } = useViewStore();
   
   const [isMobile, setIsMobile] = useState(false);
-  
-  // Calculate actual footer height on mobile
-  // Mobile: padding 12px top + 12px bottom + content height (font 14px + line height) = ~48-52px
-  // Desktop: padding 16px top + 16px bottom + content = ~56px
-  const compactFooterHeight = isMobile ? 52 : 56;
 
   // Detect mobile viewport
   useEffect(() => {
@@ -606,6 +601,7 @@ export function HomePage() {
                   }
                 : {
                     flex: 1,
+                    minHeight: 0,
                     position: "relative",
                     overflow: "hidden"
                   }
@@ -619,50 +615,52 @@ export function HomePage() {
               markers={markers}
               userLocation={userLocation || useFiltersStore.getState().userLocation}
               showRoutes={false}
-              height={isMobile && typeof window !== "undefined" ? window.innerHeight : mapHeight}
+              height={isMobile && typeof window !== "undefined" ? window.innerHeight : "100%"}
               interactive={true}
               defaultZoom={defaultZoom}
               mapStyle="default"
             />
-            <EventsList lang={lang} />
+            {/* Lista nézet gomb - same position as map view button in FloatingHeader */}
             <div
               style={{
                 position: "absolute",
                 top: 16,
-                right: 16,
+                right: 48,
                 zIndex: 1000,
-                display: "flex",
-                gap: 8,
               }}
             >
               <button
                 onClick={() => setShowMap(false)}
                 style={{
-                  padding: "12px 20px",
+                  padding: "8px 16px",
                   background: "rgba(255, 255, 255, 0.98)",
                   backdropFilter: "blur(20px)",
                   WebkitBackdropFilter: "blur(20px)",
-                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                  borderRadius: 12,
+                  border: "1px solid #764ba2",
+                  borderRadius: 8,
                   cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                  boxShadow: "0 4px 12px rgba(118, 75, 162, 0.2)",
                   fontSize: 14,
                   fontWeight: 600,
                   color: "#333",
                   transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(118, 75, 162, 0.3)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(118, 75, 162, 0.2)";
                 }}
               >
                 📋 {t("public.listView")}
               </button>
             </div>
+            <EventsList lang={lang} />
           </div>
           {/* Compact footer - fixed positioned at bottom on mobile */}
           {isMobile ? (
@@ -681,7 +679,9 @@ export function HomePage() {
               <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
             </div>
           ) : (
-            <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+            <div style={{ flexShrink: 0 }}>
+              <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+            </div>
           )}
           {/* MapFilters at top level to be above footer */}
           <MapFilters

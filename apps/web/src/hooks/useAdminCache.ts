@@ -50,9 +50,10 @@ export function useAdminCache() {
     };
 
     const handleSiteSettingsChanged = async () => {
-      // Site settings affect public pages
+      // Site settings affect public pages (Footer, Header, etc.)
+      // Invalidate all siteSettings queries regardless of language/tenant
       await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
-      // Explicitly refetch to ensure immediate update on public pages
+      // Explicitly refetch all active siteSettings queries to ensure immediate update
       await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
     };
 

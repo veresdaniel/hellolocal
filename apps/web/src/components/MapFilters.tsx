@@ -321,7 +321,8 @@ export function MapFilters({
           setHasDragged(false);
         }}
         style={{
-          padding: isMobile && !isOpen ? 10 : 16,
+          padding: isMobile && !isOpen ? 10 : 10,
+          paddingLeft: isMobile && !isOpen ? 10 : 16,
           display: "flex",
           justifyContent: isMobile && !isOpen ? "center" : "space-between",
           alignItems: "center",
@@ -336,14 +337,16 @@ export function MapFilters({
         <h3 style={{ 
           margin: 0, 
           color: "white", 
-          fontSize: isMobile && !isOpen ? 20 : 18, 
+          fontSize: isMobile && !isOpen ? 20 : 15, 
           fontWeight: 700,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: isMobile && !isOpen ? 0 : 8,
+          paddingLeft: 0,
         }}>
-          🔍 {(!isMobile || isOpen) && (t("public.filtersTitle") || "Szűrők")}
+          <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>🔍</span>
+          {(!isMobile || isOpen) && <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{t("public.filtersTitle") || "Szűrők"}</span>}
         </h3>
         {(!isMobile || isOpen) && (
           <div
@@ -351,13 +354,13 @@ export function MapFilters({
               background: "rgba(255, 255, 255, 0.2)",
               border: "none",
               borderRadius: 8,
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontSize: 18,
+              fontSize: 16,
               transition: "background 0.2s",
               pointerEvents: "none", // Let clicks pass through to parent
             }}
@@ -379,6 +382,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
               }}
             >
               Kategóriák
@@ -435,6 +439,7 @@ export function MapFilters({
                         color: isSelected ? "#3d2952" : "#5a3d7a",
                         fontWeight: isSelected ? 600 : 500,
                         lineHeight: 1.5,
+                        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                       }}
                     >
                       {category.name}
@@ -455,6 +460,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
               }}
             >
               Ár sávok
@@ -512,6 +518,7 @@ export function MapFilters({
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 600 : 500,
                           lineHeight: 1.5,
+                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                         }}
                       >
                         {priceBand.name}
@@ -520,7 +527,7 @@ export function MapFilters({
                   );
                 })
               ) : (
-                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14 }}>
+                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14, fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
                   Nincs elérhető ár sáv
                 </div>
               )}
@@ -537,6 +544,7 @@ export function MapFilters({
                 marginBottom: 12,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
+                fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
               }}
             >
               Kontextus alapú szűrők
@@ -555,6 +563,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!isOpenNow) {
@@ -582,6 +591,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!hasEventToday) {
@@ -610,6 +620,7 @@ export function MapFilters({
                     transition: "all 0.2s",
                     textAlign: "left",
                     border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                   }}
                   onMouseEnter={(e) => {
                     if (!within30Minutes) {
@@ -638,6 +649,7 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
+                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!rainSafe) {

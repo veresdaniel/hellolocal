@@ -125,7 +125,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
         style={{
           maxWidth: 1200,
           margin: "0 auto",
-          padding: isMobile ? "12px 16px" : "16px 24px",
+          padding: isMobile ? "12px 16px" : "16px 48px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -165,35 +165,14 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
 
         {/* Desktop Navigation */}
         <nav style={{ display: isMobile ? "none" : "flex", gap: 24, alignItems: "center" }}>
-          <Link
-            to={buildPath({ tenantSlug, lang, path: "" })}
-            style={{
-              textDecoration: "none",
-              color: "#666",
-              fontSize: 14,
-              fontWeight: 500,
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#667eea";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#666";
-            }}
-          >
-            {t("public.home.title")}
-          </Link>
-          {onMapViewClick && (
-            <button
-              onClick={onMapViewClick}
+          {!onMapViewClick && (
+            <Link
+              to={buildPath({ tenantSlug, lang, path: "" })}
               style={{
-                background: "none",
-                border: "none",
+                textDecoration: "none",
                 color: "#666",
                 fontSize: 14,
                 fontWeight: 500,
-                cursor: "pointer",
-                padding: 0,
                 transition: "color 0.2s",
               }}
               onMouseEnter={(e) => {
@@ -203,7 +182,36 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                 e.currentTarget.style.color = "#666";
               }}
             >
-              {t("public.mapView")}
+              {t("public.home.title")}
+            </Link>
+          )}
+          {onMapViewClick && (
+            <button
+              onClick={onMapViewClick}
+              style={{
+                background: "rgba(102, 126, 234, 0.1)",
+                border: "1px solid rgba(102, 126, 234, 0.3)",
+                borderRadius: 8,
+                color: "#667eea",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "8px 16px",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+              }}
+            >
+              📍 {t("public.mapView")}
             </button>
           )}
         </nav>
@@ -341,49 +349,51 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               }}
             />
           </button>
-            <Link
-              to={buildPath({ tenantSlug, lang, path: "" })}
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                fontSize: 20,
-                fontWeight: 600,
-                padding: "20px 24px",
-                minHeight: "56px",
-                borderRadius: 12,
-                transition: "all 0.2s",
-                background: location.pathname === buildPath({ tenantSlug, lang, path: "" }) ? "rgba(102, 126, 234, 0.1)" : "transparent",
-                display: "flex",
-                alignItems: "center",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
-              }}
-              onTouchStart={(e) => {
-                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onTouchEnd={(e) => {
-                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                  setTimeout(() => {
+            {!onMapViewClick && (
+              <Link
+                to={buildPath({ tenantSlug, lang, path: "" })}
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  textDecoration: "none",
+                  color: "#1a1a1a",
+                  fontSize: 20,
+                  fontWeight: 600,
+                  padding: "20px 24px",
+                  minHeight: "56px",
+                  borderRadius: 12,
+                  transition: "all 0.2s",
+                  background: location.pathname === buildPath({ tenantSlug, lang, path: "" }) ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  touchAction: "manipulation",
+                  WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+                }}
+                onTouchStart={(e) => {
+                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
+                    e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
+                    setTimeout(() => {
+                      e.currentTarget.style.background = "transparent";
+                    }, 150);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
+                    e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
                     e.currentTarget.style.background = "transparent";
-                  }, 150);
-                }
-              }}
-              onMouseEnter={(e) => {
-                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (location.pathname !== buildPath({ tenantSlug, lang, path: "" })) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-            >
-              {t("public.home.title")}
-            </Link>
+                  }
+                }}
+              >
+                {t("public.home.title")}
+              </Link>
+            )}
             {onMapViewClick && (
               <button
                 onClick={() => {
@@ -391,39 +401,40 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   setIsMobileMenuOpen(false);
                 }}
                 style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#1a1a1a",
+                  background: "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 12,
+                  color: "#667eea",
                   fontSize: 20,
                   fontWeight: 600,
                   padding: "20px 24px",
                   minHeight: "56px",
-                  borderRadius: 12,
                   cursor: "pointer",
                   width: "100%",
                   textAlign: "left",
                   transition: "all 0.2s",
                   display: "flex",
                   alignItems: "center",
+                  gap: 8,
                   touchAction: "manipulation",
                   WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
                 }}
                 onTouchStart={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
                 }}
                 onTouchEnd={(e) => {
                   setTimeout(() => {
-                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
                   }, 150);
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
                 }}
               >
-                {t("public.mapView")}
+                📍 {t("public.mapView")}
               </button>
             )}
             <Link

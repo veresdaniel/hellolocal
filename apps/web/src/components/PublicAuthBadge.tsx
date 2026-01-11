@@ -10,22 +10,14 @@ function isLang(x: unknown): x is Lang {
 }
 
 export function PublicAuthBadge() {
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // Use useContext directly to avoid throwing error if AuthContext is not available
   const authContext = useContext(AuthContext);
-  
-  // Don't render if not logged in or AuthContext not available
-  if (!authContext || !authContext.user) {
-    return null;
-  }
-  
-  const { user, logout, isLoading } = authContext;
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const { lang: langParam } = useParams<{ lang?: string }>();
   
-  // Get language from URL or use current i18n language or default
-  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
   const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -34,7 +26,10 @@ export function PublicAuthBadge() {
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const badgeRef = useRef<HTMLDivElement>(null);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
-
+  
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+  
   // Default positions: jobb lent (bottom right)
   const defaultPositionDesktop = { bottom: 100, right: 16 };
   const defaultPositionMobile = { bottom: 80, right: 12 };
@@ -133,6 +128,14 @@ export function PublicAuthBadge() {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, dragOffset]);
+
+  // NOW we can do conditional returns after all hooks are called
+  // Don't render if not logged in or AuthContext not available
+  if (!authContext || !authContext.user) {
+    return null;
+  }
+  
+  const { user, logout, isLoading } = authContext;
 
   // Don't show on admin pages or auth pages (check for both /admin and /:lang/admin patterns)
   if (location.pathname.includes("/admin")) {
