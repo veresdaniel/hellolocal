@@ -16,7 +16,10 @@ Menj a **Backend API** service-hez (`hellolocal-api`) a Render.com Dashboard-on:
    ```
    CORS_ORIGIN=https://hellolocal-fe.onrender.com
    ```
-   **Fontos**: A frontend URL-nek **pontosan** egyeznie kell! (nincs trailing slash)
+   **Fontos**: 
+   - A frontend URL-nek **pontosan** egyeznie kell! (nincs trailing slash)
+   - Ha a backend URL `https://hellolocal.onrender.com`, de a frontend `https://hellolocal-fe.onrender.com`, akkor a `CORS_ORIGIN`-nek tartalmaznia kell a frontend URL-t!
+   - **Példa**: Backend: `hellolocal-api.onrender.com`, Frontend: `hellolocal-fe.onrender.com` → `CORS_ORIGIN=https://hellolocal-fe.onrender.com`
 
 4. Kattints **"Save Changes"** gombra
 5. A backend automatikusan újraindul
@@ -88,12 +91,15 @@ curl -X OPTIONS https://hellolocal-api.onrender.com/api/auth/login \
 < HTTP/1.1 204 No Content
 < Access-Control-Allow-Origin: https://hellolocal-fe.onrender.com
 < Access-Control-Allow-Methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
-< Access-Control-Allow-Headers: Content-Type,Authorization,X-Requested-With
+< Access-Control-Allow-Headers: Content-Type,Authorization,X-Requested-With,Cache-Control
 < Access-Control-Allow-Credentials: true
 ```
 
 **Ha nincs `Access-Control-Allow-Origin` header:**
 - A `CORS_ORIGIN` nincs beállítva vagy nem egyezik az `Origin` header-rel
+
+**Ha `cache-control` header hibát kapsz:**
+- ✅ **JAVÍTVA** - A `Cache-Control` header mostantól engedélyezve van az `allowedHeaders`-ben
 
 ## Gyakori Hibák
 

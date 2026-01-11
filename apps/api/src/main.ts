@@ -83,7 +83,12 @@ async function bootstrap() {
     origin: allowedOrigins.length > 0 ? originValidator : false,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Cache-Control", // Allow cache-control header for version.json requests
+    ],
     exposedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: false,
     optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
