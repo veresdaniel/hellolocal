@@ -541,211 +541,104 @@ export function AdminResponsiveTable<T>({
                 // Check if this card is transitioning in (was offset 1/-1, now offset 0)
                 const isTransitioningIn = offset === 0 && previousOffset !== 0 && swipeDirection !== null;
 
-                // Styling based on position
+                // Styling based on position - Carousel layout (cards side by side)
                 const getCardStyle = () => {
+                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
                   const baseStyle = {
                     position: "absolute" as const,
                     width: "100%",
-                    // Natural spring-like animation (like iOS/Android homescreen)
-                    transition: isDragging ? "none" : "all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)", // iOS-like ease-in-out
+                    // Smooth carousel transition
+                    transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
                     transformOrigin: "center center",
                   };
 
                   if (offset === 0) {
-                    // Current card - pixel-perfect following (exactly like phone homescreen)
+                    // Current card - center position
                     if (isDragging) {
-                      // No resistance, no opacity change - just pure pixel-perfect movement
+                      // During drag: follow finger exactly
                       return {
                         ...baseStyle,
                         zIndex: 30,
                         transform: `translateX(${dragOffsetX}px) translateY(0) scale(1)`,
-                        opacity: 1, // No opacity change during drag
-                      };
-                    }
-                    
-                    if (isTransitioningIn) {
-                      // Card is transitioning in: start from side, animate to center smoothly
-                      if (swipeDirection === "left" && previousOffset === 1) {
-                        // Swipe left = next card: was offset 1, sliding in from left to center
-                        // Start at left, CSS transition will animate to center when swipeDirection clears
-                        return {
-                          ...baseStyle,
-                          zIndex: 30,
-                          transform: "translateX(-100%) translateY(0) scale(1)",
-                          opacity: 1, // Fully visible during transition
-                        };
-                      } else if (swipeDirection === "right" && previousOffset === -1) {
-                        // Swipe right = previous card: was offset -1, sliding in from right to center
-                        // Start at right, CSS transition will animate to center when swipeDirection clears
-                        return {
-                          ...baseStyle,
-                          zIndex: 30,
-                          transform: "translateX(100%) translateY(0) scale(1)",
-                          opacity: 1, // Fully visible during transition
-                        };
-                      }
-                    }
-                    
-                    // Current card sliding out or final position
-                    if (swipeDirection === "left" && !isTransitioningIn) {
-                      // Swiping left = next card: current card slides out to the left
-                      return {
-                        ...baseStyle,
-                        zIndex: 30,
-                        transform: "translateX(-100%) translateY(0) scale(1)",
-                        opacity: 1, // Fully visible during slide out
-                      };
-                    } else if (swipeDirection === "right" && !isTransitioningIn) {
-                      // Swiping right = previous card: current card slides out to the right
-                      return {
-                        ...baseStyle,
-                        zIndex: 30,
-                        transform: "translateX(100%) translateY(0) scale(1)",
-                        opacity: 1, // Fully visible during slide out
-                      };
-                    } else {
-                      // No swipe direction or animation complete = normal position
-                      return {
-                        ...baseStyle,
-                        zIndex: 30,
-                        transform: "translateX(0) translateY(0) scale(1)",
                         opacity: 1,
                       };
                     }
-                  } else if (offset === 1 && swipeDirection === "left" && previousOffset === 0) {
-                    // Swipe left = next: previous current card sliding out to the left
-                    // Side-by-side: same Y level
+                    
+                    // Final position: center
                     return {
                       ...baseStyle,
-                      zIndex: 5,
-                      transform: "translateX(-100%) translateY(0) scale(0.9)",
-                      opacity: 0,
-                      pointerEvents: "none" as const,
-                    };
-                  } else if (offset === -1 && swipeDirection === "right" && previousOffset === 0) {
-                    // Swipe right = previous: previous current card sliding out to the right
-                    // Side-by-side: same Y level
-                    return {
-                      ...baseStyle,
-                      zIndex: 5,
-                      transform: "translateX(100%) translateY(0) scale(0.9)",
-                      opacity: 0,
-                      pointerEvents: "none" as const,
+                      zIndex: 30,
+                      transform: "translateX(0) translateY(0) scale(1)",
+                      opacity: 1,
                     };
                   } else if (offset === 1) {
-                    // Next card - perfect 1:1 movement (exactly like phone homescreen)
+                    // Next card - carousel layout (side by side)
                     if (isDragging && dragOffsetX < 0) {
-                      // Dragging left (swiping to next): next card comes in from left
-                      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                      // Dragging left: next card comes in from left
+                      // Perfect 1:1 movement - next card moves exactly opposite to current
                       const absDragX = Math.abs(dragOffsetX);
-                      
-                      // Perfect 1:1 pixel mapping - exactly like phone homescreen
-                      // Next card starts at -screenWidth (completely off-screen left)
-                      // As current card moves left by X pixels, next card moves right by X pixels
                       const translateX = -screenWidth + absDragX; // From -100% to 0px
                       
-                      // No opacity change - just pure movement (like phone)
-                      
-                      // During drag: same Y level (side-by-side), no vertical offset, no scale, no opacity change
                       return {
                         ...baseStyle,
                         zIndex: 20,
                         transform: `translateX(${translateX}px) translateY(0) scale(1)`,
-                        opacity: 1, // Fully visible, no opacity change
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
                     }
                     
-                    if (swipeDirection === "left" && previousOffset === 1) {
-                      // Swipe left = next: currently transitioning in from left to center
-                      // Side-by-side: same Y level, fully visible
-                      return {
-                        ...baseStyle,
-                        zIndex: 20,
-                        transform: "translateX(-100%) translateY(0) scale(1)",
-                        opacity: 1,
-                        pointerEvents: "none" as const,
-                      };
-                    } else if (swipeDirection === "left") {
-                      // Swipe left = next: waiting to slide in from left - side-by-side
-                      return {
-                        ...baseStyle,
-                        zIndex: 20,
-                        transform: "translateX(-100%) translateY(0) scale(1)",
-                        opacity: 1,
-                        pointerEvents: "none" as const,
-                      };
-                    } else {
-                      // No swipe: stacked layout (behind current card)
-                      return {
-                        ...baseStyle,
-                        zIndex: 20,
-                        transform: "translateX(100%) translateY(12px) scale(0.95)",
-                        opacity: 0.6,
-                        pointerEvents: "none" as const,
-                      };
-                    }
-                  } else if (offset === 2) {
+                    // Default position: off-screen left, ready to come in
                     return {
                       ...baseStyle,
-                      zIndex: 10,
-                      transform: "translateY(24px) scale(0.9)",
-                      opacity: 0.3,
+                      zIndex: 20,
+                      transform: "translateX(-100%) translateY(0) scale(1)",
+                      opacity: 1,
                       pointerEvents: "none" as const,
                     };
                   } else if (offset === -1) {
-                    // Previous card - perfect 1:1 movement (exactly like phone homescreen)
+                    // Previous card - carousel layout (side by side)
                     if (isDragging && dragOffsetX > 0) {
-                      // Dragging right (swiping to previous): previous card comes in from right
-                      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                      // Dragging right: previous card comes in from right
+                      // Perfect 1:1 movement - previous card moves exactly opposite to current
                       const absDragX = Math.abs(dragOffsetX);
-                      
-                      // Perfect 1:1 pixel mapping - exactly like phone homescreen
-                      // Previous card starts at +screenWidth (completely off-screen right)
-                      // As current card moves right by X pixels, previous card moves left by X pixels
                       const translateX = screenWidth - absDragX; // From +100% to 0px
                       
-                      // No opacity change - just pure movement (like phone)
-                      
-                      // During drag: same Y level (side-by-side), no vertical offset, no scale, no opacity change
                       return {
                         ...baseStyle,
                         zIndex: 20,
                         transform: `translateX(${translateX}px) translateY(0) scale(1)`,
-                        opacity: 1, // Fully visible, no opacity change
+                        opacity: 1,
                         pointerEvents: "none" as const,
                       };
                     }
                     
-                    if (swipeDirection === "right" && previousOffset === -1) {
-                      // Swipe right = previous: currently transitioning in from right to center
-                      // Side-by-side: same Y level, fully visible
-                      return {
-                        ...baseStyle,
-                        zIndex: 20,
-                        transform: "translateX(100%) translateY(0) scale(1)",
-                        opacity: 1,
-                        pointerEvents: "none" as const,
-                      };
-                    } else if (swipeDirection === "right") {
-                      // Swipe right = previous: waiting to slide in from right - side-by-side
-                      return {
-                        ...baseStyle,
-                        zIndex: 20,
-                        transform: "translateX(100%) translateY(0) scale(1)",
-                        opacity: 1,
-                        pointerEvents: "none" as const,
-                      };
-                    } else {
-                      // No swipe: stacked layout (behind current card)
-                      return {
-                        ...baseStyle,
-                        zIndex: 5,
-                        transform: "translateX(-100%) translateY(-12px) scale(0.9)",
-                        opacity: 0,
-                        pointerEvents: "none" as const,
-                      };
-                    }
+                    // Default position: off-screen right, ready to come in
+                    return {
+                      ...baseStyle,
+                      zIndex: 20,
+                      transform: "translateX(100%) translateY(0) scale(1)",
+                      opacity: 1,
+                      pointerEvents: "none" as const,
+                    };
+                  } else if (offset === 2) {
+                    // Card 2 positions ahead - off screen left
+                    return {
+                      ...baseStyle,
+                      zIndex: 10,
+                      transform: "translateX(-200%) translateY(0) scale(1)",
+                      opacity: 0,
+                      pointerEvents: "none" as const,
+                    };
+                  } else if (offset === -2) {
+                    // Card 2 positions behind - off screen right
+                    return {
+                      ...baseStyle,
+                      zIndex: 10,
+                      transform: "translateX(200%) translateY(0) scale(1)",
+                      opacity: 0,
+                      pointerEvents: "none" as const,
+                    };
                   } else {
                     return {
                       ...baseStyle,
