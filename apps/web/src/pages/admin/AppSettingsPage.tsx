@@ -1,9 +1,9 @@
 // src/pages/admin/AppSettingsPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -16,7 +16,8 @@ import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
   const { selectedTenantId } = useAdminTenant();
   const queryClient = useQueryClient();
   const { showToast } = useToast();

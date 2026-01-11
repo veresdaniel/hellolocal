@@ -1,7 +1,8 @@
 // src/components/AdminLayout.tsx
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../contexts/AuthContext";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
 import { useAdminCache } from "../hooks/useAdminCache";
 import { useVersionCheck } from "../hooks/useVersionCheck";
@@ -29,7 +30,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   useAdminCache();
   // Version check - will check for updates and show toast if new version available
   useVersionCheck();
-  const { user, logout } = useAuth();
+  // Use useContext directly to avoid throwing error if AuthContext is not available
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    // If AuthContext is not available, show error or redirect
+    return <div>Error: Authentication context not available</div>;
+  }
+  const { user, logout } = authContext;
   const location = useLocation();
   const { showWarning, secondsRemaining } = useSessionWarning();
   const { lang: langParam } = useParams<{ lang?: string }>();

@@ -12,6 +12,7 @@ import { AdminStaticPageService } from "./admin-static-page.service";
 import { AdminTenantService } from "./admin-tenant.service";
 import { AdminAppSettingsService } from "./admin-app-settings.service";
 import { AdminEventService } from "./admin-event.service";
+import { AdminEventLogService } from "./admin-eventlog.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 
@@ -30,6 +31,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,
+    AdminEventLogService,
   ],
   exports: [
     AdminCategoryService,
@@ -43,6 +45,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminTenantService,
     AdminAppSettingsService,
     AdminEventService,
+    AdminEventLogService,
   ],
 })
 export class AdminModule {}

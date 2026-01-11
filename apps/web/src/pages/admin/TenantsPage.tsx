@@ -1,8 +1,8 @@
 // src/pages/admin/TenantsPage.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { getTenants, createTenant, updateTenant, deleteTenant, type Tenant } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
@@ -11,7 +11,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 export function TenantsPage() {
   const { t, i18n } = useTranslation();
-  const { user: currentUser } = useAuth();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
   const { reloadTenants, setSelectedTenantId, selectedTenantId } = useAdminTenant();
   usePageTitle("admin.tenants");
   const [tenants, setTenants] = useState<Tenant[]>([]);

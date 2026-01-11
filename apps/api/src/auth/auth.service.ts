@@ -11,6 +11,7 @@ import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
+import { AdminEventLogService } from "../admin/admin-eventlog.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -18,6 +19,7 @@ import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { UserRole } from "@prisma/client";
 import { randomBytes } from "crypto";
+import { forwardRef, Inject } from "@nestjs/common";
 
 export interface JwtPayload {
   sub: string; // user id
@@ -48,7 +50,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
-    @Optional() private readonly twoFactorService?: TwoFactorService
+    @Optional() private readonly twoFactorService?: TwoFactorService,
+    @Inject(forwardRef(() => AdminEventLogService))
+    @Optional()
+    private readonly eventLogService?: AdminEventLogService
   ) {}
 
   private getDefaultTenantSlug(): string {
@@ -277,6 +282,25 @@ export class AuthService {
 
       const { accessToken, refreshToken } = await this.generateTokens(payload);
 
+      // Log login event (use first tenant if available)
+      if (this.eventLogService && tenantIds.length > 0) {
+        this.eventLogService
+          .create({
+            tenantId: tenantIds[0],
+            userId: user.id,
+            action: "login",
+            description: `User logged in`,
+            metadata: {
+              email: user.email,
+              username: user.username,
+            },
+          })
+          .catch((err) => {
+            console.error("Failed to log login event:", err);
+            // Don't fail login if logging fails
+          });
+      }
+
       return {
         accessToken,
         refreshToken,
@@ -424,7 +448,7 @@ export class AuthService {
   /**
    * Logs out user by invalidating refresh token.
    */
-  async logout(userId: string): Promise<{ message: string }> {
+  async logout(userId: string, tenantIds?: string[]): Promise<{ message: string }> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -432,6 +456,30 @@ export class AuthService {
         refreshTokenExpiresAt: null,
       },
     });
+
+    // Log logout event (use first tenant if available)
+    if (this.eventLogService && tenantIds && tenantIds.length > 0) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, username: true },
+      });
+
+      this.eventLogService
+        .create({
+          tenantId: tenantIds[0],
+          userId,
+          action: "logout",
+          description: `User logged out`,
+          metadata: {
+            email: user?.email,
+            username: user?.username,
+          },
+        })
+        .catch((err) => {
+          console.error("Failed to log logout event:", err);
+          // Don't fail logout if logging fails
+        });
+    }
 
     return { message: "Logged out successfully" };
   }

@@ -1,11 +1,12 @@
 // src/components/UserInfoDropdown.tsx
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../contexts/AuthContext";
+import { AuthContext } from "../contexts/AuthContext";
 
 export function UserInfoDropdown() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
   const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;

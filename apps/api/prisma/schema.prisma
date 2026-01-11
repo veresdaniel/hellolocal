@@ -58,6 +58,7 @@ model Tenant {
   priceBands       PriceBand[]
   users            UserTenant[]
   pushSubscriptions PushSubscription[]
+  eventLogs        EventLog[]
 }
 
 model TenantTranslation {
@@ -463,6 +464,9 @@ model User {
   // Place ownership (for future - when user has appropriate role)
   ownedPlaces   Place[]  @relation("PlaceOwner")
   
+  // Event logs for this user's activities
+  eventLogs     EventLog[]
+  
   @@index([email])
   @@index([username])
   @@index([isActive])
@@ -596,4 +600,29 @@ model PushSubscription {
   
   @@index([tenantId])
   @@index([isActive])
+}
+
+// Event log for tracking user activities (superadmin and admin only)
+model EventLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String   // User who performed the action
+  action      String   // e.g., "create", "update", "delete", "login", "logout"
+  entityType  String?  // e.g., "place", "event", "category", "tag", "user", etc.
+  entityId    String?  // ID of the affected entity (if applicable)
+  description String?  // Human-readable description of the action
+  metadata    Json?    // Additional context (e.g., changed fields, IP address, etc.)
+  
+  createdAt   DateTime @default(now())
+  
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([tenantId, userId])
+  @@index([tenantId, createdAt])
 }

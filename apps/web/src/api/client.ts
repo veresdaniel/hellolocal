@@ -77,8 +77,8 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    // If 401, try to refresh token once more
-    if (res.status === 401) {
+    // If 401 or 403, try to refresh token once more, then redirect to login if still fails
+    if (res.status === 401 || res.status === 403) {
       const refreshTokenValue = localStorage.getItem("refreshToken");
       if (refreshTokenValue) {
         try {
@@ -93,18 +93,36 @@ export async function apiGet<T>(path: string): Promise<T> {
             },
           });
           if (!retryRes.ok) {
+            // If still 401/403 after refresh, redirect to login
+            if (retryRes.status === 401 || retryRes.status === 403) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("user");
+              window.dispatchEvent(new CustomEvent("auth:logout"));
+              throw new Error("Session expired. Please log in again.");
+            }
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
           return (await retryRes.json()) as T;
-        } catch {
+        } catch (err) {
           // Refresh failed, clear tokens and redirect to login
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           localStorage.removeItem("user");
           window.dispatchEvent(new CustomEvent("auth:logout"));
+          if (err instanceof Error && err.message.includes("Session expired")) {
+            throw err;
+          }
           throw new Error("Session expired. Please log in again.");
         }
+      } else {
+        // No refresh token, redirect to login immediately
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+        throw new Error("Session expired. Please log in again.");
       }
     }
     let errorMessage = `Request failed: ${res.status}`;

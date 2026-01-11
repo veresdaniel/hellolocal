@@ -1,14 +1,31 @@
 // src/components/PublicAuthBadge.tsx
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+
+function isLang(x: unknown): x is Lang {
+  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
+}
 
 export function PublicAuthBadge() {
-  const { user, logout, isLoading } = useAuth();
+  // Use useContext directly to avoid throwing error if AuthContext is not available
+  const authContext = useContext(AuthContext);
+  
+  // Don't render if not logged in or AuthContext not available
+  if (!authContext || !authContext.user) {
+    return null;
+  }
+  
+  const { user, logout, isLoading } = authContext;
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  
+  // Get language from URL or use current i18n language or default
+  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
   const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -88,8 +105,8 @@ export function PublicAuthBadge() {
     };
   }, [isDragging, dragOffset]);
 
-  // Don't show on admin pages or auth pages
-  if (location.pathname.startsWith("/admin")) {
+  // Don't show on admin pages or auth pages (check for both /admin and /:lang/admin patterns)
+  if (location.pathname.includes("/admin")) {
     return null;
   }
 
@@ -105,7 +122,8 @@ export function PublicAuthBadge() {
 
   const handleDashboard = () => {
     if (!hasDragged) {
-      navigate("/admin");
+      // Navigate to admin dashboard with language prefix
+      navigate(`/${lang}/admin`);
     }
   };
 

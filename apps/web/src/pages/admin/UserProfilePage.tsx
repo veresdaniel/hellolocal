@@ -2,7 +2,6 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext";
 import {
   getCurrentUser,
   updateUser,

@@ -1,7 +1,7 @@
 // src/components/ProtectedRoute.tsx
 import { Navigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
@@ -16,12 +16,38 @@ function isLang(x: unknown): x is Lang {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  // Use useContext directly to avoid throwing error if AuthContext is not available
+  const authContext = useContext(AuthContext);
   const { lang: langParam } = useParams<{ lang?: string }>();
-  
-  // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  
+  // Check for tokens immediately (before waiting for AuthContext)
+  const [shouldRedirect, setShouldRedirect] = useState(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshTokenValue = localStorage.getItem("refreshToken");
+    
+    // If no tokens at all, redirect immediately
+    if (!accessToken && !refreshTokenValue) {
+      return true;
+    }
+    
+    // If access token is expired
+    if (accessToken && isTokenExpired(accessToken)) {
+      // If refresh token is also expired or missing, redirect immediately
+      if (!refreshTokenValue || isTokenExpired(refreshTokenValue)) {
+        return true;
+      }
+    }
+    
+    return false;
+  });
+  
+  if (!authContext) {
+    // If AuthContext is not available, redirect to login
+    return <Navigate to={`/${lang}/admin/login`} replace />;
+  }
+  
+  const { user, isLoading } = authContext;
 
   // Check token expiration on mount and periodically
   useEffect(() => {
@@ -61,12 +87,17 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return () => clearInterval(interval);
   }, []);
 
+  // Redirect immediately if no tokens (before loading check)
+  if (shouldRedirect) {
+    return <Navigate to={`/${lang}/admin/login`} replace />;
+  }
+
   if (isLoading) {
     return <LoadingSpinner isLoading={isLoading} delay={0} />;
   }
 
-  // Redirect to login if no user or session expired
-  if (!user || shouldRedirect) {
+  // Redirect to login if no user
+  if (!user) {
     return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 

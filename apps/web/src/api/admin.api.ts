@@ -629,3 +629,105 @@ export function deleteEvent(id: string, tenantId?: string) {
   return apiDelete<{ message: string }>(`/admin/events/${id}${params}`);
 }
 
+// Event Logs
+export interface EventLog {
+  id: string;
+  tenantId: string;
+  userId: string;
+  action: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  description?: string | null;
+  metadata?: any;
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  tenant: {
+    id: string;
+    slug: string;
+  };
+}
+
+export interface EventLogFilterDto {
+  tenantId?: string;
+  userId?: string;
+  action?: string;
+  entityType?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface EventLogResponse {
+  logs: EventLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface EventLogFilterOptions {
+  actions: string[];
+  entityTypes: string[];
+}
+
+export function getEventLogs(filters: EventLogFilterDto) {
+  const params = new URLSearchParams();
+  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.userId) params.append("userId", filters.userId);
+  if (filters.action) params.append("action", filters.action);
+  if (filters.entityType) params.append("entityType", filters.entityType);
+  if (filters.startDate) params.append("startDate", filters.startDate);
+  if (filters.endDate) params.append("endDate", filters.endDate);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.limit) params.append("limit", filters.limit.toString());
+  
+  const queryString = params.toString();
+  return apiGet<EventLogResponse>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getEventLogFilterOptions() {
+  return apiGet<EventLogFilterOptions>("/admin/event-logs/filter-options");
+}
+
+export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
+  const params = new URLSearchParams();
+  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.userId) params.append("userId", filters.userId);
+  if (filters.action) params.append("action", filters.action);
+  if (filters.entityType) params.append("entityType", filters.entityType);
+  if (filters.startDate) params.append("startDate", filters.startDate);
+  if (filters.endDate) params.append("endDate", filters.endDate);
+  
+  const queryString = params.toString();
+  return fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/event-logs/export${queryString ? `?${queryString}` : ""}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+  }).then((res) => {
+    if (!res.ok) throw new Error("Export failed");
+    return res.blob();
+  });
+}
+
+export function deleteEventLogs(filters: EventLogFilterDto) {
+  const params = new URLSearchParams();
+  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.userId) params.append("userId", filters.userId);
+  if (filters.action) params.append("action", filters.action);
+  if (filters.entityType) params.append("entityType", filters.entityType);
+  if (filters.startDate) params.append("startDate", filters.startDate);
+  if (filters.endDate) params.append("endDate", filters.endDate);
+  
+  const queryString = params.toString();
+  return apiDelete<{ message: string; count: number }>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
+}

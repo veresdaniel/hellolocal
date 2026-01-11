@@ -36,6 +36,7 @@ const TenantsPage = lazy(() => import("../pages/admin/TenantsPage").then(m => ({
 const PlacesPage = lazy(() => import("../pages/admin/PlacesPage").then(m => ({ default: m.PlacesPage })));
 const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
 const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
+const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
 const AdminLayout = lazy(() => import("../components/AdminLayout").then(m => ({ default: m.AdminLayout })));
 
 // If multi-tenant is enabled, we need two separate routes
@@ -272,6 +273,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
               <AdminLayout>
                 <EventsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "event-log",
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+              <AdminLayout>
+                <EventLogPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

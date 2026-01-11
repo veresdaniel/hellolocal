@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { PrismaModule } from "../prisma/prisma.module";
 import { EmailModule } from "../email/email.module";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
+import { AdminModule } from "../admin/admin.module";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -14,6 +15,7 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
     PrismaModule,
     EmailModule,
     TwoFactorModule,
+    AdminModule, // Import AdminModule to access AdminEventLogService
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

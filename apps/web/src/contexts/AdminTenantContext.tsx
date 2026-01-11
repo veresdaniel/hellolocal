@@ -1,7 +1,7 @@
 // src/contexts/AdminTenantContext.tsx
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { useAuth } from "./AuthContext";
+import { AuthContext } from "./AuthContext";
 import { getTenants, getTenant, type Tenant } from "../api/admin.api";
 
 interface AdminTenantContextType {
@@ -15,7 +15,9 @@ interface AdminTenantContextType {
 export const AdminTenantContext = createContext<AdminTenantContextType | undefined>(undefined);
 
 export function AdminTenantProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  // Use useContext directly to avoid throwing error if AuthContext is not available
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenantId, setSelectedTenantIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

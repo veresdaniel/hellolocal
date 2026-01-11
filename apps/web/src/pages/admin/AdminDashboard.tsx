@@ -2,6 +2,8 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { Link, useParams } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
 
 function isLang(x: unknown): x is Lang {
@@ -10,11 +12,16 @@ function isLang(x: unknown): x is Lang {
 
 export function AdminDashboard() {
   const { t } = useTranslation();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
   const { lang: langParam } = useParams<{ lang?: string }>();
   usePageTitle("admin.dashboard");
   
   // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  
+  // Force re-render when user changes (to show/hide EventLog card)
+  // The component will automatically re-render when currentUser changes due to the dependency
   
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
@@ -80,6 +87,14 @@ export function AdminDashboard() {
           link={adminPath("/profile")}
           icon="👤"
         />
+        {(currentUser?.role === "superadmin" || currentUser?.role === "admin") && (
+          <DashboardCard
+            title={t("admin.dashboardCards.eventLog")}
+            description={t("admin.dashboardCards.eventLogDesc")}
+            link={adminPath("/event-log")}
+            icon="📋"
+          />
+        )}
       </div>
 
     </div>

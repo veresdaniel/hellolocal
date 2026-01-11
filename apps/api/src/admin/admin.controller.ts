@@ -9,7 +9,9 @@ import {
   UseGuards,
   Query,
   ForbiddenException,
+  Res,
 } from "@nestjs/common";
+import type { Response } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -26,6 +28,7 @@ import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from
 import { AdminTenantService, CreateTenantDto, UpdateTenantDto } from "./admin-tenant.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
 import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
+import { AdminEventLogService, EventLogFilterDto } from "./admin-eventlog.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -53,6 +56,7 @@ export class AdminController {
     private readonly tenantService: AdminTenantService,
     private readonly appSettingsService: AdminAppSettingsService,
     private readonly eventService: AdminEventService,
+    private readonly eventLogService: AdminEventLogService,
     private readonly twoFactorService: TwoFactorService
   ) {}
 
@@ -946,6 +950,65 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async deleteAppSetting(@Param("key") key: string) {
     return this.appSettingsService.delete(key);
+  }
+
+  // ==================== Event Logs ====================
+
+  @Get("/event-logs")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getEventLogs(
+    @Query() filters: EventLogFilterDto,
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+  ) {
+    // Convert string query params to numbers
+    const normalizedFilters: EventLogFilterDto = {
+      ...filters,
+      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
+      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+    };
+    return this.eventLogService.findAll(user.role, user.tenantIds, normalizedFilters);
+  }
+
+  @Get("/event-logs/filter-options")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getEventLogFilterOptions(@CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }) {
+    return this.eventLogService.getFilterOptions(user.role, user.tenantIds);
+  }
+
+  @Get("/event-logs/export")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async exportEventLogs(
+    @Query() filters: EventLogFilterDto,
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] },
+    @Res() res: Response
+  ) {
+    // Convert string query params to numbers
+    const normalizedFilters: EventLogFilterDto = {
+      ...filters,
+      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
+      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+    };
+    const csv = await this.eventLogService.exportToCsv(user.role, user.tenantIds, normalizedFilters);
+    
+    const filename = `event-logs-${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  }
+
+  @Delete("/event-logs")
+  @Roles(UserRole.superadmin)
+  async deleteEventLogs(
+    @Query() filters: EventLogFilterDto,
+    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+  ) {
+    // Convert string query params to numbers
+    const normalizedFilters: EventLogFilterDto = {
+      ...filters,
+      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
+      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+    };
+    return this.eventLogService.delete(user.role, user.tenantIds, normalizedFilters);
   }
 
   @Post("/maintenance/generate-missing-slugs")

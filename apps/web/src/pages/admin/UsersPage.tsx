@@ -1,7 +1,7 @@
 // src/pages/admin/UsersPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminTenant } from "../../contexts/AdminTenantContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import {
@@ -23,7 +23,8 @@ import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 
 export function UsersPage() {
   const { t } = useTranslation();
-  const { user: currentUser } = useAuth();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
   const { selectedTenantId } = useAdminTenant();
   usePageTitle("admin.users");
   const [users, setUsers] = useState<User[]>([]);

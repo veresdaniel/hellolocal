@@ -30,9 +30,11 @@ export function ErrorPage() {
   let statusCode: number | undefined;
   let errorMessage: string;
   let errorDetails: any = null;
+  let isBackendError = false;
 
   if (isRouteErrorResponse(error)) {
     statusCode = error.status;
+    isBackendError = true; // RouteErrorResponse is from backend/API
     errorMessage = error.statusText || t("error.unknownError");
     if (error.data) {
       if (typeof error.data === "string") {
@@ -44,15 +46,34 @@ export function ErrorPage() {
       }
     }
   } else if (error instanceof Error) {
-    errorMessage = error.message || t("error.unknownError");
-    // Try to extract status code from error message if it contains one
+    // JavaScript/Client-side errors - only show for non-5xx errors
+    // For 5xx errors, we should only show backend errors
     const statusMatch = error.message.match(/\b(\d{3})\b/);
     if (statusMatch) {
-      statusCode = parseInt(statusMatch[1], 10);
+      const extractedStatus = parseInt(statusMatch[1], 10);
+      if (extractedStatus >= 500) {
+        // This is likely a client-side error trying to mimic a 5xx
+        // Don't show it for 5xx errors - only show backend errors
+        statusCode = 500;
+        errorMessage = t("error.internalServerError");
+        isBackendError = false;
+      } else {
+        statusCode = extractedStatus;
+        errorMessage = error.message || t("error.unknownError");
+        isBackendError = false;
+      }
+    } else {
+      // No status code in error - this is a client-side JS error
+      // For 5xx errors, don't show client-side errors
+      statusCode = 500;
+      errorMessage = t("error.internalServerError");
+      isBackendError = false;
     }
   } else if (typeof error === "object" && error !== null) {
     const err = error as any;
     statusCode = err.status || err.statusCode || err.status;
+    // Check if this looks like a backend error (has statusCode and message structure)
+    isBackendError = !!(statusCode && (err.message || err.error));
     errorMessage = err.message || err.error || t("error.unknownError");
     errorDetails = err;
   } else {
@@ -62,6 +83,12 @@ export function ErrorPage() {
   // Default status code if not found
   if (!statusCode) {
     statusCode = 500;
+  }
+
+  // For 5xx errors, only show backend errors, not client-side JS errors
+  if (statusCode >= 500 && !isBackendError) {
+    errorMessage = t("error.internalServerError");
+    errorDetails = null; // Don't show JS error details for 5xx
   }
 
   // Get error title based on status code
