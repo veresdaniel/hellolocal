@@ -52,6 +52,8 @@ export function useAdminCache() {
     const handleSiteSettingsChanged = async () => {
       // Site settings affect public pages
       await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+      // Explicitly refetch to ensure immediate update on public pages
+      await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
     };
 
     const handleMapSettingsChanged = async () => {

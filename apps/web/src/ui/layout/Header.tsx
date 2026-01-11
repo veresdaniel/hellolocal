@@ -1,13 +1,14 @@
 // src/ui/layout/Header.tsx
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTenantContext } from "../../app/tenant/useTenantContext";
 import { buildPath } from "../../app/routing/buildPath";
 import { getSiteSettings } from "../../api/places.api";
 
 export function Header() {
   const { lang, tenantSlug } = useTenantContext();
+  const queryClient = useQueryClient();
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   
   // Default positions: bal fent (top left)
@@ -39,6 +40,20 @@ export function Header() {
     queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      // Refetch site settings when changed in admin
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug]);
 
   const siteName = siteSettings?.siteName || "HelloLocal";
   const brandBadgeIcon = siteSettings?.brandBadgeIcon;
@@ -163,7 +178,7 @@ export function Header() {
         zIndex: 1000,
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         borderRadius: 16,
-        padding: "12px 24px",
+        padding: "12px 16px",
         boxShadow: "0 8px 24px rgba(102, 126, 234, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1)",
         border: "1px solid rgba(255, 255, 255, 0.2)",
         backdropFilter: "blur(10px)",
@@ -183,48 +198,42 @@ export function Header() {
         }
       }}
     >
-      <Link
-        to={buildPath({ tenantSlug, lang, path: "" })}
-        style={{
-          textDecoration: "none",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          color: "white",
-          pointerEvents: isDragging ? "none" : "auto",
-        }}
-        onClick={(e) => {
-          if (isDragging) {
-            e.preventDefault();
-          }
-        }}
-      >
-        {brandBadgeIcon ? (
-          <img 
-            src={brandBadgeIcon} 
-            alt={siteName}
-            style={{ 
-              width: 28, 
-              height: 28, 
-              objectFit: "contain",
-              borderRadius: 4,
-            }}
-            onError={(e) => {
-              // Fallback to emoji if image fails to load
-              e.currentTarget.style.display = "none";
-              const fallback = document.createElement("span");
-              fallback.style.fontSize = "28px";
-              fallback.textContent = "📍";
-              e.currentTarget.parentNode?.insertBefore(fallback, e.currentTarget);
-            }}
-          />
-        ) : (
-          <span style={{ fontSize: 28 }}>📍</span>
-        )}
-        <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>
-          {siteName}
-        </span>
-      </Link>
+      {(siteName || brandBadgeIcon) && (
+        <Link
+          to={buildPath({ tenantSlug, lang, path: "" })}
+          style={{
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            color: "white",
+            pointerEvents: isDragging ? "none" : "auto",
+          }}
+          onClick={(e) => {
+            if (isDragging) {
+              e.preventDefault();
+            }
+          }}
+        >
+          {brandBadgeIcon && (
+            <img 
+              src={brandBadgeIcon} 
+              alt={siteName || ""}
+              style={{ 
+                width: 28, 
+                height: 28, 
+                objectFit: "contain",
+                borderRadius: 4,
+              }}
+            />
+          )}
+          {siteName && (
+            <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>
+              {siteName}
+            </span>
+          )}
+        </Link>
+      )}
     </header>
   );
 }

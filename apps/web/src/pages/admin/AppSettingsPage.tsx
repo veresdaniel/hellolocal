@@ -324,6 +324,8 @@ export function AppSettingsPage() {
       // Invalidate React Query cache to refresh site settings on public pages
       // Invalidate all siteSettings queries regardless of language - this will automatically refetch active queries
       await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
+      // Also explicitly refetch all active siteSettings queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
       // Notify global cache manager that site settings have changed
       notifyEntityChanged("siteSettings");
       

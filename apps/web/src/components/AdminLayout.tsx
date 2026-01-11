@@ -15,6 +15,8 @@ import { VersionDisplay } from "./VersionDisplay";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { buildPath } from "../app/routing/buildPath";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, type Lang } from "../app/config";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSiteSettings } from "../api/places.api";
 import "../styles/sessionWarning.css";
 
 function isLang(x: unknown): x is Lang {
@@ -55,6 +57,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const currentTenant = tenants.find((t) => t.id === selectedTenantId);
   
   const { showWarning, secondsRemaining } = useSessionWarning();
+  const queryClient = useQueryClient();
+
+  // Load site name and brand badge icon from settings
+  const { data: siteSettings } = useQuery({
+    queryKey: ["siteSettings", lang, currentTenant?.slug],
+    queryFn: () => getSiteSettings(lang, currentTenant?.slug),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!currentTenant?.slug || !HAS_MULTIPLE_TENANTS, // Only fetch if tenant is available or single tenant mode
+  });
+
+  // Listen for site settings changes
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, currentTenant?.slug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, currentTenant?.slug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, currentTenant?.slug, queryClient]);
+
+  const siteName = siteSettings?.siteName;
+  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
 
   // If no user and not loading, redirect to login (should not happen if ProtectedRoute works correctly, but safety check)
   if (!isLoading && !user) {
@@ -177,23 +204,61 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {/* Left section - Logo and Nav Links (Desktop) */}
           <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1 }}>
-            <Link
-              to={adminPath("")}
-              style={{
-                textDecoration: "none",
-                color: "#667eea",
-                fontSize: "clamp(20px, 4vw, 24px)",
-                transition: "opacity 0.2s ease",
-                pointerEvents: "auto",
-                position: "relative",
-                zIndex: 1002,
-              }}
-              title={t("admin.dashboard")}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-            >
-              <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
-            </Link>
+            {(siteName || brandBadgeIcon) ? (
+              <Link
+                to={adminPath("")}
+                style={{
+                  textDecoration: "none",
+                  color: "#667eea",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  transition: "opacity 0.2s ease",
+                  pointerEvents: "auto",
+                  position: "relative",
+                  zIndex: 1002,
+                }}
+                title={t("admin.dashboard")}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              >
+                {brandBadgeIcon && (
+                  <img 
+                    src={brandBadgeIcon} 
+                    alt={siteName || ""}
+                    style={{ 
+                      width: 24, 
+                      height: 24, 
+                      objectFit: "contain",
+                      borderRadius: 4,
+                    }}
+                  />
+                )}
+                {siteName && (
+                  <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, letterSpacing: "-0.02em" }}>
+                    {siteName}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <Link
+                to={adminPath("")}
+                style={{
+                  textDecoration: "none",
+                  color: "#667eea",
+                  fontSize: "clamp(20px, 4vw, 24px)",
+                  transition: "opacity 0.2s ease",
+                  pointerEvents: "auto",
+                  position: "relative",
+                  zIndex: 1002,
+                }}
+                title={t("admin.dashboard")}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              >
+                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
+              </Link>
+            )}
             
             {/* Desktop Navigation */}
             {!isMobile && (

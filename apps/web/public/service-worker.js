@@ -12,10 +12,9 @@ fetch("/version.json?t=" + Date.now())
   })
   .then((data) => {
     CACHE_NAME = `hellolocal-${data.version}-${data.buildHash.substring(0, 7)}`;
-    console.log("[SW] Cache name set to:", CACHE_NAME);
   })
   .catch((e) => {
-    console.warn("[SW] Failed to fetch version, using default cache name:", e);
+    // Failed to fetch version, using default cache name
   });
 const urlsToCache = [
   "/",
@@ -85,7 +84,6 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone).catch((err) => {
               // Ignore cache errors (e.g., chrome-extension requests)
-              console.warn("[SW] Failed to cache request:", err);
             });
           });
         }

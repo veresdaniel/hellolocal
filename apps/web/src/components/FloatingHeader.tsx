@@ -1,6 +1,6 @@
 // src/components/FloatingHeader.tsx
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTenantContext } from "../app/tenant/useTenantContext";
 import { buildPath } from "../app/routing/buildPath";
@@ -21,13 +21,29 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   const [isMobile, setIsMobile] = useState(false);
 
   // Load site name from settings
+  const queryClient = useQueryClient();
   const { data: siteSettings } = useQuery({
     queryKey: ["siteSettings", lang, tenantSlug],
     queryFn: () => getSiteSettings(lang, tenantSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  // Listen for site settings changes from admin
+  useEffect(() => {
+    const handleSiteSettingsChanged = () => {
+      // Refetch site settings when changed in admin
+      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    };
+
+    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    return () => {
+      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    };
+  }, [lang, tenantSlug, queryClient]);
+
   const siteName = siteSettings?.siteName || "HelloLocal";
+  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
 
   // Detect mobile viewport
   useEffect(() => {
@@ -115,22 +131,37 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
           alignItems: "center",
         }}
       >
-        <Link
-          to={buildPath({ tenantSlug, lang, path: "" })}
-          style={{
-            textDecoration: "none",
-            color: "#1a1a1a",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontSize: 20,
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          <span style={{ fontSize: 24 }}>📍</span>
-          <span>{siteName}</span>
-        </Link>
+        {(siteName || brandBadgeIcon) && (
+          <Link
+            to={buildPath({ tenantSlug, lang, path: "" })}
+            style={{
+              textDecoration: "none",
+              color: "#1a1a1a",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {brandBadgeIcon && (
+              <img 
+                src={brandBadgeIcon} 
+                alt={siteName || ""}
+                style={{ 
+                  width: 24, 
+                  height: 24, 
+                  objectFit: "contain",
+                  borderRadius: 4,
+                }}
+              />
+            )}
+            {siteName && (
+              <span>{siteName}</span>
+            )}
+          </Link>
+        )}
 
         {/* Desktop Navigation */}
         <nav style={{ display: isMobile ? "none" : "flex", gap: 24, alignItems: "center" }}>
