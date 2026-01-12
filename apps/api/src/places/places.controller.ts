@@ -8,7 +8,7 @@ import { PlacesService } from "./places.service";
  * - GET /api/:lang/places - List places with optional filtering
  * - GET /api/:lang/places/:slug - Get a single place by slug
  * 
- * All endpoints support multi-tenant mode via the optional tenantKey query parameter.
+ * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/places")
 export class PlacesController {
@@ -27,7 +27,7 @@ export class PlacesController {
    * Lists places with optional filtering.
    * 
    * Query parameters:
-   * - tenantKey: Optional tenant key for multi-tenant support
+   * - siteKey: Optional site key for multi-site support
    * - category: Filter by place category (winery, accommodation, etc.)
    * - priceBand: Filter by price band name
    * - town: Filter by town using public town slug
@@ -38,7 +38,7 @@ export class PlacesController {
   @Get()
   list(
     @Param("lang") lang: string,
-    @Query("tenantKey") tenantKey?: string,
+    @Query("siteKey") siteKey?: string,
     @Query("category") category?: string | string[],
     @Query("priceBand") priceBand?: string | string[],
     @Query("town") town?: string,
@@ -52,7 +52,7 @@ export class PlacesController {
     const priceBands = Array.isArray(priceBand) ? priceBand : priceBand ? [priceBand] : undefined;
     return this.placesService.list({
       lang,
-      tenantKey,
+      siteKey,
       category: categories,
       priceBand: priceBands,
       town,
@@ -66,7 +66,7 @@ export class PlacesController {
    * Gets a single place by its public slug.
    * 
    * Query parameters:
-   * - tenantKey: Optional tenant key for multi-tenant support
+   * - siteKey: Optional site key for multi-site support
    * 
    * Path parameters:
    * - lang: Language code (hu, en, de)
@@ -76,9 +76,9 @@ export class PlacesController {
   detail(
     @Param("lang") lang: string,
     @Param("slug") slug: string,
-    @Query("tenantKey") tenantKey?: string
+    @Query("siteKey") siteKey?: string
   ) {
     this.validateLang(lang);
-    return this.placesService.detail({ lang, tenantKey, slug });
+    return this.placesService.detail({ lang, siteKey, slug });
   }
 }

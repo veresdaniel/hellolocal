@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
 
 export interface CreateCategoryDto {
-  tenantId: string;
+  siteId: string;
   parentId?: string | null;
   translations: Array<{
     lang: Lang;
@@ -31,12 +31,12 @@ export interface UpdateCategoryDto {
 export class AdminCategoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 50;
     
-    const where = { tenantId };
+    const where = { siteId };
     
     // Get total count
     const total = await this.prisma.category.count({ where });
@@ -73,9 +73,9 @@ export class AdminCategoryService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const category = await this.prisma.category.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         translations: true,
         parent: {
@@ -103,7 +103,7 @@ export class AdminCategoryService {
     // Validate parent if provided
     if (dto.parentId) {
       const parent = await this.prisma.category.findFirst({
-        where: { id: dto.parentId, tenantId: dto.tenantId },
+        where: { id: dto.parentId, siteId: dto.siteId },
       });
       if (!parent) {
         throw new BadRequestException("Parent category not found");
@@ -115,7 +115,7 @@ export class AdminCategoryService {
     // Get max order for the parent level (or root if no parent)
     const maxOrder = await this.prisma.category.findFirst({
       where: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         parentId: dto.parentId || null,
       },
       orderBy: { order: "desc" },
@@ -126,7 +126,7 @@ export class AdminCategoryService {
 
     return this.prisma.category.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         parentId: dto.parentId || null,
         isActive: dto.isActive ?? true,
         color: dto.color ?? null,
@@ -150,8 +150,8 @@ export class AdminCategoryService {
     });
   }
 
-  async update(id: string, tenantId: string, dto: UpdateCategoryDto) {
-    const category = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdateCategoryDto) {
+    const category = await this.findOne(id, siteId);
 
     // Prevent setting self as parent (circular reference)
     if (dto.parentId === id) {
@@ -162,7 +162,7 @@ export class AdminCategoryService {
     if (dto.parentId !== undefined) {
       if (dto.parentId) {
         const parent = await this.prisma.category.findFirst({
-          where: { id: dto.parentId, tenantId },
+          where: { id: dto.parentId, siteId },
         });
         if (!parent) {
           throw new BadRequestException("Parent category not found");
@@ -174,7 +174,7 @@ export class AdminCategoryService {
             throw new BadRequestException("Cannot set parent: would create circular reference");
           }
           const currentParent = await this.prisma.category.findFirst({
-            where: { id: currentParentId, tenantId },
+            where: { id: currentParentId, siteId },
             select: { parentId: true },
           });
           currentParentId = currentParent?.parentId || null;
@@ -224,11 +224,11 @@ export class AdminCategoryService {
       }
     }
 
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    const category = await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string) {
+    const category = await this.findOne(id, siteId);
 
     // Check if category is used by any places
     const placesCount = await this.prisma.place.count({
@@ -248,27 +248,27 @@ export class AdminCategoryService {
     return { message: "Category deleted successfully" };
   }
 
-  async reorder(tenantId: string, updates: Array<{ id: string; parentId: string | null; order: number }>) {
+  async reorder(siteId: string, updates: Array<{ id: string; parentId: string | null; order: number }>) {
     // Validate all categories belong to the tenant
     const categoryIds = updates.map((u) => u.id);
     const categories = await this.prisma.category.findMany({
-      where: { id: { in: categoryIds }, tenantId },
+      where: { id: { in: categoryIds }, siteId },
       select: { id: true },
     });
 
     if (categories.length !== categoryIds.length) {
-      throw new BadRequestException("Some categories not found or don't belong to tenant");
+      throw new BadRequestException("Some categories not found or don't belong to site");
     }
 
     // Validate parent categories
     const parentIds = updates.filter((u) => u.parentId).map((u) => u.parentId!);
     if (parentIds.length > 0) {
       const parents = await this.prisma.category.findMany({
-        where: { id: { in: parentIds }, tenantId },
+        where: { id: { in: parentIds }, siteId },
         select: { id: true },
       });
       if (parents.length !== parentIds.length) {
-        throw new BadRequestException("Some parent categories not found or don't belong to tenant");
+        throw new BadRequestException("Some parent categories not found or don't belong to site");
       }
     }
 

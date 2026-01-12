@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
 
 export interface CreateTagDto {
-  tenantId: string;
+  siteId: string;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -25,12 +25,12 @@ export interface UpdateTagDto {
 export class AdminTagService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 50;
     
-    const where = { tenantId };
+    const where = { siteId };
     
     // Get total count
     const total = await this.prisma.tag.count({ where });
@@ -58,9 +58,9 @@ export class AdminTagService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const tag = await this.prisma.tag.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         translations: true,
       },
@@ -76,7 +76,7 @@ export class AdminTagService {
   async create(dto: CreateTagDto) {
     return this.prisma.tag.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         isActive: dto.isActive ?? true,
         translations: {
           create: dto.translations.map((t) => ({
@@ -92,8 +92,8 @@ export class AdminTagService {
     });
   }
 
-  async update(id: string, tenantId: string, dto: UpdateTagDto) {
-    const tag = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdateTagDto) {
+    const tag = await this.findOne(id, siteId);
 
     const updateData: any = {};
     if (dto.isActive !== undefined) {
@@ -128,11 +128,11 @@ export class AdminTagService {
       }
     }
 
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    const tag = await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string) {
+    const tag = await this.findOne(id, siteId);
 
     // Check if tag is used by any places
     const placesCount = await this.prisma.placeTag.count({

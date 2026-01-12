@@ -1,14 +1,16 @@
 // src/pages/admin/EventsPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
-import { getEvents, createEvent, updateEvent, deleteEvent, getCategories, getTowns, getPlaces, getTags, type Event, type CreateEventDto } from "../../api/admin.api";
+import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { getEvents, createEvent, updateEvent, deleteEvent, getCategories, getTowns, getPlaces, getTags, getMyPlaces, getSiteMemberships, type Event, type CreateEventDto } from "../../api/admin.api";
+import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
@@ -17,13 +19,17 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 
 export function EventsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
   const queryClient = useQueryClient();
   usePageTitle("admin.events");
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [towns, setTowns] = useState<any[]>([]);
   const [places, setPlaces] = useState<any[]>([]);
+  const [myPlaces, setMyPlaces] = useState<any[]>([]);
+  const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,14 +84,14 @@ export function EventsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (selectedTenantId) {
-      // Reset to first page when tenant changes
+    if (selectedSiteId) {
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   // Handle window resize for responsive layout
   useEffect(() => {
@@ -97,21 +103,42 @@ export function EventsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTenantId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit]);
+
+  // Load my places and check site admin role for RBAC filtering
+  useEffect(() => {
+    if (selectedSiteId && currentUser) {
+      loadMyPlaces();
+      checkSiteAdminRole();
+    }
+  }, [selectedSiteId, currentUser?.id]);
+
+  const checkSiteAdminRole = async () => {
+    if (!selectedSiteId || !currentUser) return;
+    try {
+      const memberships = await getSiteMemberships(selectedSiteId, currentUser.id);
+      const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === currentUser.id);
+      setIsSiteAdmin(membership?.role === "siteadmin" || false);
+    } catch (err) {
+      console.error("Failed to check site admin role", err);
+      setIsSiteAdmin(false);
+    }
+  };
 
   // Reload places when they might have changed (e.g., after creating/updating a place)
   // Listen for global cache events
   useEffect(() => {
     const handlePlacesChanged = () => {
-      if (selectedTenantId) {
+      if (selectedSiteId) {
         // Reload only places, not all data
-        getPlaces(selectedTenantId).then((response) => {
-          setPlaces(Array.isArray(response) ? response : (response?.places || []));
-        }).catch(console.error);
+        loadPlacesForDropdown();
+        if (currentUser) {
+          loadMyPlaces();
+        }
       }
     };
 
@@ -119,19 +146,41 @@ export function EventsPage() {
     return () => {
       window.removeEventListener("admin:places:changed", handlePlacesChanged);
     };
-  }, [selectedTenantId]);
+  }, [selectedSiteId, currentUser?.id]);
+
+  const loadMyPlaces = async () => {
+    if (!selectedSiteId || !currentUser) return;
+    try {
+      const data = await getMyPlaces(selectedSiteId);
+      setMyPlaces(data);
+    } catch (err) {
+      console.error("Failed to load my places", err);
+      setMyPlaces([]);
+    }
+  };
+
+  const loadPlacesForDropdown = async () => {
+    if (!selectedSiteId) return;
+    try {
+      const response = await getPlaces(selectedSiteId);
+      const allPlaces = Array.isArray(response) ? response : (response?.places || []);
+      setPlaces(allPlaces);
+    } catch (err) {
+      console.error("Failed to load places", err);
+    }
+  };
 
   const loadData = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     setIsLoading(true);
     setError(null);
     try {
       const [eventsResponse, categoriesResponse, townsResponse, placesResponse, tagsResponse] = await Promise.all([
-        getEvents(selectedTenantId, pagination.page, pagination.limit),
-        getCategories(selectedTenantId),
-        getTowns(selectedTenantId),
-        getPlaces(selectedTenantId),
-        getTags(selectedTenantId),
+        getEvents(selectedSiteId, pagination.page, pagination.limit),
+        getCategories(selectedSiteId),
+        getTowns(selectedSiteId),
+        getPlaces(selectedSiteId),
+        getTags(selectedSiteId),
       ]);
       // Backend always returns paginated response now
       if (Array.isArray(eventsResponse)) {
@@ -145,7 +194,13 @@ export function EventsPage() {
       // Handle paginated responses for categories, towns, places, tags (used in dropdowns)
       setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
       setTowns(Array.isArray(townsResponse) ? townsResponse : (townsResponse?.towns || []));
-      setPlaces(Array.isArray(placesResponse) ? placesResponse : (placesResponse?.places || []));
+      const allPlaces = Array.isArray(placesResponse) ? placesResponse : (placesResponse?.places || []);
+      setPlaces(allPlaces);
+      
+      // Load my places for RBAC filtering
+      if (currentUser) {
+        loadMyPlaces();
+      }
       setTags(Array.isArray(tagsResponse) ? tagsResponse : (tagsResponse?.tags || []));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadEventsFailed"));
@@ -163,7 +218,7 @@ export function EventsPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     if (!validateForm()) return;
 
     try {
@@ -205,7 +260,7 @@ export function EventsPage() {
       }
 
       await createEvent({
-        tenantId: selectedTenantId,
+        siteId: selectedSiteId,
         placeId: formData.placeId || null,
         categoryIds: formData.categoryIds,
         tagIds: formData.tagIds,
@@ -288,7 +343,7 @@ export function EventsPage() {
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
         },
-        selectedTenantId || undefined
+        selectedSiteId || undefined
       );
       setEditingId(null);
       resetForm();
@@ -304,7 +359,7 @@ export function EventsPage() {
     if (!confirm(t("admin.confirmDeleteEvent"))) return;
 
     try {
-      await deleteEvent(id, selectedTenantId || undefined);
+      await deleteEvent(id, selectedSiteId || undefined);
       await loadData();
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
@@ -396,13 +451,13 @@ export function EventsPage() {
     setFormErrors({});
   };
 
-  // Wait for tenant context to initialize
-  if (isTenantLoading) {
+  // Wait for site context to initialize
+  if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+  if (!selectedSiteId) {
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   // Filter events based on search query
@@ -420,117 +475,27 @@ export function EventsPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
-        <h1 style={{ 
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
-          margin: 0,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
-          {t("admin.events")}
-        </h1>
-        
-        {/* Action buttons - Show New button OR Save/Cancel buttons */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {(isCreating || editingId) ? (
-            <>
-              <button
-                onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
-                style={{
-                  padding: "12px 24px",
-                  background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
-                }}
-              >
-                {editingId ? t("common.update") : t("common.create")}
-              </button>
-              <button
-                onClick={() => {
-                  setIsCreating(false);
-                  setEditingId(null);
-                  resetForm();
-                }}
-                style={{
-                  padding: "12px 24px",
-                  background: "white",
-                  color: "#6c757d",
-                  border: "2px solid #6c757d",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#f8f9fa";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "white";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
-                }}
-              >
-                {t("common.cancel")}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setIsCreating(true);
-                resetForm();
-              }}
-              style={{
-                padding: "12px 24px",
-                background: "white",
-                color: "#667eea",
-                border: "2px solid #667eea",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontSize: 15,
-                fontWeight: 700,
-                boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)";
-                e.currentTarget.style.background = "#f8f8ff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)";
-                e.currentTarget.style.background = "white";
-              }}
-            >
-              + {t("admin.forms.newEvent")}
-            </button>
-          )}
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t("admin.events")}
+        newButtonLabel={t("admin.forms.newEvent")}
+        onNewClick={() => {
+          setEditingId(null);
+          setIsCreating(true);
+          resetForm();
+        }}
+        showNewButton={!isCreating && !editingId}
+        isCreatingOrEditing={isCreating || !!editingId}
+        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onCancel={() => {
+          setIsCreating(false);
+          setEditingId(null);
+          resetForm();
+        }}
+        saveLabel={editingId ? t("common.update") : t("common.create")}
+      />
 
-      {/* Search/Filter Bar */}
-      {!isCreating && !editingId && (
+      {/* Search/Filter Bar - unified style with AdminResponsiveTable */}
+      {!isCreating && !editingId && events.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <input
             type="text"
@@ -560,11 +525,6 @@ export function EventsPage() {
               e.target.style.boxShadow = "none";
             }}
           />
-          {filteredEvents.length !== events.length && (
-            <div style={{ marginTop: 8, fontSize: 13, color: "#666" }}>
-              {t("admin.searchResults", { count: filteredEvents.length, total: events.length })}
-            </div>
-          )}
         </div>
       )}
 
@@ -641,14 +601,28 @@ export function EventsPage() {
                   }}
                 >
                   <option value="">{t("admin.selectPlace")}</option>
-                  {places.map((place) => {
-                    const name = place.translations.find((t: any) => t.lang === "hu")?.name || place.id;
-                    return (
-                      <option key={place.id} value={place.id}>
-                        {name}
-                      </option>
-                    );
-                  })}
+                  {(() => {
+                    // RBAC: Show only user's places if not superadmin or siteadmin
+                    const isSuperadmin = currentUser?.role === "superadmin";
+                    const placesToShow = (isSuperadmin || isSiteAdmin) ? places : myPlaces;
+                    
+                    if (placesToShow.length === 0 && !isSuperadmin && !isSiteAdmin) {
+                      return (
+                        <option value="" disabled>
+                          {t("admin.noPlacesAvailable")}
+                        </option>
+                      );
+                    }
+                    
+                    return placesToShow.map((place) => {
+                      const name = place.translations?.find((t: any) => t.lang === "hu")?.name || place.translations?.[0]?.name || place.id;
+                      return (
+                        <option key={place.id} value={place.id}>
+                          {name}
+                        </option>
+                      );
+                    });
+                  })()}
                 </select>
               </div>
               <div>
@@ -1196,8 +1170,7 @@ export function EventsPage() {
         </div>
       )}
 
-      <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId ? (
+      {!isCreating && !editingId ? (
         <>
           {/* Desktop táblázat nézet */}
           <div style={{ 

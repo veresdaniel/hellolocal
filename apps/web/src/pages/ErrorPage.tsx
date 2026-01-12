@@ -1,9 +1,11 @@
 // src/pages/ErrorPage.tsx
-import { useRouteError, isRouteErrorResponse, Link, useNavigate, useParams } from "react-router-dom";
+import { useRouteError, isRouteErrorResponse, Link, useNavigate, useParams, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
-import { HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG } from "../app/config";
-import { useActiveTenantsCount } from "../hooks/useActiveTenantsCount";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "../app/config";
+import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
+import { isTokenExpired } from "../utils/tokenUtils";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -14,17 +16,43 @@ export function ErrorPage() {
   const navigate = useNavigate();
   const error = useRouteError();
   const { lang: langParam } = useParams<{ lang?: string }>();
-  const { data: tenantsCountData } = useActiveTenantsCount();
+  const { data: sitesCountData } = useActiveSitesCount();
+  const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
 
   // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  
+  // Check if we're in admin area and if session might be expired
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+    
+    if (isInAdminArea) {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshTokenValue = localStorage.getItem("refreshToken");
+      
+      // If no tokens or both tokens expired, likely session issue
+      const hasNoTokens = !accessToken && !refreshTokenValue;
+      const bothTokensExpired = accessToken && isTokenExpired(accessToken) && 
+                                 (!refreshTokenValue || isTokenExpired(refreshTokenValue));
+      
+      if (hasNoTokens || bothTokensExpired) {
+        // Clear tokens and redirect to login
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        sessionStorage.setItem("sessionExpired", "true");
+        setShouldRedirectToLogin(true);
+      }
+    }
+  }, []);
 
-  // Determine if we should show tenant slug in URL
-  const shouldShowTenantSlug = HAS_MULTIPLE_TENANTS && (tenantsCountData?.count ?? 0) > 1;
-  const tenantSlug = shouldShowTenantSlug ? DEFAULT_TENANT_SLUG : undefined;
+  // Determine if we should show site slug in URL
+  const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
+  const siteSlug = shouldShowSiteSlug ? DEFAULT_SITE_SLUG : undefined;
 
   // Build home path
-  const homePath = tenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
+  const homePath = siteSlug ? `/${lang}/${siteSlug}` : `/${lang}`;
 
   // Extract error information
   let statusCode: number | undefined;
@@ -145,6 +173,11 @@ export function ErrorPage() {
   };
 
   const theme = getErrorTheme(statusCode);
+  
+  // Redirect to login if session expired in admin area
+  if (shouldRedirectToLogin) {
+    return <Navigate to={`/${lang}/admin/login`} replace />;
+  }
 
   return (
     <div
@@ -327,6 +360,7 @@ export function ErrorPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
               display: "inline-block",
@@ -353,6 +387,7 @@ export function ErrorPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               cursor: "pointer",
               transition: "all 0.3s ease",
               backdropFilter: "blur(10px)",
@@ -381,6 +416,7 @@ export function ErrorPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               cursor: "pointer",
               transition: "all 0.3s ease",
               backdropFilter: "blur(10px)",

@@ -26,9 +26,12 @@ export interface DefaultLanguageResponse {
   defaultLanguage: "hu" | "en" | "de";
 }
 
-export interface ActiveTenantsCountResponse {
+export interface ActiveSitesCountResponse {
   count: number;
 }
+
+// Backward compatibility
+export type ActiveTenantsCountResponse = ActiveSitesCountResponse;
 
 /**
  * Get default language from public endpoint (no authentication required)
@@ -49,22 +52,30 @@ export async function getPublicDefaultLanguage(): Promise<DefaultLanguageRespons
   return (await res.json()) as DefaultLanguageResponse;
 }
 
+export interface ActiveSitesCountResponse {
+  count: number;
+}
+
+// Backward compatibility
+export type ActiveTenantsCountResponse = ActiveSitesCountResponse;
+
 /**
- * Get active tenants count from public endpoint (no authentication required)
+ * Get active sites count from public endpoint (no authentication required)
  */
-export async function getActiveTenantsCount(): Promise<ActiveTenantsCountResponse> {
+export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {
   const apiBaseUrl = getApiBaseUrl();
-  const res = await fetch(`${apiBaseUrl}/api/app-settings/active-tenants-count`, {
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/active-sites-count`, {
     headers: {
       Accept: "application/json",
     },
   });
 
   if (!res.ok) {
-    // If API call fails, assume single tenant (fallback)
+    // If API call fails, assume single site (fallback)
     return { count: 1 };
   }
 
-  return (await res.json()) as ActiveTenantsCountResponse;
+  return (await res.json()) as ActiveSitesCountResponse;
 }
+
 

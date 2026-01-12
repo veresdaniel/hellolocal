@@ -1,14 +1,15 @@
 // src/pages/admin/PlacesPage.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags } from "../../api/admin.api";
+import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags, getPlaceMemberships, getSiteMemberships } from "../../api/admin.api";
+import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
@@ -16,6 +17,7 @@ import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHoursEditor";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import { AdminPageHeader } from "../../components/AdminPageHeader";
 
 interface Place {
   id: string;
@@ -55,8 +57,10 @@ interface Place {
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const { showToast } = useToast();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -74,6 +78,8 @@ export function PlacesPage() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [currentPlaceRole, setCurrentPlaceRole] = useState<"owner" | "manager" | "editor" | null>(null);
+  const [isTenantAdmin, setIsTenantAdmin] = useState(false);
   const [formData, setFormData] = useState({
     categoryId: "",
     townId: "",
@@ -127,32 +133,89 @@ export function PlacesPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       // Reset to first page when tenant changes
       setPagination(prev => ({ ...prev, page: 1 }));
       loadData();
+      checkTenantAdminRole();
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId, currentUser?.id]);
+
+  const checkTenantAdminRole = async () => {
+    if (!selectedSiteId || !currentUser) return;
+    try {
+      const memberships = await getSiteMemberships(selectedSiteId, currentUser.id);
+      const membership = memberships.find(m => m.tenantId === selectedSiteId && m.userId === currentUser.id);
+      setIsTenantAdmin(membership?.role === "tenantadmin" || currentUser.role === "superadmin" || currentUser.role === "admin" || false);
+    } catch (err) {
+      console.error("Failed to check tenant admin role", err);
+      setIsTenantAdmin(false);
+    }
+  };
+
+  const checkPlaceRole = async (placeId: string) => {
+    if (!currentUser?.id || !placeId) {
+      setCurrentPlaceRole(null);
+      return;
+    }
+    try {
+      const data = await getPlaceMemberships(placeId, currentUser.id);
+      const membership = data.find(m => m.placeId === placeId && m.userId === currentUser.id);
+      setCurrentPlaceRole(membership?.role as "owner" | "manager" | "editor" | null || null);
+    } catch (err) {
+      console.error("Failed to check place role", err);
+      setCurrentPlaceRole(null);
+    }
+  };
+
+  // Check place role when editing
+  useEffect(() => {
+    if (editingId) {
+      checkPlaceRole(editingId);
+    } else {
+      setCurrentPlaceRole(null);
+    }
+  }, [editingId, currentUser?.id]);
+
+  // Helper functions for permission checks
+  const canModifyPublish = (): boolean => {
+    if (!currentUser) return false;
+    if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
+    if (isTenantAdmin) return true;
+    return currentPlaceRole === "owner" || currentPlaceRole === "manager";
+  };
+
+  const canModifySeo = (): boolean => {
+    // Same as canModifyPublish (owner/manager can modify SEO)
+    return canModifyPublish();
+  };
+
+  const canDeletePlace = (): boolean => {
+    if (!currentUser) return false;
+    if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
+    if (isTenantAdmin) return true;
+    return currentPlaceRole === "owner";
+  };
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       loadPlaces();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTenantId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit]);
 
 
   const loadData = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     try {
       const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse] = await Promise.all([
-        getCategories(selectedTenantId),
-        getTowns(selectedTenantId),
-        getPriceBands(selectedTenantId),
-        getTags(selectedTenantId),
+        getCategories(selectedSiteId),
+        getTowns(selectedSiteId),
+        getPriceBands(selectedSiteId),
+        getTags(selectedSiteId),
       ]);
       // Handle paginated responses (used in dropdowns, so we extract the array)
       setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
@@ -165,10 +228,10 @@ export function PlacesPage() {
   };
 
   const loadPlaces = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     setIsLoading(true);
     try {
-      const response = await getPlaces(selectedTenantId, pagination.page, pagination.limit);
+      const response = await getPlaces(selectedSiteId, pagination.page, pagination.limit);
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -195,7 +258,7 @@ export function PlacesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     if (!validateForm()) return;
 
     try {
@@ -273,7 +336,7 @@ export function PlacesPage() {
       }
 
       await createPlace({
-        tenantId: selectedTenantId,
+        tenantId: selectedSiteId,
         categoryId: formData.categoryId,
         townId: formData.townId || null,
         priceBandId: formData.priceBandId || null,
@@ -388,7 +451,7 @@ export function PlacesPage() {
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
         },
-        selectedTenantId || undefined
+        selectedSiteId || undefined
       );
       setEditingId(null);
       resetForm();
@@ -405,7 +468,7 @@ export function PlacesPage() {
     if (!confirm(t("admin.confirmations.deletePlace"))) return;
 
     try {
-      await deletePlace(id, selectedTenantId || undefined);
+      await deletePlace(id, selectedSiteId || undefined);
       await loadPlaces();
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
@@ -417,6 +480,7 @@ export function PlacesPage() {
 
   const startEdit = (place: Place) => {
     setEditingId(place.id);
+    checkPlaceRole(place.id);
     const hu = place.translations.find((t) => t.lang === "hu");
     const en = place.translations.find((t) => t.lang === "en");
     const de = place.translations.find((t) => t.lang === "de");
@@ -575,7 +639,7 @@ export function PlacesPage() {
     return <LoadingSpinner isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
+  if (!selectedSiteId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
@@ -591,114 +655,24 @@ export function PlacesPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
-        <h1 style={{
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
-          margin: 0,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
-          {t("admin.places")}
-        </h1>
-        
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {(isCreating || editingId) ? (
-            <>
-              <button
-                onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
-                style={{
-                  padding: "12px 24px",
-                  background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
-                }}
-              >
-                {editingId ? t("common.update") : t("common.create")}
-              </button>
-              <button
-                onClick={() => {
-                  setIsCreating(false);
-                  setEditingId(null);
-                  resetForm();
-                }}
-                style={{
-                  padding: "12px 24px",
-                  background: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#5a6268";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#6c757d";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)";
-                }}
-              >
-                {t("common.cancel")}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setIsCreating(true);
-                resetForm();
-              }}
-              style={{
-                padding: "12px 24px",
-                background: "white",
-                color: "#667eea",
-                border: "2px solid #667eea",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontSize: 15,
-                fontWeight: 700,
-                boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)";
-                e.currentTarget.style.background = "#f8f8ff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)";
-                e.currentTarget.style.background = "white";
-              }}
-            >
-              + {t("admin.forms.newPlace")}
-            </button>
-          )}
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t("admin.places")}
+        newButtonLabel={t("admin.forms.newPlace")}
+        onNewClick={() => {
+          setEditingId(null);
+          setIsCreating(true);
+          resetForm();
+        }}
+        showNewButton={!isCreating && !editingId}
+        isCreatingOrEditing={isCreating || !!editingId}
+        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onCancel={() => {
+          setIsCreating(false);
+          setEditingId(null);
+          resetForm();
+        }}
+        saveLabel={editingId ? t("common.update") : t("common.create")}
+      />
 
 
       {(isCreating || editingId) && (
@@ -834,33 +808,34 @@ export function PlacesPage() {
           <LanguageAwareForm>
             {(selectedLang) => (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Name */}
-                <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8,
-                    color: ((selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#333",
-                    fontWeight: 600,
-                    fontSize: "clamp(13px, 3vw, 14px)",
-                  }}>
-                    {t("common.name")} ({selectedLang.toUpperCase()}) *
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                        ? formData.nameEn
-                        : formData.nameDe
-                    }
-                    onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
-                      else setFormData({ ...formData, nameDe: e.target.value });
-                    }}
+                {/* Name - only editable by owner/manager (affects slugs) */}
+                {canModifySeo() ? (
+                  <div>
+                    <label style={{ 
+                      display: "block", 
+                      marginBottom: 8,
+                      color: ((selectedLang === "hu" && formErrors.nameHu) ||
+                              (selectedLang === "en" && formErrors.nameEn) ||
+                              (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#333",
+                      fontWeight: 600,
+                      fontSize: "clamp(13px, 3vw, 14px)",
+                    }}>
+                      {t("common.name")} ({selectedLang.toUpperCase()}) *
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        selectedLang === "hu"
+                          ? formData.nameHu
+                          : selectedLang === "en"
+                          ? formData.nameEn
+                          : formData.nameDe
+                      }
+                      onChange={(e) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
+                        else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                        else setFormData({ ...formData, nameDe: e.target.value });
+                      }}
                     style={{
                       width: "100%",
                       padding: "12px 16px",
@@ -908,7 +883,15 @@ export function PlacesPage() {
                         : formErrors.nameDe}
                     </div>
                   )}
-                </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: 12, background: "#f3f4f6", borderRadius: 8, color: "#6b7280", fontSize: 14 }}>
+                    {t("common.name")}: {selectedLang === "hu" ? formData.nameHu : selectedLang === "en" ? formData.nameEn : formData.nameDe}
+                    <div style={{ marginTop: 4, fontSize: 12, fontStyle: "italic" }}>
+                      {t("admin.readOnlyEditor") || "Editor cannot modify name (affects SEO slugs)"}
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={labelStyle}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
@@ -984,17 +967,18 @@ export function PlacesPage() {
                   />
                 </div>
 
-                {/* SEO Fields Section */}
-                <div style={{ 
-                  marginTop: 24, 
-                  padding: 16, 
-                  background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
-                  borderRadius: 8,
-                  border: "1px solid #667eea30"
-                }}>
-                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                    🔍 SEO {t("admin.settings")}
-                  </h3>
+                {/* SEO Fields Section - only visible to owner/manager */}
+                {canModifySeo() && (
+                  <div style={{ 
+                    marginTop: 24, 
+                    padding: 16, 
+                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    borderRadius: 8,
+                    border: "1px solid #667eea30"
+                  }}>
+                    <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      🔍 SEO {t("admin.settings")}
+                    </h3>
                   
                   <div style={{ marginBottom: 16 }}>
                     <label style={labelStyle}>SEO {t("common.title")}</label>
@@ -1092,7 +1076,8 @@ export function PlacesPage() {
                       {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
                     </small>
                   </div>
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </LanguageAwareForm>
@@ -1204,22 +1189,24 @@ export function PlacesPage() {
             />
           </div>
 
-          <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
-            </label>
-          </div>
+          {/* isActive checkbox - only visible to owner/manager */}
+          {canModifyPublish() && (
+            <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                />
+                <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+              </label>
+            </div>
+          )}
         </div>
         </div>
       )}
 
-      <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId && (
+      {!isCreating && !editingId && (
         <AdminResponsiveTable<Place>
           data={places}
           getItemId={(place) => place.id}
@@ -1344,7 +1331,34 @@ export function PlacesPage() {
             },
           ]}
           onEdit={startEdit}
-          onDelete={(place) => handleDelete(place.id)}
+          onDelete={(place) => {
+            // Check if user can delete this place (owner or tenantadmin)
+            // We need to check the role for this specific place
+            const checkAndDelete = async () => {
+              if (!currentUser?.id) {
+                showToast(t("admin.errors.unauthorized"), "error");
+                return;
+              }
+              // Superadmin and tenantadmin can always delete
+              if (currentUser.role === "superadmin" || currentUser.role === "admin" || isTenantAdmin) {
+                handleDelete(place.id);
+                return;
+              }
+              // Check place role
+              try {
+                const data = await getPlaceMemberships(place.id, currentUser.id);
+                const membership = data.find(m => m.placeId === place.id && m.userId === currentUser.id);
+                if (membership?.role === "owner") {
+                  handleDelete(place.id);
+                } else {
+                  showToast(t("admin.errors.cannotDeletePlace"), "error");
+                }
+              } catch (err) {
+                showToast(t("admin.errors.cannotDeletePlace"), "error");
+              }
+            };
+            checkAndDelete();
+          }}
           isLoading={isLoading}
           error={null}
         />

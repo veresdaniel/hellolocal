@@ -2,6 +2,8 @@
 import { Navigate, useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import { useAdminSite } from "../contexts/AdminSiteContext";
+import { getSiteMemberships } from "../api/admin.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
@@ -9,17 +11,22 @@ import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: "superadmin" | "admin" | "editor" | "viewer";
+  considerSiteRole?: boolean; // If true, also check site-level role (siteadmin)
 }
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, considerSiteRole = false }: ProtectedRouteProps) {
+  // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY EARLY RETURNS
   // Use useContext directly to avoid throwing error if AuthContext is not available
   const authContext = useContext(AuthContext);
+  const { selectedSiteId } = useAdminSite();
   const { lang: langParam } = useParams<{ lang?: string }>();
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  const [isSiteAdmin, setIsSiteAdmin] = useState(false);
+  const [isCheckingSiteRole, setIsCheckingSiteRole] = useState(false);
   
   // Check for tokens immediately (before waiting for AuthContext)
   const [shouldRedirect, setShouldRedirect] = useState(() => {
@@ -41,32 +48,35 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     
     return false;
   });
-  
-  // If we should redirect (no tokens or expired tokens), redirect immediately
-  // Don't wait for AuthContext to load
-  if (shouldRedirect) {
-    return <Navigate to={`/${lang}/admin/login`} replace />;
-  }
 
-  if (!authContext) {
-    // If AuthContext is not available, check tokens again
-    // If no tokens, redirect immediately
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshTokenValue = localStorage.getItem("refreshToken");
-    if (!accessToken && !refreshTokenValue) {
-      return <Navigate to={`/${lang}/admin/login`} replace />;
-    }
-    // If tokens exist but expired, check if refresh token is also expired
-    if (accessToken && isTokenExpired(accessToken)) {
-      if (!refreshTokenValue || isTokenExpired(refreshTokenValue)) {
-        return <Navigate to={`/${lang}/admin/login`} replace />;
+  // Get user and isLoading from authContext (may be undefined)
+  const user = authContext?.user ?? null;
+  const isLoading = authContext?.isLoading ?? false;
+
+  // Check site-level role if considerSiteRole is enabled
+  useEffect(() => {
+    const checkSiteAdminRole = async () => {
+      if (!considerSiteRole || !selectedSiteId || !user) {
+        setIsSiteAdmin(false);
+        setIsCheckingSiteRole(false);
+        return;
       }
-    }
-    // Wait a bit for AuthContext to load if tokens might be valid
-    return <LoadingSpinner isLoading={true} delay={0} />;
-  }
-  
-  const { user, isLoading } = authContext;
+      
+      setIsCheckingSiteRole(true);
+      try {
+        const memberships = await getSiteMemberships(selectedSiteId, user.id);
+        const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === user.id);
+        setIsSiteAdmin(membership?.role === "siteadmin" || false);
+      } catch (err) {
+        console.error("Failed to check site admin role", err);
+        setIsSiteAdmin(false);
+      } finally {
+        setIsCheckingSiteRole(false);
+      }
+    };
+    
+    checkSiteAdminRole();
+  }, [considerSiteRole, selectedSiteId, user?.id]);
 
   // Check token expiration on mount and periodically
   useEffect(() => {
@@ -106,14 +116,35 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return () => clearInterval(interval);
   }, []);
 
-  // If shouldRedirect is true, redirect immediately (don't wait for loading)
+  // NOW WE CAN DO EARLY RETURNS AFTER ALL HOOKS HAVE BEEN CALLED
+  
+  // If we should redirect (no tokens or expired tokens), redirect immediately
+  // Don't wait for AuthContext to load
   if (shouldRedirect) {
     return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 
+  if (!authContext) {
+    // If AuthContext is not available, check tokens again
+    // If no tokens, redirect immediately
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshTokenValue = localStorage.getItem("refreshToken");
+    if (!accessToken && !refreshTokenValue) {
+      return <Navigate to={`/${lang}/admin/login`} replace />;
+    }
+    // If tokens exist but expired, check if refresh token is also expired
+    if (accessToken && isTokenExpired(accessToken)) {
+      if (!refreshTokenValue || isTokenExpired(refreshTokenValue)) {
+        return <Navigate to={`/${lang}/admin/login`} replace />;
+      }
+    }
+    // Wait a bit for AuthContext to load if tokens might be valid
+    return <LoadingSpinner isLoading={true} delay={0} />;
+  }
+
   // Wait for AuthContext to finish loading before checking user
   // This prevents blocking lazy-loaded modules
-  if (isLoading) {
+  if (isLoading || (considerSiteRole && isCheckingSiteRole)) {
     // But check tokens again while loading - if no tokens, redirect immediately
     const accessToken = localStorage.getItem("accessToken");
     const refreshTokenValue = localStorage.getItem("refreshToken");
@@ -126,7 +157,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
         return <Navigate to={`/${lang}/admin/login`} replace />;
       }
     }
-    return <LoadingSpinner isLoading={isLoading} delay={0} />;
+    return <LoadingSpinner isLoading={isLoading || isCheckingSiteRole} delay={0} />;
   }
 
   // Redirect to login if no user (after loading is complete)
@@ -150,8 +181,17 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       return <>{children}</>;
     }
     
-    // Admin has access to everything except superadmin-only routes
-    if (user.role === "admin" && requiredRole !== "superadmin") {
+    // Effective admin permissions: global admin OR siteadmin (if considerSiteRole is enabled)
+    const hasAdminPermissions = user.role === "admin" || (considerSiteRole && isSiteAdmin);
+    
+    // Admin (global or site-level) has access to everything except superadmin-only routes
+    if (hasAdminPermissions && requiredRole !== "superadmin") {
+      return <>{children}</>;
+    }
+
+    // For editor/viewer roles, check if site-level role elevates permissions
+    // Siteadmin can access admin-level routes (except superadmin-only)
+    if (considerSiteRole && isSiteAdmin && requiredRole === "admin") {
       return <>{children}</>;
     }
 

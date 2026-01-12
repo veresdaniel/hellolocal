@@ -6,7 +6,7 @@ const ALLOWED_KEYS = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
 
 export interface CreateLegalPageDto {
-  tenantId: string;
+  siteId: string;
   key: LegalKey;
   translations: Array<{
     lang: Lang;
@@ -39,12 +39,12 @@ export interface UpdateLegalPageDto {
 export class AdminLegalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 50;
     
-    const where = { tenantId };
+    const where = { siteId };
     
     // Get total count
     const total = await this.prisma.legalPage.count({ where });
@@ -72,9 +72,9 @@ export class AdminLegalService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const legalPage = await this.prisma.legalPage.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         translations: true,
       },
@@ -87,13 +87,13 @@ export class AdminLegalService {
     return legalPage;
   }
 
-  async findByKey(key: string, tenantId: string) {
+  async findByKey(key: string, siteId: string) {
     if (!ALLOWED_KEYS.has(key as any)) {
       throw new BadRequestException(`Invalid legal page key: ${key}. Must be one of: ${Array.from(ALLOWED_KEYS).join(", ")}`);
     }
 
     const legalPage = await this.prisma.legalPage.findUnique({
-      where: { tenantId_key: { tenantId, key: key as LegalKey } },
+      where: { siteId_key: { siteId, key: key as LegalKey } },
       include: {
         translations: true,
       },
@@ -113,7 +113,7 @@ export class AdminLegalService {
 
     return this.prisma.legalPage.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         key: dto.key,
         isActive: dto.isActive ?? true,
         translations: {
@@ -135,8 +135,8 @@ export class AdminLegalService {
     });
   }
 
-  async update(id: string, tenantId: string, dto: UpdateLegalPageDto) {
-    const legalPage = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdateLegalPageDto) {
+    const legalPage = await this.findOne(id, siteId);
 
     const updateData: any = {};
     if (dto.isActive !== undefined) {
@@ -181,11 +181,11 @@ export class AdminLegalService {
       }
     }
 
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string) {
+    await this.findOne(id, siteId);
 
     await this.prisma.legalPage.delete({
       where: { id },

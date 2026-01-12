@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/AuthContext";
-import { AdminTenantProvider } from "./contexts/AdminTenantContext";
+import { AdminSiteProvider } from "./contexts/AdminSiteContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { ToastContainer } from "./components/Toast";
 import { router } from "./app/routes";
@@ -48,9 +48,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <AppInitializer>
           <ToastProvider>
             <AuthProvider>
-              <AdminTenantProvider>
+              <AdminSiteProvider>
                 <RouterProvider router={router} />
-              </AdminTenantProvider>
+              </AdminSiteProvider>
             </AuthProvider>
             <ToastContainer />
           </ToastProvider>

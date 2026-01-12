@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { buildPath } from "../app/routing/buildPath";
+import { buildUrl } from "../app/urls";
+import { useRouteCtx } from "../app/useRouteCtx";
 import { Link, useLocation } from "react-router-dom";
-import { getSiteSettings } from "../api/places.api";
+import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
 import { LanguageSelector } from "./LanguageSelector";
 
 interface FloatingHeaderProps {
@@ -14,45 +14,20 @@ interface FloatingHeaderProps {
 
 export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, tenantKey } = useRouteCtx();
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Load site name from settings
-  const queryClient = useQueryClient();
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  // Use site settings from context (loaded once at TenantLayout level)
+  // If context is not available (e.g., on TenantsListPage), use undefined
+  const platformSettings = usePlatformSettingsContextOptional();
 
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      // Refetch site settings when changed in admin
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-    };
-
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
-    };
-  }, [lang, tenantSlug, queryClient]);
-
-  const siteName = siteSettings?.siteName || t("common.siteName", { defaultValue: "" });
-  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
+  const brandBadgeIcon = platformSettings?.placeholders.avatar;
   const [logoError, setLogoError] = useState(false);
-  
-  // Log when brandBadgeIcon changes
-  useEffect(() => {
-    if (brandBadgeIcon) {
-      console.log("[FloatingHeader] Setting brandBadgeIcon:", brandBadgeIcon);
-    }
-  }, [brandBadgeIcon]);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -110,8 +85,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
     }
   }, [isMobile, isMobileMenuOpen]);
 
-  // Always show - this component is only called from PlacesListView and PlaceDetailPage
-  // which are already in list/detail view context
+  // Always show header - works on all pages including TenantsListPage
 
   return (
     <header
@@ -128,64 +102,94 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
         transform: isVisible ? "translateY(0)" : "translateY(-100%)",
         transition: "transform 0.3s ease-in-out",
+        width: "100%",
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: 1400,
           margin: "0 auto",
-          padding: isMobile ? "12px 16px" : "16px 48px",
+          padding: isMobile ? "12px 0" : "16px 0",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {(siteName || brandBadgeIcon) && (
-            <Link
-              to={buildPath({ tenantSlug, lang, path: "" })}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {brandBadgeIcon && !logoError && (
-                <img 
-                  src={brandBadgeIcon} 
-                  alt={siteName || ""}
-                  style={{ 
-                    height: 32, 
-                    width: "auto",
-                    objectFit: "contain",
-                    borderRadius: 4,
-                    display: "block",
-                  }}
-                  onError={(e) => {
-                    console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
-                    setLogoError(true);
-                    e.currentTarget.style.display = "none";
-                  }}
-                  onLoad={() => {
-                    setLogoError(false);
-                  }}
-                />
-              )}
-              {siteName && (
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          gap: 16, 
+          flex: 1,
+          paddingLeft: isMobile ? 16 : 24,
+          paddingRight: isMobile ? 16 : 24,
+          boxSizing: "border-box",
+        }}>
+          <Link
+            to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "" })}
+            style={{
+              textDecoration: "none",
+              color: "#1a1a1a",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              lineHeight: 1,
+              margin: 0,
+              padding: 0,
+            }}
+          >
+            {brandBadgeIcon && !logoError && (
+              <img 
+                src={brandBadgeIcon} 
+                alt={siteName || ""}
+                style={{ 
+                  height: 32, 
+                  width: "auto",
+                  objectFit: "contain",
+                  borderRadius: 4,
+                  display: "block",
+                  verticalAlign: "middle",
+                  flexShrink: 0,
+                }}
+                onError={(e) => {
+                  console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                  setLogoError(true);
+                  e.currentTarget.style.display = "none";
+                }}
+                onLoad={() => {
+                  setLogoError(false);
+                }}
+              />
+            )}
+            <span style={{ 
+              display: "inline-flex",
+              alignItems: "center",
+              lineHeight: 1,
+            }}>
+              {siteName ? (
                 <span>{siteName}</span>
+              ) : (
+                <span>{t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"}</span>
               )}
-            </Link>
-          )}
+            </span>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav style={{ display: isMobile ? "none" : "flex", gap: 24, alignItems: "center", marginLeft: "auto" }}>
+        <nav style={{ 
+          display: isMobile ? "none" : "flex", 
+          gap: 24, 
+          alignItems: "center", 
+          marginLeft: "auto",
+          paddingRight: 24,
+          boxSizing: "border-box",
+        }}>
           {/* Map view button - only show on list view */}
           {onMapViewClick && (
             <>
@@ -252,6 +256,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               gap: 4,
               alignItems: "center",
               justifyContent: "center",
+              marginRight: 16,
             }}
             aria-label={t("public.menu") || "Menu"}
           >
@@ -372,7 +377,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               <LanguageSelector />
             </div>
             <Link
-              to={buildPath({ tenantSlug, lang, path: "impresszum" })}
+              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "impresszum" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -416,7 +421,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.imprint.title")}
             </Link>
             <Link
-              to={buildPath({ tenantSlug, lang, path: "aszf" })}
+              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "aszf" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -460,7 +465,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.terms.title")}
             </Link>
             <Link
-              to={buildPath({ tenantSlug, lang, path: "adatvedelem" })}
+              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "adatvedelem" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -504,7 +509,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.privacy.title")}
             </Link>
             <Link
-              to={buildPath({ tenantSlug, lang, path: "static-pages" })}
+              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "static-pages" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",

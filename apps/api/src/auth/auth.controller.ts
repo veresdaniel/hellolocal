@@ -19,7 +19,7 @@ export class AuthController {
 
   /**
    * Register a new user.
-   * If tenantId is not provided, user is assigned to default tenant.
+   * If siteId is not provided, user is assigned to default site.
    */
   @Post("/register")
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
@@ -76,8 +76,8 @@ export class AuthController {
   @Post("/logout")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async logout(@CurrentUser() user: { id: string; tenantIds?: string[] }) {
-    return this.authService.logout(user.id, user.tenantIds);
+  async logout(@CurrentUser() user: { id: string; siteIds?: string[] }) {
+    return this.authService.logout(user.id, user.siteIds);
   }
 }
 

@@ -10,6 +10,7 @@
     "start:dev": "nest start --watch",
     "baseline": "tsx scripts/baseline-migrations.ts",
     "migrate:deploy": "prisma migrate deploy",
+    "migrate:to-brand": "tsx scripts/migrate-to-brand-siteinstance.ts",
     "db:setup": "tsx scripts/setup-db.ts",
     "db:seed": "prisma db seed",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",

@@ -1,17 +1,18 @@
 // src/app-settings/app-settings.controller.ts
-import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
-import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 /**
  * Public controller for app settings that don't require authentication
+ * Excluded from rate limiting as these are frequently called during page load
  */
 @Controller("/api")
+@SkipThrottle({ default: true, strict: true })
 export class AppSettingsController {
   constructor(
     private readonly appSettingsService: AdminAppSettingsService,
-    private readonly tenantKeyResolver: TenantKeyResolverService,
     private readonly prisma: PrismaService
   ) {}
 
@@ -24,69 +25,14 @@ export class AppSettingsController {
     return { defaultLanguage: lang };
   }
 
-  /**
-   * Get map settings - public endpoint, no authentication required
-   * Uses lang and optional tenantKey to resolve tenant and return map settings
-   */
-  @Get("/:lang/map-settings")
-  async getMapSettings(
-    @Param("lang") lang: string,
-    @Query("tenantKey") tenantKey?: string
-  ) {
-    // Validate lang
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-
-    // Resolve tenant from lang and tenantKey
-    const resolved = await this.tenantKeyResolver.resolve({ lang, tenantKey });
-    
-    // Get map settings for the resolved tenant
-    const settings = await this.appSettingsService.getMapSettings(resolved.tenantId);
-    
-    return settings;
-  }
 
   /**
-   * Get site settings - public endpoint, no authentication required
-   * Returns site name, description, and SEO settings for all languages
+   * Get active sites count - public endpoint, no authentication required
+   * Returns the number of active sites to determine if multi-site URLs should be used
    */
-  @Get("/:lang/site-settings")
-  async getSiteSettings(
-    @Param("lang") lang: string,
-    @Query("tenantKey") tenantKey?: string
-  ) {
-    // Validate lang
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-
-    // Resolve tenant
-    const tenant = await this.tenantKeyResolver.resolve({ lang, tenantKey });
-    
-    const allSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
-    
-    // Return only the requested language's settings, plus default placeholder images and brand assets
-    return {
-      siteName: allSettings.siteName[lang as "hu" | "en" | "de"],
-      siteDescription: allSettings.siteDescription[lang as "hu" | "en" | "de"],
-      seoTitle: allSettings.seoTitle[lang as "hu" | "en" | "de"],
-      seoDescription: allSettings.seoDescription[lang as "hu" | "en" | "de"],
-      defaultPlaceholderCardImage: allSettings.defaultPlaceholderCardImage,
-      defaultPlaceholderDetailHeroImage: allSettings.defaultPlaceholderDetailHeroImage,
-      defaultEventPlaceholderCardImage: allSettings.defaultEventPlaceholderCardImage,
-      brandBadgeIcon: allSettings.brandBadgeIcon,
-      faviconUrl: allSettings.faviconUrl,
-    };
-  }
-
-  /**
-   * Get active tenants count - public endpoint, no authentication required
-   * Returns the number of active tenants to determine if multi-tenant URLs should be used
-   */
-  @Get("/app-settings/active-tenants-count")
-  async getActiveTenantsCount() {
-    const count = await this.prisma.tenant.count({
+  @Get("/app-settings/active-sites-count")
+  async getActiveSitesCount() {
+    const count = await this.prisma.site.count({
       where: { isActive: true },
     });
     return { count };

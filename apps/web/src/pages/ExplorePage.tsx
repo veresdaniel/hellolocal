@@ -1,23 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
 import { getPlaces } from "../api/places.api";
 import { PlaceCard } from "../ui/place/PlaceCard";
 import { useSeo } from "../seo/useSeo";
 import { MapComponent } from "../components/MapComponent";
-import { buildPath } from "../app/routing/buildPath";
+import { buildUrl } from "../app/urls";
+import { useRouteCtx } from "../app/useRouteCtx";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { useFiltersStore } from "../stores/useFiltersStore";
 
 export function ExplorePage() {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
   const [showMap, setShowMap] = useState(true);
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
   
   // Get user location from store
   const { userLocation, _hasHydrated, setUserLocation, showUserLocation } = useFiltersStore();
@@ -133,8 +132,8 @@ export function ExplorePage() {
   }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["places", lang, tenantKey],
-    queryFn: () => getPlaces(lang, tenantKey),
+    queryKey: ["places", lang, siteKey],
+    queryFn: () => getPlaces(lang, siteKey),
   });
 
   useSeo({
@@ -157,7 +156,7 @@ export function ExplorePage() {
     lng: place.location!.lng!,
     name: place.name,
     onClick: place.slug ? () => {
-      const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
+      const path = buildUrl({ lang, siteKey, path: `place/${place.slug}` });
       navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));

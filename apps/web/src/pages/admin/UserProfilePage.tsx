@@ -193,7 +193,7 @@ export function UserProfilePage() {
           <h1 style={{ 
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
-            color: "#e0e0ff",
+            color: "white",
             margin: 0,
             marginBottom: 8,
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -246,9 +246,9 @@ export function UserProfilePage() {
         gap: 24 
       }}>
         <div>
-          <h2 style={{ 
+          <h2 style={{
             marginBottom: 16,
-            color: "#e0e0ff",
+            color: "white",
             fontSize: "clamp(18px, 4vw, 20px)",
             fontWeight: 700,
           }}>
@@ -445,9 +445,9 @@ export function UserProfilePage() {
         </div>
 
         <div>
-          <h2 style={{ 
+          <h2 style={{
             marginBottom: 16,
-            color: "#e0e0ff",
+            color: "white",
             fontSize: "clamp(18px, 4vw, 20px)",
             fontWeight: 700,
           }}>
@@ -504,9 +504,9 @@ export function UserProfilePage() {
             </div>
           </div>
 
-          <h3 style={{ 
+          <h3 style={{
             marginBottom: 16,
-            color: "#e0e0ff",
+            color: "white",
             fontSize: "clamp(16px, 3vw, 18px)",
             fontWeight: 700,
           }}>
@@ -534,9 +534,9 @@ export function UserProfilePage() {
             )}
           </div>
 
-          <h3 style={{ 
+          <h3 style={{
             marginBottom: 16,
-            color: "#e0e0ff",
+            color: "white",
             fontSize: "clamp(16px, 3vw, 18px)",
             fontWeight: 700,
           }}>

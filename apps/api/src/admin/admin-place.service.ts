@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SlugEntityType } from "@prisma/client";
+import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { generateSlug } from "../slug/slug.helper";
+import { RbacService } from "../auth/rbac.service";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -11,7 +12,7 @@ export interface OpeningHoursDto {
 }
 
 export interface CreatePlaceDto {
-  tenantId: string;
+  siteId: string;
   townId?: string | null;
   categoryId: string;
   priceBandId?: string | null;
@@ -77,14 +78,17 @@ export interface UpdatePlaceDto {
 
 @Injectable()
 export class AdminPlaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rbacService: RbacService
+  ) {}
 
   /**
    * Create slugs for a place in all languages
    * If only Hungarian translation exists, create slugs for all languages (hu, en, de) using the Hungarian name
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForPlace(placeId: string, tenantId: string, translations: Array<{ lang: Lang; name: string }>, throwOnConflict: boolean = false) {
+  private async createSlugsForPlace(placeId: string, siteId: string, translations: Array<{ lang: Lang; name: string }>, throwOnConflict: boolean = false) {
     // Find Hungarian translation to use as fallback for missing languages
     const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
     const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
@@ -102,7 +106,7 @@ export class AdminPlaceService {
       // Check if slug already exists for this place and language
       const existingSlug = await this.prisma.slug.findFirst({
         where: {
-          tenantId,
+          siteId,
           lang,
           entityType: SlugEntityType.place,
           entityId: placeId,
@@ -125,7 +129,7 @@ export class AdminPlaceService {
       // Check for slug conflicts
       const conflictingSlug = await this.prisma.slug.findFirst({
         where: {
-          tenantId,
+          siteId,
           lang,
           slug,
           NOT: {
@@ -147,7 +151,7 @@ export class AdminPlaceService {
         while (true) {
           const nextConflictingSlug = await this.prisma.slug.findFirst({
             where: {
-              tenantId,
+              siteId,
               lang,
               slug,
               NOT: {
@@ -170,14 +174,14 @@ export class AdminPlaceService {
         if (oldSlug !== slug) {
           // First, check if there's already a slug with the new value (shouldn't happen due to conflict check, but safety)
           const newSlugExists = await this.prisma.slug.findUnique({
-            where: { tenantId_lang_slug: { tenantId, lang, slug } },
+            where: { siteId_lang_slug: { siteId, lang, slug } },
           });
 
           if (!newSlugExists) {
             // Create new slug with isPrimary = true
             const newSlug = await this.prisma.slug.create({
               data: {
-                tenantId,
+                siteId,
                 lang,
                 slug,
                 entityType: SlugEntityType.place,
@@ -222,7 +226,7 @@ export class AdminPlaceService {
       } else {
         await this.prisma.slug.create({
           data: {
-            tenantId,
+            siteId,
             lang,
             slug,
             entityType: SlugEntityType.place,
@@ -235,12 +239,12 @@ export class AdminPlaceService {
     }
   }
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 50;
     
-    const where = { tenantId };
+    const where = { siteId };
     
     // Get total count
     const total = await this.prisma.place.count({ where });
@@ -295,9 +299,9 @@ export class AdminPlaceService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const place = await this.prisma.place.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         category: {
           include: {
@@ -409,13 +413,34 @@ export class AdminPlaceService {
 
     // Automatically create slugs for all translations
     // Throw error if slug conflict is detected (admin should be aware of conflicts)
-    await this.createSlugsForPlace(place.id, place.tenantId, translations, true);
+    await this.createSlugsForPlace(place.id, place.siteId, translations, true);
 
     return place;
   }
 
-  async update(id: string, tenantId: string, dto: UpdatePlaceDto) {
-    const place = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdatePlaceDto, userId?: string) {
+    const place = await this.findOne(id, siteId);
+
+    // RBAC: Check permissions for restricted fields
+    if (userId) {
+      // Check if user can modify isActive (publish/activate)
+      if (dto.isActive !== undefined && !await this.canModifyPlacePublish(userId, id, siteId)) {
+        throw new ForbiddenException("Editor cannot modify place publish status");
+      }
+
+      // Check if user can modify SEO fields (slug management)
+      // Name changes also affect slugs, so they need SEO permission
+      const hasSeoChanges = dto.translations?.some(t => 
+        t.name !== undefined ||
+        t.seoTitle !== undefined || 
+        t.seoDescription !== undefined || 
+        t.seoImage !== undefined || 
+        t.seoKeywords !== undefined
+      );
+      if (hasSeoChanges && !await this.canModifyPlaceSeo(userId, id, siteId)) {
+        throw new ForbiddenException("Editor cannot modify place SEO settings or name (which affects slugs)");
+      }
+    }
 
     const { tagIds, translations, openingHours, ...restData } = dto;
 
@@ -525,39 +550,47 @@ export class AdminPlaceService {
       }
     }
 
-    // Always update slugs for all languages, using all existing translations
-    // Fetch all current translations to ensure we have the complete set
-    const allTranslations = await this.prisma.placeTranslation.findMany({
-      where: { placeId: id },
-      select: { lang: true, name: true },
-    });
+    // Update slugs for all languages, but only if user has permission (owner/manager can, editor cannot)
+    // Slugs are updated when name changes, which is part of SEO/slug management
+    if (!userId || await this.canModifyPlaceSeo(userId, id, siteId)) {
+      // Fetch all current translations to ensure we have the complete set
+      const allTranslations = await this.prisma.placeTranslation.findMany({
+        where: { placeId: id },
+        select: { lang: true, name: true },
+      });
 
-    // If we have translations from the update, merge them with existing ones
-    // (prefer updated translations over existing ones)
-    const translationMap = new Map(allTranslations.map((t) => [t.lang, t.name]));
-    if (translations) {
-      for (const translation of translations) {
-        translationMap.set(translation.lang, translation.name);
+      // If we have translations from the update, merge them with existing ones
+      // (prefer updated translations over existing ones)
+      const translationMap = new Map(allTranslations.map((t) => [t.lang, t.name]));
+      if (translations) {
+        for (const translation of translations) {
+          translationMap.set(translation.lang, translation.name);
+        }
+      }
+
+      // Convert to array format expected by createSlugsForPlace
+      const translationsForSlugs = Array.from(translationMap.entries()).map(([lang, name]) => ({
+        lang: lang as Lang,
+        name,
+      }));
+
+      // Create/update slugs for all languages (only if user has permission)
+      if (translationsForSlugs.length > 0) {
+        // Throw error if slug conflict is detected (admin should be aware of conflicts)
+        await this.createSlugsForPlace(id, siteId, translationsForSlugs, true);
       }
     }
 
-    // Convert to array format expected by createSlugsForPlace
-    const translationsForSlugs = Array.from(translationMap.entries()).map(([lang, name]) => ({
-      lang: lang as Lang,
-      name,
-    }));
-
-    // Always create/update slugs for all languages
-    if (translationsForSlugs.length > 0) {
-      // Throw error if slug conflict is detected (admin should be aware of conflicts)
-      await this.createSlugsForPlace(id, tenantId, translationsForSlugs, true);
-    }
-
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string, userId?: string) {
+    await this.findOne(id, siteId);
+
+    // RBAC: Only owner or siteadmin can delete place
+    if (userId && !await this.canDeletePlace(userId, id, siteId)) {
+      throw new ForbiddenException("Only owner or siteadmin can delete place");
+    }
 
     await this.prisma.place.delete({
       where: { id },
@@ -567,11 +600,105 @@ export class AdminPlaceService {
   }
 
   /**
+   * Check if user can modify place publish status (isActive)
+   * Permission: owner ✅, manager ✅, editor ❌
+   */
+  private async canModifyPlacePublish(userId: string, placeId: string, siteId: string): Promise<boolean> {
+    // Check global user role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) return false;
+
+    // Superadmin and tenantadmin can always modify
+    if (user.role === UserRole.superadmin) return true;
+
+    const siteMembership = await this.prisma.siteMembership.findUnique({
+      where: {
+        siteId_userId: {
+          siteId,
+          userId,
+        },
+      },
+    });
+
+    if (siteMembership?.role === SiteRole.siteadmin) return true;
+
+    // Check place membership
+    const placeMembership = await this.prisma.placeMembership.findUnique({
+      where: {
+        placeId_userId: {
+          placeId,
+          userId,
+        },
+      },
+    });
+
+    if (!placeMembership) return false;
+
+    // Owner and manager can modify, editor cannot
+    return placeMembership.role === PlaceRole.owner || placeMembership.role === PlaceRole.manager;
+  }
+
+  /**
+   * Check if user can modify place SEO settings (slug management)
+   * Permission: owner ✅, manager ✅, editor ❌
+   */
+  private async canModifyPlaceSeo(userId: string, placeId: string, siteId: string): Promise<boolean> {
+    // Same logic as canModifyPlacePublish
+    return this.canModifyPlacePublish(userId, placeId, siteId);
+  }
+
+  /**
+   * Check if user can delete place
+   * Permission: owner ✅ (or tenantadmin), manager ❌, editor ❌
+   */
+  private async canDeletePlace(userId: string, placeId: string, siteId: string): Promise<boolean> {
+    // Check global user role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) return false;
+
+    // Superadmin can always delete
+    if (user.role === UserRole.superadmin) return true;
+
+    // Check tenant membership
+    const siteMembership = await this.prisma.siteMembership.findUnique({
+      where: {
+        siteId_userId: {
+          siteId,
+          userId,
+        },
+      },
+    });
+
+    // Tenantadmin can delete
+    if (siteMembership?.role === SiteRole.siteadmin) return true;
+
+    // Check place membership - only owner can delete
+    const placeMembership = await this.prisma.placeMembership.findUnique({
+      where: {
+        placeId_userId: {
+          placeId,
+          userId,
+        },
+      },
+    });
+
+    return placeMembership?.role === PlaceRole.owner;
+  }
+
+  /**
    * Generate missing slugs for all places in a tenant
    */
-  async generateMissingSlugs(tenantId: string) {
+  async generateMissingSlugs(siteId: string) {
     const places = await this.prisma.place.findMany({
-      where: { tenantId },
+      where: { siteId },
       include: {
         translations: true,
       },
@@ -585,7 +712,7 @@ export class AdminPlaceService {
         // Check if slug already exists
         const existingSlug = await this.prisma.slug.findFirst({
           where: {
-            tenantId,
+            siteId,
             lang: translation.lang,
             entityType: SlugEntityType.place,
             entityId: place.id,
@@ -606,7 +733,7 @@ export class AdminPlaceService {
         while (true) {
           const conflictingSlug = await this.prisma.slug.findFirst({
             where: {
-              tenantId,
+              siteId,
               lang: translation.lang,
               slug,
             },
@@ -620,7 +747,7 @@ export class AdminPlaceService {
         // Create the slug
         await this.prisma.slug.create({
           data: {
-            tenantId,
+            siteId,
             lang: translation.lang,
             slug,
             entityType: SlugEntityType.place,

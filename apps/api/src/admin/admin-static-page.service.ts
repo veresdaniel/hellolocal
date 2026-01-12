@@ -6,7 +6,7 @@ const ALLOWED_CATEGORIES = new Set(["blog", "tudastar", "infok"] as const);
 type StaticPageCategory = "blog" | "tudastar" | "infok";
 
 export interface CreateStaticPageDto {
-  tenantId: string;
+  siteId: string;
   category: StaticPageCategory;
   translations: Array<{
     lang: Lang;
@@ -40,8 +40,8 @@ export interface UpdateStaticPageDto {
 export class AdminStaticPageService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, category?: StaticPageCategory, page?: number, limit?: number) {
-    const where: any = { tenantId };
+  async findAll(siteId: string, category?: StaticPageCategory, page?: number, limit?: number) {
+    const where: any = { siteId };
     if (category) {
       if (!ALLOWED_CATEGORIES.has(category)) {
         throw new BadRequestException(`Invalid category: ${category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
@@ -79,9 +79,9 @@ export class AdminStaticPageService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const staticPage = await this.prisma.staticPage.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         translations: true,
       },
@@ -101,7 +101,7 @@ export class AdminStaticPageService {
 
     return this.prisma.staticPage.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         category: dto.category,
         isActive: dto.isActive ?? true,
         translations: {
@@ -123,8 +123,8 @@ export class AdminStaticPageService {
     });
   }
 
-  async update(id: string, tenantId: string, dto: UpdateStaticPageDto) {
-    const staticPage = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdateStaticPageDto) {
+    const staticPage = await this.findOne(id, siteId);
 
     const updateData: any = {};
     if (dto.category !== undefined) {
@@ -175,11 +175,11 @@ export class AdminStaticPageService {
       }
     }
 
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string) {
+    await this.findOne(id, siteId);
 
     await this.prisma.staticPage.delete({
       where: { id },

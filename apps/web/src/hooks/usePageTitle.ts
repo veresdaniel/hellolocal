@@ -2,11 +2,10 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getSiteSettings } from "../api/places.api";
+import { getPlatformSettings } from "../api/places.api";
 import { useContext } from "react";
-import { AdminTenantContext } from "../contexts/AdminTenantContext";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { AdminSiteContext } from "../contexts/AdminSiteContext";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "../app/config";
 
 /**
  * Hook to set the page title for admin pages using i18n
@@ -14,21 +13,25 @@ import { HAS_MULTIPLE_TENANTS } from "../app/config";
  */
 export function usePageTitle(titleKey: string) {
   const { t, i18n } = useTranslation();
-  const tenantContext = useContext(AdminTenantContext);
-  const currentTenant = tenantContext?.tenants?.find((t) => t.id === tenantContext?.selectedTenantId);
+  const siteContext = useContext(AdminSiteContext);
+  const currentSite = siteContext?.sites?.find((s) => s.id === siteContext?.selectedSiteId);
   const lang = i18n.language || "hu";
 
+  // Determine site slug: use current site slug if available, otherwise undefined
+  // Don't use DEFAULT_SITE_SLUG in multi-site mode as it may not exist
+  const siteSlug = currentSite?.slug;
+
   // Load site name from settings
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, currentTenant?.slug],
-    queryFn: () => getSiteSettings(lang, currentTenant?.slug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteSlug],
+    queryFn: () => getPlatformSettings(lang, siteSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    enabled: !!currentTenant?.slug || !HAS_MULTIPLE_TENANTS,
+    enabled: !!siteSlug && !siteContext?.isLoading, // Only fetch if we have a valid site slug and sites are loaded
   });
 
   useEffect(() => {
     const title = t(titleKey);
-    const siteName = siteSettings?.siteName || t("common.siteName", { defaultValue: "" });
+    const siteName = platformSettings?.siteName || t("common.siteName", { defaultValue: "" });
     const adminSuffix = t("admin.titleSuffix", { defaultValue: "Admin" });
     
     if (siteName) {
@@ -36,6 +39,6 @@ export function usePageTitle(titleKey: string) {
     } else {
       document.title = `${title} - ${adminSuffix}`;
     }
-  }, [titleKey, t, siteSettings?.siteName]);
+  }, [titleKey, t, platformSettings?.siteName]);
 }
 

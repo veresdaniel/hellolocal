@@ -1,11 +1,12 @@
 // src/app/routes.tsx
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Outlet } from "react-router-dom";
-import { HAS_MULTIPLE_TENANTS } from "./config";
-import { TenantLayout } from "./tenant/TenantLayout";
+import { createBrowserRouter, Outlet, useParams, Navigate } from "react-router-dom";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "./config";
+import { SiteLayout } from "./site/SiteLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RootRedirect } from "../components/RootRedirect";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 
 // Public pages - loaded eagerly (main entry point)
 import { HomePage } from "../pages/HomePage";
@@ -14,7 +15,7 @@ import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
-import { TenantsListPage } from "../pages/TenantsListPage";
+import { SitesListPage } from "../pages/SitesListPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
 
@@ -34,15 +35,26 @@ const PriceBandsPage = lazy(() => import("../pages/admin/PriceBandsPage").then(m
 const TownsPage = lazy(() => import("../pages/admin/TownsPage").then(m => ({ default: m.TownsPage })));
 const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m => ({ default: m.LegalPagesPage })));
 const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
-const TenantsPage = lazy(() => import("../pages/admin/TenantsPage").then(m => ({ default: m.TenantsPage })));
+const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
+const BrandsPage = lazy(() => import("../pages/admin/BrandsPage").then(m => ({ default: m.BrandsPage })));
+const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").then(m => ({ default: m.SiteInstancesPage })));
+const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
+const PlaceMembershipsPage = lazy(() => import("../pages/admin/PlaceMembershipsPage").then(m => ({ default: m.PlaceMembershipsPage })));
 const PlacesPage = lazy(() => import("../pages/admin/PlacesPage").then(m => ({ default: m.PlacesPage })));
 const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
 const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
 const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
 const AdminLayout = lazy(() => import("../components/AdminLayout").then(m => ({ default: m.AdminLayout })));
 
-// If multi-tenant is enabled, we need two separate routes
-// One with tenant slug and one without
+// If multi-site is enabled, we need two separate routes
+// Redirect component for old-style URLs (without siteKey) to default site
+function RedirectToSiteRoute({ entityType }: { entityType: "place" | "event" }) {
+  const { lang, slug } = useParams<{ lang: string; slug: string }>();
+  if (!lang || !slug) return null;
+  return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}/${entityType}/${slug}`} replace />;
+}
+
+// One with site slug and one without
 // IMPORTANT: These routes should NOT match /admin paths
 const createPublicRoutes = () => {
   const baseChildren = [
@@ -51,40 +63,50 @@ const createPublicRoutes = () => {
     { path: "event/:slug", element: <EventDetailPage /> },
     { path: "static-pages", element: <StaticPagesRouteGuard /> },
     { path: "static-page/:id", element: <StaticPageDetailPage /> },
-    // Tenants page - use language from URL, not from path
-    { path: "teruletek", element: <TenantsListPage /> },
-    { path: "regions", element: <TenantsListPage /> },
-    { path: "regionen", element: <TenantsListPage /> },
+    // Sites page - use language from URL, not from path
+    { path: "teruletek", element: <SitesListPage /> },
+    { path: "regions", element: <SitesListPage /> },
+    { path: "regionen", element: <SitesListPage /> },
     { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
     { path: "aszf", element: <LegalPage pageKey="terms" /> },
     { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
   ];
 
-  if (HAS_MULTIPLE_TENANTS) {
-    // Return two routes: one with tenant slug, one without
-    // The tenant slug route should NOT match "admin"
+  if (HAS_MULTIPLE_SITES) {
+    // Multi-site mode: 
+    // - /:lang route shows SitesListPage (site selection)
+    // - /:lang/:siteKey route uses TenantLayout (specific site)
+    // Backward compatibility: also support :tenantKey
     return [
       {
+        // Route without siteKey - shows site selection page
         path: `/:lang`,
-        element: <TenantLayout />,
+        element: <Outlet />,
         errorElement: <ErrorPage />,
-        children: baseChildren,
+        children: [
+          { index: true, element: <SitesListPage /> },
+          { path: "teruletek", element: <SitesListPage /> },
+          { path: "regions", element: <SitesListPage /> },
+          { path: "regionen", element: <SitesListPage /> },
+          // Redirect old-style URLs (without siteKey) to default site
+          { path: "place/:slug", element: <RedirectToSiteRoute entityType="place" /> },
+          { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
+        ],
       },
       {
-        // This route should only match tenant slugs, not "admin"
-        // We can't exclude "admin" directly, but the admin routes should be matched first
-        path: `/:lang/:tenantSlug`,
-        element: <TenantLayout />,
+        // Route with siteKey - uses SiteLayout
+        path: `/:lang/:siteKey`,
+        element: <SiteLayout />,
         errorElement: <ErrorPage />,
         children: baseChildren,
       },
     ];
   } else {
-    // Single tenant mode - just one route without tenant slug
+    // Single site mode - just one route without siteKey
     return [
       {
         path: `/:lang`,
-        element: <TenantLayout />,
+        element: <SiteLayout />,
         errorElement: <ErrorPage />,
         children: baseChildren,
       },
@@ -108,7 +130,7 @@ export const router = createBrowserRouter([
   // Admin routes (with language prefix) - MUST come before /:lang route to avoid conflicts
   {
     path: `/:lang/admin`,
-    element: <Outlet />, // Add explicit Outlet to prevent TenantLayout from being used
+    element: <Outlet />, // Add explicit Outlet to prevent SiteLayout from being used
     errorElement: <ErrorPage />,
     children: [
       {
@@ -131,7 +153,7 @@ export const router = createBrowserRouter([
         path: "",
         element: (
           <ProtectedRoute requiredRole="viewer">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <AdminDashboardWrapper />
               </AdminLayout>
@@ -143,7 +165,7 @@ export const router = createBrowserRouter([
         path: "profile",
         element: (
           <ProtectedRoute requiredRole="viewer">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <UserProfilePage />
               </AdminLayout>
@@ -155,7 +177,7 @@ export const router = createBrowserRouter([
         path: "users",
         element: (
           <ProtectedRoute requiredRole="superadmin">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <UsersPage />
               </AdminLayout>
@@ -167,7 +189,7 @@ export const router = createBrowserRouter([
         path: "categories",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <CategoriesPage />
               </AdminLayout>
@@ -179,7 +201,7 @@ export const router = createBrowserRouter([
         path: "tags",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <TagsPage />
               </AdminLayout>
@@ -191,7 +213,7 @@ export const router = createBrowserRouter([
         path: "price-bands",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PriceBandsPage />
               </AdminLayout>
@@ -203,7 +225,7 @@ export const router = createBrowserRouter([
         path: "places",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PlacesPage />
               </AdminLayout>
@@ -215,7 +237,7 @@ export const router = createBrowserRouter([
         path: "towns",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <TownsPage />
               </AdminLayout>
@@ -227,7 +249,7 @@ export const router = createBrowserRouter([
         path: "legal",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <LegalPagesPage />
               </AdminLayout>
@@ -239,7 +261,7 @@ export const router = createBrowserRouter([
         path: "static-pages",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <StaticPagesPage />
               </AdminLayout>
@@ -248,12 +270,12 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "tenants",
-        element: HAS_MULTIPLE_TENANTS ? (
+        path: "sites",
+        element: HAS_MULTIPLE_SITES ? (
           <ProtectedRoute requiredRole="superadmin">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
-                <TenantsPage />
+                <SitesPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>
@@ -262,10 +284,58 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "app-settings",
+        path: "brands",
         element: (
           <ProtectedRoute requiredRole="superadmin">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <BrandsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "site-instances",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SiteInstancesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "site-memberships",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SiteMembershipsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "place-memberships",
+        element: (
+          <ProtectedRoute requiredRole="admin" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlaceMembershipsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "platform-settings",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <AppSettingsPage />
               </AdminLayout>
@@ -277,7 +347,7 @@ export const router = createBrowserRouter([
         path: "events",
         element: (
           <ProtectedRoute requiredRole="editor">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventsPage />
               </AdminLayout>
@@ -288,8 +358,8 @@ export const router = createBrowserRouter([
       {
         path: "event-log",
         element: (
-          <ProtectedRoute requiredRole="admin">
-            <Suspense fallback={<LoadingSpinner isLoading={true} delay={0} />}>
+          <ProtectedRoute requiredRole="admin" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventLogPage />
               </AdminLayout>
@@ -300,8 +370,9 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Public tenant routes (with language prefix) - MUST come after admin routes
+  // Public site routes (with language prefix) - MUST come after admin routes
   ...createPublicRoutes(),
 
   { path: "*", element: <NotFoundPage /> },
 ]);
+

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { getLegalPages, createLegalPage, updateLegalPage, deleteLegalPage } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
@@ -31,7 +31,7 @@ interface LegalPage {
 
 export function LegalPagesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const queryClient = useQueryClient();
   usePageTitle("admin.legalPages");
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
@@ -81,28 +81,28 @@ export function LegalPagesPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       // Reset to first page when tenant changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       loadLegalPages();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTenantId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit]);
 
   const loadLegalPages = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getLegalPages(selectedTenantId, pagination.page, pagination.limit);
+      const response = await getLegalPages(selectedSiteId, pagination.page, pagination.limit);
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -128,12 +128,12 @@ export function LegalPagesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     if (!validateForm()) return;
 
     try {
       await createLegalPage({
-        tenantId: selectedTenantId!,
+        tenantId: selectedSiteId!,
         key: formData.key,
         translations: (() => {
           const translations: Array<{
@@ -252,7 +252,7 @@ export function LegalPagesPage() {
           })(),
           isActive: formData.isActive,
         },
-        selectedTenantId || undefined
+        selectedSiteId || undefined
       );
       setEditingId(null);
       resetForm();
@@ -268,7 +268,7 @@ export function LegalPagesPage() {
     if (!confirm(t("admin.confirmations.deleteLegalPage"))) return;
 
     try {
-      await deleteLegalPage(id, selectedTenantId || undefined);
+      await deleteLegalPage(id, selectedSiteId || undefined);
       await loadLegalPages();
       // Invalidate legal pages cache to refresh public pages
       queryClient.invalidateQueries({ queryKey: ["legal"] });
@@ -336,11 +336,11 @@ export function LegalPagesPage() {
   };
 
   // Wait for tenant context to initialize
-  if (isTenantLoading) {
+  if (isSiteLoading) {
     return <LoadingSpinnerComponent isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
+  if (!selectedSiteId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
@@ -359,7 +359,7 @@ export function LegalPagesPage() {
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
+          color: "white",
           textShadow: "0 2px 4px rgba(0,0,0,0.1)",
           margin: 0,
         }}>
@@ -676,8 +676,7 @@ export function LegalPagesPage() {
         </div>
       )}
 
-      <LoadingSpinnerComponent isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId && (
+      {!isCreating && !editingId && (
         <AdminResponsiveTable<LegalPage>
           data={legalPages}
           getItemId={(legalPage) => legalPage.id}
@@ -687,6 +686,7 @@ export function LegalPagesPage() {
             setSearchQuery(query);
             setPagination(prev => ({ ...prev, page: 1 }));
           }}
+          isLoading={isLoading}
           filterFn={(legalPage, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
@@ -700,7 +700,7 @@ export function LegalPagesPage() {
           columns={[
             {
               key: "key",
-              label: "Key",
+              label: t("admin.key"),
               render: (legalPage) => legalPage.key,
             },
             {

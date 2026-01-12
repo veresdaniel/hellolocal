@@ -30,6 +30,6 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
-  tenantId?: string; // Optional: if not provided, uses default tenant
+  siteId?: string; // Optional: if not provided, uses default site
 }
 

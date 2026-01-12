@@ -1,18 +1,15 @@
 // src/components/LanguageSelector.tsx
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { buildPath } from "../app/routing/buildPath";
-import { HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, type Lang } from "../app/config";
+import { buildUrl } from "../app/urls";
+import { useRouteCtx } from "../app/useRouteCtx";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
 
 export function LanguageSelector() {
   const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams<{ lang?: Lang; tenantSlug?: string }>();
-  
-  // Try to get lang from URL params (for public pages and admin pages)
-  const currentLang = params.lang;
-  const tenantSlug = HAS_MULTIPLE_TENANTS ? (params.tenantSlug || DEFAULT_TENANT_SLUG) : DEFAULT_TENANT_SLUG;
+  const { lang: currentLang, tenantKey } = useRouteCtx();
   const isAdminPage = location.pathname.includes("/admin");
 
   const handleLanguageChange = (lang: "hu" | "en" | "de") => {
@@ -28,7 +25,7 @@ export function LanguageSelector() {
         navigate(newPath + location.search, { replace: true });
       } else {
         // If no lang in path, build new path with language
-        const basePath = buildPath({ tenantSlug, lang, path: "" });
+        const basePath = buildUrl({ lang, siteKey, path: "" });
         navigate(basePath + location.search, { replace: true });
       }
     }

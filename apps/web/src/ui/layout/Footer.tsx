@@ -3,76 +3,60 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
-import { getSiteSettings } from "../../api/places.api";
-import { useTenantContext } from "../../app/tenant/useTenantContext";
-import { HAS_MULTIPLE_TENANTS } from "../../app/config";
 import type { Lang } from "../../app/config";
+import type { PlatformSettings } from "../../app/site/SiteOutletContext";
+import { buildUrl } from "../../app/urls";
+import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
 
 export function Footer({
   lang,
-  tenantSlug,
+  siteSlug,
+  platform,
   compact = false,
 }: {
   lang: Lang;
-  tenantSlug?: string;
+  siteSlug?: string; // Optional - not available on site list page
+  platform?: PlatformSettings; // Optional - not available on site list page
   compact?: boolean;
 }) {
   const { t } = useTranslation();
-  const { tenantSlug: contextTenantSlug } = useTenantContext();
-  const effectiveTenantSlug = tenantSlug || contextTenantSlug;
-  const tenantKey = HAS_MULTIPLE_TENANTS ? effectiveTenantSlug : undefined;
-  const base = HAS_MULTIPLE_TENANTS && effectiveTenantSlug ? `/${lang}/${effectiveTenantSlug}` : `/${lang}`;
+  const effectiveSiteSlug = siteSlug;
   const currentYear = new Date().getFullYear();
   const [isMobile, setIsMobile] = useState(false);
 
   // Check if there are any static pages
   const { data: staticPages = [] } = useQuery({
-    queryKey: ["staticPages", lang, tenantKey, "all"],
-    queryFn: () => getStaticPages(lang, tenantKey),
+    queryKey: ["staticPages", lang, effectiveSiteSlug, "all"],
+    queryFn: () => getStaticPages(lang, effectiveSiteSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const hasStaticPages = staticPages.length > 0;
   const queryClient = useQueryClient();
 
-  // Load site name and brand badge icon from settings
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, effectiveTenantSlug],
-    queryFn: () => getSiteSettings(lang, effectiveTenantSlug),
-    staleTime: 0, // Always consider stale to ensure fresh data on changes
-    refetchOnMount: true, // Refetch when component mounts
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-  });
+  // Use platform settings from prop (passed from SiteLayout) or try to get from context
+  const contextPlatformSettings = usePlatformSettingsContextOptional();
+  const platformSettings = platform || contextPlatformSettings;
 
-  // Listen for site settings changes from admin
+  // Listen for platform settings changes from admin
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      console.log("[Footer] Site settings changed, invalidating cache");
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, effectiveTenantSlug] });
+    if (!effectiveSiteSlug) return; // Skip if no site slug
+    
+    const handlePlatformSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, effectiveTenantSlug, queryClient]);
+  }, [lang, effectiveSiteSlug, queryClient]);
 
-  const siteName = siteSettings?.siteName;
-  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
-  
-  // Debug: log when siteName changes
-  useEffect(() => {
-    console.log("[Footer] siteName changed:", siteName);
-  }, [siteName]);
+  // Map new DTO structure to legacy format for compatibility
+  const siteName = platformSettings?.site?.name;
+  const brandBadgeIcon = platformSettings?.placeholders?.avatar;
   const [logoError, setLogoError] = useState(false);
-  
-  // Log when brandBadgeIcon changes
-  useEffect(() => {
-    if (brandBadgeIcon) {
-      console.log("[Footer] Setting brandBadgeIcon:", brandBadgeIcon);
-    }
-  }, [brandBadgeIcon]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -144,7 +128,7 @@ export function Footer({
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {hasStaticPages && (
                 <Link
-                  to={`${base}/static-pages`}
+                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" })}
                   style={{
                     color: "white",
                     textDecoration: "none",
@@ -162,7 +146,7 @@ export function Footer({
                 </Link>
               )}
               <Link
-                to={`${base}/impresszum`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "impresszum" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -179,7 +163,7 @@ export function Footer({
                 {t("public.legal.imprint.title")}
               </Link>
               <Link
-                to={`${base}/aszf`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "aszf" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -196,7 +180,7 @@ export function Footer({
                 {t("public.legal.terms.title")}
               </Link>
               <Link
-                to={`${base}/adatvedelem`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "adatvedelem" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -319,7 +303,7 @@ export function Footer({
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Link
-                to={`${base}/impresszum`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "impresszum" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -341,7 +325,7 @@ export function Footer({
                 {t("public.legal.imprint.title")}
               </Link>
               <Link
-                to={`${base}/aszf`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "aszf" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -363,7 +347,7 @@ export function Footer({
                 {t("public.legal.terms.title")}
               </Link>
               <Link
-                to={`${base}/adatvedelem`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "adatvedelem" })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -404,7 +388,7 @@ export function Footer({
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Link
-                to={`${base}`}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -427,7 +411,7 @@ export function Footer({
               </Link>
               {hasStaticPages && (
                 <Link
-                  to={`${base}/static-pages`}
+                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" })}
                   style={{
                     color: "white",
                     textDecoration: "none",

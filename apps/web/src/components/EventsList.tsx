@@ -2,11 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getEvents, getSiteSettings } from "../api/places.api";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { buildPath } from "../app/routing/buildPath";
+import { getEvents, getPlatformSettings } from "../api/places.api";
+import { useRouteCtx } from "../app/useRouteCtx";
+import { buildUrl } from "../app/urls";
 import { Link } from "react-router-dom";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { Badge } from "./Badge";
 
 interface EventsListProps {
@@ -15,8 +15,7 @@ interface EventsListProps {
 
 export function EventsList({ lang }: EventsListProps) {
   const { t } = useTranslation();
-  const { tenantSlug } = useTenantContext();
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  const { siteKey } = useRouteCtx();
   const queryClient = useQueryClient();
   
   const [isOpen, setIsOpen] = useState(() => {
@@ -62,41 +61,30 @@ export function EventsList({ lang }: EventsListProps) {
   }, [isOpen]);
 
   // Load site settings for default placeholder image
-  const { data: siteSettings, isLoading: isLoadingSiteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
+  const { data: platformSettings, isLoading: isLoadingPlatformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Listen for site settings changes from admin
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      // Invalidate and refetch site settings to update placeholder images
-      console.debug('[EventsList] Site settings changed, invalidating cache');
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    const handlePlatformSettingsChanged = () => {
+      // Invalidate and refetch platform settings to update placeholder images
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, tenantSlug, queryClient]);
+  }, [lang, siteKey, queryClient]);
 
-  // Debug: log site settings when they change
-  useEffect(() => {
-    if (siteSettings) {
-      console.debug('[EventsList] Site settings loaded:', {
-        defaultEventPlaceholderCardImage: siteSettings.defaultEventPlaceholderCardImage,
-        lang,
-        tenantSlug,
-      });
-    }
-  }, [siteSettings, lang, tenantSlug]);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", lang, tenantKey],
-    queryFn: () => getEvents(lang, undefined, undefined, 50, 0),
+    queryKey: ["events", lang, siteKey],
+    queryFn: () => getEvents(lang, siteKey ?? "", undefined, undefined, 50, 0),
     staleTime: 5 * 60 * 1000, // 5 minutes
     select: (data) => {
       // Filter: only show events that have showOnMap = true and haven't ended
@@ -402,7 +390,7 @@ export function EventsList({ lang }: EventsListProps) {
                 }
                 // Determine image URL - use event image or placeholder
                 const eventImage = event.heroImage?.trim() || null;
-                const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                const placeholderImage = platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
                 const imageUrl = eventImage || placeholderImage;
                 const hasImage = !!imageUrl && imageUrl.length > 0;
                 
@@ -414,7 +402,7 @@ export function EventsList({ lang }: EventsListProps) {
                 return (
                   <Link
                     key={event.id}
-                    to={buildPath({ tenantSlug, lang, path: `event/${event.slug}` })}
+                    to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
                     style={{
                       display: "block",
                       background: "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",

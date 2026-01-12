@@ -2,8 +2,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getPlaces, getEvents, getMapSettings, getSiteSettings } from "../api/places.api";
+import { useRouteCtx } from "../app/useRouteCtx";
+import { getPlaces, getEvents, getMapSettings, getPlatformSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebSiteSchema } from "../seo/schemaOrg";
 import { MapComponent } from "../components/MapComponent";
@@ -12,16 +12,17 @@ import { PlacesListView } from "../components/PlacesListView";
 import { EventsList } from "../components/EventsList";
 import { Header } from "../ui/layout/Header";
 import { Footer } from "../ui/layout/Footer";
-import { buildPath } from "../app/routing/buildPath";
+import { buildUrl } from "../app/urls";
 import { useNavigate } from "react-router-dom";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ErrorState } from "../components/ErrorState";
 import { useFiltersStore } from "../stores/useFiltersStore";
 import { useViewStore } from "../stores/useViewStore";
 
 export function HomePage() {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -66,8 +67,7 @@ export function HomePage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Get tenantKey for API call (only if multi-tenant mode)
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  // Get siteKey for API call (only if multi-site mode)
 
   // Listen for place changes from admin panel to refresh map view
   useEffect(() => {
@@ -98,9 +98,9 @@ export function HomePage() {
   // Load map settings first to avoid flickering
   // Don't cache too aggressively - need to refresh on lang/tenant change
   const { data: mapSettings, isLoading: isLoadingMapSettings, dataUpdatedAt } = useQuery({
-    queryKey: ["mapSettings", lang, tenantKey],
+    queryKey: ["mapSettings", lang, siteKey],
     queryFn: async () => {
-      const result = await getMapSettings(lang, tenantKey);
+      const result = await getMapSettings(lang, siteKey);
       return result;
     },
     staleTime: 0, // Always consider stale to ensure fresh data on lang/tenant change
@@ -110,9 +110,9 @@ export function HomePage() {
   });
 
   // Load site settings for SEO
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -123,16 +123,17 @@ export function HomePage() {
 
   // Load events for "hasEventToday" filter
   const { data: eventsData } = useQuery({
-    queryKey: ["events", lang, tenantKey],
-    queryFn: () => getEvents(lang, undefined, undefined, 100, 0, tenantKey),
+    queryKey: ["events", lang, siteKey],
+    queryFn: () => getEvents(lang, siteKey || "default", undefined, undefined, 100, 0),
+    enabled: !!siteKey, // Only fetch if we have a siteKey
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: placesData, isLoading: isLoadingPlaces, isError: isPlacesError, error: placesError } = useQuery({
-    queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands],
+    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands],
     queryFn: () => getPlaces(
       lang,
-      tenantKey,
+      siteKey,
       selectedCategories.length > 0 ? selectedCategories : undefined,
       selectedPriceBands.length > 0 ? selectedPriceBands : undefined
     ),
@@ -243,29 +244,29 @@ export function HomePage() {
   }, [within30Minutes, mapCenter, userLocation]);
 
   const siteUrl = window.location.origin;
-  const siteName = siteSettings?.siteName || t("common.siteName");
+  const siteName = platformSettings?.siteName || t("common.siteName");
 
   useSeo({
-    title: siteSettings?.seoTitle || t("public.home.title"),
-    description: siteSettings?.seoDescription || t("public.home.description"),
-    image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    title: platformSettings?.seoTitle || t("public.home.title"),
+    description: platformSettings?.seoDescription || t("public.home.description"),
+    image: platformSettings?.defaultPlaceholderCardImage || undefined,
     og: {
       type: "website",
-      title: siteSettings?.seoTitle || siteName || t("public.home.title"),
-      description: siteSettings?.seoDescription || t("public.home.description"),
-      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+      title: platformSettings?.seoTitle || siteName || t("public.home.title"),
+      description: platformSettings?.seoDescription || t("public.home.description"),
+      image: platformSettings?.defaultPlaceholderCardImage || undefined,
     },
     twitter: {
-      card: siteSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: siteSettings?.seoTitle || siteName || t("public.home.title"),
-      description: siteSettings?.seoDescription || t("public.home.description"),
-      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+      title: platformSettings?.seoTitle || siteName || t("public.home.title"),
+      description: platformSettings?.seoDescription || t("public.home.description"),
+      image: platformSettings?.defaultPlaceholderCardImage || undefined,
     },
     schemaOrg: {
       type: "WebSite",
       data: {
         name: siteName,
-        description: siteSettings?.seoDescription || t("public.home.description"),
+        description: platformSettings?.seoDescription || t("public.home.description"),
         url: siteUrl,
         potentialAction: {
           "@type": "SearchAction",
@@ -278,7 +279,7 @@ export function HomePage() {
       },
     },
   }, {
-    siteName: siteSettings?.siteName,
+    siteName: platformSettings?.siteName,
   });
 
   // Helper function to calculate distance in km using Haversine formula
@@ -383,7 +384,7 @@ export function HomePage() {
     lng: place.location!.lng!,
     name: place.name,
     onClick: place.slug ? () => {
-      const path = buildPath({ tenantSlug, lang, path: `place/${place.slug}` });
+      const path = buildUrl({ lang, siteKey: siteKey, path: `place/${place.slug}` });
       navigate(path);
     } : undefined, // Only allow navigation if slug exists
   }));
@@ -396,20 +397,20 @@ export function HomePage() {
   useEffect(() => {
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
-  }, [lang, tenantKey]);
+  }, [lang, siteKey]);
   
   // Force reset and update when lang or tenant changes (ensures fresh initialization)
   useEffect(() => {
     // Reset flags when lang or tenant changes
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
-  }, [lang, tenantKey]);
+  }, [lang, siteKey]);
   
   // Track previous mapSettings values to detect actual changes
   const prevMapSettingsRef = useRef<{ lat: number | null; lng: number | null; zoom: number | null } | null>(null);
   // Initialize with null to detect initial mount
   const prevLangRef = useRef<string | null>(null);
-  const prevTenantKeyRef = useRef<string | undefined>(undefined);
+  const prevSiteKeyRef = useRef<string | undefined>(undefined);
   
   // Update map center when mapSettings loads or changes (including on lang/tenant change)
   // This is the primary effect that should always run when mapSettings is available
@@ -419,20 +420,20 @@ export function HomePage() {
       return;
     }
     
-    // Check if lang or tenantKey changed (force update even if mapSettings values are the same)
+    // Check if lang or siteKey changed (force update even if mapSettings values are the same)
     // On initial mount, prevLangRef will be null, so we want to update
     const isInitialMount = prevLangRef.current === null;
     const langChanged = !isInitialMount && prevLangRef.current !== lang;
-    const tenantKeyChanged = !isInitialMount && prevTenantKeyRef.current !== tenantKey;
+    const siteKeyChanged = !isInitialMount && prevSiteKeyRef.current !== siteKey;
     const mapSettingsChanged = prevMapSettingsRef.current === null || 
       prevMapSettingsRef.current.lat !== mapSettings?.lat ||
       prevMapSettingsRef.current.lng !== mapSettings?.lng ||
       prevMapSettingsRef.current.zoom !== mapSettings?.zoom;
     
     // Update refs
-    if (isInitialMount || langChanged || tenantKeyChanged) {
+    if (isInitialMount || langChanged || siteKeyChanged) {
       prevLangRef.current = lang;
-      prevTenantKeyRef.current = tenantKey;
+      prevSiteKeyRef.current = siteKey;
     }
     
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
@@ -443,7 +444,7 @@ export function HomePage() {
         Math.abs(mapCenter.lat - mapSettings.lat) < 0.0001 && 
         Math.abs(mapCenter.lng - mapSettings.lng) < 0.0001;
       
-      if (isInitialMount || langChanged || tenantKeyChanged || mapSettingsChanged || !hasInitializedCenter.current || !currentCenterMatches) {
+      if (isInitialMount || langChanged || siteKeyChanged || mapSettingsChanged || !hasInitializedCenter.current || !currentCenterMatches) {
         setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
         hasInitializedCenter.current = true;
         prevMapSettingsRef.current = { lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? null };
@@ -469,7 +470,7 @@ export function HomePage() {
     if (!isLoadingPlaces) {
       initialPlacesLoaded.current = true;
     }
-  }, [mapSettings, isLoadingPlaces, isLoadingMapSettings, allPlacesWithCoordinates.length, lang, tenantKey, setMapCenter, dataUpdatedAt, mapCenter]);
+  }, [mapSettings, isLoadingPlaces, isLoadingMapSettings, allPlacesWithCoordinates.length, lang, siteKey, setMapCenter, dataUpdatedAt, mapCenter]);
 
   // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
   useEffect(() => {
@@ -567,9 +568,26 @@ export function HomePage() {
     }
   }, [mapSettings, isLoadingMapSettings, mapCenter, setMapCenter]);
 
-  // Don't render map until settings are loaded to avoid flickering
-  if (isLoadingMapSettings) {
-    return <LoadingSpinner isLoading={true} />;
+  // Show spinner while critical data is loading (map settings OR places)
+  // This prevents showing empty page with just header/footer
+  // Show spinner if:
+  // 1. Map settings are loading
+  // 2. Places are loading AND we don't have cached data yet
+  const isCriticalDataLoading = isLoadingMapSettings || (isLoadingPlaces && !placesData);
+  
+  if (isCriticalDataLoading) {
+    return <LoadingSpinner isLoading={true} delay={200} />;
+  }
+  
+  // If we have an error loading places, show error state
+  if (isPlacesError && !placesData) {
+    return (
+      <ErrorState
+        title={t("error.errorOccurred")}
+        message={t("public.errorLoadingPlaces")}
+        variant="minimal"
+      />
+    );
   }
 
   return (
@@ -678,11 +696,11 @@ export function HomePage() {
                 padding: 0,
               }}
             >
-              <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+              <Footer lang={lang} siteSlug={siteKey} compact={true} />
             </div>
           ) : (
             <div style={{ flexShrink: 0 }}>
-              <Footer lang={lang} tenantSlug={tenantSlug} compact={true} />
+              <Footer lang={lang} siteSlug={siteKey} compact={true} />
             </div>
           )}
           {/* MapFilters at top level to be above footer */}
@@ -720,7 +738,7 @@ export function HomePage() {
             onRainSafeChange={setRainSafe}
           />
           {/* Full footer for list view */}
-          <Footer lang={lang} tenantSlug={tenantSlug} />
+          <Footer lang={lang} siteSlug={siteKey} />
         </>
       )}
     </div>

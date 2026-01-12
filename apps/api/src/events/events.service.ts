@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { Lang, SlugEntityType } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
+import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 
 type ListArgs = {
   lang: string;
-  tenantKey?: string;
+  siteKey?: string;
   category?: string;
   placeId?: string;
   limit: number;
@@ -19,7 +19,7 @@ type ListArgs = {
 export class EventsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tenantResolver: TenantKeyResolverService,
+    private readonly siteResolver: SiteKeyResolverService,
     private readonly slugResolver: SlugResolverService
   ) {}
 
@@ -36,11 +36,11 @@ export class EventsService {
    */
   async list(args: ListArgs) {
     const lang = this.normalizeLang(args.lang);
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
+    const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     const now = new Date();
     const where: Prisma.EventWhereInput = {
-      tenantId: tenant.tenantId,
+      siteId: site.siteId,
       isActive: true,
       // Only show events that haven't ended yet
       // If event has endDate, it must be in the future
@@ -55,11 +55,11 @@ export class EventsService {
       // Find category by name in translations
       const category = await this.prisma.category.findFirst({
         where: {
-          tenantId: tenant.tenantId,
+          siteId: site.siteId,
           isActive: true,
           translations: {
             some: {
-              lang: tenant.lang,
+              lang: site.lang,
               name: { equals: args.category, mode: "insensitive" },
             },
           },
@@ -118,7 +118,7 @@ export class EventsService {
 
     // Helper function to get translation with fallback
     const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
-      const requested = translations.find((t) => t.lang === tenant.lang);
+      const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
       return translation?.[field] ?? null;
@@ -130,8 +130,8 @@ export class EventsService {
         // Try to get slug in requested language
         let slug = await this.prisma.slug.findFirst({
           where: {
-            tenantId: tenant.tenantId,
-            lang: tenant.lang,
+            siteId: site.siteId,
+            lang: site.lang,
             entityType: SlugEntityType.event,
             entityId: event.id,
             isPrimary: true,
@@ -141,10 +141,10 @@ export class EventsService {
         });
         
         // Fallback to Hungarian if not found and requested language is not Hungarian
-        if (!slug && tenant.lang !== Lang.hu) {
+        if (!slug && site.lang !== Lang.hu) {
           slug = await this.prisma.slug.findFirst({
             where: {
-              tenantId: tenant.tenantId,
+              siteId: site.siteId,
               lang: Lang.hu,
               entityType: SlugEntityType.event,
               entityId: event.id,
@@ -155,7 +155,7 @@ export class EventsService {
           });
         }
 
-        const eventTranslation = event.translations.find((t) => t.lang === tenant.lang) ||
+        const eventTranslation = event.translations.find((t) => t.lang === site.lang) ||
           event.translations.find((t) => t.lang === "hu");
 
         const categoryName = event.category?.translations
@@ -175,8 +175,8 @@ export class EventsService {
         if (event.placeId) {
           let placeSlugRecord = await this.prisma.slug.findFirst({
             where: {
-              tenantId: tenant.tenantId,
-              lang: tenant.lang,
+              siteId: site.siteId,
+              lang: site.lang,
               entityType: SlugEntityType.place,
               entityId: event.placeId,
               isPrimary: true,
@@ -186,10 +186,10 @@ export class EventsService {
           });
           
           // Fallback to Hungarian if not found
-          if (!placeSlugRecord && tenant.lang !== Lang.hu) {
+          if (!placeSlugRecord && site.lang !== Lang.hu) {
             placeSlugRecord = await this.prisma.slug.findFirst({
               where: {
-                tenantId: tenant.tenantId,
+                siteId: site.siteId,
                 lang: Lang.hu,
                 entityType: SlugEntityType.place,
                 entityId: event.placeId,
@@ -202,7 +202,7 @@ export class EventsService {
           
           placeSlug = placeSlugRecord?.slug ?? null;
 
-          const placeTranslation = event.place?.translations.find((t) => t.lang === tenant.lang) ||
+          const placeTranslation = event.place?.translations.find((t) => t.lang === site.lang) ||
             event.place?.translations.find((t) => t.lang === "hu");
           placeName = placeTranslation?.name ?? null;
         }
@@ -210,7 +210,7 @@ export class EventsService {
         return {
           id: event.id,
           slug: slug?.slug ?? event.id, // Fallback to ID if no slug
-          tenantKey: tenant.canonicalTenantKey ?? null,
+          siteKey: site.canonicalSiteKey ?? null,
           category: categoryName,
           name: eventTranslation?.title ?? "(missing translation)",
           shortDescription: eventTranslation?.shortDescription ?? null,
@@ -242,15 +242,16 @@ export class EventsService {
 
   /**
    * Gets a single event by its public slug.
+   * Uses resolve → by-id pattern for consistency.
    */
-  async detail(args: { lang: string; tenantKey?: string; slug: string }) {
+  async detail(args: { lang: string; siteKey?: string; slug: string }) {
     const lang = this.normalizeLang(args.lang);
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
+    const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     // Resolve slug to get the eventId
     const r = await this.slugResolver.resolve({
-      tenantId: tenant.tenantId,
-      lang: tenant.lang,
+      siteId: site.siteId,
+      lang: site.lang,
       slug: args.slug,
     });
 
@@ -258,9 +259,34 @@ export class EventsService {
       throw new NotFoundException("Not an event slug");
     }
 
+    // Fetch event by ID using detailById (reuse logic, avoid duplication)
+    const eventData = await this.detailById({
+      lang: args.lang,
+      siteKey: args.siteKey,
+      eventId: r.entityId,
+    });
+
+    // Override slug and redirect info from resolution
+    return {
+      ...eventData,
+      slug: r.canonicalSlug,
+      redirected: r.redirected,
+      siteRedirected: site.redirected,
+    };
+  }
+
+  /**
+   * Gets a single event by its entity ID (stable, future-proof).
+   * Returns full event details including SEO data.
+   * This method is used after slug resolution to fetch event data by ID.
+   */
+  async detailById(args: { lang: string; siteKey?: string; eventId: string }) {
+    const lang = this.normalizeLang(args.lang);
+    const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
+
     // Fetch event by ID
     const event = await this.prisma.event.findUnique({
-      where: { id: r.entityId },
+      where: { id: args.eventId },
       include: {
         place: {
           include: {
@@ -294,17 +320,34 @@ export class EventsService {
       },
     });
 
-    if (!event || !event.isActive) throw new NotFoundException("Event not found");
+    if (!event || !event.isActive || event.siteId !== site.siteId) {
+      throw new NotFoundException("Event not found");
+    }
+
+    // Get canonical slug for this event
+    const canonicalSlugRecord = await this.prisma.slug.findFirst({
+      where: {
+        siteId: site.siteId,
+        lang: site.lang,
+        entityType: SlugEntityType.event,
+        entityId: args.eventId,
+        isPrimary: true,
+        isActive: true,
+      },
+      select: { slug: true },
+    });
+
+    const canonicalSlug = canonicalSlugRecord?.slug ?? args.eventId;
 
     // Helper function to get translation with fallback
     const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
-      const requested = translations.find((t) => t.lang === tenant.lang);
+      const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
       return translation?.[field] ?? null;
     };
 
-    const eventTranslation = event.translations.find((t) => t.lang === tenant.lang) ||
+    const eventTranslation = event.translations.find((t) => t.lang === site.lang) ||
       event.translations.find((t) => t.lang === "hu");
 
     const categoryName = event.category?.translations
@@ -324,8 +367,8 @@ export class EventsService {
     if (event.placeId) {
       const placeSlugRecord = await this.prisma.slug.findFirst({
         where: {
-          tenantId: tenant.tenantId,
-          lang: tenant.lang,
+          siteId: site.siteId,
+          lang: site.lang,
           entityType: SlugEntityType.place,
           entityId: event.placeId,
           isPrimary: true,
@@ -335,17 +378,17 @@ export class EventsService {
       });
       placeSlug = placeSlugRecord?.slug ?? null;
 
-      const placeTranslation = event.place?.translations.find((t) => t.lang === tenant.lang) ||
+      const placeTranslation = event.place?.translations.find((t) => t.lang === site.lang) ||
         event.place?.translations.find((t) => t.lang === "hu");
       placeName = placeTranslation?.name ?? null;
     }
 
     return {
       id: event.id,
-      slug: r.canonicalSlug,
-      redirected: r.redirected,
-      tenantKey: tenant.canonicalTenantKey ?? null,
-      tenantRedirected: tenant.redirected,
+      slug: canonicalSlug,
+      redirected: false, // No redirect when fetching by ID
+      siteKey: site.canonicalSiteKey ?? null,
+      siteRedirected: site.redirected,
       category: categoryName,
       name: eventTranslation?.title ?? "(missing translation)",
       shortDescription: eventTranslation?.shortDescription ?? null,

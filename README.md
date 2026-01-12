@@ -25,7 +25,7 @@
 ### Admin Funkciók
 - **Role-based hozzáférés** (superadmin, admin, editor, viewer)
 - **2FA autentikáció** - TOTP alapú
-- **Többbérlős (Multi-tenant)** rendszer
+- **Többbérlős (Multi-site)** rendszer - [Site Architecture dokumentáció](./docs/site-architecture.md)
 - **Automatikus slug generálás**
 - **Push értesítések** - Web Push API
 

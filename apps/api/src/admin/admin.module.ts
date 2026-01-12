@@ -10,14 +10,20 @@ import { AdminTownService } from "./admin-town.service";
 import { AdminPlaceService } from "./admin-place.service";
 import { AdminLegalService } from "./admin-legal.service";
 import { AdminStaticPageService } from "./admin-static-page.service";
-import { AdminTenantService } from "./admin-tenant.service";
+import { AdminSiteService } from "./admin-site.service";
 import { AdminAppSettingsService } from "./admin-app-settings.service";
 import { AdminEventService } from "./admin-event.service";
+import { AdminBrandService } from "./admin-brand.service";
+import { AdminSiteInstanceService } from "./admin-site-instance.service";
+import { AdminSiteMembershipService } from "./admin-site-membership.service";
+import { AdminPlaceMembershipService } from "./admin-place-membership.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { AuthModule } from "../auth/auth.module";
+import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule],
   controllers: [AdminController],
   providers: [
     AdminCategoryService,
@@ -28,9 +34,13 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminPlaceService,
     AdminLegalService,
     AdminStaticPageService,
-    AdminTenantService,
+    AdminSiteService,
     AdminAppSettingsService,
     AdminEventService,
+    AdminBrandService,
+    AdminSiteInstanceService,
+    AdminSiteMembershipService,
+    AdminPlaceMembershipService,
     // AdminEventLogService is now provided by EventLogModule
   ],
   exports: [
@@ -42,9 +52,13 @@ import { NotificationsModule } from "../notifications/notifications.module";
     AdminPlaceService,
     AdminLegalService,
     AdminStaticPageService,
-    AdminTenantService,
+    AdminSiteService,
     AdminAppSettingsService,
     AdminEventService,
+    AdminBrandService,
+    AdminSiteInstanceService,
+    AdminSiteMembershipService,
+    AdminPlaceMembershipService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

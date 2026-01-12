@@ -15,7 +15,8 @@ export type LegalPageDto = {
 
 export function getLegalPage(
   lang: string,
+  tenantKey: string,
   pageKey: "imprint" | "terms" | "privacy"
 ) {
-  return apiGetPublic<LegalPageDto>(`/${lang}/legal/${pageKey}`);
+  return apiGetPublic<LegalPageDto>(`/public/${lang}/${tenantKey}/legal/${pageKey}`);
 }

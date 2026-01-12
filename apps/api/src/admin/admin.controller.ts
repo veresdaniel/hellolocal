@@ -25,12 +25,18 @@ import { AdminTownService, CreateTownDto, UpdateTownDto } from "./admin-town.ser
 import { AdminPlaceService, CreatePlaceDto, UpdatePlaceDto } from "./admin-place.service";
 import { AdminLegalService, CreateLegalPageDto, UpdateLegalPageDto } from "./admin-legal.service";
 import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from "./admin-static-page.service";
-import { AdminTenantService, CreateTenantDto, UpdateTenantDto } from "./admin-tenant.service";
+import { AdminSiteService, CreateSiteDto, UpdateSiteDto } from "./admin-site.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
 import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
 import { AdminEventLogService, EventLogFilterDto } from "./admin-eventlog.service";
+import { AdminBrandService, CreateBrandDto, UpdateBrandDto } from "./admin-brand.service";
+import { AdminSiteInstanceService, CreateSiteInstanceDto, UpdateSiteInstanceDto } from "./admin-site-instance.service";
+import { AdminSiteMembershipService, CreateSiteMembershipDto, UpdateSiteMembershipDto } from "./admin-site-membership.service";
+import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembershipDto } from "./admin-place-membership.service";
+import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 
 /**
  * Admin controller for CRUD operations on all entities.
@@ -53,62 +59,69 @@ export class AdminController {
     private readonly placeService: AdminPlaceService,
     private readonly legalService: AdminLegalService,
     private readonly staticPageService: AdminStaticPageService,
-    private readonly tenantService: AdminTenantService,
+    private readonly siteService: AdminSiteService,
     private readonly appSettingsService: AdminAppSettingsService,
     private readonly eventService: AdminEventService,
     private readonly eventLogService: AdminEventLogService,
-    private readonly twoFactorService: TwoFactorService
+    private readonly brandService: AdminBrandService,
+    private readonly siteInstanceService: AdminSiteInstanceService,
+    private readonly siteMembershipService: AdminSiteMembershipService,
+    private readonly placeMembershipService: AdminPlaceMembershipService,
+    private readonly rbacService: RbacService,
+    private readonly twoFactorService: TwoFactorService,
+    private readonly platformSettingsService: PlatformSettingsService
   ) {}
 
   // ==================== Categories ====================
 
   @Get("/categories")
   async getCategories(
-    @CurrentUser() user: { tenantIds: string[] },
-    @Query("tenantId") tenantIdParam?: string,
+    @CurrentUser() user: { siteIds: string[] },
+    @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    // Use tenantId from query if provided, otherwise use first tenant from user
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    // Use siteId from query if provided, otherwise use first site from user
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    // Verify user has access to this tenant
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    // Verify user has access to this site
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.categoryService.findAll(tenantId, pageNum, limitNum);
+    return this.categoryService.findAll(siteId, pageNum, limitNum);
   }
 
   @Get("/categories/:id")
-  async getCategory(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
-    const tenantId = user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+  async getCategory(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
+    const siteId = user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    return this.categoryService.findOne(id, tenantId);
+    return this.categoryService.findOne(id, siteId);
   }
 
   @Post("/categories")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createCategory(
     @Body() dto: CreateCategoryDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    // Use tenantId from user if not provided
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    // Use siteId from user if not provided
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.categoryService.create(dto);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "category",
@@ -120,24 +133,25 @@ export class AdminController {
   }
 
   @Put("/categories/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateCategory(
     @Param("id") id: string,
     @Body() dto: UpdateCategoryDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.categoryService.update(id, tenantId, dto);
+    const result = await this.categoryService.update(id, siteId, dto);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "category",
@@ -149,23 +163,24 @@ export class AdminController {
   }
 
   @Delete("/categories/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteCategory(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.categoryService.remove(id, tenantId);
+    const result = await this.categoryService.remove(id, siteId);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "category",
@@ -179,65 +194,66 @@ export class AdminController {
   @Put("/categories/reorder")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async reorderCategories(
-    @Body() body: { tenantId: string; updates: Array<{ id: string; parentId: string | null; order: number }> },
-    @CurrentUser() user: { tenantIds: string[] }
+    @Body() body: { siteId: string; updates: Array<{ id: string; parentId: string | null; order: number }> },
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = body.tenantId || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = body.siteId || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.categoryService.reorder(tenantId, body.updates);
+    return this.categoryService.reorder(siteId, body.updates);
   }
 
   // ==================== Tags ====================
 
   @Get("/tags")
   async getTags(
-    @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.tagService.findAll(tenantId, page, limit);
+    return this.tagService.findAll(siteId, page, limit);
   }
 
   @Get("/tags/:id")
-  async getTag(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
-    const tenantId = user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+  async getTag(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
+    const siteId = user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    return this.tagService.findOne(id, tenantId);
+    return this.tagService.findOne(id, siteId);
   }
 
   @Post("/tags")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createTag(
     @Body() dto: CreateTagDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.tagService.create(dto);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "tag",
@@ -249,24 +265,25 @@ export class AdminController {
   }
 
   @Put("/tags/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateTag(
     @Param("id") id: string,
     @Body() dto: UpdateTagDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.tagService.update(id, tenantId, dto);
+    const result = await this.tagService.update(id, siteId, dto);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "tag",
@@ -278,23 +295,24 @@ export class AdminController {
   }
 
   @Delete("/tags/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteTag(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.tagService.remove(id, tenantId);
+    const result = await this.tagService.remove(id, siteId);
     
     // Log the action
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "tag",
@@ -309,47 +327,48 @@ export class AdminController {
 
   @Get("/price-bands")
   async getPriceBands(
-    @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.priceBandService.findAll(tenantId, page, limit);
+    return this.priceBandService.findAll(siteId, page, limit);
   }
 
   @Get("/price-bands/:id")
-  async getPriceBand(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
-    const tenantId = user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+  async getPriceBand(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
+    const siteId = user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    return this.priceBandService.findOne(id, tenantId);
+    return this.priceBandService.findOne(id, siteId);
   }
 
   @Post("/price-bands")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createPriceBand(
     @Body() dto: CreatePriceBandDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.priceBandService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "priceBand",
@@ -361,23 +380,24 @@ export class AdminController {
   }
 
   @Put("/price-bands/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updatePriceBand(
     @Param("id") id: string,
     @Body() dto: UpdatePriceBandDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.priceBandService.update(id, tenantId, dto);
+    const result = await this.priceBandService.update(id, siteId, dto);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "priceBand",
@@ -389,22 +409,23 @@ export class AdminController {
   }
 
   @Delete("/price-bands/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deletePriceBand(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.priceBandService.remove(id, tenantId);
+    const result = await this.priceBandService.remove(id, siteId);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "priceBand",
@@ -419,54 +440,55 @@ export class AdminController {
 
   @Get("/towns")
   async getTowns(
-    @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.townService.findAll(tenantId, page, limit);
+    return this.townService.findAll(siteId, page, limit);
   }
 
   @Get("/towns/:id")
   async getTown(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.townService.findOne(id, tenantId);
+    return this.townService.findOne(id, siteId);
   }
 
   @Post("/towns")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createTown(
     @Body() dto: CreateTownDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.townService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "town",
@@ -478,23 +500,24 @@ export class AdminController {
   }
 
   @Put("/towns/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateTown(
     @Param("id") id: string,
     @Body() dto: UpdateTownDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.townService.update(id, tenantId, dto);
+    const result = await this.townService.update(id, siteId, dto);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "town",
@@ -506,22 +529,23 @@ export class AdminController {
   }
 
   @Delete("/towns/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteTown(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.townService.remove(id, tenantId);
+    const result = await this.townService.remove(id, siteId);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "town",
@@ -536,54 +560,55 @@ export class AdminController {
 
   @Get("/places")
   async getPlaces(
-    @Query("tenantId") tenantIdParam: string | undefined,
+    @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.placeService.findAll(tenantId, page, limit);
+    return this.placeService.findAll(siteId, page, limit);
   }
 
   @Get("/places/:id")
   async getPlace(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.placeService.findOne(id, tenantId);
+    return this.placeService.findOne(id, siteId);
   }
 
   @Post("/places")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createPlace(
     @Body() dto: CreatePlaceDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.placeService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "place",
@@ -595,23 +620,24 @@ export class AdminController {
   }
 
   @Put("/places/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updatePlace(
     @Param("id") id: string,
     @Body() dto: UpdatePlaceDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.placeService.update(id, tenantId, dto);
+    const result = await this.placeService.update(id, siteId, dto, user.id);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "place",
@@ -623,22 +649,23 @@ export class AdminController {
   }
 
   @Delete("/places/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deletePlace(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.placeService.remove(id, tenantId);
+    const result = await this.placeService.remove(id, siteId, user.id);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "place",
@@ -653,70 +680,71 @@ export class AdminController {
 
   @Get("/legal-pages")
   async getLegalPages(
-    @CurrentUser() user: { tenantIds: string[] },
-    @Query("tenantId") tenantIdParam?: string,
+    @CurrentUser() user: { siteIds: string[] },
+    @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.legalService.findAll(tenantId, pageNum, limitNum);
+    return this.legalService.findAll(siteId, pageNum, limitNum);
   }
 
   @Get("/legal-pages/:id")
   async getLegalPage(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.legalService.findOne(id, tenantId);
+    return this.legalService.findOne(id, siteId);
   }
 
   @Get("/legal-pages/key/:key")
   async getLegalPageByKey(
     @Param("key") key: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.legalService.findByKey(key, tenantId);
+    return this.legalService.findByKey(key, siteId);
   }
 
   @Post("/legal-pages")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createLegalPage(
     @Body() dto: CreateLegalPageDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.legalService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "legalPage",
@@ -728,23 +756,24 @@ export class AdminController {
   }
 
   @Put("/legal-pages/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateLegalPage(
     @Param("id") id: string,
     @Body() dto: UpdateLegalPageDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.legalService.update(id, tenantId, dto);
+    const result = await this.legalService.update(id, siteId, dto);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "legalPage",
@@ -756,22 +785,23 @@ export class AdminController {
   }
 
   @Delete("/legal-pages/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteLegalPage(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.legalService.remove(id, tenantId);
+    const result = await this.legalService.remove(id, siteId);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "legalPage",
@@ -786,55 +816,56 @@ export class AdminController {
 
   @Get("/static-pages")
   async getStaticPages(
-    @CurrentUser() user: { tenantIds: string[] },
-    @Query("tenantId") tenantIdParam?: string,
+    @CurrentUser() user: { siteIds: string[] },
+    @Query("siteId") siteIdParam?: string,
     @Query("category") category?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.staticPageService.findAll(tenantId, category as any, pageNum, limitNum);
+    return this.staticPageService.findAll(siteId, category as any, pageNum, limitNum);
   }
 
   @Get("/static-pages/:id")
   async getStaticPage(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    return this.staticPageService.findOne(id, tenantId);
+    return this.staticPageService.findOne(id, siteId);
   }
 
   @Post("/static-pages")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createStaticPage(
     @Body() dto: CreateStaticPageDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new Error("User does not have access to this site");
     }
     const result = await this.staticPageService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "staticPage",
@@ -846,23 +877,24 @@ export class AdminController {
   }
 
   @Put("/static-pages/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateStaticPage(
     @Param("id") id: string,
     @Body() dto: UpdateStaticPageDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.staticPageService.update(id, tenantId, dto);
+    const result = await this.staticPageService.update(id, siteId, dto);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "staticPage",
@@ -874,22 +906,23 @@ export class AdminController {
   }
 
   @Delete("/static-pages/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteStaticPage(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.staticPageService.remove(id, tenantId);
+    const result = await this.staticPageService.remove(id, siteId);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "staticPage",
@@ -905,12 +938,12 @@ export class AdminController {
   @Get("/users")
   @Roles(UserRole.superadmin, UserRole.admin)
   async getUsers(
-    @Query("tenantId") tenantId?: string,
-    @CurrentUser() user?: { role: UserRole; tenantIds: string[] }
+    @Query("siteId") siteId?: string,
+    @CurrentUser() user?: { role: UserRole; siteIds: string[] }
   ) {
-    // Superadmin and admin can see all users, others only see users from their tenants
-    const filterTenantId = (user?.role === UserRole.superadmin || user?.role === UserRole.admin) ? tenantId : user?.tenantIds[0];
-    return this.usersService.findAll(filterTenantId);
+    // Superadmin and admin can see all users, others only see users from their sites
+    const filterSiteId = (user?.role === UserRole.superadmin || user?.role === UserRole.admin) ? siteId : user?.siteIds[0];
+    return this.usersService.findAll(filterSiteId);
   }
 
   @Get("/users/me")
@@ -938,15 +971,15 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async createUser(
     @Body() dto: CreateUserDto,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     const result = await this.usersService.create(dto, user.role);
     
-    // Log to first tenant of the created user
-    const tenantId = dto.tenantIds?.[0] || user.tenantIds[0];
-    if (tenantId) {
+    // Log to first site of the created user
+    const siteId = dto.siteIds?.[0] || user.siteIds[0];
+    if (siteId) {
       await this.eventLogService.create({
-        tenantId,
+        siteId,
         userId: user.id,
         action: "create",
         entityType: "user",
@@ -962,18 +995,18 @@ export class AdminController {
   async updateUser(
     @Param("id") id: string,
     @Body() dto: UpdateUserDto,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     // Users can only update themselves, unless they are superadmin or admin
     if (user.id !== id && user.role !== UserRole.superadmin && user.role !== UserRole.admin) {
       throw new ForbiddenException("You can only update your own profile");
     }
-    const result = await this.usersService.updateUserWithTenants(id, dto, user.role);
+    const result = await this.usersService.updateUserWithSites(id, dto, user.role);
     
-    const tenantId = user.tenantIds[0];
-    if (tenantId) {
+    const siteId = user.siteIds[0];
+    if (siteId) {
       await this.eventLogService.create({
-        tenantId,
+        siteId,
         userId: user.id,
         action: "update",
         entityType: "user",
@@ -989,14 +1022,14 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async deleteUser(
     @Param("id") id: string,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     const result = await this.usersService.remove(id, user.role);
     
-    const tenantId = user.tenantIds[0];
-    if (tenantId) {
+    const siteId = user.siteIds[0];
+    if (siteId) {
       await this.eventLogService.create({
-        tenantId,
+        siteId,
         userId: user.id,
         action: "delete",
         entityType: "user",
@@ -1015,86 +1048,86 @@ export class AdminController {
     return { message: "2FA has been disabled for this user." };
   }
 
-  // ==================== Tenants ====================
+  // ==================== Sites ====================
 
-  @Get("/tenants")
+  @Get("/sites")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async getTenants() {
-    return this.tenantService.findAll();
+  async getSites() {
+    return this.siteService.findAll();
   }
 
-  @Get("/tenants/:id")
+  @Get("/sites/:id")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
-  async getTenant(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
-    // Superadmin and admin can access any tenant
-    // Other users can only access their assigned tenants
-    if (user.tenantIds && !user.tenantIds.includes(id)) {
-      throw new ForbiddenException("You do not have access to this tenant");
+  async getSite(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
+    // Superadmin and admin can access any site
+    // Other users can only access their assigned sites
+    if (user.siteIds && !user.siteIds.includes(id)) {
+      throw new ForbiddenException("You do not have access to this site");
     }
-    return this.tenantService.findOne(id);
+    return this.siteService.findOne(id);
   }
 
-  @Post("/tenants")
+  @Post("/sites")
   @Roles(UserRole.superadmin)
-  async createTenant(
-    @Body() dto: CreateTenantDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+  async createSite(
+    @Body() dto: CreateSiteDto,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const result = await this.tenantService.create(dto);
+    const result = await this.siteService.create(dto);
     
-    // Log to the first available tenant (or the newly created one)
-    const tenantId = result.id;
+    // Log to the first available site (or the newly created one)
+    const siteId = result.id;
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "create",
-      entityType: "tenant",
+      entityType: "site",
       entityId: result.id,
-      description: `Created tenant`,
+      description: `Created site`,
     }).catch(err => console.error("Failed to log:", err));
     
     return result;
   }
 
-  @Put("/tenants/:id")
+  @Put("/sites/:id")
   @Roles(UserRole.superadmin)
-  async updateTenant(
+  async updateSite(
     @Param("id") id: string,
-    @Body() dto: UpdateTenantDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Body() dto: UpdateSiteDto,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const result = await this.tenantService.update(id, dto);
+    const result = await this.siteService.update(id, dto);
     
     await this.eventLogService.create({
-      tenantId: id,
+      siteId: id,
       userId: user.id,
       action: "update",
-      entityType: "tenant",
+      entityType: "site",
       entityId: id,
-      description: `Updated tenant`,
+      description: `Updated site`,
     }).catch(err => console.error("Failed to log:", err));
     
     return result;
   }
 
-  @Delete("/tenants/:id")
+  @Delete("/sites/:id")
   @Roles(UserRole.superadmin)
-  async deleteTenant(
+  async deleteSite(
     @Param("id") id: string,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const result = await this.tenantService.remove(id);
+    const result = await this.siteService.remove(id);
     
-    // Log to first available tenant since we're deleting one
-    const tenantId = user.tenantIds[0];
-    if (tenantId) {
+    // Log to first available site since we're deleting one
+    const siteId = user.siteIds[0];
+    if (siteId) {
       await this.eventLogService.create({
-        tenantId,
+        siteId,
         userId: user.id,
         action: "delete",
-        entityType: "tenant",
+        entityType: "site",
         entityId: id,
-        description: `Deleted tenant`,
+        description: `Deleted site`,
       }).catch(err => console.error("Failed to log:", err));
     }
     
@@ -1105,47 +1138,57 @@ export class AdminController {
 
   @Get("/events")
   async getEvents(
-    @CurrentUser() user: { tenantIds: string[] },
-    @Query("tenantId") tenantIdParam?: string,
+    @CurrentUser() user: { siteIds: string[] },
+    @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new ForbiddenException("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new ForbiddenException("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.eventService.findAll(tenantId, pageNum, limitNum);
+    return this.eventService.findAll(siteId, pageNum, limitNum);
   }
 
   @Get("/events/:id")
-  async getEvent(@Param("id") id: string, @CurrentUser() user: { tenantIds: string[] }) {
-    const tenantId = user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+  async getEvent(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
+    const siteId = user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    return this.eventService.findOne(id, tenantId);
+    return this.eventService.findOne(id, siteId);
   }
 
   @Post("/events")
   async createEvent(
     @Body() dto: CreateEventDto,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[]; role: UserRole }
   ) {
-    if (!dto.tenantId) {
-      dto.tenantId = user.tenantIds[0];
+    if (!dto.siteId) {
+      dto.siteId = user.siteIds[0];
     }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
     }
+
+    // RBAC: Check if user can create event for this place
+    await this.rbacService.assertCanCreateEventForPlace(
+      user.id,
+      dto.siteId,
+      dto.placeId || null
+    );
+
+    // Set createdByUserId for audit trail
+    dto.createdByUserId = user.id;
     const result = await this.eventService.create(dto);
     
     await this.eventLogService.create({
-      tenantId: dto.tenantId,
+      siteId: dto.siteId,
       userId: user.id,
       action: "create",
       entityType: "event",
@@ -1157,23 +1200,24 @@ export class AdminController {
   }
 
   @Put("/events/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updateEvent(
     @Param("id") id: string,
     @Body() dto: UpdateEventDto,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.eventService.update(id, tenantId, dto);
+    const result = await this.eventService.update(id, siteId, dto);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "update",
       entityType: "event",
@@ -1185,22 +1229,23 @@ export class AdminController {
   }
 
   @Delete("/events/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deleteEvent(
     @Param("id") id: string,
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { id: string; tenantIds: string[] }
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new Error("User has no associated tenant");
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
     }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new Error("User does not have access to this tenant");
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
     }
-    const result = await this.eventService.remove(id, tenantId);
+    const result = await this.eventService.remove(id, siteId, user.id);
     
     await this.eventLogService.create({
-      tenantId,
+      siteId,
       userId: user.id,
       action: "delete",
       entityType: "event",
@@ -1230,41 +1275,6 @@ export class AdminController {
     return this.appSettingsService.setDefaultLanguage(dto.language as Lang);
   }
 
-  @Get("/app-settings/map-settings")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
-  async getMapSettings(
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
-  ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new ForbiddenException("User has no associated tenant");
-    }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
-    }
-    return this.appSettingsService.getMapSettings(tenantId);
-  }
-
-  @Put("/app-settings/map-settings")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async setMapSettings(
-    @Body() dto: { tenantId: string; townId?: string | null; lat?: number | null; lng?: number | null; zoom?: number | null },
-    @CurrentUser() user: { tenantIds: string[] }
-  ) {
-    if (!dto.tenantId) {
-      throw new ForbiddenException("tenantId is required");
-    }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
-    }
-    return this.appSettingsService.setMapSettings(dto.tenantId, {
-      townId: dto.townId,
-      lat: dto.lat,
-      lng: dto.lng,
-      zoom: dto.zoom,
-    });
-  }
 
   @Get("/app-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
@@ -1272,61 +1282,6 @@ export class AdminController {
     return this.appSettingsService.findAll();
   }
 
-  // IMPORTANT: Specific routes must come BEFORE parameterized routes
-  // Otherwise /app-settings/site-settings will match /app-settings/:key
-  @Get("/app-settings/site-settings")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async getSiteSettings(
-    @Query("tenantId") tenantIdParam: string | undefined,
-    @CurrentUser() user: { tenantIds: string[] }
-  ) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!tenantId) {
-      throw new ForbiddenException("User has no associated tenant");
-    }
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
-    }
-    return this.appSettingsService.getSiteSettings(tenantId);
-  }
-
-  @Put("/app-settings/site-settings")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async setSiteSettings(
-    @Body() dto: {
-      tenantId: string;
-      siteName?: { hu?: string; en?: string; de?: string };
-      siteDescription?: { hu?: string; en?: string; de?: string };
-      seoTitle?: { hu?: string; en?: string; de?: string };
-      seoDescription?: { hu?: string; en?: string; de?: string };
-      isCrawlable?: boolean;
-      defaultPlaceholderCardImage?: string | null;
-      defaultPlaceholderDetailHeroImage?: string | null;
-      defaultEventPlaceholderCardImage?: string | null;
-      brandBadgeIcon?: string | null;
-      faviconUrl?: string | null;
-    },
-    @CurrentUser() user: { tenantIds: string[] }
-  ) {
-    if (!dto.tenantId) {
-      throw new ForbiddenException("tenantId is required");
-    }
-    if (!user.tenantIds.includes(dto.tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
-    }
-    return this.appSettingsService.setSiteSettings(dto.tenantId, {
-      siteName: dto.siteName,
-      siteDescription: dto.siteDescription,
-      seoTitle: dto.seoTitle,
-      seoDescription: dto.seoDescription,
-      isCrawlable: dto.isCrawlable,
-      defaultPlaceholderCardImage: dto.defaultPlaceholderCardImage,
-      defaultPlaceholderDetailHeroImage: dto.defaultPlaceholderDetailHeroImage,
-      defaultEventPlaceholderCardImage: dto.defaultEventPlaceholderCardImage,
-      brandBadgeIcon: dto.brandBadgeIcon,
-      faviconUrl: dto.faviconUrl,
-    });
-  }
 
   @Get("/app-settings/:key")
   @Roles(UserRole.superadmin, UserRole.admin)
@@ -1358,7 +1313,7 @@ export class AdminController {
   @Roles(UserRole.superadmin, UserRole.admin)
   async getEventLogs(
     @Query() filters: EventLogFilterDto,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     // Convert string query params to numbers
     const normalizedFilters: EventLogFilterDto = {
@@ -1366,20 +1321,20 @@ export class AdminController {
       page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
       limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
     };
-    return this.eventLogService.findAll(user.role, user.tenantIds, normalizedFilters);
+    return this.eventLogService.findAll(user.role, user.siteIds, normalizedFilters);
   }
 
   @Get("/event-logs/filter-options")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async getEventLogFilterOptions(@CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }) {
-    return this.eventLogService.getFilterOptions(user.role, user.tenantIds);
+  async getEventLogFilterOptions(@CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }) {
+    return this.eventLogService.getFilterOptions(user.role, user.siteIds);
   }
 
   @Get("/event-logs/export")
   @Roles(UserRole.superadmin, UserRole.admin)
   async exportEventLogs(
     @Query() filters: EventLogFilterDto,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] },
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] },
     @Res() res: Response
   ) {
     // Convert string query params to numbers
@@ -1388,7 +1343,7 @@ export class AdminController {
       page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
       limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
     };
-    const csv = await this.eventLogService.exportToCsv(user.role, user.tenantIds, normalizedFilters);
+    const csv = await this.eventLogService.exportToCsv(user.role, user.siteIds, normalizedFilters);
     
     const filename = `event-logs-${new Date().toISOString().split('T')[0]}.csv`;
     res.setHeader('Content-Type', 'text/csv');
@@ -1400,7 +1355,7 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async deleteEventLogs(
     @Query() filters: EventLogFilterDto,
-    @CurrentUser() user: { id: string; role: UserRole; tenantIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     // Convert string query params to numbers
     const normalizedFilters: EventLogFilterDto = {
@@ -1408,19 +1363,206 @@ export class AdminController {
       page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
       limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
     };
-    return this.eventLogService.delete(user.role, user.tenantIds, normalizedFilters);
+    return this.eventLogService.delete(user.role, user.siteIds, normalizedFilters);
   }
 
   @Post("/maintenance/generate-missing-slugs")
   @Roles(UserRole.superadmin)
-  async generateMissingSlugs(@Query("tenantId") tenantIdParam: string | undefined, @CurrentUser() user: { tenantIds: string[] }) {
-    const tenantId = tenantIdParam || user.tenantIds[0];
-    if (!user.tenantIds.includes(tenantId)) {
-      throw new ForbiddenException("User does not have access to this tenant");
+  async generateMissingSlugs(@Query("siteId") siteIdParam: string | undefined, @CurrentUser() user: { siteIds: string[] }) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new ForbiddenException("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
     }
 
-    const result = await this.placeService.generateMissingSlugs(tenantId);
+    const result = await this.placeService.generateMissingSlugs(siteId);
     return result;
+  }
+
+  // ==================== Brands ====================
+
+  @Get("/brands")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getBrands() {
+    try {
+      return await this.brandService.findAll();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Get("/brands/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getBrand(@Param("id") id: string) {
+    try {
+      return await this.brandService.findOne(id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post("/brands")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async createBrand(@Body() dto: CreateBrandDto) {
+    try {
+      return await this.brandService.create(dto);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Put("/brands/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async updateBrand(@Param("id") id: string, @Body() dto: UpdateBrandDto) {
+    try {
+      return await this.brandService.update(id, dto);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Delete("/brands/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async deleteBrand(@Param("id") id: string) {
+    try {
+      return await this.brandService.delete(id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // ==================== Site Instances ====================
+
+  @Get("/site-instances")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getSiteInstances(
+    @Query("siteId") siteId?: string,
+    @CurrentUser() user?: { siteIds: string[] }
+  ) {
+    // If siteId not provided and user has siteIds, use first site
+    const resolvedSiteId = siteId || (user?.siteIds?.[0]);
+    return this.siteInstanceService.findAll(resolvedSiteId);
+  }
+
+  @Get("/site-instances/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getSiteInstance(@Param("id") id: string) {
+    return this.siteInstanceService.findOne(id);
+  }
+
+  @Post("/site-instances")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async createSiteInstance(@Body() dto: CreateSiteInstanceDto) {
+    return this.siteInstanceService.create(dto);
+  }
+
+  @Put("/site-instances/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async updateSiteInstance(@Param("id") id: string, @Body() dto: UpdateSiteInstanceDto) {
+    return this.siteInstanceService.update(id, dto);
+  }
+
+  @Delete("/site-instances/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async deleteSiteInstance(@Param("id") id: string) {
+    return this.siteInstanceService.delete(id);
+  }
+
+  // ==================== Site Memberships ====================
+
+  @Get("/site-memberships")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getSiteMemberships(
+    @Query("siteId") siteId?: string,
+    @Query("userId") userId?: string
+  ) {
+    return this.siteMembershipService.findAll(siteId, userId);
+  }
+
+  @Get("/site-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getSiteMembership(@Param("id") id: string) {
+    return this.siteMembershipService.findOne(id);
+  }
+
+  @Post("/site-memberships")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async createSiteMembership(@Body() dto: CreateSiteMembershipDto) {
+    return this.siteMembershipService.create(dto);
+  }
+
+  @Put("/site-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async updateSiteMembership(@Param("id") id: string, @Body() dto: UpdateSiteMembershipDto) {
+    return this.siteMembershipService.update(id, dto);
+  }
+
+  @Delete("/site-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async deleteSiteMembership(@Param("id") id: string) {
+    return this.siteMembershipService.delete(id);
+  }
+
+  // ==================== Place Memberships ====================
+
+  @Get("/place-memberships")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async getPlaceMemberships(
+    @Query("placeId") placeId?: string,
+    @Query("userId") userId?: string,
+    @CurrentUser() user?: { id: string; siteIds: string[] }
+  ) {
+    // If userId not provided, use current user's ID
+    const resolvedUserId = userId || user?.id;
+    return this.placeMembershipService.findAll(placeId, resolvedUserId);
+  }
+
+  @Get("/place-memberships/my-places")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async getMyPlaces(
+    @Query("siteId") siteId?: string,
+    @CurrentUser() user?: { id: string; siteIds: string[] }
+  ) {
+    if (!user?.id) {
+      throw new ForbiddenException("User ID is required");
+    }
+    return this.placeMembershipService.getMyPlaces(user.id, siteId);
+  }
+
+  @Get("/place-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async getPlaceMembership(@Param("id") id: string) {
+    return this.placeMembershipService.findOne(id);
+  }
+
+  @Post("/place-memberships")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async createPlaceMembership(
+    @Body() dto: CreatePlaceMembershipDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.placeMembershipService.create(dto, user.id);
+  }
+
+  @Put("/place-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async updatePlaceMembership(
+    @Param("id") id: string,
+    @Body() dto: UpdatePlaceMembershipDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.placeMembershipService.update(id, dto, user.id);
+  }
+
+  @Delete("/place-memberships/:id")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async deletePlaceMembership(
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.placeMembershipService.delete(id, user.id);
   }
 }
 

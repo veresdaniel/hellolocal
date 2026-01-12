@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
 
 export interface CreatePriceBandDto {
-  tenantId: string;
+  siteId: string;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -25,12 +25,12 @@ export interface UpdatePriceBandDto {
 export class AdminPriceBandService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 50;
     
-    const where = { tenantId };
+    const where = { siteId };
     
     // Get total count
     const total = await this.prisma.priceBand.count({ where });
@@ -58,9 +58,9 @@ export class AdminPriceBandService {
     };
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const priceBand = await this.prisma.priceBand.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         translations: true,
       },
@@ -76,7 +76,7 @@ export class AdminPriceBandService {
   async create(dto: CreatePriceBandDto) {
     return this.prisma.priceBand.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         isActive: dto.isActive ?? true,
         translations: {
           create: dto.translations.map((t) => ({
@@ -92,8 +92,8 @@ export class AdminPriceBandService {
     });
   }
 
-  async update(id: string, tenantId: string, dto: UpdatePriceBandDto) {
-    const priceBand = await this.findOne(id, tenantId);
+  async update(id: string, siteId: string, dto: UpdatePriceBandDto) {
+    const priceBand = await this.findOne(id, siteId);
 
     const updateData: any = {};
     if (dto.isActive !== undefined) {
@@ -128,11 +128,11 @@ export class AdminPriceBandService {
       }
     }
 
-    return this.findOne(id, tenantId);
+    return this.findOne(id, siteId);
   }
 
-  async remove(id: string, tenantId: string) {
-    const priceBand = await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string) {
+    const priceBand = await this.findOne(id, siteId);
 
     // Check if price band is used by any places
     const placesCount = await this.prisma.place.count({

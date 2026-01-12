@@ -4,11 +4,11 @@ export type Lang = (typeof APP_LANGS)[number];
 
 export const DEFAULT_LANG: Lang = "hu";
 
-// most 1 tenant van:
-export const DEFAULT_TENANT_SLUG = "etyek-budai";
+// most 1 site van:
+export const DEFAULT_SITE_SLUG = "etyek-budai";
 
-// ha később több tenant lesz (Mockoon /tenants alapján), ezt true-ra állítod runtime:
-export const HAS_MULTIPLE_TENANTS = true;
+// ha később több site lesz (Mockoon /sites alapján), ezt true-ra állítod runtime:
+export const HAS_MULTIPLE_SITES = true;
 
 // App version - automatically read from package.json at build time
 // This is used for version checking and cache invalidation

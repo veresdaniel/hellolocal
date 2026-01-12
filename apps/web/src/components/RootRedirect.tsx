@@ -2,9 +2,9 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicDefaultLanguage } from "../api/public.api";
-import { HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, DEFAULT_LANG } from "../app/config";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, DEFAULT_LANG } from "../app/config";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { useActiveTenantsCount } from "../hooks/useActiveTenantsCount";
+import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 import type { Lang } from "../app/config";
 
 export function RootRedirect() {
@@ -44,25 +44,25 @@ export function RootRedirect() {
     retry: 1,
   });
 
-  // Fetch active tenants count to determine if tenant slug should be shown
-  const { data: tenantsCountData, isLoading: isLoadingTenantsCount } = useActiveTenantsCount();
+  // Fetch active sites count to determine if site slug should be shown
+  const { data: sitesCountData, isLoading: isLoadingSitesCount } = useActiveSitesCount();
 
   // Use default language (from API or fallback to DEFAULT_LANG)
   const lang = defaultLang || DEFAULT_LANG;
 
-  // Show loading spinner while fetching default language and tenants count (only for public routes)
-  if (isLoadingLang || isLoadingTenantsCount) {
+  // Show loading spinner while fetching default language and sites count (only for public routes)
+  if (isLoadingLang || isLoadingSitesCount) {
     return <LoadingSpinner isLoading={true} delay={0} />;
   }
 
-  // Determine if we should show tenant slug in URL
-  // If multi-tenant is enabled but only one tenant exists, hide tenant slug from URL
-  // Fallback to false if tenantsCountData is not available
-  const shouldShowTenantSlug = HAS_MULTIPLE_TENANTS && (tenantsCountData?.count ?? 0) > 1;
+  // Determine if we should show site slug in URL
+  // If multi-site is enabled but only one site exists, hide site slug from URL
+  // Fallback to false if sitesCountData is not available
+  const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
 
-  // Redirect to default language (with or without tenant slug based on tenant count)
-  const path = shouldShowTenantSlug
-    ? `/${defaultLang}/${DEFAULT_TENANT_SLUG}`
+  // Redirect to default language (with or without site slug based on site count)
+  const path = shouldShowSiteSlug
+    ? `/${defaultLang}/${DEFAULT_SITE_SLUG}`
     : `/${defaultLang}`;
   
   return <Navigate to={path} replace />;

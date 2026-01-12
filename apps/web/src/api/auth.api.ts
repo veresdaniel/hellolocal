@@ -8,7 +8,7 @@ export interface RegisterDto {
   firstName: string;
   lastName: string;
   bio?: string;
-  tenantId?: string;
+  siteId?: string;
 }
 
 export interface LoginDto {
@@ -40,7 +40,7 @@ export interface AuthResponse {
     firstName: string;
     lastName: string;
     role: "superadmin" | "admin" | "editor" | "viewer";
-    tenantIds: string[];
+    siteIds: string[];
   };
 }
 
@@ -51,7 +51,9 @@ export interface User {
   firstName: string;
   lastName: string;
   role: "superadmin" | "admin" | "editor" | "viewer";
-  tenantIds: string[];
+  siteIds: string[];
+  // Backward compatibility: backend may still return tenantIds
+  tenantIds?: string[];
 }
 
 export function register(data: RegisterDto) {

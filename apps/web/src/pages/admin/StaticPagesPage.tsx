@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
 import { getStaticPages, createStaticPage, updateStaticPage, deleteStaticPage } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
@@ -15,7 +15,7 @@ import { AdminResponsiveTable, type TableColumn, type CardField } from "../../co
 
 interface StaticPage {
   id: string;
-  tenantId: string;
+  siteId: string;
   category: "blog" | "tudastar" | "infok";
   isActive: boolean;
   translations: Array<{
@@ -33,7 +33,7 @@ interface StaticPage {
 
 export function StaticPagesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const queryClient = useQueryClient();
   usePageTitle("admin.staticPages");
   const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
@@ -83,28 +83,28 @@ export function StaticPagesPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       // Reset to first page when tenant changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       loadStaticPages();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTenantId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit]);
 
   const loadStaticPages = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getStaticPages(selectedTenantId, undefined, pagination.page, pagination.limit);
+      const response = await getStaticPages(selectedSiteId, undefined, pagination.page, pagination.limit);
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -130,12 +130,12 @@ export function StaticPagesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     if (!validateForm()) return;
 
     try {
       await createStaticPage({
-        tenantId: selectedTenantId!,
+        tenantId: selectedSiteId!,
         category: formData.category,
         translations: (() => {
           const translations: Array<{
@@ -250,7 +250,7 @@ export function StaticPagesPage() {
           })(),
           isActive: formData.isActive,
         },
-        selectedTenantId || undefined
+        selectedSiteId || undefined
       );
       setEditingId(null);
       resetForm();
@@ -265,7 +265,7 @@ export function StaticPagesPage() {
     if (!confirm(t("admin.confirmations.deleteStaticPage"))) return;
 
     try {
-      await deleteStaticPage(id, selectedTenantId || undefined);
+      await deleteStaticPage(id, selectedSiteId || undefined);
       await loadStaticPages();
       notifyEntityChanged("staticPages");
     } catch (err) {
@@ -349,7 +349,7 @@ export function StaticPagesPage() {
     return <LoadingSpinnerComponent isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
+  if (!selectedSiteId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
@@ -368,7 +368,7 @@ export function StaticPagesPage() {
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
+          color: "white",
           textShadow: "0 2px 4px rgba(0,0,0,0.1)",
           margin: 0,
         }}>
@@ -677,8 +677,7 @@ export function StaticPagesPage() {
         </div>
       )}
 
-      <LoadingSpinnerComponent isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId && (
+      {!isCreating && !editingId && (
         <AdminResponsiveTable<StaticPage>
           data={staticPages}
           getItemId={(staticPage) => staticPage.id}
@@ -688,6 +687,7 @@ export function StaticPagesPage() {
             setSearchQuery(query);
             setPagination(prev => ({ ...prev, page: 1 }));
           }}
+          isLoading={isLoading}
           filterFn={(staticPage, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";

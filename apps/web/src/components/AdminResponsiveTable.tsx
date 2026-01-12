@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Pagination } from "./Pagination";
+import { TableSkeleton } from "./TableSkeleton";
 
 export interface TableColumn<T> {
   key: string;
@@ -111,8 +112,17 @@ export function AdminResponsiveTable<T>({
     }
   }, [filteredData.length, currentMobileIndex]);
 
+  // Show skeleton screen while loading
   if (isLoading) {
-    return null; // LoadingSpinner handles this outside
+    return (
+      <div style={{ minHeight: 400 }}>
+        <TableSkeleton 
+          rows={5} 
+          columns={columns.length} 
+          isMobile={isMobile}
+        />
+      </div>
+    );
   }
 
   return (
@@ -149,7 +159,14 @@ export function AdminResponsiveTable<T>({
             }}
           />
           {filteredData.length !== data.length && (
-            <div style={{ marginTop: 8, fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div style={{ 
+              marginTop: 12, 
+              fontSize: 13, 
+              color: "white", 
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              textAlign: "center",
+              opacity: 0.9,
+            }}>
               {t("admin.searchResults", { count: filteredData.length, total: data.length })}
             </div>
           )}

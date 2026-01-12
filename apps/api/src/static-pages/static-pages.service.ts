@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
+import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { Lang } from "@prisma/client";
 
 @Injectable()
 export class StaticPagesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tenantResolver: TenantKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService
   ) {}
 
   private normalizeLang(lang: string | undefined): Lang {
@@ -22,18 +22,18 @@ export class StaticPagesService {
    * 
    * @param args - Page listing arguments
    * @param args.lang - Language code
-   * @param args.tenantKey - Optional tenant key for multi-tenant support
+   * @param args.siteKey - Optional site key for multi-site support
    * @param args.category - Optional category filter (blog, tudastar, infok)
    * @returns Array of static pages with translations
    */
-  async list(args: { lang: string; tenantKey?: string; category?: string }) {
+  async list(args: { lang: string; siteKey?: string; category?: string }) {
     const lang = this.normalizeLang(args.lang);
 
-    // Resolve tenant (either default or from tenantKey parameter)
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
+    // Resolve site (either default or from siteKey parameter)
+    const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     const where: any = {
-      tenantId: tenant.tenantId,
+      siteId: site.siteId,
       isActive: true,
     };
 
@@ -74,19 +74,19 @@ export class StaticPagesService {
    * @param args - Page retrieval arguments
    * @param args.lang - Language code
    * @param args.id - Static page ID
-   * @param args.tenantKey - Optional tenant key for multi-tenant support
+   * @param args.siteKey - Optional site key for multi-site support
    * @returns Static page data with translation and SEO
    */
-  async detail(args: { lang: string; id: string; tenantKey?: string }) {
+  async detail(args: { lang: string; id: string; siteKey?: string }) {
     const lang = this.normalizeLang(args.lang);
 
-    // Resolve tenant (either default or from tenantKey parameter)
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey: args.tenantKey });
+    // Resolve site (either default or from siteKey parameter)
+    const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     const staticPage = await this.prisma.staticPage.findFirst({
       where: {
         id: args.id,
-        tenantId: tenant.tenantId,
+        siteId: site.siteId,
         isActive: true,
       },
       include: { translations: true },

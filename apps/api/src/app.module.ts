@@ -1,11 +1,11 @@
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { PlacesModule } from "./places/places.module";
-import { TenantsModule } from "./tenants/tenants.module";
+import { SitesModule } from "./tenants/sites.module";
 import { EventsModule } from "./events/events.module";
 import { LegalModule } from "./legal/legal.module";
 import { StaticPagesModule } from "./static-pages/static-pages.module";
@@ -17,7 +17,11 @@ import { AppSettingsModule } from "./app-settings/app-settings.module";
 import { TwoFactorModule } from "./two-factor/two-factor.module";
 import { SeoModule } from "./seo/seo.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { PlatformSettingsModule } from "./platform-settings/platform-settings.module";
+import { SiteModule } from "./site/site.module";
 import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middleware";
+import { SiteResolveMiddleware } from "./common/middleware/site-resolve.middleware";
+import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-redirect.interceptor";
 
 @Module({
   imports: [
@@ -26,12 +30,14 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
       {
         name: "default",
         ttl: 60000, // 1 perc (milliszekundumban)
-        limit: 100, // 100 kérés percenként (növelve a places API hívásokhoz)
+        // Fejlesztésben sokkal lazább limit, productionban szigorúbb
+        limit: process.env.NODE_ENV === "production" ? 100 : 10000, // 100 kérés/perc production, 10000 fejlesztés
       },
       {
         name: "strict",
         ttl: 60000, // 1 perc
-        limit: 5, // 5 kérés percenként (auth endpoint-okhoz)
+        // Auth endpoint-ok: fejlesztésben lazább, productionban szigorúbb
+        limit: process.env.NODE_ENV === "production" ? 5 : 1000, // 5 kérés/perc production, 1000 fejlesztés
       },
     ]),
     PrismaModule,
@@ -42,24 +48,37 @@ import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middlewa
     AppSettingsModule, // Public app settings (no auth required)
     AdminModule, // AdminModule must be imported before PlacesModule to ensure /api/admin routes take precedence
     PlacesModule,
-    TenantsModule,
+    SitesModule,
     EventsModule,
     LegalModule,
     StaticPagesModule,
     SeoModule, // SEO metadata for SSR
     NotificationsModule, // Push notifications
+    PlatformSettingsModule, // Platform settings API (Brand + Site + SiteInstance merged)
+    SiteModule, // Site resolver and public endpoints
   ],
   controllers: [HealthController],
   providers: [
     SeoInjectorMiddleware,
+    SiteResolveMiddleware, // Site resolve middleware (canonical flow)
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CanonicalRedirectInterceptor,
     },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Apply site resolve middleware first (canonical flow for /:lang/:siteKey/* routes)
+    // This is the core of the Site-based architecture
+    consumer
+      .apply(SiteResolveMiddleware)
+      .forRoutes("*");
+    
     // Apply SEO injector middleware to all routes except API and admin
     consumer
       .apply(SeoInjectorMiddleware)

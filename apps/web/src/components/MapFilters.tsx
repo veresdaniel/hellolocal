@@ -2,8 +2,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { useSiteContext } from "../app/site/useSiteContext";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import type { Place } from "../types/place";
 import { useFiltersStore } from "../stores/useFiltersStore";
 
@@ -39,8 +39,8 @@ export function MapFilters({
   onRainSafeChange,
   lang,
 }: MapFiltersProps) {
-  const { tenantSlug } = useTenantContext();
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  const { siteKey } = useSiteContext();
+  const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
   const { t } = useTranslation();
   const userLocation = useFiltersStore((state) => state.userLocation);
   const [isOpen, setIsOpen] = useState(false);
@@ -257,8 +257,8 @@ export function MapFilters({
   // Use cached places data from React Query if available (don't fetch separately)
   // This avoids duplicate API calls - we'll extract categories/price bands from existing cache
   const queryClient = useQueryClient();
-  const places = queryClient.getQueryData<Place[]>(["places", lang, tenantKey]) || 
-                 queryClient.getQueryData<Place[]>(["places", lang, tenantKey, undefined, undefined]);
+  const places = queryClient.getQueryData<Place[]>(["places", lang, effectiveSiteKey]) ||
+                 queryClient.getQueryData<Place[]>(["places", lang, effectiveSiteKey, undefined, undefined]);
 
   // Extract unique categories and price bands from places
   // Note: For price bands, we use IDs. For categories, we still use names (can be updated later)

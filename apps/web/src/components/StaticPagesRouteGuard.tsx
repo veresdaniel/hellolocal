@@ -1,20 +1,20 @@
 // src/components/StaticPagesRouteGuard.tsx
 import { useQuery } from "@tanstack/react-query";
-import { useTenantContext } from "../app/tenant/useTenantContext";
+import { useSiteContext } from "../app/site/useSiteContext";
 import { getStaticPages } from "../api/static-pages.api";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { StaticPagesListPage } from "../pages/StaticPagesListPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { LoadingSpinner } from "./LoadingSpinner";
 
 export function StaticPagesRouteGuard() {
-  const { lang, tenantSlug } = useTenantContext();
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  const { lang, siteKey } = useSiteContext();
+  const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
 
   // Check if there are any static pages
   const { data: staticPages = [], isLoading } = useQuery({
-    queryKey: ["staticPages", lang, tenantKey, "all"],
-    queryFn: () => getStaticPages(lang, tenantKey),
+    queryKey: ["staticPages", lang, effectiveSiteKey, "all"],
+    queryFn: () => getStaticPages(lang, effectiveSiteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 

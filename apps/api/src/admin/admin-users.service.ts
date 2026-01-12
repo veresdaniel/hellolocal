@@ -15,7 +15,7 @@ export interface CreateUserDto {
   lastName: string;
   bio?: string;
   role?: UserRole;
-  tenantIds?: string[];
+  siteIds?: string[];
   isActive?: boolean;
 }
 
@@ -24,19 +24,19 @@ export interface UpdateUserDto {
   lastName?: string;
   bio?: string;
   isActive?: boolean;
-  tenantIds?: string[];
+  siteIds?: string[];
 }
 
 @Injectable()
 export class AdminUsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string) {
+  async findAll(siteId?: string) {
     const where: any = {};
-    if (tenantId) {
-      where.tenants = {
+    if (siteId) {
+      where.sites = {
         some: {
-          tenantId,
+          siteId,
         },
       };
     }
@@ -44,9 +44,9 @@ export class AdminUsersService {
     return this.prisma.user.findMany({
       where,
       include: {
-        tenants: {
+        sites: {
           include: {
-            tenant: {
+            site: {
               select: {
                 id: true,
                 slug: true,
@@ -69,9 +69,9 @@ export class AdminUsersService {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
-        tenants: {
+        sites: {
           include: {
-            tenant: {
+            site: {
               select: {
                 id: true,
                 slug: true,
@@ -124,9 +124,9 @@ export class AdminUsersService {
       where: { id: userId },
       data: dto,
       include: {
-        tenants: {
+        sites: {
           include: {
-            tenant: {
+            site: {
               select: {
                 id: true,
                 slug: true,
@@ -148,8 +148,8 @@ export class AdminUsersService {
     return this.findOne(userId);
   }
 
-  async getAllTenants() {
-    return this.prisma.tenant.findMany({
+  async getAllSites() {
+    return this.prisma.site.findMany({
       include: {
         translations: {
           select: {
@@ -193,19 +193,19 @@ export class AdminUsersService {
         bio: dto.bio,
         role: dto.role || UserRole.viewer,
         isActive: dto.isActive ?? true,
-        tenants: dto.tenantIds
+        sites: dto.siteIds
           ? {
-              create: dto.tenantIds.map((tenantId, index) => ({
-                tenantId,
+              create: dto.siteIds.map((siteId, index) => ({
+                siteId,
                 isPrimary: index === 0,
               })),
             }
           : undefined,
       },
       include: {
-        tenants: {
+        sites: {
           include: {
-            tenant: {
+            site: {
               select: {
                 id: true,
                 slug: true,
@@ -237,7 +237,7 @@ export class AdminUsersService {
     return { message: "User deleted successfully" };
   }
 
-  async updateUserWithTenants(userId: string, dto: UpdateUserDto, currentUserRole: UserRole) {
+  async updateUserWithSites(userId: string, dto: UpdateUserDto, currentUserRole: UserRole) {
     // Only superadmin or admin can update other users
     if (currentUserRole !== UserRole.superadmin && currentUserRole !== UserRole.admin) {
       throw new ForbiddenException("Only superadmin or admin can update users");
@@ -257,19 +257,19 @@ export class AdminUsersService {
       }
     });
 
-    // Update tenant relationships if provided
-    if (dto.tenantIds !== undefined) {
-      // Delete existing tenant relationships
-      await this.prisma.userTenant.deleteMany({
+    // Update site relationships if provided
+    if (dto.siteIds !== undefined) {
+      // Delete existing site relationships
+      await this.prisma.userSite.deleteMany({
         where: { userId },
       });
 
-      // Create new tenant relationships
-      if (dto.tenantIds.length > 0) {
-        await this.prisma.userTenant.createMany({
-          data: dto.tenantIds.map((tenantId, index) => ({
+      // Create new site relationships
+      if (dto.siteIds.length > 0) {
+        await this.prisma.userSite.createMany({
+          data: dto.siteIds.map((siteId, index) => ({
             userId,
-            tenantId,
+            siteId,
             isPrimary: index === 0,
           })),
         });

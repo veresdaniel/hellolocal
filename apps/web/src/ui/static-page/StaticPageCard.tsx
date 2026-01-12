@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useTenantContext } from "../../app/tenant/useTenantContext";
-import { buildPath } from "../../app/routing/buildPath";
+import { buildUrl } from "../../app/urls";
+import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
-import { getSiteSettings } from "../../api/places.api";
+import { getPlatformSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
@@ -41,20 +41,20 @@ function getCategoryColor(category: string): string {
 }
 
 export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, tenantKey } = useRouteCtx();
   const { t } = useTranslation();
   const categoryColor = getCategoryColor(staticPage.category);
   const categoryLabel = getCategoryLabel(staticPage.category);
 
   // Load site settings for default placeholder image
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, tenantKey],
+    queryFn: () => getPlatformSettings(lang, tenantKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Use default placeholder image if available
-  const imageUrl = sanitizeImageUrl(siteSettings?.defaultPlaceholderCardImage) || null;
+  const imageUrl = sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) || null;
 
   // Common article content
   const articleContent = (
@@ -213,7 +213,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
         }
       `}</style>
       <Link
-        to={buildPath({ tenantSlug, lang, path: `static-page/${staticPage.id}` })}
+        to={buildUrl({ lang, tenantKey, path: `static-page/${staticPage.id}` })}
         style={{
           textDecoration: "none",
           color: "inherit",

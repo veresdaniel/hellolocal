@@ -73,7 +73,12 @@ export function ImageWithSkeleton({
         src={src}
         alt={alt}
         className={className}
-        style={combinedStyle}
+        style={{
+          ...combinedStyle,
+          maxWidth: "100%",
+          height: "auto",
+          display: "block",
+        }}
         loading="lazy"
         onLoad={handleLoad}
         onError={handleError}

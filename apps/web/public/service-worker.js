@@ -11,10 +11,13 @@ fetch("/version.json?t=" + Date.now())
     throw new Error("Failed to fetch version");
   })
   .then((data) => {
-    CACHE_NAME = `hellolocal-${data.version}-${data.buildHash.substring(0, 7)}`;
+    if (data && data.version && data.buildHash) {
+      CACHE_NAME = `hellolocal-${data.version}-${data.buildHash.substring(0, 7)}`;
+    }
   })
   .catch((e) => {
     // Failed to fetch version, using default cache name
+    console.warn("[ServiceWorker] Failed to fetch version.json, using default cache name:", e);
   });
 const urlsToCache = [
   "/",
@@ -53,7 +56,16 @@ self.addEventListener("fetch", (event) => {
   
   // Don't cache version.json - always fetch fresh
   if (url.pathname.includes("/version.json")) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request).catch((error) => {
+        // If version.json fetch fails, return a basic response
+        console.warn("[ServiceWorker] Failed to fetch version.json:", error);
+        return new Response(JSON.stringify({ version: "unknown", buildHash: "unknown" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      })
+    );
     return;
   }
   

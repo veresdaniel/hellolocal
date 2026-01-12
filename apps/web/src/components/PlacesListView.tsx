@@ -2,14 +2,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getPlaces, getEvents, type Event, getSiteSettings } from "../api/places.api";
+import { useRouteCtx } from "../app/useRouteCtx";
+import { getPlaces, getEvents, type Event, getPlatformSettings } from "../api/places.api";
 import type { Place } from "../types/place";
 import { PlaceCard } from "../ui/place/PlaceCard";
 import { MapFilters } from "./MapFilters";
 import { FloatingHeader } from "./FloatingHeader";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
-import { buildPath } from "../app/routing/buildPath";
+import { HAS_MULTIPLE_SITES } from "../app/config";
+import { buildUrl } from "../app/urls";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useFiltersStore } from "../stores/useFiltersStore";
@@ -50,7 +50,7 @@ export function PlacesListView({
   onRainSafeChange: propOnRainSafeChange,
 }: PlacesListViewProps) {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useRouteCtx();
   const queryClient = useQueryClient();
   
   // Use Zustand store as default, props override if provided
@@ -72,7 +72,6 @@ export function PlacesListView({
 
   const [searchQuery, setSearchQuery] = useState("");
   const observerTarget = useRef<HTMLDivElement>(null);
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
 
   // Fetch places with infinite scroll
   const {
@@ -84,7 +83,7 @@ export function PlacesListView({
     isError,
     // error, // unused for now
   } = useInfiniteQuery({
-    queryKey: ["places", lang, tenantKey, selectedCategories, selectedPriceBands, searchQuery],
+    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands, searchQuery],
     queryFn: async ({ pageParam = 0 }) => {
       // Note: getPlaces now accepts arrays for OR logic filtering
       const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
@@ -92,7 +91,7 @@ export function PlacesListView({
       
       const places = await getPlaces(
         lang,
-        tenantKey,
+        siteKey,
         categoryParam,
         priceBandParam,
         searchQuery || undefined,
@@ -113,43 +112,38 @@ export function PlacesListView({
 
   // Fetch events for context-based filters
   const { data: eventsData = [] } = useQuery({
-    queryKey: ["events", lang, tenantKey],
-    queryFn: () => getEvents(lang, undefined, undefined, 100, 0, tenantKey),
+    queryKey: ["events", lang, siteKey],
+    queryFn: () => getEvents(lang, siteKey ?? "", undefined, undefined, 100, 0),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch site settings for placeholder image
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantKey),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Listen for site settings changes from admin
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      // Invalidate and refetch site settings to update placeholder images
-      console.debug('[PlacesListView] Site settings changed, invalidating cache');
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    const handlePlatformSettingsChanged = () => {
+      // Invalidate and refetch platform settings to update placeholder images
+      console.debug('[PlacesListView] Platform settings changed, invalidating cache');
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, tenantSlug, queryClient]);
+  }, [lang, siteKey, queryClient]);
 
-  // Debug: log site settings when they change
+  // Debug: log platform settings when they change
   useEffect(() => {
-    if (siteSettings) {
-      console.debug('[PlacesListView] Site settings loaded:', {
-        defaultEventPlaceholderCardImage: siteSettings.defaultEventPlaceholderCardImage,
-        lang,
-        tenantSlug,
-      });
+    if (platformSettings) {
     }
-  }, [siteSettings, lang, tenantSlug]);
+  }, [platformSettings, lang, siteKey]);
 
   // Get user location for "within30Minutes" filter
   useEffect(() => {
@@ -496,7 +490,7 @@ export function PlacesListView({
                       >
                         {(() => {
                           const eventImage = event.heroImage?.trim() || null;
-                          const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                          const placeholderImage = platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
                           const imageUrl = eventImage || placeholderImage;
                           const hasImage = !!imageUrl && imageUrl.length > 0;
                           
@@ -586,7 +580,7 @@ export function PlacesListView({
                   return (
                     <Link
                       key={event.id}
-                      to={buildPath({ tenantSlug, lang, path: `event/${event.slug}` })}
+                      to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
                       style={{ textDecoration: "none", color: "inherit" }}
                     >
                       <div
@@ -610,7 +604,7 @@ export function PlacesListView({
                       >
                         {(() => {
                           const eventImage = event.heroImage?.trim() || null;
-                          const placeholderImage = siteSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                          const placeholderImage = platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
                           const imageUrl = eventImage || placeholderImage;
                           const hasImage = !!imageUrl && imageUrl.length > 0;
                           

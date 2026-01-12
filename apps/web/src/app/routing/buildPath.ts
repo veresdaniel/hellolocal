@@ -1,20 +1,17 @@
 // src/app/routing/buildPath.ts
-import { HAS_MULTIPLE_TENANTS } from "../config";
+import { buildUrl } from "../urls";
+import type { Lang } from "../config";
 
 /**
- * Builds a path with optional tenant slug based on multi-tenant configuration
- * Note: This function doesn't check tenant count - it's handled by TenantLayout
- * If you need to check tenant count, use the useActiveTenantsCount hook
+ * Builds a path with optional site slug based on multi-site configuration
+ * Note: This function doesn't check site count - it's handled by SiteLayout
+ * If you need to check site count, use the useActiveSitesCount hook
  * 
- * The path format should be: /{lang}/{tenantSlug?}/{path}
- * TenantLayout will handle redirecting if tenant slug shouldn't be shown
+ * The path format should be: /{lang}/{siteSlug?}/{path}
+ * SiteLayout will handle redirecting if site slug shouldn't be shown
+ * 
+ * @deprecated Use buildUrl from urls.ts instead. This function is kept for backward compatibility.
  */
-export function buildPath(opts: { tenantSlug: string; lang: string; path?: string }) {
-  // The correct format is: /{lang}/{tenantSlug?}/{path}
-  // If multi-tenant is enabled, include tenant slug (TenantLayout will redirect if needed)
-  // If multi-tenant is disabled, don't include tenant slug
-  const langPart = `/${opts.lang}`;
-  const tenantPart = HAS_MULTIPLE_TENANTS ? `/${opts.tenantSlug}` : "";
-  const rest = opts.path ? `/${opts.path.replace(/^\/+/, "")}` : "";
-  return `${langPart}${tenantPart}${rest}`;
+export function buildPath(opts: { siteSlug: string; tenantSlug?: string; lang: Lang; path?: string }) {
+  return buildUrl({ lang: opts.lang, siteKey: opts.siteSlug || opts.tenantSlug, path: opts.path });
 }

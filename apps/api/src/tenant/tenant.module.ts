@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
-import { TenantKeyResolverService } from "./tenant-key-resolver.service";
+import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 
 @Module({
   imports: [PrismaModule],
-  providers: [TenantKeyResolverService],
-  exports: [TenantKeyResolverService],
+  providers: [SiteKeyResolverService],
+  exports: [SiteKeyResolverService],
 })
 export class TenantModule {}

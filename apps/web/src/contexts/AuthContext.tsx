@@ -286,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const userData = {
                 ...freshUser,
                 role,
-                tenantIds: freshUser.tenants?.map((ut: { tenantId: string }) => ut.tenantId) || [],
+                siteIds: freshUser.siteIds || [],
               };
               localStorage.setItem("user", JSON.stringify(userData));
               
@@ -295,7 +295,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!prevUser || 
                     prevUser.id !== userData.id || 
                     prevUser.role !== userData.role ||
-                    JSON.stringify(prevUser.tenantIds) !== JSON.stringify(userData.tenantIds)) {
+                    JSON.stringify(prevUser.siteIds) !== JSON.stringify(userData.siteIds)) {
                   return userData;
                 }
                 // Data is the same, return previous reference to prevent re-render

@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SlugEntityType } from "@prisma/client";
+import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { NotificationsService } from "../notifications/notifications.service";
+import { RbacService } from "../auth/rbac.service";
 
 export interface CreateEventDto {
-  tenantId: string;
+  siteId: string;
   placeId?: string | null;
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  createdByUserId?: string | null; // User who created the event (for audit trail)
   translations: Array<{
     lang: Lang;
     title: string;
@@ -64,7 +66,8 @@ export interface UpdateEventDto {
 export class AdminEventService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly rbacService: RbacService
   ) {}
 
   /**
@@ -83,7 +86,7 @@ export class AdminEventService {
    * Create slugs for an event in all languages
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForEvent(eventId: string, tenantId: string, translations: Array<{ lang: Lang; title: string }>, throwOnConflict: boolean = false) {
+  private async createSlugsForEvent(eventId: string, siteId: string, translations: Array<{ lang: Lang; title: string }>, throwOnConflict: boolean = false) {
     for (const translation of translations) {
       const baseSlug = this.generateSlug(translation.title);
       let slug = baseSlug;
@@ -92,7 +95,7 @@ export class AdminEventService {
       // Check for existing slugs
       const existing = await this.prisma.slug.findFirst({
         where: {
-          tenantId,
+          siteId,
           lang: translation.lang,
           slug,
           NOT: {
@@ -115,7 +118,7 @@ export class AdminEventService {
         while (true) {
           const nextExisting = await this.prisma.slug.findFirst({
             where: {
-              tenantId,
+              siteId,
               lang: translation.lang,
               slug,
               NOT: {
@@ -134,7 +137,7 @@ export class AdminEventService {
       // Create the slug
       await this.prisma.slug.create({
         data: {
-          tenantId,
+          siteId,
           lang: translation.lang,
           slug,
           entityType: SlugEntityType.event,
@@ -152,7 +155,7 @@ export class AdminEventService {
    */
   private async createSlugsForEventWithRedirects(
     eventId: string,
-    tenantId: string,
+    siteId: string,
     translations: Array<{ lang: Lang; title: string }>,
     existingSlugsByLang: Map<Lang, any>,
     throwOnConflict: boolean = false
@@ -167,7 +170,7 @@ export class AdminEventService {
       // Check for existing slugs (excluding current event's slugs)
       const existing = await this.prisma.slug.findFirst({
         where: {
-          tenantId,
+          siteId,
           lang: translation.lang,
           slug,
           NOT: {
@@ -192,7 +195,7 @@ export class AdminEventService {
         while (true) {
           const nextExisting = await this.prisma.slug.findFirst({
             where: {
-              tenantId,
+              siteId,
               lang: translation.lang,
               slug,
               NOT: {
@@ -217,14 +220,14 @@ export class AdminEventService {
         if (oldSlug !== slug) {
           // Check if there's already a slug with the new value
           const newSlugExists = await this.prisma.slug.findUnique({
-            where: { tenantId_lang_slug: { tenantId, lang: translation.lang, slug } },
+            where: { siteId_lang_slug: { siteId, lang: translation.lang, slug } },
           });
 
           if (!newSlugExists) {
             // Create new slug with isPrimary = true
             const newSlug = await this.prisma.slug.create({
               data: {
-                tenantId,
+                siteId,
                 lang: translation.lang,
                 slug,
                 entityType: SlugEntityType.event,
@@ -270,7 +273,7 @@ export class AdminEventService {
         // No existing slug, create new one
         await this.prisma.slug.create({
           data: {
-            tenantId,
+            siteId,
             lang: translation.lang,
             slug,
             entityType: SlugEntityType.event,
@@ -283,13 +286,13 @@ export class AdminEventService {
     }
   }
 
-  async findAll(tenantId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number) {
     try {
       // Default pagination values
       const pageNum = page ? parseInt(String(page)) : 1;
       const limitNum = limit ? parseInt(String(limit)) : 50;
       
-      const where = { tenantId };
+      const where = { siteId };
       
       // Get total count
       const total = await this.prisma.event.count({ where });
@@ -346,9 +349,9 @@ export class AdminEventService {
     }
   }
 
-  async findOne(id: string, tenantId: string) {
+  async findOne(id: string, siteId: string) {
     const event = await this.prisma.event.findFirst({
-      where: { id, tenantId },
+      where: { id, siteId },
       include: {
         place: {
           include: {
@@ -390,7 +393,7 @@ export class AdminEventService {
   }
 
   async create(dto: CreateEventDto) {
-    const { tagIds = [], categoryIds = [], translations, ...eventData } = dto;
+    const { tagIds = [], categoryIds = [], translations, isPublished, ...eventData } = dto;
 
     // Validate that at least one translation is provided
     if (!translations || translations.length === 0) {
@@ -405,6 +408,7 @@ export class AdminEventService {
     const event = await this.prisma.event.create({
       data: {
         ...eventData,
+        ...(dto.createdByUserId ? { createdByUserId: dto.createdByUserId } : {}),
         startDate: typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate,
         endDate: dto.endDate ? (typeof dto.endDate === "string" ? new Date(dto.endDate) : dto.endDate) : null,
         isActive: dto.isActive ?? true,
@@ -472,7 +476,7 @@ export class AdminEventService {
     // Throw error if slug conflict is detected (admin should be aware of conflicts)
     await this.createSlugsForEvent(
       event.id,
-      dto.tenantId,
+      dto.siteId,
       translations.map((t) => ({ lang: t.lang, title: t.title })),
       true
     );
@@ -488,9 +492,9 @@ export class AdminEventService {
     return event;
   }
 
-  async update(id: string, tenantId: string, dto: UpdateEventDto) {
-    const event = await this.findOne(id, tenantId);
-    const { tagIds, categoryIds, translations, ...eventData } = dto;
+  async update(id: string, siteId: string, dto: UpdateEventDto) {
+    const event = await this.findOne(id, siteId);
+    const { tagIds, categoryIds, translations, isPublished, ...eventData } = dto;
 
     // Update translations if provided
     if (translations && translations.length > 0) {
@@ -518,7 +522,7 @@ export class AdminEventService {
       // Get existing slugs before updating
       const existingSlugs = await this.prisma.slug.findMany({
         where: {
-          tenantId,
+          siteId,
           entityType: SlugEntityType.event,
           entityId: id,
         },
@@ -531,7 +535,7 @@ export class AdminEventService {
       // Throw error if slug conflict is detected (admin should be aware of conflicts)
       await this.createSlugsForEventWithRedirects(
         id,
-        tenantId,
+        siteId,
         translations.map((t) => ({ lang: t.lang, title: t.title })),
         existingSlugsByLang,
         true
@@ -623,14 +627,62 @@ export class AdminEventService {
     return updated;
   }
 
-  async remove(id: string, tenantId: string) {
-    const event = await this.findOne(id, tenantId);
+  async remove(id: string, siteId: string, userId?: string) {
+    const event = await this.findOne(id, siteId);
+
+    // RBAC: Only owner or manager can delete event (editor cannot)
+    if (userId && event.placeId && !await this.canDeleteEvent(userId, event.placeId, siteId)) {
+      throw new ForbiddenException("Editor cannot delete events");
+    }
 
     await this.prisma.event.delete({
       where: { id },
     });
 
     return { message: "Event deleted successfully" };
+  }
+
+  /**
+   * Check if user can delete event
+   * Permission: owner ✅, manager ✅, editor ❌
+   */
+  private async canDeleteEvent(userId: string, placeId: string, siteId: string): Promise<boolean> {
+    // Check global user role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) return false;
+
+    // Superadmin and tenantadmin can always delete
+    if (user.role === UserRole.superadmin) return true;
+
+    const siteMembership = await this.prisma.siteMembership.findUnique({
+      where: {
+        siteId_userId: {
+          siteId,
+          userId,
+        },
+      },
+    });
+
+    if (siteMembership?.role === SiteRole.siteadmin) return true;
+
+    // Check place membership
+    const placeMembership = await this.prisma.placeMembership.findUnique({
+      where: {
+        placeId_userId: {
+          placeId,
+          userId,
+        },
+      },
+    });
+
+    if (!placeMembership) return false;
+
+    // Owner and manager can delete, editor cannot
+    return placeMembership.role === PlaceRole.owner || placeMembership.role === PlaceRole.manager;
   }
 }
 

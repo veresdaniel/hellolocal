@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, type Lang } from "../../app/config";
-import { buildPath } from "../../app/routing/buildPath";
+import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../../app/config";
+import { buildUrl } from "../../app/urls";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -123,8 +123,8 @@ export function LoginPage() {
   }, [requiresTwoFactor]);
 
   // Build public page path
-  const publicPagePath = buildPath({ 
-    tenantSlug: DEFAULT_TENANT_SLUG, 
+  const publicPagePath = buildUrl({
+    siteKey: DEFAULT_SITE_SLUG,
     lang, 
     path: "" 
   });

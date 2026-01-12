@@ -84,6 +84,44 @@ function redirectToLogin() {
 }
 
 /**
+ * Checks if session might be expired (no tokens or both tokens expired)
+ * Returns true if session is likely expired
+ */
+function isSessionLikelyExpired(): boolean {
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshTokenValue = localStorage.getItem("refreshToken");
+  
+  // If no tokens, session is expired
+  if (!accessToken && !refreshTokenValue) {
+    return true;
+  }
+  
+  // If both tokens are expired, session is expired
+  if (accessToken && isTokenExpired(accessToken) && 
+      (!refreshTokenValue || isTokenExpired(refreshTokenValue))) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Checks if we're in admin area and session is expired, then redirects to login
+ * Returns true if redirect happened, false otherwise
+ */
+function checkAndRedirectIfSessionExpired(): boolean {
+  const currentPath = window.location.pathname;
+  const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+  
+  if (isInAdminArea && isSessionLikelyExpired()) {
+    redirectToLogin();
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Refreshes the access token if it's expired
  */
 async function ensureValidToken(): Promise<void> {
@@ -442,6 +480,14 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
       }
     }
     
+    // For 500 errors in admin area, check if session might be expired
+    // Sometimes backend returns 500 instead of 401 for session issues
+    if (res.status === 500) {
+      if (checkAndRedirectIfSessionExpired()) {
+        throw new Error("Session expired. Please log in again.");
+      }
+    }
+    
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
     
@@ -537,6 +583,15 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
         throw new Error("Session expired. Please log in again.");
       }
     }
+    
+    // For 500 errors in admin area, check if session might be expired
+    // Sometimes backend returns 500 instead of 401 for session issues
+    if (res.status === 500) {
+      if (checkAndRedirectIfSessionExpired()) {
+        throw new Error("Session expired. Please log in again.");
+      }
+    }
+    
     let errorMessage = `Request failed: ${res.status}`;
     
     // Handle 404 specifically - endpoint not found
@@ -708,9 +763,17 @@ export async function apiDelete<T>(path: string): Promise<T> {
       }
     }
     
+    // For 500 errors in admin area, check if session might be expired
+    // Sometimes backend returns 500 instead of 401 for session issues
+    if (res.status === 500) {
+      if (checkAndRedirectIfSessionExpired()) {
+        throw new Error("Session expired. Please log in again.");
+      }
+    }
+    
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
-    
+
     console.error(`[apiDelete] Failed: ${errorMessage}`);
     throw new Error(errorMessage);
   }

@@ -7,7 +7,7 @@ import { LegalService } from "./legal.service";
  * Routes:
  * - GET /api/:lang/legal/:page - Get a legal page (imprint, terms, or privacy)
  * 
- * All endpoints support multi-tenant mode via the optional tenantKey query parameter.
+ * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/legal")
 export class LegalController {
@@ -26,7 +26,7 @@ export class LegalController {
    * Gets a legal page by key.
    * 
    * Query parameters:
-   * - tenantKey: Optional tenant key for multi-tenant support
+   * - siteKey: Optional site key for multi-site support
    * 
    * Path parameters:
    * - lang: Language code (hu, en, de)
@@ -36,9 +36,9 @@ export class LegalController {
   getLegalPage(
     @Param("lang") lang: string,
     @Param("page") page: string,
-    @Query("tenantKey") tenantKey?: string
+    @Query("siteKey") siteKey?: string
   ) {
     this.validateLang(lang);
-    return this.legal.getPage({ lang, page, tenantKey });
+    return this.legal.getPage({ lang, page, siteKey });
   }
 }

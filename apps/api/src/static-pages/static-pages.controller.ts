@@ -8,7 +8,7 @@ import { StaticPagesService } from "./static-pages.service";
  * - GET /api/:lang/static-pages - List static pages with optional category filtering
  * - GET /api/:lang/static-pages/:id - Get a single static page by ID
  * 
- * All endpoints support multi-tenant mode via the optional tenantKey query parameter.
+ * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/static-pages")
 export class StaticPagesController {
@@ -27,17 +27,17 @@ export class StaticPagesController {
    * Lists static pages with optional category filtering.
    * 
    * Query parameters:
-   * - tenantKey: Optional tenant key for multi-tenant support
+   * - siteKey: Optional site key for multi-site support
    * - category: Optional category filter (blog, tudastar, infok)
    */
   @Get()
   list(
     @Param("lang") lang: string,
-    @Query("tenantKey") tenantKey?: string,
+    @Query("siteKey") siteKey?: string,
     @Query("category") category?: string
   ) {
     this.validateLang(lang);
-    return this.staticPagesService.list({ lang, tenantKey, category });
+    return this.staticPagesService.list({ lang, siteKey, category });
   }
 
   /**
@@ -47,10 +47,10 @@ export class StaticPagesController {
   detail(
     @Param("lang") lang: string,
     @Param("id") id: string,
-    @Query("tenantKey") tenantKey?: string
+    @Query("siteKey") siteKey?: string
   ) {
     this.validateLang(lang);
-    return this.staticPagesService.detail({ lang, tenantKey, id });
+    return this.staticPagesService.detail({ lang, siteKey, id });
   }
 }
 

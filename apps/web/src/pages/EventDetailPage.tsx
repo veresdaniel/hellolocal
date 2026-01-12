@@ -1,64 +1,65 @@
 // src/pages/EventDetailPage.tsx
 import { useMemo, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getEvent, getSiteSettings } from "../api/places.api";
+import { getEvent, getEventById, getPlatformSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
-import { buildPath } from "../app/routing/buildPath";
+import { buildUrl } from "../app/urls";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { ErrorState } from "../components/ErrorState";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
+import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
-  const { slug } = useParams<{ slug: string }>();
-  const { lang, tenantSlug } = useTenantContext();
-  const navigate = useNavigate();
+  const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
 
-  // Get tenantKey for API call (only if multi-tenant mode)
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
-
-  const { data: event, isLoading, isError, error } = useQuery({
-    queryKey: ["event", lang, slug, tenantKey],
-    queryFn: () => getEvent(lang, slug!, tenantKey),
-    enabled: !!slug,
+  const resolveQ = useResolvedSlugRedirect({
+    lang: lang ?? "",
+    siteKey: siteKey ?? "",
+    slug: slug ?? "",
   });
 
-  // Handle redirects: if the slug was redirected, navigate to the canonical slug
-  useEffect(() => {
-    if (event?.redirected && event.slug && event.slug !== slug) {
-      const canonicalPath = buildPath({ tenantSlug, lang, path: `event/${event.slug}` });
-      navigate(canonicalPath, { replace: true });
-    }
-  }, [event, slug, lang, tenantSlug, navigate]);
+  // Load event by entityId after slug resolution (stable, future-proof)
+  // Only load if slug is resolved, not redirecting, and entity type is event
+  const shouldLoadEvent = resolveQ.data && !resolveQ.data.needsRedirect && resolveQ.data.entityType === "event";
+
+  const { data: event, isLoading, isError, error } = useQuery({
+    queryKey: ["event", resolveQ.data?.entityId, lang, siteKey],
+    queryFn: () => {
+      if (!resolveQ.data || !siteKey) throw new Error("Missing resolve data or siteKey");
+      return getEventById(lang!, siteKey, resolveQ.data.entityId);
+    },
+    enabled: shouldLoadEvent && !!siteKey && !!lang,
+  });
 
   const queryClient = useQueryClient();
 
   // Load site settings for SEO
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Listen for site settings changes from admin
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    const handlePlatformSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, tenantSlug, queryClient]);
+  }, [lang, siteKey, queryClient]);
 
   // Ref for HTML content container
   const descriptionRef = useRef<HTMLDivElement>(null);
@@ -183,8 +184,8 @@ export function EventDetailPage() {
   const seo = useMemo(() => {
     if (!event) {
       return {
-        title: siteSettings?.seoTitle || t("public.event.title"),
-        description: siteSettings?.seoDescription || t("public.event.description"),
+        title: platformSettings?.seoTitle || t("public.event.title"),
+        description: platformSettings?.seoDescription || t("public.event.description"),
       };
     }
     
@@ -252,39 +253,80 @@ export function EventDetailPage() {
                 ...(event.placeName && { name: event.placeName }),
               }
             : undefined,
-          organizer: siteSettings?.siteName
+          organizer: platformSettings?.siteName
             ? {
-                name: siteSettings.siteName,
+                name: platformSettings.siteName,
                 url: window.location.origin,
               }
             : undefined,
         },
       },
     };
-  }, [event, siteSettings, t]);
+  }, [event, platformSettings, t]);
 
   useSeo(seo, {
-    siteName: siteSettings?.siteName,
+    siteName: platformSettings?.siteName,
   });
 
-  if (!slug) return <div style={{ padding: 24 }}>{t("public.errorLoadingEvent")}</div>;
-  
-  // Show loading spinner while loading
-  if (isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+  if (!slug) {
+    return (
+      <ErrorState
+        title={t("error.notFound")}
+        message={t("public.errorLoadingEvent")}
+        variant="minimal"
+      />
+    );
   }
   
-  if (isError)
-    return (
-      <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
-        <p>{t("public.errorLoadingEvent")}</p>
-        <pre style={{ whiteSpace: "pre-wrap", fontSize: 12, marginTop: 16 }}>
-          {String(error)}
-        </pre>
-      </div>
-    );
+  if (resolveQ.isLoading) {
+    return <LoadingSpinner isLoading={true} delay={500} />;
+  }
   
-  if (!event) return <div style={{ padding: 64, textAlign: "center" }}>{t("public.noEvents")}</div>;
+  if (resolveQ.isError) {
+    return (
+      <ErrorState
+        title={t("error.notFound")}
+        message={t("public.errorLoadingEvent")}
+        variant="minimal"
+      />
+    );
+  }
+  
+  // Check if resolved entity type is event
+  if (resolveQ.data && resolveQ.data.entityType !== "event") {
+    return (
+      <ErrorState
+        title={t("error.notFound")}
+        message={t("public.errorLoadingEvent")}
+        variant="minimal"
+      />
+    );
+  }
+  
+  // Show loading spinner while loading event
+  if (isLoading) {
+    return <LoadingSpinner isLoading={true} delay={500} />;
+  }
+  
+  if (isError) {
+    return (
+      <ErrorState
+        title={t("error.errorOccurred")}
+        message={t("public.errorLoadingEvent")}
+        variant="minimal"
+      />
+    );
+  }
+  
+  if (!event) {
+    return (
+      <ErrorState
+        title={t("error.notFound")}
+        message={t("public.noEvents")}
+        variant="minimal"
+      />
+    );
+  }
 
   return (
     <>
@@ -332,7 +374,7 @@ export function EventDetailPage() {
           {/* Header */}
           <div style={{ margin: "0 16px 32px" }}>
             <Link
-              to={buildPath({ tenantSlug, lang, path: "" })}
+              to={buildUrl({ lang, siteKey, path: "" })}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -413,7 +455,7 @@ export function EventDetailPage() {
             {event.placeName && (
               <div style={{ marginBottom: 16 }}>
                 <Link
-                  to={buildPath({ tenantSlug, lang, path: `place/${event.placeSlug}` })}
+                  to={buildUrl({ lang, siteKey, path: `place/${event.placeSlug}` })}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",

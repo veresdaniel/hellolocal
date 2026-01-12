@@ -2,11 +2,11 @@ import { useParams } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
+import { useSiteContext } from "../app/site/useSiteContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
-import { getSiteSettings } from "../api/places.api";
+import { getPlatformSettings } from "../api/places.api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FloatingHeader } from "../components/FloatingHeader";
 
@@ -16,15 +16,16 @@ type Props = {
 
 export function LegalPage({ pageKey }: Props) {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useSiteContext();
   const safeLang = lang ?? "hu";
+  const safeSiteKey = siteKey || "default";
 
-  const { data, isLoading, error } = useLegalPage(safeLang, pageKey);
+  const { data, isLoading, error } = useLegalPage(safeLang, safeTenantKey, pageKey);
 
   // Load site settings for SEO
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", safeLang, tenantSlug],
-    queryFn: () => getSiteSettings(safeLang, tenantSlug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", safeLang, siteKey],
+    queryFn: () => getPlatformSettings(safeLang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -61,33 +62,33 @@ export function LegalPage({ pageKey }: Props) {
         description: stripHtml(data.seo.description),
         url: pageUrl,
         inLanguage: safeLang,
-        isPartOf: siteSettings?.siteName
+        isPartOf: platformSettings?.siteName
           ? {
-              name: siteSettings.siteName,
+              name: platformSettings.siteName,
               url: siteUrl,
             }
           : undefined,
       },
     },
   } : {
-    title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-    description: siteSettings?.seoDescription || "",
+    title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+    description: platformSettings?.seoDescription || "",
     keywords: [],
     og: {
       type: "article" as const,
-      title: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-      description: siteSettings?.seoDescription || "",
+      title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+      description: platformSettings?.seoDescription || "",
     },
     schemaOrg: {
       type: "WebPage" as const,
       data: {
-        name: siteSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-        description: stripHtml(siteSettings?.seoDescription),
+        name: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+        description: stripHtml(platformSettings?.seoDescription),
         url: pageUrl,
         inLanguage: safeLang,
-        isPartOf: siteSettings?.siteName
+        isPartOf: platformSettings?.siteName
           ? {
-              name: siteSettings.siteName,
+              name: platformSettings.siteName,
               url: siteUrl,
             }
           : undefined,
@@ -96,7 +97,7 @@ export function LegalPage({ pageKey }: Props) {
   };
 
   useSeo(seo, {
-    siteName: siteSettings?.siteName,
+    siteName: platformSettings?.siteName,
   });
 
   // Ref for HTML content container

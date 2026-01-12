@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 
 export interface EventLogFilterDto {
-  tenantId?: string;
+  siteId?: string;
   userId?: string;
   action?: string;
   entityType?: string;
@@ -14,7 +14,7 @@ export interface EventLogFilterDto {
 }
 
 export interface CreateEventLogDto {
-  tenantId: string;
+  siteId: string;
   userId: string;
   action: string;
   entityType?: string | null;
@@ -33,7 +33,7 @@ export class AdminEventLogService {
   async create(dto: CreateEventLogDto) {
     const result = await this.prisma.eventLog.create({
       data: {
-        tenantId: dto.tenantId,
+        siteId: dto.siteId,
         userId: dto.userId,
         action: dto.action,
         entityType: dto.entityType ?? null,
@@ -51,7 +51,7 @@ export class AdminEventLogService {
             lastName: true,
           },
         },
-        tenant: {
+        site: {
           select: {
             id: true,
             slug: true,
@@ -66,7 +66,7 @@ export class AdminEventLogService {
    * Find all event logs with filters
    * Only accessible to superadmin and admin
    */
-  async findAll(userRole: UserRole, userTenantIds: string[], filters: EventLogFilterDto) {
+  async findAll(userRole: UserRole, userSiteIds: string[], filters: EventLogFilterDto) {
     // Only superadmin and admin can access event logs
     if (userRole !== UserRole.superadmin && userRole !== UserRole.admin) {
       throw new ForbiddenException("Only superadmin and admin can access event logs");
@@ -74,17 +74,17 @@ export class AdminEventLogService {
 
     const where: any = {};
 
-    // Filter by tenant - superadmin can see all, admin only their tenants
+    // Filter by site - superadmin can see all, admin only their sites
     if (userRole === UserRole.superadmin) {
-      if (filters.tenantId) {
-        where.tenantId = filters.tenantId;
+      if (filters.siteId) {
+        where.siteId = filters.siteId;
       }
     } else {
-      // Admin can only see logs from their tenants
-      if (filters.tenantId && userTenantIds.includes(filters.tenantId)) {
-        where.tenantId = filters.tenantId;
+      // Admin can only see logs from their sites
+      if (filters.siteId && userSiteIds.includes(filters.siteId)) {
+        where.siteId = filters.siteId;
       } else {
-        where.tenantId = { in: userTenantIds };
+        where.siteId = { in: userSiteIds };
       }
     }
 
@@ -132,7 +132,7 @@ export class AdminEventLogService {
               lastName: true,
             },
           },
-          tenant: {
+          site: {
             select: {
               id: true,
               slug: true,
@@ -161,7 +161,7 @@ export class AdminEventLogService {
   /**
    * Export event logs to CSV format
    */
-  async exportToCsv(userRole: UserRole, userTenantIds: string[], filters: EventLogFilterDto): Promise<string> {
+  async exportToCsv(userRole: UserRole, userSiteIds: string[], filters: EventLogFilterDto): Promise<string> {
     // Only superadmin and admin can export event logs
     if (userRole !== UserRole.superadmin && userRole !== UserRole.admin) {
       throw new ForbiddenException("Only superadmin and admin can export event logs");
@@ -169,17 +169,17 @@ export class AdminEventLogService {
 
     const where: any = {};
 
-    // Filter by tenant - superadmin can see all, admin only their tenants
+    // Filter by site - superadmin can see all, admin only their sites
     if (userRole === UserRole.superadmin) {
-      if (filters.tenantId) {
-        where.tenantId = filters.tenantId;
+      if (filters.siteId) {
+        where.siteId = filters.siteId;
       }
     } else {
-      // Admin can only see logs from their tenants
-      if (filters.tenantId && userTenantIds.includes(filters.tenantId)) {
-        where.tenantId = filters.tenantId;
+      // Admin can only see logs from their sites
+      if (filters.siteId && userSiteIds.includes(filters.siteId)) {
+        where.siteId = filters.siteId;
       } else {
-        where.tenantId = { in: userTenantIds };
+        where.siteId = { in: userSiteIds };
       }
     }
 
@@ -221,7 +221,7 @@ export class AdminEventLogService {
             lastName: true,
           },
         },
-        tenant: {
+        site: {
           select: {
             id: true,
             slug: true,
@@ -235,7 +235,7 @@ export class AdminEventLogService {
     const headers = [
       "ID",
       "Timestamp",
-      "Tenant",
+      "Site",
       "User",
       "User Email",
       "Action",
@@ -248,7 +248,7 @@ export class AdminEventLogService {
     const rows = logs.map((log: any) => [
       log.id,
       log.createdAt.toISOString(),
-      log.tenant.slug,
+      log.site.slug,
       `${log.user.firstName} ${log.user.lastName}`,
       log.user.email,
       log.action,
@@ -270,7 +270,7 @@ export class AdminEventLogService {
    * Delete event logs
    * Only accessible to superadmin
    */
-  async delete(userRole: UserRole, userTenantIds: string[], filters: EventLogFilterDto) {
+  async delete(userRole: UserRole, userSiteIds: string[], filters: EventLogFilterDto) {
     // Only superadmin can delete event logs
     if (userRole !== UserRole.superadmin) {
       throw new ForbiddenException("Only superadmin can delete event logs");
@@ -278,15 +278,15 @@ export class AdminEventLogService {
 
     const where: any = {};
 
-    // Filter by tenant - superadmin can delete from any tenant, but we still need tenant filter
-    if (filters.tenantId) {
-      where.tenantId = filters.tenantId;
+    // Filter by site - superadmin can delete from any site, but we still need site filter
+    if (filters.siteId) {
+      where.siteId = filters.siteId;
     } else {
-      // If no tenant filter, use user's tenants (safety measure)
-      if (userTenantIds.length > 0) {
-        where.tenantId = { in: userTenantIds };
+      // If no site filter, use user's sites (safety measure)
+      if (userSiteIds.length > 0) {
+        where.siteId = { in: userSiteIds };
       } else {
-        throw new BadRequestException("Cannot delete event logs: no tenant specified and user has no tenants");
+        throw new BadRequestException("Cannot delete event logs: no site specified and user has no sites");
       }
     }
 
@@ -319,7 +319,7 @@ export class AdminEventLogService {
     // Count total matching records (before applying any page/limit)
     const totalMatching = await this.prisma.eventLog.count({ where });
     
-    // If no filters except tenant, don't allow deletion (safety measure)
+    // If no filters except site, don't allow deletion (safety measure)
     const hasSpecificFilters = !!(filters.userId || filters.action || filters.entityType || filters.startDate || filters.endDate);
     if (!hasSpecificFilters && totalMatching > 100) {
       throw new BadRequestException(`Cannot delete ${totalMatching} event logs without specific filters. Please add filters to narrow down the deletion.`);
@@ -344,7 +344,7 @@ export class AdminEventLogService {
   /**
    * Get available filter options (actions, entity types, etc.)
    */
-  async getFilterOptions(userRole: UserRole, userTenantIds: string[]) {
+  async getFilterOptions(userRole: UserRole, userSiteIds: string[]) {
     // Only superadmin and admin can access filter options
     if (userRole !== UserRole.superadmin && userRole !== UserRole.admin) {
       throw new ForbiddenException("Only superadmin and admin can access filter options");
@@ -352,9 +352,9 @@ export class AdminEventLogService {
 
     const where: any = {};
 
-    // Filter by tenant - superadmin can see all, admin only their tenants
+    // Filter by site - superadmin can see all, admin only their sites
     if (userRole === UserRole.admin) {
-      where.tenantId = { in: userTenantIds };
+      where.siteId = { in: userSiteIds };
     }
 
     const entityTypeWhere = {

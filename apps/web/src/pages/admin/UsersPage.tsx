@@ -3,24 +3,24 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import {
   getUsers,
-  getTenants,
+  getSites,
   createUser,
   updateUser,
   updateUserRole,
   deleteUser,
   disableTwoFactorForUser,
   type User,
-  type Tenant,
+  type Site,
   type UpdateUserRoleDto,
   type CreateUserDto,
 } from "../../api/admin.api";
-import { TenantAutocomplete } from "../../components/TenantAutocomplete";
+import { SiteAutocomplete } from "../../components/SiteAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { HAS_MULTIPLE_TENANTS } from "../../app/config";
+import { HAS_MULTIPLE_SITES } from "../../app/config";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 
 export function UsersPage() {
@@ -28,10 +28,10 @@ export function UsersPage() {
   const location = useLocation();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedSiteId } = useAdminSite();
   usePageTitle("admin.users");
   const [users, setUsers] = useState<User[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,14 +46,14 @@ export function UsersPage() {
     bio: "",
     role: "viewer" as CreateUserDto["role"],
     isActive: true,
-    tenantIds: [] as string[],
+    siteIds: [] as string[],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const previousPathnameRef = useRef<string>(location.pathname);
 
   useEffect(() => {
     loadData();
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   // Load data on mount even if no tenant is selected (for superadmin)
   useEffect(() => {
@@ -87,7 +87,7 @@ export function UsersPage() {
           bio: "",
           role: "viewer",
           isActive: true,
-          tenantIds: [],
+          siteIds: [],
         });
         setFormErrors({});
       }
@@ -98,14 +98,14 @@ export function UsersPage() {
     setIsLoading(true);
     setError(null);
     try {
-      // Superadmin can see all users, others need tenantId
-      const tenantIdForQuery = currentUser?.role === "superadmin" ? undefined : (selectedTenantId || undefined);
-      const [usersData, tenantsData] = await Promise.all([
-        getUsers(tenantIdForQuery),
-        getTenants(),
+      // Superadmin can see all users, others need siteId
+      const siteIdForQuery = currentUser?.role === "superadmin" ? undefined : (selectedSiteId || undefined);
+      const [usersData, sitesData] = await Promise.all([
+        getUsers(siteIdForQuery),
+        getSites(),
       ]);
       setUsers(usersData);
-      setTenants(tenantsData);
+      setSites(sitesData);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadUsersFailed"));
     } finally {
@@ -138,7 +138,7 @@ export function UsersPage() {
         bio: formData.bio || undefined,
         role: formData.role,
         isActive: formData.isActive,
-        tenantIds: formData.tenantIds.length > 0 ? formData.tenantIds : undefined,
+        siteIds: formData.siteIds.length > 0 ? formData.siteIds : undefined,
       });
       setIsCreating(false);
       resetForm();
@@ -157,7 +157,7 @@ export function UsersPage() {
         lastName: formData.lastName,
         bio: formData.bio || undefined,
         isActive: formData.isActive,
-        tenantIds: formData.tenantIds.length > 0 ? formData.tenantIds : undefined,
+        siteIds: formData.siteIds.length > 0 ? formData.siteIds : undefined,
       });
       setEditingId(null);
       resetForm();
@@ -202,7 +202,7 @@ export function UsersPage() {
       bio: user.bio || "",
       role: user.role,
       isActive: user.isActive,
-      tenantIds: user.tenants.map((ut) => ut.tenantId),
+      siteIds: user.sites?.map((us) => us.siteId) || user.tenants?.map((ut) => ut.tenantId) || [],
     });
   };
 
@@ -216,7 +216,7 @@ export function UsersPage() {
       bio: "",
       role: "viewer",
       isActive: true,
-      tenantIds: [],
+      siteIds: [],
     });
     setFormErrors({});
   };
@@ -234,7 +234,7 @@ export function UsersPage() {
           fontSize: "clamp(20px, 4vw, 28px)", 
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff", 
+          color: "white", 
           margin: 0,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
         }}>
@@ -419,11 +419,11 @@ export function UsersPage() {
             </div>
           </div>
 
-          {HAS_MULTIPLE_TENANTS && (
-            <TenantAutocomplete
-              selectedTenantIds={formData.tenantIds}
-              onTenantIdsChange={(tenantIds) => setFormData({ ...formData, tenantIds })}
-              allTenants={tenants}
+          {HAS_MULTIPLE_SITES && (
+            <SiteAutocomplete
+              selectedSiteIds={formData.siteIds}
+              onSiteIdsChange={(siteIds) => setFormData({ ...formData, siteIds })}
+              allSites={sites}
             />
           )}
 
@@ -511,8 +511,7 @@ export function UsersPage() {
         </div>
       )}
 
-      <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId && (
+      {!isCreating && !editingId && (
         <AdminResponsiveTable<User>
           data={users}
           getItemId={(user) => user.id}
@@ -528,6 +527,7 @@ export function UsersPage() {
               user.role.toLowerCase().includes(lowerQuery)
             );
           }}
+          isLoading={isLoading}
           columns={[
             {
               key: "username",
@@ -577,21 +577,26 @@ export function UsersPage() {
               ),
             },
             {
-              key: "tenants",
-              label: t("admin.tenants"),
-              render: (user) =>
-                user.tenants.length === 0 ? (
+              key: "sites",
+              label: t("admin.sites"),
+              render: (user) => {
+                const userSites = user.sites || user.tenants || [];
+                return userSites.length === 0 ? (
                   <span style={{ color: "#999" }}>{t("common.none")}</span>
                 ) : (
                   <div>
-                    {user.tenants.map((ut) => (
-                      <div key={ut.id} style={{ marginBottom: 4 }}>
-                        {ut.tenant.slug}
-                        {ut.isPrimary && <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>}
-                      </div>
-                    ))}
+                    {userSites.map((us: any) => {
+                      const site = us.site || us.tenant;
+                      return (
+                        <div key={us.id} style={{ marginBottom: 4 }}>
+                          {site.slug}
+                          {us.isPrimary && <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>}
+                        </div>
+                      );
+                    })}
                   </div>
-                ),
+                );
+              },
             },
             {
               key: "status",
@@ -663,14 +668,19 @@ export function UsersPage() {
               ),
             },
             {
-              key: "tenants",
-              render: (user) =>
-                user.tenants.length > 0 ? (
+              key: "sites",
+              render: (user) => {
+                const userSites = user.sites || user.tenants || [];
+                return userSites.length > 0 ? (
                   <div style={{ marginBottom: 8, fontSize: 13, color: "#666" }}>
-                    <strong>{t("admin.tenants")}:</strong>{" "}
-                    {user.tenants.map((ut) => ut.tenant.slug + (ut.isPrimary ? " ★" : "")).join(", ")}
+                    <strong>{t("admin.sites")}:</strong>{" "}
+                    {userSites.map((us: any) => {
+                      const site = us.site || us.tenant;
+                      return site.slug + (us.isPrimary ? " ★" : "");
+                    }).join(", ")}
                   </div>
-                ) : null,
+                ) : null;
+              },
             },
             {
               key: "status",

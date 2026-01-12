@@ -1,10 +1,10 @@
 // src/seo/seo.controller.ts
 import { Controller, Get, Param, Query, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
+import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 import { SlugEntityType } from "@prisma/client";
-import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
+import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 
 /**
  * Removes HTML tags from a string and normalizes whitespace
@@ -22,9 +22,9 @@ function stripHtml(html: string | null | undefined): string {
 export class SeoController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tenantResolver: TenantKeyResolverService,
+    private readonly siteResolver: SiteKeyResolverService,
     private readonly slugResolver: SlugResolverService,
-    private readonly appSettingsService: AdminAppSettingsService
+    private readonly platformSettingsService: PlatformSettingsService
   ) {}
 
   /**
@@ -43,13 +43,13 @@ export class SeoController {
       throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
     }
 
-    // Resolve tenant
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey });
+    // Resolve site
+    const site = await this.siteResolver.resolve({ lang, siteKey: tenantKey });
 
     // Resolve slug
     const slugResult = await this.slugResolver.resolve({
-      tenantId: tenant.tenantId,
-      lang: tenant.lang,
+      siteId: site.siteId,
+      lang: site.lang,
       slug,
     });
 
@@ -59,8 +59,8 @@ export class SeoController {
       throw new NotFoundException(`Entity not found or wrong type`);
     }
 
-    // Get site settings for the resolved tenant
-    const siteSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
+    // Get platform settings for the resolved site
+    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(site.siteId);
 
     if (type === "place") {
       const place = await this.prisma.place.findUnique({
@@ -82,20 +82,20 @@ export class SeoController {
         throw new NotFoundException("Place not found");
       }
 
-      const translation = place.translations.find((t) => t.lang === tenant.lang) ||
+      const translation = place.translations.find((t) => t.lang === site.lang) ||
         place.translations.find((t) => t.lang === "hu");
 
-      const categoryName = place.category?.translations.find((t) => t.lang === tenant.lang)?.name ||
+      const categoryName = place.category?.translations.find((t) => t.lang === site.lang)?.name ||
         place.category?.translations.find((t) => t.lang === "hu")?.name;
 
-      const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
+      const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
       const title = translation?.seoTitle || translation?.name || place.id;
       const rawDescription = translation?.seoDescription || translation?.description || "";
       const description = stripHtml(rawDescription);
       // Use SEO image, then hero image, then default placeholder detail hero image
-      const image = translation?.seoImage || place.heroImage || siteSettings.defaultPlaceholderDetailHeroImage || "";
+      const image = translation?.seoImage || place.heroImage || platformSettings.defaultPlaceholderDetailHeroImage || "";
       const keywords = translation?.seoKeywords || [];
-      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${tenant.lang}${tenant.canonicalTenantKey ? `/${tenant.canonicalTenantKey}` : ""}/place/${slugResult.canonicalSlug}`;
+      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/place/${slugResult.canonicalSlug}`;
 
       // Generate basic LocalBusiness schema.org data
       const schemaOrg: any = {
@@ -194,17 +194,17 @@ export class SeoController {
         throw new NotFoundException("Event not found");
       }
 
-      const translation = event.translations.find((t) => t.lang === tenant.lang) ||
+      const translation = event.translations.find((t) => t.lang === site.lang) ||
         event.translations.find((t) => t.lang === "hu");
 
-      const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
+      const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
       const title = translation?.seoTitle || translation?.title || event.id;
       const rawDescription = translation?.seoDescription || translation?.shortDescription || translation?.description || "";
       const description = stripHtml(rawDescription);
       // Use SEO image, then hero image, then default placeholder detail hero image
-      const image = translation?.seoImage || event.heroImage || siteSettings.defaultPlaceholderDetailHeroImage || "";
+      const image = translation?.seoImage || event.heroImage || platformSettings.defaultPlaceholderDetailHeroImage || "";
       const keywords = translation?.seoKeywords || [];
-      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${tenant.lang}${tenant.canonicalTenantKey ? `/${tenant.canonicalTenantKey}` : ""}/event/${slugResult.canonicalSlug}`;
+      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/event/${slugResult.canonicalSlug}`;
 
       // Generate basic Event schema.org data
       const schemaOrg: any = {
@@ -243,7 +243,7 @@ export class SeoController {
 
         // Add place name if event is associated with a place
         if (event.place) {
-          const placeTranslation = event.place.translations.find((t) => t.lang === tenant.lang) ||
+          const placeTranslation = event.place.translations.find((t) => t.lang === site.lang) ||
             event.place.translations.find((t) => t.lang === "hu");
           if (placeTranslation?.name) {
             location.name = placeTranslation.name;
@@ -259,8 +259,8 @@ export class SeoController {
         schemaOrg.location = location;
       } else if (event.place) {
         // Event has a place but no coordinates - use place info
-        const placeTranslation = event.place.translations.find((t) => t.lang === tenant.lang) ||
-          event.place.translations.find((t) => t.lang === "hu");
+          const placeTranslation = event.place.translations.find((t) => t.lang === site.lang) ||
+            event.place.translations.find((t) => t.lang === "hu");
         if (placeTranslation) {
           const location: any = {
             "@type": "Place",
@@ -315,16 +315,16 @@ export class SeoController {
       throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
     }
 
-    // Resolve tenant
-    const tenant = await this.tenantResolver.resolve({ lang, tenantKey });
+    // Resolve site
+    const site = await this.siteResolver.resolve({ lang, siteKey: tenantKey });
 
     // Get site settings for the resolved tenant
-    const siteSettings = await this.appSettingsService.getSiteSettings(tenant.tenantId);
-    const siteName = siteSettings.siteName[tenant.lang as "hu" | "en" | "de"];
-    const seoTitle = siteSettings.seoTitle[tenant.lang as "hu" | "en" | "de"] || siteName;
-    const rawSeoDescription = siteSettings.seoDescription[tenant.lang as "hu" | "en" | "de"] || "";
+    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(site.siteId);
+    const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
+    const seoTitle = platformSettings.seoTitle[site.lang as "hu" | "en" | "de"] || siteName;
+    const rawSeoDescription = platformSettings.seoDescription[site.lang as "hu" | "en" | "de"] || "";
     const seoDescription = stripHtml(rawSeoDescription);
-    const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${tenant.lang}${tenant.canonicalTenantKey ? `/${tenant.canonicalTenantKey}` : ""}`;
+    const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}`;
 
     // Generate WebSite schema.org data
     const schemaOrg: any = {

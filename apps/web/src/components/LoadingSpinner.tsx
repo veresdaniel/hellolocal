@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 
 interface LoadingSpinnerProps {
   isLoading: boolean;
-  delay?: number; // Delay in milliseconds before showing spinner (default: 2000)
+  delay?: number; // Delay in milliseconds before showing spinner (default: 200 for quick feedback)
 }
 
-export function LoadingSpinner({ isLoading, delay = 2000 }: LoadingSpinnerProps) {
+export function LoadingSpinner({ isLoading, delay = 200 }: LoadingSpinnerProps) {
   const { t } = useTranslation();
   const [showSpinner, setShowSpinner] = useState(false);
 

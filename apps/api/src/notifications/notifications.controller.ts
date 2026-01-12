@@ -3,7 +3,7 @@ import { Controller, Post, Body, Delete, Param } from "@nestjs/common";
 import { NotificationsService } from "./notifications.service";
 
 export interface SubscribeDto {
-  tenantId: string;
+  siteId: string;
   subscription: {
     endpoint: string;
     expirationTime?: number | null;
@@ -21,7 +21,7 @@ export class NotificationsController {
 
   @Post("/subscribe")
   async subscribe(@Body() dto: SubscribeDto) {
-    return this.notificationsService.subscribe(dto.tenantId, {
+    return this.notificationsService.subscribe(dto.siteId, {
       endpoint: dto.subscription.endpoint,
       keys: dto.subscription.keys,
       userAgent: dto.userAgent,

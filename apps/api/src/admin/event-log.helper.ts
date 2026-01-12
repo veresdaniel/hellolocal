@@ -7,7 +7,7 @@ import { AdminEventLogService } from "./admin-eventlog.service";
  */
 export async function logAdminAction(
   eventLogService: AdminEventLogService | undefined,
-  tenantId: string,
+  siteId: string,
   userId: string,
   action: "create" | "update" | "delete",
   entityType: string,
@@ -21,7 +21,7 @@ export async function logAdminAction(
 
   try {
     await eventLogService.create({
-      tenantId,
+      siteId,
       userId,
       action,
       entityType,

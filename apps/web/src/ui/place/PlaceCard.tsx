@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { Place } from "../../types/place";
-import { useTenantContext } from "../../app/tenant/useTenantContext";
-import { buildPath } from "../../app/routing/buildPath";
+import { buildUrl } from "../../app/urls";
+import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
-import { getSiteSettings } from "../../api/places.api";
+import { getPlatformSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
@@ -62,22 +62,22 @@ interface PlaceCardProps {
 }
 
 export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
   const categoryName = place.category || null;
   // Use category color from database, fallback to getCategoryColor function
   const categoryColor = place.categoryColor || getCategoryColor(categoryName);
 
-  // Load site settings for default placeholder image
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
+  // Load platform settings for default placeholder image
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Determine which image to use: place image or default placeholder
   // Sanitize URLs to prevent XSS attacks
-  const imageUrl = sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(siteSettings?.defaultPlaceholderCardImage) || null;
+  const imageUrl = sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) || null;
   const hasSlug = !!place.slug;
 
   // Common article content
@@ -282,7 +282,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
       `}</style>
       {hasSlug ? (
         <Link
-          to={buildPath({ tenantSlug, lang, path: `place/${place.slug}` })}
+          to={buildUrl({ lang, siteKey, path: `place/${place.slug}` })}
           style={{
             textDecoration: "none",
             color: "inherit",

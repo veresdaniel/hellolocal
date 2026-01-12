@@ -9,12 +9,23 @@ export interface MapSettings {
   zoom: number | null;
 }
 
-export function getMapSettings(lang: string, tenantKey?: string): Promise<MapSettings> {
-  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
-  return apiGetPublic<MapSettings>(`/${lang}/map-settings${params}`);
+export function getMapSettings(lang: string, siteKey?: string): Promise<MapSettings> {
+  // Map settings are part of platform settings
+  // Use platform settings endpoint and extract map settings from it
+  const effectiveSiteKey = siteKey || "default";
+  return apiGetPublic<PlatformSettingsDto>(`/public/${lang}/${effectiveSiteKey}/platform`).then(
+    (dto) => ({
+      townId: null, // Not available in platform settings
+      lat: dto.map?.center?.lat || null,
+      lng: dto.map?.center?.lng || null,
+      zoom: dto.map?.zoom || null,
+    })
+  );
 }
 
-export interface SiteSettings {
+// Legacy PlatformSettings interface - kept for backward compatibility
+// New code should use PlatformSettingsDto from types/platformSettings.ts
+export interface PlatformSettings {
   siteName: string;
   siteDescription: string;
   seoTitle: string;
@@ -26,25 +37,40 @@ export interface SiteSettings {
   faviconUrl: string | null;
 }
 
-export function getSiteSettings(lang: string, tenantKey?: string): Promise<SiteSettings> {
-  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
-  return apiGetPublic<SiteSettings>(`/${lang}/site-settings${params}`);
+// Legacy function - maps to new API endpoint
+export function getPlatformSettings(lang: string, siteKey?: string): Promise<PlatformSettings> {
+  // Use new unified platform-settings endpoint with path parameters
+  // If siteKey is not provided, use "default" as fallback
+  const effectiveSiteKey = siteKey || "default";
+  return apiGetPublic<PlatformSettingsDto>(`/public/${lang}/${effectiveSiteKey}/platform`).then(
+    (dto) => ({
+      siteName: dto.site.name,
+      siteDescription: dto.site.description || "",
+      seoTitle: dto.seo.defaultTitle || "",
+      seoDescription: dto.seo.defaultDescription || "",
+      defaultPlaceholderCardImage: dto.placeholders.placeCard || null,
+      defaultPlaceholderDetailHeroImage: dto.placeholders.placeHero || null,
+      defaultEventPlaceholderCardImage: dto.placeholders.eventCard || null,
+      brandBadgeIcon: dto.placeholders.avatar || null,
+      faviconUrl: dto.brand.faviconUrl || null,
+    })
+  );
 }
+
+// Import new DTO type
+import type { PlatformSettingsDto } from "../types/platformSettings";
 
 export function getPlaces(
   lang: string,
-  tenantKey?: string,
+  siteKey: string,
   category?: string | string[],
   priceBand?: string | string[],
   searchQuery?: string,
   limit?: number,
   offset?: number
 ) {
+  const effectiveSiteKey = siteKey || "default";
   const params = new URLSearchParams();
-  // Add tenantKey if provided (for multi-tenant mode)
-  if (tenantKey) {
-    params.append("tenantKey", tenantKey);
-  }
   // Support multiple categories and price bands (OR logic)
   if (category) {
     const categories = Array.isArray(category) ? category : [category];
@@ -58,12 +84,24 @@ export function getPlaces(
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Place[]>(`/${lang}/places${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Place[]>(`/public/${lang}/${effectiveSiteKey}/places${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getPlace(lang: string, slug: string, tenantKey?: string) {
-  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
-  return apiGetPublic<Place>(`/${lang}/places/${slug}${params}`);
+export function getPlace(lang: string, slug: string, siteKey: string) {
+  return apiGetPublic<Place>(`/public/${lang}/${siteKey}/places/${slug}`);
+}
+
+/**
+ * Gets a place by its entity ID (stable, future-proof).
+ * This should be used after slug resolution to fetch place data by ID.
+ * 
+ * @param lang - Language code (hu, en, de)
+ * @param siteKey - Site key from URL
+ * @param placeId - Place entity ID
+ * @returns Place data
+ */
+export function getPlaceById(lang: string, siteKey: string, placeId: string) {
+  return apiGetPublic<Place>(`/public/${lang}/${siteKey}/places/by-id/${placeId}`);
 }
 
 export interface Category {
@@ -79,10 +117,10 @@ export interface PriceBand {
 // Note: These would need to be added to the backend as public endpoints
 // For now, we'll use a workaround by fetching from the places data
 // OPTIMIZED: Use cached places data if available to avoid duplicate API calls
-let cachedPlacesForExtraction: { lang: string; tenantKey?: string; places: Place[]; timestamp: number } | null = null;
+let cachedPlacesForExtraction: { lang: string; siteKey?: string; tenantKey?: string; places: Place[]; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 
-export async function getCategories(lang: string, tenantKey?: string, useCachedPlaces?: Place[]): Promise<Category[]> {
+export async function getCategories(lang: string, siteKey?: string, useCachedPlaces?: Place[]): Promise<Category[]> {
   // If places are provided, use them directly (no API call needed)
   if (useCachedPlaces) {
     const categoryMap = new Map<string, Category>();
@@ -104,7 +142,7 @@ export async function getCategories(lang: string, tenantKey?: string, useCachedP
   // Check cache first
   if (cachedPlacesForExtraction && 
       cachedPlacesForExtraction.lang === lang && 
-      cachedPlacesForExtraction.tenantKey === tenantKey &&
+      (cachedPlacesForExtraction.siteKey === siteKey || cachedPlacesForExtraction.tenantKey === siteKey) &&
       Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
     const categoryMap = new Map<string, Category>();
     cachedPlacesForExtraction.places.forEach((place) => {
@@ -123,8 +161,8 @@ export async function getCategories(lang: string, tenantKey?: string, useCachedP
   }
 
   // Fetch places and cache them
-  const places = await getPlaces(lang, tenantKey);
-  cachedPlacesForExtraction = { lang, tenantKey, places, timestamp: Date.now() };
+  const places = await getPlaces(lang, siteKey || "");
+  cachedPlacesForExtraction = { lang, siteKey, tenantKey: siteKey, places, timestamp: Date.now() };
   
   const categoryMap = new Map<string, Category>();
   places.forEach((place) => {
@@ -142,7 +180,7 @@ export async function getCategories(lang: string, tenantKey?: string, useCachedP
   return Array.from(categoryMap.values());
 }
 
-export async function getPriceBands(lang: string, tenantKey?: string, useCachedPlaces?: Place[]): Promise<PriceBand[]> {
+export async function getPriceBands(lang: string, siteKey?: string, useCachedPlaces?: Place[]): Promise<PriceBand[]> {
   // If places are provided, use them directly (no API call needed)
   if (useCachedPlaces) {
     const priceBandMap = new Map<string, PriceBand>();
@@ -164,7 +202,7 @@ export async function getPriceBands(lang: string, tenantKey?: string, useCachedP
   // Check cache first
   if (cachedPlacesForExtraction && 
       cachedPlacesForExtraction.lang === lang && 
-      cachedPlacesForExtraction.tenantKey === tenantKey &&
+      (cachedPlacesForExtraction.siteKey === siteKey || cachedPlacesForExtraction.tenantKey === siteKey) &&
       Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
     const priceBandMap = new Map<string, PriceBand>();
     cachedPlacesForExtraction.places.forEach((place) => {
@@ -183,8 +221,8 @@ export async function getPriceBands(lang: string, tenantKey?: string, useCachedP
   }
 
   // Fetch places and cache them
-  const places = await getPlaces(lang, tenantKey);
-  cachedPlacesForExtraction = { lang, tenantKey, places, timestamp: Date.now() };
+  const places = await getPlaces(lang, siteKey || "");
+  cachedPlacesForExtraction = { lang, siteKey, tenantKey: siteKey, places, timestamp: Date.now() };
   
   const priceBandMap = new Map<string, PriceBand>();
   places.forEach((place) => {
@@ -207,8 +245,8 @@ export interface Event {
   id: string;
   slug: string;
   redirected?: boolean; // Whether the slug was redirected to a canonical slug
-  tenantRedirected?: boolean; // Whether the tenant key was redirected
-  tenantKey: string | null;
+  siteRedirected?: boolean; // Whether the site key was redirected
+  siteKey: string | null;
   category: string | null;
   name: string;
   shortDescription: string | null;
@@ -235,29 +273,41 @@ export interface Event {
 
 export function getEvents(
   lang: string,
+  siteKey: string,
   category?: string,
   placeId?: string,
   limit?: number,
-  offset?: number,
-  tenantKey?: string
+  offset?: number
 ) {
+  const effectiveSiteKey = siteKey || "default";
   const params = new URLSearchParams();
-  if (tenantKey) params.append("tenantKey", tenantKey);
   if (category) params.append("category", category);
   if (placeId) params.append("placeId", placeId);
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Event[]>(`/${lang}/events${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Event[]>(`/public/${lang}/${effectiveSiteKey}/events${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getEvent(lang: string, slug: string, tenantKey?: string) {
-  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
-  return apiGetPublic<Event>(`/${lang}/events/${slug}${params}`);
+export function getEvent(lang: string, slug: string, siteKey: string) {
+  return apiGetPublic<Event>(`/public/${lang}/${siteKey}/events/${slug}`);
 }
 
-// Tenants
-export interface Tenant {
+/**
+ * Gets an event by its entity ID (stable, future-proof).
+ * This should be used after slug resolution to fetch event data by ID.
+ * 
+ * @param lang - Language code (hu, en, de)
+ * @param siteKey - Site key from URL
+ * @param eventId - Event entity ID
+ * @returns Event data
+ */
+export function getEventById(lang: string, siteKey: string, eventId: string) {
+  return apiGetPublic<Event>(`/public/${lang}/${siteKey}/events/by-id/${eventId}`);
+}
+
+// Sites (public API)
+export interface Site {
   id: string;
   slug: string;
   name: string;
@@ -272,23 +322,22 @@ export interface Tenant {
   updatedAt: string;
 }
 
-export function getTenants(
+export function getSites(
   lang: string,
-  tenantKey?: string,
+  siteKey: string,
   searchQuery?: string,
   limit?: number,
   offset?: number
 ) {
   const params = new URLSearchParams();
-  if (tenantKey) params.append("tenantKey", tenantKey);
   if (searchQuery) params.append("q", searchQuery);
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Tenant[]>(`/${lang}/tenants${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Site[]>(`/public/${lang}/${siteKey}/sites${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getTenant(lang: string, slug: string, tenantKey?: string) {
-  const params = tenantKey ? `?tenantKey=${tenantKey}` : "";
-  return apiGetPublic<Tenant>(`/${lang}/tenants/${slug}${params}`);
+export function getSite(lang: string, slug: string, siteKey: string) {
+  return apiGetPublic<Site>(`/public/${lang}/${siteKey}/sites/${slug}`);
 }
+

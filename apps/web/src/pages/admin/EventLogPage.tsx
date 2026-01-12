@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import {
   getEventLogs,
@@ -10,29 +10,30 @@ import {
   exportEventLogs,
   deleteEventLogs,
   getUsers,
-  getTenants,
+  getSites,
   type EventLog,
   type EventLogFilterDto,
   type User,
-  type Tenant,
+  type Site,
 } from "../../api/admin.api";
 
 // Import getEventLogs directly for use in useEffect
 import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { HAS_MULTIPLE_TENANTS } from "../../app/config";
+import { Pagination } from "../../components/Pagination";
+import { HAS_MULTIPLE_SITES } from "../../app/config";
 
 export function EventLogPage() {
   const { t } = useTranslation();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
-  const { selectedTenantId } = useAdminTenant();
+  const { selectedSiteId } = useAdminSite();
   usePageTitle("admin.eventLog");
   const { showToast } = useToast();
 
   const [logs, setLogs] = useState<EventLog[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
   const [filterOptions, setFilterOptions] = useState<{ actions: string[]; entityTypes: string[] }>({
     actions: [],
     entityTypes: [],
@@ -135,12 +136,12 @@ export function EventLogPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // Update filters when selectedTenantId changes
+  // Update filters when selectedSiteId changes
   useEffect(() => {
-    if (selectedTenantId) {
-      setFilters((prev) => ({ ...prev, tenantId: selectedTenantId, page: 1 }));
+    if (selectedSiteId) {
+      setFilters((prev) => ({ ...prev, siteId: selectedSiteId, page: 1 }));
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   // Load logs when filters change (but skip initial load and delete operations)
   useEffect(() => {
@@ -265,7 +266,7 @@ export function EventLogPage() {
     try {
       // Remove page and limit from delete filters
       const deleteFilters = {
-        tenantId: filters.tenantId,
+        siteId: filters.siteId,
         userId: filters.userId,
         action: filters.action,
         entityType: filters.entityType,
@@ -343,7 +344,7 @@ export function EventLogPage() {
           fontSize: "clamp(20px, 4vw, 28px)",
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
+          color: "white",
           margin: 0,
           marginBottom: 8,
           textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -374,19 +375,19 @@ export function EventLogPage() {
       >
         <h3 style={{ marginTop: 0, marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.eventLog.filters")}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
-          {/* Tenant Filter */}
-          {HAS_MULTIPLE_TENANTS && (currentUser?.role === "superadmin" || tenants.length > 1) && (
+          {/* Site Filter */}
+          {HAS_MULTIPLE_SITES && (currentUser?.role === "superadmin" || sites.length > 1) && (
             <div>
               <label style={{ display: "block", marginBottom: 4, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.eventLog.filterTenant")}
               </label>
               <select
-                value={filters.tenantId || ""}
-                onChange={(e) => handleFilterChange("tenantId", e.target.value || undefined)}
+                value={filters.siteId || ""}
+                onChange={(e) => handleFilterChange("siteId", e.target.value || undefined)}
                 style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
               >
-                <option value="">{t("admin.eventLog.allTenants")}</option>
-                {tenants.map((tenant) => (
+                <option value="">{t("admin.eventLog.allSites")}</option>
+                {sites.map((site) => (
                   <option key={tenant.id} value={tenant.id}>
                     {tenant.translations[0]?.name || tenant.slug}
                   </option>
@@ -516,7 +517,7 @@ export function EventLogPage() {
           <button
             onClick={() => {
               setFilters({
-                tenantId: selectedTenantId || undefined,
+                siteId: selectedSiteId || undefined,
                 page: 1,
                 limit: 50,
               });
@@ -563,7 +564,7 @@ export function EventLogPage() {
                 <thead>
                   <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
                     <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.timestamp")}</th>
-                    {HAS_MULTIPLE_TENANTS && <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.tenant")}</th>}
+                    {HAS_MULTIPLE_SITES && <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.site")}</th>}
                     <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.user")}</th>
                     <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.action")}</th>
                     <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.entityType")}</th>
@@ -573,7 +574,7 @@ export function EventLogPage() {
                 <tbody>
                   {logs.length === 0 ? (
                     <tr>
-                      <td colSpan={HAS_MULTIPLE_TENANTS ? 6 : 5} style={{ padding: 24, textAlign: "center", color: "#666" }}>
+                      <td colSpan={HAS_MULTIPLE_SITES ? 6 : 5} style={{ padding: 24, textAlign: "center", color: "#666" }}>
                         {t("admin.eventLog.noLogs")}
                       </td>
                     </tr>
@@ -581,10 +582,10 @@ export function EventLogPage() {
                     logs.map((log) => (
                       <tr key={log.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
                         <td style={{ padding: 12 }}>{formatDate(log.createdAt)}</td>
-                        {HAS_MULTIPLE_TENANTS && (
+                        {HAS_MULTIPLE_SITES && (
                           <td style={{ padding: 12 }}>
                             <span style={{ padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
-                              {log.tenant.slug}
+                              {log.site?.slug || log.siteId}
                             </span>
                           </td>
                         )}
@@ -621,43 +622,16 @@ export function EventLogPage() {
           </div>
 
           {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-              <div style={{ color: "#666" }}>
-                {t("admin.eventLog.showing")} {((pagination.page - 1) * pagination.limit) + 1} -{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("admin.eventLog.of")}{" "}
-                {pagination.total}
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => setFilters((prev) => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
-                  style={{
-                    padding: "8px 16px",
-                    background: pagination.page === 1 ? "#e5e7eb" : "#3b82f6",
-                    color: pagination.page === 1 ? "#9ca3af" : "white",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: pagination.page === 1 ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {t("admin.eventLog.previous")}
-                </button>
-                <button
-                  onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page >= pagination.totalPages}
-                  style={{
-                    padding: "8px 16px",
-                    background: pagination.page >= pagination.totalPages ? "#e5e7eb" : "#3b82f6",
-                    color: pagination.page >= pagination.totalPages ? "#9ca3af" : "white",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: pagination.page >= pagination.totalPages ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {t("admin.eventLog.next")}
-                </button>
-              </div>
+          {pagination.total > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                limit={pagination.limit}
+                onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
+                onLimitChange={(limit) => setFilters((prev) => ({ ...prev, limit, page: 1 }))}
+              />
             </div>
           )}
         </>

@@ -31,15 +31,49 @@ enum UserRole {
   // Future roles can be added here
 }
 
+enum SiteRole {
+  siteadmin
+  editor
+  viewer
+}
+
+enum PlaceRole {
+  owner
+  manager
+  editor
+}
+
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
-model Tenant {
+// Brand: Visual identity and branding assets
+// Represents who is speaking, visual style, default assets
+model Brand {
+  id              String   @id @default(cuid())
+  name            String
+  logoUrl         String?
+  faviconUrl      String?
+
+  theme           Json?   // colors, typography
+  placeholders    Json?   // default images (card, detail hero, event card)
+  mapDefaults     Json?   // default map style, zoom, center
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sites          Site[]
+}
+
+model Site {
   id               String   @id @default(cuid())
   slug             String   @unique
   isActive         Boolean  @default(true)
 
   // optional: for domain/whitelabel later
   primaryDomain    String?  @unique
+
+  // Brand relationship - site belongs to a brand
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -49,21 +83,26 @@ model Tenant {
   events           Event[]
   legalPages       LegalPage[]
   staticPages      StaticPage[]
-  translations     TenantTranslation[]
+  translations     SiteTranslation[]
 
-  tenantKeys       TenantKey[]
+  siteKeys         SiteKey[]
   slugs            Slug[]
   categories       Category[]
   tags             Tag[]
   priceBands       PriceBand[]
-  users            UserTenant[]
+  users            UserSite[]
   pushSubscriptions PushSubscription[]
   eventLogs        EventLog[]
+  siteInstances    SiteInstance[]
+  siteMemberships  SiteMembership[]
+  siteDomains      SiteDomain[]
+
+  @@index([brandId])
 }
 
-model TenantTranslation {
+model SiteTranslation {
   id              String  @id @default(cuid())
-  tenantId        String
+  siteId           String
   lang            Lang
 
   name            String
@@ -77,15 +116,15 @@ model TenantTranslation {
   seoImage        String?
   seoKeywords     String[] @default([])
 
-  tenant          Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site            Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, lang])
+  @@unique([siteId, lang])
   @@index([lang])
 }
 
-model TenantKey {
+model SiteKey {
   id            String   @id @default(cuid())
-  tenantId      String
+  siteId        String
   lang          Lang
   slug          String
 
@@ -93,22 +132,22 @@ model TenantKey {
   isActive      Boolean  @default(true)
 
   redirectToId  String?
-  redirectTo    TenantKey?  @relation("TenantKeyRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
-  redirectsFrom TenantKey[] @relation("TenantKeyRedirect")
+  redirectTo    SiteKey?  @relation("SiteKeyRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
+  redirectsFrom SiteKey[] @relation("SiteKeyRedirect")
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site          Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  @@unique([lang, slug])
+  @@unique([siteId, lang, slug])
   @@index([lang, slug])
-  @@index([tenantId, lang])
+  @@index([siteId, lang])
 }
 
 model Slug {
   id            String         @id @default(cuid())
-  tenantId      String
+  siteId        String
   lang          Lang
   slug          String
 
@@ -125,16 +164,16 @@ model Slug {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site          Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  @@unique([tenantId, lang, slug])
-  @@index([tenantId, lang, slug])
-  @@index([tenantId, entityType, entityId])
+  @@unique([siteId, lang, slug])
+  @@index([siteId, lang, slug])
+  @@index([siteId, entityType, entityId])
 }
 
 model Town {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   isActive   Boolean  @default(true)
 
   // Map coordinates
@@ -144,11 +183,11 @@ model Town {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   places     Place[]
   translations TownTranslation[]
 
-  @@index([tenantId])
+  @@index([siteId])
 }
 
 model TownTranslation {
@@ -174,7 +213,7 @@ model TownTranslation {
 
 model Category {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   parentId   String?  // Parent category for hierarchy
   isActive   Boolean  @default(true)
   color      String?  // Hex color code for card border (e.g., "#667eea")
@@ -183,7 +222,7 @@ model Category {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   parent     Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children   Category[] @relation("CategoryHierarchy")
   translations CategoryTranslation[]
@@ -191,9 +230,9 @@ model Category {
   events     Event[]
   eventCategories EventCategory[]
 
-  @@index([tenantId])
+  @@index([siteId])
   @@index([parentId])
-  @@index([tenantId, parentId, order])
+  @@index([siteId, parentId, order])
 }
 
 model CategoryTranslation {
@@ -212,18 +251,18 @@ model CategoryTranslation {
 
 model Tag {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   isActive   Boolean  @default(true)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations TagTranslation[]
   places     PlaceTag[]
   events     EventTag[]
 
-  @@index([tenantId])
+  @@index([siteId])
 }
 
 model TagTranslation {
@@ -242,17 +281,17 @@ model TagTranslation {
 
 model PriceBand {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   isActive   Boolean  @default(true)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations PriceBandTranslation[]
   places     Place[]
 
-  @@index([tenantId])
+  @@index([siteId])
 }
 
 model PriceBandTranslation {
@@ -271,7 +310,7 @@ model PriceBandTranslation {
 
 model Place {
   id          String        @id @default(cuid())
-  tenantId    String
+  siteId      String
   townId      String?
   ownerId    String?
 
@@ -298,7 +337,7 @@ model Place {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site        Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
   town        Town?         @relation(fields: [townId], references: [id], onDelete: SetNull)
   category    Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   priceBand   PriceBand?    @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
@@ -307,8 +346,9 @@ model Place {
   tags        PlaceTag[]
   events      Event[]
   openingHours PlaceOpeningHours[]
+  memberships PlaceMembership[]
 
-  @@index([tenantId, categoryId])
+  @@index([siteId, categoryId])
   @@index([townId])
 }
 
@@ -381,18 +421,18 @@ model PlaceTranslation {
 
 model LegalPage {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   key        String   // imprint | terms | privacy
   isActive   Boolean  @default(true)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations LegalPageTranslation[]
 
-  @@unique([tenantId, key])
-  @@index([tenantId])
+  @@unique([siteId, key])
+  @@index([siteId])
 }
 
 model LegalPageTranslation {
@@ -418,17 +458,17 @@ model LegalPageTranslation {
 
 model StaticPage {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   category   String   // blog | tudastar | infok
   isActive   Boolean  @default(true)
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations StaticPageTranslation[]
 
-  @@index([tenantId])
+  @@index([siteId])
   @@index([category])
 }
 
@@ -481,8 +521,8 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
-  // Many-to-many with tenants (user can belong to multiple tenants)
-  tenants       UserTenant[]
+  // Many-to-many with sites (user can belong to multiple sites)
+  sites          UserSite[]
   
   // Place ownership (for future - when user has appropriate role)
   ownedPlaces   Place[]  @relation("PlaceOwner")
@@ -490,26 +530,72 @@ model User {
   // Event logs for this user's activities
   eventLogs     EventLog[]
   
+  // Site memberships (RBAC)
+  siteMemberships SiteMembership[]
+  
+  // Place memberships (RBAC)
+  placeMemberships PlaceMembership[]
+  
+  // Events created by this user
+  createdEvents Event[] @relation("EventCreator")
+  
   @@index([email])
   @@index([username])
   @@index([isActive])
 }
 
-// Junction table for many-to-many relationship between User and Tenant
-model UserTenant {
+// Junction table for many-to-many relationship between User and Site
+// Legacy: kept for backward compatibility, but SiteMembership should be used for RBAC
+model UserSite {
   id        String   @id @default(cuid())
   userId    String
-  tenantId  String
-  isPrimary Boolean   @default(false) // One tenant can be marked as primary
+  siteId    String
+  isPrimary Boolean   @default(false) // One site can be marked as primary
   
   createdAt DateTime @default(now())
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   
-  @@unique([userId, tenantId])
+  @@unique([userId, siteId])
   @@index([userId])
-  @@index([tenantId])
+  @@index([siteId])
+}
+
+// SiteMembership: RBAC for site-level permissions
+model SiteMembership {
+  id        String     @id @default(cuid())
+  siteId    String
+  userId    String
+  role      SiteRole   @default(editor)
+
+  createdAt DateTime   @default(now())
+
+  site      Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, userId])
+  @@index([userId])
+  @@index([siteId])
+  @@index([role])
+}
+
+// PlaceMembership: RBAC for place-level permissions
+model PlaceMembership {
+  id        String     @id @default(cuid())
+  placeId   String
+  userId    String
+  role      PlaceRole @default(editor)
+
+  createdAt DateTime   @default(now())
+
+  place     Place      @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, userId])
+  @@index([userId])
+  @@index([placeId])
+  @@index([role])
 }
 
 // Application settings (global, not tenant-specific)
@@ -528,9 +614,10 @@ model AppSetting {
 
 model Event {
   id         String   @id @default(cuid())
-  tenantId   String
+  siteId     String
   placeId    String?  // Optional: event can be linked to a place
   categoryId String?  // Optional: event can have a category
+  createdByUserId String? // User who created the event (for audit trail)
   isActive   Boolean  @default(true)
   isPinned   Boolean  @default(false) // Pinned events appear at top of lists
   isRainSafe Boolean  @default(false) // Whether the event is rain-safe (indoor or covered)
@@ -545,16 +632,18 @@ model Event {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   place      Place?   @relation(fields: [placeId], references: [id], onDelete: SetNull)
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Legacy: kept for backward compatibility
+  createdBy  User?    @relation("EventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   translations EventTranslation[]
   tags       EventTag[]
   categories EventCategory[] // Many-to-many relationship with categories
   
-  @@index([tenantId, startDate])
+  @@index([siteId, startDate])
   @@index([placeId])
   @@index([categoryId])
+  @@index([createdByUserId])
 }
 
 model EventTranslation {
@@ -610,8 +699,8 @@ model EventCategory {
 // Push notification subscriptions
 model PushSubscription {
   id         String   @id @default(cuid())
-  tenantId   String
-  endpoint   String   @unique
+  siteId     String
+  endpoint   String
   p256dh     String   // Public key
   auth       String   // Auth secret
   
@@ -621,16 +710,17 @@ model PushSubscription {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   
-  @@index([tenantId])
+  @@unique([siteId, endpoint])
+  @@index([siteId])
   @@index([isActive])
 }
 
 // Event log for tracking user activities (superadmin and admin only)
 model EventLog {
   id          String   @id @default(cuid())
-  tenantId    String
+  siteId      String
   userId      String   // User who performed the action
   action      String   // e.g., "create", "update", "delete", "login", "logout"
   entityType  String?  // e.g., "place", "event", "category", "tag", "user", etc.
@@ -640,14 +730,59 @@ model EventLog {
   
   createdAt   DateTime @default(now())
   
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([tenantId])
+  @@index([siteId])
   @@index([userId])
   @@index([action])
   @@index([entityType])
   @@index([createdAt])
-  @@index([tenantId, userId])
-  @@index([tenantId, createdAt])
+  @@index([siteId, userId])
+  @@index([siteId, createdAt])
+}
+
+// SiteDomain: Domain-to-site mapping (supports multi-language domains)
+// Example: example.com can serve /hu/... and /en/... for the same site
+model SiteDomain {
+  id          String   @id @default(cuid())
+  siteId      String
+  domain      String   @unique  // example.com, etyek.localo.app
+  isActive    Boolean  @default(true)
+
+  // Optional: mark one domain as primary (canonical)
+  isPrimary   Boolean  @default(false)
+
+  // Optional: default language for this domain (used when "/" or "/admin" is accessed)
+  defaultLang Lang     @default(hu)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([isActive])
+}
+
+// SiteInstance: Deployment/display level configuration
+// Represents language-specific configuration (map config, features)
+// Domain is handled separately via SiteDomain model
+model SiteInstance {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  lang        Lang
+  isDefault   Boolean   @default(false)
+
+  mapConfig   Json?     // instance-specific map settings (overrides brand defaults)
+  features    Json?      // enable events, blog, etc.
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([siteId, lang])
+  @@index([siteId])
+  @@index([lang])
 }

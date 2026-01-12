@@ -2,13 +2,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTenantContext } from "../../app/tenant/useTenantContext";
-import { buildPath } from "../../app/routing/buildPath";
-import { getSiteSettings } from "../../api/places.api";
+import { useTranslation } from "react-i18next";
+import { buildUrl } from "../../app/urls";
+import { useRouteCtx } from "../../app/useRouteCtx";
+import { usePlatformSettingsContext } from "../../context/PlatformSettingsContext";
 import { LanguageSelector } from "../../components/LanguageSelector";
 
 export function Header() {
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, tenantKey } = useRouteCtx();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -41,29 +43,25 @@ export function Header() {
   const activeZIndex = 10000; // High z-index when actively being used (dragging)
   const currentZIndex = isDragging ? activeZIndex : baseZIndex;
 
-  // Load site name from settings
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  // Use platform settings from context (loaded once at TenantLayout level)
+  const platformSettings = usePlatformSettingsContext();
 
-  // Listen for site settings changes from admin
+  // Listen for platform settings changes from admin
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      // Refetch site settings when changed in admin
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
+    const handlePlatformSettingsChanged = () => {
+      // Refetch platform settings when changed in admin
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, tenantKey] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, tenantKey] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, tenantSlug]);
+  }, [lang, tenantKey]);
 
-  const siteName = siteSettings?.siteName || t("common.siteName", { defaultValue: "" });
-  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
+  const brandBadgeIcon = platformSettings?.placeholders.avatar;
 
   // Load position when device type changes
   useEffect(() => {
@@ -210,7 +208,7 @@ export function Header() {
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {(siteName || brandBadgeIcon) && (
           <Link
-            to={buildPath({ tenantSlug, lang, path: "" })}
+            to={buildUrl({ lang, tenantKey, path: "" })}
             style={{
               textDecoration: "none",
               display: "flex",

@@ -1,5 +1,6 @@
 // src/components/LanguageAwareEditor.tsx
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
 
 type Lang = "hu" | "en" | "de";
@@ -16,12 +17,6 @@ interface LanguageAwareEditorProps {
   label?: string;
 }
 
-const LANGUAGES: { code: Lang; name: string }[] = [
-  { code: "hu", name: "Hungarian" },
-  { code: "en", name: "English" },
-  { code: "de", name: "German" },
-];
-
 export function LanguageAwareEditor({
   values,
   onChange,
@@ -29,11 +24,14 @@ export function LanguageAwareEditor({
   height = 300,
   label,
 }: LanguageAwareEditorProps) {
+  const { t } = useTranslation();
   const [selectedLang, setSelectedLang] = useState<Lang>("hu");
 
   useEffect(() => {
     // Update editor content when values change externally
   }, [values]);
+
+  const LANGUAGES: Lang[] = ["hu", "en", "de"];
 
   return (
     <div>
@@ -55,8 +53,8 @@ export function LanguageAwareEditor({
           }}
         >
           {LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.name}
+            <option key={lang} value={lang}>
+              {t(`admin.languageNames.${lang}`)}
             </option>
           ))}
         </select>
@@ -64,7 +62,7 @@ export function LanguageAwareEditor({
       <TipTapEditorWithUpload
         value={values[selectedLang]}
         onChange={(value) => onChange(selectedLang, value)}
-        placeholder={placeholder ? `${placeholder} (${LANGUAGES.find((l) => l.code === selectedLang)?.name})` : undefined}
+        placeholder={placeholder ? `${placeholder} (${t(`admin.languageNames.${selectedLang}`)})` : undefined}
         height={height}
         uploadFolder="editor"
       />

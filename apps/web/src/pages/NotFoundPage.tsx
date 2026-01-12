@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
-import { HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG } from "../app/config";
-import { useActiveTenantsCount } from "../hooks/useActiveTenantsCount";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "../app/config";
+import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -14,17 +14,17 @@ export function NotFoundPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
-  const { data: tenantsCountData } = useActiveTenantsCount();
+  const { data: sitesCountData } = useActiveSitesCount();
 
   // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
-  // Determine if we should show tenant slug in URL
-  const shouldShowTenantSlug = HAS_MULTIPLE_TENANTS && (tenantsCountData?.count ?? 0) > 1;
-  const tenantSlug = shouldShowTenantSlug ? DEFAULT_TENANT_SLUG : undefined;
+  // Determine if we should show site slug in URL
+  const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
+  const siteSlug = shouldShowSiteSlug ? DEFAULT_SITE_SLUG : undefined;
 
   // Build home path
-  const homePath = tenantSlug ? `/${lang}/${tenantSlug}` : `/${lang}`;
+  const homePath = siteSlug ? `/${lang}/${siteSlug}` : `/${lang}`;
 
   return (
     <div
@@ -168,6 +168,7 @@ export function NotFoundPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
               display: "inline-block",
@@ -194,6 +195,7 @@ export function NotFoundPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               cursor: "pointer",
               transition: "all 0.3s ease",
               backdropFilter: "blur(10px)",

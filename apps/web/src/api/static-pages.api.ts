@@ -11,18 +11,14 @@ export interface StaticPage {
   updatedAt: string;
 }
 
-export function getStaticPages(lang: string, tenantKey?: string, category?: string): Promise<StaticPage[]> {
+export function getStaticPages(lang: string, tenantKey: string, category?: string): Promise<StaticPage[]> {
   const params = new URLSearchParams();
-  if (tenantKey) params.append("tenantKey", tenantKey);
   if (category) params.append("category", category);
   const queryString = params.toString();
-  return apiGetPublic<StaticPage[]>(`/${lang}/static-pages${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<StaticPage[]>(`/public/${lang}/${tenantKey}/static-pages${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getStaticPage(lang: string, id: string, tenantKey?: string): Promise<StaticPage & { seo: any }> {
-  const params = new URLSearchParams();
-  if (tenantKey) params.append("tenantKey", tenantKey);
-  const queryString = params.toString();
-  return apiGetPublic<StaticPage & { seo: any }>(`/${lang}/static-pages/${id}${queryString ? `?${queryString}` : ""}`);
+export function getStaticPage(lang: string, id: string, tenantKey: string): Promise<StaticPage & { seo: any }> {
+  return apiGetPublic<StaticPage & { seo: any }>(`/public/${lang}/${tenantKey}/static-pages/${id}`);
 }
 

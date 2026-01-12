@@ -49,12 +49,12 @@ export function useAdminCache() {
       await queryClient.invalidateQueries({ queryKey: ["events"] });
     };
 
-    const handleSiteSettingsChanged = async () => {
-      // Site settings affect public pages (Footer, Header, etc.)
-      // Invalidate all siteSettings queries regardless of language/tenant
-      await queryClient.invalidateQueries({ queryKey: ["siteSettings"] });
-      // Explicitly refetch all active siteSettings queries to ensure immediate update
-      await queryClient.refetchQueries({ queryKey: ["siteSettings"] });
+    const handlePlatformSettingsChanged = async () => {
+      // Platform settings affect public pages (Footer, Header, etc.)
+      // Invalidate all platformSettings queries regardless of language/tenant
+      await queryClient.invalidateQueries({ queryKey: ["platformSettings"] });
+      // Explicitly refetch all active platformSettings queries to ensure immediate update
+      await queryClient.refetchQueries({ queryKey: ["platformSettings"] });
     };
 
     const handleMapSettingsChanged = async () => {
@@ -69,7 +69,7 @@ export function useAdminCache() {
     window.addEventListener("admin:towns:changed", handleTownsChanged);
     window.addEventListener("admin:priceBands:changed", handlePriceBandsChanged);
     window.addEventListener("admin:tags:changed", handleTagsChanged);
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     window.addEventListener("admin:mapSettings:changed", handleMapSettingsChanged);
 
     return () => {
@@ -80,7 +80,7 @@ export function useAdminCache() {
       window.removeEventListener("admin:towns:changed", handleTownsChanged);
       window.removeEventListener("admin:priceBands:changed", handlePriceBandsChanged);
       window.removeEventListener("admin:tags:changed", handleTagsChanged);
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
       window.removeEventListener("admin:mapSettings:changed", handleMapSettingsChanged);
     };
   }, [queryClient]);
@@ -90,7 +90,7 @@ export function useAdminCache() {
  * Helper function to notify that an entity has changed
  * Use this after create/update/delete operations
  */
-export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "siteSettings" | "mapSettings" | "staticPages") {
+export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "platformSettings" | "mapSettings" | "staticPages") {
   window.dispatchEvent(new CustomEvent(`admin:${entityType}:changed`));
 }
 

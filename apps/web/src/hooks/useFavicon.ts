@@ -1,38 +1,16 @@
 // src/hooks/useFavicon.ts
 import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTenantContext } from "../app/tenant/useTenantContext";
-import { getSiteSettings } from "../api/places.api";
+import { usePlatformSettingsContext } from "../context/PlatformSettingsContext";
 
 /**
- * Hook to dynamically update the favicon based on site settings
+ * Hook to dynamically update the favicon based on platform settings
  */
 export function useFavicon() {
-  const { lang, tenantSlug } = useTenantContext();
-  const queryClient = useQueryClient();
-  
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => getSiteSettings(lang, tenantSlug),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      // Invalidate and refetch site settings to update favicon
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, tenantSlug] });
-    };
-
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
-    };
-  }, [lang, tenantSlug, queryClient]);
+  // Use platform settings from context (loaded once at TenantLayout level)
+  const platformSettings = usePlatformSettingsContext();
 
   useEffect(() => {
-    if (!siteSettings?.faviconUrl) {
+    if (!platformSettings?.brand?.faviconUrl) {
       // Remove any existing custom favicons if faviconUrl is cleared
       const existingFavicons = document.querySelectorAll(
         'link[rel="icon"]:not([href="/vite.svg"]), link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
@@ -42,12 +20,15 @@ export function useFavicon() {
     }
 
     // Validate URL format
+    const faviconUrl = platformSettings.brand.faviconUrl;
+    if (!faviconUrl) return;
+
     let baseFaviconUrl: string;
     try {
-      new URL(siteSettings.faviconUrl);
-      baseFaviconUrl = siteSettings.faviconUrl;
+      new URL(faviconUrl);
+      baseFaviconUrl = faviconUrl;
     } catch {
-      console.warn("[useFavicon] Invalid favicon URL format:", siteSettings.faviconUrl);
+      console.warn("[useFavicon] Invalid favicon URL format:", faviconUrl);
       return;
     }
 
@@ -58,9 +39,9 @@ export function useFavicon() {
     url.searchParams.delete('v');
     // Add new cache-busting param with current timestamp
     url.searchParams.set('v', Date.now().toString());
-    const faviconUrl = url.toString();
+    const faviconUrlWithCacheBusting = url.toString();
     
-    console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrl);
+    console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrlWithCacheBusting);
 
     // Find and remove ALL existing favicon links (including default vite.svg if it's not the one we want)
     const existingFavicons = document.querySelectorAll(
@@ -78,30 +59,30 @@ export function useFavicon() {
     const isSvg = urlWithoutParams.toLowerCase().endsWith('.svg');
     const isIco = urlWithoutParams.toLowerCase().endsWith('.ico');
     link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
-    link.href = faviconUrl;
+    link.href = faviconUrlWithCacheBusting;
     document.head.appendChild(link);
 
     // Also add apple-touch-icon for iOS devices
     const appleLink = document.createElement("link");
     appleLink.rel = "apple-touch-icon";
     appleLink.id = "dynamic-apple-touch-icon";
-    appleLink.href = faviconUrl;
+    appleLink.href = faviconUrlWithCacheBusting;
     document.head.appendChild(appleLink);
 
     // Preload the image to verify it works (but don't block on it)
     const img = new Image();
     img.onerror = () => {
-      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrl);
+      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrlWithCacheBusting);
       // Don't remove the link - let browser handle it
     };
     img.onload = () => {
-      console.log("[useFavicon] Successfully verified favicon:", faviconUrl);
+      console.log("[useFavicon] Successfully verified favicon:", faviconUrlWithCacheBusting);
     };
-    img.src = faviconUrl;
+    img.src = faviconUrlWithCacheBusting;
 
     // Cleanup function
     return () => {
       // Don't remove on unmount - let it persist
     };
-  }, [siteSettings?.faviconUrl]);
+  }, [platformSettings?.brand?.faviconUrl]);
 }

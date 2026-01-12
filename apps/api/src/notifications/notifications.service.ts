@@ -24,7 +24,7 @@ export class NotificationsService {
   /**
    * Subscribe a user to push notifications
    */
-  async subscribe(tenantId: string, subscription: {
+  async subscribe(siteId: string, subscription: {
     endpoint: string;
     keys: {
       p256dh: string;
@@ -35,7 +35,7 @@ export class NotificationsService {
     try {
       // Upsert subscription (update if exists, create if not)
       return await this.prisma.pushSubscription.upsert({
-        where: { endpoint: subscription.endpoint },
+        where: { siteId_endpoint: { siteId, endpoint: subscription.endpoint } },
         update: {
           p256dh: subscription.keys.p256dh,
           auth: subscription.keys.auth,
@@ -43,7 +43,7 @@ export class NotificationsService {
           isActive: true,
         },
         create: {
-          tenantId,
+          siteId,
           endpoint: subscription.endpoint,
           p256dh: subscription.keys.p256dh,
           auth: subscription.keys.auth,
@@ -62,10 +62,17 @@ export class NotificationsService {
    */
   async unsubscribe(endpoint: string) {
     try {
-      await this.prisma.pushSubscription.update({
-        where: { endpoint },
-        data: { isActive: false },
+      // Find subscription by endpoint (endpoint should be unique enough in practice)
+      const subscription = await this.prisma.pushSubscription.findFirst({
+        where: { endpoint, isActive: true },
       });
+      
+      if (subscription) {
+        await this.prisma.pushSubscription.update({
+          where: { id: subscription.id },
+          data: { isActive: false },
+        });
+      }
     } catch (error) {
       this.logger.error("Error unsubscribing:", error);
       throw error;
@@ -73,9 +80,9 @@ export class NotificationsService {
   }
 
   /**
-   * Send notification to all subscribers of a tenant
+   * Send notification to all subscribers of a site
    */
-  async sendToTenant(tenantId: string, notification: {
+  async sendToSite(siteId: string, notification: {
     title: string;
     body: string;
     icon?: string;
@@ -84,7 +91,7 @@ export class NotificationsService {
     try {
       const subscriptions = await this.prisma.pushSubscription.findMany({
         where: {
-          tenantId,
+          siteId,
           isActive: true,
         },
       });
@@ -153,7 +160,7 @@ export class NotificationsService {
         return;
       }
 
-      await this.sendToTenant(event.tenantId, {
+      await this.sendToSite(event.siteId, {
         title: "Új esemény! 🎉",
         body: translation.title,
         icon: event.heroImage || undefined,
@@ -206,7 +213,7 @@ export class NotificationsService {
           continue;
         }
 
-        await this.sendToTenant(event.tenantId, {
+        await this.sendToSite(event.siteId, {
           title: "Esemény hamarosan kezdődik! ⏰",
           body: `${translation.title} - 2 óra múlva`,
           icon: event.heroImage || undefined,

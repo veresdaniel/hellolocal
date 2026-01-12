@@ -25,7 +25,7 @@ export interface JwtPayload {
   email: string;
   username: string;
   role: UserRole;
-  tenantIds: string[]; // Array of tenant IDs the user belongs to
+  siteIds: string[]; // Array of site IDs the user belongs to
 }
 
 export interface AuthResponse {
@@ -38,7 +38,7 @@ export interface AuthResponse {
     firstName: string;
     lastName: string;
     role: UserRole;
-    tenantIds: string[];
+    siteIds: string[];
   };
 }
 
@@ -53,8 +53,8 @@ export class AuthService {
     @Optional() private readonly eventLogService?: AdminEventLogService
   ) {}
 
-  private getDefaultTenantSlug(): string {
-    return this.configService.get<string>("DEFAULT_TENANT_SLUG") ?? "etyek-budai";
+  private getDefaultSiteSlug(): string {
+    return this.configService.get<string>("DEFAULT_SITE_SLUG") ?? "etyek-budai";
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -117,7 +117,7 @@ export class AuthService {
 
   /**
    * Registers a new user.
-   * If tenantId is not provided, assigns user to default tenant.
+   * If siteId is not provided, assigns user to default site.
    */
   async register(dto: RegisterDto): Promise<AuthResponse> {
     // Check if user already exists
@@ -131,24 +131,24 @@ export class AuthService {
       throw new BadRequestException("User with this email or username already exists");
     }
 
-    // Get tenant ID (default or provided)
-    let tenantId: string;
-    if (dto.tenantId) {
-      const tenant = await this.prisma.tenant.findUnique({
-        where: { id: dto.tenantId },
+    // Get site ID (default or provided)
+    let siteId: string;
+    if (dto.siteId) {
+      const site = await this.prisma.site.findUnique({
+        where: { id: dto.siteId },
       });
-      if (!tenant) {
-        throw new NotFoundException("Tenant not found");
+      if (!site) {
+        throw new NotFoundException("Site not found");
       }
-      tenantId = dto.tenantId;
+      siteId = dto.siteId;
     } else {
-      const defaultTenant = await this.prisma.tenant.findUnique({
-        where: { slug: this.getDefaultTenantSlug() },
+      const defaultSite = await this.prisma.site.findUnique({
+        where: { slug: this.getDefaultSiteSlug() },
       });
-      if (!defaultTenant) {
-        throw new NotFoundException("Default tenant not found");
+      if (!defaultSite) {
+        throw new NotFoundException("Default site not found");
       }
-      tenantId = defaultTenant.id;
+      siteId = defaultSite.id;
     }
 
     // Hash password
@@ -164,28 +164,28 @@ export class AuthService {
         lastName: dto.lastName,
         bio: dto.bio,
         role: UserRole.viewer, // Default role
-        tenants: {
+        sites: {
           create: {
-            tenantId,
+            siteId,
             isPrimary: true,
           },
         },
       },
       include: {
-        tenants: {
-          select: { tenantId: true },
+        sites: {
+          select: { siteId: true },
         },
       },
     });
 
-    const tenantIds = user.tenants.map((t) => t.tenantId);
+    const siteIds = user.sites.map((s) => s.siteId);
 
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       username: user.username,
       role: user.role,
-      tenantIds,
+      siteIds,
     };
 
     const { accessToken, refreshToken } = await this.generateTokens(payload);
@@ -206,7 +206,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        tenantIds,
+        siteIds,
       },
     };
   }
@@ -219,8 +219,8 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({
         where: { email: dto.email },
         include: {
-          tenants: {
-            select: { tenantId: true },
+          sites: {
+            select: { siteId: true },
           },
         },
       });
@@ -261,12 +261,12 @@ export class AuthService {
         }
       }
 
-      const tenantIds = user.tenants?.map((t) => t.tenantId) || [];
+      const siteIds = user.sites?.map((s) => s.siteId) || [];
 
-      // Ensure tenantIds is always an array (even if empty)
-      if (!Array.isArray(tenantIds)) {
-        console.error("Invalid tenantIds format:", tenantIds);
-        throw new UnauthorizedException("User tenant configuration is invalid");
+      // Ensure siteIds is always an array (even if empty)
+      if (!Array.isArray(siteIds)) {
+        console.error("Invalid siteIds format:", siteIds);
+        throw new UnauthorizedException("User site configuration is invalid");
       }
 
       const payload: JwtPayload = {
@@ -274,19 +274,19 @@ export class AuthService {
         email: user.email,
         username: user.username,
         role: user.role as UserRole,
-        tenantIds,
+        siteIds,
       };
 
       const { accessToken, refreshToken } = await this.generateTokens(payload);
 
-      // Log login event (use first tenant if available)
+      // Log login event (use first site if available)
       // Add a small delay to prevent duplicate logs in development (React StrictMode)
-      if (this.eventLogService && tenantIds.length > 0) {
+      if (this.eventLogService && siteIds.length > 0) {
         // Check if we already logged this login in the last 2 seconds to prevent duplicates
         try {
           const recentLogin = await this.prisma.eventLog.findFirst({
             where: {
-              tenantId: tenantIds[0],
+              siteId: siteIds[0],
               userId: user.id,
               action: 'login',
               createdAt: {
@@ -298,7 +298,7 @@ export class AuthService {
           if (!recentLogin) {
             this.eventLogService
               .create({
-                tenantId: tenantIds[0],
+                siteId: siteIds[0],
                 userId: user.id,
                 action: "login",
                 description: `User logged in`,
@@ -321,7 +321,7 @@ export class AuthService {
           if (this.eventLogService) {
             this.eventLogService
               .create({
-                tenantId: tenantIds[0],
+                siteId: siteIds[0],
                 userId: user.id,
                 action: "login",
                 description: `User logged in`,
@@ -348,7 +348,7 @@ export class AuthService {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role as UserRole,
-          tenantIds,
+          siteIds,
         },
       };
     } catch (error) {
@@ -456,8 +456,8 @@ export class AuthService {
           },
         },
         include: {
-          tenants: {
-            select: { tenantId: true },
+          sites: {
+            select: { siteId: true },
           },
         },
       });
@@ -466,14 +466,14 @@ export class AuthService {
         throw new UnauthorizedException("Invalid refresh token");
       }
 
-      const tenantIds = user.tenants.map((t) => t.tenantId);
+      const siteIds = user.sites.map((s) => s.siteId);
 
       const newPayload: JwtPayload = {
         sub: user.id,
         email: user.email,
         username: user.username,
         role: user.role,
-        tenantIds,
+        siteIds,
       };
 
       return await this.generateTokens(newPayload);
@@ -485,7 +485,7 @@ export class AuthService {
   /**
    * Logs out user by invalidating refresh token.
    */
-  async logout(userId: string, tenantIds?: string[]): Promise<{ message: string }> {
+  async logout(userId: string, siteIds?: string[]): Promise<{ message: string }> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -494,8 +494,8 @@ export class AuthService {
       },
     });
 
-    // Log logout event (use first tenant if available)
-    if (this.eventLogService && tenantIds && tenantIds.length > 0) {
+    // Log logout event (use first site if available)
+    if (this.eventLogService && siteIds && siteIds.length > 0) {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { email: true, username: true },
@@ -503,7 +503,7 @@ export class AuthService {
 
       this.eventLogService
         .create({
-          tenantId: tenantIds[0],
+          siteId: siteIds[0],
           userId,
           action: "logout",
           description: `User logged out`,
@@ -528,8 +528,8 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       include: {
-        tenants: {
-          select: { tenantId: true },
+        sites: {
+          select: { siteId: true },
         },
       },
     });
@@ -538,14 +538,14 @@ export class AuthService {
       return null;
     }
 
-    const tenantIds = user.tenants.map((t) => t.tenantId);
+    const siteIds = user.sites.map((s) => s.siteId);
 
     return {
       id: user.id,
       email: user.email,
       username: user.username,
       role: user.role as UserRole,
-      tenantIds,
+      siteIds,
     };
   }
 }

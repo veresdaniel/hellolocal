@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
-import { useAdminTenant } from "../../contexts/AdminTenantContext";
+import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
@@ -12,6 +12,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import { AdminPageHeader } from "../../components/AdminPageHeader";
 
 interface Tag {
   id: string;
@@ -27,7 +28,7 @@ interface Tag {
 
 export function TagsPage() {
   const { t, i18n } = useTranslation();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   usePageTitle("admin.tags");
@@ -61,27 +62,27 @@ export function TagsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       // Reset to first page when tenant changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no tenant
       setIsLoading(false);
     }
-  }, [selectedTenantId]);
+  }, [selectedSiteId]);
 
   useEffect(() => {
-    if (selectedTenantId) {
+    if (selectedSiteId) {
       loadTags();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTenantId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit]);
 
   const loadTags = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     setIsLoading(true);
     try {
-      const response = await getTags(selectedTenantId, pagination.page, pagination.limit);
+      const response = await getTags(selectedSiteId, pagination.page, pagination.limit);
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -107,7 +108,7 @@ export function TagsPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    if (!selectedSiteId) return;
     if (!validateForm()) return;
 
     try {
@@ -121,7 +122,7 @@ export function TagsPage() {
         translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
       }
       await createTag({
-        tenantId: selectedTenantId,
+        tenantId: selectedSiteId,
         translations,
         isActive: formData.isActive,
       });
@@ -155,7 +156,7 @@ export function TagsPage() {
           translations,
           isActive: formData.isActive,
         },
-        selectedTenantId || undefined
+        selectedSiteId || undefined
       );
       setEditingId(null);
       resetForm();
@@ -172,7 +173,7 @@ export function TagsPage() {
     if (!confirm(t("admin.confirmations.deleteTag"))) return;
 
     try {
-      await deleteTag(id, selectedTenantId || undefined);
+      await deleteTag(id, selectedSiteId || undefined);
       await loadTags();
       // Notify global cache manager that tags have changed
       notifyEntityChanged("tags");
@@ -212,45 +213,34 @@ export function TagsPage() {
   };
 
   // Wait for tenant context to initialize
-  if (isTenantLoading) {
+  if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
+  if (!selectedSiteId) {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
   }
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
-        <h1 style={{
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#e0e0ff",
-          margin: 0,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
-          {t("admin.tags")}
-        </h1>
-        
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {(isCreating || editingId) ? (
-            <>
-              <button onClick={() => editingId ? handleUpdate(editingId) : handleCreate()} style={{ padding: "12px 24px", background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)"; }}>
-                {editingId ? t("common.update") : t("common.create")}
-              </button>
-              <button onClick={() => { setIsCreating(false); setEditingId(null); resetForm(); }} style={{ padding: "12px 24px", background: "#6c757d", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 600, transition: "all 0.3s ease", boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#5a6268"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#6c757d"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)"; }}>
-                {t("common.cancel")}
-              </button>
-            </>
-          ) : (
-            <button onClick={() => { setEditingId(null); setIsCreating(true); resetForm(); }} style={{ padding: "12px 24px", background: "white", color: "#667eea", border: "2px solid #667eea", borderRadius: 8, cursor: "pointer", fontSize: 15, fontWeight: 700, boxShadow: "0 6px 20px rgba(0, 0, 0, 0.2)", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.3)"; e.currentTarget.style.background = "#f8f8ff"; }} onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.2)"; e.currentTarget.style.background = "white"; }}>
-              + {t("admin.forms.newTag")}
-            </button>
-          )}
-        </div>
-      </div>
+      <AdminPageHeader
+        title={t("admin.tags")}
+        newButtonLabel={t("admin.forms.newTag")}
+        onNewClick={() => {
+          setEditingId(null);
+          setIsCreating(true);
+          resetForm();
+        }}
+        showNewButton={!isCreating && !editingId}
+        isCreatingOrEditing={isCreating || !!editingId}
+        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onCancel={() => {
+          setIsCreating(false);
+          setEditingId(null);
+          resetForm();
+        }}
+        saveLabel={editingId ? t("common.update") : t("common.create")}
+      />
 
       {(isCreating || editingId) && (
         <div style={{ 
@@ -355,8 +345,7 @@ export function TagsPage() {
         </div>
       )}
 
-      <LoadingSpinner isLoading={isLoading} />
-      {!isLoading && !isCreating && !editingId && (
+      {!isCreating && !editingId && (
         <AdminResponsiveTable<Tag>
           data={tags}
           getItemId={(tag) => tag.id}
@@ -366,6 +355,7 @@ export function TagsPage() {
             setSearchQuery(query);
             setPagination(prev => ({ ...prev, page: 1 }));
           }}
+          isLoading={isLoading}
           filterFn={(tag, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";

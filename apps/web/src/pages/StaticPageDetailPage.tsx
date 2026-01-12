@@ -3,34 +3,35 @@ import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
+import { useSiteContext } from "../app/site/useSiteContext";
 import { getStaticPage } from "../api/static-pages.api";
-import { getSiteSettings } from "../api/places.api";
+import { getPlatformSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ErrorState } from "../components/ErrorState";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 
 export function StaticPageDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useSiteContext();
   const safeLang = lang ?? "hu";
 
-  // Get tenantKey for API call (only if multi-tenant mode)
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  // Get siteKey for API call (only if multi-site mode)
+  const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
 
   const { data: staticPage, isLoading, error } = useQuery({
-    queryKey: ["staticPage", safeLang, id, tenantKey],
-    queryFn: () => getStaticPage(safeLang, id!, tenantKey),
+    queryKey: ["staticPage", safeLang, id, effectiveSiteKey],
+    queryFn: () => getStaticPage(safeLang, id!, effectiveSiteKey),
     enabled: !!id,
   });
 
   // Load site settings for SEO
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", safeLang, tenantSlug],
-    queryFn: () => getSiteSettings(safeLang, tenantSlug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", safeLang, siteKey],
+    queryFn: () => getPlatformSettings(safeLang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -66,33 +67,33 @@ export function StaticPageDetailPage() {
         description: stripHtml(staticPage.seo.description),
         url: pageUrl,
         inLanguage: safeLang,
-        isPartOf: siteSettings?.siteName
+        isPartOf: platformSettings?.siteName
           ? {
-              name: siteSettings.siteName,
+              name: platformSettings.siteName,
               url: siteUrl,
             }
           : undefined,
       },
     },
   } : {
-    title: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-    description: siteSettings?.seoDescription || stripHtml(staticPage?.content) || "",
+    title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+    description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
     keywords: [],
     og: {
       type: "article" as const,
-      title: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-      description: siteSettings?.seoDescription || stripHtml(staticPage?.content) || "",
+      title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+      description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
     },
     schemaOrg: {
       type: "WebPage" as const,
       data: {
-        name: siteSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-        description: stripHtml(siteSettings?.seoDescription || staticPage?.content),
+        name: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+        description: stripHtml(platformSettings?.seoDescription || staticPage?.content),
         url: pageUrl,
         inLanguage: safeLang,
-        isPartOf: siteSettings?.siteName
+        isPartOf: platformSettings?.siteName
           ? {
-              name: siteSettings.siteName,
+              name: platformSettings.siteName,
               url: siteUrl,
             }
           : undefined,
@@ -101,7 +102,7 @@ export function StaticPageDetailPage() {
   };
 
   useSeo(seo, {
-    siteName: siteSettings?.siteName,
+    siteName: platformSettings?.siteName,
   });
 
   // Ref for HTML content container
@@ -226,14 +227,16 @@ export function StaticPageDetailPage() {
 
   if (error || (!isLoading && !staticPage)) {
     return (
-      <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
-        <p>{t("public.errorLoadingPlace")}</p>
-      </div>
+      <ErrorState
+        title={t("error.errorOccurred")}
+        message={t("public.errorLoadingPlace")}
+        variant="minimal"
+      />
     );
   }
 
   if (!staticPage) {
-    return <LoadingSpinner isLoading={true} />;
+    return <LoadingSpinner isLoading={true} delay={500} />;
   }
 
   return (

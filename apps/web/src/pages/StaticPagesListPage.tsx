@@ -2,24 +2,24 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useTenantContext } from "../app/tenant/useTenantContext";
+import { useSiteContext } from "../app/site/useSiteContext";
 import { getStaticPages } from "../api/static-pages.api";
 import { StaticPageCard } from "../ui/static-page/StaticPageCard";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { HAS_MULTIPLE_TENANTS } from "../app/config";
+import { HAS_MULTIPLE_SITES } from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useSeo } from "../seo/useSeo";
 
 export function StaticPagesListPage() {
   const { t } = useTranslation();
-  const { lang, tenantSlug } = useTenantContext();
+  const { lang, siteKey } = useSiteContext();
   const [selectedCategory, setSelectedCategory] = useState<"blog" | "tudastar" | "infok" | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const tenantKey = HAS_MULTIPLE_TENANTS ? tenantSlug : undefined;
+  const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
 
   const { data: staticPages = [], isLoading, isError } = useQuery({
-    queryKey: ["staticPages", lang, tenantKey, selectedCategory],
-    queryFn: () => getStaticPages(lang, tenantKey, selectedCategory === "all" ? undefined : selectedCategory),
+    queryKey: ["staticPages", lang, effectiveSiteKey, selectedCategory],
+    queryFn: () => getStaticPages(lang, effectiveSiteKey, selectedCategory === "all" ? undefined : selectedCategory),
   });
 
   // Filter static pages by search query
@@ -37,30 +37,30 @@ export function StaticPagesListPage() {
   }, [staticPages, searchQuery]);
 
   // Load site settings for SEO
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, tenantSlug],
-    queryFn: () => import("../api/places.api").then(m => m.getSiteSettings(lang, tenantSlug)),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => import("../api/places.api").then(m => m.getPlatformSettings(lang, siteKey)),
     staleTime: 5 * 60 * 1000,
   });
 
   useSeo({
-    title: siteSettings?.seoTitle || t("public.staticPages.title"),
-    description: siteSettings?.seoDescription || t("public.staticPages.title"),
-    image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    title: platformSettings?.seoTitle || t("public.staticPages.title"),
+    description: platformSettings?.seoDescription || t("public.staticPages.title"),
+    image: platformSettings?.defaultPlaceholderCardImage || undefined,
     og: {
       type: "website",
-      title: siteSettings?.seoTitle || t("public.staticPages.title"),
-      description: siteSettings?.seoDescription || t("public.staticPages.title"),
-      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+    title: platformSettings?.seoTitle || t("public.staticPages.title"),
+    description: platformSettings?.seoDescription || t("public.staticPages.title"),
+    image: platformSettings?.defaultPlaceholderCardImage || undefined,
     },
     twitter: {
-      card: siteSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: siteSettings?.seoTitle || t("public.staticPages.title"),
-      description: siteSettings?.seoDescription || t("public.staticPages.title"),
-      image: siteSettings?.defaultPlaceholderCardImage || undefined,
+      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+    title: platformSettings?.seoTitle || t("public.staticPages.title"),
+    description: platformSettings?.seoDescription || t("public.staticPages.title"),
+    image: platformSettings?.defaultPlaceholderCardImage || undefined,
     },
   }, {
-    siteName: siteSettings?.siteName,
+    siteName: platformSettings?.siteName,
   });
 
   const getNoResultsMessage = () => {

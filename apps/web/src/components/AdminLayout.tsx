@@ -3,20 +3,21 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { AdminTenantContext } from "../contexts/AdminTenantContext";
+import { AdminSiteContext } from "../contexts/AdminSiteContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
 import { useAdminCache } from "../hooks/useAdminCache";
 import { useVersionCheck } from "../hooks/useVersionCheck";
-import { TenantSelector } from "./TenantSelector";
+import { SiteSelector } from "./SiteSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
 import { ToastContainer } from "./Toast";
 import { VersionDisplay } from "./VersionDisplay";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { buildPath } from "../app/routing/buildPath";
-import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_TENANTS, DEFAULT_TENANT_SLUG, type Lang } from "../app/config";
+import { Link, useLocation, useParams, useNavigation } from "react-router-dom";
+import { buildUrl } from "../app/urls";
+import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSiteSettings } from "../api/places.api";
+import { getPlatformSettings } from "../api/places.api";
+import { AdminPageSkeleton } from "./AdminPageSkeleton";
 import "../styles/sessionWarning.css";
 import "../styles/admin-inputs.css";
 
@@ -33,10 +34,65 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const navigation = useNavigation();
   const { lang: langParam } = useParams<{ lang?: string }>();
+  
+  // Track previous location to detect route changes
+  const [previousLocation, setPreviousLocation] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+  
+  // Initialize previous location on mount (only once)
+  useEffect(() => {
+    if (previousLocation === null) {
+      setPreviousLocation(location.pathname);
+    }
+  }, [location.pathname, previousLocation]);
+  
+  // Detect route changes and show skeleton during navigation
+  useEffect(() => {
+    // Skip if previousLocation is not initialized yet
+    if (previousLocation === null) {
+      return;
+    }
+    
+    // Only show skeleton for admin route changes (not for initial load)
+    if (location.pathname !== previousLocation && previousLocation.includes("/admin") && location.pathname.includes("/admin")) {
+      setIsNavigating(true);
+      setPreviousLocation(location.pathname);
+      
+      // Safety timeout: reset isNavigating after 2 seconds if it's still true
+      // This prevents the skeleton from getting stuck
+      const safetyTimer = setTimeout(() => {
+        setIsNavigating(false);
+      }, 2000);
+      
+      return () => clearTimeout(safetyTimer);
+    } else if (location.pathname !== previousLocation) {
+      // Update previous location even if not showing skeleton
+      setPreviousLocation(location.pathname);
+      // Make sure navigating is false if we're not on admin routes
+      if (!location.pathname.includes("/admin")) {
+        setIsNavigating(false);
+      }
+    }
+  }, [location.pathname, previousLocation]);
+  
+  // Check navigation state from React Router and reset isNavigating when navigation completes
+  const isNavigationPending = navigation?.state === "loading" || navigation?.state === "submitting";
+  
+  // Reset isNavigating when navigation completes
+  useEffect(() => {
+    if (navigation?.state === "idle" && isNavigating) {
+      // Navigation completed, reset after a short delay to allow page to render
+      const timer = setTimeout(() => {
+        setIsNavigating(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [navigation?.state, isNavigating]);
   
   // Initialize global cache management for all admin pages
   useAdminCache();
@@ -51,38 +107,42 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
   const { user, logout, isLoading } = authContext;
   
-  // Get selected tenant from AdminTenantContext
-  const tenantContext = useContext(AdminTenantContext);
-  const selectedTenantId = tenantContext?.selectedTenantId;
-  const tenants = tenantContext?.tenants ?? [];
-  const currentTenant = tenants.find((t) => t.id === selectedTenantId);
+  // Get selected site from AdminSiteContext
+  const siteContext = useContext(AdminSiteContext);
+  const selectedSiteId = siteContext?.selectedSiteId;
+  const sites = siteContext?.sites ?? [];
+  const currentSite = sites.find((s) => s.id === selectedSiteId);
+  
+  // Determine site slug: use current site slug if available, otherwise undefined
+  // Don't use DEFAULT_SITE_SLUG in multi-site mode as it may not exist
+  const siteSlug = currentSite?.slug;
   
   const { showWarning, secondsRemaining } = useSessionWarning();
   const queryClient = useQueryClient();
 
   // Load site name and brand badge icon from settings
-  const { data: siteSettings } = useQuery({
-    queryKey: ["siteSettings", lang, currentTenant?.slug],
-    queryFn: () => getSiteSettings(lang, currentTenant?.slug),
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteSlug],
+    queryFn: () => getPlatformSettings(lang, siteSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    enabled: !!currentTenant?.slug || !HAS_MULTIPLE_TENANTS, // Only fetch if tenant is available or single tenant mode
+    enabled: !!siteSlug && !siteContext?.isLoading, // Only fetch if we have a valid site slug and sites are loaded
   });
 
   // Listen for site settings changes
   useEffect(() => {
-    const handleSiteSettingsChanged = () => {
-      queryClient.invalidateQueries({ queryKey: ["siteSettings", lang, currentTenant?.slug] });
-      queryClient.refetchQueries({ queryKey: ["siteSettings", lang, currentTenant?.slug] });
+    const handlePlatformSettingsChanged = () => {
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteSlug] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteSlug] });
     };
 
-    window.addEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
-      window.removeEventListener("admin:siteSettings:changed", handleSiteSettingsChanged);
+      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, currentTenant?.slug, queryClient]);
+  }, [lang, siteSlug, queryClient]);
 
-  const siteName = siteSettings?.siteName;
-  const brandBadgeIcon = siteSettings?.brandBadgeIcon;
+  const siteName = platformSettings?.siteName;
+  const brandBadgeIcon = platformSettings?.brandBadgeIcon;
 
   // If no user and not loading, redirect to login (should not happen if ProtectedRoute works correctly, but safety check)
   if (!isLoading && !user) {
@@ -90,9 +150,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return null;
   }
   
-  // If still loading, show loading spinner
+  // If still loading, show skeleton screen (prevents layout shift)
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ 
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      }} />
+    );
   }
   
   // If no user after loading, should not happen but safety check
@@ -140,20 +205,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
   
-  // Build public page path based on selected tenant
-  const publicPagePath = currentTenant 
-    ? buildPath({ tenantSlug: currentTenant.slug, lang, path: "" })
-    : buildPath({ tenantSlug: DEFAULT_TENANT_SLUG, lang, path: "" });
+  // Build public page path based on selected site
+  const publicPagePath = currentSite 
+    ? buildUrl({ siteKey: currentSite.slug, lang, path: "" })
+    : buildUrl({ siteKey: DEFAULT_SITE_SLUG, lang, path: "" });
 
-  const navLinks = [
-    { path: "", label: t("admin.dashboard") },
-    { path: "/profile", label: t("admin.profileMenu") },
-    ...(user?.role === "superadmin" ? [
-      { path: "/app-settings", label: t("admin.appSettings") },
-      { path: "/users", label: t("admin.users") },
-      ...(HAS_MULTIPLE_TENANTS ? [{ path: "/tenants", label: t("admin.tenants") }] : [])
-    ] : [])
-  ];
+  // Navigation links removed - now displayed as cards on the dashboard
+  const navLinks: Array<{ path: string; label: string; icon: string; color: string }> = [];
 
   return (
     <div className="admin-layout" style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto" }}>
@@ -261,40 +319,64 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </Link>
             )}
             
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Tile Menu */}
             {!isMobile && (
-              <div style={{ display: "flex", gap: 12, flexWrap: "nowrap", alignItems: "center", pointerEvents: "auto", position: "relative", zIndex: 1001 }}>
+              <div style={{ 
+                display: "flex", 
+                gap: 8, 
+                flexWrap: "nowrap", 
+                alignItems: "center", 
+                pointerEvents: "auto", 
+                position: "relative", 
+                zIndex: 1001 
+              }}>
                 {navLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={adminPath(link.path)}
                     style={{
                       textDecoration: "none",
-                      color: isActive(adminPath(link.path)) ? "#667eea" : "#666",
-                      fontSize: 14,
-                      fontWeight: isActive(adminPath(link.path)) ? 500 : 400,
+                      color: isActive(adminPath(link.path)) ? (link.color || "#667eea") : "#666",
+                      fontSize: 13,
+                      fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      padding: "8px 12px",
-                      borderRadius: 6,
-                      background: isActive(adminPath(link.path)) ? "#f0f0ff" : "transparent",
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      background: isActive(adminPath(link.path)) 
+                        ? `${link.color || "#667eea"}15` 
+                        : "rgba(0, 0, 0, 0.03)",
+                      border: isActive(adminPath(link.path))
+                        ? `2px solid ${link.color || "#667eea"}40`
+                        : "2px solid transparent",
                       transition: "all 0.2s ease",
                       whiteSpace: "nowrap",
                       pointerEvents: "auto",
                       position: "relative",
                       zIndex: 1002,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      boxShadow: isActive(adminPath(link.path)) 
+                        ? `0 2px 8px ${link.color || "#667eea"}20` 
+                        : "none",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive(adminPath(link.path))) {
-                        e.currentTarget.style.background = "#f8f8ff";
+                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive(adminPath(link.path))) {
-                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
                       }
                     }}
                   >
-                    {link.label}
+                    <span style={{ fontSize: 16 }}>{link.icon}</span>
+                    <span>{link.label}</span>
                   </Link>
                 ))}
               </div>
@@ -329,8 +411,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Language Selector */}
             {!isMobile && <LanguageSelector />}
             
-            {/* Tenant Selector */}
-            {!isMobile && HAS_MULTIPLE_TENANTS && <TenantSelector />}
+            {/* Site Selector */}
+            {!isMobile && HAS_MULTIPLE_SITES && <SiteSelector />}
             
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
@@ -447,32 +529,53 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             )}
             
-            {/* Mobile Nav Links */}
-            <div style={{ marginBottom: 16 }}>
+            {/* Mobile Nav Links - Tile Grid */}
+            <div style={{ 
+              marginBottom: 16,
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 12,
+            }}>
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={adminPath(link.path)}
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    padding: "14px 16px",
-                    color: isActive(adminPath(link.path)) ? "#667eea" : "#333",
+                    justifyContent: "center",
+                    padding: "20px 16px",
+                    color: isActive(adminPath(link.path)) ? (link.color || "#667eea") : "#333",
                     textDecoration: "none",
-                    fontSize: 16,
-                    fontWeight: isActive(adminPath(link.path)) ? 500 : 400,
+                    fontSize: 14,
+                    fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: isActive(adminPath(link.path)) ? "#f0f0ff" : "transparent",
-                    borderRadius: 8,
-                    marginBottom: 6,
+                    background: isActive(adminPath(link.path)) 
+                      ? `${link.color || "#667eea"}15` 
+                      : "rgba(0, 0, 0, 0.03)",
+                    border: isActive(adminPath(link.path))
+                      ? `2px solid ${link.color || "#667eea"}40`
+                      : "2px solid rgba(0, 0, 0, 0.08)",
+                    borderRadius: 12,
                     transition: "all 0.2s ease",
+                    textAlign: "center",
+                    boxShadow: isActive(adminPath(link.path)) 
+                      ? `0 4px 12px ${link.color || "#667eea"}20` 
+                      : "0 2px 4px rgba(0, 0, 0, 0.05)",
                   }}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  onTouchStart={(e) => {
+                    e.currentTarget.style.transform = "scale(0.98)";
+                  }}
+                  onTouchEnd={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
                 >
-                  <span style={{ marginRight: 8 }}>
-                    {isActive(adminPath(link.path)) ? "▶" : ""}
+                  <span style={{ fontSize: 32, marginBottom: 8, display: "block" }}>
+                    {link.icon}
                   </span>
-                  {link.label}
+                  <span style={{ lineHeight: 1.3 }}>{link.label}</span>
                 </Link>
               ))}
             </div>
@@ -493,7 +596,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <LanguageSelector />
               </div>
               
-              {HAS_MULTIPLE_TENANTS && (
+              {HAS_MULTIPLE_SITES && (
                 <div style={{ 
                   padding: "10px 14px", 
                   background: "#f8f8ff", 
@@ -501,9 +604,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   border: "1px solid #e0e0ff",
                 }}>
                   <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                    {t("admin.tenant")}
+                    {t("admin.site")}
                   </div>
-                  <TenantSelector />
+                  <SiteSelector />
                 </div>
               )}
               
@@ -628,7 +731,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         overflowX: "hidden",
         overflowY: "auto",
       }}>
-        {children}
+        {/* Only show skeleton if we're navigating between admin routes */}
+        {/* Don't rely on isNavigationPending alone as it can get stuck during lazy loading */}
+        {isNavigating ? <AdminPageSkeleton /> : children}
       </main>
       
       <VersionDisplay />
