@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { NotificationsService } from "../notifications/notifications.service";
 import { RbacService } from "../auth/rbac.service";
+import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
 
 export interface CreateEventDto {
   siteId: string;
@@ -403,6 +404,31 @@ export class AdminEventService {
     // Validate startDate
     if (!dto.startDate) {
       throw new BadRequestException("startDate is required");
+    }
+
+    // Validate event limit based on place plan (if placeId is provided)
+    if (dto.placeId) {
+      const place = await this.prisma.place.findUnique({
+        where: { id: dto.placeId },
+        select: { id: true, plan: true },
+      });
+
+      if (place) {
+        const plan: PlacePlan = (place.plan as PlacePlan) || "free";
+        // Count existing active events for this place
+        const eventCount = await this.prisma.event.count({
+          where: {
+            placeId: dto.placeId,
+            isActive: true,
+          },
+        });
+
+        if (!canAddEvent(plan, eventCount)) {
+          throw new BadRequestException(
+            `Plan "${plan}" allows maximum ${plan === "free" ? 0 : 3} events per place. This place already has ${eventCount} events.`
+          );
+        }
+      }
     }
 
     const event = await this.prisma.event.create({

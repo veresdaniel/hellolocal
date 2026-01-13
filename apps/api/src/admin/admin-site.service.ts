@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang, SitePlan } from "@prisma/client";
 
 export interface CreateSiteDto {
   slug: string;
@@ -36,6 +36,12 @@ export interface UpdateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
+  // Billing/subscription fields
+  plan?: SitePlan;
+  planStatus?: string; // trial/active/past_due/canceled
+  planValidUntil?: Date | string | null;
+  planLimits?: Record<string, any> | null;
+  billingEmail?: string | null;
 }
 
 @Injectable()
@@ -53,6 +59,10 @@ export class AdminSiteService {
               name: true,
             },
           },
+          siteDomains: {
+            where: { isActive: true },
+            orderBy: { isPrimary: "desc" },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -68,6 +78,20 @@ export class AdminSiteService {
       include: {
         translations: true,
         brand: true,
+        siteDomains: true,
+        siteKeys: {
+          orderBy: [{ isPrimary: "desc" }, { lang: "asc" }],
+        },
+        siteInstances: {
+          include: {
+            site: {
+              select: {
+                id: true,
+                slug: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -75,7 +99,38 @@ export class AdminSiteService {
       throw new NotFoundException("Site not found");
     }
 
-    return site;
+    // Calculate usage statistics
+    const [placesCount, featuredCount, eventsCount] = await Promise.all([
+      this.prisma.place.count({
+        where: { siteId: id, isActive: true },
+      }),
+      this.prisma.place.count({
+        where: {
+          siteId: id,
+          isFeatured: true,
+          OR: [
+            { featuredUntil: null },
+            { featuredUntil: { gt: new Date() } },
+          ],
+        },
+      }),
+      this.prisma.event.count({
+        where: {
+          siteId: id,
+          isActive: true,
+          startDate: { gte: new Date() },
+        },
+      }),
+    ]);
+
+    return {
+      ...site,
+      usage: {
+        places: placesCount,
+        featured: featuredCount,
+        events: eventsCount,
+      },
+    };
   }
 
   async create(dto: CreateSiteDto) {
@@ -174,6 +229,17 @@ export class AdminSiteService {
     if (dto.brandId !== undefined) updateData.brandId = dto.brandId;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.primaryDomain !== undefined) updateData.primaryDomain = dto.primaryDomain;
+    
+    // Billing/subscription fields
+    if (dto.plan !== undefined) updateData.plan = dto.plan;
+    if (dto.planStatus !== undefined) updateData.planStatus = dto.planStatus;
+    if (dto.planValidUntil !== undefined) {
+      updateData.planValidUntil = dto.planValidUntil 
+        ? (typeof dto.planValidUntil === "string" ? new Date(dto.planValidUntil) : dto.planValidUntil)
+        : null;
+    }
+    if (dto.planLimits !== undefined) updateData.planLimits = dto.planLimits;
+    if (dto.billingEmail !== undefined) updateData.billingEmail = dto.billingEmail;
 
     await this.prisma.site.update({
       where: { id },

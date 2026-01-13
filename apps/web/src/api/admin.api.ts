@@ -427,6 +427,14 @@ export interface SiteInstance {
     enableStaticPages?: boolean;
     [key: string]: any;
   } | null;
+  sitePlaceholders?: {
+    card?: string | null;
+    hero?: string | null;
+    eventCard?: string | null;
+    [key: string]: any;
+  } | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   site?: {
@@ -456,6 +464,14 @@ export interface CreateSiteInstanceDto {
     enableStaticPages?: boolean;
     [key: string]: any;
   } | null;
+  sitePlaceholders?: {
+    card?: string | null;
+    hero?: string | null;
+    eventCard?: string | null;
+    [key: string]: any;
+  } | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
 }
 
 export interface UpdateSiteInstanceDto {
@@ -473,6 +489,14 @@ export interface UpdateSiteInstanceDto {
     enableStaticPages?: boolean;
     [key: string]: any;
   } | null;
+  sitePlaceholders?: {
+    card?: string | null;
+    hero?: string | null;
+    eventCard?: string | null;
+    [key: string]: any;
+  } | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
 }
 
 // Sites (admin only)
@@ -483,6 +507,11 @@ export interface Site {
   primaryDomain?: string | null;
   brandId: string;
   brand?: Brand;
+  plan?: "free" | "official" | "pro" | "business";
+  planStatus?: string | null;
+  planValidUntil?: string | null;
+  planLimits?: Record<string, any> | null;
+  billingEmail?: string | null;
   translations: Array<{
     id: string;
     lang: string;
@@ -495,6 +524,32 @@ export interface Site {
     seoImage: string | null;
     seoKeywords: string[];
   }>;
+  siteDomains?: Array<{
+    id: string;
+    domain: string;
+    isActive: boolean;
+    isPrimary: boolean;
+    defaultLang: "hu" | "en" | "de";
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  siteKeys?: Array<{
+    id: string;
+    siteId: string;
+    lang: "hu" | "en" | "de";
+    slug: string;
+    isPrimary: boolean;
+    isActive: boolean;
+    redirectToId?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  siteInstances?: Array<SiteInstance>;
+  usage?: {
+    places: number;
+    featured: number;
+    events: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -533,6 +588,11 @@ export interface UpdateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
+  plan?: "free" | "official" | "pro" | "business";
+  planStatus?: string;
+  planValidUntil?: string | Date | null;
+  planLimits?: Record<string, any> | null;
+  billingEmail?: string | null;
 }
 
 export function getSites() {
@@ -1081,4 +1141,88 @@ export function deleteEventLogs(filters: EventLogFilterDto) {
 
   const queryString = params.toString();
   return apiDelete<{ message: string; count: number }>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
+}
+
+// ==================== Billing ====================
+
+export interface PlaceSubscription {
+  placeId: string;
+  plan: "free" | "basic" | "pro";
+  isFeatured: boolean;
+  featuredUntil: string | null;
+}
+
+export interface PlaceEntitlements {
+  placeId: string;
+  plan: "free" | "basic" | "pro";
+  limits: {
+    images: number;
+    events: number;
+    featured: boolean;
+  };
+  currentUsage: {
+    images: number;
+    events: number;
+    isFeatured: boolean;
+    featuredUntil: string | null;
+  };
+  canUpgrade: boolean;
+  canDowngrade: boolean;
+}
+
+export interface SiteSubscription {
+  siteId: string;
+  plan: "free" | "official" | "pro" | "business";
+  planStatus: string | null;
+  planValidUntil: string | null;
+  planLimits: Record<string, any> | null;
+  billingEmail: string | null;
+}
+
+export interface SiteEntitlements {
+  siteId: string;
+  plan: "free" | "official" | "pro" | "business";
+  limits: {
+    places: number;
+    featuredSlots: number;
+    events: number;
+    imagesPerPlace: number;
+    customDomain: boolean;
+    multiAdmin: boolean;
+    analytics: "none" | "basic" | "advanced";
+    support: "community" | "email" | "sla";
+  };
+  currentUsage: {
+    places: number;
+    featuredPlaces: number;
+    events: number;
+  };
+  canUpgrade: boolean;
+  canDowngrade: boolean;
+}
+
+// Place subscription
+export function getPlaceSubscription(placeId: string) {
+  return apiGet<PlaceSubscription>(`/admin/billing/places/${placeId}/subscription`);
+}
+
+export function updatePlaceSubscription(placeId: string, data: Partial<Omit<PlaceSubscription, "placeId">>) {
+  return apiPut<PlaceSubscription>(`/admin/billing/places/${placeId}/subscription`, data);
+}
+
+export function getPlaceEntitlements(placeId: string) {
+  return apiGet<PlaceEntitlements>(`/admin/billing/places/${placeId}/entitlements`);
+}
+
+// Site subscription
+export function getSiteSubscription(siteId: string) {
+  return apiGet<SiteSubscription>(`/admin/billing/sites/${siteId}/subscription`);
+}
+
+export function updateSiteSubscription(siteId: string, data: Partial<Omit<SiteSubscription, "siteId">>) {
+  return apiPut<SiteSubscription>(`/admin/billing/sites/${siteId}/subscription`, data);
+}
+
+export function getSiteEntitlements(siteId: string) {
+  return apiGet<SiteEntitlements>(`/admin/billing/sites/${siteId}/entitlements`);
 }

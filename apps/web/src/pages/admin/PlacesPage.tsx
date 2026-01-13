@@ -18,6 +18,7 @@ import { MapComponent } from "../../components/MapComponent";
 import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHoursEditor";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { PlaceBillingSection } from "../../components/PlaceBillingSection";
 
 interface Place {
   id: string;
@@ -26,6 +27,9 @@ interface Place {
   categoryId: string;
   priceBandId: string | null;
   isActive: boolean;
+  plan?: "free" | "basic" | "pro";
+  isFeatured?: boolean;
+  featuredUntil?: string | null;
   heroImage: string | null;
   gallery: string[];
   lat: number | null;
@@ -122,6 +126,9 @@ export function PlacesPage() {
     lat: "",
     lng: "",
     isActive: true,
+    plan: "free" as "free" | "basic" | "pro",
+    isFeatured: false,
+    featuredUntil: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const previousPathnameRef = useRef<string>(location.pathname);
@@ -347,6 +354,9 @@ export function PlacesPage() {
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
         isActive: formData.isActive,
+        plan: formData.plan,
+        isFeatured: formData.isFeatured,
+        featuredUntil: formData.featuredUntil ? new Date(formData.featuredUntil).toISOString() : null,
       });
       setIsCreating(false);
       resetForm();
@@ -450,6 +460,9 @@ export function PlacesPage() {
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
+          plan: formData.plan,
+          isFeatured: formData.isFeatured,
+          featuredUntil: formData.featuredUntil ? new Date(formData.featuredUntil).toISOString() : null,
         },
         selectedSiteId || undefined
       );
@@ -526,6 +539,9 @@ export function PlacesPage() {
       lat: place.lat?.toString() || "",
       lng: place.lng?.toString() || "",
       isActive: place.isActive,
+      plan: place.plan || "free",
+      isFeatured: place.isFeatured || false,
+      featuredUntil: place.featuredUntil ? new Date(place.featuredUntil).toISOString().split('T')[0] : "",
     });
   };
 
@@ -538,6 +554,9 @@ export function PlacesPage() {
       nameHu: "",
       nameEn: "",
       nameDe: "",
+      shortDescriptionHu: "",
+      shortDescriptionEn: "",
+      shortDescriptionDe: "",
       descriptionHu: "",
       descriptionEn: "",
       descriptionDe: "",
@@ -569,6 +588,9 @@ export function PlacesPage() {
       lat: "",
       lng: "",
       isActive: true,
+      plan: "free",
+      isFeatured: false,
+      featuredUntil: "",
     });
     setFormErrors({});
   };
@@ -634,8 +656,8 @@ export function PlacesPage() {
     }
   }, [location.pathname, editingId, isCreating]);
 
-  // Wait for tenant context to initialize
-  if (isTenantLoading) {
+  // Wait for site context to initialize
+  if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
@@ -1178,6 +1200,53 @@ export function PlacesPage() {
             </div>
           </div>
 
+          {/* isActive checkbox - prominent at the top */}
+          {canModifyPublish() && (
+            <div style={{ 
+              marginBottom: 24, 
+              padding: 20, 
+              background: formData.isActive 
+                ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
+                : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+              borderRadius: 12,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              border: "2px solid",
+              borderColor: formData.isActive ? "#10b981" : "#ef4444",
+            }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 12, 
+                cursor: "pointer",
+                color: "white",
+              }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  style={{ 
+                    width: 24, 
+                    height: 24, 
+                    cursor: "pointer",
+                    accentColor: "white",
+                  }}
+                />
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+                    {formData.isActive 
+                      ? (t("admin.placeActive") || "✓ Place is Active") 
+                      : (t("admin.placeInactive") || "✗ Place is Inactive")}
+                  </div>
+                  <div style={{ fontSize: 14, opacity: 0.9 }}>
+                    {formData.isActive 
+                      ? (t("admin.placeActiveDescription") || "This place is visible to visitors")
+                      : (t("admin.placeInactiveDescription") || "This place is hidden from visitors")}
+                  </div>
+                </div>
+              </label>
+            </div>
+          )}
+
           {/* Hero kép teljes szélességben */}
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>{t("admin.heroImageUrl")}</label>
@@ -1189,19 +1258,23 @@ export function PlacesPage() {
             />
           </div>
 
-          {/* isActive checkbox - only visible to owner/manager */}
-          {canModifyPublish() && (
-            <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-                <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
-              </label>
+          {/* Billing/Plan fields - only visible to owner/manager */}
+          {canModifyPublish() && editingId && (
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 700, color: "#333", display: "flex", alignItems: "center", gap: 8 }}>
+                🪙 {t("admin.billing") || "Billing & Plan"}
+              </h3>
+              <PlaceBillingSection
+                placeId={editingId}
+                currentPlan={formData.plan}
+                currentIsFeatured={formData.isFeatured}
+                currentFeaturedUntil={formData.featuredUntil}
+                siteId={selectedSiteId || ""}
+                userRole={currentUser?.role || "viewer"}
+              />
             </div>
           )}
+
         </div>
         </div>
       )}

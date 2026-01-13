@@ -334,6 +334,7 @@ export function UsersPage() {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                autoComplete="new-password"
                 style={{
                   width: "100%",
                   padding: 8,

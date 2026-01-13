@@ -36,6 +36,7 @@ const TownsPage = lazy(() => import("../pages/admin/TownsPage").then(m => ({ def
 const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m => ({ default: m.LegalPagesPage })));
 const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
 const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
+const SiteEditPage = lazy(() => import("../pages/admin/SiteEditPage").then(m => ({ default: m.SiteEditPage })));
 const BrandsPage = lazy(() => import("../pages/admin/BrandsPage").then(m => ({ default: m.BrandsPage })));
 const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").then(m => ({ default: m.SiteInstancesPage })));
 const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
@@ -276,6 +277,20 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SitesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ) : (
+          <NotFoundPage />
+        ),
+      },
+      {
+        path: "sites/:id/edit",
+        element: HAS_MULTIPLE_SITES ? (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SiteEditPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

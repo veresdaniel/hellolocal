@@ -19,6 +19,14 @@ export interface CreateSiteInstanceDto {
     enableStaticPages?: boolean;
     [key: string]: any;
   } | null;
+  sitePlaceholders?: {
+    card?: string | null;
+    hero?: string | null;
+    eventCard?: string | null;
+    [key: string]: any;
+  } | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
 }
 
 export interface UpdateSiteInstanceDto {
@@ -36,6 +44,14 @@ export interface UpdateSiteInstanceDto {
     enableStaticPages?: boolean;
     [key: string]: any;
   } | null;
+  sitePlaceholders?: {
+    card?: string | null;
+    hero?: string | null;
+    eventCard?: string | null;
+    [key: string]: any;
+  } | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
 }
 
 @Injectable()
@@ -151,6 +167,9 @@ export class AdminSiteInstanceService {
         isDefault: dto.isDefault ?? false,
         mapConfig: dto.mapConfig || undefined,
         features: dto.features || undefined,
+        sitePlaceholders: dto.sitePlaceholders || undefined,
+        logoUrl: dto.logoUrl || undefined,
+        faviconUrl: dto.faviconUrl || undefined,
       },
       include: {
         site: {
@@ -213,6 +232,18 @@ export class AdminSiteInstanceService {
 
     if (dto.features !== undefined) {
       updateData.features = dto.features;
+    }
+
+    if (dto.sitePlaceholders !== undefined) {
+      updateData.sitePlaceholders = dto.sitePlaceholders;
+    }
+
+    if (dto.logoUrl !== undefined) {
+      updateData.logoUrl = dto.logoUrl;
+    }
+
+    if (dto.faviconUrl !== undefined) {
+      updateData.faviconUrl = dto.faviconUrl;
     }
 
     return this.prisma.siteInstance.update({

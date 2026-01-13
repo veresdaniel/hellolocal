@@ -8,11 +8,12 @@ import { SiteController } from "./site.controller";
 import { ResolveController } from "./resolve.controller";
 import { SiteResolverService } from "./site-resolver.service";
 import { ResolveService } from "./resolve.service";
+import { SiteKeyResolverService } from "./site-key-resolver.service";
 
 @Module({
   imports: [PrismaModule, TenantModule, SlugModule, PlacesModule, EventsModule],
   controllers: [SiteController, ResolveController],
-  providers: [SiteResolverService, ResolveService],
-  exports: [SiteResolverService, ResolveService],
+  providers: [SiteResolverService, ResolveService, SiteKeyResolverService],
+  exports: [SiteResolverService, ResolveService, SiteKeyResolverService],
 })
 export class SiteModule {}

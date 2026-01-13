@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { getSites, createSite, updateSite, deleteSite, getBrands, type Site, type Brand } from "../../api/admin.api";
@@ -13,6 +14,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 
 export function SitesPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { reloadSites, setSelectedSiteId, selectedSiteId } = useAdminSite();
@@ -202,6 +204,11 @@ export function SitesPage() {
   };
 
   const startEdit = (site: Site) => {
+    // Navigate to Site Edit page instead of inline editing
+    navigate(`/admin/sites/${site.id}/edit`);
+  };
+
+  const startEditInline = (site: Site) => {
     setEditingId(site.id);
     const hu = site.translations.find((t) => t.lang === "hu");
     const en = site.translations.find((t) => t.lang === "en");

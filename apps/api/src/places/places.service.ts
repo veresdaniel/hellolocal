@@ -254,7 +254,10 @@ export class PlacesService {
     // Note: Places don't have slugs directly - slugs are stored in a separate Slug table
     const places = await this.prisma.place.findMany({
       where,
-      orderBy: { updatedAt: "desc" },
+      orderBy: [
+        { isFeatured: "desc" },
+        { updatedAt: "desc" },
+      ],
       take: Math.min(Math.max(args.limit, 1), 200), // Enforce limit between 1-200
       skip: Math.max(args.offset, 0), // Ensure non-negative offset
       include: {

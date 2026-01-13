@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole, PlacePlan, SitePlan } from "@prisma/client";
 import { generateSlug } from "../slug/slug.helper";
 import { RbacService } from "../auth/rbac.service";
+import { canAddImage, canBeFeatured, type PlacePlan as PlacePlanType } from "../config/place-limits.config";
+import { canHaveFeaturedPlaces, canAddFeaturedPlace, getSiteLimits, type SitePlanType } from "../config/site-limits.config";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -42,6 +44,9 @@ export interface CreatePlaceDto {
   ratingAvg?: number | null;
   ratingCount?: number | null;
   extras?: any;
+  plan?: PlacePlan;
+  isFeatured?: boolean;
+  featuredUntil?: Date | string | null;
 }
 
 export interface UpdatePlaceDto {
@@ -74,6 +79,9 @@ export interface UpdatePlaceDto {
   ratingAvg?: number | null;
   ratingCount?: number | null;
   extras?: any;
+  plan?: PlacePlan;
+  isFeatured?: boolean;
+  featuredUntil?: Date | string | null;
 }
 
 @Injectable()
@@ -282,7 +290,10 @@ export class AdminPlaceService {
           orderBy: { dayOfWeek: 'asc' },
         },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [
+        { isFeatured: "desc" },
+        { updatedAt: "desc" },
+      ],
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
@@ -344,9 +355,44 @@ export class AdminPlaceService {
   async create(dto: CreatePlaceDto) {
     const { tagIds = [], translations, openingHours = [], ...placeData } = dto;
 
+    // Validate image limit based on plan (default: free)
+    const plan: PlacePlanType = (dto.plan as PlacePlanType) || "free";
+    const gallery = dto.gallery || [];
+    const imageCount = gallery.length + (dto.heroImage ? 1 : 0);
+    
+    if (!canAddImage(plan, imageCount)) {
+      throw new BadRequestException(
+        `Plan "${plan}" allows maximum ${plan === "free" ? 3 : 15} images. You are trying to add ${imageCount} images.`
+      );
+    }
+
+    // Validate featured status if provided
+    if (dto.isFeatured === true && !canBeFeatured(plan)) {
+      throw new BadRequestException(
+        `Plan "${plan}" does not support featured placement. Upgrade to "pro" plan.`
+      );
+    }
+
+    // Validate featuredUntil date (must be in the future if isFeatured is true)
+    if (dto.isFeatured === true && dto.featuredUntil) {
+      const featuredUntilDate = typeof dto.featuredUntil === "string" 
+        ? new Date(dto.featuredUntil) 
+        : dto.featuredUntil;
+      if (featuredUntilDate <= new Date()) {
+        throw new BadRequestException(
+          "featuredUntil must be in the future when isFeatured is true"
+        );
+      }
+    }
+
     const place = await this.prisma.place.create({
       data: {
         ...placeData,
+        plan: dto.plan || "free",
+        isFeatured: dto.isFeatured ?? false,
+        featuredUntil: dto.featuredUntil 
+          ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+          : null,
         isActive: dto.isActive ?? true,
         translations: {
           create: translations.map((t) => ({
@@ -421,6 +467,77 @@ export class AdminPlaceService {
   async update(id: string, siteId: string, dto: UpdatePlaceDto, userId?: string) {
     const place = await this.findOne(id, siteId);
 
+    // Validate featured status based on SITE plan (not place plan)
+    if (dto.isFeatured !== undefined && dto.isFeatured === true) {
+      // Get site with plan information
+      const site = await this.prisma.site.findUnique({
+        where: { id: siteId },
+        select: { plan: true, planLimits: true },
+      });
+
+      if (!site) {
+        throw new NotFoundException(`Site with ID ${siteId} not found`);
+      }
+
+      const sitePlan: SitePlanType = site.plan;
+      
+      // Check if site plan supports featured places
+      if (!canHaveFeaturedPlaces(sitePlan)) {
+        throw new BadRequestException(
+          `Site plan "${sitePlan}" does not support featured places. Upgrade to "pro" or "business" plan.`
+        );
+      }
+
+      // Check if there are available featured slots
+      const currentFeaturedCount = await this.prisma.place.count({
+        where: {
+          siteId,
+          isFeatured: true,
+          OR: [
+            { featuredUntil: null },
+            { featuredUntil: { gt: new Date() } },
+          ],
+        },
+      });
+
+      // If this place is already featured, don't count it
+      const isCurrentlyFeatured = place.isFeatured;
+      const effectiveFeaturedCount = isCurrentlyFeatured 
+        ? Math.max(0, currentFeaturedCount - 1)
+        : currentFeaturedCount;
+
+      if (!canAddFeaturedPlace(sitePlan, effectiveFeaturedCount)) {
+        const limits = getSiteLimits(sitePlan);
+        throw new BadRequestException(
+          `Site plan "${sitePlan}" allows maximum ${limits.featuredSlots === Infinity ? "unlimited" : limits.featuredSlots} featured places. Currently ${effectiveFeaturedCount} featured places are active.`
+        );
+      }
+
+      // Validate featuredUntil date (must be in the future if isFeatured is true)
+      const featuredUntilDate = dto.featuredUntil 
+        ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+        : place.featuredUntil;
+      if (featuredUntilDate && featuredUntilDate <= new Date()) {
+        throw new BadRequestException(
+          "featuredUntil must be in the future when isFeatured is true"
+        );
+      }
+    }
+
+    // Validate image limit based on plan
+    if (dto.gallery !== undefined || dto.heroImage !== undefined) {
+      const plan: PlacePlanType = (dto.plan as PlacePlanType) || place.plan || "free";
+      const currentGallery = dto.gallery !== undefined ? dto.gallery : place.gallery;
+      const currentHeroImage = dto.heroImage !== undefined ? dto.heroImage : place.heroImage;
+      const imageCount = currentGallery.length + (currentHeroImage ? 1 : 0);
+      
+      if (!canAddImage(plan, imageCount)) {
+        throw new BadRequestException(
+          `Plan "${plan}" allows maximum ${plan === "free" ? 3 : 15} images. You are trying to use ${imageCount} images.`
+        );
+      }
+    }
+
     // RBAC: Check permissions for restricted fields
     if (userId) {
       // Check if user can modify isActive (publish/activate)
@@ -458,6 +575,9 @@ export class AdminPlaceService {
     if (restData.ratingCount !== undefined) updateData.ratingCount = restData.ratingCount;
     if (restData.extras !== undefined) updateData.extras = restData.extras;
     if (restData.ownerId !== undefined) updateData.ownerId = restData.ownerId;
+    if (restData.plan !== undefined) updateData.plan = restData.plan;
+    if (restData.isFeatured !== undefined) updateData.isFeatured = restData.isFeatured;
+    if (restData.featuredUntil !== undefined) updateData.featuredUntil = restData.featuredUntil;
     
     // Explicitly handle lat and lng to ensure null values are properly set
     if (dto.lat !== undefined) {
@@ -465,6 +585,12 @@ export class AdminPlaceService {
     }
     if (dto.lng !== undefined) {
       updateData.lng = dto.lng;
+    }
+    // Handle featuredUntil date conversion
+    if (dto.featuredUntil !== undefined) {
+      updateData.featuredUntil = dto.featuredUntil 
+        ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+        : null;
     }
 
     await this.prisma.place.update({

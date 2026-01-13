@@ -23,6 +23,7 @@ function isLang(x: unknown): x is Lang {
 
 export function SiteLayout() {
   const params = useParams();
+  const { t } = useTranslation();
 
   const langParam = params.lang;
   const siteKeyParam = params.siteKey;
@@ -33,6 +34,10 @@ export function SiteLayout() {
   const siteKey = HAS_MULTIPLE_SITES
     ? siteKeyParam ?? DEFAULT_SITE_SLUG
     : DEFAULT_SITE_SLUG;
+
+  // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
+  // Hook-okat mindig a komponens elején kell hívni, még a korai return-ek előtt
+  const { data: platform, isLoading, isError, refetch } = usePlatformSettings({ lang, siteKey });
 
   // rossz lang -> redirect a javított langra (megtartva a többit)
   if (langParam !== lang) {
@@ -46,10 +51,6 @@ export function SiteLayout() {
   if (HAS_MULTIPLE_SITES && !siteKeyParam) {
     return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}`} replace />;
   }
-
-  // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
-  const { data: platform, isLoading, isError, refetch } = usePlatformSettings({ lang, siteKey });
-  const { t } = useTranslation();
 
   // Full screen spinner for loading
   if (isLoading) {

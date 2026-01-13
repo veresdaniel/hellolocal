@@ -43,6 +43,19 @@ enum PlaceRole {
   editor
 }
 
+enum PlacePlan {
+  free
+  basic
+  pro
+}
+
+enum SitePlan {
+  free
+  official
+  pro
+  business
+}
+
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
 // Brand: Visual identity and branding assets
@@ -71,6 +84,14 @@ model Site {
   // optional: for domain/whitelabel later
   primaryDomain    String?  @unique
 
+  // Subscription/billing fields
+  plan             SitePlan  @default(free)
+  planStatus       String?   @default("active") // trial/active/past_due/canceled
+  planValidUntil  DateTime?
+  planLimits       Json?     // override/experiments (places, featured, events limits)
+  billingEmail     String?
+  billingMeta      Json?     // stripe ids later
+
   // Brand relationship - site belongs to a brand
   brandId         String
   brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
@@ -98,6 +119,8 @@ model Site {
   siteDomains      SiteDomain[]
 
   @@index([brandId])
+  @@index([plan])
+  @@index([planValidUntil])
 }
 
 model SiteTranslation {
@@ -317,6 +340,11 @@ model Place {
   categoryId  String
   isActive    Boolean       @default(true)
 
+  // Subscription/upsell fields
+  plan        PlacePlan     @default(free)
+  isFeatured  Boolean       @default(false)
+  featuredUntil DateTime?
+
   // Media + discoverability
   heroImage   String?
   gallery     String[]      @default([])
@@ -350,6 +378,9 @@ model Place {
 
   @@index([siteId, categoryId])
   @@index([townId])
+  @@index([siteId, isFeatured])
+  @@index([featuredUntil])
+  @@index([plan])
 }
 
 // Opening hours for places (one entry per day of week)
@@ -778,6 +809,11 @@ model SiteInstance {
 
   mapConfig   Json?     // instance-specific map settings (overrides brand defaults)
   features    Json?      // enable events, blog, etc.
+  sitePlaceholders Json? // site-level placeholder images override (card, hero, event card)
+
+  // Branding overrides (optional, inherits from Brand if null)
+  logoUrl   String?
+  faviconUrl  String?
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

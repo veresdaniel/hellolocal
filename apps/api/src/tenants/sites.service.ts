@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 
 type ListArgs = {
   lang: string;
-  siteKey?: string; // Optional site key from URL (for multi-site support)
+  siteKey?: string; // Optional site key from URL (for multi-site support, not used in list)
   q?: string; // Search query (searches in site names)
   limit: number; // Maximum number of results (1-200)
   offset: number; // Pagination offset
@@ -13,8 +12,7 @@ type ListArgs = {
 @Injectable()
 export class SitesService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly prisma: PrismaService
   ) {}
 
   /**
