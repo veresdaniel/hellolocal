@@ -267,7 +267,8 @@ export function UserProfilePage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#4b5563",
-                fontSize: "clamp(13px, 3vw, 14px)",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
               }}>
                 {t("admin.username")}
@@ -279,7 +280,8 @@ export function UserProfilePage() {
                 style={{ 
                   width: "100%", 
                   padding: "clamp(10px, 2vw, 12px)", 
-                  fontSize: "clamp(14px, 3vw, 15px)",
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   background: "#f5f5f5",
                   border: "1px solid #e5e7eb",
                   borderRadius: 8,
@@ -294,7 +296,8 @@ export function UserProfilePage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#4b5563",
-                fontSize: "clamp(13px, 3vw, 14px)",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
               }}>
                 {t("admin.email")}
@@ -306,7 +309,8 @@ export function UserProfilePage() {
                 style={{ 
                   width: "100%", 
                   padding: "clamp(10px, 2vw, 12px)", 
-                  fontSize: "clamp(14px, 3vw, 15px)",
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   background: "#f5f5f5",
                   border: "1px solid #e5e7eb",
                   borderRadius: 8,
@@ -321,7 +325,8 @@ export function UserProfilePage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#4b5563",
-                fontSize: "clamp(13px, 3vw, 14px)",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
               }}>
                 {t("admin.fields.firstName")}
@@ -335,7 +340,8 @@ export function UserProfilePage() {
                 style={{ 
                   width: "100%", 
                   padding: "clamp(10px, 2vw, 12px)", 
-                  fontSize: "clamp(14px, 3vw, 15px)",
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: "2px solid #e0e7ff",
                   borderRadius: 8,
                   transition: "all 0.2s ease",
@@ -352,7 +358,8 @@ export function UserProfilePage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#4b5563",
-                fontSize: "clamp(13px, 3vw, 14px)",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
               }}>
                 {t("admin.fields.lastName")}
@@ -366,7 +373,8 @@ export function UserProfilePage() {
                 style={{ 
                   width: "100%", 
                   padding: "clamp(10px, 2vw, 12px)", 
-                  fontSize: "clamp(14px, 3vw, 15px)",
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: "2px solid #e0e7ff",
                   borderRadius: 8,
                   transition: "all 0.2s ease",
@@ -383,7 +391,8 @@ export function UserProfilePage() {
                 display: "block", 
                 marginBottom: 8,
                 color: "#4b5563",
-                fontSize: "clamp(13px, 3vw, 14px)",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
               }}>
                 {t("admin.fields.bio")}
@@ -396,13 +405,14 @@ export function UserProfilePage() {
                 style={{ 
                   width: "100%", 
                   padding: "clamp(10px, 2vw, 12px)", 
-                  fontSize: "clamp(14px, 3vw, 15px)",
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: "2px solid #e0e7ff",
                   borderRadius: 8,
                   transition: "all 0.2s ease",
                   outline: "none",
                   boxSizing: "border-box",
-                  fontFamily: "inherit",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   resize: "vertical",
                 }}
                 onFocus={(e) => e.target.style.borderColor = "#667eea"}
@@ -414,8 +424,9 @@ export function UserProfilePage() {
               type="submit"
               disabled={isSaving}
               style={{
-                padding: "12px 24px",
-                fontSize: 15,
+                padding: "10px 20px",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
                 background: isSaving ? "#ddd" : "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
                 color: isSaving ? "#999" : "white",
@@ -462,7 +473,11 @@ export function UserProfilePage() {
             border: "1px solid rgba(102, 126, 234, 0.1)",
           }}>
             <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb" }}>
-              <strong style={{ color: "#4b5563", fontSize: 14 }}>{t("admin.role")}:</strong>{" "}
+              <strong style={{ 
+                color: "#4b5563", 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{t("admin.role")}:</strong>{" "}
               <span
                 style={{
                   padding: "4px 12px",
@@ -476,7 +491,8 @@ export function UserProfilePage() {
                       ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)"
                       : "#6c757d",
                   color: "white",
-                  fontSize: 12,
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   display: "inline-block",
                   marginLeft: 8,
@@ -485,7 +501,13 @@ export function UserProfilePage() {
                 {user.role}
               </span>
             </div>
-            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb", fontSize: 14 }}>
+            <div style={{ 
+              marginBottom: 16, 
+              paddingBottom: 16, 
+              borderBottom: "1px solid #e5e7eb", 
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
               <strong style={{ color: "#4b5563" }}>{t("admin.table.status")}:</strong>{" "}
               <span style={{ 
                 color: user.isActive ? "#059669" : "#dc2626",
@@ -494,11 +516,20 @@ export function UserProfilePage() {
                 {user.isActive ? t("common.active") : t("common.inactive")}
               </span>
             </div>
-            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #e5e7eb", fontSize: 14 }}>
+            <div style={{ 
+              marginBottom: 16, 
+              paddingBottom: 16, 
+              borderBottom: "1px solid #e5e7eb", 
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
               <strong style={{ color: "#4b5563" }}>{t("admin.profile.memberSince")}:</strong>{" "}
               <span style={{ color: "#6b7280" }}>{new Date(user.createdAt).toLocaleDateString()}</span>
             </div>
-            <div style={{ fontSize: 14 }}>
+            <div style={{ 
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
               <strong style={{ color: "#4b5563" }}>{t("admin.profile.lastUpdated")}:</strong>{" "}
               <span style={{ color: "#6b7280" }}>{new Date(user.updatedAt).toLocaleDateString()}</span>
             </div>
@@ -521,11 +552,19 @@ export function UserProfilePage() {
             border: "1px solid rgba(102, 126, 234, 0.1)",
           }}>
             {!user.tenants || user.tenants.length === 0 ? (
-              <div style={{ color: "#6b7280", fontSize: 14 }}>{t("admin.profile.noTenantsAssigned")}</div>
+              <div style={{ 
+                color: "#6b7280", 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{t("admin.profile.noTenantsAssigned")}</div>
             ) : (
               <ul style={{ margin: 0, paddingLeft: 20, color: "#374151" }}>
                 {user.tenants.map((ut: any) => (
-                  <li key={ut.id} style={{ marginBottom: 8, fontSize: 14 }}>
+                  <li key={ut.id} style={{ 
+                    marginBottom: 8, 
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {ut.tenant.slug}
                     {ut.isPrimary && <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>★ {t("admin.profile.primary")}</span>}
                   </li>
@@ -565,7 +604,12 @@ export function UserProfilePage() {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, padding: 12, background: "#f0f9ff", borderRadius: 6, border: "1px solid #b3d9ff" }}>
                   <span style={{ fontSize: 20 }}>✓</span>
-                  <span style={{ color: "#28a745", fontWeight: 600, fontSize: 15 }}>{t("admin.twoFactor.isEnabled")}</span>
+                  <span style={{ 
+                    color: "#28a745", 
+                    fontWeight: 600, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>{t("admin.twoFactor.isEnabled")}</span>
                 </div>
                 <p style={{ marginBottom: 16, color: "#666", fontSize: 14, lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.twoFactor.accountProtected")}
@@ -575,7 +619,8 @@ export function UserProfilePage() {
                   disabled={isTwoFactorLoading}
                   style={{
                     padding: "10px 20px",
-                    fontSize: 14,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     background: isTwoFactorLoading ? "#ddd" : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                     color: "white",
@@ -612,8 +657,9 @@ export function UserProfilePage() {
                       onClick={handleSetupTwoFactor}
                       disabled={isTwoFactorLoading}
                       style={{
-                        padding: "12px 24px",
-                        fontSize: 15,
+                        padding: "10px 20px",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                         background: isTwoFactorLoading ? "#ddd" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                         color: "white",
@@ -642,7 +688,13 @@ export function UserProfilePage() {
                 ) : (
                   <div>
                     <div style={{ marginBottom: 20, padding: 16, background: "#f8f9fa", borderRadius: 8, border: "1px solid #e0e0e0" }}>
-                      <p style={{ marginBottom: 16, fontWeight: 600, fontSize: 15, color: "#333" }}>
+                      <p style={{ 
+                        marginBottom: 16, 
+                        fontWeight: 600, 
+                        fontSize: "clamp(15px, 3.5vw, 16px)", 
+                        color: "#333",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>
                         {t("admin.twoFactor.scanQRCodeDescription")}
                       </p>
                       {qrCodeUrl && (
@@ -652,15 +704,37 @@ export function UserProfilePage() {
                       )}
                       {twoFactorSecret && (
                         <div style={{ marginBottom: 0, padding: 12, background: "white", borderRadius: 6, border: "1px solid #ddd" }}>
-                          <p style={{ marginBottom: 6, fontSize: 13, color: "#666", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.twoFactor.orEnterKeyManually")}</p>
-                          <code style={{ fontFamily: "monospace", fontSize: 13, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4, display: "block", wordBreak: "break-all", border: "1px solid #e0e0e0" }}>
+                          <p style={{ 
+                            marginBottom: 6, 
+                            fontSize: "clamp(14px, 3.5vw, 16px)", 
+                            color: "#666", 
+                            fontWeight: 500, 
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}>{t("admin.twoFactor.orEnterKeyManually")}</p>
+                          <code style={{ 
+                            fontFamily: "monospace", 
+                            fontSize: "clamp(13px, 3vw, 15px)", 
+                            padding: "8px 12px", 
+                            background: "#f5f5f5", 
+                            borderRadius: 4, 
+                            display: "block", 
+                            wordBreak: "break-all", 
+                            border: "1px solid #e0e0e0",
+                          }}>
                             {twoFactorSecret}
                           </code>
                         </div>
                       )}
                     </div>
                     <div style={{ marginBottom: 16 }}>
-                      <label style={{ display: "block", marginBottom: 8, fontWeight: 600, fontSize: 14, color: "#333" }}>
+                      <label style={{ 
+                        display: "block", 
+                        marginBottom: 8, 
+                        fontWeight: 600, 
+                        fontSize: "clamp(14px, 3.5vw, 16px)", 
+                        color: "#333",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>
                         {t("admin.twoFactor.enter6DigitCode")}
                       </label>
                       <input
@@ -693,7 +767,8 @@ export function UserProfilePage() {
                         style={{
                           flex: 1,
                           padding: "12px 20px",
-                          fontSize: 15,
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           fontWeight: 600,
                           background: verificationToken.length === 6 && !isVerifying ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)" : "#ddd",
                           color: "white",
@@ -728,7 +803,8 @@ export function UserProfilePage() {
                         }}
                         style={{
                           padding: "12px 20px",
-                          fontSize: 15,
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           fontWeight: 600,
                           background: "white",
                           color: "#6c757d",

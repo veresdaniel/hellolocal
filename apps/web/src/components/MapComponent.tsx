@@ -29,6 +29,7 @@ interface MapComponentProps {
   interactive?: boolean;
   defaultZoom?: number;
   mapStyle?: "default" | "hand-drawn" | "pastel";
+  hideLocationButton?: boolean; // Hide the "show my location" button (for admin pages)
 }
 
 // Helper function to calculate distance in km using Haversine formula
@@ -94,6 +95,7 @@ export function MapComponent({
   interactive = true,
   defaultZoom = 13,
   mapStyle = "default",
+  hideLocationButton = false,
 }: MapComponentProps) {
   const { t } = useTranslation();
   const { showUserLocation, setShowUserLocation, userLocation: userLocationFromStore, setUserLocation } = useFiltersStore();
@@ -876,7 +878,8 @@ export function MapComponent({
                   WebkitBackdropFilter: "blur(12px)",
                   padding: "6px 14px",
                   borderRadius: 12,
-                  fontSize: 12,
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   whiteSpace: "nowrap",
@@ -1165,8 +1168,9 @@ export function MapComponent({
       </Map>
       
       {/* Draggable user location control */}
-      <div
-        ref={locationControlRef}
+      {!hideLocationButton && (
+        <div
+          ref={locationControlRef}
         onMouseDown={handleLocationControlMouseDown}
         onTouchStart={handleLocationControlTouchStart}
         style={{
@@ -1397,6 +1401,7 @@ export function MapComponent({
           <span style={{ fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.showMyLocation") || "Mutasd a helyzetem"}</span>
         </label>
       </div>
+      )}
       
       {interactive && onLocationChange && (
         <div

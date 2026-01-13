@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { useToast } from "../../contexts/ToastContext";
 import { getDefaultLanguage, setDefaultLanguage } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
@@ -95,7 +95,12 @@ export function AppSettingsPage() {
           </button>
           {languageOpen && (
             <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-              <p style={{ color: "#666", marginBottom: 24, fontSize: 15 }}>
+              <p style={{ 
+                color: "#666", 
+                marginBottom: 24, 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 {t("admin.defaultLanguageDescription")}
               </p>
 
@@ -109,7 +114,8 @@ export function AppSettingsPage() {
                     disabled={!isAdmin || isSaving}
                     style={{
                       padding: "10px 16px",
-                      fontSize: 15,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
                       background: "white",
@@ -128,7 +134,8 @@ export function AppSettingsPage() {
                       disabled={isSaving}
                       style={{
                         padding: "10px 24px",
-                        fontSize: 15,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
                         background: isSaving ? "#999" : "#007bff",
                         color: "white",
@@ -170,7 +177,8 @@ export function AppSettingsPage() {
           {t("admin.appSettings")}
         </h1>
         <p style={{ 
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 400,
           color: "#c0c0d0",
@@ -241,7 +249,8 @@ export function AppSettingsPage() {
                     disabled={isSaving}
                     style={{
                       padding: "10px 24px",
-                      fontSize: 15,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       fontWeight: 500,
                       background: isSaving ? "#999" : "#007bff",
                       color: "white",

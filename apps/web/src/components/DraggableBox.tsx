@@ -278,7 +278,8 @@ export function DraggableBox({
         <h3 style={{ 
           margin: 0, 
           color: "white", 
-          fontSize: isMobile && !isOpen ? 20 : 15, 
+          fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",

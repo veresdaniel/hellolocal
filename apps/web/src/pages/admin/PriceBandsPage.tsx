@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
-import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from "../../api/admin.api";
@@ -30,7 +30,9 @@ interface PriceBand {
 export function PriceBandsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { selectedTenantId, isLoading: isTenantLoading } = useAdminTenant();
+  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const selectedTenantId = selectedSiteId; // Alias for backward compatibility
+  const isTenantLoading = isSiteLoading;
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   usePageTitle("admin.priceBands");
@@ -65,10 +67,10 @@ export function PriceBandsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      // Reset to first page when tenant changes
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedTenantId]);
@@ -214,13 +216,13 @@ export function PriceBandsPage() {
     setFormErrors({});
   };
 
-  // Wait for tenant context to initialize
-  if (isTenantLoading) {
+  // Wait for site context to initialize
+  if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+  if (!selectedSiteId) {
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   return (
@@ -240,16 +242,35 @@ export function PriceBandsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
 
       {(isCreating || editingId) && (
         <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
-          <h2 style={{ marginBottom: 24, color: "#667eea", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <h2 style={{ 
+            marginBottom: 24, 
+            color: "#667eea", 
+            fontSize: "clamp(18px, 4vw, 22px)", 
+            fontWeight: 700, 
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>
             {editingId ? t("admin.forms.editPriceBand") : t("admin.forms.newPriceBand")}
           </h2>
+
+          {/* Active Checkbox - moved to top */}
+          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+              />
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+            </label>
+          </div>
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -321,17 +342,6 @@ export function PriceBandsPage() {
               </>
             )}
           </LanguageAwareForm>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              {t("common.active")}
-            </label>
-          </div>
         </div>
       )}
 
@@ -416,7 +426,6 @@ export function PriceBandsPage() {
           ]}
           onEdit={startEdit}
           onDelete={(priceBand) => handleDelete(priceBand.id)}
-          isLoading={isLoading}
           error={null}
         />
       )}

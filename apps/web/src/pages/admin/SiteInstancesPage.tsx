@@ -208,7 +208,7 @@ export function SiteInstancesPage() {
   const columns: TableColumn<SiteInstance>[] = [
     {
       key: "site",
-      label: t("admin.tenant"),
+      label: t("admin.site"),
       render: (instance) => instance.site?.slug || instance.siteId,
     },
     {
@@ -248,7 +248,7 @@ export function SiteInstancesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -276,8 +276,9 @@ export function SiteInstancesPage() {
           <h2 style={{ 
             marginBottom: 24, 
             color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(18px, 4vw, 22px)",
             fontWeight: 700,
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {editingId ? t("admin.forms.editSiteInstance") : t("admin.forms.newSiteInstance")}
           </h2>
@@ -285,7 +286,7 @@ export function SiteInstancesPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div>
               <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.tenant")} *
+                {t("admin.site")} *
               </label>
               <select
                 value={formData.siteId}
@@ -338,18 +339,25 @@ export function SiteInstancesPage() {
             </div>
 
             <div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 12, fontWeight: 600, cursor: "pointer", fontSize: 15 }}>
                 <input
                   type="checkbox"
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                   checked={formData.isDefault}
                   onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
                 />
-                {t("admin.isDefault")}
+                <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isDefault")}</span>
               </label>
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ marginBottom: 16, color: "#667eea", fontSize: 18, fontWeight: 600 }}>
+              <h3 style={{ 
+                marginBottom: 16, 
+                color: "#667eea", 
+                fontSize: "clamp(16px, 3.5vw, 18px)", 
+                fontWeight: 600,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 {t("admin.mapConfig")}
               </h3>
               
@@ -445,42 +453,52 @@ export function SiteInstancesPage() {
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ marginBottom: 16, color: "#667eea", fontSize: 18, fontWeight: 600 }}>
+              <h3 style={{ 
+                marginBottom: 16, 
+                color: "#667eea", 
+                fontSize: "clamp(16px, 3.5vw, 18px)", 
+                fontWeight: 600,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 {t("admin.features")}
               </h3>
               
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
                   <input
                     type="checkbox"
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     checked={formData.isCrawlable}
                     onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
                   />
-                  {t("admin.isCrawlable")}
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isCrawlable")}</span>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
                   <input
                     type="checkbox"
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     checked={formData.enableEvents}
                     onChange={(e) => setFormData({ ...formData, enableEvents: e.target.checked })}
                   />
-                  {t("admin.enableEvents")}
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableEvents")}</span>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
                   <input
                     type="checkbox"
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     checked={formData.enableBlog}
                     onChange={(e) => setFormData({ ...formData, enableBlog: e.target.checked })}
                   />
-                  {t("admin.enableBlog")}
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableBlog")}</span>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
                   <input
                     type="checkbox"
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     checked={formData.enableStaticPages}
                     onChange={(e) => setFormData({ ...formData, enableStaticPages: e.target.checked })}
                   />
-                  {t("admin.enableStaticPages")}
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableStaticPages")}</span>
                 </label>
               </div>
             </div>

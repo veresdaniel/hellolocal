@@ -100,7 +100,8 @@ export function ImageWithSkeleton({
             alignItems: "center",
             justifyContent: "center",
             color: "#999",
-            fontSize: 14,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           Image not available

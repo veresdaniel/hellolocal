@@ -548,7 +548,13 @@ export function PlacesListView({
                               </Badge>
                             )}
                           </div>
-                          <div style={{ fontSize: 14, color: "#666", marginBottom: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                          <div style={{ 
+                            fontSize: "clamp(14px, 3.5vw, 16px)", 
+                            color: "#666", 
+                            marginBottom: 8, 
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                            fontWeight: 400,
+                          }}>
                             {new Date(event.startDate).toLocaleDateString(
                               lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                               {
@@ -561,16 +567,35 @@ export function PlacesListView({
                             )}
                           </div>
                           {event.shortDescription && (
-                            <p style={{ fontSize: 14, color: "#666", margin: "8px 0", lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            <p style={{ 
+                              fontSize: "clamp(14px, 3.5vw, 16px)", 
+                              color: "#666", 
+                              margin: "8px 0", 
+                              lineHeight: 1.6, 
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                              fontWeight: 400,
+                            }}>
                               {event.shortDescription}
                             </p>
                           )}
                           {event.placeName && (
-                            <div style={{ fontSize: 13, color: "#667eea", marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            <div style={{ 
+                              fontSize: "clamp(14px, 3.5vw, 16px)", 
+                              color: "#667eea", 
+                              marginTop: 8, 
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                              fontWeight: 400,
+                            }}>
                               📍 {event.placeName}
                             </div>
                           )}
-                          <div style={{ marginTop: 12, fontSize: 13, color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                          <div style={{ 
+                            marginTop: 12, 
+                            fontSize: "clamp(14px, 3.5vw, 16px)", 
+                            color: "#999", 
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                            fontWeight: 400,
+                          }}>
                             {t("public.placeSlugMissing") || "Részletek hamarosan..."}
                           </div>
                         </div>
@@ -663,7 +688,13 @@ export function PlacesListView({
                               </Badge>
                             )}
                           </div>
-                          <div style={{ fontSize: 14, color: "#666", marginBottom: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                          <div style={{ 
+                            fontSize: "clamp(14px, 3.5vw, 16px)", 
+                            color: "#666", 
+                            marginBottom: 8, 
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                            fontWeight: 400,
+                          }}>
                             {new Date(event.startDate).toLocaleDateString(
                               lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                               {
@@ -676,17 +707,35 @@ export function PlacesListView({
                             )}
                           </div>
                           {event.shortDescription && (
-                            <p style={{ fontSize: 14, color: "#666", margin: "8px 0", lineHeight: 1.6, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            <p style={{ 
+                              fontSize: "clamp(14px, 3.5vw, 16px)", 
+                              color: "#666", 
+                              margin: "8px 0", 
+                              lineHeight: 1.6, 
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                              fontWeight: 400,
+                            }}>
                               {event.shortDescription}
                             </p>
                           )}
                           {event.placeName && (
-                            <div style={{ fontSize: 13, color: "#667eea", marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                            <div style={{ 
+                              fontSize: "clamp(14px, 3.5vw, 16px)", 
+                              color: "#667eea", 
+                              marginTop: 8, 
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                              fontWeight: 400,
+                            }}>
                               📍 {event.placeName}
                             </div>
                           )}
                           <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-                            <span style={{ fontSize: 14, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#667eea" }}>
+                            <span style={{ 
+                              fontSize: "clamp(14px, 3.5vw, 16px)", 
+                              fontWeight: 500, 
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                              color: "#667eea",
+                            }}>
                               {t("public.readMore")} →
                             </span>
                           </div>

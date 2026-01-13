@@ -45,7 +45,8 @@ export function Pagination({
       }}>
         <span style={{ 
           color: "#666", 
-          fontSize: "clamp(12px, 3vw, 14px)",
+          fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           whiteSpace: "nowrap",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
@@ -56,7 +57,8 @@ export function Pagination({
           onChange={(e) => onLimitChange(parseInt(e.target.value))}
           style={{
             padding: "6px 10px",
-            fontSize: "clamp(12px, 3vw, 14px)",
+            fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             border: "1px solid #ddd",
             borderRadius: 6,
             cursor: "pointer",
@@ -85,7 +87,8 @@ export function Pagination({
             border: "none",
             borderRadius: 6,
             cursor: currentPage === 1 ? "not-allowed" : "pointer",
-            fontSize: "clamp(12px, 3vw, 14px)",
+            fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             transition: "all 0.2s ease",
@@ -96,7 +99,8 @@ export function Pagination({
         </button>
 
         <span style={{ 
-          fontSize: "clamp(12px, 3vw, 14px)", 
+          fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
           color: "#666", 
           minWidth: "clamp(80px, 20vw, 100px)", 
           textAlign: "center",
@@ -118,7 +122,8 @@ export function Pagination({
             border: "none",
             borderRadius: 6,
             cursor: currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
-            fontSize: "clamp(12px, 3vw, 14px)",
+            fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             transition: "all 0.2s ease",

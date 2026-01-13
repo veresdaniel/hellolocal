@@ -342,7 +342,7 @@ export function ResetPasswordPage() {
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "inherit",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
                 backgroundColor: confirmError ? "#fef2f2" : "white",
               }}

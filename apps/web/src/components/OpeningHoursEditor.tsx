@@ -69,7 +69,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
     transition: "all 0.3s ease",
     width: "100%",
     boxSizing: "border-box",
-    fontFamily: "inherit",
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontWeight: 500,
   };
 
@@ -81,7 +81,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
   };
 
   const labelStyle: React.CSSProperties = {
-    fontSize: "clamp(13px, 3vw, 14px)",
+    fontSize: "clamp(14px, 3.5vw, 16px)",
     fontWeight: 600,
     color: "#333",
     minWidth: "clamp(70px, 15vw, 100px)",
@@ -102,7 +102,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
     >
       <div
         style={{
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
           color: "#666",
           marginBottom: "8px",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -140,7 +140,7 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
-                fontSize: "clamp(12px, 2.5vw, 13px)",
+                fontSize: "clamp(13px, 3vw, 15px)",
                 color: "#333",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
@@ -176,7 +176,12 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
                   }}
                   placeholder={t("common.openTime")}
                 />
-                <span style={{ color: "#666", fontSize: "14px", fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>-</span>
+                <span style={{ 
+                  color: "#666", 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  fontWeight: 600, 
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>-</span>
                 <input
                   type="time"
                   value={hour.closeTime}

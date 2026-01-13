@@ -247,7 +247,7 @@ export function SitesListPage() {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-sizing: border-box;
-          font-family: inherit;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         
         .tenants-search-input:focus {
@@ -455,8 +455,6 @@ export function SitesListPage() {
           </div>
         </div>
       </div>
-      {/* Footer */}
-      <Footer lang={effectiveLang} siteSlug={undefined} platform={platformSettings} />
     </>
   );
 }

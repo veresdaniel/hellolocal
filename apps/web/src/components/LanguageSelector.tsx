@@ -46,7 +46,7 @@ export function LanguageSelector() {
       onChange={(e) => handleLanguageChange(e.target.value as "hu" | "en" | "de")}
       style={{
         padding: "8px 16px",
-        fontSize: 14,
+        fontSize: "clamp(14px, 3.5vw, 16px)",
         borderRadius: 8,
         border: "1px solid rgba(0, 0, 0, 0.1)",
         background: "transparent",

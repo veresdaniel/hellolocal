@@ -3,8 +3,9 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import type { ReactNode } from "react";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
-import { isTokenExpired } from "../utils/tokenUtils";
+import { isTokenExpired, getTokenExpiration } from "../utils/tokenUtils";
 import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
+import { SessionExtensionToast } from "../components/SessionExtensionToast";
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +28,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSessionToast, setShowSessionToast] = useState(false);
 
   // Helper function to extract language code from URL or localStorage
   const getLanguageCode = (): Lang => {
@@ -56,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("user");
       localStorage.removeItem("adminSelectedTenantId");
       setUser(null);
+      setShowSessionToast(false); // Hide toast on logout
       
       const currentPath = window.location.pathname;
       const lang = getLanguageCode();
@@ -164,6 +167,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, handleLogout]);
 
+  // Check if session is expiring soon (30 seconds before expiration) and show toast
+  useEffect(() => {
+    const checkSessionExpiring = () => {
+      const currentPath = window.location.pathname;
+      const isPublicPage = 
+        currentPath.startsWith("/admin/login") ||
+        currentPath.startsWith("/admin/register") ||
+        currentPath.startsWith("/admin/forgot-password") ||
+        currentPath.startsWith("/admin/reset-password") ||
+        !currentPath.startsWith("/admin");
+
+      if (isPublicPage || !user) {
+        setShowSessionToast(false);
+        return;
+      }
+
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        setShowSessionToast(false);
+        return;
+      }
+
+      const expirationTime = getTokenExpiration(accessToken);
+      if (!expirationTime) {
+        setShowSessionToast(false);
+        return;
+      }
+
+      const now = Date.now();
+      const timeUntilExpiry = expirationTime - now;
+      const thirtySeconds = 30 * 1000; // 30 seconds = 0.5 minutes
+
+      // Show toast if token expires in less than 30 seconds
+      if (timeUntilExpiry < thirtySeconds && timeUntilExpiry > 0) {
+        setShowSessionToast(true);
+      } else {
+        setShowSessionToast(false);
+      }
+    };
+
+    // Check immediately
+    checkSessionExpiring();
+
+    // Check every second for accurate timing
+    const interval = setInterval(checkSessionExpiring, 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Proactive session extension on user interaction
   useEffect(() => {
     let lastActivityTime = Date.now();
@@ -205,6 +257,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = await refreshToken({ refreshToken: refreshTokenValue });
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem("refreshToken", data.refreshToken);
+            // Hide toast after successful refresh
+            setShowSessionToast(false);
           } catch (error) {
             console.error("[Auth] Failed to refresh session on activity", error);
             // Don't logout here, let the normal expiration check handle it
@@ -415,9 +469,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, isLoading, handleLogin, handleRegister, handleLogout]
   );
 
+  const handleSessionExtended = useCallback(() => {
+    setShowSessionToast(false);
+  }, []);
+
+  const handleSessionToastDismiss = useCallback(() => {
+    // Toast only dismisses on logout, not manually
+    // But we can hide it if user extends session
+    setShowSessionToast(false);
+  }, []);
+
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
+      {showSessionToast && (
+        <SessionExtensionToast
+          onExtend={handleSessionExtended}
+          onDismiss={handleSessionToastDismiss}
+        />
+      )}
     </AuthContext.Provider>
   );
 }

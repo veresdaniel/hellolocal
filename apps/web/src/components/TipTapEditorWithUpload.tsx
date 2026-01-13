@@ -207,7 +207,11 @@ export function TipTapEditorWithUpload({
             alignItems: "center",
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 600 }}>HTML Source</span>
+          <span style={{ 
+            fontSize: "clamp(13px, 3vw, 15px)", 
+            fontWeight: 600,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>HTML Source</span>
           <button
             type="button"
             onClick={handleToggleSourceCode}
@@ -218,7 +222,8 @@ export function TipTapEditorWithUpload({
               border: "none",
               borderRadius: 4,
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {showSourceCode ? "Show Editor" : "Show Source"}
@@ -233,7 +238,8 @@ export function TipTapEditorWithUpload({
             padding: 12,
             border: "none",
             fontFamily: "monospace",
-            fontSize: 13,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             resize: "vertical",
           }}
           placeholder="HTML source code..."
@@ -340,7 +346,8 @@ export function TipTapEditorWithUpload({
                 padding: "4px 8px",
                 border: "1px solid #ddd",
                 borderRadius: 4,
-                fontSize: 12,
+                fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 minWidth: 200,
               }}
             />
@@ -354,7 +361,8 @@ export function TipTapEditorWithUpload({
                   padding: "4px 8px",
                   border: "1px solid #ddd",
                   borderRadius: 4,
-                  fontSize: 12,
+                  fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   minWidth: 150,
                 }}
               />
@@ -369,7 +377,8 @@ export function TipTapEditorWithUpload({
                 border: "none",
                 borderRadius: 4,
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Set Link"
             >
@@ -386,7 +395,8 @@ export function TipTapEditorWithUpload({
                   border: "none",
                   borderRadius: 4,
                   cursor: "pointer",
-                  fontSize: 12,
+                  fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 title="Remove Link"
               >
@@ -407,7 +417,8 @@ export function TipTapEditorWithUpload({
                 border: "none",
                 borderRadius: 4,
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: "clamp(13px, 3vw, 15px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Cancel"
             >
@@ -567,7 +578,8 @@ function ToolbarButton({
         border: "1px solid #ddd",
         borderRadius: 4,
         cursor: disabled ? "not-allowed" : "pointer",
-        fontSize: 14,
+        fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         opacity: disabled ? 0.6 : 1,
       }}
     >

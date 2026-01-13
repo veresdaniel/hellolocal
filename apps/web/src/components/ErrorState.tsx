@@ -81,7 +81,7 @@ export function ErrorState({
               <Link
                 to={backLink}
                 style={{
-                  padding: "12px 24px",
+                  padding: "10px 20px",
                   background: "#667eea",
                   color: "white",
                   textDecoration: "none",
@@ -108,7 +108,7 @@ export function ErrorState({
               <button
                 onClick={onRetry}
                 style={{
-                  padding: "12px 24px",
+                  padding: "10px 20px",
                   background: "white",
                   color: "#667eea",
                   border: "2px solid #667eea",

@@ -79,7 +79,8 @@ export function UserInfoDropdown() {
               gap: 6,
             }}>
               <div style={{ 
-                fontSize: 12, 
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -89,7 +90,8 @@ export function UserInfoDropdown() {
                 {t("admin.username")}
               </div>
               <div style={{ 
-                fontSize: 14, 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
@@ -103,7 +105,8 @@ export function UserInfoDropdown() {
               gap: 6,
             }}>
               <div style={{ 
-                fontSize: 12, 
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -113,7 +116,8 @@ export function UserInfoDropdown() {
                 {t("admin.email")}
               </div>
               <div style={{ 
-                fontSize: 14, 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
@@ -127,7 +131,8 @@ export function UserInfoDropdown() {
               gap: 6,
             }}>
               <div style={{ 
-                fontSize: 12, 
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -143,7 +148,8 @@ export function UserInfoDropdown() {
                     borderRadius: 6,
                     background: getRoleColor(user.role),
                     color: "white",
-                    fontSize: 12,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     display: "inline-block",
@@ -160,7 +166,8 @@ export function UserInfoDropdown() {
               gap: 6,
             }}>
               <div style={{ 
-                fontSize: 12, 
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -170,7 +177,8 @@ export function UserInfoDropdown() {
                 {t("admin.tenants")}
               </div>
               <div style={{ 
-                fontSize: 14, 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>

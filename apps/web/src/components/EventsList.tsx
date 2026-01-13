@@ -382,7 +382,12 @@ export function EventsList({ lang }: EventsListProps) {
                       <div style={{ fontWeight: 600, marginBottom: 4, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                         {event.name}
                       </div>
-                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                      <div style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)", 
+                        color: "#666", 
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
+                        fontWeight: 400,
+                      }}>
                         {t("public.placeSlugMissing") || "Részletek hamarosan..."}
                       </div>
                     </div>
@@ -488,7 +493,7 @@ export function EventsList({ lang }: EventsListProps) {
 
                   {/* Date */}
                   <div style={{ 
-                    fontSize: 14, 
+                    fontSize: "clamp(14px, 3.5vw, 16px)", 
                     color: "#4a3560",
                     marginBottom: 8,
                     fontWeight: 500,
@@ -510,7 +515,7 @@ export function EventsList({ lang }: EventsListProps) {
                   {/* Place */}
                   {event.placeName && (
                     <div style={{ 
-                      fontSize: 14, 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
                       color: "#4a3560",
                       marginBottom: 8,
                       fontWeight: 500,

@@ -48,7 +48,8 @@ export function SiteSelector() {
         background: "#fee", 
         borderRadius: 4, 
         color: "#c00", 
-        fontSize: 14,
+        fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         fontWeight: 400,
       }}>
@@ -94,7 +95,8 @@ export function SiteSelector() {
           onClick={openPublicPage}
           style={{
             padding: "8px 16px",
-            fontSize: 14,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             borderRadius: 4,
             border: "1px solid #7c3aed",
             background: "#7c3aed",
@@ -143,7 +145,8 @@ export function SiteSelector() {
         disabled={!currentSite}
         style={{
           padding: "8px 16px",
-          fontSize: 14,
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           borderRadius: 4,
           border: "1px solid #7c3aed",
           background: currentSite ? "#7c3aed" : "#ccc",

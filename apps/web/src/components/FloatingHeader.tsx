@@ -200,7 +200,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   border: "1px solid rgba(102, 126, 234, 0.3)",
                   borderRadius: 8,
                   color: "#667eea",
-                  fontSize: 14,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontWeight: 500,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   cursor: "pointer",

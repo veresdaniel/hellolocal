@@ -19,7 +19,11 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
   return (
     <div>
       <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <label style={{ fontWeight: "bold", fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.language")}:</label>
+        <label style={{ 
+          fontWeight: "bold", 
+          fontSize: "clamp(14px, 3.5vw, 16px)", 
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>{t("admin.language")}:</label>
         <select
           value={selectedLang}
           onChange={(e) => setSelectedLang(e.target.value as Lang)}
@@ -27,7 +31,7 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
             padding: "6px 12px",
             border: "1px solid #ddd",
             borderRadius: 4,
-            fontSize: 14,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
             background: "white",
             cursor: "pointer",
           }}

@@ -122,7 +122,8 @@ function ErrorPageWrapper({ error }: { error: any }) {
             </summary>
             <pre
               style={{
-                fontSize: 12,
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Monaco', 'Courier New', monospace",
                 color: "#333",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
@@ -136,7 +137,7 @@ function ErrorPageWrapper({ error }: { error: any }) {
         <button
           onClick={() => window.location.reload()}
           style={{
-            padding: "12px 24px",
+            padding: "10px 20px",
             background: "#667eea",
             color: "white",
             border: "none",

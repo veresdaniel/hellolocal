@@ -78,7 +78,7 @@ export function CookieConsent() {
           <p
             style={{
               margin: 0,
-              fontSize: "clamp(14px, 3vw, 15px)",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
               lineHeight: 1.5,
               color: "rgba(255, 255, 255, 0.95)",
               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -93,13 +93,14 @@ export function CookieConsent() {
             onClick={handleAccept}
             style={{
               flex: isMobile ? 1 : "none",
-              padding: "12px 24px",
+              padding: "10px 20px",
               background: "white",
               color: "#000",
               border: "none",
               borderRadius: 8,
               cursor: "pointer",
-              fontSize: 15,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 600,
               transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(255, 255, 255, 0.2)",
@@ -128,7 +129,8 @@ export function CookieConsent() {
               border: "1px solid rgba(255, 255, 255, 0.3)",
               borderRadius: 8,
               cursor: "pointer",
-              fontSize: 14,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 500,
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",

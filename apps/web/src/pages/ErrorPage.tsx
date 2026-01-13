@@ -337,7 +337,8 @@ export function ErrorPage() {
             </summary>
             <pre
               style={{
-                fontSize: 12,
+                fontSize: "clamp(13px, 3vw, 15px)",
+                fontFamily: "'Monaco', 'Courier New', monospace",
                 color: "#333",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",

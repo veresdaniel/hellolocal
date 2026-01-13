@@ -1,8 +1,8 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect, useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -62,6 +62,7 @@ export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const { showToast } = useToast();
   const authContext = useContext(AuthContext);
@@ -82,9 +83,13 @@ export function PlacesPage() {
     totalPages: 0,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(() => {
+    // Check URL on initial mount
+    const params = new URLSearchParams(window.location.search);
+    return params.get("new") === "true";
+  });
   const [currentPlaceRole, setCurrentPlaceRole] = useState<"owner" | "manager" | "editor" | null>(null);
-  const [isTenantAdmin, setIsTenantAdmin] = useState(false);
+  const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [formData, setFormData] = useState({
     categoryId: "",
     townId: "",
@@ -142,25 +147,25 @@ export function PlacesPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      // Reset to first page when tenant changes
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
       loadData();
-      checkTenantAdminRole();
+      checkSiteAdminRole();
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedSiteId, currentUser?.id]);
 
-  const checkTenantAdminRole = async () => {
+  const checkSiteAdminRole = async () => {
     if (!selectedSiteId || !currentUser) return;
     try {
       const memberships = await getSiteMemberships(selectedSiteId, currentUser.id);
-      const membership = memberships.find(m => m.tenantId === selectedSiteId && m.userId === currentUser.id);
-      setIsTenantAdmin(membership?.role === "tenantadmin" || currentUser.role === "superadmin" || currentUser.role === "admin" || false);
+      const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === currentUser.id);
+      setIsSiteAdmin(membership?.role === "siteadmin" || currentUser.role === "superadmin" || currentUser.role === "admin" || false);
     } catch (err) {
-      console.error("Failed to check tenant admin role", err);
-      setIsTenantAdmin(false);
+      console.error("Failed to check site admin role", err);
+      setIsSiteAdmin(false);
     }
   };
 
@@ -192,7 +197,7 @@ export function PlacesPage() {
   const canModifyPublish = (): boolean => {
     if (!currentUser) return false;
     if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
-    if (isTenantAdmin) return true;
+    if (isSiteAdmin) return true;
     return currentPlaceRole === "owner" || currentPlaceRole === "manager";
   };
 
@@ -204,7 +209,7 @@ export function PlacesPage() {
   const canDeletePlace = (): boolean => {
     if (!currentUser) return false;
     if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
-    if (isTenantAdmin) return true;
+    if (isSiteAdmin) return true;
     return currentPlaceRole === "owner";
   };
 
@@ -247,7 +252,31 @@ export function PlacesPage() {
         setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setPlaces(response.places || []);
-        setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+        const paginationData = response.pagination;
+        if (paginationData) {
+          // Ensure totalPages is calculated if missing or incorrect
+          const total = paginationData.total || 0;
+          const limit = paginationData.limit || pagination.limit || 50;
+          const calculatedTotalPages = Math.ceil(total / limit) || 1;
+          const totalPages = paginationData.totalPages || calculatedTotalPages;
+          
+          setPagination({
+            page: paginationData.page || pagination.page || 1,
+            limit,
+            total,
+            totalPages: totalPages > 0 ? totalPages : calculatedTotalPages,
+          });
+        } else {
+          // Fallback: calculate from places array length
+          const places = response.places || [];
+          const total = places.length;
+          const limit = pagination.limit;
+          setPagination(prev => ({
+            ...prev,
+            total,
+            totalPages: Math.ceil(total / limit) || 1,
+          }));
+        }
       }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
@@ -365,6 +394,13 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeCreated"), "success");
+      
+      // If we came from dashboard, navigate back to dashboard
+      const fromParam = searchParams.get("from");
+      if (fromParam === "dashboard") {
+        navigate("/admin");
+        return;
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.createPlaceFailed"), "error");
     }
@@ -473,6 +509,13 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeUpdated"), "success");
+      
+      // If we came from dashboard, navigate back to dashboard
+      const fromParam = searchParams.get("from");
+      if (fromParam === "dashboard") {
+        navigate("/admin");
+        return;
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updatePlaceFailed"), "error");
     }
@@ -596,6 +639,29 @@ export function PlacesPage() {
     setFormErrors({});
   };
 
+  // Check for ?new=true query param to auto-open new form
+  // Run this early, before data loads, to show form immediately
+  useEffect(() => {
+    // Check on mount and whenever searchParams change
+    const shouldOpenNewForm = searchParams.get("new") === "true" && !isCreating && !editingId;
+    
+    if (shouldOpenNewForm) {
+      // Set creating state immediately, even if selectedSiteId is not yet loaded
+      setIsCreating(true);
+      setEditingId(null);
+      // Reset form will be called after state is set
+      // Use setTimeout to ensure state is updated first
+      setTimeout(() => {
+        resetForm();
+      }, 0);
+      // Remove query param from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("new");
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString(), isCreating, editingId]);
+
   // Reset edit state when navigating away from this page
   useEffect(() => {
     const currentPath = location.pathname;
@@ -663,17 +729,17 @@ export function PlacesPage() {
   }
 
   if (!selectedSiteId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   // Common label style for better contrast on admin
   const labelStyle: React.CSSProperties = {
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     display: "block",
     marginBottom: 4,
-    fontSize: "clamp(13px, 3vw, 14px)",
+    fontSize: "clamp(14px, 3.5vw, 16px)",
     fontWeight: 600,
     color: "#333",
-    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   };
 
   return (
@@ -693,7 +759,14 @@ export function PlacesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          
+          // If we came from dashboard, navigate back to dashboard
+          const fromParam = searchParams.get("from");
+          if (fromParam === "dashboard") {
+            navigate("/admin");
+            return;
+          }
+          // Back button will handle navigation otherwise
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -711,7 +784,7 @@ export function PlacesPage() {
           <h2 style={{ 
             marginBottom: 24, 
             color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(18px, 4vw, 22px)",
             fontWeight: 700,
             fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
@@ -738,7 +811,8 @@ export function PlacesPage() {
                   marginBottom: 8,
                   color: "#667eea",
                   fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {t("admin.towns")}
                 </label>
@@ -753,7 +827,7 @@ export function PlacesPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: "white",
                     cursor: "pointer",
                     boxSizing: "border-box",
@@ -796,7 +870,7 @@ export function PlacesPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: "white",
                     cursor: "pointer",
                     boxSizing: "border-box",
@@ -873,7 +947,7 @@ export function PlacesPage() {
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
-                      fontFamily: "inherit",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       background: ((selectedLang === "hu" && formErrors.nameHu) ||
                                    (selectedLang === "en" && formErrors.nameEn) ||
                                    (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
@@ -899,7 +973,13 @@ export function PlacesPage() {
                   {((selectedLang === "hu" && formErrors.nameHu) ||
                     (selectedLang === "en" && formErrors.nameEn) ||
                     (selectedLang === "de" && formErrors.nameDe)) && (
-                    <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+                    <div style={{ 
+                      color: "#dc2626", 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
+                      marginTop: 6, 
+                      fontWeight: 500,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {selectedLang === "hu"
                         ? formErrors.nameHu
                         : selectedLang === "en"
@@ -909,9 +989,21 @@ export function PlacesPage() {
                   )}
                   </div>
                 ) : (
-                  <div style={{ padding: 12, background: "#f3f4f6", borderRadius: 8, color: "#6b7280", fontSize: 14 }}>
+                  <div style={{ 
+                    padding: 12, 
+                    background: "#f3f4f6", 
+                    borderRadius: 8, 
+                    color: "#6b7280", 
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {t("common.name")}: {selectedLang === "hu" ? formData.nameHu : selectedLang === "en" ? formData.nameEn : formData.nameDe}
-                    <div style={{ marginTop: 4, fontSize: 12, fontStyle: "italic" }}>
+                    <div style={{ 
+                      marginTop: 4, 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      fontStyle: "italic",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.readOnlyEditor") || "Editor cannot modify name (affects SEO slugs)"}
                     </div>
                   </div>
@@ -936,7 +1028,13 @@ export function PlacesPage() {
                     height={150}
                     uploadFolder="editor/places"
                   />
-                  <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                  <small style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    marginTop: 4, 
+                    display: "block",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
                   </small>
                 </div>
@@ -1000,7 +1098,13 @@ export function PlacesPage() {
                     borderRadius: 8,
                     border: "1px solid #667eea30"
                   }}>
-                    <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                    <h3 style={{ 
+                      margin: "0 0 16px 0", 
+                      fontSize: "clamp(16px, 3.5vw, 18px)", 
+                      fontWeight: 600, 
+                      color: "#667eea", 
+                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       🔍 SEO {t("admin.settings")}
                     </h3>
                   
@@ -1021,9 +1125,22 @@ export function PlacesPage() {
                         else setFormData({ ...formData, seoTitleDe: e.target.value });
                       }}
                       placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{ 
+                        width: "100%", 
+                        padding: 12, 
+                        fontSize: "clamp(15px, 3.5vw, 16px)", 
+                        border: "1px solid #ddd", 
+                        borderRadius: 4,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ 
+                      color: "#666", 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      marginTop: 4, 
+                      display: "block",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.seoTitleHint") || "If empty, place name will be used"}
                     </small>
                   </div>
@@ -1045,7 +1162,14 @@ export function PlacesPage() {
                       }}
                       placeholder={t("admin.seoDescriptionPlaceholder") || "SEO description (leave empty for auto)"}
                       rows={3}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{ 
+                        width: "100%", 
+                        padding: 12, 
+                        fontSize: "clamp(15px, 3.5vw, 16px)", 
+                        border: "1px solid #ddd", 
+                        borderRadius: 4,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
                     />
                     <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from description will be used"}
@@ -1069,7 +1193,14 @@ export function PlacesPage() {
                         else setFormData({ ...formData, seoImageDe: e.target.value });
                       }}
                       placeholder={t("admin.seoImagePlaceholder") || "SEO image URL (leave empty for hero image)"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{ 
+                        width: "100%", 
+                        padding: 12, 
+                        fontSize: "clamp(15px, 3.5vw, 16px)", 
+                        border: "1px solid #ddd", 
+                        borderRadius: 4,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
                     />
                     <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoImageHint") || "If empty, hero image will be used"}
@@ -1077,7 +1208,7 @@ export function PlacesPage() {
                   </div>
 
                   <div style={{ marginBottom: 0 }}>
-                    <label style={labelStyle}>SEO Keywords</label>
+                    <label style={labelStyle}>{t("admin.seoKeywords")}</label>
                     <input
                       type="text"
                       value={
@@ -1094,9 +1225,22 @@ export function PlacesPage() {
                         else setFormData({ ...formData, seoKeywordsDe: keywords });
                       }}
                       placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{ 
+                        width: "100%", 
+                        padding: 12, 
+                        fontSize: "clamp(15px, 3.5vw, 16px)", 
+                        border: "1px solid #ddd", 
+                        borderRadius: 4,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ 
+                      color: "#666", 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      marginTop: 4, 
+                      display: "block",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
                     </small>
                   </div>
@@ -1116,7 +1260,14 @@ export function PlacesPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+36 30 123 4567"
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
                 />
               </div>
               <div>
@@ -1126,7 +1277,14 @@ export function PlacesPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="info@example.com"
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
                 />
               </div>
               <div>
@@ -1136,7 +1294,14 @@ export function PlacesPage() {
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   placeholder="https://example.com"
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
                 />
               </div>
               <div>
@@ -1146,7 +1311,14 @@ export function PlacesPage() {
                   value={formData.facebook}
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                   placeholder="https://facebook.com/yourpage"
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
                 />
               </div>
               <div>
@@ -1156,7 +1328,14 @@ export function PlacesPage() {
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   placeholder="+36 30 123 4567"
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
                 />
               </div>
             </div>
@@ -1173,28 +1352,43 @@ export function PlacesPage() {
                   }}
                   height={500}
                   interactive={true}
+                  hideLocationButton={true}
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 14 }}>{t("admin.latitude")}</label>
+                  <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>{t("admin.latitude")}</label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lat}
                     onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    style={{ 
+                      width: "100%", 
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
                     placeholder="47.4979"
                   />
                 </div>
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 14 }}>{t("admin.longitude")}</label>
+                  <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>{t("admin.longitude")}</label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lng}
                     onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    style={{ 
+                      width: "100%", 
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
                     placeholder="19.0402"
                   />
                 </div>
@@ -1234,12 +1428,21 @@ export function PlacesPage() {
                   }}
                 />
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+                  <div style={{ 
+                    fontSize: "clamp(16px, 4vw, 20px)", 
+                    fontWeight: 700, 
+                    marginBottom: 4,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {formData.isActive 
-                      ? (t("admin.placeActive") || "✓ Place is Active") 
-                      : (t("admin.placeInactive") || "✗ Place is Inactive")}
+                      ? (t("admin.placeActive") || "Place is Active") 
+                      : (t("admin.placeInactive") || "Place is Inactive")}
                   </div>
-                  <div style={{ fontSize: 14, opacity: 0.9 }}>
+                  <div style={{ 
+                    fontSize: "clamp(14px, 3.5vw, 16px)", 
+                    opacity: 0.9,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {formData.isActive 
                       ? (t("admin.placeActiveDescription") || "This place is visible to visitors")
                       : (t("admin.placeInactiveDescription") || "This place is hidden from visitors")}
@@ -1256,14 +1459,30 @@ export function PlacesPage() {
               type="url"
               value={formData.heroImage}
               onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-              style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{ 
+                width: "100%", 
+                padding: 12, 
+                fontSize: "clamp(15px, 3.5vw, 16px)", 
+                border: "1px solid #ddd", 
+                borderRadius: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
             />
           </div>
 
           {/* Billing/Plan fields - only visible to owner/manager */}
           {canModifyPublish() && editingId && (
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 700, color: "#333", display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ 
+                margin: "0 0 16px 0", 
+                fontSize: "clamp(16px, 3.5vw, 18px)", 
+                fontWeight: 700, 
+                color: "#333", 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 8,
+                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 🪙 {t("admin.billing") || "Billing & Plan"}
               </h3>
               <PlaceBillingSection
@@ -1349,8 +1568,9 @@ export function PlacesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 12,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   {place.isActive ? t("common.active") : t("common.inactive")}
@@ -1378,8 +1598,13 @@ export function PlacesPage() {
                 const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
                                        place.town?.translations.find((t) => t.lang === "hu");
                 return townTranslation ? (
-                  <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
-                    📍 {townTranslation.name}
+                  <div style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(14px, 3.5vw, 16px)", 
+                    marginBottom: 8,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
+                    {townTranslation.name}
                   </div>
                 ) : null;
               },
@@ -1396,8 +1621,9 @@ export function PlacesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   {place.isActive ? t("common.active") : t("common.inactive")}
@@ -1407,15 +1633,15 @@ export function PlacesPage() {
           ]}
           onEdit={startEdit}
           onDelete={(place) => {
-            // Check if user can delete this place (owner or tenantadmin)
+            // Check if user can delete this place (owner or siteadmin)
             // We need to check the role for this specific place
             const checkAndDelete = async () => {
               if (!currentUser?.id) {
                 showToast(t("admin.errors.unauthorized"), "error");
                 return;
               }
-              // Superadmin and tenantadmin can always delete
-              if (currentUser.role === "superadmin" || currentUser.role === "admin" || isTenantAdmin) {
+              // Superadmin and siteadmin can always delete
+              if (currentUser.role === "superadmin" || currentUser.role === "admin" || isSiteAdmin) {
                 handleDelete(place.id);
                 return;
               }

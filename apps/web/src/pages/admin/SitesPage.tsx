@@ -278,7 +278,7 @@ export function SitesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -291,7 +291,8 @@ export function SitesPage() {
           color: "#991b1b",
           borderRadius: 12,
           border: "1px solid #fca5a5",
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 500,
         }}>
           {error}
@@ -310,7 +311,7 @@ export function SitesPage() {
           <h2 style={{ 
             marginBottom: 24, 
             color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(18px, 4vw, 22px)",
             fontWeight: 700,
             fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
@@ -326,7 +327,8 @@ export function SitesPage() {
                   marginBottom: 8,
                   color: formErrors.slug ? "#dc2626" : "#667eea",
                   fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {t("admin.fields.siteSlug")} *
                 </label>
@@ -337,12 +339,13 @@ export function SitesPage() {
                   style={{
                     width: "100%",
                     padding: "12px 16px",
-                    fontSize: 15,
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     border: `2px solid ${formErrors.slug ? "#fca5a5" : "#e0e7ff"}`,
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: formErrors.slug ? "#fef2f2" : "white",
                     boxSizing: "border-box",
                   }}
@@ -357,7 +360,13 @@ export function SitesPage() {
                     e.target.style.boxShadow = "none";
                   }}
                 />
-                {formErrors.slug && <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>{formErrors.slug}</div>}
+                {formErrors.slug && <div style={{ 
+                  color: "#dc2626", 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  marginTop: 6, 
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.slug}</div>}
               </div>
               <div>
                 <label style={{ 
@@ -365,7 +374,8 @@ export function SitesPage() {
                   marginBottom: 8,
                   color: formErrors.brandId ? "#dc2626" : "#667eea",
                   fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {t("admin.brand")} *
                 </label>
@@ -375,12 +385,13 @@ export function SitesPage() {
                   style={{
                     width: "100%",
                     padding: "12px 16px",
-                    fontSize: 15,
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     border: `2px solid ${formErrors.brandId ? "#fca5a5" : "#e0e7ff"}`,
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: formErrors.brandId ? "#fef2f2" : "white",
                     boxSizing: "border-box",
                   }}
@@ -402,7 +413,13 @@ export function SitesPage() {
                     </option>
                   ))}
                 </select>
-                {formErrors.brandId && <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>{formErrors.brandId}</div>}
+                {formErrors.brandId && <div style={{ 
+                  color: "#dc2626", 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  marginTop: 6, 
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.brandId}</div>}
               </div>
               <div>
                 <label style={{ 
@@ -410,7 +427,8 @@ export function SitesPage() {
                   marginBottom: 8,
                   color: "#667eea",
                   fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {t("admin.primaryDomain")}
                 </label>
@@ -421,12 +439,13 @@ export function SitesPage() {
                   style={{
                     width: "100%",
                     padding: "12px 16px",
-                    fontSize: 15,
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     border: "2px solid #e0e7ff",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     boxSizing: "border-box",
                   }}
                   placeholder="example.com"
@@ -454,7 +473,8 @@ export function SitesPage() {
                               (selectedLang === "en" && formErrors.nameEn) ||
                               (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#667eea",
                       fontWeight: 600,
-                      fontSize: "clamp(13px, 3vw, 14px)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
                       {t("common.name")} ({selectedLang.toUpperCase()}) *
                     </label>
@@ -475,7 +495,8 @@ export function SitesPage() {
                       style={{
                         width: "100%",
                         padding: "12px 16px",
-                        fontSize: 15,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border:
                           ((selectedLang === "hu" && formErrors.nameHu) ||
                           (selectedLang === "en" && formErrors.nameEn) ||
@@ -485,7 +506,7 @@ export function SitesPage() {
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "inherit",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background: ((selectedLang === "hu" && formErrors.nameHu) ||
                                      (selectedLang === "en" && formErrors.nameEn) ||
                                      (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
@@ -528,7 +549,8 @@ export function SitesPage() {
                       marginBottom: 8,
                       color: "#667eea",
                       fontWeight: 600,
-                      fontSize: "clamp(13px, 3vw, 14px)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
                       {t("admin.shortDescription")} ({selectedLang.toUpperCase()})
                     </label>
@@ -549,12 +571,13 @@ export function SitesPage() {
                       style={{
                         width: "100%",
                         padding: "12px 16px",
-                        fontSize: 15,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "inherit",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
@@ -575,7 +598,8 @@ export function SitesPage() {
                       marginBottom: 8,
                       color: "#667eea",
                       fontWeight: 600,
-                      fontSize: "clamp(13px, 3vw, 14px)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
                       {t("common.description")} ({selectedLang.toUpperCase()})
                     </label>
@@ -605,7 +629,8 @@ export function SitesPage() {
                       marginBottom: 8,
                       color: "#667eea",
                       fontWeight: 600,
-                      fontSize: "clamp(13px, 3vw, 14px)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
                       {t("admin.heroImage")} ({selectedLang.toUpperCase()})
                     </label>
@@ -627,12 +652,13 @@ export function SitesPage() {
                       style={{
                         width: "100%",
                         padding: "12px 16px",
-                        fontSize: 15,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "inherit",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
@@ -644,7 +670,12 @@ export function SitesPage() {
                         e.target.style.boxShadow = "none";
                       }}
                     />
-                    <div style={{ fontSize: 12, color: "#666", marginTop: 6 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginTop: 6,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.heroImageDescription") || "URL a kártyán megjelenő képhez"}
                     </div>
                   </div>
@@ -654,12 +685,19 @@ export function SitesPage() {
 
             {/* Active Checkbox */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 10, 
+                cursor: "pointer", 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                 />
                 <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>
@@ -712,7 +750,8 @@ export function SitesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 12,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -742,7 +781,8 @@ export function SitesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -753,7 +793,6 @@ export function SitesPage() {
           ]}
           onEdit={startEdit}
           onDelete={(site) => handleDelete(site.id)}
-          isLoading={isLoading}
           error={error}
         />
       )}

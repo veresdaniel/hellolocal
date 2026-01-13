@@ -82,10 +82,10 @@ export function LegalPagesPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      // Reset to first page when tenant changes
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedSiteId]);
@@ -335,13 +335,13 @@ export function LegalPagesPage() {
     setFormErrors({});
   };
 
-  // Wait for tenant context to initialize
+  // Wait for site context to initialize
   if (isSiteLoading) {
     return <LoadingSpinnerComponent isLoading={true} />;
   }
 
   if (!selectedSiteId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   return (
@@ -373,13 +373,14 @@ export function LegalPagesPage() {
           }}
           disabled={!!editingId || isCreating}
           style={{
-            padding: "12px 24px",
+            padding: "10px 20px",
             background: editingId || isCreating ? "#ccc" : "white",
             color: editingId || isCreating ? "#999" : "#667eea",
             border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            fontSize: "clamp(14px, 3vw, 15px)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
             boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
             transition: "all 0.3s ease",
@@ -429,6 +430,26 @@ export function LegalPagesPage() {
             </div>
           )}
 
+          {/* Active Checkbox - moved to top */}
+          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
+            <label style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 12, 
+              cursor: "pointer", 
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+              />
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+            </label>
+          </div>
+
           <LanguageAwareForm>
             {(selectedLang) => (
               <>
@@ -466,7 +487,12 @@ export function LegalPagesPage() {
                   {(selectedLang === "hu" && formErrors.titleHu) ||
                     (selectedLang === "en" && formErrors.titleEn) ||
                     (selectedLang === "de" && formErrors.titleDe) ? (
-                    <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                    <div style={{ 
+                      color: "#dc3545", 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      marginTop: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {selectedLang === "hu"
                         ? formErrors.titleHu
                         : selectedLang === "en"
@@ -495,7 +521,13 @@ export function LegalPagesPage() {
                     height={150}
                     uploadFolder="editor/legal"
                   />
-                  <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                  <small style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    marginTop: 4, 
+                    display: "block",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
                   </small>
                 </div>
@@ -529,7 +561,13 @@ export function LegalPagesPage() {
                   borderRadius: 8,
                   border: "1px solid #667eea30"
                 }}>
-                  <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <h3 style={{ 
+                    margin: "0 0 16px 0", 
+                    fontSize: "clamp(16px, 3.5vw, 18px)", 
+                    fontWeight: 600, 
+                    color: "#667eea", 
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     🔍 SEO {t("admin.settings")}
                   </h3>
                   
@@ -552,7 +590,13 @@ export function LegalPagesPage() {
                       placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
                       style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    marginTop: 4, 
+                    display: "block",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                       {t("admin.seoTitleHint") || "If empty, page title will be used"}
                     </small>
                   </div>
@@ -576,7 +620,13 @@ export function LegalPagesPage() {
                       rows={3}
                       style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    marginTop: 4, 
+                    display: "block",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                       {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from content will be used"}
                     </small>
                   </div>
@@ -603,7 +653,7 @@ export function LegalPagesPage() {
                   </div>
 
                   <div style={{ marginBottom: 0 }}>
-                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO Keywords</label>
+                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.seoKeywords")}</label>
                     <input
                       type="text"
                       value={
@@ -621,7 +671,13 @@ export function LegalPagesPage() {
                       placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
                       style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ 
+                    color: "#666", 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    marginTop: 4, 
+                    display: "block",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                       {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
                     </small>
                   </div>
@@ -630,22 +686,11 @@ export function LegalPagesPage() {
             )}
           </LanguageAwareForm>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              {t("common.active")}
-            </label>
-          </div>
-
           <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
               style={{
-                padding: "12px 24px",
+                padding: "10px 20px",
                 background: "#28a745",
                 color: "white",
                 border: "none",
@@ -662,7 +707,7 @@ export function LegalPagesPage() {
                 resetForm();
               }}
               style={{
-                padding: "12px 24px",
+                padding: "10px 20px",
                 background: "#6c757d",
                 color: "white",
                 border: "none",
@@ -725,7 +770,8 @@ export function LegalPagesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 12,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -754,7 +800,8 @@ export function LegalPagesPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -765,7 +812,6 @@ export function LegalPagesPage() {
           ]}
           onEdit={startEdit}
           onDelete={(legalPage) => handleDelete(legalPage.id)}
-          isLoading={isLoading}
           error={null}
         />
       )}

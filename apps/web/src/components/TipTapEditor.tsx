@@ -520,14 +520,15 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
         <style>{`
           .tiptap-editor {
             outline: none;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 15px;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
             color: #333;
             line-height: 1.6;
           }
           .tiptap-editor p {
             margin: 0.5em 0;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
           }
           .tiptap-editor p.is-editor-empty:first-child::before {
             color: #999;
@@ -535,20 +536,24 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
             float: left;
             height: 0;
             pointer-events: none;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
           }
           .tiptap-editor ul, .tiptap-editor ol {
             padding-left: 1.5em;
             margin: 0.5em 0;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
           }
           .tiptap-editor li {
             margin: 0.25em 0;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
           }
           .tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
             margin: 1em 0 0.5em 0;
             font-weight: 600;
-            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           }
           .tiptap-editor h1 {
             font-size: 2em;
@@ -565,13 +570,15 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
             margin: 1em 0;
             color: #666;
             font-style: italic;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+            font-size: clamp(15px, 3.5vw, 16px) !important;
           }
           .tiptap-editor code {
             background: #f4f4f4;
             padding: 2px 6px;
             border-radius: 3px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
+            font-family: 'Monaco', 'Courier New', monospace !important;
+            font-size: clamp(13px, 3vw, 14px) !important;
           }
           .tiptap-editor pre {
             background: #f4f4f4;
@@ -579,10 +586,14 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
             border-radius: 4px;
             overflow-x: auto;
             margin: 1em 0;
+            font-family: 'Monaco', 'Courier New', monospace !important;
+            font-size: clamp(13px, 3vw, 14px) !important;
           }
           .tiptap-editor pre code {
             background: none;
             padding: 0;
+            font-family: 'Monaco', 'Courier New', monospace !important;
+            font-size: clamp(13px, 3vw, 14px) !important;
           }
           .tiptap-editor img {
             max-width: 100%;

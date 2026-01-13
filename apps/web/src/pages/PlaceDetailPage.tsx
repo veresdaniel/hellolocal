@@ -501,7 +501,7 @@ export function PlaceDetailPage() {
                     </strong>
                     <div
                       ref={addressRef}
-                      style={{ color: "white", fontSize: 13, lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
+                      style={{ color: "white", fontSize: "clamp(14px, 3.5vw, 16px)", lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
                       dangerouslySetInnerHTML={{ __html: place.contact.address }}
                     />
                   </div>
@@ -525,7 +525,8 @@ export function PlaceDetailPage() {
                       style={{
                         color: "white",
                         textDecoration: "none",
-                        fontSize: 14,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
@@ -543,7 +544,10 @@ export function PlaceDetailPage() {
                       }}
                     >
                       {place.contact.phone}
-                      <span style={{ fontSize: 12 }}>→</span>
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>→</span>
                     </a>
                   </div>
                 )}
@@ -566,7 +570,8 @@ export function PlaceDetailPage() {
                       style={{
                         color: "white",
                         textDecoration: "none",
-                        fontSize: 13,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
@@ -585,7 +590,10 @@ export function PlaceDetailPage() {
                       }}
                     >
                       {place.contact.email}
-                      <span style={{ fontSize: 12 }}>→</span>
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>→</span>
                     </a>
                   </div>
                 )}
@@ -610,7 +618,8 @@ export function PlaceDetailPage() {
                       style={{
                         color: "white",
                         textDecoration: "none",
-                        fontSize: 13,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
@@ -629,7 +638,10 @@ export function PlaceDetailPage() {
                       }}
                     >
                       {place.contact.website.replace(/^https?:\/\//i, '')}
-                      <span style={{ fontSize: 12 }}>↗</span>
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>↗</span>
                     </a>
                   </div>
                 )}
@@ -654,7 +666,8 @@ export function PlaceDetailPage() {
                       style={{
                         color: "white",
                         textDecoration: "none",
-                        fontSize: 13,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
@@ -673,7 +686,10 @@ export function PlaceDetailPage() {
                       }}
                     >
                       {place.contact.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '')}
-                      <span style={{ fontSize: 12 }}>↗</span>
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>↗</span>
                     </a>
                   </div>
                 )}
@@ -698,7 +714,8 @@ export function PlaceDetailPage() {
                       style={{
                         color: "white",
                         textDecoration: "none",
-                        fontSize: 14,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
@@ -716,7 +733,10 @@ export function PlaceDetailPage() {
                       }}
                     >
                       {place.contact.whatsapp}
-                      <span style={{ fontSize: 12 }}>→</span>
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>→</span>
                     </a>
                   </div>
                 )}
@@ -778,7 +798,8 @@ export function PlaceDetailPage() {
                             fontWeight: isToday ? 500 : 400,
                             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             color: isToday ? "#667eea" : "#333",
-                            fontSize: 13,
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
                           {dayName}
@@ -799,7 +820,8 @@ export function PlaceDetailPage() {
                         <span
                           style={{
                             color: oh.isClosed ? "#999" : "#333",
-                            fontSize: 13,
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             fontWeight: 400,
                             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}

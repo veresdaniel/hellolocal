@@ -232,7 +232,7 @@ export function RegisterPage() {
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "inherit",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
                 backgroundColor: emailError ? "#fef2f2" : "white",
               }}
@@ -284,7 +284,7 @@ export function RegisterPage() {
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "inherit",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
                 backgroundColor: passwordError ? "#fef2f2" : "white",
               }}
@@ -413,7 +413,7 @@ export function RegisterPage() {
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "inherit",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
                 resize: "vertical",
                 minHeight: 80,

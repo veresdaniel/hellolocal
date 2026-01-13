@@ -45,11 +45,12 @@ export function LanguageAwareEditor({
           value={selectedLang}
           onChange={(e) => setSelectedLang(e.target.value as Lang)}
           style={{
-            padding: "6px 12px",
+            padding: "8px 12px",
             border: "1px solid #ddd",
             borderRadius: 4,
-            fontSize: 14,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
             background: "white",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {LANGUAGES.map((lang) => (

@@ -39,6 +39,7 @@ const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then
 const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
 const SiteEditPage = lazy(() => import("../pages/admin/SiteEditPage").then(m => ({ default: m.SiteEditPage })));
 const SubscriptionOverviewPage = lazy(() => import("../pages/admin/SubscriptionOverviewPage").then(m => ({ default: m.SubscriptionOverviewPage })));
+const SubscriptionsDashboardPage = lazy(() => import("../pages/admin/SubscriptionsDashboardPage").then(m => ({ default: m.SubscriptionsDashboardPage })));
 const BrandsPage = lazy(() => import("../pages/admin/BrandsPage").then(m => ({ default: m.BrandsPage })));
 const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").then(m => ({ default: m.SiteInstancesPage })));
 const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
@@ -315,6 +316,18 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ) : (
           <NotFoundPage />
+        ),
+      },
+      {
+        path: "subscriptions",
+        element: (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SubscriptionsDashboardPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
         ),
       },
       {

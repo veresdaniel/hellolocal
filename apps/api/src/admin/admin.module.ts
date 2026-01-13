@@ -17,6 +17,7 @@ import { AdminBrandService } from "./admin-brand.service";
 import { AdminSiteInstanceService } from "./admin-site-instance.service";
 import { AdminSiteMembershipService } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService } from "./admin-place-membership.service";
+import { AdminSubscriptionService } from "./admin-subscription.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { AuthModule } from "../auth/auth.module";
@@ -42,6 +43,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSiteInstanceService,
     AdminSiteMembershipService,
     AdminPlaceMembershipService,
+    AdminSubscriptionService,
     // AdminEventLogService is now provided by EventLogModule
   ],
   exports: [
@@ -60,6 +62,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSiteInstanceService,
     AdminSiteMembershipService,
     AdminPlaceMembershipService,
+    AdminSubscriptionService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

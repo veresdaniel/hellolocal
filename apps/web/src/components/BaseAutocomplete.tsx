@@ -120,7 +120,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
         background: chipColor,
         color: "white",
         borderRadius: 4,
-        fontSize: 14,
+        fontSize: "clamp(14px, 3.5vw, 16px)",
       }}
     >
       {getItemName(item)}
@@ -164,7 +164,12 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             () => handleItemRemove(selectedItem?.id || "")
           )}
           {error && (
-            <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+            <div style={{ 
+          color: "#dc3545", 
+          fontSize: "clamp(13px, 3vw, 15px)", 
+          marginTop: 4,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
               {error}
             </div>
           )}
@@ -196,7 +201,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   color: "#007bff",
                   fontWeight: 500,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
                 }}
               >
                 {getItemName(selectedItem)} ✓
@@ -212,7 +217,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                     cursor: "pointer",
                     borderBottom: "1px solid #f0f0f0",
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: 15,
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
                     color: "#333",
                   }}
                   onMouseEnter={(e) => {
@@ -232,7 +237,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   color: "#999",
                   fontStyle: "italic",
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
                 }}
               >
                 {t("admin.table.noData")}
@@ -253,7 +258,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             marginBottom: 8,
             color: error ? "#dc2626" : "#667eea",
             fontWeight: 600,
-            fontSize: "clamp(13px, 3vw, 14px)",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {label} {required && "*"}
@@ -281,7 +286,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                fontSize: 15,
+                fontSize: "clamp(15px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
@@ -310,7 +315,11 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 >
                   ×
                 </button>
-                <span style={{ color: "#999", fontSize: 12 }}>▼</span>
+                <span style={{ 
+                  color: "#999", 
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>▼</span>
               </div>
             </div>
           )}
@@ -341,7 +350,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
               style={{
                 width: "100%",
                 padding: "12px 16px",
-                fontSize: 15,
+                fontSize: "clamp(15px, 3.5vw, 16px)",
                 border: "none",
                 outline: "none",
                 borderRadius: 8,
@@ -354,7 +363,13 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           )}
         </div>
         {error && (
-          <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+          <div style={{ 
+            color: "#dc2626", 
+            fontSize: "clamp(14px, 3.5vw, 16px)", 
+            marginTop: 6, 
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>
             {error}
           </div>
         )}
@@ -399,7 +414,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
                   color: "#333",
                 }}
                 onMouseEnter={(e) => {
@@ -419,7 +434,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   color: "#999",
                   fontStyle: "italic",
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
                 }}
               >
                 No results found
@@ -442,7 +457,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           marginBottom: 8,
           color: error ? "#dc2626" : "#667eea",
           fontWeight: 600,
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {label} {required && "*"}
@@ -478,7 +493,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             border: "none",
             outline: "none",
             padding: "2px 4px",
-            fontSize: 15,
+            fontSize: "clamp(15px, 3.5vw, 16px)",
             minWidth: 120,
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             color: "#333",
@@ -486,7 +501,13 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
         />
       </div>
       {error && (
-        <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+        <div style={{ 
+          color: "#dc2626", 
+          fontSize: "clamp(14px, 3.5vw, 16px)", 
+          marginTop: 6, 
+          fontWeight: 500,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
           {error}
         </div>
       )}
@@ -516,7 +537,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 cursor: "pointer",
                 borderBottom: "1px solid #f0f0f0",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontSize: 15,
+                fontSize: "clamp(15px, 3.5vw, 16px)",
                 color: "#333",
               }}
               onMouseEnter={(e) => {

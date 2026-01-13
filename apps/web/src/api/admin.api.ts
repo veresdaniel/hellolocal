@@ -1002,9 +1002,9 @@ export interface UpdateEventDto {
   lng?: number | null;
 }
 
-export function getEvents(tenantId?: string, page?: number, limit?: number) {
+export function getEvents(siteId?: string, page?: number, limit?: number) {
   const params = new URLSearchParams();
-  if (tenantId) params.append("tenantId", tenantId);
+  if (siteId) params.append("siteId", siteId);
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
@@ -1081,7 +1081,7 @@ export interface EventLogFilterOptions {
 
 export function getEventLogs(filters: EventLogFilterDto) {
   const params = new URLSearchParams();
-  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.siteId) params.append("siteId", filters.siteId);
   if (filters.userId) params.append("userId", filters.userId);
   if (filters.action) params.append("action", filters.action);
   if (filters.entityType) params.append("entityType", filters.entityType);
@@ -1109,7 +1109,7 @@ export function getEventLogFilterOptions() {
 
 export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
   const params = new URLSearchParams();
-  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.siteId) params.append("siteId", filters.siteId);
   if (filters.userId) params.append("userId", filters.userId);
   if (filters.action) params.append("action", filters.action);
   if (filters.entityType) params.append("entityType", filters.entityType);
@@ -1131,7 +1131,7 @@ export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
 export function deleteEventLogs(filters: EventLogFilterDto) {
   const params = new URLSearchParams();
   // Only include filters that are relevant for deletion (exclude page and limit)
-  if (filters.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters.siteId) params.append("siteId", filters.siteId);
   if (filters.userId) params.append("userId", filters.userId);
   if (filters.action) params.append("action", filters.action);
   if (filters.entityType) params.append("entityType", filters.entityType);
@@ -1240,4 +1240,110 @@ export function updateSiteSubscription(siteId: string, data: Partial<Omit<SiteSu
 
 export function getSiteEntitlements(siteId: string) {
   return apiGet<SiteEntitlements>(`/admin/billing/sites/${siteId}/entitlements`);
+}
+
+// Subscriptions Dashboard (Superadmin)
+export interface SubscriptionListItem {
+  scope: "site" | "place";
+  id: string;
+  entityId: string;
+  entityName: string;
+  plan: "FREE" | "BASIC" | "PRO";
+  status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
+  validUntil: string | null;
+  owner: {
+    name: string;
+    email: string;
+    phone?: string | null;
+  };
+  adminUrl: string;
+  publicUrl?: string;
+}
+
+export interface SubscriptionSummary {
+  activeCount: number;
+  expiringCount: number;
+  newCount: number;
+  churnCount: number;
+  netChange: number;
+  mrrCents?: number;
+}
+
+export interface TrendPoint {
+  weekStart: string;
+  active: number;
+  new: number;
+  churn: number;
+}
+
+export interface UpdateSubscriptionDto {
+  plan?: "FREE" | "BASIC" | "PRO";
+  status?: "ACTIVE" | "SUSPENDED" | "EXPIRED";
+  validUntil?: string | null;
+  billingPeriod?: "MONTHLY" | "YEARLY";
+  priceCents?: number | null;
+  currency?: string | null;
+  note?: string | null;
+}
+
+export function getSubscriptions(params?: {
+  scope?: "site" | "place" | "all";
+  status?: "ACTIVE" | "SUSPENDED" | "EXPIRED";
+  plan?: "FREE" | "BASIC" | "PRO";
+  q?: string;
+  expiresWithinDays?: number;
+  take?: number;
+  skip?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.scope) queryParams.append("scope", params.scope);
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.plan) queryParams.append("plan", params.plan);
+  if (params?.q) queryParams.append("q", params.q);
+  if (params?.expiresWithinDays !== undefined) queryParams.append("expiresWithinDays", String(params.expiresWithinDays));
+  if (params?.take !== undefined) queryParams.append("take", String(params.take));
+  if (params?.skip !== undefined) queryParams.append("skip", String(params.skip));
+  const queryString = queryParams.toString();
+  return apiGet<{ items: SubscriptionListItem[]; total: number }>(`/admin/subscriptions${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getExpiringSubscriptions(params?: {
+  scope?: "site" | "place" | "all";
+  withinDays?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.scope) queryParams.append("scope", params.scope);
+  if (params?.withinDays !== undefined) queryParams.append("withinDays", String(params.withinDays));
+  const queryString = queryParams.toString();
+  return apiGet<SubscriptionListItem[]>(`/admin/subscriptions/expiring${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getSubscriptionSummary(params?: {
+  scope?: "site" | "place" | "all";
+  rangeDays?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.scope) queryParams.append("scope", params.scope);
+  if (params?.rangeDays !== undefined) queryParams.append("rangeDays", String(params.rangeDays));
+  const queryString = queryParams.toString();
+  return apiGet<SubscriptionSummary>(`/admin/subscriptions/summary${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getSubscriptionTrends(params?: {
+  scope?: "site" | "place" | "all";
+  weeks?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.scope) queryParams.append("scope", params.scope);
+  if (params?.weeks !== undefined) queryParams.append("weeks", String(params.weeks));
+  const queryString = queryParams.toString();
+  return apiGet<{ points: TrendPoint[] }>(`/admin/subscriptions/trends${queryString ? `?${queryString}` : ""}`);
+}
+
+export function updateSubscription(scope: "site" | "place", id: string, data: UpdateSubscriptionDto) {
+  return apiPut<any>(`/admin/subscriptions/${scope}/${id}`, data);
+}
+
+export function extendSubscription(scope: "site" | "place", id: string) {
+  return apiPost<any>(`/admin/subscriptions/${scope}/${id}/extend`, {});
 }

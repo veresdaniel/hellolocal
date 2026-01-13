@@ -63,11 +63,24 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // Listen on all addresses
+    port: 5173,
+    strictPort: false, // Allow fallback to next available port
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+      clientPort: 5173,
+    },
     proxy: {
       "/api": {
         target: "http://localhost:3002",
         changeOrigin: true,
+        ws: true, // Enable WebSocket proxying for API
       },
+    },
+    watch: {
+      usePolling: false, // Use native file system events
     },
   },
   build: {
@@ -84,6 +97,8 @@ export default defineConfig({
           "map-vendor": ["maplibre-gl", "react-map-gl"],
           // Editor libraries (large, only used in admin)
           "editor-vendor": ["@tiptap/react", "@tiptap/starter-kit", "@tiptap/extension-placeholder"],
+          // Chart library
+          "chart-vendor": ["recharts"],
           // State management
           "state-vendor": ["zustand"],
         },

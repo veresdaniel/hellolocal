@@ -82,7 +82,8 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
                 border: "none",
                 color: "white",
                 cursor: "pointer",
-                fontSize: 14,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               ×

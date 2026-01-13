@@ -35,6 +35,7 @@ import { AdminBrandService, CreateBrandDto, UpdateBrandDto } from "./admin-brand
 import { AdminSiteInstanceService, CreateSiteInstanceDto, UpdateSiteInstanceDto } from "./admin-site-instance.service";
 import { AdminSiteMembershipService, CreateSiteMembershipDto, UpdateSiteMembershipDto } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembershipDto } from "./admin-place-membership.service";
+import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -69,6 +70,7 @@ export class AdminController {
     private readonly siteInstanceService: AdminSiteInstanceService,
     private readonly siteMembershipService: AdminSiteMembershipService,
     private readonly placeMembershipService: AdminPlaceMembershipService,
+    private readonly subscriptionService: AdminSubscriptionService,
     private readonly placeUpsellService: PlaceUpsellService,
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
@@ -1593,6 +1595,85 @@ export class AdminController {
     @CurrentUser() user: { id: string }
   ) {
     return this.placeMembershipService.delete(id, user.id);
+  }
+
+  // ==================== Subscriptions ====================
+
+  @Get("/subscriptions")
+  @Roles(UserRole.superadmin)
+  async getSubscriptions(
+    @Query("scope") scope?: "site" | "place" | "all",
+    @Query("status") status?: string,
+    @Query("plan") plan?: string,
+    @Query("q") q?: string,
+    @Query("expiresWithinDays") expiresWithinDays?: string,
+    @Query("take") take?: string,
+    @Query("skip") skip?: string
+  ) {
+    return this.subscriptionService.findAll({
+      scope: scope as "site" | "place" | "all" | undefined,
+      status: status as any,
+      plan: plan as any,
+      q,
+      expiresWithinDays: expiresWithinDays ? parseInt(expiresWithinDays, 10) : undefined,
+      take: take ? parseInt(take, 10) : undefined,
+      skip: skip ? parseInt(skip, 10) : undefined,
+    });
+  }
+
+  @Get("/subscriptions/expiring")
+  @Roles(UserRole.superadmin)
+  async getExpiringSubscriptions(
+    @Query("scope") scope?: "site" | "place" | "all",
+    @Query("withinDays") withinDays?: string
+  ) {
+    return this.subscriptionService.getExpiring({
+      scope: scope as "site" | "place" | "all" | undefined,
+      withinDays: withinDays ? parseInt(withinDays, 10) : undefined,
+    });
+  }
+
+  @Get("/subscriptions/summary")
+  @Roles(UserRole.superadmin)
+  async getSubscriptionSummary(
+    @Query("scope") scope?: "site" | "place" | "all",
+    @Query("rangeDays") rangeDays?: string
+  ) {
+    return this.subscriptionService.getSummary({
+      scope: scope as "site" | "place" | "all" | undefined,
+      rangeDays: rangeDays ? parseInt(rangeDays, 10) : undefined,
+    });
+  }
+
+  @Get("/subscriptions/trends")
+  @Roles(UserRole.superadmin)
+  async getSubscriptionTrends(
+    @Query("scope") scope?: "site" | "place" | "all",
+    @Query("weeks") weeks?: string
+  ) {
+    return this.subscriptionService.getTrends({
+      scope: scope as "site" | "place" | "all" | undefined,
+      weeks: weeks ? parseInt(weeks, 10) : undefined,
+    });
+  }
+
+  @Put("/subscriptions/:scope/:id")
+  @Roles(UserRole.superadmin)
+  async updateSubscription(
+    @Param("scope") scope: "site" | "place",
+    @Param("id") id: string,
+    @Body() dto: UpdateSubscriptionDto
+  ) {
+    return this.subscriptionService.update(scope, id, dto);
+  }
+
+  @Post("/subscriptions/:scope/:id/extend")
+  @Roles(UserRole.superadmin)
+  async extendSubscription(
+    @Param("scope") scope: "site" | "place",
+    @Param("id") id: string
+  ) {
+    return this.subscriptionService.extend(scope, id);
   }
 }
 

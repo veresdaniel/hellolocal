@@ -74,10 +74,10 @@ export function CategoriesPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      // Reset to first page when tenant changes
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedSiteId]);
@@ -244,13 +244,13 @@ export function CategoriesPage() {
     setFormErrors({});
   };
 
-  // Wait for tenant context to initialize
+  // Wait for site context to initialize
   if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
   if (!selectedSiteId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   return (
@@ -270,7 +270,7 @@ export function CategoriesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -288,7 +288,7 @@ export function CategoriesPage() {
           <h2 style={{ 
             marginBottom: 24, 
             color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(18px, 4vw, 22px)",
             fontWeight: 700,
             fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
@@ -412,14 +412,16 @@ export function CategoriesPage() {
             </p>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Active Checkbox - moved to top */}
+          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              {t("common.active")}
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
 
@@ -915,7 +917,6 @@ export function CategoriesPage() {
           ]}
           onEdit={startEdit}
           onDelete={(category) => handleDelete(category.id)}
-          isLoading={isLoading}
           error={null}
         />
       )}

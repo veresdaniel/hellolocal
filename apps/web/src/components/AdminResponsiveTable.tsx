@@ -141,12 +141,13 @@ export function AdminResponsiveTable<T>({
             style={{
               width: "100%",
               padding: "12px 16px",
-              fontSize: 15,
+              fontSize: "clamp(15px, 3.5vw, 16px)",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               border: "2px solid #e0e7ff",
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               boxSizing: "border-box",
             }}
             onFocus={(e) => {
@@ -161,7 +162,7 @@ export function AdminResponsiveTable<T>({
           {filteredData.length !== data.length && (
             <div style={{ 
               marginTop: 12, 
-              fontSize: 13, 
+              fontSize: "clamp(14px, 3.5vw, 16px)", 
               color: "white", 
               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textAlign: "center",
@@ -296,7 +297,7 @@ export function AdminResponsiveTable<T>({
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
-                        fontSize: 12,
+                        fontSize: "clamp(13px, 3vw, 15px)",
                         fontWeight: 600,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
@@ -322,7 +323,7 @@ export function AdminResponsiveTable<T>({
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
-                        fontSize: 12,
+                        fontSize: "clamp(13px, 3vw, 15px)",
                         fontWeight: 600,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",

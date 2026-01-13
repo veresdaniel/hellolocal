@@ -136,10 +136,21 @@ export function SubscriptionOverviewPage() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#333" }}>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: "clamp(16px, 3.5vw, 18px)", 
+                    fontWeight: 600, 
+                    color: "#333",
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
                     {translation?.name || site.slug}
                   </h3>
-                  <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>{site.slug}</div>
+                  <div style={{ 
+                    fontSize: "clamp(13px, 3vw, 15px)", 
+                    color: "#666", 
+                    marginTop: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>{site.slug}</div>
                 </div>
                 <button
                   type="button"
@@ -150,7 +161,8 @@ export function SubscriptionOverviewPage() {
                     color: "white",
                     border: "none",
                     borderRadius: 6,
-                    fontSize: 12,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
@@ -163,7 +175,12 @@ export function SubscriptionOverviewPage() {
                 {/* Plan */}
                 {site.subscription && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.plan") || "Csomag"}
                     </div>
                     <div
@@ -173,7 +190,8 @@ export function SubscriptionOverviewPage() {
                         background: planColors[site.subscription.plan],
                         color: "white",
                         borderRadius: 4,
-                        fontSize: 13,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                       }}
                     >
@@ -185,7 +203,12 @@ export function SubscriptionOverviewPage() {
                 {/* Status */}
                 {site.subscription && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.status") || "Státusz"}
                     </div>
                     <div
@@ -195,7 +218,8 @@ export function SubscriptionOverviewPage() {
                         background: statusColors[site.subscription.status],
                         color: "white",
                         borderRadius: 4,
-                        fontSize: 13,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                       }}
                     >
@@ -207,10 +231,19 @@ export function SubscriptionOverviewPage() {
                 {/* Valid Until */}
                 {site.subscription?.validUntil && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.validUntil") || "Érvényes"}
                     </div>
-                    <div style={{ fontSize: 13, color: "#333" }}>
+                    <div style={{ 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
+                      color: "#333",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {new Date(site.subscription.validUntil).toLocaleDateString()}
                     </div>
                   </div>
@@ -219,10 +252,19 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Places */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.places") || "Helyek"}
                     </div>
-                    <div style={{ fontSize: 13, color: "#333" }}>
+                    <div style={{ 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
+                      color: "#333",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {site.entitlements.currentUsage.places} / {site.entitlements.limits.places === Infinity ? "∞" : site.entitlements.limits.places}
                     </div>
                   </div>
@@ -231,10 +273,19 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Featured */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.featured") || "Kiemelt"}
                     </div>
-                    <div style={{ fontSize: 13, color: "#333" }}>
+                    <div style={{ 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
+                      color: "#333",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {site.entitlements.currentUsage.featuredPlaces} / {site.entitlements.limits.featuredSlots === Infinity ? "∞" : site.entitlements.limits.featuredSlots}
                     </div>
                   </div>
@@ -243,10 +294,19 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Events */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+                    <div style={{ 
+                      fontSize: "clamp(13px, 3vw, 15px)", 
+                      color: "#666", 
+                      marginBottom: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {t("admin.events") || "Események"}
                     </div>
-                    <div style={{ fontSize: 13, color: "#333" }}>
+                    <div style={{ 
+                      fontSize: "clamp(14px, 3.5vw, 16px)", 
+                      color: "#333",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
                       {site.entitlements.currentUsage.events} / {site.entitlements.limits.events === Infinity ? "∞" : site.entitlements.limits.events}
                     </div>
                   </div>
@@ -254,7 +314,15 @@ export function SubscriptionOverviewPage() {
               </div>
 
               {site.subscription?.note && (
-                <div style={{ marginTop: 12, padding: 8, background: "#f8f9fa", borderRadius: 6, fontSize: 12, color: "#666" }}>
+                <div style={{ 
+                  marginTop: 12, 
+                  padding: 8, 
+                  background: "#f8f9fa", 
+                  borderRadius: 6, 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  color: "#666",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
                   <strong>{t("admin.note") || "Megjegyzés"}:</strong> {site.subscription.note}
                 </div>
               )}

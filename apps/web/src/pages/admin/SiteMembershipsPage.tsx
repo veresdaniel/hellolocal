@@ -216,7 +216,7 @@ export function SiteMembershipsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -253,7 +253,7 @@ export function SiteMembershipsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div>
               <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.tenant")} *
+                {t("admin.site")} *
               </label>
               <select
                 value={formData.siteId}
@@ -262,7 +262,8 @@ export function SiteMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.siteId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -276,7 +277,12 @@ export function SiteMembershipsPage() {
                 ))}
               </select>
               {formErrors.siteId && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.siteId}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.siteId}</p>
               )}
             </div>
 
@@ -291,7 +297,8 @@ export function SiteMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -305,7 +312,12 @@ export function SiteMembershipsPage() {
                 ))}
               </select>
               {formErrors.userId && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.userId}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.userId}</p>
               )}
             </div>
 
@@ -319,7 +331,8 @@ export function SiteMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -330,7 +343,12 @@ export function SiteMembershipsPage() {
                 <option value="viewer">{t("admin.roles.viewer")}</option>
               </select>
               {formErrors.role && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.role}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.role}</p>
               )}
             </div>
           </div>

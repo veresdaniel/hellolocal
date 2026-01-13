@@ -4,7 +4,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { 
   getPlaceMemberships, 
   createPlaceMembership, 
@@ -301,7 +301,7 @@ export function PlaceMembershipsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -314,7 +314,7 @@ export function PlaceMembershipsPage() {
           borderRadius: 8, 
           marginBottom: 24 
         }}>
-          {t("admin.selectTenantFirst")}
+          {t("admin.selectSiteFirst")}
         </div>
       )}
 
@@ -359,7 +359,8 @@ export function PlaceMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.placeId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -373,7 +374,12 @@ export function PlaceMembershipsPage() {
                 ))}
               </select>
               {formErrors.placeId && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.placeId}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.placeId}</p>
               )}
             </div>
 
@@ -388,7 +394,8 @@ export function PlaceMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -402,7 +409,12 @@ export function PlaceMembershipsPage() {
                 ))}
               </select>
               {formErrors.userId && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.userId}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.userId}</p>
               )}
             </div>
 
@@ -423,7 +435,8 @@ export function PlaceMembershipsPage() {
                 style={{
                   width: "100%",
                   padding: "12px 16px",
-                  fontSize: 15,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -431,19 +444,30 @@ export function PlaceMembershipsPage() {
               >
                 <option value="editor">{t("admin.roles.editor")}</option>
                 <option value="manager">{t("admin.roles.manager")}</option>
-                {/* Owner option only visible to superadmin, tenantadmin, or current owner */}
+                {/* Owner option only visible to superadmin, siteadmin, or current owner */}
                 {(isSuperadmin || currentUser?.role === "admin" || currentUserPlaceRole === "owner") && (
                   <option value="owner">{t("admin.roles.owner")}</option>
                 )}
               </select>
               {/* Help text */}
-              <div style={{ marginTop: 8, fontSize: 12, color: "#666", lineHeight: 1.5 }}>
+              <div style={{ 
+                marginTop: 8, 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                color: "#666", 
+                lineHeight: 1.5,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 <div>{t("admin.roleDescriptions.owner")}</div>
                 <div>{t("admin.roleDescriptions.manager")}</div>
                 <div>{t("admin.roleDescriptions.editor")}</div>
               </div>
               {formErrors.role && (
-                <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.role}</p>
+                <p style={{ 
+                  color: "#dc3545", 
+                  fontSize: "clamp(13px, 3vw, 15px)", 
+                  marginTop: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.role}</p>
               )}
             </div>
           </div>

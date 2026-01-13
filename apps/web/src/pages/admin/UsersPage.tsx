@@ -55,7 +55,7 @@ export function UsersPage() {
     loadData();
   }, [selectedSiteId]);
 
-  // Load data on mount even if no tenant is selected (for superadmin)
+  // Load data on mount even if no site is selected (for superadmin)
   useEffect(() => {
     if (currentUser?.role === "superadmin") {
       loadData();
@@ -248,13 +248,14 @@ export function UsersPage() {
           }}
           disabled={!!editingId || isCreating}
           style={{
-            padding: "12px 24px",
+            padding: "10px 20px",
             background: editingId || isCreating ? "#e0e0e0" : "white",
             color: editingId || isCreating ? "#999" : "#667eea",
             border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
-            fontSize: 15,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
             boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(0, 0, 0, 0.2)",
             transition: "all 0.3s ease",
@@ -305,7 +306,12 @@ export function UsersPage() {
                   background: editingId ? "#f5f5f5" : "white",
                 }}
               />
-              {formErrors.username && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.username}</div>}
+              {formErrors.username && <div style={{ 
+                color: "#dc3545", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                marginTop: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{formErrors.username}</div>}
             </div>
             <div>
               <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.email")} *</label>
@@ -323,7 +329,12 @@ export function UsersPage() {
                   background: editingId ? "#f5f5f5" : "white",
                 }}
               />
-              {formErrors.email && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.email}</div>}
+              {formErrors.email && <div style={{ 
+                color: "#dc3545", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                marginTop: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{formErrors.email}</div>}
             </div>
           </div>
 
@@ -343,7 +354,12 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.password && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.password}</div>}
+              {formErrors.password && <div style={{ 
+                color: "#dc3545", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                marginTop: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{formErrors.password}</div>}
             </div>
           )}
 
@@ -362,7 +378,12 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.firstName && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.firstName}</div>}
+              {formErrors.firstName && <div style={{ 
+                color: "#dc3545", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                marginTop: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{formErrors.firstName}</div>}
             </div>
             <div>
               <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.lastName")} *</label>
@@ -378,7 +399,12 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.lastName && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.lastName}</div>}
+              {formErrors.lastName && <div style={{ 
+                color: "#dc3545", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                marginTop: 4,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>{formErrors.lastName}</div>}
             </div>
           </div>
 
@@ -409,13 +435,22 @@ export function UsersPage() {
               </div>
             )}
             <div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: isCreating ? 0 : 24 }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 12, 
+                marginTop: isCreating ? 0 : 24, 
+                cursor: "pointer", 
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                 />
-                {t("common.active")}
+                <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>
             </div>
           </div>
@@ -454,7 +489,8 @@ export function UsersPage() {
                       }}
                       style={{
                         padding: "8px 16px",
-                        fontSize: 14,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background: "#dc3545",
                         color: "white",
                         border: "none",
@@ -481,7 +517,7 @@ export function UsersPage() {
             <button
               onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
               style={{
-                padding: "12px 24px",
+                padding: "10px 20px",
                 background: "#28a745",
                 color: "white",
                 border: "none",
@@ -498,7 +534,7 @@ export function UsersPage() {
                 resetForm();
               }}
               style={{
-                padding: "12px 24px",
+                padding: "10px 20px",
                 background: "#6c757d",
                 color: "white",
                 border: "none",
@@ -555,7 +591,8 @@ export function UsersPage() {
                   disabled={user.role === "superadmin" && user.id !== currentUser?.id}
                   style={{
                     padding: "4px 8px",
-                    fontSize: 14,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     borderRadius: 4,
                     border: "1px solid #ddd",
                     cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
@@ -611,7 +648,8 @@ export function UsersPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 12,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -626,7 +664,12 @@ export function UsersPage() {
             {
               key: "email",
               render: (user) => (
-                <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
+                <div style={{ 
+                  color: "#666", 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  marginBottom: 8,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
                   📧 {user.email}
                 </div>
               ),
@@ -644,7 +687,8 @@ export function UsersPage() {
                     disabled={user.role === "superadmin" && user.id !== currentUser?.id}
                     style={{
                       padding: "6px 12px",
-                      fontSize: 13,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
                       cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
@@ -695,7 +739,8 @@ export function UsersPage() {
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
                     color: "white",
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -710,7 +755,6 @@ export function UsersPage() {
               handleDelete(user.id);
             }
           }}
-          isLoading={isLoading}
           error={error}
         />
       )}

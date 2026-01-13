@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
-import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
@@ -38,6 +38,7 @@ export function TownsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const selectedTenantId = selectedSiteId; // Alias for backward compatibility
   const queryClient = useQueryClient();
   usePageTitle("admin.towns");
   const [towns, setTowns] = useState<Town[]>([]);
@@ -89,10 +90,10 @@ export function TownsPage() {
 
   useEffect(() => {
     if (selectedTenantId) {
-      // Reset to first page when tenant changes
+      // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedTenantId]);
@@ -346,13 +347,13 @@ export function TownsPage() {
     setFormErrors({});
   };
 
-  // Wait for tenant context to initialize
+  // Wait for site context to initialize
   if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
   }
 
-  if (!selectedTenantId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectTenant")}</div>;
+  if (!selectedSiteId) {
+    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
   return (
@@ -372,7 +373,7 @@ export function TownsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -385,7 +386,13 @@ export function TownsPage() {
 
       {(isCreating || editingId) && (
         <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
-          <h2 style={{ marginBottom: 24, color: "#667eea", fontSize: "clamp(20px, 5vw, 24px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <h2 style={{ 
+            marginBottom: 24, 
+            color: "#667eea", 
+            fontSize: "clamp(18px, 4vw, 22px)", 
+            fontWeight: 700, 
+            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
           </h2>
 
@@ -481,6 +488,19 @@ export function TownsPage() {
             )}
           </LanguageAwareForm>
 
+          {/* Active Checkbox - moved before location */}
+          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+              />
+              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+            </label>
+          </div>
+
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
             <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -493,44 +513,58 @@ export function TownsPage() {
                   }}
                   height={500}
                   interactive={true}
+                  hideLocationButton={true}
                 />
               </div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.latitude")}</label>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: 4, 
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>{t("admin.latitude")}</label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lat}
                     onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    style={{ 
+                      width: "100%", 
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
                     placeholder="47.4979"
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 4, fontSize: 14 }}>{t("admin.longitude")}</label>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: 4, 
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>{t("admin.longitude")}</label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lng}
                     onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                    style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                    style={{ 
+                      width: "100%", 
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
                     placeholder="19.0402"
                   />
                 </div>
               </div>
             </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              {t("common.active")}
-            </label>
           </div>
         </div>
       )}
@@ -616,7 +650,6 @@ export function TownsPage() {
           ]}
           onEdit={startEdit}
           onDelete={(town) => handleDelete(town.id)}
-          isLoading={isLoading}
           error={error}
         />
       )}

@@ -2,7 +2,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -21,6 +21,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 export function EventsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
@@ -46,7 +47,11 @@ export function EventsPage() {
     totalPages: 0,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(() => {
+    // Check URL on initial mount
+    const params = new URLSearchParams(window.location.search);
+    return params.get("new") === "true";
+  });
   const [formData, setFormData] = useState({
     placeId: "",
     categoryId: "",
@@ -90,7 +95,7 @@ export function EventsPage() {
       // Reset to first page when site changes
       setPagination(prev => ({ ...prev, page: 1 }));
     } else {
-      // Reset loading state if no tenant
+      // Reset loading state if no site
       setIsLoading(false);
     }
   }, [selectedSiteId]);
@@ -188,10 +193,40 @@ export function EventsPage() {
       if (Array.isArray(eventsResponse)) {
         // Fallback for backward compatibility (should not happen)
         setEvents(eventsResponse);
-        setPagination(prev => ({ ...prev, total: eventsResponse.length, totalPages: 1 }));
+        const total = eventsResponse.length;
+        const limit = pagination.limit;
+        setPagination(prev => ({ 
+          ...prev, 
+          total, 
+          totalPages: Math.ceil(total / limit) || 1 
+        }));
       } else {
         setEvents(eventsResponse.events || []);
-        setPagination(eventsResponse.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+        const paginationData = eventsResponse.pagination;
+        if (paginationData) {
+          // Ensure totalPages is calculated if missing or incorrect
+          const total = paginationData.total || 0;
+          const limit = paginationData.limit || pagination.limit || 50;
+          const calculatedTotalPages = Math.ceil(total / limit) || 1;
+          const totalPages = paginationData.totalPages || calculatedTotalPages;
+          
+          setPagination({
+            page: paginationData.page || pagination.page || 1,
+            limit,
+            total,
+            totalPages: totalPages > 0 ? totalPages : calculatedTotalPages,
+          });
+        } else {
+          // Fallback: calculate from events array length
+          const events = eventsResponse.events || [];
+          const total = events.length;
+          const limit = pagination.limit;
+          setPagination(prev => ({
+            ...prev,
+            total,
+            totalPages: Math.ceil(total / limit) || 1,
+          }));
+        }
       }
       // Handle paginated responses for categories, towns, places, tags (used in dropdowns)
       setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
@@ -282,6 +317,13 @@ export function EventsPage() {
       await loadData();
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
+      
+      // If we came from dashboard, navigate back to dashboard
+      const fromParam = searchParams.get("from");
+      if (fromParam === "dashboard") {
+        navigate("/admin");
+        return;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createEventFailed"));
     }
@@ -352,6 +394,13 @@ export function EventsPage() {
       await loadData();
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
+      
+      // If we came from dashboard, navigate back to dashboard
+      const fromParam = searchParams.get("from");
+      if (fromParam === "dashboard") {
+        navigate("/admin");
+        return;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateEventFailed"));
     }
@@ -453,6 +502,29 @@ export function EventsPage() {
     setFormErrors({});
   };
 
+  // Check for ?new=true query param to auto-open new form
+  // Run this early, before data loads, to show form immediately
+  useEffect(() => {
+    // Check on mount and whenever searchParams change
+    const shouldOpenNewForm = searchParams.get("new") === "true" && !isCreating && !editingId;
+    
+    if (shouldOpenNewForm) {
+      // Set creating state immediately, even if selectedSiteId is not yet loaded
+      setIsCreating(true);
+      setEditingId(null);
+      // Reset form will be called after state is set
+      // Use setTimeout to ensure state is updated first
+      setTimeout(() => {
+        resetForm();
+      }, 0);
+      // Remove query param from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("new");
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString(), isCreating, editingId]);
+
   // Wait for site context to initialize
   if (isSiteLoading) {
     return <LoadingSpinner isLoading={true} />;
@@ -492,7 +564,14 @@ export function EventsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          navigate("/admin");
+          
+          // If we came from dashboard, navigate back to dashboard
+          const fromParam = searchParams.get("from");
+          if (fromParam === "dashboard") {
+            navigate("/admin");
+            return;
+          }
+          // Back button will handle navigation otherwise
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
@@ -516,7 +595,7 @@ export function EventsPage() {
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
-              fontFamily: "inherit",
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               boxSizing: "border-box",
             }}
             onFocus={(e) => {
@@ -558,7 +637,7 @@ export function EventsPage() {
           <h2 style={{ 
             marginBottom: 24, 
             color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
+            fontSize: "clamp(18px, 4vw, 22px)",
             fontWeight: 700,
             fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
@@ -589,7 +668,7 @@ export function EventsPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: "white",
                     cursor: "pointer",
                     boxSizing: "border-box",
@@ -673,7 +752,7 @@ export function EventsPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: formErrors.startDate ? "#fef2f2" : "white",
                     boxSizing: "border-box",
                   }}
@@ -712,7 +791,7 @@ export function EventsPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "inherit",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
@@ -770,7 +849,7 @@ export function EventsPage() {
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
-                      fontFamily: "inherit",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       background: ((selectedLang === "hu" && formErrors.titleHu) ||
                                    (selectedLang === "en" && formErrors.titleEn) ||
                                    (selectedLang === "de" && formErrors.titleDe)) ? "#fef2f2" : "white",
@@ -881,7 +960,13 @@ export function EventsPage() {
                 borderRadius: 8,
                 border: "1px solid #667eea30"
               }}>
-                <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 600, color: "#667eea", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <h3 style={{ 
+                  margin: "0 0 16px 0", 
+                  fontSize: "clamp(16px, 3.5vw, 18px)", 
+                  fontWeight: 600, 
+                  color: "#667eea", 
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
                   🔍 SEO {t("admin.settings")}
                 </h3>
                 
@@ -958,7 +1043,7 @@ export function EventsPage() {
                 </div>
 
                 <div style={{ marginBottom: 0 }}>
-                  <label style={{ display: "block", marginBottom: 4 }}>SEO Keywords</label>
+                  <label style={{ display: "block", marginBottom: 4 }}>{t("admin.seoKeywords")}</label>
                   <input
                     type="text"
                     value={
@@ -1007,7 +1092,7 @@ export function EventsPage() {
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "inherit",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
               }}
               placeholder={t("admin.urlPlaceholder")}
@@ -1043,6 +1128,7 @@ export function EventsPage() {
                   }}
                   height={400}
                   interactive={true}
+                  hideLocationButton={true}
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
@@ -1069,7 +1155,7 @@ export function EventsPage() {
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
-                      fontFamily: "inherit",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       boxSizing: "border-box",
                     }}
                     placeholder="47.4979"
@@ -1106,7 +1192,7 @@ export function EventsPage() {
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
-                      fontFamily: "inherit",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       boxSizing: "border-box",
                     }}
                     placeholder="19.0402"
@@ -1131,7 +1217,7 @@ export function EventsPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 18, height: 18, cursor: "pointer" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
@@ -1140,7 +1226,7 @@ export function EventsPage() {
                 type="checkbox"
                 checked={formData.isPinned}
                 onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
-                style={{ width: 18, height: 18, cursor: "pointer" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isPinned")}</span>
             </label>
@@ -1149,7 +1235,7 @@ export function EventsPage() {
                 type="checkbox"
                 checked={formData.isRainSafe}
                 onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
-                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
             </label>
@@ -1161,7 +1247,7 @@ export function EventsPage() {
                 type="checkbox"
                 checked={formData.showOnMap}
                 onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
-                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
             </label>

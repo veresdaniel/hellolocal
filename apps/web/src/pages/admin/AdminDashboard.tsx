@@ -80,11 +80,13 @@ export function AdminDashboard() {
 
   // Quick actions handlers
   const handleNewPlace = () => {
-    navigate(adminPath("/places"));
+    // Navigate to places page with query param to trigger new form and track that we came from dashboard
+    navigate(`${adminPath("/places")}?new=true&from=dashboard`);
   };
 
   const handleNewEvent = () => {
-    navigate(adminPath("/events"));
+    // Navigate to events page with query param to trigger new form and track that we came from dashboard
+    navigate(`${adminPath("/events")}?new=true&from=dashboard`);
   };
 
   return (
@@ -102,7 +104,8 @@ export function AdminDashboard() {
           {t("admin.dashboard")}
         </h1>
         <p style={{ 
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 400,
           color: "#c0c0d0",
@@ -354,6 +357,16 @@ export function AdminDashboard() {
               variant="admin"
             />
           )}
+          {user?.role === "superadmin" && (
+            <DashboardCard
+              title={t("admin.subscriptionsDashboard")}
+              description={t("admin.dashboardCards.subscriptionsDesc")}
+              link={adminPath("/subscriptions")}
+              icon="💳"
+              isMobile={isMobile}
+              variant="admin"
+            />
+          )}
         </div>
       </div>
 
@@ -442,14 +455,19 @@ function QuickActionButton({
       <span>{label}</span>
       {highlight && (
         <span style={{ 
-          fontSize: "14px", 
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
           marginLeft: "2px",
           filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))",
         }}>
           ✨
         </span>
       )}
-      {isExternal && <span style={{ fontSize: "12px", opacity: 0.7 }}>↗</span>}
+      {isExternal && <span style={{ 
+        fontSize: "clamp(13px, 3vw, 15px)", 
+        opacity: 0.7,
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}>↗</span>}
     </button>
   );
 }
@@ -517,7 +535,8 @@ function DashboardCard({
           {icon}
         </div>
         <div style={{
-          fontSize: "clamp(12px, 2.8vw, 14px)",
+          fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 600,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#a8b3ff",
@@ -580,7 +599,8 @@ function DashboardCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         <h3 style={{ 
           margin: "0 0 3px 0",
-          fontSize: "clamp(15px, 3vw, 16px)",
+          fontSize: "clamp(15px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           color: "#a8b3ff",
@@ -593,7 +613,8 @@ function DashboardCard({
         <p style={{ 
           margin: 0, 
           color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "clamp(12px, 2.5vw, 13px)",
+          fontSize: "clamp(13px, 3vw, 15px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           lineHeight: 1.3,
           fontWeight: 400,

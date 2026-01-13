@@ -337,7 +337,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     style={{
                       textDecoration: "none",
                       color: isActive(adminPath(link.path)) ? (link.color || "#667eea") : "#666",
-                      fontSize: 13,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       padding: "8px 14px",
@@ -463,8 +463,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </button>
             )}
             
-            {/* Mobile Menu Button */}
-            {isMobile && (
+            {/* Mobile Menu Button - only show if there are nav links */}
+            {isMobile && navLinks.length > 0 && (
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 style={{
@@ -590,7 +590,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 borderRadius: 8,
                 border: "1px solid #e0e0ff",
               }}>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.language")}
                 </div>
                 <LanguageSelector />
@@ -603,7 +603,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 8,
                   border: "1px solid #e0e0ff",
                 }}>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.site")}
                   </div>
                   <SiteSelector />
@@ -616,7 +616,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 borderRadius: 8,
                 border: "1px solid #e0e0ff",
               }}>
-                <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {t("admin.userInfo")}
                 </div>
                 <UserInfoDropdown />

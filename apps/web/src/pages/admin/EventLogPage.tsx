@@ -50,7 +50,7 @@ export function EventLogPage() {
   });
 
   const [filters, setFilters] = useState<EventLogFilterDto>({
-    tenantId: selectedTenantId || undefined,
+    siteId: selectedSiteId || undefined,
     userId: undefined,
     action: undefined,
     entityType: undefined,
@@ -78,7 +78,7 @@ export function EventLogPage() {
         
         // Load logs immediately with current filters
         const initialFilters = {
-          tenantId: selectedTenantId || undefined,
+          siteId: selectedSiteId || undefined,
           userId: undefined,
           action: undefined,
           entityType: undefined,
@@ -173,11 +173,11 @@ export function EventLogPage() {
 
   const loadData = async () => {
     try {
-      const [usersData, tenantsData] = await Promise.all([getUsers(), getTenants()]);
+      const [usersData, sitesData] = await Promise.all([getUsers(), getSites()]);
       setUsers(usersData);
-      setTenants(tenantsData);
+      setSites(sitesData);
     } catch (err) {
-      console.error("Failed to load users/tenants:", err);
+      console.error("Failed to load users/sites:", err);
     }
   };
 
@@ -352,7 +352,8 @@ export function EventLogPage() {
           {t("admin.eventLog")}
         </h1>
         <p style={{ 
-          fontSize: "clamp(13px, 3vw, 14px)",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 400,
           color: "#c0c0d0",
@@ -379,17 +380,24 @@ export function EventLogPage() {
           {HAS_MULTIPLE_SITES && (currentUser?.role === "superadmin" || sites.length > 1) && (
             <div>
               <label style={{ display: "block", marginBottom: 4, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                {t("admin.eventLog.filterTenant")}
+                {t("admin.eventLog.filterSite")}
               </label>
               <select
                 value={filters.siteId || ""}
                 onChange={(e) => handleFilterChange("siteId", e.target.value || undefined)}
-                style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+                style={{ 
+                  width: "100%", 
+                  padding: 12, 
+                  fontSize: "clamp(15px, 3.5vw, 16px)", 
+                  border: "1px solid #ddd", 
+                  borderRadius: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
               >
                 <option value="">{t("admin.eventLog.allSites")}</option>
                 {sites.map((site) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.translations[0]?.name || tenant.slug}
+                  <option key={site.id} value={site.id}>
+                    {site.translations?.[0]?.name || site.slug}
                   </option>
                 ))}
               </select>
@@ -584,7 +592,13 @@ export function EventLogPage() {
                         <td style={{ padding: 12 }}>{formatDate(log.createdAt)}</td>
                         {HAS_MULTIPLE_SITES && (
                           <td style={{ padding: 12 }}>
-                            <span style={{ padding: "4px 8px", background: "#f3f4f6", borderRadius: 4, fontSize: 12 }}>
+                            <span style={{ 
+                              padding: "4px 8px", 
+                              background: "#f3f4f6", 
+                              borderRadius: 4, 
+                              fontSize: "clamp(13px, 3vw, 15px)",
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            }}>
                               {log.site?.slug || log.siteId}
                             </span>
                           </td>
@@ -594,7 +608,11 @@ export function EventLogPage() {
                             <div style={{ fontWeight: 500 }}>
                               {log.user.firstName} {log.user.lastName}
                             </div>
-                            <div style={{ fontSize: 12, color: "#666" }}>{log.user.email}</div>
+                            <div style={{ 
+                              fontSize: "clamp(13px, 3vw, 15px)", 
+                              color: "#666",
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            }}>{log.user.email}</div>
                           </div>
                         </td>
                         <td style={{ padding: 12 }}>
@@ -604,7 +622,8 @@ export function EventLogPage() {
                               background: getActionColor(log.action) + "20",
                               color: getActionColor(log.action),
                               borderRadius: 4,
-                              fontSize: 12,
+                              fontSize: "clamp(13px, 3vw, 15px)",
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               fontWeight: 500,
                             }}
                           >

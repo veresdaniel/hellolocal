@@ -31,11 +31,11 @@ export function Badge({
       padding: "4px 10px",
     },
     medium: {
-      fontSize: 12,
+      fontSize: "clamp(13px, 3vw, 15px)",
       padding: "6px 12px",
     },
     large: {
-      fontSize: 13,
+      fontSize: "clamp(14px, 3.5vw, 16px)",
       padding: "8px 14px",
     },
   };
