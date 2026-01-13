@@ -11,25 +11,28 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#667eea" />
     <title></title>
+    <script>
+      // Suppress "tabReply will be removed" deprecation warning
+      // This warning comes from browser extensions (e.g., TronWeb wallet extension)
+      // and is not from our application code. Filter must run early in <head> to catch
+      // extension-injected scripts that run before page scripts.
+      (function() {
+        if (typeof console !== 'undefined' && console.warn) {
+          const originalWarn = console.warn;
+          console.warn = function(...args) {
+            const message = String(args.join(' '));
+            if (message.includes('tabReply') || message.includes('tabReply will be removed')) {
+              // Suppress this specific deprecation warning from browser extensions
+              return;
+            }
+            originalWarn.apply(console, args);
+          };
+        }
+      })();
+    </script>
   </head>
   <body style="margin: 0 !important; padding: 0 !important;">
     <div id="root"></div>
-    <script>
-      // Suppress "tabReply will be removed" deprecation warning
-      // This warning typically comes from browser extensions (e.g., React DevTools)
-      // or Vite's HMR system and is not from our application code
-      (function() {
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-          const message = args.join(' ');
-          if (typeof message === 'string' && message.includes('tabReply')) {
-            // Suppress this specific deprecation warning
-            return;
-          }
-          originalWarn.apply(console, args);
-        };
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
