@@ -5,6 +5,8 @@ import { generateSlug } from "../slug/slug.helper";
 import { RbacService } from "../auth/rbac.service";
 import { canAddImage, canBeFeatured, type PlacePlan as PlacePlanType } from "../config/place-limits.config";
 import { canHaveFeaturedPlaces, canAddFeaturedPlace, getSiteLimits, type SitePlanType } from "../config/site-limits.config";
+import { PlaceUpsellService } from "../entitlements/place-upsell.service";
+import { EntitlementsService } from "../entitlements/entitlements.service";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -47,6 +49,7 @@ export interface CreatePlaceDto {
   plan?: PlacePlan;
   isFeatured?: boolean;
   featuredUntil?: Date | string | null;
+  galleryLimitOverride?: number | null;
 }
 
 export interface UpdatePlaceDto {
@@ -82,13 +85,16 @@ export interface UpdatePlaceDto {
   plan?: PlacePlan;
   isFeatured?: boolean;
   featuredUntil?: Date | string | null;
+  galleryLimitOverride?: number | null;
 }
 
 @Injectable()
 export class AdminPlaceService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly rbacService: RbacService
+    private readonly rbacService: RbacService,
+    private readonly placeUpsellService: PlaceUpsellService,
+    private readonly entitlementsService: EntitlementsService
   ) {}
 
   /**
@@ -467,50 +473,13 @@ export class AdminPlaceService {
   async update(id: string, siteId: string, dto: UpdatePlaceDto, userId?: string) {
     const place = await this.findOne(id, siteId);
 
-    // Validate featured status based on SITE plan (not place plan)
-    if (dto.isFeatured !== undefined && dto.isFeatured === true) {
-      // Get site with plan information
-      const site = await this.prisma.site.findUnique({
-        where: { id: siteId },
-        select: { plan: true, planLimits: true },
-      });
-
-      if (!site) {
-        throw new NotFoundException(`Site with ID ${siteId} not found`);
-      }
-
-      const sitePlan: SitePlanType = site.plan;
+    // Validate featured status using EntitlementsService
+    if (dto.isFeatured !== undefined && dto.isFeatured === true && place.isFeatured === false) {
+      const ent = await this.entitlementsService.getBySiteId(siteId);
+      const gate = this.placeUpsellService.getFeaturedGate(ent, false);
       
-      // Check if site plan supports featured places
-      if (!canHaveFeaturedPlaces(sitePlan)) {
-        throw new BadRequestException(
-          `Site plan "${sitePlan}" does not support featured places. Upgrade to "pro" or "business" plan.`
-        );
-      }
-
-      // Check if there are available featured slots
-      const currentFeaturedCount = await this.prisma.place.count({
-        where: {
-          siteId,
-          isFeatured: true,
-          OR: [
-            { featuredUntil: null },
-            { featuredUntil: { gt: new Date() } },
-          ],
-        },
-      });
-
-      // If this place is already featured, don't count it
-      const isCurrentlyFeatured = place.isFeatured;
-      const effectiveFeaturedCount = isCurrentlyFeatured 
-        ? Math.max(0, currentFeaturedCount - 1)
-        : currentFeaturedCount;
-
-      if (!canAddFeaturedPlace(sitePlan, effectiveFeaturedCount)) {
-        const limits = getSiteLimits(sitePlan);
-        throw new BadRequestException(
-          `Site plan "${sitePlan}" allows maximum ${limits.featuredSlots === Infinity ? "unlimited" : limits.featuredSlots} featured places. Currently ${effectiveFeaturedCount} featured places are active.`
-        );
+      if (gate.state !== "enabled") {
+        throw new BadRequestException(gate.reason);
       }
 
       // Validate featuredUntil date (must be in the future if isFeatured is true)
@@ -578,6 +547,7 @@ export class AdminPlaceService {
     if (restData.plan !== undefined) updateData.plan = restData.plan;
     if (restData.isFeatured !== undefined) updateData.isFeatured = restData.isFeatured;
     if (restData.featuredUntil !== undefined) updateData.featuredUntil = restData.featuredUntil;
+    if (restData.galleryLimitOverride !== undefined) updateData.galleryLimitOverride = restData.galleryLimitOverride;
     
     // Explicitly handle lat and lng to ensure null values are properly set
     if (dto.lat !== undefined) {

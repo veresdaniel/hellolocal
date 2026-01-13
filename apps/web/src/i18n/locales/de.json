@@ -66,6 +66,63 @@
         "title": "Datenschutz"
       }
     },
+    "pricing": {
+      "title": "Preise & Pakete",
+      "description": "Wählen Sie den Plan, der zu Ihrer Freiheit passt",
+      "subtitle": "Dies ist das Minimum, das mit manueller Abrechnung gut verwaltet werden kann (kein Stripe, keine Rechnungsstellung, nur Status + Gültigkeit + Limits).",
+      "popular": "Beliebt",
+      "footerNote": "Die Abrechnung erfolgt manuell. Keine Stripe-Integration. Status, Gültigkeit und Limits können manuell verwaltet werden.",
+      "plans": {
+        "free": {
+          "name": "Free",
+          "description": "Einstiegslevel, Testversion"
+        },
+        "basic": {
+          "name": "Basic",
+          "description": "\"Macht jetzt Sinn\", Inhalt + Veranstaltungen"
+        },
+        "pro": {
+          "name": "Pro",
+          "description": "Wachstum + hervorgehoben + Domain + zusätzliche Sichtbarkeit"
+        }
+      },
+      "categories": {
+        "places": "Orte",
+        "visibility": "Sichtbarkeit",
+        "events": "Veranstaltungen",
+        "seo": "SEO",
+        "domain": "Domain",
+        "languages": "Sprachen",
+        "permissions": "Berechtigungen",
+        "admin": "Admin",
+        "push": "Push"
+      },
+      "features": {
+        "placesCount": "Anzahl der Orte",
+        "imagesPerPlace": "Bilder pro Ort (Galerie)",
+        "heroImage": "Hero-Bild",
+        "contacts": "Kontakte (Tel/E-Mail/Web)",
+        "extraFields": "Zusätzliche Felder (Extras JSON)",
+        "featuredPlaces": "Hervorgehobene Orte",
+        "featuredBoost": "Hervorgehobener Boost (Ranking-Gewicht)",
+        "eventsEnabled": "Veranstaltungen aktiviert",
+        "eventsPerMonth": "Veranstaltungen pro Monat",
+        "siteSeo": "Site SEO (Titel/Beschreibung/Bild)",
+        "placeSeo": "Place SEO-Felder",
+        "canonicalSupport": "Canonical/Redirect-Unterstützung",
+        "customDomain": "Benutzerdefinierte Domain",
+        "multipleDomainAliases": "Mehrere Domain-Aliase",
+        "max5": "✓ (max. 5)",
+        "additionalLanguages": "Zusätzliche Sprachen (hu+en+de)",
+        "siteMembers": "Site-Mitglieder (Mitgliedschaften)",
+        "eventLog": "Event-Log",
+        "pushSubscription": "PushSubscription",
+        "optionalAddon": "optionales Add-on"
+      },
+      "featureMatrix": {
+        "feature": "Funktion"
+      }
+    },
     "open": "Öffnen",
     "readMore": "Weiterlesen",
     "category": "Kategorie",
@@ -151,6 +208,7 @@
   },
   "admin": {
     "titleSuffix": "Admin",
+    "edit": "Bearbeiten",
     "dashboard": "Dashboard",
     "categories": "Kategorien",
     "tags": "Tags",
@@ -350,6 +408,7 @@
     "featuredUntilHint": "Leer lassen für dauerhaft hervorgehobenen Status",
     "expires": "läuft ab",
     "featuredPlacement": "Hervorgehobene Platzierung",
+    "extraGalleryImages": "Zusätzliche Galeriebilder",
     "unlimitedImages": "Unbegrenzte Bilder",
     "eventDisplay": "Ereignisanzeige",
     "upTo15Images": "Bis zu 15 Bilder",
@@ -362,6 +421,21 @@
     "availableInProPlan": "Verfügbar im Pro-Plan",
     "upgradeToPro": "Auf Pro upgraden, um hervorgehobene Platzierung zu aktivieren",
     "activateFeatured": "Hervorgehobene Platzierung aktivieren",
+    "viewPlans": "Pläne vergleichen",
+    "available": "Verfügbar",
+    "availableFeatures": "Verfügbare Funktionen",
+    "billingAndPlan": "Abrechnung und Plan",
+    "planInfo": "Sie können den Plan in den Site-Einstellungen ändern.",
+    "manageFeatured": "Hervorgehobene Orte verwalten",
+    "subscriptionOverview": "Abonnement-Übersicht",
+    "subscriptionOverviewSubtitle": "Site-Abonnements und Nutzungsdaten",
+    "validUntil": "Gültig bis",
+    "note": "Hinweis",
+    "places": "Orte",
+    "featured": "Hervorgehoben",
+    "statusActive": "Aktiv",
+    "statusSuspended": "Ausgesetzt",
+    "statusExpired": "Abgelaufen",
     "dashboardCards": {
       "userProfile": "Benutzerprofil",
       "userProfileDesc": "Ihr Profil anzeigen und bearbeiten",

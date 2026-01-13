@@ -132,6 +132,9 @@ export function Footer({
                   style={{
                     color: "white",
                     textDecoration: "none",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     opacity: 0.9,
                     transition: "opacity 0.2s",
                   }}
@@ -150,6 +153,9 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -167,6 +173,9 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -184,6 +193,9 @@ export function Footer({
                 style={{
                   color: "white",
                   textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -195,6 +207,30 @@ export function Footer({
                 }}
               >
                 {t("public.legal.privacy.title")}
+              </Link>
+              <Link
+                to={buildUrl({ 
+                  lang, 
+                  siteKey: effectiveSiteSlug, 
+                  path: lang === "de" ? "preise" : "pricing"
+                })}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("public.pricing.title")}
               </Link>
             </div>
           )}
@@ -417,6 +453,7 @@ export function Footer({
                     textDecoration: "none",
                     fontSize: 15,
                     fontWeight: 500,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     opacity: 0.9,
                     transition: "opacity 0.2s",
                   }}
@@ -432,6 +469,32 @@ export function Footer({
                   {t("public.staticPages.title")}
                 </Link>
               )}
+              <Link
+                to={buildUrl({ 
+                  lang, 
+                  siteKey: effectiveSiteSlug, 
+                  path: lang === "de" ? "preise" : "pricing"
+                })}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.pricing.title")}
+              </Link>
             </div>
           </div>
         </div>

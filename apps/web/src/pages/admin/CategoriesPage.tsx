@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -38,6 +39,7 @@ interface Category {
 
 export function CategoriesPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   usePageTitle("admin.categories");
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const queryClient = useQueryClient();
@@ -268,6 +270,7 @@ export function CategoriesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />

@@ -23,6 +23,8 @@ import { AdminPriceBandService, CreatePriceBandDto, UpdatePriceBandDto } from ".
 import { AdminUsersService, UpdateUserRoleDto, UpdateUserDto, CreateUserDto } from "./admin-users.service";
 import { AdminTownService, CreateTownDto, UpdateTownDto } from "./admin-town.service";
 import { AdminPlaceService, CreatePlaceDto, UpdatePlaceDto } from "./admin-place.service";
+import { PlaceUpsellService } from "../entitlements/place-upsell.service";
+import { EntitlementsService } from "../entitlements/entitlements.service";
 import { AdminLegalService, CreateLegalPageDto, UpdateLegalPageDto } from "./admin-legal.service";
 import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from "./admin-static-page.service";
 import { AdminSiteService, CreateSiteDto, UpdateSiteDto } from "./admin-site.service";
@@ -67,6 +69,8 @@ export class AdminController {
     private readonly siteInstanceService: AdminSiteInstanceService,
     private readonly siteMembershipService: AdminSiteMembershipService,
     private readonly placeMembershipService: AdminPlaceMembershipService,
+    private readonly placeUpsellService: PlaceUpsellService,
+    private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
     private readonly twoFactorService: TwoFactorService,
     private readonly platformSettingsService: PlatformSettingsService
@@ -591,6 +595,32 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     return this.placeService.findOne(id, siteId);
+  }
+
+  @Get("/places/:id/upsell-state")
+  async getPlaceUpsellState(
+    @Param("id") id: string,
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
+    }
+    
+    const place = await this.placeService.findOne(id, siteId);
+    const currentImageCount = (place.gallery?.length || 0) + (place.heroImage ? 1 : 0);
+    
+    return this.placeUpsellService.getPlaceUpsellState(
+      siteId,
+      id,
+      place.isFeatured || false,
+      currentImageCount,
+      place.galleryLimitOverride
+    );
   }
 
   @Post("/places")

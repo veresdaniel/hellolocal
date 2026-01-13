@@ -13,6 +13,7 @@ import { HomePage } from "../pages/HomePage";
 import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
+import { PricingPage } from "../pages/PricingPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
 import { SitesListPage } from "../pages/SitesListPage";
@@ -37,6 +38,7 @@ const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m
 const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
 const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
 const SiteEditPage = lazy(() => import("../pages/admin/SiteEditPage").then(m => ({ default: m.SiteEditPage })));
+const SubscriptionOverviewPage = lazy(() => import("../pages/admin/SubscriptionOverviewPage").then(m => ({ default: m.SubscriptionOverviewPage })));
 const BrandsPage = lazy(() => import("../pages/admin/BrandsPage").then(m => ({ default: m.BrandsPage })));
 const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").then(m => ({ default: m.SiteInstancesPage })));
 const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
@@ -71,6 +73,9 @@ const createPublicRoutes = () => {
     { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
     { path: "aszf", element: <LegalPage pageKey="terms" /> },
     { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+    { path: "pricing", element: <PricingPage /> },
+    { path: "tarife", element: <PricingPage /> },
+    { path: "preise", element: <PricingPage /> },
   ];
 
   if (HAS_MULTIPLE_SITES) {
@@ -291,6 +296,20 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteEditPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ) : (
+          <NotFoundPage />
+        ),
+      },
+      {
+        path: "subscription-overview",
+        element: HAS_MULTIPLE_SITES ? (
+          <ProtectedRoute requiredRole="superadmin">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SubscriptionOverviewPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

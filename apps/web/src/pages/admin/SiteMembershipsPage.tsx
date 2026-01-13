@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { 
@@ -23,6 +24,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 
 export function SiteMembershipsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
@@ -214,6 +216,7 @@ export function SiteMembershipsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />

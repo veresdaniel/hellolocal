@@ -30,7 +30,15 @@ export function SiteLayout() {
 
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
+  // Reserved paths that should not be treated as siteKey
+  const RESERVED_PATHS = ["sites", "teruletek", "regions", "regionen", "admin", "static-pages", "static-page", "impresszum", "aszf", "adatvedelem", "pricing", "tarife", "preise"];
+
   // multi-site módban siteKey elvárt, single-site módban fix
+  // Ha a siteKeyParam egy foglalt path, akkor redirectálunk a sites listára
+  if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam)) {
+    return <Navigate to={`/${lang}`} replace />;
+  }
+
   const siteKey = HAS_MULTIPLE_SITES
     ? siteKeyParam ?? DEFAULT_SITE_SLUG
     : DEFAULT_SITE_SLUG;

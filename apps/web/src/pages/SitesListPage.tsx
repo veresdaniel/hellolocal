@@ -6,6 +6,7 @@ import { useLocation, useParams, Navigate } from "react-router-dom";
 import { getSites } from "../api/places.api";
 import { SiteCard } from "../ui/site/SiteCard";
 import { FloatingHeader } from "../components/FloatingHeader";
+import { Footer } from "../ui/layout/Footer";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useSeo } from "../seo/useSeo";
@@ -401,7 +402,7 @@ export function SitesListPage() {
                 <input
                   type="text"
                   className="tenants-search-input"
-                  placeholder={t("public.searchTenants") || "Keresés site-ok között..."}
+                  placeholder={t("public.searchSites") || "Keresés site-ok között..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -454,6 +455,8 @@ export function SitesListPage() {
           </div>
         </div>
       </div>
+      {/* Footer */}
+      <Footer lang={effectiveLang} siteSlug={undefined} platform={platformSettings} />
     </>
   );
 }

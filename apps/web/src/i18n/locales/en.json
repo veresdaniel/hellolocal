@@ -66,6 +66,63 @@
         "title": "Privacy Policy"
       }
     },
+    "pricing": {
+      "title": "Pricing & Plans",
+      "description": "Choose the plan that fits your freedom",
+      "subtitle": "This is the minimum that can be well managed with manual billing (no Stripe, no invoicing, just status + validity + limits).",
+      "popular": "Popular",
+      "footerNote": "Billing is manual. No Stripe integration. Status, validity and limits can be managed manually.",
+      "plans": {
+        "free": {
+          "name": "Free",
+          "description": "Entry level, trial"
+        },
+        "basic": {
+          "name": "Basic",
+          "description": "\"Makes sense now\", content + events"
+        },
+        "pro": {
+          "name": "Pro",
+          "description": "Growth + featured + domain + extra visibility"
+        }
+      },
+      "categories": {
+        "places": "Places",
+        "visibility": "Visibility",
+        "events": "Events",
+        "seo": "SEO",
+        "domain": "Domain",
+        "languages": "Languages",
+        "permissions": "Permissions",
+        "admin": "Admin",
+        "push": "Push"
+      },
+      "features": {
+        "placesCount": "Number of places",
+        "imagesPerPlace": "Images per place (gallery)",
+        "heroImage": "Hero image",
+        "contacts": "Contacts (tel/email/web)",
+        "extraFields": "Extra fields (extras JSON)",
+        "featuredPlaces": "Featured places",
+        "featuredBoost": "Featured boost (ranking weight)",
+        "eventsEnabled": "Events enabled",
+        "eventsPerMonth": "Events per month",
+        "siteSeo": "Site SEO (title/desc/image)",
+        "placeSeo": "Place SEO fields",
+        "canonicalSupport": "Canonical/redirect support",
+        "customDomain": "Custom domain",
+        "multipleDomainAliases": "Multiple domain aliases",
+        "max5": "✓ (max 5)",
+        "additionalLanguages": "Additional languages (hu+en+de)",
+        "siteMembers": "Site members (memberships)",
+        "eventLog": "Event log",
+        "pushSubscription": "PushSubscription",
+        "optionalAddon": "optional add-on"
+      },
+      "featureMatrix": {
+        "feature": "Feature"
+      }
+    },
     "open": "Open",
     "readMore": "Read more",
     "category": "Category",
@@ -151,6 +208,7 @@
   },
   "admin": {
     "titleSuffix": "Admin",
+    "edit": "Edit",
     "dashboard": "Dashboard",
     "categories": "Categories",
     "tags": "Tags",
@@ -349,6 +407,7 @@
     "featuredUntilHint": "Leave empty for permanent featured status",
     "expires": "expires",
     "featuredPlacement": "Featured placement",
+    "extraGalleryImages": "Extra gallery images",
     "unlimitedImages": "Unlimited images",
     "eventDisplay": "Event display",
     "upTo15Images": "Up to 15 images",
@@ -361,6 +420,21 @@
     "availableInProPlan": "Available in Pro plan",
     "upgradeToPro": "Upgrade to Pro to enable featured placement",
     "activateFeatured": "Activate Featured Placement",
+    "viewPlans": "Compare Plans",
+    "available": "Available",
+    "availableFeatures": "Available Features",
+    "billingAndPlan": "Billing and Plan",
+    "planInfo": "You can modify the plan in Site settings.",
+    "manageFeatured": "Manage Featured Places",
+    "subscriptionOverview": "Subscription Overview",
+    "subscriptionOverviewSubtitle": "Site subscriptions and usage data",
+    "validUntil": "Valid Until",
+    "note": "Note",
+    "places": "Places",
+    "featured": "Featured",
+    "statusActive": "Active",
+    "statusSuspended": "Suspended",
+    "statusExpired": "Expired",
     "dashboardCards": {
       "userProfile": "User Profile",
       "userProfileDesc": "View and edit your profile",

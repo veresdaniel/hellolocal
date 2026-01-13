@@ -21,9 +21,10 @@ import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { AuthModule } from "../auth/auth.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
+import { EntitlementsModule } from "../entitlements/entitlements.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, EntitlementsModule],
   controllers: [AdminController],
   providers: [
     AdminCategoryService,

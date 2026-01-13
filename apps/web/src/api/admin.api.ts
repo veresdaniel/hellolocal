@@ -1214,6 +1214,21 @@ export function getPlaceEntitlements(placeId: string) {
   return apiGet<PlaceEntitlements>(`/admin/billing/places/${placeId}/entitlements`);
 }
 
+export type FeatureGate =
+  | { state: "enabled" }
+  | { state: "locked"; reason: string; upgradeCta: "viewPlans" | "contactAdmin" }
+  | { state: "limit_reached"; reason: string; upgradeCta: "upgradePlan"; alternativeCta?: "manageExisting" };
+
+export type PlaceUpsellState = {
+  featured: FeatureGate;
+  gallery: FeatureGate;
+};
+
+export function getPlaceUpsellState(placeId: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiGet<PlaceUpsellState>(`/admin/places/${placeId}/upsell-state${params}`);
+}
+
 // Site subscription
 export function getSiteSubscription(siteId: string) {
   return apiGet<SiteSubscription>(`/admin/billing/sites/${siteId}/subscription`);

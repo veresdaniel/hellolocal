@@ -278,6 +278,7 @@ export function SitesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />

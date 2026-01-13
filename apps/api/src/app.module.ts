@@ -21,6 +21,7 @@ import { PlatformSettingsModule } from "./platform-settings/platform-settings.mo
 import { SiteModule } from "./site/site.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { BillingModule } from "./billing/billing.module";
+import { EntitlementsModule } from "./entitlements/entitlements.module";
 import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middleware";
 import { SiteResolveMiddleware } from "./common/middleware/site-resolve.middleware";
 import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-redirect.interceptor";
@@ -60,6 +61,7 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
     SiteModule, // Site resolver and public endpoints
     TasksModule, // Scheduled tasks (expired featured cleanup, etc.)
     BillingModule, // Billing and subscription management
+    EntitlementsModule, // Entitlements and subscription management
   ],
   controllers: [HealthController],
   providers: [

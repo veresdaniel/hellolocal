@@ -56,6 +56,18 @@ enum SitePlan {
   business
 }
 
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
 // Brand: Visual identity and branding assets
@@ -117,6 +129,7 @@ model Site {
   siteInstances    SiteInstance[]
   siteMemberships  SiteMembership[]
   siteDomains      SiteDomain[]
+  subscription     SiteSubscription?
 
   @@index([brandId])
   @@index([plan])
@@ -344,6 +357,7 @@ model Place {
   plan        PlacePlan     @default(free)
   isFeatured  Boolean       @default(false)
   featuredUntil DateTime?
+  galleryLimitOverride Int? // optional per-place add-on: additional gallery images beyond plan limit
 
   // Media + discoverability
   heroImage   String?
@@ -821,4 +835,23 @@ model SiteInstance {
   @@unique([siteId, lang])
   @@index([siteId])
   @@index([lang])
+}
+
+model SiteSubscription {
+  id         String             @id @default(cuid())
+  siteId     String             @unique
+  plan       SubscriptionPlan   @default(FREE)
+  status     SubscriptionStatus @default(ACTIVE)
+  validUntil DateTime?
+
+  // manuális admin megjegyzés (pl. "2026 Q1 promo")
+  note       String?
+
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  site       Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([plan])
+  @@index([status])
 }

@@ -11,7 +11,6 @@ import { MapFilters } from "../components/MapFilters";
 import { PlacesListView } from "../components/PlacesListView";
 import { EventsList } from "../components/EventsList";
 import { Header } from "../ui/layout/Header";
-import { Footer } from "../ui/layout/Footer";
 import { buildUrl } from "../app/urls";
 import { useNavigate } from "react-router-dom";
 import { HAS_MULTIPLE_SITES } from "../app/config";
@@ -682,27 +681,6 @@ export function HomePage() {
             </div>
             <EventsList lang={lang} />
           </div>
-          {/* Compact footer - fixed positioned at bottom on mobile */}
-          {isMobile ? (
-            <div
-              style={{
-                position: "fixed",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                width: "100%",
-                zIndex: 100,
-                margin: 0,
-                padding: 0,
-              }}
-            >
-              <Footer lang={lang} siteSlug={siteKey} compact={true} />
-            </div>
-          ) : (
-            <div style={{ flexShrink: 0 }}>
-              <Footer lang={lang} siteSlug={siteKey} compact={true} />
-            </div>
-          )}
           {/* MapFilters at top level to be above footer */}
           <MapFilters
             selectedCategories={selectedCategories}
@@ -737,8 +715,6 @@ export function HomePage() {
             onWithin30MinutesChange={setWithin30Minutes}
             onRainSafeChange={setRainSafe}
           />
-          {/* Full footer for list view */}
-          <Footer lang={lang} siteSlug={siteKey} />
         </>
       )}
     </div>

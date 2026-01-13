@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getBrands, createBrand, updateBrand, deleteBrand, type Brand, type CreateBrandDto, type UpdateBrandDto } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
@@ -10,6 +11,7 @@ import { isValidImageUrl } from "../../utils/urlValidation";
 
 export function BrandsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   usePageTitle("admin.brands");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -228,6 +230,7 @@ export function BrandsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />

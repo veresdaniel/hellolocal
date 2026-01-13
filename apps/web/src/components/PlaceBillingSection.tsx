@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { getPlaceEntitlements, type PlaceEntitlements } from "../api/admin.api";
+import { getPlaceUpsellState, type PlaceUpsellState, type FeatureGate } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 
 interface PlaceBillingSectionProps {
@@ -25,50 +25,140 @@ export function PlaceBillingSection({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [entitlements, setEntitlements] = useState<PlaceEntitlements | null>(null);
+  const [upsellState, setUpsellState] = useState<PlaceUpsellState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [previousPlan, setPreviousPlan] = useState<string | null>(null);
-  const [animatedValues, setAnimatedValues] = useState<Set<string>>(new Set());
   const isSuperadmin = userRole === "superadmin";
 
   useEffect(() => {
     loadData();
-  }, [placeId]);
-
-  // Track plan changes for animation
-  useEffect(() => {
-    if (previousPlan && previousPlan !== currentPlan) {
-      // Mark values that should animate
-      setAnimatedValues(new Set(["plan", "images", "events", "featured"]));
-      // Clear animation after animation completes
-      setTimeout(() => {
-        setAnimatedValues(new Set());
-      }, 600);
-    }
-    setPreviousPlan(currentPlan);
-  }, [currentPlan, previousPlan]);
+  }, [placeId, siteId]);
 
   const loadData = async () => {
-    if (!placeId) return;
+    if (!placeId || !siteId) return;
     setIsLoading(true);
     try {
-      const entData = await getPlaceEntitlements(placeId);
-      setEntitlements(entData);
+      const state = await getPlaceUpsellState(placeId, siteId);
+      setUpsellState(state);
     } catch (error) {
-      console.error("Failed to load billing data:", error);
+      console.error("Failed to load upsell state:", error);
       showToast(t("admin.errorLoadingBilling") || "Failed to load billing information", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleViewPlan = () => {
+  const handleViewPlans = () => {
     // Navigate to Site Edit page, subscription tab
     if (siteId) {
       navigate(`/admin/sites/${siteId}/edit?tab=subscription`);
     } else {
       showToast(t("admin.siteNotFound") || "Site not found", "error");
     }
+  };
+
+  const handleManageFeatured = () => {
+    // Navigate to places list with featured filter
+    navigate(`/admin/places?siteId=${siteId}&featured=true`);
+  };
+
+  const renderFeatureGate = (gate: FeatureGate, label: string, icon: string) => {
+    if (gate.state === "enabled") {
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 12, background: "#f0fdf4", borderRadius: 8 }}>
+          <span style={{ fontSize: 18, color: "#22c55e" }}>✓</span>
+          <span style={{ fontSize: 14, color: "#333", fontWeight: 500 }}>{label}</span>
+          <span style={{ fontSize: 12, color: "#10b981", marginLeft: "auto" }}>
+            {t("admin.available") || "Available"}
+          </span>
+        </div>
+      );
+    }
+
+    if (gate.state === "locked") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#fef2f2", borderRadius: 8, border: "1px solid #fecaca" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18, color: "#dc2626" }}>🔒</span>
+            <span style={{ fontSize: 14, color: "#333", fontWeight: 500 }}>{label}</span>
+          </div>
+          <div style={{ fontSize: 12, color: "#991b1b", marginLeft: 26 }}>
+            {gate.reason}
+          </div>
+          {gate.upgradeCta === "viewPlans" && (
+            <button
+              type="button"
+              onClick={handleViewPlans}
+              style={{
+                marginLeft: 26,
+                marginTop: 4,
+                padding: "6px 12px",
+                background: "#667eea",
+                color: "white",
+                border: "none",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t("admin.viewPlans") || "Csomagok összehasonlítása"}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (gate.state === "limit_reached") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, background: "#fffbeb", borderRadius: 8, border: "1px solid #fde68a" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18, color: "#f59e0b" }}>⚠️</span>
+            <span style={{ fontSize: 14, color: "#333", fontWeight: 500 }}>{label}</span>
+          </div>
+          <div style={{ fontSize: 12, color: "#92400e", marginLeft: 26 }}>
+            {gate.reason}
+          </div>
+          <div style={{ display: "flex", gap: 8, marginLeft: 26, marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={handleViewPlans}
+              style={{
+                padding: "6px 12px",
+                background: "#667eea",
+                color: "white",
+                border: "none",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t("admin.upgradePlan") || "Frissítés"}
+            </button>
+            {gate.alternativeCta === "manageExisting" && (
+              <button
+                type="button"
+                onClick={handleManageFeatured}
+                style={{
+                  padding: "6px 12px",
+                  background: "white",
+                  color: "#667eea",
+                  border: "1px solid #667eea",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {t("admin.manageFeatured") || "Kiemelések kezelése"}
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (isLoading) {
@@ -93,40 +183,27 @@ export function PlaceBillingSection({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <style>{`
-        @keyframes valueUpdate {
-          0% {
-            transform: scale(1);
-            color: inherit;
-          }
-          50% {
-            transform: scale(1.15);
-            color: #667eea;
-          }
-          100% {
-            transform: scale(1);
-            color: inherit;
-          }
-        }
-      `}</style>
-      {/* Current Plan Display - Read-only */}
-      <div
-        style={{
-          padding: 20,
-          background: "white",
-          borderRadius: 12,
-          border: `2px solid ${planColors[currentPlan]}`,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#333" }}>
+      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#333" }}>
+        {t("admin.billingAndPlan") || "Számlázás és csomag"}
+      </h3>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Left: Plan Summary + Usage */}
+        <div
+          style={{
+            padding: 20,
+            background: "white",
+            borderRadius: 12,
+            border: `2px solid ${planColors[currentPlan]}`,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
               {t("admin.currentPlan") || "Current Plan"}
-            </h3>
+            </div>
             <div
               style={{
-                marginTop: 8,
                 display: "inline-block",
                 padding: "6px 12px",
                 background: planColors[currentPlan],
@@ -134,118 +211,53 @@ export function PlaceBillingSection({
                 borderRadius: 6,
                 fontSize: 14,
                 fontWeight: 600,
-                animation: animatedValues.has("plan") ? "valueUpdate 0.6s ease-out" : "none",
-                transform: animatedValues.has("plan") ? "scale(1.1)" : "scale(1)",
-                transition: "transform 0.3s ease-out",
               }}
             >
               {planLabels[currentPlan]}
             </div>
           </div>
-          <div style={{ fontSize: 12, color: "#666", fontStyle: "italic" }}>
-            {t("admin.readOnly") || "Read-only"}
+
+          <div style={{ fontSize: 12, color: "#666", marginTop: 16 }}>
+            {t("admin.planInfo") || "A csomagot a Site beállításokban módosíthatod."}
           </div>
         </div>
 
-        {/* Plan Features - Read-only display */}
-        {entitlements && (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 14, color: "#666", marginBottom: 12 }}>
-              {t("admin.planFeatures") || "Plan Features"}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ 
-                  fontSize: 16, 
-                  color: entitlements.limits.images === Infinity || entitlements.currentUsage.images < entitlements.limits.images ? "#22c55e" : "#dc2626" 
-                }}>
-                  {entitlements.limits.images === Infinity ? "✓" : entitlements.currentUsage.images < entitlements.limits.images ? "✓" : "✗"}
-                </span>
-                <span 
-                  style={{ 
-                    fontSize: 14, 
-                    color: "#333",
-                    animation: animatedValues.has("images") ? "valueUpdate 0.6s ease-out" : "none",
-                    transform: animatedValues.has("images") ? "scale(1.1)" : "scale(1)",
-                    transition: "transform 0.3s ease-out",
-                  }}
-                >
-                  {entitlements.limits.images === Infinity
-                    ? t("admin.unlimitedImages") || "Unlimited images"
-                    : `${entitlements.currentUsage.images} / ${entitlements.limits.images} ${t("admin.images") || "images"}`}
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ 
-                  fontSize: 16, 
-                  color: entitlements.limits.events === Infinity || entitlements.currentUsage.events < entitlements.limits.events ? "#22c55e" : "#dc2626" 
-                }}>
-                  {entitlements.limits.events === Infinity ? "✓" : entitlements.currentUsage.events < entitlements.limits.events ? "✓" : "✗"}
-                </span>
-                <span 
-                  style={{ 
-                    fontSize: 14, 
-                    color: "#333",
-                    animation: animatedValues.has("events") ? "valueUpdate 0.6s ease-out" : "none",
-                    transform: animatedValues.has("events") ? "scale(1.1)" : "scale(1)",
-                    transition: "transform 0.3s ease-out",
-                  }}
-                >
-                  {entitlements.limits.events === Infinity
-                    ? t("admin.unlimitedEvents") || "Unlimited events"
-                    : `${entitlements.currentUsage.events} / ${entitlements.limits.events} ${t("admin.events") || "events"}`}
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ 
-                  fontSize: 16, 
-                  color: entitlements.limits.featured ? "#22c55e" : "#dc2626" 
-                }}>
-                  {entitlements.limits.featured ? "✓" : "✗"}
-                </span>
-                <span 
-                  style={{ 
-                    fontSize: 14, 
-                    color: "#333",
-                    animation: animatedValues.has("featured") ? "valueUpdate 0.6s ease-out" : "none",
-                    transform: animatedValues.has("featured") ? "scale(1.1)" : "scale(1)",
-                    transition: "transform 0.3s ease-out",
-                  }}
-                >
-                  {t("admin.featuredPlacement") || "Featured placement"}
-                  {currentIsFeatured && (
-                    <span style={{ marginLeft: 8, fontSize: 12, color: "#10b981", fontWeight: 600 }}>
-                      ({t("admin.active") || "Active"})
-                    </span>
-                  )}
-                </span>
-              </div>
-            </div>
+        {/* Right: Feature Gates */}
+        <div
+          style={{
+            padding: 20,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e7ff",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div style={{ fontSize: 14, color: "#666", marginBottom: 12, fontWeight: 600 }}>
+            {t("admin.availableFeatures") || "Elérhető funkciók"}
           </div>
-        )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {upsellState && (
+              <>
+                {renderFeatureGate(
+                  upsellState.featured,
+                  t("admin.featuredPlacement") || "Kiemelt megjelenés",
+                  "⭐"
+                )}
+                {renderFeatureGate(
+                  upsellState.gallery,
+                  t("admin.extraGalleryImages") || "Extra galéria képek",
+                  "🖼️"
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Upsell CTA for non-pro plans */}
-      {currentPlan !== "pro" && (
-        <div style={{ 
-          padding: 16, 
-          background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)", 
-          borderRadius: 12, 
-          border: "1px solid #e0e0e0",
-        }}>
-          <div style={{ fontSize: 14, color: "#666", marginBottom: 8, fontWeight: 600 }}>
-            {t("admin.proPlanBenefits") || "Pro Plan Benefits"}
-          </div>
-          <div style={{ fontSize: 13, color: "#999", marginBottom: 12 }}>
-            {t("admin.upgradeToProHint") || "Upgrade to Pro to unlock unlimited images, events, and featured placement."}
-          </div>
-        </div>
-      )}
-
-      {/* View/Update Plan Button */}
+      {/* CTA Button */}
       <button
         type="button"
-        onClick={handleViewPlan}
+        onClick={handleViewPlans}
         style={{
           padding: "12px 24px",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -267,7 +279,7 @@ export function PlaceBillingSection({
           e.currentTarget.style.boxShadow = "0 2px 4px rgba(102, 126, 234, 0.3)";
         }}
       >
-        {t("admin.viewOrUpdatePlan") || "View / Update Plan"}
+        {t("admin.viewPlans") || "Csomagok összehasonlítása"}
       </button>
     </div>
   );

@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { getSiteInstances, createSiteInstance, updateSiteInstance, deleteSiteInstance, getSites, type SiteInstance, type CreateSiteInstanceDto, type UpdateSiteInstanceDto, type Site } from "../../api/admin.api";
@@ -11,6 +12,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 
 export function SiteInstancesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
@@ -246,6 +248,7 @@ export function SiteInstancesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />

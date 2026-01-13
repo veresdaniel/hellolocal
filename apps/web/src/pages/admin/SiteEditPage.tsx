@@ -11,6 +11,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { MapComponent } from "../../components/MapComponent";
 import { getSite, updateSite, getBrands, getSiteInstances, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
+import { getSiteSubscription, getSiteEntitlements, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
 
 type TabId = "overview" | "domain" | "appearance" | "map" | "features" | "subscription";
 
@@ -66,6 +67,7 @@ export function SiteEditPage() {
     plan: "free" as "free" | "official" | "pro" | "business",
     planStatus: "active",
     planValidUntil: "",
+    showAdvanced: false,
     // Domain tab - will be handled separately
     // Appearance tab - will be handled via SiteInstance
     // Map tab - will be handled via SiteInstance
@@ -235,7 +237,7 @@ export function SiteEditPage() {
         title={currentTranslation?.name || site.slug}
         isCreatingOrEditing={true}
         onSave={handleSave}
-        onCancel={() => navigate("/admin/sites")}
+        onCancel={() => navigate("/admin")}
         saveLabel={t("common.save")}
         cancelLabel={t("common.cancel")}
       />
@@ -1543,35 +1545,75 @@ function SubscriptionTab({
   showToast: (message: string, type: "success" | "error") => void;
   t: (key: string) => string;
 }) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [subscription, setSubscription] = useState<SiteSubscription | null>(null);
+  const [entitlements, setEntitlements] = useState<SiteEntitlements | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPlanSwitcher, setShowPlanSwitcher] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [previousPlan, setPreviousPlan] = useState<string | null>(null);
   const [animatedValues, setAnimatedValues] = useState<Set<string>>(new Set());
-
-  const planLimits = {
-    free: { places: 3, featuredSlots: 0, events: 0 },
-    official: { places: Infinity, featuredSlots: 1, events: 20 },
-    pro: { places: Infinity, featuredSlots: 3, events: Infinity },
-    business: { places: Infinity, featuredSlots: Infinity, events: Infinity },
-  };
-
-  const currentPlan = formData.plan || "free";
-  const limits = planLimits[currentPlan];
-  const usage = site.usage || { places: 0, featured: 0, events: 0 };
 
   const isSuperAdmin = currentUser?.role === "superadmin";
   const isAdmin = currentUser?.role === "admin";
   const canEditPlan = isSuperAdmin;
 
+  // Load subscription and entitlements data
+  useEffect(() => {
+    loadSubscriptionData();
+  }, [site.id]);
+
+  const loadSubscriptionData = async () => {
+    if (!site.id) return;
+    setIsLoading(true);
+    try {
+      const [subData, entData] = await Promise.all([
+        getSiteSubscription(site.id),
+        getSiteEntitlements(site.id),
+      ]);
+      setSubscription(subData);
+      setEntitlements(entData);
+      // Update formData with subscription data
+      setFormData((prev: any) => ({
+        ...prev,
+        plan: subData.plan,
+        planStatus: subData.planStatus || "active",
+        planValidUntil: subData.planValidUntil ? new Date(subData.planValidUntil).toISOString().split("T")[0] : "",
+      }));
+    } catch (error) {
+      console.error("Failed to load subscription data:", error);
+      showToast(t("admin.errorLoadingBilling") || "Failed to load subscription information", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Track plan changes for animation
+  useEffect(() => {
+    if (entitlements && previousPlan && previousPlan !== entitlements.plan) {
+      // Mark values that should animate
+      setAnimatedValues(new Set(["plan", "places", "featuredSlots", "events"]));
+      // Clear animation after animation completes
+      setTimeout(() => {
+        setAnimatedValues(new Set());
+      }, 600);
+    }
+    if (entitlements) {
+      setPreviousPlan(entitlements.plan);
+    }
+  }, [entitlements?.plan, previousPlan]);
+
   // Status badge colors
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     const statusMap: Record<string, { color: string; bg: string; label: string }> = {
-      active: { color: "#10b981", bg: "#d1fae5", label: t("admin.siteEdit.subscription.statusActive") || "Active" },
-      trial: { color: "#f59e0b", bg: "#fef3c7", label: t("admin.siteEdit.subscription.statusTrial") || "Trial" },
-      past_due: { color: "#ef4444", bg: "#fee2e2", label: t("admin.siteEdit.subscription.statusPastDue") || "Past Due" },
-      canceled: { color: "#6b7280", bg: "#f3f4f6", label: t("admin.siteEdit.subscription.statusCanceled") || "Canceled" },
+      active: { color: "#10b981", bg: "#d1fae5", label: t("admin.siteEdit.subscription.statusActive") || "Aktív" },
+      trial: { color: "#f59e0b", bg: "#fef3c7", label: t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak" },
+      past_due: { color: "#ef4444", bg: "#fee2e2", label: t("admin.siteEdit.subscription.statusPastDue") || "Lejárt" },
+      canceled: { color: "#6b7280", bg: "#f3f4f6", label: t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva" },
+      suspended: { color: "#ef4444", bg: "#fee2e2", label: t("admin.siteEdit.subscription.statusSuspended") || "Felfüggesztve" },
+      expired: { color: "#6b7280", bg: "#f3f4f6", label: t("admin.siteEdit.subscription.statusExpired") || "Lejárt" },
     };
-    const statusInfo = statusMap[status] || statusMap.active;
+    const statusInfo = statusMap[status || "active"] || statusMap.active;
     return (
       <span
         style={{
@@ -1594,33 +1636,42 @@ function SubscriptionTab({
     return Math.min(100, (used / limit) * 100);
   };
 
-  // Track plan changes for animation
-  useEffect(() => {
-    if (previousPlan && previousPlan !== currentPlan) {
-      // Mark values that should animate
-      setAnimatedValues(new Set(["plan", "places", "featuredSlots", "events"]));
-      // Clear animation after animation completes
-      setTimeout(() => {
-        setAnimatedValues(new Set());
-      }, 600);
-    }
-    setPreviousPlan(currentPlan);
-  }, [currentPlan, previousPlan]);
+  // Plan labels and colors
+  const planLabels: Record<string, string> = {
+    free: t("admin.planFree") || "Free",
+    official: t("admin.planOfficial") || "Official",
+    pro: t("admin.planPro") || "Pro",
+    business: t("admin.planBusiness") || "Business",
+  };
+
+  // Plan descriptions
+  const planDescriptions: Record<string, string> = {
+    free: t("admin.planFreeDescription") || "1 hely, nincs esemény",
+    official: t("admin.planOfficialDescription") || "Korlátlan hely, események",
+    pro: t("admin.planProDescription") || "Korlátlan hely, kiemelések, egyedi domain",
+    business: t("admin.planBusinessDescription") || "Minden funkció, prioritás",
+  };
+
+  const planColors: Record<string, string> = {
+    free: "#6b7280",
+    official: "#3b82f6",
+    pro: "#667eea",
+    business: "#8b5cf6",
+  };
 
   const handlePlanChange = async (newPlan: "free" | "official" | "pro" | "business") => {
     if (!canEditPlan) {
-      // Show CTA for non-superadmin
-      showToast(t("admin.siteEdit.subscription.contactToUpgrade") || "Kérjük, lépjen kapcsolatba a csomagváltáshoz", "error");
+      showToast(t("admin.siteEdit.subscription.contactToUpgrade") || "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.", "info");
       return;
     }
 
     setIsSaving(true);
     try {
       await updateSite(site.id, { plan: newPlan });
-      setFormData({ ...formData, plan: newPlan });
+      // Reload subscription data to get updated entitlements
+      await loadSubscriptionData();
       showToast(t("admin.siteEdit.subscription.planUpdated") || "Csomag frissítve", "success");
-      // Don't call onUpdate() to avoid full reload - just update local state
-      // onUpdate(); // Commented out to prevent full table reload
+      setShowPlanSwitcher(false);
     } catch (err) {
       showToast(t("admin.errors.updateSiteFailed") || "Frissítés sikertelen", "error");
     } finally {
@@ -1636,8 +1687,8 @@ function SubscriptionTab({
         planStatus: formData.planStatus,
         planValidUntil: formData.planValidUntil ? new Date(formData.planValidUntil).toISOString() : null,
       });
+      await loadSubscriptionData();
       showToast(t("admin.siteEdit.subscription.saved") || "Mentve", "success");
-      onUpdate();
     } catch (err) {
       showToast(t("admin.errors.updateSiteFailed") || "Mentés sikertelen", "error");
     } finally {
@@ -1645,82 +1696,652 @@ function SubscriptionTab({
     }
   };
 
-  // Show planValidUntil only if needed
-  const shouldShowValidUntil = formData.planStatus !== "active" || formData.plan !== "free";
+  if (isLoading || !subscription || !entitlements) {
+    return (
+      <div style={{ padding: 48, textAlign: "center" }}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  const currentPlan = subscription.plan;
+  const limits = entitlements.limits;
+  const usage = entitlements.currentUsage;
 
   return (
-    <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
-        {t("admin.siteEdit.subscription.title") || "Előfizetés"}
-      </h3>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <style>{`
+        @keyframes valueUpdate {
+          0% {
+            transform: scale(1);
+            color: inherit;
+          }
+          50% {
+            transform: scale(1.15);
+            color: #667eea;
+          }
+          100% {
+            transform: scale(1);
+            color: inherit;
+          }
+        }
+      `}</style>
 
-      {/* Plan selection - role-based */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
-          {t("admin.plan")}
-        </label>
-        {canEditPlan ? (
-          <select
-            value={formData.plan}
-            onChange={(e) => handlePlanChange(e.target.value as any)}
-            disabled={isSaving}
-            style={{
-              width: "100%",
-              maxWidth: 400,
-              padding: "8px 12px",
-              border: "1px solid #d1d5db",
-              borderRadius: 6,
-              fontSize: 14,
-            }}
-          >
-            <option value="free">Free</option>
-            <option value="official">Official</option>
-            <option value="pro">Pro</option>
-            <option value="business">Business</option>
-          </select>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 16, fontWeight: 600, textTransform: "capitalize" }}>
-              {formData.plan}
-            </span>
-            {formData.plan !== "pro" && formData.plan !== "business" && (
+      {/* A. Hero Blokk - Aktuális csomag (kompakt) */}
+      <div
+        style={{
+          padding: "16px 24px",
+          background: `linear-gradient(135deg, ${planColors[currentPlan]}15 0%, ${planColors[currentPlan]}05 100%)`,
+          borderRadius: 12,
+          border: `2px solid ${planColors[currentPlan]}`,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 500 }}>
+                {t("admin.siteEdit.subscription.currentPlan") || "Jelenlegi csomag"}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "8px 18px",
+                    background: planColors[currentPlan],
+                    color: "white",
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    height: 40,
+                    animation: animatedValues.has("plan") ? "valueUpdate 0.6s ease-out" : "none",
+                    transform: animatedValues.has("plan") ? "scale(1.05)" : "scale(1)",
+                    transition: "transform 0.3s ease-out",
+                  }}
+                >
+                  {planLabels[currentPlan] || currentPlan.toUpperCase()}
+                </div>
+                {canEditPlan && (
+                  <button
+                    onClick={() => setShowPlanSwitcher(!showPlanSwitcher)}
+                    disabled={isSaving}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 18px",
+                      background: "white",
+                      border: `2px solid ${planColors[currentPlan]}`,
+                      borderRadius: 8,
+                      color: planColors[currentPlan],
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: isSaving ? "not-allowed" : "pointer",
+                      transition: "all 0.2s",
+                      opacity: isSaving ? 0.6 : 1,
+                      height: 40,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSaving) {
+                        e.currentTarget.style.background = planColors[currentPlan];
+                        e.currentTarget.style.color = "white";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSaving) {
+                        e.currentTarget.style.background = "white";
+                        e.currentTarget.style.color = planColors[currentPlan];
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>⚙️</span>
+                    {t("admin.siteEdit.subscription.changePlan") || "Csomag módosítása"}
+                  </button>
+                )}
+              </div>
+            </div>
+            {subscription.planValidUntil && (
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+                {t("admin.siteEdit.subscription.validUntil") || "Érvényes"}:{" "}
+                {new Date(subscription.planValidUntil).toLocaleDateString("hu-HU", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </div>
+            )}
+          </div>
+          <div>
+            {getStatusBadge(subscription.planStatus)}
+          </div>
+        </div>
+      </div>
+
+      {/* D. Plan Switcher - Only for superadmin, közvetlenül a hero blokk alatt */}
+      {canEditPlan && showPlanSwitcher && (
+        <div style={{ 
+          padding: 32, 
+          background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+          borderRadius: 16, 
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Decorative background element */}
+          <div style={{
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            background: `radial-gradient(circle, ${planColors[currentPlan]}10 0%, transparent 70%)`,
+            borderRadius: "50%",
+            pointerEvents: "none",
+          }} />
+          
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <h4 style={{ 
+              marginBottom: 24, 
+              fontSize: 20, 
+              fontWeight: 700, 
+              color: "#1e293b",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}>
+              <span style={{ fontSize: 24 }}>✨</span>
+              {t("admin.siteEdit.subscription.availablePlans") || "Elérhető csomagok"}
+            </h4>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", 
+              gap: 20, 
+              marginBottom: 24 
+            }}>
+              {(["free", "official", "pro", "business"] as const).map((plan) => (
+                <div
+                  key={plan}
+                  onClick={() => !isSaving && handlePlanChange(plan)}
+                  style={{
+                    padding: 24,
+                    background: currentPlan === plan 
+                      ? `linear-gradient(135deg, ${planColors[plan]}15 0%, ${planColors[plan]}08 100%)` 
+                      : "white",
+                    border: `2px solid ${currentPlan === plan ? planColors[plan] : "#e2e8f0"}`,
+                    borderRadius: 16,
+                    cursor: isSaving ? "not-allowed" : "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    opacity: isSaving ? 0.6 : 1,
+                    boxShadow: currentPlan === plan 
+                      ? `0 8px 20px ${planColors[plan]}25` 
+                      : "0 2px 8px rgba(0,0,0,0.04)",
+                    transform: currentPlan === plan ? "translateY(-2px)" : "translateY(0)",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSaving && currentPlan !== plan) {
+                      e.currentTarget.style.borderColor = planColors[plan];
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${planColors[plan]}08 0%, ${planColors[plan]}03 100%)`;
+                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow = `0 12px 24px ${planColors[plan]}20`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSaving && currentPlan !== plan) {
+                      e.currentTarget.style.borderColor = "#e2e8f0";
+                      e.currentTarget.style.background = "white";
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                    }
+                  }}
+                >
+                  {/* Current badge */}
+                  {currentPlan === plan && (
+                    <div style={{
+                      position: "absolute",
+                      top: 12,
+                      right: 12,
+                      padding: "4px 10px",
+                      background: planColors[plan],
+                      color: "white",
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      boxShadow: `0 2px 8px ${planColors[plan]}40`,
+                    }}>
+                      {t("admin.current") || "Jelenlegi"}
+                    </div>
+                  )}
+                  
+                  <div style={{ 
+                    fontSize: 28, 
+                    fontWeight: 800, 
+                    color: planColors[plan], 
+                    marginBottom: 12,
+                    letterSpacing: "-0.5px",
+                  }}>
+                    {planLabels[plan] || plan.toUpperCase()}
+                  </div>
+                  <div style={{ 
+                    fontSize: 13, 
+                    color: "#64748b", 
+                    lineHeight: 1.6,
+                    minHeight: 40,
+                    marginBottom: 16,
+                  }}>
+                    {planDescriptions[plan] || ""}
+                  </div>
+                  
+                  {/* Select button - always visible */}
+                  {currentPlan !== plan && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isSaving) handlePlanChange(plan);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "10px 16px",
+                        background: planColors[plan],
+                        color: "white",
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: isSaving ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                        opacity: isSaving ? 0.6 : 1,
+                        boxShadow: `0 2px 8px ${planColors[plan]}30`,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSaving) {
+                          e.currentTarget.style.background = planColors[plan];
+                          e.currentTarget.style.transform = "translateY(-1px)";
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${planColors[plan]}40`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSaving) {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = `0 2px 8px ${planColors[plan]}30`;
+                        }
+                      }}
+                    >
+                      {t("admin.selectPlan") || "Kiválasztás"}
+                    </button>
+                  )}
+                  
+                  {currentPlan === plan && (
+                    <div style={{
+                      width: "100%",
+                      padding: "10px 16px",
+                      background: `${planColors[plan]}15`,
+                      color: planColors[plan],
+                      border: `1px solid ${planColors[plan]}40`,
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      textAlign: "center",
+                    }}>
+                      {t("admin.current") || "Jelenlegi"}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "flex-end",
+              paddingTop: 16,
+              borderTop: "1px solid #e2e8f0",
+            }}>
               <button
-                onClick={() => handlePlanChange("pro")}
+                onClick={() => setShowPlanSwitcher(false)}
                 style={{
-                  padding: "8px 16px",
-                  border: "none",
-                  borderRadius: 6,
-                  background: "#667eea",
-                  color: "white",
+                  padding: "10px 20px",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 8,
+                  background: "white",
+                  color: "#475569",
                   cursor: "pointer",
                   fontSize: 14,
                   fontWeight: 500,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#94a3b8";
+                  e.currentTarget.style.background = "#f1f5f9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#cbd5e1";
+                  e.currentTarget.style.background = "white";
                 }}
               >
-                {t("admin.siteEdit.subscription.upgradeToPro") || "Váltás Pro-ra"}
+                {t("common.cancel") || "Mégse"}
               </button>
-            )}
+            </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* B. Feature Matrix + C. Usage - Két oszlop desktopon, egy mobilon */}
+      <div style={{ 
+        display: "grid", 
+        gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", 
+        gap: 24,
+      }}>
+        {/* B. Feature Matrix - Read-only */}
+        <div style={{ 
+          padding: 32, 
+          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+          borderRadius: 16, 
+          border: "2px solid #e2e8f0",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 400,
+        }}>
+          <h4 style={{ 
+            marginBottom: 24, 
+            fontSize: 20, 
+            fontWeight: 700, 
+            color: "#1e293b",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 24 }}>📦</span>
+            {t("admin.siteEdit.subscription.planContents") || "Csomag tartalma"}
+          </h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.placesCount") || "Helyek száma"}</span>
+              <span style={{ 
+                fontSize: 18, 
+                fontWeight: 700, 
+                color: limits.places === Infinity ? "#10b981" : "#1e293b",
+                padding: "4px 12px",
+                background: limits.places === Infinity ? "#d1fae5" : "#f1f5f9",
+                borderRadius: 8,
+              }}>
+                {limits.places === Infinity ? "∞" : limits.places}
+              </span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.featuredPlacesCount") || "Kiemelt helyek"}</span>
+              <span style={{ 
+                fontSize: 18, 
+                fontWeight: 700, 
+                color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
+                padding: "4px 12px",
+                background: limits.featuredSlots > 0 ? "#d1fae5" : "#fee2e2",
+                borderRadius: 8,
+              }}>
+                {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
+              </span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.events")}</span>
+              <span style={{ 
+                fontSize: 24, 
+                color: limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
+                fontWeight: 700,
+              }}>
+                {limits.events === Infinity ? "✓" : limits.events > 0 ? "✓" : "✗"}
+              </span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.multiLanguage") || "Több nyelv"}</span>
+              <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.customDomain") || "Egyedi domain"}</span>
+              <span style={{ fontSize: 24, color: limits.customDomain ? "#10b981" : "#dc2626", fontWeight: 700 }}>
+                {limits.customDomain ? "✓" : "✗"}
+              </span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.seoSettings") || "SEO beállítások"}</span>
+              <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
+            </div>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 500, color: "#334155" }}>{t("admin.pushNotifications") || "Push értesítés"}</span>
+              <span style={{ fontSize: 24, color: "#dc2626", fontWeight: 700 }}>✗</span>
+            </div>
+          </div>
+        </div>
+
+        {/* C. Usage / Quota */}
+        <div style={{ 
+          padding: 32, 
+          background: "linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)",
+          borderRadius: 16, 
+          border: "2px solid #e2e8f0",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 400,
+        }}>
+          <h4 style={{ 
+            marginBottom: 24, 
+            fontSize: 20, 
+            fontWeight: 700, 
+            color: "#1e293b",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 24 }}>📊</span>
+            {t("admin.siteEdit.subscription.usage") || "Használat"}
+          </h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
+            {/* Places */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#334155" }}>{t("admin.places")}</span>
+                <span 
+                  style={{ 
+                    fontSize: 18, 
+                    fontWeight: 700,
+                    animation: animatedValues.has("places") ? "valueUpdate 0.6s ease-out" : "none",
+                    transform: animatedValues.has("places") ? "scale(1.1)" : "scale(1)",
+                    transition: "transform 0.3s ease-out",
+                    color: usage.places >= (limits.places === Infinity ? 0 : limits.places) ? "#ef4444" : "#1e293b",
+                    padding: "6px 14px",
+                    background: usage.places >= (limits.places === Infinity ? 0 : limits.places) ? "#fee2e2" : "#f1f5f9",
+                    borderRadius: 10,
+                  }}
+                >
+                  {usage.places} / {limits.places === Infinity ? "∞" : limits.places}
+                  {limits.places !== Infinity && usage.places >= limits.places && (
+                    <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 16 }}>⚠️</span>
+                  )}
+                </span>
+              </div>
+              {limits.places !== Infinity && (
+                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                  <div
+                    style={{
+                      width: `${getProgress(usage.places, limits.places)}%`,
+                      height: "100%",
+                      background: usage.places >= limits.places 
+                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
+                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      transition: "width 0.3s ease",
+                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Featured slots */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#334155" }}>{t("admin.featuredPlaces") || "Kiemelések"}</span>
+                <span 
+                  style={{ 
+                    fontSize: 18, 
+                    fontWeight: 700,
+                    animation: animatedValues.has("featuredSlots") ? "valueUpdate 0.6s ease-out" : "none",
+                    transform: animatedValues.has("featuredSlots") ? "scale(1.1)" : "scale(1)",
+                    transition: "transform 0.3s ease-out",
+                    color: limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots ? "#ef4444" : "#1e293b",
+                    padding: "6px 14px",
+                    background: limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots ? "#fee2e2" : "#f1f5f9",
+                    borderRadius: 10,
+                  }}
+                >
+                  {usage.featuredPlaces} / {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
+                  {limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots && (
+                    <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 16 }}>⚠️</span>
+                  )}
+                </span>
+              </div>
+              {limits.featuredSlots === 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#6b7280", fontSize: 14, padding: 12, background: "#f3f4f6", borderRadius: 10, border: "1px solid #e5e7eb" }}>
+                  <span style={{ fontSize: 20 }}>🔒</span>
+                  <span>{t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}</span>
+                </div>
+              ) : limits.featuredSlots !== Infinity ? (
+                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                  <div
+                    style={{
+                      width: `${getProgress(usage.featuredPlaces, limits.featuredSlots)}%`,
+                      height: "100%",
+                      background: usage.featuredPlaces >= limits.featuredSlots 
+                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
+                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      transition: "width 0.3s ease",
+                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>∞</div>
+              )}
+            </div>
+
+            {/* Events */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#334155" }}>{t("admin.events")}</span>
+                <span 
+                  style={{ 
+                    fontSize: 18, 
+                    fontWeight: 700,
+                    animation: animatedValues.has("events") ? "valueUpdate 0.6s ease-out" : "none",
+                    transform: animatedValues.has("events") ? "scale(1.1)" : "scale(1)",
+                    transition: "transform 0.3s ease-out",
+                    color: limits.events !== Infinity && usage.events >= limits.events ? "#ef4444" : "#1e293b",
+                    padding: "6px 14px",
+                    background: limits.events !== Infinity && usage.events >= limits.events ? "#fee2e2" : "#f1f5f9",
+                    borderRadius: 10,
+                  }}
+                >
+                  {usage.events} / {limits.events === Infinity ? "∞" : limits.events}
+                </span>
+              </div>
+              {limits.events === 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#6b7280", fontSize: 14, padding: 12, background: "#f3f4f6", borderRadius: 10, border: "1px solid #e5e7eb" }}>
+                  <span style={{ fontSize: 20 }}>🔒</span>
+                  <span>{t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}</span>
+                </div>
+              ) : limits.events !== Infinity ? (
+                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                  <div
+                    style={{
+                      width: `${getProgress(usage.events, limits.events)}%`,
+                      height: "100%",
+                      background: usage.events >= limits.events 
+                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
+                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      transition: "width 0.3s ease",
+                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>∞</div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Status badge */}
-      <div style={{ marginBottom: 24 }}>
-        <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
-          {t("admin.siteEdit.subscription.status") || "Státusz"}
-        </label>
-        {getStatusBadge(formData.planStatus)}
-      </div>
+      {/* Non-superadmin message */}
+      {!canEditPlan && (
+        <div style={{ padding: 16, background: "#fef3c7", borderRadius: 8, border: "1px solid #fbbf24" }}>
+          <div style={{ fontSize: 14, color: "#92400e" }}>
+            {t("admin.siteEdit.subscription.contactToUpgrade") || "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel."}
+          </div>
+        </div>
+      )}
 
       {/* Advanced settings (superadmin only) */}
       {isSuperAdmin && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginTop: 8 }}>
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             style={{
@@ -1737,232 +2358,248 @@ function SubscriptionTab({
           </button>
 
           {showAdvanced && (
-            <div style={{ marginTop: 16, padding: 16, background: "#f9fafb", borderRadius: 8, border: "1px solid #e5e7eb" }}>
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
-                  {t("admin.planStatus")}
-                </label>
-                <select
-                  value={formData.planStatus}
-                  onChange={(e) => setFormData({ ...formData, planStatus: e.target.value })}
-                  style={{
-                    width: "100%",
-                    maxWidth: 400,
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize: 14,
-                  }}
-                >
-                  <option value="trial">Trial</option>
-                  <option value="active">Active</option>
-                  <option value="past_due">Past Due</option>
-                  <option value="canceled">Canceled</option>
-                </select>
-              </div>
+            <div style={{ 
+              marginTop: 16, 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
+              gap: 24,
+            }}>
+              {/* Dropdown mezők bal oldalon */}
+              <div style={{ padding: 20, background: "#f9fafb", borderRadius: 12, border: "1px solid #e5e7eb" }}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+                    {t("admin.planStatus")}
+                  </label>
+                  <select
+                    value={formData.planStatus}
+                    onChange={(e) => setFormData({ ...formData, planStatus: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 8,
+                      fontSize: 14,
+                      background: "white",
+                    }}
+                  >
+                    <option value="trial">{t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak"}</option>
+                    <option value="active">{t("admin.siteEdit.subscription.statusActive") || "Aktív"}</option>
+                    <option value="past_due">{t("admin.siteEdit.subscription.statusPastDue") || "Lejárt"}</option>
+                    <option value="canceled">{t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva"}</option>
+                  </select>
+                </div>
 
-              {shouldShowValidUntil && (
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
                     {t("admin.planValidUntil")}
                   </label>
-                  <input
-                    type="date"
-                    value={formData.planValidUntil}
-                    onChange={(e) => setFormData({ ...formData, planValidUntil: e.target.value })}
-                    style={{
-                      width: "100%",
-                      maxWidth: 400,
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: 6,
-                      fontSize: 14,
-                    }}
-                  />
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                      type="date"
+                      value={formData.planValidUntil}
+                      onChange={(e) => setFormData({ ...formData, planValidUntil: e.target.value })}
+                      style={{
+                        flex: 1,
+                        padding: "10px 14px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: 8,
+                        fontSize: 14,
+                        background: "white",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentDate = formData.planValidUntil 
+                          ? new Date(formData.planValidUntil) 
+                          : new Date();
+                        const newDate = new Date(currentDate);
+                        newDate.setDate(newDate.getDate() + 30);
+                        setFormData({ 
+                          ...formData, 
+                          planValidUntil: newDate.toISOString().split('T')[0] 
+                        });
+                      }}
+                      style={{
+                        padding: "10px 16px",
+                        border: "1px solid #10b981",
+                        borderRadius: 8,
+                        background: "#10b981",
+                        color: "white",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#059669";
+                        e.currentTarget.style.borderColor = "#059669";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#10b981";
+                        e.currentTarget.style.borderColor = "#10b981";
+                      }}
+                    >
+                      +30 {t("admin.days") || "nap"}
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              <button
-                onClick={handleSaveAdvanced}
-                disabled={isSaving}
-                style={{
-                  padding: "8px 16px",
-                  border: "none",
-                  borderRadius: 6,
-                  background: "#667eea",
-                  color: "white",
-                  cursor: isSaving ? "not-allowed" : "pointer",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  opacity: isSaving ? 0.6 : 1,
-                }}
-              >
-                {isSaving ? t("common.saving") : t("common.save")}
-              </button>
+                <button
+                  onClick={handleSaveAdvanced}
+                  disabled={isSaving}
+                  style={{
+                    width: "100%",
+                    padding: "10px 16px",
+                    border: "none",
+                    borderRadius: 8,
+                    background: "#667eea",
+                    color: "white",
+                    cursor: isSaving ? "not-allowed" : "pointer",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    opacity: isSaving ? 0.6 : 1,
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSaving) {
+                      e.currentTarget.style.background = "#5568d3";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSaving) {
+                      e.currentTarget.style.background = "#667eea";
+                    }
+                  }}
+                >
+                  {isSaving ? t("common.saving") : t("common.save")}
+                </button>
+              </div>
+
+              {/* Korlátok jobb oldalon desktopon */}
+              <div style={{ 
+                padding: 24, 
+                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+                borderRadius: 16, 
+                border: "2px solid #e2e8f0",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+              }}>
+                <h4 style={{ 
+                  marginBottom: 24, 
+                  fontSize: 20, 
+                  fontWeight: 700, 
+                  color: "#1e293b",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}>
+                  <span style={{ fontSize: 24 }}>📊</span>
+                  {t("admin.limits") || "Korlátok"}
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    padding: "18px 22px",
+                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                    borderRadius: 12,
+                    border: "2px solid #e2e8f0",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
+                      {t("admin.places") || "Helyek"}
+                    </span>
+                    <span style={{ 
+                      fontSize: 36, 
+                      fontWeight: 900, 
+                      color: limits.places === Infinity ? "#10b981" : "#1e293b",
+                      padding: "12px 20px",
+                      background: limits.places === Infinity 
+                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
+                        : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
+                      borderRadius: 12,
+                      minWidth: 100,
+                      textAlign: "center",
+                      boxShadow: limits.places === Infinity 
+                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
+                        : "0 2px 8px rgba(0,0,0,0.1)",
+                      letterSpacing: "-1px",
+                    }}>
+                      {limits.places === Infinity ? "∞" : limits.places}
+                    </span>
+                  </div>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    padding: "18px 22px",
+                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                    borderRadius: 12,
+                    border: "2px solid #e2e8f0",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
+                      {t("admin.featuredPlaces") || "Kiemelt helyek"}
+                    </span>
+                    <span style={{ 
+                      fontSize: 36, 
+                      fontWeight: 900, 
+                      color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
+                      padding: "12px 20px",
+                      background: limits.featuredSlots > 0 
+                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
+                        : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                      borderRadius: 12,
+                      minWidth: 100,
+                      textAlign: "center",
+                      boxShadow: limits.featuredSlots > 0 
+                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
+                        : "0 4px 12px rgba(220, 38, 38, 0.2)",
+                      letterSpacing: "-1px",
+                    }}>
+                      {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
+                    </span>
+                  </div>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    padding: "18px 22px",
+                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                    borderRadius: 12,
+                    border: "2px solid #e2e8f0",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
+                      {t("admin.events") || "Események"}
+                    </span>
+                    <span style={{ 
+                      fontSize: 36, 
+                      fontWeight: 900, 
+                      color: limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
+                      padding: "12px 20px",
+                      background: limits.events === Infinity || limits.events > 0 
+                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
+                        : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                      borderRadius: 12,
+                      minWidth: 100,
+                      textAlign: "center",
+                      boxShadow: limits.events === Infinity || limits.events > 0 
+                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
+                        : "0 4px 12px rgba(220, 38, 38, 0.2)",
+                      letterSpacing: "-1px",
+                    }}>
+                      {limits.events === Infinity ? "∞" : limits.events}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
-
-      {/* Limits display with usage */}
-      <div style={{ padding: 20, background: "#f9fafb", borderRadius: 12, border: "1px solid #e5e7eb", marginTop: 24 }}>
-        <style>{`
-          @keyframes valueUpdate {
-            0% {
-              transform: scale(1);
-              color: inherit;
-            }
-            50% {
-              transform: scale(1.15);
-              color: #667eea;
-            }
-            100% {
-              transform: scale(1);
-              color: inherit;
-            }
-          }
-        `}</style>
-        <h4 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600, color: "#374151" }}>
-          {t("admin.siteEdit.subscription.limits") || "Korlátok"}
-        </h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Places */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{t("admin.places")}</span>
-              <span 
-                style={{ 
-                  fontSize: 14, 
-                  fontWeight: 600,
-                  animation: animatedValues.has("places") ? "valueUpdate 0.6s ease-out" : "none",
-                  transform: animatedValues.has("places") ? "scale(1.1)" : "scale(1)",
-                  transition: "transform 0.3s ease-out",
-                }}
-              >
-                {usage.places} / {limits.places === Infinity ? "∞" : limits.places}
-              </span>
-            </div>
-            {limits.places !== Infinity && (
-              <div style={{ width: "100%", height: 8, background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${getProgress(usage.places, limits.places)}%`,
-                    height: "100%",
-                    background: usage.places >= limits.places ? "#ef4444" : "#667eea",
-                    transition: "width 0.3s ease",
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Featured slots */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{t("admin.featuredSlots")}</span>
-              <span 
-                style={{ 
-                  fontSize: 14, 
-                  fontWeight: 600,
-                  animation: animatedValues.has("featuredSlots") ? "valueUpdate 0.6s ease-out" : "none",
-                  transform: animatedValues.has("featuredSlots") ? "scale(1.1)" : "scale(1)",
-                  transition: "transform 0.3s ease-out",
-                }}
-              >
-                {usage.featured} / {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
-              </span>
-            </div>
-            {limits.featuredSlots === 0 ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#6b7280", fontSize: 13 }}>
-                🔒 {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
-                {!canEditPlan && (
-                  <button
-                    onClick={() => handlePlanChange("pro")}
-                    style={{
-                      padding: "4px 12px",
-                      border: "none",
-                      borderRadius: 4,
-                      background: "#667eea",
-                      color: "white",
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("admin.siteEdit.subscription.upgradeToPro") || "Váltás Pro-ra"}
-                  </button>
-                )}
-              </div>
-            ) : limits.featuredSlots !== Infinity ? (
-              <div style={{ width: "100%", height: 8, background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${getProgress(usage.featured, limits.featuredSlots)}%`,
-                    height: "100%",
-                    background: usage.featured >= limits.featuredSlots ? "#ef4444" : "#667eea",
-                    transition: "width 0.3s ease",
-                  }}
-                />
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: "#6b7280" }}>∞</div>
-            )}
-          </div>
-
-          {/* Events */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{t("admin.events")}</span>
-              <span 
-                style={{ 
-                  fontSize: 14, 
-                  fontWeight: 600,
-                  animation: animatedValues.has("events") ? "valueUpdate 0.6s ease-out" : "none",
-                  transform: animatedValues.has("events") ? "scale(1.1)" : "scale(1)",
-                  transition: "transform 0.3s ease-out",
-                }}
-              >
-                {usage.events} / {limits.events === Infinity ? "∞" : limits.events}
-              </span>
-            </div>
-            {limits.events === 0 ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#6b7280", fontSize: 13 }}>
-                🔒 {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
-                {!canEditPlan && (
-                  <button
-                    onClick={() => handlePlanChange("pro")}
-                    style={{
-                      padding: "4px 12px",
-                      border: "none",
-                      borderRadius: 4,
-                      background: "#667eea",
-                      color: "white",
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("admin.siteEdit.subscription.upgradeToPro") || "Váltás Pro-ra"}
-                  </button>
-                )}
-              </div>
-            ) : limits.events !== Infinity ? (
-              <div style={{ width: "100%", height: 8, background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${getProgress(usage.events, limits.events)}%`,
-                    height: "100%",
-                    background: usage.events >= limits.events ? "#ef4444" : "#667eea",
-                    transition: "width 0.3s ease",
-                  }}
-                />
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: "#6b7280" }}>∞</div>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

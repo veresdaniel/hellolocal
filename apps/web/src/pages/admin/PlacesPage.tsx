@@ -1,7 +1,7 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect, useRef, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAdminSite, useAdminTenant } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
@@ -61,6 +61,7 @@ interface Place {
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const { showToast } = useToast();
   const authContext = useContext(AuthContext);
@@ -692,6 +693,7 @@ export function PlacesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
+          navigate("/admin");
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
