@@ -1,7 +1,7 @@
 // src/components/AdminLayout.tsx
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { AdminSiteContext } from "../contexts/AdminSiteContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
@@ -30,6 +30,9 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
+  // Track if component is unmounting to prevent hook errors during logout/navigation
+  const isUnmountingRef = useRef(false);
+  
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -41,11 +44,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [previousLocation, setPreviousLocation] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
+  // Set unmounting flag on unmount
+  useEffect(() => {
+    return () => {
+      isUnmountingRef.current = true;
+    };
+  }, []);
+  
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
   
   // Initialize previous location on mount (only once)
   useEffect(() => {
+    if (isUnmountingRef.current) return;
     if (previousLocation === null) {
       setPreviousLocation(location.pathname);
     }
@@ -53,6 +64,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   
   // Detect route changes and show skeleton during navigation
   useEffect(() => {
+    if (isUnmountingRef.current) return;
+    
     // Skip if previousLocation is not initialized yet
     if (previousLocation === null) {
       return;
@@ -66,7 +79,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       // Safety timeout: reset isNavigating after 2 seconds if it's still true
       // This prevents the skeleton from getting stuck
       const safetyTimer = setTimeout(() => {
-        setIsNavigating(false);
+        if (!isUnmountingRef.current) {
+          setIsNavigating(false);
+        }
       }, 2000);
       
       return () => clearTimeout(safetyTimer);
@@ -85,32 +100,33 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   
   // Reset isNavigating when navigation completes
   useEffect(() => {
+    if (isUnmountingRef.current) return;
     if (navigation?.state === "idle" && isNavigating) {
       // Navigation completed, reset after a short delay to allow page to render
       const timer = setTimeout(() => {
-        setIsNavigating(false);
+        if (!isUnmountingRef.current) {
+          setIsNavigating(false);
+        }
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [navigation?.state, isNavigating]);
   
+  // Use useContext directly to avoid throwing error if AuthContext is not available
+  const authContext = useContext(AuthContext);
+  
+  // IMPORTANT: All hooks must be called before any conditional returns
+  // This ensures React hooks are called in the same order every render
   // Initialize global cache management for all admin pages
   useAdminCache();
   // Version check - will check for updates and show toast if new version available
   useVersionCheck();
   
-  // Use useContext directly to avoid throwing error if AuthContext is not available
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    // If AuthContext is not available, show error or redirect
-    return <div>Error: Authentication context not available</div>;
-  }
-  const { user, logout, isLoading } = authContext;
-  
   // Get selected site from AdminSiteContext
   const siteContext = useContext(AdminSiteContext);
   const selectedSiteId = siteContext?.selectedSiteId;
   const sites = siteContext?.sites ?? [];
+  const siteError = siteContext?.error ?? null;
   const currentSite = sites.find((s) => s.id === selectedSiteId);
   
   // Determine site slug: use current site slug if available, otherwise undefined
@@ -119,18 +135,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   
   const { showWarning, secondsRemaining } = useSessionWarning();
   const queryClient = useQueryClient();
-
+  
   // Load site name and brand badge icon from settings
+  // IMPORTANT: This hook must be called before any conditional returns
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteSlug],
     queryFn: () => getPlatformSettings(lang, siteSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     enabled: !!siteSlug && !siteContext?.isLoading, // Only fetch if we have a valid site slug and sites are loaded
   });
-
+  
   // Listen for site settings changes
   useEffect(() => {
+    if (isUnmountingRef.current) return;
+    
     const handlePlatformSettingsChanged = () => {
+      if (isUnmountingRef.current) return;
       queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteSlug] });
       queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteSlug] });
     };
@@ -141,34 +161,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, [lang, siteSlug, queryClient]);
 
-  const siteName = platformSettings?.siteName;
-  const brandBadgeIcon = platformSettings?.brandBadgeIcon;
-
-  // If no user and not loading, redirect to login (should not happen if ProtectedRoute works correctly, but safety check)
-  if (!isLoading && !user) {
-    window.location.href = `/${lang}/admin/login`;
-    return null;
-  }
-  
-  // If still loading, show skeleton screen (prevents layout shift)
-  if (isLoading) {
-    return (
-      <div style={{ 
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }} />
-    );
-  }
-  
-  // If no user after loading, should not happen but safety check
-  if (!user) {
-    window.location.href = `/${lang}/admin/login`;
-    return null;
-  }
-
   // Check screen size for responsive behavior
   useEffect(() => {
+    if (isUnmountingRef.current) return;
+    
     const checkScreenSize = () => {
+      if (isUnmountingRef.current) return;
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) {
         setIsMobileMenuOpen(false);
@@ -182,6 +180,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Sync i18n language with URL parameter
   useEffect(() => {
+    if (isUnmountingRef.current) return;
     if (lang && i18n.language !== lang) {
       i18n.changeLanguage(lang);
       localStorage.setItem("i18nextLng", lang);
@@ -190,10 +189,35 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Close mobile menu when route changes
   useEffect(() => {
+    if (isUnmountingRef.current) return;
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+  
+  // Now we can check conditions after all hooks are called
+  if (!authContext) {
+    // If AuthContext is not available, show error or redirect
+    return <div>Error: Authentication context not available</div>;
+  }
+  const { user, logout, isLoading } = authContext;
+
+  const siteName = platformSettings?.siteName;
+  const brandBadgeIcon = platformSettings?.brandBadgeIcon;
+
+  // If still loading, show skeleton screen (prevents layout shift)
+  // Note: ProtectedRoute already handles authentication, so we don't need to check for user here
+  if (isLoading) {
+    return (
+      <div style={{ 
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      }} />
+    );
+  }
 
   const handleLogout = async () => {
+    // Mark component as unmounting to prevent hook errors
+    isUnmountingRef.current = true;
+    
     // Store current language before logout
     const currentLang = lang;
     localStorage.setItem("logoutRedirectLang", currentLang);
@@ -718,6 +742,30 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         )}
       </nav>
+      
+      {/* Error Banner for Schema Errors */}
+      {siteError && (
+        <div
+          style={{
+            background: "#fff3cd",
+            border: "1px solid #ffc107",
+            color: "#856404",
+            padding: "12px 20px",
+            margin: "0",
+            textAlign: "center",
+            fontSize: "14px",
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            position: "sticky",
+            top: "60px",
+            zIndex: 999,
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <span style={{ marginRight: "8px" }}>⚠️</span>
+          {siteError}
+        </div>
+      )}
       
       {/* Main Content */}
       <main style={{ 

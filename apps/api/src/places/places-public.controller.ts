@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
 import { PlacesService } from "./places.service";
+import { PlacesPriceListService } from "./places-price-list.service";
 
 /**
  * Public controller for place-related endpoints.
@@ -13,7 +14,10 @@ import { PlacesService } from "./places.service";
  */
 @Controller("/api/public/:lang/:siteKey/places")
 export class PlacesPublicController {
-  constructor(private readonly placesService: PlacesService) {}
+  constructor(
+    private readonly placesService: PlacesService,
+    private readonly priceListService: PlacesPriceListService
+  ) {}
 
   /**
    * Validates that the lang parameter is a valid language code.
@@ -71,13 +75,20 @@ export class PlacesPublicController {
    * - slug: Public-facing slug of the place
    */
   @Get(":slug")
-  detail(
+  async detail(
     @Param("lang") lang: string,
     @Param("siteKey") siteKey: string,
     @Param("slug") slug: string
   ) {
     this.validateLang(lang);
-    return this.placesService.detail({ lang, siteKey, slug });
+    const place = await this.placesService.detail({ lang, siteKey, slug });
+    // Add hasPriceList flag
+    const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
+    const hasPriceList = await this.priceListService.hasPriceList(place.id, site.siteId);
+    return {
+      ...place,
+      hasPriceList,
+    };
   }
 
   /**
@@ -92,12 +103,39 @@ export class PlacesPublicController {
    * - placeId: Place entity ID
    */
   @Get("by-id/:placeId")
-  detailById(
+  async detailById(
     @Param("lang") lang: string,
     @Param("siteKey") siteKey: string,
     @Param("placeId") placeId: string
   ) {
     this.validateLang(lang);
-    return this.placesService.detailById({ lang, siteKey, placeId });
+    const place = await this.placesService.detailById({ lang, siteKey, placeId });
+    // Add hasPriceList flag
+    const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
+    const hasPriceList = await this.priceListService.hasPriceList(placeId, site.siteId);
+    return {
+      ...place,
+      hasPriceList,
+    };
+  }
+
+  /**
+   * Gets price list for a place (public)
+   * 
+   * Path parameters:
+   * - lang: Language code (hu, en, de)
+   * - siteKey: Site key from URL path
+   * - placeId: Place entity ID
+   */
+  @Get("by-id/:placeId/pricelist")
+  async getPriceList(
+    @Param("lang") lang: string,
+    @Param("siteKey") siteKey: string,
+    @Param("placeId") placeId: string
+  ) {
+    this.validateLang(lang);
+    const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
+    // For public endpoint, requireAuth is false (no authentication check)
+    return this.priceListService.getPriceList(placeId, site.siteId, false);
   }
 }

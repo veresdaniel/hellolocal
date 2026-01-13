@@ -12,7 +12,7 @@ export class AdminSiteSubscriptionController {
       (await this.prisma.siteSubscription.findUnique({ 
         where: { siteId } 
       })) ?? {
-        plan: "FREE",
+        plan: "BASIC",
         status: "ACTIVE",
         validUntil: null,
         note: null,
@@ -24,7 +24,7 @@ export class AdminSiteSubscriptionController {
   async update(
     @Param("siteId") siteId: string,
     @Body() body: { 
-      plan: "FREE" | "BASIC" | "PRO"; 
+      plan: "BASIC" | "PRO" | "BUSINESS"; 
       status: "ACTIVE" | "SUSPENDED" | "EXPIRED"; 
       validUntil?: string | null; 
       note?: string | null;

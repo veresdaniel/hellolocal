@@ -414,7 +414,7 @@ export class AdminPlaceService {
         featuredUntil: dto.featuredUntil 
           ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
           : null,
-        isActive: dto.isActive ?? true,
+        isActive: dto.isActive ?? false,
         translations: {
           create: translations.map((t) => ({
             lang: t.lang,

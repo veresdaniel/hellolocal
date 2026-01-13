@@ -204,6 +204,32 @@ export class PlatformSettingsService {
         planOverrides: (brand?.planOverrides as any) || null,
         placePlanOverrides: (brand?.placePlanOverrides as any) || null,
       },
+      platform: await this.getPlatformLocaleSettings(),
+    };
+  }
+
+  /**
+   * Get platform settings (locale, currency, timeFormat, weekStartsOn) from AppSetting
+   */
+  async getPlatformLocaleSettings(): Promise<{
+    locale: string;
+    currency: string;
+    timeFormat: "24h" | "12h";
+    weekStartsOn: number;
+  }> {
+    // Get platform settings from AppSetting
+    const [localeSetting, currencySetting, timeFormatSetting, weekStartsOnSetting] = await Promise.all([
+      this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
+    ]);
+
+    return {
+      locale: localeSetting?.value || "hu-HU",
+      currency: currencySetting?.value || "HUF",
+      timeFormat: (timeFormatSetting?.value === "12h" ? "12h" : "24h") as "24h" | "12h",
+      weekStartsOn: weekStartsOnSetting?.value ? parseInt(weekStartsOnSetting.value, 10) : 1,
     };
   }
 

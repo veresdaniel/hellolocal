@@ -1,6 +1,6 @@
 // entitlements.config.ts
 export type Entitlements = {
-  plan: "FREE" | "BASIC" | "PRO";
+  plan: "BASIC" | "PRO" | "BUSINESS";
   status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
   validUntil?: string | null;
 
@@ -38,41 +38,41 @@ export type Entitlements = {
 };
 
 export const PLAN_DEFS = {
-  FREE: {
+  BASIC: {
     limits: {
-      placesMax: 3,
-      featuredPlacesMax: 0,
-      galleryImagesPerPlaceMax: 3,
-      eventsPerMonthMax: 0,
-      siteMembersMax: 2,
-      domainAliasesMax: 0,
+      placesMax: Infinity, // Korlátlan place (default) - mind a tulaj, mind az oda regisztráló felhasználó létrehozhat
+      featuredPlacesMax: 0, // Nincs kiemelt helyek
+      galleryImagesPerPlaceMax: Infinity, // Korlátlan kép
+      eventsPerMonthMax: 0, // Nincs események
+      siteMembersMax: Infinity, // Korlátlan tag
+      domainAliasesMax: 0, // Nincs egyedi domain
       languagesMax: 1,
-      galleriesMax: 5,
-      imagesPerGalleryMax: 10,
-      galleriesPerPlaceMax: 1,
-      galleriesPerEventMax: 1,
+      galleriesMax: Infinity,
+      imagesPerGalleryMax: Infinity,
+      galleriesPerPlaceMax: Infinity,
+      galleriesPerEventMax: Infinity,
     },
     features: {
-      eventsEnabled: false,
-      placeSeoEnabled: false,
+      eventsEnabled: false, // Nincs események
+      placeSeoEnabled: false, // Nincs SEO
       extrasEnabled: false,
-      customDomainEnabled: false,
+      customDomainEnabled: false, // Nincs egyedi domain
       eventLogEnabled: false,
     },
   },
-  BASIC: {
+  PRO: {
     limits: {
-      placesMax: 30,
-      featuredPlacesMax: 3,
-      galleryImagesPerPlaceMax: 10,
-      eventsPerMonthMax: 30,
-      siteMembersMax: 5,
-      domainAliasesMax: 0,
-      languagesMax: 2,
-      galleriesMax: 20,
-      imagesPerGalleryMax: 30,
-      galleriesPerPlaceMax: 3,
-      galleriesPerEventMax: 2,
+      placesMax: Infinity,
+      featuredPlacesMax: 15,
+      galleryImagesPerPlaceMax: 30,
+      eventsPerMonthMax: 200,
+      siteMembersMax: 20,
+      domainAliasesMax: 5,
+      languagesMax: 3,
+      galleriesMax: Infinity,
+      imagesPerGalleryMax: 100,
+      galleriesPerPlaceMax: Infinity,
+      galleriesPerEventMax: Infinity,
     },
     features: {
       eventsEnabled: true,
@@ -82,17 +82,17 @@ export const PLAN_DEFS = {
       eventLogEnabled: true,
     },
   },
-  PRO: {
+  BUSINESS: {
     limits: {
-      placesMax: 150,
-      featuredPlacesMax: 15,
-      galleryImagesPerPlaceMax: 30,
-      eventsPerMonthMax: 200,
-      siteMembersMax: 20,
-      domainAliasesMax: 5,
-      languagesMax: 3,
+      placesMax: Infinity,
+      featuredPlacesMax: Infinity,
+      galleryImagesPerPlaceMax: Infinity,
+      eventsPerMonthMax: Infinity,
+      siteMembersMax: Infinity,
+      domainAliasesMax: Infinity,
+      languagesMax: Infinity,
       galleriesMax: Infinity,
-      imagesPerGalleryMax: 100,
+      imagesPerGalleryMax: Infinity,
       galleriesPerPlaceMax: Infinity,
       galleriesPerEventMax: Infinity,
     },

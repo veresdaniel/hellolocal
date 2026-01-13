@@ -504,7 +504,7 @@ function FeatureMatrixEditor({
   setFeatureMatrix: (matrix: FeatureMatrix) => void;
   t: any;
 }) {
-  const plans = ["FREE", "BASIC", "PRO"] as const;
+  const plans = ["BASIC", "PRO", "BUSINESS"] as const;
   const [isMobile, setIsMobile] = useState(false);
   
   useEffect(() => {
@@ -519,47 +519,47 @@ function FeatureMatrixEditor({
   // Get default values from PLAN_DEFS (imported from backend config)
   // Since we can't import from backend in frontend, we'll use the same structure
   const defaultDefs = {
-    FREE: {
+    BASIC: {
       limits: {
-        placesMax: 3,
-        featuredPlacesMax: 0,
-        galleryImagesPerPlaceMax: 3,
-        eventsPerMonthMax: 0,
-        siteMembersMax: 2,
-        domainAliasesMax: 0,
+        placesMax: Infinity, // Korlátlan place (default)
+        featuredPlacesMax: 0, // Nincs kiemelt helyek
+        galleryImagesPerPlaceMax: Infinity, // Korlátlan kép
+        eventsPerMonthMax: 0, // Nincs események
+        siteMembersMax: Infinity, // Korlátlan tag
+        domainAliasesMax: 0, // Nincs egyedi domain
         languagesMax: 1,
-        galleriesMax: 5,
-        imagesPerGalleryMax: 10,
-        galleriesPerPlaceMax: 1,
-        galleriesPerEventMax: 1,
+        galleriesMax: Infinity,
+        imagesPerGalleryMax: Infinity,
+        galleriesPerPlaceMax: Infinity,
+        galleriesPerEventMax: Infinity,
       },
       features: {
-        eventsEnabled: false,
-        placeSeoEnabled: false,
+        eventsEnabled: false, // Nincs események
+        placeSeoEnabled: false, // Nincs SEO
         extrasEnabled: false,
-        customDomainEnabled: false,
+        customDomainEnabled: false, // Nincs egyedi domain
         eventLogEnabled: false,
         heroImage: true,
         contacts: true,
-        siteSeo: true,
+        siteSeo: false, // Nincs SEO
         canonicalSupport: true,
         multipleDomainAliases: false,
-        pushSubscription: false,
+        pushSubscription: false, // Nincs push
       },
     },
-    BASIC: {
+    PRO: {
       limits: {
-        placesMax: 30,
-        featuredPlacesMax: 3,
-        galleryImagesPerPlaceMax: 10,
-        eventsPerMonthMax: 30,
-        siteMembersMax: 5,
-        domainAliasesMax: 0,
-        languagesMax: 2,
-        galleriesMax: 20,
-        imagesPerGalleryMax: 30,
-        galleriesPerPlaceMax: 3,
-        galleriesPerEventMax: 2,
+        placesMax: Infinity,
+        featuredPlacesMax: 15,
+        galleryImagesPerPlaceMax: 30,
+        eventsPerMonthMax: 200,
+        siteMembersMax: 20,
+        domainAliasesMax: 5,
+        languagesMax: 3,
+        galleriesMax: Infinity,
+        imagesPerGalleryMax: 100,
+        galleriesPerPlaceMax: Infinity,
+        galleriesPerEventMax: Infinity,
       },
       features: {
         eventsEnabled: true,
@@ -575,17 +575,17 @@ function FeatureMatrixEditor({
         pushSubscription: false,
       },
     },
-    PRO: {
+    BUSINESS: {
       limits: {
-        placesMax: 150,
-        featuredPlacesMax: 15,
-        galleryImagesPerPlaceMax: 30,
-        eventsPerMonthMax: 200,
-        siteMembersMax: 20,
-        domainAliasesMax: 5,
-        languagesMax: 3,
+        placesMax: Infinity,
+        featuredPlacesMax: Infinity,
+        galleryImagesPerPlaceMax: Infinity,
+        eventsPerMonthMax: Infinity,
+        siteMembersMax: Infinity,
+        domainAliasesMax: Infinity,
+        languagesMax: Infinity,
         galleriesMax: Infinity,
-        imagesPerGalleryMax: 100,
+        imagesPerGalleryMax: Infinity,
         galleriesPerPlaceMax: Infinity,
         galleriesPerEventMax: Infinity,
       },
@@ -605,7 +605,7 @@ function FeatureMatrixEditor({
     },
   };
 
-  const updatePlanValue = (plan: "FREE" | "BASIC" | "PRO", path: string[], value: any) => {
+  const updatePlanValue = (plan: "BASIC" | "PRO" | "BUSINESS", path: string[], value: any) => {
     const newOverrides = { ...(featureMatrix.planOverrides || {}) };
     if (!newOverrides[plan]) {
       newOverrides[plan] = { limits: {}, features: {} };
@@ -623,7 +623,7 @@ function FeatureMatrixEditor({
     setFeatureMatrix({ planOverrides: newOverrides });
   };
 
-  const getValue = (plan: "FREE" | "BASIC" | "PRO", path: string[]): any => {
+  const getValue = (plan: "BASIC" | "PRO" | "BUSINESS", path: string[]): any => {
     const override = featureMatrix.planOverrides?.[plan];
     if (!override) return undefined;
     
@@ -635,7 +635,7 @@ function FeatureMatrixEditor({
     return current;
   };
 
-  const getDisplayValue = (plan: "FREE" | "BASIC" | "PRO", path: string[]): any => {
+  const getDisplayValue = (plan: "BASIC" | "PRO" | "BUSINESS", path: string[]): any => {
     const override = getValue(plan, path);
     if (override !== undefined) return override;
     
@@ -715,10 +715,10 @@ function FeatureMatrixEditor({
               {t("public.pricing.featureMatrix.feature") || "Feature"}
             </th>
             {plans.map((plan) => {
-              const planLabels: Record<"FREE" | "BASIC" | "PRO", string> = {
-                FREE: t("admin.planFree") || "Free",
+              const planLabels: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
                 BASIC: t("admin.planBasic") || "Basic",
                 PRO: t("admin.planPro") || "Pro",
+                BUSINESS: t("admin.planBusiness") || "Business",
               };
               return (
                 <th key={plan} style={{ 

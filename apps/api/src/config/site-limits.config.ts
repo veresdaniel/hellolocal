@@ -16,40 +16,29 @@ export type SiteLimits = {
 };
 
 export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
-  free: {
-    places: 3, // or unlimited with fewer features
-    featuredSlots: 0,
-    events: 0, // or 1
-    imagesPerPlace: 3,
-    customDomain: false,
+  basic: {
+    places: Infinity, // Korlátlan place (default) - mind a tulaj, mind az oda regisztráló felhasználó létrehozhat
+    featuredSlots: 0, // Nincs kiemelt helyek
+    events: 0, // Nincs események
+    imagesPerPlace: Infinity, // Korlátlan kép
+    customDomain: false, // Nincs egyedi domain
     multiAdmin: false,
-    analytics: "none",
+    analytics: "none", // Nincs SEO
     support: "community",
   },
-  official: {
-    // Legacy plan, treat as pro
-    places: Infinity,
-    featuredSlots: 1,
-    events: 20, // per month
-    imagesPerPlace: 30,
-    customDomain: false,
-    multiAdmin: false,
-    analytics: "basic",
-    support: "email",
-  },
   pro: {
-    places: Infinity, // or 10-50
+    places: Infinity,
     featuredSlots: 3,
-    events: Infinity, // or 20/month
-    imagesPerPlace: Infinity, // or 10-30
-    customDomain: false, // or true if business feature
+    events: Infinity,
+    imagesPerPlace: Infinity,
+    customDomain: false,
     multiAdmin: false,
     analytics: "basic",
     support: "email",
   },
   business: {
     places: Infinity,
-    featuredSlots: Infinity, // or higher number with priority
+    featuredSlots: Infinity,
     events: Infinity,
     imagesPerPlace: Infinity,
     customDomain: true,

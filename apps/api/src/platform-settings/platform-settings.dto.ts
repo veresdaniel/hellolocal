@@ -52,4 +52,12 @@ export type PlatformSettingsDto = {
     planOverrides?: any;
     placePlanOverrides?: any;
   };
+
+  // Platform settings (global)
+  platform: {
+    locale: string; // e.g., "hu-HU"
+    currency: string; // e.g., "HUF"
+    timeFormat: "24h" | "12h";
+    weekStartsOn: number; // 0 = Sunday, 1 = Monday
+  };
 };

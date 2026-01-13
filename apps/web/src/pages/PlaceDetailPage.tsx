@@ -2,7 +2,7 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPlace, getPlaceById, getPlatformSettings, getGallery, type PublicGallery } from "../api/places.api";
+import { getPlace, getPlaceById, getPlatformSettings, getGallery, getPlacePriceList, type PublicGallery, type PublicPriceList } from "../api/places.api";
 import { GalleryViewer } from "../components/GalleryViewer";
 import { createOrUpdateRating, getMyRating } from "../api/rating.api";
 import { buildPlaceSeo } from "../seo/buildPlaceSeo";
@@ -21,6 +21,7 @@ import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { formatMoney } from "../utils/formatMoney";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -66,6 +67,17 @@ export function PlaceDetailPage() {
     },
     enabled: isAuthenticated && !!resolveQ.data?.entityId && !!lang,
     retry: false, // Don't retry on 401
+  });
+
+  // Load price list if place has one
+  const { data: priceList, isLoading: isLoadingPriceList } = useQuery({
+    queryKey: ["priceList", resolveQ.data?.entityId, lang, siteKey],
+    queryFn: () => {
+      if (!resolveQ.data?.entityId || !lang || !siteKey) throw new Error("Missing place ID, lang, or siteKey");
+      return getPlacePriceList(lang, siteKey, resolveQ.data.entityId);
+    },
+    enabled: shouldLoadPlace && place?.hasPriceList === true && !!siteKey && !!lang,
+    retry: false,
   });
 
   // Extract gallery IDs from description
@@ -1078,6 +1090,140 @@ export function PlaceDetailPage() {
                   Object.keys(galleries).length > 0
                 }
               />
+            </div>
+          )}
+
+          {/* Price List */}
+          {place.hasPriceList && priceList && !isLoadingPriceList && (
+            <div
+              style={{
+                background: "white",
+                padding: "clamp(20px, 4vw, 32px)",
+                borderRadius: 16,
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
+                margin: "0 16px 32px",
+                border: "1px solid rgba(102, 126, 234, 0.1)",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "clamp(20px, 5vw, 24px)",
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#1a1a1a",
+                  marginBottom: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span style={{ fontSize: 24 }}>💰</span>
+                {t("admin.priceList")}
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {priceList.blocks.map((block, blockIndex) => (
+                  <div
+                    key={blockIndex}
+                    style={{
+                      padding: "clamp(16px, 4vw, 20px)",
+                      background: "#f8f9fa",
+                      borderRadius: 12,
+                      border: "1px solid #e0e0e0",
+                    }}
+                  >
+                    {block.title && (
+                      <h4
+                        style={{
+                          fontSize: "clamp(18px, 4vw, 20px)",
+                          fontWeight: 600,
+                          fontFamily: "'Poppins', system-ui, sans-serif",
+                          color: "#333",
+                          marginBottom: 16,
+                        }}
+                      >
+                        {block.title}
+                      </h4>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {block.items.map((item, itemIndex) => (
+                        <div
+                          key={itemIndex}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr auto",
+                            gap: 16,
+                            alignItems: "center",
+                            padding: "12px",
+                            background: "white",
+                            borderRadius: 8,
+                            border: "1px solid #e0e0e0",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "clamp(15px, 3.5vw, 17px)",
+                              fontFamily: "'Inter', system-ui, sans-serif",
+                              color: "#333",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                          {item.price !== null && item.price !== undefined ? (
+                            <span
+                              style={{
+                                fontSize: "clamp(16px, 4vw, 18px)",
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                                color: "#667eea",
+                                fontWeight: 600,
+                                textAlign: "right",
+                              }}
+                            >
+                              {formatMoney(item.price, {
+                                locale: platformSettings?.platform?.locale || "hu-HU",
+                                currency: priceList.currency || platformSettings?.platform?.currency || "HUF",
+                              })}
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily: "'Inter', system-ui, sans-serif",
+                                color: "#999",
+                                fontStyle: "italic",
+                                textAlign: "right",
+                              }}
+                            >
+                              {t("admin.customPrice") || "Egyedi árazás"}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {priceList.note && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      padding: "16px",
+                      background: "#fff9e6",
+                      borderRadius: 8,
+                      border: "1px solid #ffd700",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#333",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        lineHeight: 1.6,
+                        fontFamily: "'Inter', system-ui, sans-serif",
+                      }}
+                      dangerouslySetInnerHTML={{ __html: priceList.note }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

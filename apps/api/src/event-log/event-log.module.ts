@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
-import { AdminEventLogService } from "../admin/admin-eventlog.service";
+import { AdminEventLogService } from "./admin-eventlog.service";
 
 /**
  * EventLog Module

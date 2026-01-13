@@ -271,10 +271,10 @@ export function SubscriptionsDashboardPage() {
         return "#667eea";
       case "BASIC":
         return "#3b82f6";
-      case "FREE":
-        return "#6b7280";
+      case "BUSINESS":
+        return "#8b5cf6";
       default:
-        return "#6b7280";
+        return "#3b82f6";
     }
   };
 
@@ -712,9 +712,9 @@ export function SubscriptionsDashboardPage() {
           }}
         >
           <option value="all">{t("admin.allPlans") || "Minden csomag"}</option>
-          <option value="FREE">{t("admin.planFree") || "Free"}</option>
           <option value="BASIC">{t("admin.planBasic") || "Basic"}</option>
           <option value="PRO">{t("admin.planPro") || "Pro"}</option>
+          <option value="BUSINESS">{t("admin.planBusiness") || "Business"}</option>
         </select>
         <select
           value={expiresWithinDays || ""}
@@ -854,9 +854,9 @@ export function SubscriptionsDashboardPage() {
                             onChange={(e) => setEditData({ ...editData, plan: e.target.value as any })}
                             style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                           >
-                            <option value="FREE">FREE</option>
                             <option value="BASIC">BASIC</option>
                             <option value="PRO">PRO</option>
+                            <option value="BUSINESS">BUSINESS</option>
                           </select>
                           <select
                             value={editData.status || item.status}

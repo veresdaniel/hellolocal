@@ -145,7 +145,14 @@ export class AdminUsersService {
   }
 
   async getCurrentUser(userId: string) {
-    return this.findOne(userId);
+    const user = await this.findOne(userId);
+    // Add siteIds array for frontend compatibility
+    const siteIds = user.sites.map((s) => s.siteId);
+    return {
+      ...user,
+      siteIds,
+      activeSiteId: user.activeSiteId || null,
+    };
   }
 
   async getAllSites() {
@@ -183,7 +190,7 @@ export class AdminUsersService {
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     // Create user (as visitor - activeSiteId is null by default)
-    // User will become active when they activate a free site
+    // User will become active when they activate a site
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,

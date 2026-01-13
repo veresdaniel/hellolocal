@@ -8,7 +8,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { AuthContext } from "../contexts/AuthContext";
+import { useAdminSite } from "../contexts/AdminSiteContext";
 import { activateFreeSite } from "../api/sites.api";
+import { getCurrentUser } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 import { DEFAULT_LANG } from "../app/config";
 
@@ -18,12 +20,13 @@ interface FloatingHeaderProps {
 
 export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
-  const { lang, tenantKey } = useRouteCtx();
+  const { lang, siteKey, siteKeyParam } = useRouteCtx();
   const location = useLocation();
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
   const isLoading = authContext?.isLoading ?? false;
+  const { reloadSites } = useAdminSite();
   const { showToast } = useToast();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -97,8 +100,10 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   }, [isMobile, isMobileMenuOpen]);
 
   // Check if user is a visitor (activeSiteId === null)
-  const isVisitor = user && (user.activeSiteId === null || user.activeSiteId === undefined);
-  const hasActiveSite = user && user.activeSiteId !== null && user.activeSiteId !== undefined;
+  // Superadmin is never a visitor - they have access to everything
+  const isSuperadmin = user?.role === "superadmin";
+  const isVisitor = user && !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
+  const hasActiveSite = user && (isSuperadmin || (user.activeSiteId !== null && user.activeSiteId !== undefined));
   // Show auth buttons on all non-map view pages
   // FloatingHeader only appears on non-map view pages, so we should always show buttons here
   // The onMapViewClick prop indicates we're on a list view page (definitely show buttons)
@@ -108,13 +113,45 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   const handleActivateFree = async () => {
     try {
       setIsActivating(true);
-      const result = await activateFreeSite(lang);
+      // Pass the current siteKey so the backend knows which site to assign
+      // Only pass siteKey if it's actually in the URL (not the default fallback)
+      const effectiveSiteKey = siteKeyParam || undefined;
+      console.log(`[activate-free] Activating with siteKey: ${effectiveSiteKey}, lang: ${lang}, siteKeyParam: ${siteKeyParam}`);
+      const result = await activateFreeSite(lang, effectiveSiteKey);
       showToast(t("public.activateFree.success") || "Free site activated successfully!", "success");
-      // Refresh user data without page reload
-      if (authContext && authContext.refreshUser) {
-        // Refresh user data to get updated activeSiteId
-        await authContext.refreshUser();
-        // No redirect needed - user will stay on current page, just state updates
+      
+      // Fetch fresh user data from API to get updated activeSiteId
+      try {
+        const freshUser = await getCurrentUser();
+        // Backend now returns siteIds directly, but also has sites array
+        // Use siteIds if available, otherwise extract from sites array
+        const siteIds = (freshUser as any).siteIds || freshUser.sites?.map((s: { siteId: string }) => s.siteId) || [];
+        const userData = {
+          ...freshUser,
+          siteIds,
+          role: freshUser.role.toLowerCase() as "superadmin" | "admin" | "editor" | "viewer",
+        };
+        // Update localStorage with fresh user data
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Trigger AuthContext refresh to update UI
+        if (authContext && authContext.refreshUser) {
+          await authContext.refreshUser();
+          // Wait a bit for AuthContext to update, then reload sites in AdminSiteContext
+          // This ensures the user object with updated siteIds is available
+          setTimeout(() => {
+            reloadSites();
+          }, 200);
+        } else {
+          // If refreshUser is not available, still try to reload sites
+          reloadSites();
+        }
+      } catch (refreshError) {
+        console.error("Failed to refresh user data after activation:", refreshError);
+        // Still try to refresh from context even if API call fails
+        if (authContext && authContext.refreshUser) {
+          await authContext.refreshUser();
+        }
       }
     } catch (err) {
       showToast(
@@ -191,7 +228,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
           boxSizing: "border-box",
         }}>
           <Link
-            to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "" })}
+            to={buildUrl({ lang, siteKey: siteKey || undefined, path: "" })}
             style={{
               textDecoration: "none",
               color: "#1a1a1a",

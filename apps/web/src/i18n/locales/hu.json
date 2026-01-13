@@ -244,6 +244,35 @@
     "tags": "Címkék",
     "priceBands": "Ár szintek",
     "places": "Helyek",
+    "priceList": "Árlap",
+    "priceListDesc": "Árlista kezelése",
+    "newBlock": "Új blokk",
+    "newItem": "Új sor",
+    "blockTitle": "Blokk címe",
+    "itemLabel": "Megnevezés",
+    "price": "Ár",
+    "note": "Megjegyzés",
+    "notePlaceholder": "Megjegyzés (richtext)",
+    "currency": "Pénznem",
+    "enabled": "Engedélyezve",
+    "requireAuth": "Csak bejelentkezetteknek",
+    "noPriceList": "Még nincs árlapod. Hozz létre egy blokkot.",
+    "saved": "Mentve",
+    "unsavedChanges": "Mentetlen változások",
+    "saving": "Mentés",
+    "backToPlace": "Vissza a helyhez",
+    "confirmations": {
+      "deleteBlock": "Biztosan törölni szeretnéd ezt a blokkot?"
+    },
+    "messages": {
+      "priceListUpdated": "Árlista sikeresen frissítve"
+    },
+    "errors": {
+      "updatePriceListFailed": "Árlista frissítése sikertelen",
+      "placeNotFound": "Hely nem található",
+      "noAccessToPlace": "Nincs hozzáférésed ehhez a helyhez"
+    },
+    "customPrice": "Egyedi árazás",
     "towns": "Települések",
     "legalPages": "Jogi oldalak",
     "users": "Felhasználók",
@@ -646,7 +675,9 @@
         "advancedSettings": "Haladó beállítások",
         "contactToUpgrade": "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.",
         "lockedInPro": "Pro csomagban elérhető",
-        "upgradeToPro": "Váltás Pro-ra"
+        "upgradeToPro": "Váltás Pro-ra",
+        "allowPublicRegistration": "Publikus regisztráció engedélyezése",
+        "allowPublicRegistrationDescription": "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket. Csak Pro és Business csomagoknál elérhető."
       }
     },
     "placesCount": "Helyek száma",
@@ -1198,6 +1229,12 @@
     "siteNotFound": "Nem található site",
     "siteNotFoundMessage": "A megadott site nem létezik vagy nincs engedélyezve.",
     "backToSites": "Vissza a site-okhoz"
+  },
+  "offline": {
+    "title": "Offline vagyunk",
+    "message": "Úgy tűnik, nincs internetkapcsolat. Ellenőrizd a hálózati beállításaidat.",
+    "joke": "A router is pihenni szeretne néha... 😊",
+    "retry": "Újrapróbálás"
   },
   "cookieConsent": {
     "message": "Ez az oldal sütiket használ a legjobb felhasználói élmény biztosításához. A folytatással elfogadod a sütik használatát.",

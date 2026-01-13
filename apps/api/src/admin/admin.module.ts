@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
 import { EventLogModule } from "../event-log/event-log.module";
 import { AdminController } from "./admin.controller";
@@ -19,6 +19,7 @@ import { AdminSiteMembershipService } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService } from "./admin-place-membership.service";
 import { AdminSubscriptionService } from "./admin-subscription.service";
 import { AdminGalleryService } from "./admin-gallery.service";
+import { AdminPriceListService } from "./admin-price-list.service";
 import { GalleryPublicService } from "./gallery-public.service";
 import { GalleryPublicController } from "./gallery-public.controller";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
@@ -29,7 +30,7 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, EntitlementsModule, SiteModule],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, forwardRef(() => EntitlementsModule), SiteModule],
   controllers: [AdminController, GalleryPublicController],
   providers: [
     AdminCategoryService,
@@ -49,6 +50,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminPlaceMembershipService,
     AdminSubscriptionService,
     AdminGalleryService,
+    AdminPriceListService,
     GalleryPublicService,
     // AdminEventLogService is now provided by EventLogModule
   ],
@@ -70,6 +72,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminPlaceMembershipService,
     AdminSubscriptionService,
     AdminGalleryService,
+    AdminPriceListService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

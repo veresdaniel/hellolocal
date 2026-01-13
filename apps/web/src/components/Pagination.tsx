@@ -57,12 +57,11 @@ export function Pagination({
           style={{
             padding: "6px 10px",
             fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             border: "1px solid #ddd",
             borderRadius: 6,
             cursor: "pointer",
             background: "white",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <option value={10}>10 / {t("admin.pagination.page")}</option>
@@ -87,9 +86,8 @@ export function Pagination({
             borderRadius: 6,
             cursor: currentPage === 1 ? "not-allowed" : "pointer",
             fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontWeight: 600,
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 600,
             transition: "all 0.2s ease",
             boxShadow: currentPage === 1 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}
@@ -104,7 +102,6 @@ export function Pagination({
           minWidth: "clamp(80px, 20vw, 100px)", 
           textAlign: "center",
           fontWeight: 600,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {t("admin.pagination.pageInfo", { current: currentPage, total: totalPages })}
         </span>
@@ -122,9 +119,8 @@ export function Pagination({
             borderRadius: 6,
             cursor: currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
             fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontWeight: 600,
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 600,
             transition: "all 0.2s ease",
             boxShadow: currentPage === totalPages || totalPages === 0 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}

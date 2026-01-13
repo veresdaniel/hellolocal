@@ -8,6 +8,7 @@ interface AdminSiteContextType {
   selectedSiteId: string | null;
   sites: Site[];
   isLoading: boolean;
+  error: string | null;
   setSelectedSiteId: (siteId: string | null) => void;
   reloadSites: () => void;
 }
@@ -22,6 +23,7 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSiteId, setSelectedSiteIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // If AuthContext is still loading, wait for it
   // This prevents showing "please select site" while auth is initializing
@@ -36,17 +38,20 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setSites([]);
       setSelectedSiteIdState(null);
+      setError(null);
       return;
     }
     
     // Ensure isLoading is true when starting to load
     setIsLoading(true);
+    setError(null);
     
     try {
       // Only superadmin and admin can call getSites to see all sites
       if (user.role === "superadmin" || user.role === "admin") {
         const data = await getSites();
         setSites(data);
+        setError(null); // Clear error on successful load
         // Auto-select first site if none selected
         if (data.length > 0) {
           const stored = localStorage.getItem("adminSelectedSiteId");
@@ -73,6 +78,7 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
         const siteResults = await Promise.all(sitePromises);
         const userSites = siteResults.filter((s: Site | null): s is Site => s !== null);
         setSites(userSites);
+        setError(null); // Clear error on successful load
         if (userSites.length > 0) {
           const stored = localStorage.getItem("adminSelectedSiteId");
           if (stored && userSites.some((s) => s.id === stored)) {
@@ -87,17 +93,29 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
       } else {
         // No site IDs assigned
         setSites([]);
+        setError(null); // Clear error when no sites assigned (not an error state)
       }
     } catch (err) {
       // Only log error if it's not a network error (backend not running)
       const errorMessage = err instanceof Error ? err.message : String(err);
       const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+      const isSchemaError = errorMessage.includes("Database schema is out of sync") || errorMessage.includes("migrations");
       
       if (!isNetworkError) {
         console.error("[AdminSiteContext] Failed to load sites", err);
+        
+        // For schema errors, set error state but don't crash
+        if (isSchemaError) {
+          console.warn("[AdminSiteContext] Database schema is out of sync. Please run migrations on the server.");
+          setError("Database schema is out of sync. Please contact the administrator to run migrations.");
+        } else {
+          // For other errors, set a generic error message
+          setError("Failed to load sites. Please try again later.");
+        }
       } else {
         // Silently handle network errors - backend might not be running
         console.debug("[AdminSiteContext] Backend not available, skipping site load");
+        setError(null); // Clear error for network issues
       }
       setSites([]);
     } finally {
@@ -179,6 +197,7 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
     selectedSiteId,
     sites,
     isLoading: isLoadingSites, // Use combined loading state
+    error,
     setSelectedSiteId,
     reloadSites,
   };
@@ -203,6 +222,7 @@ export function useAdminSite() {
       selectedSiteId: null,
       sites: [],
       isLoading: true,
+      error: null,
       setSelectedSiteId: () => {
         console.warn("setSelectedSiteId called outside AdminSiteProvider");
       },

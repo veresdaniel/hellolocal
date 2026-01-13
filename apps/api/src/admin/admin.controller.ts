@@ -30,13 +30,14 @@ import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from
 import { AdminSiteService, CreateSiteDto, UpdateSiteDto } from "./admin-site.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
 import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
-import { AdminEventLogService, EventLogFilterDto } from "./admin-eventlog.service";
+import { AdminEventLogService, EventLogFilterDto } from "../event-log/admin-eventlog.service";
 import { AdminBrandService, CreateBrandDto, UpdateBrandDto } from "./admin-brand.service";
 import { AdminSiteInstanceService, CreateSiteInstanceDto, UpdateSiteInstanceDto } from "./admin-site-instance.service";
 import { AdminSiteMembershipService, CreateSiteMembershipDto, UpdateSiteMembershipDto } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembershipDto } from "./admin-place-membership.service";
 import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
 import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
+import { AdminPriceListService, UpdatePriceListDto } from "./admin-price-list.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -73,6 +74,7 @@ export class AdminController {
     private readonly placeMembershipService: AdminPlaceMembershipService,
     private readonly subscriptionService: AdminSubscriptionService,
     private readonly galleryService: AdminGalleryService,
+    private readonly priceListService: AdminPriceListService,
     private readonly placeUpsellService: PlaceUpsellService,
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
@@ -718,6 +720,54 @@ export class AdminController {
       entityType: "place",
       entityId: id,
       description: `Deleted place`,
+    }).catch(err => console.error("Failed to log:", err));
+    
+    return result;
+  }
+
+  // ==================== Place Price List ====================
+
+  @Get("/places/:placeId/pricelist")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async getPlacePriceList(
+    @Param("placeId") placeId: string,
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { id: string; siteIds: string[] }
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
+    }
+    return this.priceListService.getPriceList(placeId, siteId, user.id);
+  }
+
+  @Put("/places/:placeId/pricelist")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async updatePlacePriceList(
+    @Param("placeId") placeId: string,
+    @Query("siteId") siteIdParam: string | undefined,
+    @Body() dto: UpdatePriceListDto,
+    @CurrentUser() user: { id: string; siteIds: string[] }
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new Error("User does not have access to this site");
+    }
+    const result = await this.priceListService.upsertPriceList(placeId, siteId, dto, user.id);
+    
+    await this.eventLogService.create({
+      siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "placePriceList",
+      entityId: placeId,
+      description: `Updated price list for place`,
     }).catch(err => console.error("Failed to log:", err));
     
     return result;

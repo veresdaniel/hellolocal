@@ -646,6 +646,7 @@ export class PlacesService {
         image: placeTranslation?.seoImage ?? null,
         keywords: placeTranslation?.seoKeywords ?? [],
       },
+      hasPriceList: false, // Will be set by controller using PlacesPriceListService
     };
   }
 }

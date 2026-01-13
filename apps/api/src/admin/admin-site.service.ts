@@ -42,6 +42,10 @@ export interface UpdateSiteDto {
   planValidUntil?: Date | string | null;
   planLimits?: Record<string, any> | null;
   billingEmail?: string | null;
+  // Access control: public registration
+  // If false, only site owner (siteadmin/superadmin) can create users and places
+  // Only available for pro/business plans (basic always allows public registration)
+  allowPublicRegistration?: boolean;
 }
 
 @Injectable()
@@ -50,7 +54,7 @@ export class AdminSiteService {
 
   async findAll() {
     try {
-      return await this.prisma.site.findMany({
+      const sites = await this.prisma.site.findMany({
         include: {
           translations: true,
           brand: {
@@ -61,13 +65,37 @@ export class AdminSiteService {
           },
           siteDomains: {
             where: { isActive: true },
-            orderBy: { isPrimary: "desc" },
           },
         },
         orderBy: { createdAt: "desc" },
       });
-    } catch (error) {
+
+      // Sort siteDomains in memory to avoid database schema dependency issues
+      return sites.map((site) => ({
+        ...site,
+        siteDomains: (site.siteDomains || []).sort((a, b) => {
+          // Sort by isPrimary (true first), then by domain
+          if (a.isPrimary === b.isPrimary) {
+            return a.domain.localeCompare(b.domain);
+          }
+          return a.isPrimary ? -1 : 1;
+        }),
+      }));
+    } catch (error: any) {
       console.error("Error in AdminSiteService.findAll:", error);
+      // If the error is about missing table/column, provide helpful message
+      // P2021: Table does not exist
+      // P2022: Column does not exist
+      if (
+        error?.message?.includes("does not exist") || 
+        error?.code === "P2021" || 
+        error?.code === "P2022" ||
+        error?.meta?.driverAdapterError?.name === "ColumnNotFound"
+      ) {
+        throw new Error(
+          "Database schema is out of sync. Please run migrations: npx prisma migrate deploy"
+        );
+      }
       throw error;
     }
   }
@@ -240,6 +268,15 @@ export class AdminSiteService {
     }
     if (dto.planLimits !== undefined) updateData.planLimits = dto.planLimits;
     if (dto.billingEmail !== undefined) updateData.billingEmail = dto.billingEmail;
+    if (dto.allowPublicRegistration !== undefined) {
+      // Only allow setting this for pro/business plans
+      // Basic plan always allows public registration
+      const currentPlan = dto.plan || site.plan;
+      if (currentPlan === "basic" && dto.allowPublicRegistration === false) {
+        throw new BadRequestException("Public registration cannot be disabled for basic plan. Upgrade to pro or business plan to use this feature.");
+      }
+      updateData.allowPublicRegistration = dto.allowPublicRegistration;
+    }
 
     await this.prisma.site.update({
       where: { id },

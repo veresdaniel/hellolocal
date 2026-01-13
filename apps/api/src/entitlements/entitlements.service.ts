@@ -20,12 +20,12 @@ export class EntitlementsService {
 
     const siteId = resolved.siteId;
 
-    // 1) subscription betöltés (ha nincs: FREE/ACTIVE)
+    // 1) subscription betöltés (ha nincs: BASIC/ACTIVE)
     const sub =
       (await this.prisma.siteSubscription.findUnique({
         where: { siteId },
       })) ?? {
-        plan: "FREE" as const,
+        plan: "BASIC" as const,
         status: "ACTIVE" as const,
         validUntil: null,
       };
@@ -35,7 +35,7 @@ export class EntitlementsService {
     const isExpired = sub.validUntil ? sub.validUntil.getTime() < now.getTime() : false;
     const status = isExpired ? "EXPIRED" : sub.status;
 
-    const plan = sub.plan as "FREE" | "BASIC" | "PRO";
+    const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
     
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({
@@ -111,12 +111,12 @@ export class EntitlementsService {
    * Get entitlements directly by siteId (for admin/internal use)
    */
   async getBySiteId(siteId: string): Promise<Entitlements> {
-    // 1) subscription betöltés (ha nincs: FREE/ACTIVE)
+    // 1) subscription betöltés (ha nincs: BASIC/ACTIVE)
     const sub =
       (await this.prisma.siteSubscription.findUnique({
         where: { siteId },
       })) ?? {
-        plan: "FREE" as const,
+        plan: "BASIC" as const,
         status: "ACTIVE" as const,
         validUntil: null,
       };
@@ -126,7 +126,7 @@ export class EntitlementsService {
     const isExpired = sub.validUntil ? sub.validUntil.getTime() < now.getTime() : false;
     const status = isExpired ? "EXPIRED" : sub.status;
 
-    const plan = sub.plan as "FREE" | "BASIC" | "PRO";
+    const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
     
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({

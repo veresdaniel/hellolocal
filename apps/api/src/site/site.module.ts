@@ -1,6 +1,5 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
-import { TenantModule } from "../tenant/tenant.module";
 import { SlugModule } from "../slug/slug.module";
 import { PlacesModule } from "../places/places.module";
 import { EventsModule } from "../events/events.module";
@@ -11,7 +10,7 @@ import { ResolveService } from "./resolve.service";
 import { SiteKeyResolverService } from "./site-key-resolver.service";
 
 @Module({
-  imports: [PrismaModule, TenantModule, SlugModule, PlacesModule, EventsModule],
+  imports: [PrismaModule, SlugModule, forwardRef(() => PlacesModule), forwardRef(() => EventsModule)],
   controllers: [SiteController, ResolveController],
   providers: [SiteResolverService, ResolveService, SiteKeyResolverService],
   exports: [SiteResolverService, ResolveService, SiteKeyResolverService],

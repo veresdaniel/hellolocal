@@ -64,9 +64,10 @@ export function SiteEditPage() {
     isActive: true,
     brandId: "",
     // Subscription tab
-    plan: "free" as "free" | "official" | "pro" | "business",
+    plan: "basic" as "basic" | "pro" | "business",
     planStatus: "active",
     planValidUntil: "",
+    allowPublicRegistration: true,
     showAdvanced: false,
     // Domain tab - will be handled separately
     // Appearance tab - will be handled via SiteInstance
@@ -111,9 +112,10 @@ export function SiteEditPage() {
         heroImageDe: translationDe?.heroImage || "",
         isActive: data.isActive,
         brandId: data.brandId,
-        plan: data.plan || "free",
+        plan: data.plan || "basic",
         planStatus: data.planStatus || "active",
         planValidUntil: data.planValidUntil ? new Date(data.planValidUntil).toISOString().split("T")[0] : "",
+        allowPublicRegistration: data.allowPublicRegistration ?? true,
       });
     } catch (err) {
       showToast(t("admin.errors.loadSiteFailed"), "error");
@@ -1755,6 +1757,7 @@ function SubscriptionTab({
         plan: subData.plan,
         planStatus: subData.planStatus || "active",
         planValidUntil: subData.planValidUntil ? new Date(subData.planValidUntil).toISOString().split("T")[0] : "",
+        allowPublicRegistration: subData.allowPublicRegistration ?? site.allowPublicRegistration ?? true,
       }));
     } catch (error) {
       console.error("Failed to load subscription data:", error);
@@ -1815,28 +1818,25 @@ function SubscriptionTab({
 
   // Plan labels and colors
   const planLabels: Record<string, string> = {
-    free: t("admin.planFree") || "Free",
-    official: t("admin.planOfficial") || "Official",
+    basic: t("admin.planBasic") || "Basic",
     pro: t("admin.planPro") || "Pro",
     business: t("admin.planBusiness") || "Business",
   };
 
   // Plan descriptions
   const planDescriptions: Record<string, string> = {
-    free: t("admin.planFreeDescription") || "1 hely, nincs esemény",
-    official: t("admin.planOfficialDescription") || "Korlátlan hely, események",
-    pro: t("admin.planProDescription") || "Korlátlan hely, kiemelések, egyedi domain",
-    business: t("admin.planBusinessDescription") || "Minden funkció, prioritás",
+    basic: t("admin.planBasicDescription") || "Korlátlan hely (default), nincs: domain, seo, események, push, kiemelt",
+    pro: t("admin.planProDescription") || "Korlátlan hely, kiemelések, események",
+    business: t("admin.planBusinessDescription") || "Minden funkció, egyedi domain, prioritás",
   };
 
   const planColors: Record<string, string> = {
-    free: "#6b7280",
-    official: "#3b82f6",
+    basic: "#3b82f6",
     pro: "#667eea",
     business: "#8b5cf6",
   };
 
-  const handlePlanChange = async (newPlan: "free" | "official" | "pro" | "business") => {
+  const handlePlanChange = async (newPlan: "basic" | "pro" | "business") => {
     if (!canEditPlan) {
       showToast(t("admin.siteEdit.subscription.contactToUpgrade") || "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.", "info");
       return;
@@ -1863,6 +1863,7 @@ function SubscriptionTab({
       await updateSite(site.id, {
         planStatus: formData.planStatus,
         planValidUntil: formData.planValidUntil ? new Date(formData.planValidUntil).toISOString() : null,
+        allowPublicRegistration: formData.allowPublicRegistration,
       });
       await loadSubscriptionData();
       showToast(t("admin.siteEdit.subscription.saved") || "Mentve", "success");
@@ -2051,7 +2052,7 @@ function SubscriptionTab({
               gap: 20, 
               marginBottom: 24 
             }}>
-              {(["free", "official", "pro", "business"] as const).map((plan) => (
+              {(["basic", "pro", "business"] as const).map((plan) => (
                 <div
                   key={plan}
                   onClick={() => !isSaving && handlePlanChange(plan)}
@@ -2737,6 +2738,62 @@ function SubscriptionTab({
                     </button>
                   </div>
                 </div>
+
+                {/* Public Registration Toggle - Only for pro/business plans */}
+                {(formData.plan === "pro" || formData.plan === "business") && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: 12,
+                      cursor: "pointer",
+                      padding: "12px 16px",
+                      background: "white",
+                      borderRadius: 8,
+                      border: "1px solid #d1d5db",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#667eea";
+                      e.currentTarget.style.background = "#f8fafc";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#d1d5db";
+                      e.currentTarget.style.background = "white";
+                    }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.allowPublicRegistration}
+                        onChange={(e) => setFormData({ ...formData, allowPublicRegistration: e.target.checked })}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          cursor: "pointer",
+                          accentColor: "#667eea",
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          fontWeight: 500, 
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "#334155",
+                          marginBottom: 4,
+                        }}>
+                          {t("admin.siteEdit.subscription.allowPublicRegistration") || "Publikus regisztráció engedélyezése"}
+                        </div>
+                        <div style={{ 
+                          fontSize: "clamp(12px, 2.5vw, 13px)",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "#6b7280",
+                        }}>
+                          {t("admin.siteEdit.subscription.allowPublicRegistrationDescription") || "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket."}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                )}
 
                 <button
                   onClick={handleSaveAdvanced}

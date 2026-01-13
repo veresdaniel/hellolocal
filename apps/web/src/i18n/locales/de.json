@@ -228,6 +228,35 @@
     "tags": "Tags",
     "priceBands": "Preisklassen",
     "places": "Orte",
+    "priceList": "Preisliste",
+    "priceListDesc": "Preisliste verwalten",
+    "newBlock": "Neuer Block",
+    "newItem": "Neues Element",
+    "blockTitle": "Block-Titel",
+    "itemLabel": "Bezeichnung",
+    "price": "Preis",
+    "note": "Hinweis",
+    "notePlaceholder": "Hinweis (Rich Text)",
+    "currency": "Währung",
+    "enabled": "Aktiviert",
+    "requireAuth": "Authentifizierung erforderlich",
+    "noPriceList": "Noch keine Preisliste. Erstellen Sie einen Block.",
+    "saved": "Gespeichert",
+    "unsavedChanges": "Nicht gespeicherte Änderungen",
+    "saving": "Speichern",
+    "backToPlace": "Zurück zum Ort",
+    "confirmations": {
+      "deleteBlock": "Möchten Sie diesen Block wirklich löschen?"
+    },
+    "messages": {
+      "priceListUpdated": "Preisliste erfolgreich aktualisiert"
+    },
+    "errors": {
+      "updatePriceListFailed": "Preisliste konnte nicht aktualisiert werden",
+      "placeNotFound": "Ort nicht gefunden",
+      "noAccessToPlace": "Sie haben keinen Zugriff auf diesen Ort"
+    },
+    "customPrice": "Individuelle Preisgestaltung",
     "towns": "Städte",
     "legalPages": "Rechtliche Seiten",
     "users": "Benutzer",
@@ -441,7 +470,9 @@
         "contactToUpgrade": "Bitte kontaktieren Sie uns für einen Planwechsel",
         "planUpdated": "Plan aktualisiert",
         "saved": "Gespeichert",
-        "advancedSettings": "Erweiterte Einstellungen"
+        "advancedSettings": "Erweiterte Einstellungen",
+        "allowPublicRegistration": "Öffentliche Registrierung zulassen",
+        "allowPublicRegistrationDescription": "Wenn deaktiviert, kann nur der Site-Besitzer Benutzer und Orte erstellen. Nur für Pro- und Business-Pläne verfügbar."
       },
       "quickActions": "Schnellaktionen",
       "openPublicPage": "Öffentliche Seite öffnen"
@@ -1047,6 +1078,12 @@
     "siteNotFound": "Site nicht gefunden",
     "siteNotFoundMessage": "Die angegebene Site existiert nicht oder ist nicht aktiviert.",
     "backToSites": "Zurück zu den Sites"
+  },
+  "offline": {
+    "title": "Sie sind offline",
+    "message": "Es scheint keine Internetverbindung zu geben. Bitte überprüfen Sie Ihre Netzwerkeinstellungen.",
+    "joke": "Auch Router brauchen manchmal eine Pause... 😊",
+    "retry": "Erneut versuchen"
   },
   "cookieConsent": {
     "message": "Diese Website verwendet Cookies, um die beste Benutzererfahrung zu bieten. Durch Fortfahren akzeptieren Sie die Verwendung von Cookies.",

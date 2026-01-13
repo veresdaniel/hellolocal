@@ -117,7 +117,7 @@ export class SubscriptionService {
         : null;
 
     if (!sub || sub.status === "EXPIRED") {
-      return this.freePlan();
+      return this.basicPlan();
     }
 
     return this.planMatrix(sub.plan);
@@ -134,22 +134,23 @@ export class SubscriptionService {
           maxImages: 20,
           canBeFeatured: true,
         };
-      case "BASIC":
+      case "BUSINESS":
         return {
           canCreateEvent: true,
-          maxImages: 10,
-          canBeFeatured: false,
+          maxImages: Infinity,
+          canBeFeatured: true,
         };
+      case "BASIC":
       default:
-        return this.freePlan();
+        return this.basicPlan();
     }
   }
 
-  private freePlan() {
+  private basicPlan() {
     return {
-      canCreateEvent: false,
-      maxImages: 3,
-      canBeFeatured: false,
+      canCreateEvent: false, // Nincs események
+      maxImages: Infinity, // Korlátlan kép
+      canBeFeatured: false, // Nincs kiemelt helyek
     };
   }
 }

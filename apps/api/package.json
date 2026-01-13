@@ -13,6 +13,7 @@
     "migrate:to-brand": "tsx scripts/migrate-to-brand-siteinstance.ts",
     "db:setup": "tsx scripts/setup-db.ts",
     "db:seed": "prisma db seed",
+    "db:fix-admin": "tsx scripts/fix-admin-user.ts",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
     "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",
     "lint": "eslint .",

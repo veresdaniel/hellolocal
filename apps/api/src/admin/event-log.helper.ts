@@ -1,5 +1,5 @@
 // src/admin/event-log.helper.ts
-import { AdminEventLogService } from "./admin-eventlog.service";
+import { AdminEventLogService } from "../event-log/admin-eventlog.service";
 
 /**
  * Helper function to log admin actions

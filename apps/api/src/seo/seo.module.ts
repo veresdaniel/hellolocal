@@ -2,12 +2,12 @@
 import { Module } from "@nestjs/common";
 import { SeoController } from "./seo.controller";
 import { PrismaModule } from "../prisma/prisma.module";
-import { TenantModule } from "../tenant/tenant.module";
+import { SiteModule } from "../site/site.module";
 import { SlugModule } from "../slug/slug.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 
 @Module({
-  imports: [PrismaModule, TenantModule, SlugModule, PlatformSettingsModule],
+  imports: [PrismaModule, SiteModule, SlugModule, PlatformSettingsModule],
   controllers: [SeoController],
 })
 export class SeoModule {}

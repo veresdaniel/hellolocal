@@ -9,13 +9,13 @@ import { getSiteLimits, type SiteLimits } from "../config/site-limits.config";
 function placePlanToSubscriptionPlan(plan: PlacePlan): SubscriptionPlan {
   switch (plan) {
     case "free":
-      return "FREE";
+      return SubscriptionPlan.FREE;
     case "basic":
-      return "BASIC";
+      return SubscriptionPlan.BASIC;
     case "pro":
-      return "PRO";
+      return SubscriptionPlan.PRO;
     default:
-      return "FREE";
+      return SubscriptionPlan.FREE;
   }
 }
 
@@ -54,6 +54,7 @@ export interface SiteSubscriptionDto {
   planValidUntil: Date | null;
   planLimits: Record<string, any> | null;
   billingEmail: string | null;
+  allowPublicRegistration: boolean;
 }
 
 export interface PlaceEntitlementsDto {
@@ -327,8 +328,8 @@ export class BillingService {
         console.error("Error creating subscription history entry:", error);
         // Don't throw - history logging should not break the main operation
       }
-    } else if (isNewSubscription && newSubscriptionPlan !== "FREE") {
-      // If subscription is created with a non-FREE plan, create history entry
+    } else if (isNewSubscription && newSubscriptionPlan !== "BASIC") {
+      // If subscription is created with a non-BASIC plan, create history entry
       try {
         await this.prisma.subscriptionHistory.create({
           data: {
@@ -435,6 +436,7 @@ export class BillingService {
         planValidUntil: true,
         planLimits: true,
         billingEmail: true,
+        allowPublicRegistration: true,
       },
     });
 
@@ -449,6 +451,7 @@ export class BillingService {
       planValidUntil: site.planValidUntil,
       planLimits: site.planLimits as Record<string, any> | null,
       billingEmail: site.billingEmail,
+      allowPublicRegistration: site.allowPublicRegistration ?? true,
     };
   }
 
@@ -475,6 +478,7 @@ export class BillingService {
         planValidUntil: data.planValidUntil ?? undefined,
         planLimits: data.planLimits ? (data.planLimits as any) : undefined,
         billingEmail: data.billingEmail ?? undefined,
+        allowPublicRegistration: data.allowPublicRegistration ?? undefined,
       },
       select: {
         id: true,
@@ -483,6 +487,7 @@ export class BillingService {
         planValidUntil: true,
         planLimits: true,
         billingEmail: true,
+        allowPublicRegistration: true,
       },
     });
 
@@ -493,6 +498,7 @@ export class BillingService {
       planValidUntil: updated.planValidUntil,
       planLimits: updated.planLimits as Record<string, any> | null,
       billingEmail: updated.billingEmail,
+      allowPublicRegistration: updated.allowPublicRegistration ?? true,
     };
   }
 
@@ -528,7 +534,7 @@ export class BillingService {
 
     // Determine if upgrade/downgrade is possible
     const canUpgrade = site.plan !== "business";
-    const canDowngrade = site.plan !== "free";
+    const canDowngrade = site.plan !== "basic";
 
     return {
       siteId: site.id,

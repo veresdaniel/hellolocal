@@ -95,7 +95,7 @@ export function SiteSelector() {
           style={{
             padding: "8px 16px",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             borderRadius: 4,
             border: "1px solid #7c3aed",
             background: "#7c3aed",
@@ -105,7 +105,6 @@ export function SiteSelector() {
             alignItems: "center",
             gap: 6,
             minWidth: isSmallScreen ? "auto" : "fit-content",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 500,
           }}
           title={t("admin.openPublicPage")}
@@ -145,7 +144,7 @@ export function SiteSelector() {
         style={{
           padding: "8px 16px",
           fontSize: "clamp(14px, 3.5vw, 16px)",
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           borderRadius: 4,
           border: "1px solid #7c3aed",
           background: currentSite ? "#7c3aed" : "#ccc",
@@ -155,7 +154,6 @@ export function SiteSelector() {
           alignItems: "center",
           gap: 6,
           minWidth: isSmallScreen ? "auto" : "fit-content",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 500,
         }}
         title={t("admin.openPublicPage")}

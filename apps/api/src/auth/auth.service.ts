@@ -11,7 +11,7 @@ import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
-import { AdminEventLogService } from "../admin/admin-eventlog.service";
+import { AdminEventLogService } from "../event-log/admin-eventlog.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -119,9 +119,11 @@ export class AuthService {
 
   /**
    * Registers a new user.
-   * If siteId is not provided, assigns user to default site.
+   * If siteId is not provided, assigns user to the site from the request context
+   * (determined by domain or URL-based site resolution).
+   * Falls back to default site if no site context is available.
    */
-  async register(dto: RegisterDto): Promise<AuthResponse> {
+  async register(dto: RegisterDto, requestSiteId?: string, referer?: string): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await this.prisma.user.findFirst({
       where: {
@@ -133,8 +135,8 @@ export class AuthService {
       throw new BadRequestException("User with this email or username already exists");
     }
 
-    // Get site ID (default or provided)
-    let siteId: string;
+    // Get site ID (priority: DTO > request context > referer-based resolution > default site)
+    let siteId: string | undefined;
     if (dto.siteId) {
       const site = await this.prisma.site.findUnique({
         where: { id: dto.siteId },
@@ -143,7 +145,57 @@ export class AuthService {
         throw new NotFoundException("Site not found");
       }
       siteId = dto.siteId;
-    } else {
+    } else if (requestSiteId) {
+      // Use site from request context (domain or URL-based resolution)
+      const site = await this.prisma.site.findUnique({
+        where: { id: requestSiteId },
+      });
+      if (!site) {
+        throw new NotFoundException("Site from request context not found");
+      }
+      siteId = requestSiteId;
+    } else if (referer) {
+      // Try to extract siteKey and lang from referer URL
+      // Format: /:lang/:siteKey/... or /:lang/admin/...
+      const refererMatch = referer.match(/\/(hu|en|de)\/([^\/]+)/);
+      if (refererMatch) {
+        const lang = refererMatch[1];
+        const siteKey = refererMatch[2];
+        
+        // Skip if siteKey is "admin" (admin routes don't have siteKey)
+        if (siteKey !== "admin") {
+          try {
+            // Try to resolve site from siteKey + lang
+            const siteKeyRecord = await this.prisma.siteKey.findFirst({
+              where: {
+                lang: lang as any,
+                slug: siteKey,
+                isActive: true,
+              },
+              orderBy: [
+                { isPrimary: 'desc' },
+                { createdAt: 'asc' },
+              ],
+              select: { siteId: true },
+            });
+            
+            if (siteKeyRecord) {
+              const site = await this.prisma.site.findUnique({
+                where: { id: siteKeyRecord.siteId },
+              });
+              if (site) {
+                siteId = site.id;
+              }
+            }
+          } catch (err) {
+            // If resolution fails, fall through to default site
+          }
+        }
+      }
+    }
+    
+    // Fallback to default site if still not resolved
+    if (!siteId) {
       const defaultSite = await this.prisma.site.findUnique({
         where: { slug: this.getDefaultSiteSlug() },
       });
@@ -153,11 +205,31 @@ export class AuthService {
       siteId = defaultSite.id;
     }
 
+    // Check if public registration is allowed for this site
+    const site = await this.prisma.site.findUnique({
+      where: { id: siteId },
+      select: { 
+        id: true, 
+        plan: true, 
+        allowPublicRegistration: true 
+      },
+    });
+
+    if (!site) {
+      throw new NotFoundException("Site not found");
+    }
+
+    // For pro/business plans, check if public registration is enabled
+    // Basic plan always allows public registration
+    if ((site.plan === "pro" || site.plan === "business") && !site.allowPublicRegistration) {
+      throw new BadRequestException("Public registration is disabled for this site. Please contact the site administrator.");
+    }
+
     // Hash password
     const passwordHash = await this.hashPassword(dto.password);
 
     // Create user (as visitor - activeSiteId is null by default)
-    // User will become active when they activate a free site
+    // User will become active when they activate a site
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
@@ -231,12 +303,22 @@ export class AuthService {
         },
       });
 
-      if (!user || !user.isActive) {
+      if (!user) {
+        // Log for debugging (not exposed to client for security)
+        console.log(`Login attempt failed: User not found for email: ${dto.email}`);
+        throw new UnauthorizedException("Invalid credentials");
+      }
+
+      if (!user.isActive) {
+        // Log for debugging (not exposed to client for security)
+        console.log(`Login attempt failed: User is inactive for email: ${dto.email} (userId: ${user.id})`);
         throw new UnauthorizedException("Invalid credentials");
       }
 
       const isPasswordValid = await this.comparePassword(dto.password, user.passwordHash);
       if (!isPasswordValid) {
+        // Log for debugging (not exposed to client for security)
+        console.log(`Login attempt failed: Invalid password for email: ${dto.email} (userId: ${user.id})`);
         throw new UnauthorizedException("Invalid credentials");
       }
 

@@ -48,9 +48,15 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 
 // Wrapper component to provide error to ErrorPage
+// Uses the same blue theme as ErrorPage for 500 errors
 function ErrorPageWrapper({ error }: { error: any }) {
-  // Since ErrorPage uses useRouteError, we need to mock it
-  // We'll create a simpler version that accepts error as prop
+  // Use the same blue gradient theme as ErrorPage for 500 errors
+  const theme = {
+    gradient: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+    accentColor: "rgba(255, 255, 255, 0.2)",
+    textColor: "white",
+  };
+
   return (
     <div
       style={{
@@ -61,29 +67,113 @@ function ErrorPageWrapper({ error }: { error: any }) {
         justifyContent: "center",
         padding: 24,
         textAlign: "center",
-        background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+        background: theme.gradient,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <div style={{ maxWidth: 700 }}>
-        <h1
+      {/* Animated background elements - same as ErrorPage */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-50%",
+          left: "-50%",
+          width: "200%",
+          height: "200%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "50px 50px",
+          animation: "float 20s infinite linear",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "20%",
+          right: "10%",
+          width: "300px",
+          height: "300px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "50%",
+          filter: "blur(40px)",
+          animation: "pulse 4s infinite ease-in-out",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10%",
+          left: "10%",
+          width: "200px",
+          height: "200px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "50%",
+          filter: "blur(30px)",
+          animation: "pulse 6s infinite ease-in-out",
+          animationDelay: "2s",
+        }}
+      />
+
+      <style>
+        {`
+          @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-50px, -50px) rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+          }
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+          }
+        `}
+      </style>
+
+      <div
+        style={{
+          maxWidth: 700,
+          position: "relative",
+          zIndex: 1,
+          animation: "slideIn 0.6s ease-out",
+        }}
+      >
+        <div
           style={{
-            fontSize: "clamp(48px, 10vw, 120px)",
-            fontWeight: 700,
+            fontSize: "clamp(120px, 20vw, 200px)",
+            fontWeight: 900,
             margin: 0,
-            color: "#dc3545",
+            color: "rgba(255, 255, 255, 0.95)",
             lineHeight: 1,
             marginBottom: 16,
+            textShadow: "0 10px 30px rgba(0, 0, 0, 0.3)",
+            animation: "shake 0.5s ease-in-out",
+            letterSpacing: "-0.05em",
+            WebkitTextStroke: "2px rgba(255, 255, 255, 0.3)",
           }}
         >
           500
-        </h1>
+        </div>
         <h2
           style={{
-            fontSize: "clamp(24px, 5vw, 36px)",
-            fontWeight: 600,
+            fontSize: "clamp(28px, 5vw, 42px)",
+            fontWeight: 700,
             margin: 0,
-            color: "#1a1a1a",
+            color: theme.textColor,
             marginBottom: 16,
+            textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
           }}
         >
           Internal Error
@@ -91,9 +181,10 @@ function ErrorPageWrapper({ error }: { error: any }) {
         <p
           style={{
             fontSize: "clamp(16px, 3vw, 20px)",
-            color: "#666",
-            marginBottom: 24,
+            color: "rgba(255, 255, 255, 0.9)",
+            marginBottom: 40,
             lineHeight: 1.6,
+            textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
           }}
         >
           {error.data?.message || "An unexpected error occurred"}
@@ -103,18 +194,20 @@ function ErrorPageWrapper({ error }: { error: any }) {
             style={{
               marginBottom: 32,
               padding: 16,
-              background: "#f8f9fa",
+              background: "rgba(255, 255, 255, 0.1)",
+              backdropFilter: "blur(10px)",
               borderRadius: 8,
               textAlign: "left",
               maxWidth: "100%",
               overflow: "auto",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
             }}
           >
             <summary
               style={{
                 cursor: "pointer",
                 fontWeight: 500,
-                color: "#666",
+                color: "rgba(255, 255, 255, 0.9)",
                 marginBottom: 8,
               }}
             >
@@ -124,7 +217,7 @@ function ErrorPageWrapper({ error }: { error: any }) {
               style={{
                 fontSize: "clamp(13px, 3vw, 15px)",
                 fontFamily: "'Monaco', 'Courier New', monospace",
-                color: "#333",
+                color: "rgba(255, 255, 255, 0.9)",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
                 margin: 0,
@@ -137,21 +230,25 @@ function ErrorPageWrapper({ error }: { error: any }) {
         <button
           onClick={() => window.location.reload()}
           style={{
-            padding: "10px 20px",
-            background: "#667eea",
-            color: "white",
+            padding: "14px 32px",
+            background: "white",
+            color: "#6366f1",
             border: "none",
-            borderRadius: 8,
-            fontWeight: 500,
+            borderRadius: "12px",
+            fontWeight: 600,
             fontSize: 16,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             cursor: "pointer",
-            transition: "background 0.2s",
+            transition: "all 0.3s ease",
+            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#5568d3";
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#667eea";
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
           }}
         >
           Reload Page

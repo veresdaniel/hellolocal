@@ -76,10 +76,6 @@ async function main() {
             category: "winery",
             isActive: true,
             heroImage: "https://picsum.photos/seed/hernak/1200/800",
-            gallery: [
-                "https://picsum.photos/seed/hernak1/1200/800",
-                "https://picsum.photos/seed/hernak2/1200/800",
-            ],
             lat: 47.447,
             lng: 18.748,
             priceBand: "premium",

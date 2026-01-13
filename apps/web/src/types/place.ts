@@ -62,6 +62,9 @@ export type Place = {
     count: number | null; // Number of ratings
   };
 
+  // Price list
+  hasPriceList?: boolean; // Whether place has a price list
+
   // category-specifikus, szabad struktúra
   extras?: Record<string, unknown>;
 

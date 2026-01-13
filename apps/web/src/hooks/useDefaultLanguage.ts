@@ -1,5 +1,5 @@
 // src/hooks/useDefaultLanguage.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getPublicDefaultLanguage } from "../api/public.api";
 import i18n from "../i18n/config";
 
@@ -10,8 +10,12 @@ import i18n from "../i18n/config";
  */
 export function useDefaultLanguage() {
   const [isLoading, setIsLoading] = useState(true);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    // Track if component is still mounted to prevent state updates after unmount
+    isMountedRef.current = true;
+
     const loadDefaultLanguage = async () => {
       try {
         // Try to get default language from public API endpoint
@@ -34,11 +38,20 @@ export function useDefaultLanguage() {
           localStorage.setItem("i18nextLng", "hu");
         }
       } finally {
-        setIsLoading(false);
+        // Only update state if component is still mounted
+        // This prevents errors during page reloads (e.g., logout redirects)
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadDefaultLanguage();
+
+    return () => {
+      // Mark as unmounted to prevent state updates
+      isMountedRef.current = false;
+    };
   }, []);
 
   return { isLoading };

@@ -50,8 +50,7 @@ enum PlacePlan {
 }
 
 enum SitePlan {
-  free
-  official
+  basic
   pro
   business
 }
@@ -60,6 +59,7 @@ enum SubscriptionPlan {
   FREE
   BASIC
   PRO
+  BUSINESS
 }
 
 enum SubscriptionStatus {
@@ -99,18 +99,23 @@ model Brand {
 model Site {
   id       String  @id @default(cuid())
   slug     String  @unique
-  isActive Boolean @default(true)
+  isActive Boolean @default(false)
 
   // optional: for domain/whitelabel later
   primaryDomain String? @unique
 
   // Subscription/billing fields
-  plan           SitePlan  @default(free)
+  plan           SitePlan  @default(basic)
   planStatus     String?   @default("active") // trial/active/past_due/canceled
   planValidUntil DateTime?
   planLimits     Json? // override/experiments (places, featured, events limits)
   billingEmail   String?
   billingMeta    Json? // stripe ids later
+  
+  // Access control: public registration
+  // If false, only site owner (siteadmin/superadmin) can create users and places
+  // Only available for pro/business plans (basic always allows public registration)
+  allowPublicRegistration Boolean @default(true)
 
   // Brand relationship - site belongs to a brand
   brandId String
@@ -361,7 +366,7 @@ model Place {
   ownerId String?
 
   categoryId String
-  isActive   Boolean @default(true)
+  isActive   Boolean @default(false)
 
   // Subscription/upsell fields
   plan                 PlacePlan @default(free)
@@ -401,12 +406,34 @@ model Place {
   subscription PlaceSubscription?
   galleries    Gallery[]
   ratings      PlaceRating[]
+  priceList    PlacePriceList?
 
   @@index([siteId, categoryId])
   @@index([townId])
   @@index([siteId, isFeatured])
   @@index([featuredUntil])
   @@index([plan])
+}
+
+// Price list for places
+model PlacePriceList {
+  id        String   @id @default(cuid())
+  placeId   String   @unique
+  currency  String   @default("HUF") // optional override for platform setting
+  blocks    Json     // [{ title: string, items: [{ label: string, price: number|null, note?: string }] }]
+  note      String?  // Rich text note at the end (HTML)
+  isActive  Boolean  @default(true)
+  isEnabled Boolean  @default(true) // Feature flag: can disable price list module
+  requireAuth Boolean @default(false) // If true, only authenticated users can view
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([placeId])
+  @@index([isActive])
+  @@index([isEnabled])
 }
 
 // Opening hours for places (one entry per day of week)
@@ -905,7 +932,7 @@ model SiteInstance {
 model SiteSubscription {
   id              String             @id @default(cuid())
   siteId          String             @unique
-  plan            SubscriptionPlan   @default(FREE)
+  plan            SubscriptionPlan   @default(BASIC)
   status          SubscriptionStatus @default(ACTIVE)
   validUntil      DateTime?
   billingPeriod   BillingPeriod      @default(MONTHLY)
@@ -928,7 +955,7 @@ model SiteSubscription {
 model PlaceSubscription {
   id              String             @id @default(cuid())
   placeId         String             @unique
-  plan            SubscriptionPlan   @default(FREE)
+  plan            SubscriptionPlan   @default(BASIC)
   status          SubscriptionStatus @default(ACTIVE)
   validUntil      DateTime?
   billingPeriod   BillingPeriod      @default(MONTHLY)

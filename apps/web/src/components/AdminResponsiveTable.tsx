@@ -147,7 +147,6 @@ export function AdminResponsiveTable<T>({
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               boxSizing: "border-box",
             }}
             onFocus={(e) => {

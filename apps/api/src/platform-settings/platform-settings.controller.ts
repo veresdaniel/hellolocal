@@ -135,9 +135,9 @@ export class AdminPlatformSettingsController {
   async setFeatureMatrix(
     @Body() dto: {
       planOverrides?: {
-        FREE?: any;
         BASIC?: any;
         PRO?: any;
+        BUSINESS?: any;
       } | null;
       placePlanOverrides?: {
         free?: any;

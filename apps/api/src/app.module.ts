@@ -5,12 +5,12 @@ import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { PlacesModule } from "./places/places.module";
-import { SitesModule } from "./tenants/sites.module";
+import { SitesModule } from "./sites/sites.module";
 import { EventsModule } from "./events/events.module";
 import { LegalModule } from "./legal/legal.module";
 import { StaticPagesModule } from "./static-pages/static-pages.module";
 import { SlugModule } from "./slug/slug.module";
-import { TenantModule } from "./tenant/tenant.module";
+import { SiteModule } from "./site/site.module";
 import { AuthModule } from "./auth/auth.module";
 import { AdminModule } from "./admin/admin.module";
 import { AppSettingsModule } from "./app-settings/app-settings.module";
@@ -18,7 +18,6 @@ import { TwoFactorModule } from "./two-factor/two-factor.module";
 import { SeoModule } from "./seo/seo.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { PlatformSettingsModule } from "./platform-settings/platform-settings.module";
-import { SiteModule } from "./site/site.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { BillingModule } from "./billing/billing.module";
 import { EntitlementsModule } from "./entitlements/entitlements.module";
@@ -45,7 +44,6 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
       },
     ]),
     PrismaModule,
-    TenantModule,
     SlugModule,
     AuthModule,
     TwoFactorModule,
@@ -63,7 +61,7 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
     TasksModule, // Scheduled tasks (expired featured cleanup, etc.)
     BillingModule, // Billing and subscription management
     EntitlementsModule, // Entitlements and subscription management
-    SubscriptionModule, // Subscription lifecycle management (cancel, expire, activate-free)
+    SubscriptionModule, // Subscription lifecycle management (cancel, expire)
   ],
   controllers: [HealthController],
   providers: [

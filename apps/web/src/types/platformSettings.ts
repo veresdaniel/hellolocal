@@ -59,4 +59,12 @@ export type PlatformSettingsDto = {
   seoImage?: string | null;
   siteName?: string | null;
   seoTitle?: string | null;
+
+  // Platform settings (global)
+  platform?: {
+    locale: string; // e.g., "hu-HU"
+    currency: string; // e.g., "HUF"
+    timeFormat: "24h" | "12h";
+    weekStartsOn: number; // 0 = Sunday, 1 = Monday
+  };
 };

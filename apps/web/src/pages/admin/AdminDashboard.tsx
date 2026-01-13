@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useMemo } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../../app/config";
@@ -74,6 +74,22 @@ export function AdminDashboard() {
 
   // Determine if EventLog card should be shown (admin or siteadmin)
   const showEventLog = hasAdminPermissions;
+
+  // Count cards in each section to conditionally show section titles
+  const permissionsCardsCount = useMemo(() => {
+    let count = 0;
+    if (user?.role === "superadmin") count += 2; // users + siteMemberships
+    if (hasAdminPermissions) count += 1; // placeMemberships
+    return count;
+  }, [user?.role, hasAdminPermissions]);
+
+  const systemCardsCount = useMemo(() => {
+    let count = 0;
+    if (user?.role === "superadmin") count += 3; // appSettings + brands + subscriptions
+    if (user?.role === "superadmin" && HAS_MULTIPLE_SITES) count += 1; // sites
+    if (showEventLog) count += 1; // eventLog
+    return count;
+  }, [user?.role, showEventLog]);
 
   // Public site URL
   const publicSiteUrl = buildUrl({ lang: currentLang, siteKey, path: "" });
@@ -152,7 +168,7 @@ export function AdminDashboard() {
             ? "repeat(auto-fit, minmax(85px, 1fr))" 
             : isTablet
             ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
+            : "repeat(auto-fill, minmax(240px, min(1fr, 320px)))",
           gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
           width: "100%",
           maxWidth: "100%",
@@ -218,7 +234,7 @@ export function AdminDashboard() {
             ? "repeat(auto-fit, minmax(85px, 1fr))" 
             : isTablet
             ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
+            : "repeat(auto-fill, minmax(240px, min(1fr, 320px)))",
           gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
           width: "100%",
           maxWidth: "100%",
@@ -262,120 +278,124 @@ export function AdminDashboard() {
       </div>
 
       {/* Permissions & People Block */}
-      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <SectionTitle label={t("admin.dashboardSections.permissions")} />
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: isMobile 
-            ? "repeat(auto-fit, minmax(85px, 1fr))" 
-            : isTablet
-            ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}>
-          {user?.role === "superadmin" && (
-            <DashboardCard
-              title={t("admin.users")}
-              description={t("admin.dashboardCards.usersDesc")}
-              link={adminPath("/users")}
-              icon="👥"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {user?.role === "superadmin" && (
-            <DashboardCard
-              title={t("admin.dashboardCards.siteMemberships")}
-              description={t("admin.dashboardCards.siteMembershipsDesc")}
-              link={adminPath("/site-memberships")}
-              icon="👥"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {hasAdminPermissions && (
-            <DashboardCard
-              title={t("admin.dashboardCards.placeMemberships")}
-              description={t("admin.dashboardCards.placeMembershipsDesc")}
-              link={adminPath("/place-memberships")}
-              icon="📍"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
+      {permissionsCardsCount > 0 && (
+        <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+          <SectionTitle label={t("admin.dashboardSections.permissions")} />
+          <div style={{ 
+            display: "grid",
+            gridTemplateColumns: isMobile 
+              ? "repeat(auto-fit, minmax(85px, 1fr))" 
+              : isTablet
+              ? "repeat(auto-fit, minmax(180px, 1fr))"
+              : "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}>
+            {user?.role === "superadmin" && (
+              <DashboardCard
+                title={t("admin.users")}
+                description={t("admin.dashboardCards.usersDesc")}
+                link={adminPath("/users")}
+                icon="👥"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {user?.role === "superadmin" && (
+              <DashboardCard
+                title={t("admin.dashboardCards.siteMemberships")}
+                description={t("admin.dashboardCards.siteMembershipsDesc")}
+                link={adminPath("/site-memberships")}
+                icon="👥"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {hasAdminPermissions && (
+              <DashboardCard
+                title={t("admin.dashboardCards.placeMemberships")}
+                description={t("admin.dashboardCards.placeMembershipsDesc")}
+                link={adminPath("/place-memberships")}
+                icon="📍"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* System / Admin Block */}
-      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <SectionTitle label={t("admin.dashboardSections.system")} />
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: isMobile 
-            ? "repeat(auto-fit, minmax(85px, 1fr))" 
-            : isTablet
-            ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}>
-          {user?.role === "superadmin" && (
-            <DashboardCard
-              title={t("admin.appSettings")}
-              description={t("admin.dashboardCards.appSettingsDesc")}
-              link={adminPath("/platform-settings")}
-              icon="⚙️"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {user?.role === "superadmin" && (
-            <DashboardCard
-              title={t("admin.dashboardCards.brands")}
-              description={t("admin.dashboardCards.brandsDesc")}
-              link={adminPath("/brands")}
-              icon="🏷️"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {user?.role === "superadmin" && HAS_MULTIPLE_SITES && (
-            <DashboardCard
-              title={t("admin.sites")}
-              description={t("admin.dashboardCards.sitesDesc")}
-              link={adminPath("/sites")}
-              icon="🗺️"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {showEventLog && (
-            <DashboardCard
-              title={t("admin.dashboardCards.eventLog")}
-              description={t("admin.dashboardCards.eventLogDesc")}
-              link={adminPath("/event-log")}
-              icon="📋"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
-          {user?.role === "superadmin" && (
-            <DashboardCard
-              title={t("admin.subscriptionsDashboard")}
-              description={t("admin.dashboardCards.subscriptionsDesc")}
-              link={adminPath("/subscriptions")}
-              icon="💳"
-              isMobile={isMobile}
-              variant="admin"
-            />
-          )}
+      {systemCardsCount > 0 && (
+        <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+          <SectionTitle label={t("admin.dashboardSections.system")} />
+          <div style={{ 
+            display: "grid",
+            gridTemplateColumns: isMobile 
+              ? "repeat(auto-fit, minmax(85px, 1fr))" 
+              : isTablet
+              ? "repeat(auto-fit, minmax(180px, 1fr))"
+              : "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}>
+            {user?.role === "superadmin" && (
+              <DashboardCard
+                title={t("admin.appSettings")}
+                description={t("admin.dashboardCards.appSettingsDesc")}
+                link={adminPath("/platform-settings")}
+                icon="⚙️"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {user?.role === "superadmin" && (
+              <DashboardCard
+                title={t("admin.dashboardCards.brands")}
+                description={t("admin.dashboardCards.brandsDesc")}
+                link={adminPath("/brands")}
+                icon="🏷️"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {user?.role === "superadmin" && HAS_MULTIPLE_SITES && (
+              <DashboardCard
+                title={t("admin.sites")}
+                description={t("admin.dashboardCards.sitesDesc")}
+                link={adminPath("/sites")}
+                icon="🗺️"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {showEventLog && (
+              <DashboardCard
+                title={t("admin.dashboardCards.eventLog")}
+                description={t("admin.dashboardCards.eventLogDesc")}
+                link={adminPath("/event-log")}
+                icon="📋"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {user?.role === "superadmin" && (
+              <DashboardCard
+                title={t("admin.subscriptionsDashboard")}
+                description={t("admin.dashboardCards.subscriptionsDesc")}
+                link={adminPath("/subscriptions")}
+                icon="💳"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
@@ -549,9 +569,8 @@ function DashboardCard({
         </div>
         <div style={{
           fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 600,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 600,
           color: "#a8b3ff",
           textAlign: "center",
           lineHeight: 1.2,
@@ -613,9 +632,8 @@ function DashboardCard({
         <h3 style={{ 
           margin: "0 0 3px 0",
           fontSize: "clamp(15px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 700,
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 700,
           color: "#a8b3ff",
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -627,7 +645,6 @@ function DashboardCard({
           margin: 0, 
           color: "rgba(255, 255, 255, 0.75)",
           fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           lineHeight: 1.3,
           fontWeight: 400,

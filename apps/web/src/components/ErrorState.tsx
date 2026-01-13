@@ -9,6 +9,7 @@ interface ErrorStateProps {
   backLinkText?: string;
   onRetry?: () => void;
   variant?: "default" | "minimal";
+  statusCode?: number; // For 500 errors, use blue gradient like ErrorPage
 }
 
 export function ErrorState({
@@ -18,12 +19,24 @@ export function ErrorState({
   backLinkText,
   onRetry,
   variant = "default",
+  statusCode,
 }: ErrorStateProps) {
   const { t } = useTranslation();
 
   const defaultTitle = title || t("error.errorOccurred");
   const defaultMessage = message || t("error.unknownError");
   const defaultBackLinkText = backLinkText || t("error.goHome");
+
+  // For 500 errors, use blue gradient like ErrorPage
+  const getErrorTheme = (code?: number) => {
+    if (code && code >= 500) {
+      return "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)";
+    }
+    // Default purple gradient for other errors
+    return "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+  };
+
+  const gradient = getErrorTheme(statusCode);
 
   if (variant === "minimal") {
     return (
@@ -147,7 +160,7 @@ export function ErrorState({
         justifyContent: "center",
         padding: 24,
         textAlign: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: gradient,
         position: "relative",
         overflow: "hidden",
       }}

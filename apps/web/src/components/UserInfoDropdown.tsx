@@ -14,9 +14,9 @@ export function UserInfoDropdown() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "superadmin":
-        return "#dc3545";
+        return "#9c27b0"; // Sötétlila
       case "admin":
-        return "#007bff";
+        return "#dc3545";
       case "editor":
         return "#28a745";
       default:
@@ -83,7 +83,6 @@ export function UserInfoDropdown() {
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}>
@@ -108,7 +107,6 @@ export function UserInfoDropdown() {
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}>
@@ -118,7 +116,6 @@ export function UserInfoDropdown() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
                 {user.email}
               </div>
@@ -134,7 +131,6 @@ export function UserInfoDropdown() {
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}>
@@ -148,9 +144,8 @@ export function UserInfoDropdown() {
                     background: getRoleColor(user.role),
                     color: "white",
                     fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 600,
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 600,
                     display: "inline-block",
                   }}
                 >
@@ -169,7 +164,6 @@ export function UserInfoDropdown() {
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#666", 
                 fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}>
@@ -179,7 +173,6 @@ export function UserInfoDropdown() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
                 {user.tenantIds?.length || 0}
               </div>

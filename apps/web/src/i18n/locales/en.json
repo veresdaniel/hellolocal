@@ -242,6 +242,35 @@
     "tags": "Tags",
     "priceBands": "Price Bands",
     "places": "Places",
+    "priceList": "Price List",
+    "priceListDesc": "Manage price list",
+    "newBlock": "New Block",
+    "newItem": "New Item",
+    "blockTitle": "Block Title",
+    "itemLabel": "Label",
+    "price": "Price",
+    "note": "Note",
+    "notePlaceholder": "Note (rich text)",
+    "currency": "Currency",
+    "enabled": "Enabled",
+    "requireAuth": "Require Authentication",
+    "noPriceList": "No price list yet. Create a block.",
+    "saved": "Saved",
+    "unsavedChanges": "Unsaved changes",
+    "saving": "Saving",
+    "backToPlace": "Back to Place",
+    "confirmations": {
+      "deleteBlock": "Are you sure you want to delete this block?"
+    },
+    "messages": {
+      "priceListUpdated": "Price list updated successfully"
+    },
+    "errors": {
+      "updatePriceListFailed": "Failed to update price list",
+      "placeNotFound": "Place not found",
+      "noAccessToPlace": "You do not have access to this place"
+    },
+    "customPrice": "Custom Pricing",
     "towns": "Towns",
     "legalPages": "Legal Pages",
     "users": "Users",
@@ -453,7 +482,9 @@
         "contactToUpgrade": "Please contact us to change plan",
         "planUpdated": "Plan updated",
         "saved": "Saved",
-        "advancedSettings": "Advanced Settings"
+        "advancedSettings": "Advanced Settings",
+        "allowPublicRegistration": "Allow Public Registration",
+        "allowPublicRegistrationDescription": "If disabled, only the site owner can create users and places. Only available for Pro and Business plans."
       },
       "quickActions": "Quick Actions",
       "openPublicPage": "Open Public Page"
@@ -1057,6 +1088,12 @@
     "siteNotFound": "Site Not Found",
     "siteNotFoundMessage": "The specified site does not exist or is not enabled.",
     "backToSites": "Back to Sites"
+  },
+  "offline": {
+    "title": "You're Offline",
+    "message": "It seems there's no internet connection. Please check your network settings.",
+    "joke": "Even routers need a break sometimes... 😊",
+    "retry": "Retry"
   },
   "cookieConsent": {
     "message": "This site uses cookies to provide the best user experience. By continuing, you accept the use of cookies.",

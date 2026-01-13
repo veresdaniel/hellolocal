@@ -83,8 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
             return;
           }
-          // Redirect to admin login page only if in admin area
-          window.location.href = `/${logoutLang}/admin/login`;
+          // Use setTimeout to delay redirect slightly, allowing React to properly unmount
+          // This prevents "Cannot read properties of null" errors during page reload
+          setTimeout(() => {
+            window.location.href = `/${logoutLang}/admin/login`;
+          }, 0);
         }
         // If on public page, don't redirect or reload - just clear auth state
         // The component will re-render automatically when user state changes
@@ -99,8 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         // Redirect to admin login only if session expired while in admin
+        // Use setTimeout to delay redirect slightly, allowing React to properly unmount
         sessionStorage.setItem("sessionExpired", "true");
-        window.location.href = `/${lang}/admin/login`;
+        setTimeout(() => {
+          window.location.href = `/${lang}/admin/login`;
+        }, 0);
       }
     }
   }, []);
@@ -352,10 +358,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .then((freshUser) => {
               // Update with fresh data from API - ensure role is lowercase
               const role = (freshUser.role || "").toLowerCase() as User["role"];
+              // Backend now returns siteIds directly, but also has sites array
+              // Use siteIds if available, otherwise extract from sites array
+              const siteIds = freshUser.siteIds || (freshUser as any).sites?.map((s: { siteId: string }) => s.siteId) || [];
               const userData = {
                 ...freshUser,
                 role,
-                siteIds: freshUser.siteIds || [],
+                siteIds,
               };
               localStorage.setItem("user", JSON.stringify(userData));
               
@@ -364,6 +373,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!prevUser || 
                     prevUser.id !== userData.id || 
                     prevUser.role !== userData.role ||
+                    prevUser.activeSiteId !== userData.activeSiteId ||
                     JSON.stringify(prevUser.siteIds) !== JSON.stringify(userData.siteIds)) {
                   return userData;
                 }

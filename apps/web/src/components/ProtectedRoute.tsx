@@ -167,7 +167,9 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
 
   // Check if user is a visitor (activeSiteId === null)
   // Visitors should not access admin routes (except login/register)
-  const isVisitor = user.activeSiteId === null || user.activeSiteId === undefined;
+  // BUT: superadmin has access to everything, even without activeSiteId
+  const isSuperadmin = user.role === "superadmin";
+  const isVisitor = !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
   if (isVisitor) {
     // Redirect visitor to public pages (home page)
     return <Navigate to={`/${lang}`} replace />;

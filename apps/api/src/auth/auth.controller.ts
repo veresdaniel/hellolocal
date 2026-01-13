@@ -10,6 +10,7 @@ import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
+import { RequestWithSite } from "../common/middleware/site-resolve.middleware";
 
 /**
  * Authentication controller.
@@ -21,12 +22,15 @@ export class AuthController {
 
   /**
    * Register a new user.
-   * If siteId is not provided, user is assigned to default site.
+   * If siteId is not provided, user is assigned to the site from the request context
+   * (determined by domain or URL-based site resolution).
+   * Falls back to referer-based resolution if request context is not available.
    */
   @Post("/register")
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto, @Req() req: RequestWithSite) {
+    const referer = req.headers.referer || req.headers.origin;
+    return this.authService.register(dto, req.site?.siteId, referer);
   }
 
   /**

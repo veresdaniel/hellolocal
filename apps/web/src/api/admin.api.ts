@@ -232,6 +232,48 @@ export function deletePlace(id: string, tenantId?: string) {
   return apiDelete<{ message: string }>(`/admin/places/${id}${params}`);
 }
 
+// Place Price List
+export interface PriceListBlock {
+  title: string;
+  items: Array<{
+    label: string;
+    price: number | null;
+    note?: string;
+  }>;
+}
+
+export interface PriceList {
+  id: string;
+  placeId: string;
+  currency: string;
+  blocks: PriceListBlock[];
+  note: string | null;
+  isActive: boolean;
+  isEnabled: boolean;
+  requireAuth: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdatePriceListDto {
+  blocks: PriceListBlock[];
+  currency?: string;
+  note?: string | null;
+  isActive?: boolean;
+  isEnabled?: boolean;
+  requireAuth?: boolean;
+}
+
+export function getPlacePriceList(placeId: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiGet<PriceList | null>(`/admin/places/${placeId}/pricelist${params}`);
+}
+
+export function updatePlacePriceList(placeId: string, data: UpdatePriceListDto, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiPut<PriceList>(`/admin/places/${placeId}/pricelist${params}`, data);
+}
+
 // Legal Pages
 export function getLegalPages(siteId?: string, page?: number, limit?: number) {
   const params = new URLSearchParams();
@@ -507,11 +549,12 @@ export interface Site {
   primaryDomain?: string | null;
   brandId: string;
   brand?: Brand;
-  plan?: "free" | "official" | "pro" | "business";
+  plan?: "basic" | "pro" | "business";
   planStatus?: string | null;
   planValidUntil?: string | null;
   planLimits?: Record<string, any> | null;
   billingEmail?: string | null;
+  allowPublicRegistration?: boolean; // If false, only site owner can create users and places (pro/business only)
   translations: Array<{
     id: string;
     lang: string;
@@ -588,11 +631,12 @@ export interface UpdateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
-  plan?: "free" | "official" | "pro" | "business";
+  plan?: "basic" | "pro" | "business";
   planStatus?: string;
   planValidUntil?: string | Date | null;
   planLimits?: Record<string, any> | null;
   billingEmail?: string | null;
+  allowPublicRegistration?: boolean; // If false, only site owner can create users and places (pro/business only)
 }
 
 export function getSites() {
@@ -900,7 +944,7 @@ export function setPlatformSettings(data: SetPlatformSettingsDto & { siteId: str
 // Feature Matrix (Plan Overrides)
 export interface FeatureMatrix {
   planOverrides: {
-    FREE?: {
+    BASIC?: {
       limits?: {
         placesMax?: number;
         featuredPlacesMax?: number;
@@ -957,6 +1001,34 @@ export interface FeatureMatrix {
       };
     };
     PRO?: {
+      limits?: {
+        placesMax?: number;
+        featuredPlacesMax?: number;
+        galleryImagesPerPlaceMax?: number;
+        eventsPerMonthMax?: number;
+        siteMembersMax?: number;
+        domainAliasesMax?: number;
+        languagesMax?: number;
+        galleriesMax?: number | "∞";
+        imagesPerGalleryMax?: number;
+        galleriesPerPlaceMax?: number | "∞";
+        galleriesPerEventMax?: number | "∞";
+      };
+      features?: {
+        eventsEnabled?: boolean;
+        placeSeoEnabled?: boolean;
+        extrasEnabled?: boolean;
+        customDomainEnabled?: boolean;
+        eventLogEnabled?: boolean;
+        heroImage?: boolean;
+        contacts?: boolean;
+        siteSeo?: boolean;
+        canonicalSupport?: boolean;
+        multipleDomainAliases?: boolean;
+        pushSubscription?: boolean | "optional add-on";
+      };
+    };
+    BUSINESS?: {
       limits?: {
         placesMax?: number;
         featuredPlacesMax?: number;
@@ -1296,16 +1368,17 @@ export interface PlaceEntitlements {
 
 export interface SiteSubscription {
   siteId: string;
-  plan: "free" | "official" | "pro" | "business";
+  plan: "basic" | "pro" | "business";
   planStatus: string | null;
   planValidUntil: string | null;
   planLimits: Record<string, any> | null;
   billingEmail: string | null;
+  allowPublicRegistration: boolean; // If false, only site owner can create users and places (pro/business only)
 }
 
 export interface SiteEntitlements {
   siteId: string;
-  plan: "free" | "official" | "pro" | "business";
+  plan: "basic" | "pro" | "business";
   limits: {
     places: number;
     featuredSlots: number;
@@ -1372,7 +1445,7 @@ export interface SubscriptionListItem {
   id: string;
   entityId: string;
   entityName: string;
-  plan: "FREE" | "BASIC" | "PRO";
+  plan: "BASIC" | "PRO" | "BUSINESS";
   status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
   validUntil: string | null;
   owner: {

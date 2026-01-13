@@ -67,16 +67,16 @@ export function SubscriptionOverviewPage() {
     }
   };
 
-  const planLabels: Record<"FREE" | "BASIC" | "PRO", string> = {
-    FREE: t("admin.planFree") || "Free",
+  const planLabels: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
     BASIC: t("admin.planBasic") || "Basic",
     PRO: t("admin.planPro") || "Pro",
+    BUSINESS: t("admin.planBusiness") || "Business",
   };
 
-  const planColors: Record<"FREE" | "BASIC" | "PRO", string> = {
-    FREE: "#6b7280",
+  const planColors: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
     BASIC: "#3b82f6",
     PRO: "#667eea",
+    BUSINESS: "#8b5cf6",
   };
 
   const statusColors: Record<"ACTIVE" | "SUSPENDED" | "EXPIRED", string> = {

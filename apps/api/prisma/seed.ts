@@ -14,45 +14,60 @@ function mustEnv(name: string): string {
   return v;
 }
 
-const DEFAULT_TENANT_INTERNAL = process.env.DEFAULT_TENANT_SLUG ?? "etyek-budai";
+const DEFAULT_SITE_SLUG = process.env.DEFAULT_SITE_SLUG ?? "etyek-budai";
 
 // -------------------- helpers --------------------
 
-async function upsertTenantKey(args: {
-  tenantId: string;
+async function upsertSiteKey(args: {
+  siteId: string;
   lang: Lang;
   slug: string;
   isPrimary?: boolean;
 }) {
-  const { tenantId, lang, slug, isPrimary = true } = args;
+  const { siteId, lang, slug, isPrimary = true } = args;
 
-  return prisma.tenantKey.upsert({
-    where: { lang_slug: { lang, slug } },
-    update: { tenantId, isPrimary, isActive: true },
-    create: { tenantId, lang, slug, isPrimary, isActive: true },
+  // Check if SiteKey already exists
+  const existing = await prisma.siteKey.findFirst({
+    where: {
+      siteId,
+      lang,
+      slug,
+    },
+  });
+
+  if (existing) {
+    return prisma.siteKey.update({
+      where: { id: existing.id },
+      data: { isPrimary, isActive: true },
+      select: { id: true, lang: true, slug: true },
+    });
+  }
+
+  return prisma.siteKey.create({
+    data: { siteId, lang, slug, isPrimary, isActive: true },
     select: { id: true, lang: true, slug: true },
   });
 }
 
 async function upsertSlug(args: {
-  tenantId: string;
+  siteId: string;
   lang: Lang;
   slug: string;
   entityType: SlugEntityType;
   entityId: string;
   isPrimary?: boolean;
 }) {
-  const { tenantId, lang, slug, entityType, entityId, isPrimary = true } = args;
+  const { siteId, lang, slug, entityType, entityId, isPrimary = true } = args;
   return prisma.slug.upsert({
-    where: { tenantId_lang_slug: { tenantId, lang, slug } },
+    where: { siteId_lang_slug: { siteId, lang, slug } },
     update: { entityType, entityId, isPrimary, isActive: true },
-    create: { tenantId, lang, slug, entityType, entityId, isPrimary, isActive: true },
+    create: { siteId, lang, slug, entityType, entityId, isPrimary, isActive: true },
     select: { id: true, lang: true, slug: true, entityType: true, entityId: true },
   });
 }
 
 async function ensureCategory(args: {
-  tenantId: string;
+  siteId: string;
   // natural key for seed: HU name
   huName: string;
   translations: Array<{
@@ -62,18 +77,18 @@ async function ensureCategory(args: {
   }>;
   isActive?: boolean;
 }) {
-  const { tenantId, huName, translations, isActive = true } = args;
+  const { siteId, huName, translations, isActive = true } = args;
 
   // Find existing by HU translation name
   let category = await prisma.category.findFirst({
-    where: { tenantId, translations: { some: { lang: "hu", name: huName } } },
+    where: { siteId, translations: { some: { lang: "hu", name: huName } } },
     select: { id: true },
   });
 
   if (!category) {
     category = await prisma.category.create({
       data: {
-        tenantId,
+        siteId,
         isActive,
         translations: {
           create: translations.map((t) => ({
@@ -109,7 +124,7 @@ async function ensureCategory(args: {
 }
 
 async function ensureTag(args: {
-  tenantId: string;
+  siteId: string;
   // natural key for seed: HU name
   huName: string;
   translations: Array<{
@@ -119,18 +134,18 @@ async function ensureTag(args: {
   }>;
   isActive?: boolean;
 }) {
-  const { tenantId, huName, translations, isActive = true } = args;
+  const { siteId, huName, translations, isActive = true } = args;
 
   // Find existing by HU translation name
   let tag = await prisma.tag.findFirst({
-    where: { tenantId, translations: { some: { lang: "hu", name: huName } } },
+    where: { siteId, translations: { some: { lang: "hu", name: huName } } },
     select: { id: true },
   });
 
   if (!tag) {
     tag = await prisma.tag.create({
       data: {
-        tenantId,
+        siteId,
         isActive,
         translations: {
           create: translations.map((t) => ({
@@ -166,7 +181,7 @@ async function ensureTag(args: {
 }
 
 async function ensurePriceBand(args: {
-  tenantId: string;
+  siteId: string;
   // natural key for seed: HU name
   huName: string;
   translations: Array<{
@@ -176,18 +191,18 @@ async function ensurePriceBand(args: {
   }>;
   isActive?: boolean;
 }) {
-  const { tenantId, huName, translations, isActive = true } = args;
+  const { siteId, huName, translations, isActive = true } = args;
 
   // Find existing by HU translation name
   let priceBand = await prisma.priceBand.findFirst({
-    where: { tenantId, translations: { some: { lang: "hu", name: huName } } },
+    where: { siteId, translations: { some: { lang: "hu", name: huName } } },
     select: { id: true },
   });
 
   if (!priceBand) {
     priceBand = await prisma.priceBand.create({
       data: {
-        tenantId,
+        siteId,
         isActive,
         translations: {
           create: translations.map((t) => ({
@@ -223,7 +238,7 @@ async function ensurePriceBand(args: {
 }
 
 async function ensureTown(args: {
-  tenantId: string;
+  siteId: string;
   // natural key for seed: HU name
   huName: string;
   translations: Array<{
@@ -238,18 +253,18 @@ async function ensureTown(args: {
   }>;
   isActive?: boolean;
 }) {
-  const { tenantId, huName, translations, isActive = true } = args;
+  const { siteId, huName, translations, isActive = true } = args;
 
   // Find existing by HU translation name
   let town = await prisma.town.findFirst({
-    where: { tenantId, translations: { some: { lang: "hu", name: huName } } },
+    where: { siteId, translations: { some: { lang: "hu", name: huName } } },
     select: { id: true },
   });
 
   if (!town) {
     town = await prisma.town.create({
       data: {
-        tenantId,
+        siteId,
         isActive,
         translations: {
           create: translations.map((t) => ({
@@ -301,7 +316,7 @@ async function ensureTown(args: {
 }
 
 async function ensurePlace(args: {
-  tenantId: string;
+  siteId: string;
   townId?: string | null;
   // natural key for seed: HU name
   huName: string;
@@ -310,7 +325,6 @@ async function ensurePlace(args: {
   isActive?: boolean;
 
   heroImage?: string | null;
-  gallery?: string[];
   tagIds?: string[]; // Array of tag IDs
   lat?: number | null;
   lng?: number | null;
@@ -340,7 +354,7 @@ async function ensurePlace(args: {
   }>;
 }) {
   const {
-    tenantId,
+    siteId,
     townId = null,
     huName,
     categoryId,
@@ -359,19 +373,18 @@ async function ensurePlace(args: {
 
   // Find existing by HU translation name
   let place = await prisma.place.findFirst({
-    where: { tenantId, translations: { some: { lang: "hu", name: huName } } },
+    where: { siteId, translations: { some: { lang: "hu", name: huName } } },
     select: { id: true },
   });
 
   if (!place) {
     place = await prisma.place.create({
       data: {
-        tenantId,
+        siteId,
         townId,
         categoryId,
         isActive,
         heroImage,
-        gallery,
         lat,
         lng,
         priceBandId,
@@ -475,7 +488,7 @@ async function ensurePlace(args: {
 }
 
 async function ensureLegalPage(args: {
-  tenantId: string;
+  siteId: string;
   key: string; // imprint|terms|privacy
   isActive?: boolean;
   translations: Array<{
@@ -488,13 +501,13 @@ async function ensureLegalPage(args: {
     seoKeywords?: string[];
   }>;
 }) {
-  const { tenantId, key, isActive = true, translations } = args;
+  const { siteId, key, isActive = true, translations } = args;
 
   const page = await prisma.legalPage.upsert({
-    where: { tenantId_key: { tenantId, key } },
+    where: { siteId_key: { siteId, key } },
     update: { isActive },
     create: {
-      tenantId,
+      siteId,
       key,
       isActive,
       translations: {
@@ -545,56 +558,151 @@ async function ensureLegalPage(args: {
 async function main() {
   mustEnv("DATABASE_URL");
 
-  // 1) Tenant (internal key)
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: DEFAULT_TENANT_INTERNAL },
-    update: { isActive: true },
-    create: {
-      slug: DEFAULT_TENANT_INTERNAL,
-      isActive: true,
-      translations: {
-        create: [
-          {
-            lang: "hu",
-            name: "Etyek–Budai Borvidék",
-            shortDescription: "<p>Rövid bemutató…</p>",
-            description: "<p>Hosszabb leírás…</p>",
-            seoTitle: "Etyek–Budai Borvidék",
-            seoDescription: "Fedezd fel az Etyek–Budai borvidéket.",
-            seoKeywords: ["etyek", "borvidék", "borászat"],
-          },
-          {
-            lang: "en",
-            name: "Etyek–Buda Wine Region",
-            shortDescription: "<p>Short intro…</p>",
-            description: "<p>Longer description…</p>",
-            seoTitle: "Etyek–Buda Wine Region",
-            seoDescription: "Discover the Etyek–Buda wine region.",
-            seoKeywords: ["wine region", "etyek", "wineries"],
-          },
-          {
-            lang: "de",
-            name: "Weinregion Etyek–Buda",
-            shortDescription: "<p>Kurzbeschreibung…</p>",
-            description: "<p>Längere Beschreibung…</p>",
-            seoTitle: "Weinregion Etyek–Buda",
-            seoDescription: "Entdecke die Weinregion Etyek–Buda.",
-            seoKeywords: ["Weinregion", "Etyek", "Weingüter"],
-          },
-        ],
-      },
-    },
-    select: { id: true, slug: true },
+  // 1) Brand (required for Site)
+  let brand = await prisma.brand.findFirst({
+    where: { name: "HelloLocal" },
   });
 
-  // 2) TenantKey (public key in URL): hu/en/de  (MEZŐ: slug)
-  await upsertTenantKey({ tenantId: tenant.id, lang: "hu", slug: "etyek-budai", isPrimary: true });
-  await upsertTenantKey({ tenantId: tenant.id, lang: "en", slug: "etyek-buda", isPrimary: true });
-  await upsertTenantKey({ tenantId: tenant.id, lang: "de", slug: "etyek-buda", isPrimary: true });
+  if (!brand) {
+    brand = await prisma.brand.create({
+      data: {
+        name: "HelloLocal",
+      },
+    });
+    console.log(`✓ Created brand: ${brand.name}`);
+  } else {
+    console.log(`✓ Found brand: ${brand.name}`);
+  }
 
-  // 3) Town: Etyek
+  // 2) Site (internal key)
+  // First, check if Site table exists
+  const siteTableExists = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'Site'
+    );
+  `;
+
+  if (!siteTableExists[0]?.exists) {
+    console.error(`❌ Site table does not exist in database.`);
+    console.error(`   Please run: pnpm -C apps/api generate && pnpm -C apps/api migrate:deploy`);
+    throw new Error(
+      `Database schema is out of sync. Site table missing. Please run migrations and regenerate Prisma client.`
+    );
+  }
+
+  let site = null;
+  
+  try {
+    // Try to find site by slug
+    site = await prisma.site.findFirst({
+      where: { slug: DEFAULT_SITE_SLUG },
+      include: {
+        translations: true,
+      },
+    });
+  } catch (error: any) {
+    // If slug column doesn't exist or query fails, try to find any site
+    console.log(`⚠️  Could not find site by slug: ${error.message}`);
+    console.log(`   Trying to find any site...`);
+    try {
+      site = await prisma.site.findFirst({
+        include: {
+          translations: true,
+        },
+      });
+    } catch (err: any) {
+      console.error(`❌ Could not access Site table: ${err.message}`);
+      console.error(`   This usually means the Prisma client is out of sync.`);
+      console.error(`   Try running: pnpm -C apps/api generate`);
+      throw new Error(
+        `Prisma client is out of sync with database. Please run: pnpm -C apps/api generate`
+      );
+    }
+  }
+
+  if (!site) {
+    // Create new site
+    try {
+      site = await prisma.site.create({
+      data: {
+        slug: DEFAULT_SITE_SLUG,
+        brandId: brand.id,
+        isActive: true,
+        translations: {
+          create: [
+            {
+              lang: "hu",
+              name: "Etyek–Budai Borvidék",
+              shortDescription: "<p>Rövid bemutató…</p>",
+              description: "<p>Hosszabb leírás…</p>",
+              seoTitle: "Etyek–Budai Borvidék",
+              seoDescription: "Fedezd fel az Etyek–Budai borvidéket.",
+              seoKeywords: ["etyek", "borvidék", "borászat"],
+            },
+            {
+              lang: "en",
+              name: "Etyek–Buda Wine Region",
+              shortDescription: "<p>Short intro…</p>",
+              description: "<p>Longer description…</p>",
+              seoTitle: "Etyek–Buda Wine Region",
+              seoDescription: "Discover the Etyek–Buda wine region.",
+              seoKeywords: ["wine region", "etyek", "wineries"],
+            },
+            {
+              lang: "de",
+              name: "Weinregion Etyek–Buda",
+              shortDescription: "<p>Kurzbeschreibung…</p>",
+              description: "<p>Längere Beschreibung…</p>",
+              seoTitle: "Weinregion Etyek–Buda",
+              seoDescription: "Entdecke die Weinregion Etyek–Buda.",
+              seoKeywords: ["Weinregion", "Etyek", "Weingüter"],
+            },
+          ],
+        },
+      },
+      include: {
+        translations: true,
+      },
+      include: {
+        translations: true,
+      },
+    });
+    const siteSlug = (site as any).slug || site.id;
+    console.log(`✓ Created site: ${siteSlug}`);
+    } catch (error: any) {
+      console.error(`❌ Could not create site: ${error.message}`);
+      throw new Error(
+        `Failed to create site. Please ensure migrations are run: pnpm -C apps/api db:setup`
+      );
+    }
+  } else {
+    // Update existing site to ensure it's active
+    try {
+      site = await prisma.site.update({
+        where: { id: site.id },
+        data: { isActive: true },
+        include: {
+          translations: true,
+        },
+      });
+      const siteSlug = (site as any).slug || site.id;
+      console.log(`✓ Found site: ${siteSlug}`);
+    } catch (error: any) {
+      // If update fails, just use the existing site
+      console.log(`⚠️  Could not update site, using existing: ${site.id}`);
+    }
+  }
+
+  // 3) SiteKey (public key in URL): hu/en/de  (MEZŐ: slug)
+  await upsertSiteKey({ siteId: site.id, lang: "hu", slug: "etyek-budai", isPrimary: true });
+  await upsertSiteKey({ siteId: site.id, lang: "en", slug: "etyek-buda", isPrimary: true });
+  await upsertSiteKey({ siteId: site.id, lang: "de", slug: "etyek-buda", isPrimary: true });
+
+  // 4) Town: Etyek
   const townId = await ensureTown({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Etyek",
     translations: [
       {
@@ -610,13 +718,13 @@ async function main() {
   });
 
   // Town public slugs per lang
-  await upsertSlug({ tenantId: tenant.id, lang: "hu", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
-  await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
-  await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
+  await upsertSlug({ siteId: site.id, lang: "hu", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
+  await upsertSlug({ siteId: site.id, lang: "en", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
+  await upsertSlug({ siteId: site.id, lang: "de", slug: "etyek", entityType: SlugEntityType.TOWN, entityId: townId });
 
-  // 3.5) Categories
+  // 5) Categories
   const categoryWineryId = await ensureCategory({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Borászat",
     translations: [
       { lang: "hu", name: "Borászat", description: "<p>Borászatok és pincészetek.</p>" },
@@ -626,7 +734,7 @@ async function main() {
   });
 
   const categoryAccommodationId = await ensureCategory({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Szállás",
     translations: [
       { lang: "hu", name: "Szállás", description: "<p>Szálláshelyek.</p>" },
@@ -636,7 +744,7 @@ async function main() {
   });
 
   const categoryHospitalityId = await ensureCategory({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Vendéglátás",
     translations: [
       { lang: "hu", name: "Vendéglátás", description: "<p>Éttermek, kávézók, bárok.</p>" },
@@ -646,7 +754,7 @@ async function main() {
   });
 
   const categoryCraftId = await ensureCategory({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Kézműves",
     translations: [
       { lang: "hu", name: "Kézműves", description: "<p>Kézműves műhelyek és workshopok.</p>" },
@@ -656,7 +764,7 @@ async function main() {
   });
 
   const categoryFoodProducerId = await ensureCategory({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Élelmiszer termelő",
     translations: [
       { lang: "hu", name: "Élelmiszer termelő", description: "<p>Helyi élelmiszer termelők.</p>" },
@@ -667,7 +775,7 @@ async function main() {
 
   // 3.6) Tags
   const tagTastingId = await ensureTag({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Kóstoló",
     translations: [
       { lang: "hu", name: "Kóstoló" },
@@ -677,7 +785,7 @@ async function main() {
   });
 
   const tagTerraceId = await ensureTag({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Terasz",
     translations: [
       { lang: "hu", name: "Terasz" },
@@ -688,7 +796,7 @@ async function main() {
 
   // 3.7) Price Bands
   const priceBandBudgetId = await ensurePriceBand({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Költségvetési",
     translations: [
       { lang: "hu", name: "Költségvetési" },
@@ -698,7 +806,7 @@ async function main() {
   });
 
   const priceBandMidId = await ensurePriceBand({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Középkategória",
     translations: [
       { lang: "hu", name: "Középkategória" },
@@ -708,7 +816,7 @@ async function main() {
   });
 
   const priceBandPremiumId = await ensurePriceBand({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Prémium",
     translations: [
       { lang: "hu", name: "Prémium" },
@@ -718,7 +826,7 @@ async function main() {
   });
 
   const priceBandLuxuryId = await ensurePriceBand({
-    tenantId: tenant.id,
+    siteId: site.id,
     huName: "Luxus",
     translations: [
       { lang: "hu", name: "Luxus" },
@@ -729,15 +837,11 @@ async function main() {
 
   // 4) Place: Hernák Estate
   const placeId = await ensurePlace({
-    tenantId: tenant.id,
+    siteId: site.id,
     townId,
     huName: "Hernák Estate",
     categoryId: categoryWineryId,
     heroImage: "https://picsum.photos/seed/hernak/1200/800",
-    gallery: [
-      "https://picsum.photos/seed/hernak1/1200/800",
-      "https://picsum.photos/seed/hernak2/1200/800",
-    ],
     lat: 47.447,
     lng: 18.748,
     priceBandId: priceBandPremiumId,
@@ -780,13 +884,13 @@ async function main() {
   });
 
   // Place public slugs per lang
-  await upsertSlug({ tenantId: tenant.id, lang: "hu", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
-  await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
-  await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
+  await upsertSlug({ siteId: site.id, lang: "hu", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
+  await upsertSlug({ siteId: site.id, lang: "en", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
+  await upsertSlug({ siteId: site.id, lang: "de", slug: "hernak-estate", entityType: SlugEntityType.PLACE, entityId: placeId });
 
   // 5) Legal pages
   const imprintId = await ensureLegalPage({
-    tenantId: tenant.id,
+    siteId: site.id,
     key: "imprint",
     translations: [
       {
@@ -802,7 +906,7 @@ async function main() {
   });
 
   const termsId = await ensureLegalPage({
-    tenantId: tenant.id,
+    siteId: site.id,
     key: "terms",
     translations: [
       {
@@ -818,7 +922,7 @@ async function main() {
   });
 
   const privacyId = await ensureLegalPage({
-    tenantId: tenant.id,
+    siteId: site.id,
     key: "privacy",
     translations: [
       {
@@ -834,17 +938,17 @@ async function main() {
   });
 
   // Legal public slugs per lang (page entity)
-  await upsertSlug({ tenantId: tenant.id, lang: "hu", slug: "impresszum", entityType: SlugEntityType.PAGE, entityId: imprintId });
-  await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "imprint", entityType: SlugEntityType.PAGE, entityId: imprintId });
-  await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "impressum", entityType: SlugEntityType.PAGE, entityId: imprintId });
+  await upsertSlug({ siteId: site.id, lang: "hu", slug: "impresszum", entityType: SlugEntityType.PAGE, entityId: imprintId });
+  await upsertSlug({ siteId: site.id, lang: "en", slug: "imprint", entityType: SlugEntityType.PAGE, entityId: imprintId });
+  await upsertSlug({ siteId: site.id, lang: "de", slug: "impressum", entityType: SlugEntityType.PAGE, entityId: imprintId });
 
-  await upsertSlug({ tenantId: tenant.id, lang: "hu", slug: "aszf", entityType: SlugEntityType.PAGE, entityId: termsId });
-  await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "terms", entityType: SlugEntityType.PAGE, entityId: termsId });
-  await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "agb", entityType: SlugEntityType.PAGE, entityId: termsId });
+  await upsertSlug({ siteId: site.id, lang: "hu", slug: "aszf", entityType: SlugEntityType.PAGE, entityId: termsId });
+  await upsertSlug({ siteId: site.id, lang: "en", slug: "terms", entityType: SlugEntityType.PAGE, entityId: termsId });
+  await upsertSlug({ siteId: site.id, lang: "de", slug: "agb", entityType: SlugEntityType.PAGE, entityId: termsId });
 
-  await upsertSlug({ tenantId: tenant.id, lang: "hu", slug: "adatvedelem", entityType: SlugEntityType.PAGE, entityId: privacyId });
-  await upsertSlug({ tenantId: tenant.id, lang: "en", slug: "privacy-policy", entityType: SlugEntityType.PAGE, entityId: privacyId });
-  await upsertSlug({ tenantId: tenant.id, lang: "de", slug: "datenschutz", entityType: SlugEntityType.PAGE, entityId: privacyId });
+  await upsertSlug({ siteId: site.id, lang: "hu", slug: "adatvedelem", entityType: SlugEntityType.PAGE, entityId: privacyId });
+  await upsertSlug({ siteId: site.id, lang: "en", slug: "privacy-policy", entityType: SlugEntityType.PAGE, entityId: privacyId });
+  await upsertSlug({ siteId: site.id, lang: "de", slug: "datenschutz", entityType: SlugEntityType.PAGE, entityId: privacyId });
 
   // 6) Superadmin user
   const superadminPasswordHash = await bcrypt.hash("admin123", 10); // Change in production!
@@ -861,6 +965,40 @@ async function main() {
 
   let superadminUser;
   if (existingAdmin) {
+    // Check if user already has this site
+    const existingUserSite = await prisma.userSite.findUnique({
+      where: {
+        userId_siteId: {
+          userId: existingAdmin.id,
+          siteId: site.id,
+        },
+      },
+    });
+
+    if (!existingUserSite) {
+      // Create site relationship
+      await prisma.userSite.create({
+        data: {
+          userId: existingAdmin.id,
+          siteId: site.id,
+          isPrimary: true,
+        },
+      });
+    } else {
+      // Update to make it primary
+      await prisma.userSite.update({
+        where: {
+          userId_siteId: {
+            userId: existingAdmin.id,
+            siteId: site.id,
+          },
+        },
+        data: {
+          isPrimary: true,
+        },
+      });
+    }
+
     // Update existing admin to superadmin
     superadminUser = await prisma.user.update({
       where: { id: existingAdmin.id },
@@ -871,24 +1009,6 @@ async function main() {
         firstName: "Super",
         lastName: "Admin",
         bio: "System super administrator",
-        // Ensure tenant relationship exists
-        tenants: {
-          upsert: {
-            where: {
-              userId_tenantId: {
-                userId: existingAdmin.id,
-                tenantId: tenant.id,
-              },
-            },
-            update: {
-              isPrimary: true,
-            },
-            create: {
-              tenantId: tenant.id,
-              isPrimary: true,
-            },
-          },
-        },
       },
       select: { id: true, username: true, email: true, role: true },
     });
@@ -904,9 +1024,9 @@ async function main() {
         bio: "System super administrator",
         role: UserRole.superadmin,
         isActive: true,
-        tenants: {
+        sites: {
           create: {
-            tenantId: tenant.id,
+            siteId: site.id,
             isPrimary: true,
           },
         },

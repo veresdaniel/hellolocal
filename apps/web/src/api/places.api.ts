@@ -116,6 +116,28 @@ export function getPlaceById(lang: string, siteKey: string, placeId: string) {
   return apiGetPublic<Place>(`/public/${lang}/${siteKey}/places/by-id/${placeId}`);
 }
 
+// Price List API
+export interface PriceListBlock {
+  title: string;
+  items: Array<{
+    label: string;
+    price: number | null;
+    note?: string;
+  }>;
+}
+
+export interface PublicPriceList {
+  id: string;
+  placeId: string;
+  currency: string;
+  blocks: PriceListBlock[];
+  note: string | null;
+}
+
+export function getPlacePriceList(lang: string, siteKey: string, placeId: string) {
+  return apiGetPublic<PublicPriceList>(`/public/${lang}/${siteKey}/places/by-id/${placeId}/pricelist`);
+}
+
 // Gallery API
 export interface GalleryImage {
   id: string;

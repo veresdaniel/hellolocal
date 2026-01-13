@@ -74,7 +74,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request).catch(() => {
         // If network fails, return offline response
-        return new Response("Offline", { status: 503 });
+        // For API requests, return JSON error
+        return new Response(JSON.stringify({ error: "Offline", message: "No internet connection" }), { 
+          status: 503,
+          headers: { "Content-Type": "application/json" }
+        });
       })
     );
     return;
@@ -90,7 +94,20 @@ self.addEventListener("fetch", (event) => {
       }).catch(() => {
         // If network fails, try cache as fallback
         return caches.match(event.request).then((cachedResponse) => {
-          return cachedResponse || new Response("Offline", { status: 503 });
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // If no cache and it's an HTML request, redirect to offline page
+          if (event.request.headers.get("accept")?.includes("text/html")) {
+            return new Response(
+              `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/offline"></head><body>Redirecting to offline page...</body></html>`,
+              { 
+                status: 503,
+                headers: { "Content-Type": "text/html" }
+              }
+            );
+          }
+          return new Response("Offline", { status: 503 });
         });
       })
     );
@@ -120,7 +137,17 @@ self.addEventListener("fetch", (event) => {
       });
     })
     .catch(() => {
-      // If both cache and network fail, return a basic response
+      // If both cache and network fail, return offline page for HTML requests
+      if (event.request.headers.get("accept")?.includes("text/html")) {
+        return new Response(
+          `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/offline"></head><body>Redirecting to offline page...</body></html>`,
+          { 
+            status: 503,
+            headers: { "Content-Type": "text/html" }
+          }
+        );
+      }
+      // For non-HTML requests, return plain text
       return new Response("Offline", { status: 503 });
     })
   );

@@ -19,12 +19,16 @@ import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
 import { SitesListPage } from "../pages/SitesListPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
+import { OfflinePage } from "../pages/OfflinePage";
 
 // Auth pages - loaded eagerly (small, needed for login)
 import { LoginPage } from "../pages/auth/LoginPage";
 import { RegisterPage } from "../pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
+
+// AdminLayout - eagerly loaded (layout component, should not be lazy loaded to prevent hook errors during navigation)
+import { AdminLayout } from "../components/AdminLayout";
 
 // Admin pages - lazy loaded (only needed when user is logged in)
 const AdminDashboardWrapper = lazy(() => import("../pages/admin/AdminDashboardWrapper").then(m => ({ default: m.AdminDashboardWrapper })));
@@ -46,10 +50,10 @@ const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").
 const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
 const PlaceMembershipsPage = lazy(() => import("../pages/admin/PlaceMembershipsPage").then(m => ({ default: m.PlaceMembershipsPage })));
 const PlacesPage = lazy(() => import("../pages/admin/PlacesPage").then(m => ({ default: m.PlacesPage })));
+const PlacePriceListPage = lazy(() => import("../pages/admin/PlacePriceListPage").then(m => ({ default: m.PlacePriceListPage })));
 const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
 const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
 const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
-const AdminLayout = lazy(() => import("../components/AdminLayout").then(m => ({ default: m.AdminLayout })));
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -78,6 +82,7 @@ const createPublicRoutes = () => {
     { path: "pricing", element: <PricingPage /> },
     { path: "tarife", element: <PricingPage /> },
     { path: "preise", element: <PricingPage /> },
+    { path: "offline", element: <OfflinePage /> },
   ];
 
   if (HAS_MULTIPLE_SITES) {
@@ -125,6 +130,9 @@ const createPublicRoutes = () => {
 export const router = createBrowserRouter([
   // root -> default nyelv (dynamically loaded from app settings)
   { path: "/", element: <RootRedirect /> },
+  
+  // Offline page - accessible without language prefix for service worker redirects
+  { path: "/offline", element: <OfflinePage /> },
   
   // Legacy admin routes redirect to language-specific routes
   // IMPORTANT: These MUST be defined BEFORE any other routes that could match /admin/*
@@ -236,6 +244,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PlacesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "places/:placeId/pricelist",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlacePriceListPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>
