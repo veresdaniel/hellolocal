@@ -165,6 +165,14 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
     return <Navigate to={`/${lang}/admin/login`} replace />;
   }
 
+  // Check if user is a visitor (activeSiteId === null)
+  // Visitors should not access admin routes (except login/register)
+  const isVisitor = user.activeSiteId === null || user.activeSiteId === undefined;
+  if (isVisitor) {
+    // Redirect visitor to public pages (home page)
+    return <Navigate to={`/${lang}`} replace />;
+  }
+
   if (requiredRole) {
     const roleHierarchy: Record<string, number> = {
       viewer: 1,

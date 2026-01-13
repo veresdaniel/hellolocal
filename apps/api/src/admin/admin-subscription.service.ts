@@ -823,26 +823,36 @@ export class AdminSubscriptionService {
   }
 
   /**
-   * Get subscription history
+   * Get subscription history with pagination
    */
   async getHistory(
     scope: "site" | "place",
-    subscriptionId: string
-  ): Promise<any[]> {
+    subscriptionId: string,
+    skip?: number,
+    take?: number
+  ): Promise<{ items: any[]; total: number }> {
     try {
-      const history = await this.prisma.subscriptionHistory.findMany({
-        where: {
-          scope,
-          subscriptionId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-      return history;
+      const where = {
+        scope,
+        subscriptionId,
+      };
+
+      const [history, total] = await Promise.all([
+        this.prisma.subscriptionHistory.findMany({
+          where,
+          orderBy: {
+            createdAt: "desc",
+          },
+          skip: skip || 0,
+          take: take || 50,
+        }),
+        this.prisma.subscriptionHistory.count({ where }),
+      ]);
+
+      return { items: history, total };
     } catch (error) {
       console.error("Error in getHistory:", error);
-      return [];
+      return { items: [], total: 0 };
     }
   }
 }

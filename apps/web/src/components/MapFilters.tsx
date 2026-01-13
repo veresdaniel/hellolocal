@@ -399,7 +399,6 @@ export function MapFilters({
           fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -478,7 +477,6 @@ export function MapFilters({
             <h3
               style={{
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
                 color: "#5a3d7a",
                 marginBottom: 10,
@@ -538,7 +536,6 @@ export function MapFilters({
                     <span
                       style={{
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         color: isSelected ? "#3d2952" : "#5a3d7a",
                         fontWeight: isSelected ? 500 : 400,
                         lineHeight: 1.4,
@@ -558,7 +555,6 @@ export function MapFilters({
             <h3
               style={{
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
                 color: "#5a3d7a",
                 marginBottom: 10,
@@ -619,7 +615,6 @@ export function MapFilters({
                       <span
                         style={{
                           fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.4,
@@ -644,7 +639,6 @@ export function MapFilters({
             <h3
               style={{
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
                 color: "#5a3d7a",
                 marginBottom: 10,
@@ -666,7 +660,6 @@ export function MapFilters({
                   color: isOpenNow ? "#3d2952" : "#5a3d7a",
                   fontWeight: isOpenNow ? 600 : 500,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -695,7 +688,6 @@ export function MapFilters({
                   color: hasEventToday ? "#3d2952" : "#5a3d7a",
                   fontWeight: hasEventToday ? 600 : 500,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -725,7 +717,6 @@ export function MapFilters({
                     color: within30Minutes ? "#3d2952" : "#5a3d7a",
                     fontWeight: within30Minutes ? 600 : 500,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s",
                     textAlign: "left",
                     border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -755,7 +746,6 @@ export function MapFilters({
                   color: rainSafe ? "#3d2952" : "#5a3d7a",
                   fontWeight: rainSafe ? 600 : 500,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",

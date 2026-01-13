@@ -52,6 +52,7 @@ export interface User {
   lastName: string;
   role: "superadmin" | "admin" | "editor" | "viewer";
   siteIds: string[];
+  activeSiteId?: string | null; // null = visitor, non-null = active user
   // Backward compatibility: backend may still return tenantIds
   tenantIds?: string[];
 }

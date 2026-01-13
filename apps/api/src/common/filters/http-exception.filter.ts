@@ -45,17 +45,36 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       // Handle generic JavaScript errors
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = process.env.NODE_ENV === "production" 
-        ? "Internal server error" 
-        : exception.message || "An unexpected error occurred";
-      error = "Internal Server Error";
       
-      // Log the full error in development
-      if (process.env.NODE_ENV !== "production") {
-        details = {
-          name: exception.name,
-          stack: exception.stack,
-        };
+      // Special handling for OAuth errors (TokenError from passport-oauth2)
+      if (exception.name === "TokenError" || exception.message?.includes("Bad Request")) {
+        status = HttpStatus.BAD_REQUEST;
+        message = "Google OAuth authentication failed. Please check your Google OAuth configuration (callback URL, client ID, and secret).";
+        error = "OAuthError";
+        this.logger.error(
+          `OAuth error: ${exception.message}`,
+          exception.stack
+        );
+        
+        // For OAuth errors, redirect to frontend login page instead of returning JSON
+        if (request.url?.includes("/google/callback")) {
+          const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+          const lang = request.headers.referer?.match(/\/(hu|en|de)(\/|$)/)?.[1] || "hu";
+          return response.redirect(`${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(message)}`);
+        }
+      } else {
+        message = process.env.NODE_ENV === "production" 
+          ? "Internal server error" 
+          : exception.message || "An unexpected error occurred";
+        error = "Internal Server Error";
+        
+        // Log the full error in development
+        if (process.env.NODE_ENV !== "production") {
+          details = {
+            name: exception.name,
+            stack: exception.stack,
+          };
+        }
       }
     } else {
       // Handle unknown errors

@@ -21,6 +21,7 @@ interface AuthContextType {
     bio?: string;
   }) => Promise<void>;
   logout: (isManualLogout?: boolean) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -294,8 +295,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Load user from localStorage on mount and refresh from API
-  useEffect(() => {
+  // Function to load user from localStorage and refresh from API
+  const loadUserFromStorage = useCallback(async () => {
+    setIsLoading(true);
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("accessToken");
     const storedRefreshToken = localStorage.getItem("refreshToken");
@@ -307,6 +309,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (parsedUser.role) {
           parsedUser.role = parsedUser.role.toLowerCase();
         }
+        // Set user immediately from localStorage (synchronous update for immediate UI feedback)
+        // This ensures the UI updates immediately even before API call completes
+        // Always update to ensure React re-renders when user data changes
         setUser(parsedUser);
         
         // Refresh user data from API to ensure it's up to date (especially role)
@@ -421,6 +426,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Load user from localStorage on mount and refresh from API
+  useEffect(() => {
+    loadUserFromStorage();
+  }, [loadUserFromStorage]);
+
+  // Listen for storage changes (e.g., from Google OAuth callback)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // If accessToken or user changed, reload user data
+      if (e.key === "accessToken" || e.key === "user") {
+        loadUserFromStorage();
+      }
+    };
+
+    // Also listen for custom storage events (for same-tab updates)
+    const handleCustomStorageEvent = () => {
+      loadUserFromStorage();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("auth:storage-update", handleCustomStorageEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth:storage-update", handleCustomStorageEvent);
+    };
+  }, [loadUserFromStorage]);
+
   const handleLogin = useCallback(async (email: string, password: string, twoFactorToken?: string) => {
     const response = await login({ email, password, twoFactorToken });
     localStorage.setItem("accessToken", response.accessToken);
@@ -455,6 +488,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
+  // Refresh user function that can be called externally
+  const handleRefreshUser = useCallback(async () => {
+    await loadUserFromStorage();
+  }, [loadUserFromStorage]);
+
   // Memoize context value to ensure stable reference
   // Only recreate when user, isLoading, or handlers change
   const contextValue = useMemo(
@@ -465,8 +503,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: handleLogin,
       register: handleRegister,
       logout: handleLogout,
+      refreshUser: handleRefreshUser,
     }),
-    [user, isLoading, handleLogin, handleRegister, handleLogout]
+    [user, isLoading, handleLogin, handleRegister, handleLogout, handleRefreshUser]
   );
 
   const handleSessionExtended = useCallback(() => {

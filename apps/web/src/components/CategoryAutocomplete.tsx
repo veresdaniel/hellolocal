@@ -33,11 +33,12 @@ export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
   const { t, i18n } = useTranslation();
   const {
     categories,
-    placeholder = "Select category...",
+    placeholder,
     label,
     required = false,
     error,
   } = props;
+  const defaultPlaceholder = placeholder || t("admin.selectCategoryPlaceholder");
 
   // Determine if multiple mode: if multiple prop is explicitly true, or if selectedCategoryIds exists
   // Default to single select mode (multiple = false) unless explicitly set to true
@@ -81,7 +82,7 @@ export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
       onSelect={handleSelect}
       onRemove={handleRemove}
       getItemName={getCategoryName}
-      placeholder={placeholder}
+      placeholder={placeholder || defaultPlaceholder}
       label={label || t("admin.categories")}
       required={required}
       error={error}

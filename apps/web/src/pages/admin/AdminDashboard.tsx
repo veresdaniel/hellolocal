@@ -106,7 +106,6 @@ export function AdminDashboard() {
         <p style={{ 
           fontSize: "clamp(14px, 3.5vw, 16px)",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 400,
           color: "#c0c0d0",
           margin: 0,

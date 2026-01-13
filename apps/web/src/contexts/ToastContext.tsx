@@ -1,5 +1,5 @@
 // src/contexts/ToastContext.tsx
-import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from "react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 

@@ -10,8 +10,9 @@ interface StaticPageCategoryAutocompleteProps {
   placeholder?: string;
 }
 
-export function StaticPageCategoryAutocomplete({ value, onChange, placeholder = "Select category..." }: StaticPageCategoryAutocompleteProps) {
+export function StaticPageCategoryAutocomplete({ value, onChange, placeholder }: StaticPageCategoryAutocompleteProps) {
   const { t } = useTranslation();
+  const defaultPlaceholder = placeholder || t("admin.selectCategoryPlaceholder");
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -106,7 +107,7 @@ export function StaticPageCategoryAutocomplete({ value, onChange, placeholder = 
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={placeholder || defaultPlaceholder}
             autoFocus
             style={{
               width: "100%",

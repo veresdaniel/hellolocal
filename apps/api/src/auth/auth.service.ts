@@ -26,6 +26,7 @@ export interface JwtPayload {
   username: string;
   role: UserRole;
   siteIds: string[]; // Array of site IDs the user belongs to
+  activeSiteId?: string | null; // Active site ID (null = visitor)
 }
 
 export interface AuthResponse {
@@ -39,6 +40,7 @@ export interface AuthResponse {
     lastName: string;
     role: UserRole;
     siteIds: string[];
+    activeSiteId?: string | null;
   };
 }
 
@@ -154,7 +156,8 @@ export class AuthService {
     // Hash password
     const passwordHash = await this.hashPassword(dto.password);
 
-    // Create user
+    // Create user (as visitor - activeSiteId is null by default)
+    // User will become active when they activate a free site
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
@@ -164,6 +167,7 @@ export class AuthService {
         lastName: dto.lastName,
         bio: dto.bio,
         role: UserRole.viewer, // Default role
+        activeSiteId: null, // Visitor by default
         sites: {
           create: {
             siteId,
@@ -186,6 +190,7 @@ export class AuthService {
       username: user.username,
       role: user.role,
       siteIds,
+      activeSiteId: user.activeSiteId,
     };
 
     const { accessToken, refreshToken } = await this.generateTokens(payload);
@@ -207,6 +212,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         siteIds,
+        activeSiteId: user.activeSiteId,
       },
     };
   }
@@ -275,6 +281,7 @@ export class AuthService {
         username: user.username,
         role: user.role as UserRole,
         siteIds,
+        activeSiteId: user.activeSiteId,
       };
 
       const { accessToken, refreshToken } = await this.generateTokens(payload);
@@ -349,6 +356,7 @@ export class AuthService {
           lastName: user.lastName,
           role: user.role as UserRole,
           siteIds,
+          activeSiteId: user.activeSiteId,
         },
       };
     } catch (error) {
@@ -546,6 +554,104 @@ export class AuthService {
       username: user.username,
       role: user.role as UserRole,
       siteIds,
+      activeSiteId: user.activeSiteId,
+    };
+  }
+
+  /**
+   * Handles Google OAuth authentication/registration.
+   * Creates user as visitor (activeSiteId: null) if they don't exist.
+   */
+  async googleLogin(googleUser: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture?: string;
+  }): Promise<AuthResponse> {
+    // Check if user already exists
+    let user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+      include: {
+        sites: {
+          select: { siteId: true },
+        },
+      },
+    });
+
+    // If user doesn't exist, create as visitor
+    if (!user) {
+      // Get default site ID
+      const defaultSite = await this.prisma.site.findUnique({
+        where: { slug: this.getDefaultSiteSlug() },
+      });
+
+      if (!defaultSite) {
+        throw new NotFoundException("Default site not found");
+      }
+
+      // Generate username from email (first part before @)
+      const emailPrefix = googleUser.email.split("@")[0];
+      const baseUsername = emailPrefix.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+      
+      // Ensure unique username
+      let username = baseUsername;
+      let counter = 1;
+      while (await this.prisma.user.findUnique({ where: { username } })) {
+        username = `${baseUsername}-${counter}`;
+        counter++;
+      }
+
+      // Create user as visitor (activeSiteId: null)
+      user = await this.prisma.user.create({
+        data: {
+          username,
+          email: googleUser.email,
+          passwordHash: "", // No password for OAuth users
+          firstName: googleUser.firstName,
+          lastName: googleUser.lastName,
+          role: UserRole.viewer,
+          activeSiteId: null, // Visitor by default
+          sites: {
+            create: {
+              siteId: defaultSite.id,
+              isPrimary: true,
+            },
+          },
+        },
+        include: {
+          sites: {
+            select: { siteId: true },
+          },
+        },
+      });
+    }
+
+    const siteIds = user.sites?.map((s) => s.siteId) || [];
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      siteIds,
+      activeSiteId: user.activeSiteId,
+    };
+
+    const { accessToken, refreshToken } = await this.generateTokens(payload);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        siteIds,
+        activeSiteId: user.activeSiteId,
+      },
     };
   }
 }

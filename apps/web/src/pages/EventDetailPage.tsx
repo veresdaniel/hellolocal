@@ -336,7 +336,7 @@ export function EventDetailPage() {
         style={{
           minHeight: "100vh",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          paddingTop: 80,
+          paddingTop: "clamp(72px, 8vw, 88px)",
         }}
       >
         <article
@@ -352,7 +352,7 @@ export function EventDetailPage() {
             <div
               style={{
                 width: "calc(100% - 32px)",
-                margin: "0 16px 24px",
+                margin: "24px 16px 24px",
                 height: "clamp(250px, 50vw, 400px)",
                 borderRadius: 16,
                 overflow: "hidden",
@@ -385,7 +385,6 @@ export function EventDetailPage() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 24,
                 transition: "color 0.2s",
               }}

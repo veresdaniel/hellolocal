@@ -273,7 +273,7 @@ export function PlaceDetailPage() {
         style={{
           minHeight: "100vh",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          paddingTop: 80,
+          paddingTop: "clamp(72px, 8vw, 88px)",
         }}
       >
         <article
@@ -291,7 +291,7 @@ export function PlaceDetailPage() {
               style={{
                 width: "calc(100% - 32px)",
                 maxWidth: "100%",
-                margin: "0 16px 16px",
+                margin: "24px 16px 16px",
                 height: "clamp(250px, 50vw, 400px)",
                 borderRadius: 16,
                 overflow: "hidden",
@@ -535,7 +535,6 @@ export function PlaceDetailPage() {
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
@@ -580,7 +579,6 @@ export function PlaceDetailPage() {
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
@@ -628,7 +626,6 @@ export function PlaceDetailPage() {
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
@@ -676,7 +673,6 @@ export function PlaceDetailPage() {
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 400,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
@@ -724,7 +720,6 @@ export function PlaceDetailPage() {
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 6,
@@ -806,7 +801,6 @@ export function PlaceDetailPage() {
                             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             color: isToday ? "#667eea" : "#333",
                             fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
                           {dayName}
@@ -828,9 +822,8 @@ export function PlaceDetailPage() {
                           style={{
                             color: oh.isClosed ? "#999" : "#333",
                             fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            fontWeight: 400,
                             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontWeight: 400,
                           }}
                         >
                           {oh.isClosed ? (

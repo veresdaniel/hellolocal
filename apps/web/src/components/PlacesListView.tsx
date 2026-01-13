@@ -366,7 +366,7 @@ export function PlacesListView({
         style={{
           minHeight: "100vh",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          padding: "72px 12px 24px",
+          padding: "clamp(72px, 8vw, 88px) 12px 24px",
         }}
       >
         {/* Header */}
@@ -380,6 +380,7 @@ export function PlacesListView({
           <h1
             style={{
               margin: 0,
+              marginTop: 0,
               marginBottom: 24,
               fontSize: "clamp(24px, 5vw, 36px)",
               fontWeight: 700,

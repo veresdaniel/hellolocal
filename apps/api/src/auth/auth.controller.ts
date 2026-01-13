@@ -1,5 +1,7 @@
-import { Body, Controller, Post, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards, HttpCode, HttpStatus, Get, Req, Res, HttpException, HttpStatus as NestHttpStatus } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
+import { AuthGuard } from "@nestjs/passport";
+import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
@@ -78,6 +80,76 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser() user: { id: string; siteIds?: string[] }) {
     return this.authService.logout(user.id, user.siteIds);
+  }
+
+  /**
+   * Initiate Google OAuth login.
+   * Redirects to Google OAuth consent screen.
+   */
+  @Get("/google")
+  @UseGuards(AuthGuard("google"))
+  async googleAuth(@Req() req: Request) {
+    // Guard redirects to Google
+    // This method will not be called if credentials are missing,
+    // but the route will still be registered
+  }
+
+  /**
+   * Google OAuth callback.
+   * Handles the redirect from Google after authentication.
+   * Redirects to frontend with tokens in URL hash (more secure than query params).
+   */
+  @Get("/google/callback")
+  @UseGuards(AuthGuard("google"))
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const lang = this.extractLanguageFromRequest(req) || "hu";
+    
+    // Check if OAuth failed (user will be null if strategy validation failed)
+    if (!req.user) {
+      // Check if there's an error in query params (from Google)
+      const error = req.query.error;
+      const errorDescription = req.query.error_description;
+      
+      const errorMsg = error 
+        ? `Google OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ""}`
+        : "Google OAuth authentication failed";
+      
+      return res.redirect(`${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(errorMsg)}`);
+    }
+    
+    const googleUser = req.user as {
+      email: string;
+      firstName: string;
+      lastName: string;
+      picture?: string;
+    };
+    
+    try {
+      const authResponse = await this.authService.googleLogin(googleUser);
+      
+      // Encode tokens for URL (use hash to avoid server logs)
+      const tokens = encodeURIComponent(JSON.stringify({
+        accessToken: authResponse.accessToken,
+        refreshToken: authResponse.refreshToken,
+        user: authResponse.user,
+      }));
+      
+      // Redirect to frontend callback handler
+      return res.redirect(`${frontendUrl}/${lang}/admin/login?googleAuth=success&tokens=${tokens}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Google authentication failed";
+      return res.redirect(`${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(errorMessage)}`);
+    }
+  }
+
+  /**
+   * Extract language from request (from referer or default)
+   */
+  private extractLanguageFromRequest(req: Request): string | null {
+    const referer = req.headers.referer || "";
+    const langMatch = referer.match(/\/(hu|en|de)(\/|$)/);
+    return langMatch ? langMatch[1] : null;
   }
 }
 

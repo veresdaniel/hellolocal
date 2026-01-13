@@ -54,6 +54,10 @@ export function SubscriptionsDashboardPage() {
   const [historyModalOpen, setHistoryModalOpen] = useState<string | null>(null);
   const [history, setHistory] = useState<SubscriptionHistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(0);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [currentHistoryItem, setCurrentHistoryItem] = useState<SubscriptionListItem | null>(null);
+  const historyPageSize = 20;
 
   const pageSize = 20;
 
@@ -206,15 +210,19 @@ export function SubscriptionsDashboardPage() {
     }
   };
 
-  const handleViewHistory = async (item: SubscriptionListItem) => {
+  const handleViewHistory = async (item: SubscriptionListItem, page: number = 0) => {
+    setCurrentHistoryItem(item);
     setHistoryModalOpen(item.id);
+    setHistoryPage(page);
     setIsLoadingHistory(true);
     try {
-      const historyData = await getSubscriptionHistory(item.scope, item.id);
-      setHistory(historyData);
+      const historyData = await getSubscriptionHistory(item.scope, item.id, page * historyPageSize, historyPageSize);
+      setHistory(historyData.items);
+      setHistoryTotal(historyData.total);
     } catch (err) {
       showToast(t("admin.errors.loadFailed") || "Failed to load history", "error");
       setHistory([]);
+      setHistoryTotal(0);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -1058,7 +1066,11 @@ export function SubscriptionsDashboardPage() {
             zIndex: 1000,
             padding: isMobile ? 16 : 24,
           }}
-          onClick={() => setHistoryModalOpen(null)}
+          onClick={() => {
+            setHistoryModalOpen(null);
+            setHistoryPage(0);
+            setCurrentHistoryItem(null);
+          }}
         >
           <div
             style={{
@@ -1078,7 +1090,11 @@ export function SubscriptionsDashboardPage() {
                 {t("admin.subscriptionHistory") || "Előfizetés előzmények"}
               </h2>
               <button
-                onClick={() => setHistoryModalOpen(null)}
+                onClick={() => {
+            setHistoryModalOpen(null);
+            setHistoryPage(0);
+            setCurrentHistoryItem(null);
+          }}
                 style={{
                   background: "none",
                   border: "none",
@@ -1106,8 +1122,9 @@ export function SubscriptionsDashboardPage() {
                 {t("admin.noHistory") || "Nincs előzmény"}
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {history.map((item) => (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {history.map((item) => (
                   <div
                     key={item.id}
                     style={{
@@ -1181,8 +1198,73 @@ export function SubscriptionsDashboardPage() {
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                
+                {/* Pagination for history */}
+                {historyTotal > historyPageSize && (
+                  <div style={{ 
+                    marginTop: 20,
+                    paddingTop: 20,
+                    borderTop: "1px solid #e5e7eb",
+                    display: "flex", 
+                    justifyContent: "space-between", 
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 12,
+                  }}>
+                    <div style={{ 
+                      fontSize: 14, 
+                      color: "#666",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}>
+                      {t("admin.showing") || "Showing"} {historyPage * historyPageSize + 1}-{Math.min((historyPage + 1) * historyPageSize, historyTotal)} {t("admin.of") || "of"} {historyTotal}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          if (currentHistoryItem && historyPage > 0) {
+                            handleViewHistory(currentHistoryItem, historyPage - 1);
+                          }
+                        }}
+                        disabled={historyPage === 0}
+                        style={{
+                          padding: "8px 16px",
+                          background: historyPage === 0 ? "#e5e7eb" : "#667eea",
+                          color: historyPage === 0 ? "#999" : "white",
+                          border: "none",
+                          borderRadius: 6,
+                          fontSize: 14,
+                          cursor: historyPage === 0 ? "not-allowed" : "pointer",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {t("admin.previous") || "Előző"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (currentHistoryItem && (historyPage + 1) * historyPageSize < historyTotal) {
+                            handleViewHistory(currentHistoryItem, historyPage + 1);
+                          }
+                        }}
+                        disabled={(historyPage + 1) * historyPageSize >= historyTotal}
+                        style={{
+                          padding: "8px 16px",
+                          background: (historyPage + 1) * historyPageSize >= historyTotal ? "#e5e7eb" : "#667eea",
+                          color: (historyPage + 1) * historyPageSize >= historyTotal ? "#999" : "white",
+                          border: "none",
+                          borderRadius: 6,
+                          fontSize: 14,
+                          cursor: (historyPage + 1) * historyPageSize >= historyTotal ? "not-allowed" : "pointer",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {t("admin.next") || "Következő"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

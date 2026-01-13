@@ -182,7 +182,8 @@ export class AdminUsersService {
     // Hash password
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    // Create user
+    // Create user (as visitor - activeSiteId is null by default)
+    // User will become active when they activate a free site
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
@@ -193,6 +194,7 @@ export class AdminUsersService {
         bio: dto.bio,
         role: dto.role || UserRole.viewer,
         isActive: dto.isActive ?? true,
+        activeSiteId: null, // Visitor by default
         sites: dto.siteIds
           ? {
               create: dto.siteIds.map((siteId, index) => ({

@@ -412,7 +412,6 @@ export function UserProfilePage() {
                   transition: "all 0.2s ease",
                   outline: "none",
                   boxSizing: "border-box",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   resize: "vertical",
                 }}
                 onFocus={(e) => e.target.style.borderColor = "#667eea"}

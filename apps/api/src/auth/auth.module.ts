@@ -9,6 +9,7 @@ import { EventLogModule } from "../event-log/event-log.module";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
+import { GoogleStrategy } from "./strategies/google.strategy";
 import { RbacService } from "./rbac.service";
 import { SiteRoleGuard } from "./guards/site-role.guard";
 import { PlaceRoleGuard } from "./guards/place-role.guard";
@@ -47,7 +48,7 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RbacService, SiteRoleGuard, PlaceRoleGuard],
+  providers: [AuthService, JwtStrategy, GoogleStrategy, RbacService, SiteRoleGuard, PlaceRoleGuard],
   exports: [AuthService, RbacService, SiteRoleGuard, PlaceRoleGuard],
 })
 export class AuthModule {}

@@ -93,7 +93,6 @@ export function UserInfoDropdown() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                 color: "#333",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
                 {user.username}
               </div>

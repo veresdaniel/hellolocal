@@ -237,9 +237,8 @@ export function TipTapEditorWithUpload({
             minHeight: `${height}px`,
             padding: 12,
             border: "none",
-            fontFamily: "monospace",
-            fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
             resize: "vertical",
           }}
           placeholder="HTML source code..."

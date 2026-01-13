@@ -1491,8 +1491,19 @@ export interface SubscriptionHistoryItem {
   createdAt: string;
 }
 
-export function getSubscriptionHistory(scope: "site" | "place", id: string) {
-  return apiGet<SubscriptionHistoryItem[]>(`/admin/subscriptions/${scope}/${id}/history`);
+export function getSubscriptionHistory(
+  scope: "site" | "place", 
+  id: string, 
+  skip?: number, 
+  take?: number
+) {
+  const params = new URLSearchParams();
+  if (skip !== undefined) params.append("skip", skip.toString());
+  if (take !== undefined) params.append("take", take.toString());
+  const query = params.toString();
+  return apiGet<{ items: SubscriptionHistoryItem[]; total: number }>(
+    `/admin/subscriptions/${scope}/${id}/history${query ? `?${query}` : ""}`
+  );
 }
 
 // Galleries

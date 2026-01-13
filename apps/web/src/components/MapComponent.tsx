@@ -881,7 +881,6 @@ export function MapComponent({
                   fontSize: "clamp(13px, 3vw, 15px)",
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   whiteSpace: "nowrap",
                   boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
                   pointerEvents: "none",

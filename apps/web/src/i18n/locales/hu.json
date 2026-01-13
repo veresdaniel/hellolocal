@@ -141,6 +141,16 @@
     "open": "Megnyitás",
     "readMore": "Tovább",
     "category": "Kategória",
+    "activateFree": {
+      "cta": "Ingyenes oldal aktiválása",
+      "success": "Az ingyenes oldal sikeresen aktiválva!",
+      "error": "Az oldal aktiválása sikertelen volt.",
+      "modal": {
+        "title": "Ingyenes oldal aktiválása",
+        "description": "Biztosan aktiválni szeretnéd az ingyenes oldalt? Ez lehetővé teszi, hogy hozzáférj a dashboardhoz és kezdj el dolgozni az oldaladon.",
+        "confirm": "Aktiválás"
+      }
+    },
     "priceBand": "Ár szint",
     "tags": "Címkék",
     "address": "Cím",
@@ -252,7 +262,10 @@
     "userInfo": "Felhasználó",
     "login": "Bejelentkezés",
     "loginDescription": "Jelentkezz be az admin felületre",
+    "loginWithGoogle": "Bejelentkezés Google-lal",
     "register": "Regisztráció",
+    "registerWithGoogle": "Regisztráció Google-lal",
+    "or": "vagy",
     "registering": "Regisztrálás...",
     "registrationFailed": "Regisztráció sikertelen",
     "loginFailed": "Bejelentkezés sikertelen",
@@ -350,7 +363,9 @@
     "seoDescription": "SEO leírás",
     "seoDescriptionPlaceholder": "Alapértelmezett SEO leírás",
     "platformSettingsUpdated": "Platform beállítások frissítve.",
+    "select": "Válassz...",
     "selectCategory": "Válassz kategóriát",
+    "selectCategoryPlaceholder": "Válassz kategóriát...",
     "selectTown": "Válassz települést",
     "selectPriceBand": "Válassz ár szintet",
     "heroImageUrl": "Hero kép URL",

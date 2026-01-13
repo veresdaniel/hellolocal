@@ -1,10 +1,11 @@
 // src/context/PlatformSettingsContext.tsx
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
+import type { ReactNode } from "react";
 import type { PlatformSettings } from "../app/site/SiteOutletContext";
 
 const PlatformSettingsContext = createContext<PlatformSettings | null>(null);
 
-export function PlatformSettingsProvider(props: { value: PlatformSettings; children: React.ReactNode }) {
+export function PlatformSettingsProvider(props: { value: PlatformSettings; children: ReactNode }) {
   return <PlatformSettingsContext.Provider value={props.value}>{props.children}</PlatformSettingsContext.Provider>;
 }
 

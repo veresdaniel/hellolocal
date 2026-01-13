@@ -48,7 +48,6 @@ export function Pagination({
           fontSize: "clamp(13px, 3vw, 15px)",
           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           whiteSpace: "nowrap",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}>
           {t("admin.pagination.showing", { start: startItem, end: endItem, total })}
         </span>

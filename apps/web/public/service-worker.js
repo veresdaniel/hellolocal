@@ -80,6 +80,23 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   
+  // Don't cache auth pages (login, register) - always fetch fresh from network
+  // This ensures Google login button and other dynamic content always appears
+  if (url.pathname.includes("/login") || url.pathname.includes("/register") || url.pathname.includes("/admin/login") || url.pathname.includes("/admin/register")) {
+    event.respondWith(
+      fetch(event.request).then((fetchResponse) => {
+        // Return fresh response without caching
+        return fetchResponse;
+      }).catch(() => {
+        // If network fails, try cache as fallback
+        return caches.match(event.request).then((cachedResponse) => {
+          return cachedResponse || new Response("Offline", { status: 503 });
+        });
+      })
+    );
+    return;
+  }
+  
   // Don't cache chrome-extension, chrome, or other non-http(s) schemes
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     event.respondWith(fetch(event.request));

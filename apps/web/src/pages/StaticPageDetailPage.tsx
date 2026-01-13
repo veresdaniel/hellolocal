@@ -248,7 +248,7 @@ export function StaticPageDetailPage() {
         style={{
           minHeight: "100vh",
           background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          paddingTop: 80,
+          paddingTop: "clamp(72px, 8vw, 88px)",
         }}
       >
         <article
@@ -263,6 +263,7 @@ export function StaticPageDetailPage() {
             style={{
               fontSize: "clamp(24px, 5vw, 36px)",
               fontWeight: 700,
+              marginTop: 0,
               marginBottom: 24,
               color: "#1a1a1a",
               lineHeight: 1.3,

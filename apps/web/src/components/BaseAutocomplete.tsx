@@ -1,5 +1,5 @@
 // src/components/BaseAutocomplete.tsx
-import React, { useState, useRef, useEffect, ReactNode } from "react";
+import { useState, useRef, useEffect, isValidElement, type ReactNode, type ChangeEvent, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 export interface AutocompleteItem {
@@ -31,7 +31,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
   onSelect,
   onRemove,
   getItemName,
-  placeholder = "Select...",
+  placeholder,
   label,
   required = false,
   error,
@@ -42,6 +42,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
   zIndex = 800,
 }: BaseAutocompleteProps<T>) {
   const { t } = useTranslation();
+  const defaultPlaceholder = placeholder || t("admin.select");
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +73,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [multiple]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setShowSuggestions(true);
   };
@@ -97,7 +98,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     onRemove(itemId);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && filteredItems.length > 0) {
       e.preventDefault();
       handleItemSelect(filteredItems[0].id);
@@ -345,7 +346,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder={selectedItem ? "" : placeholder}
+              placeholder={selectedItem ? "" : (placeholder || defaultPlaceholder)}
               autoFocus={showSuggestions}
               style={{
                 width: "100%",
@@ -481,7 +482,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           const chip = chipRenderer(item, () => handleItemRemove(item.id));
           // If chip is already a React element with key, return it directly
           // Otherwise wrap it in a div with key
-          return React.isValidElement(chip) && chip.key ? chip : (
+          return isValidElement(chip) && chip.key ? chip : (
             <div key={item.id}>{chip}</div>
           );
         })}
@@ -492,7 +493,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          placeholder={safeSelectedItemIds.length === 0 ? placeholder : ""}
+          placeholder={safeSelectedItemIds.length === 0 ? (placeholder || defaultPlaceholder) : ""}
           style={{
             flex: 1,
             border: "none",

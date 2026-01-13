@@ -1697,9 +1697,13 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async getSubscriptionHistory(
     @Param("scope") scope: "site" | "place",
-    @Param("id") id: string
+    @Param("id") id: string,
+    @Query("skip") skip?: string,
+    @Query("take") take?: string
   ) {
-    return this.subscriptionService.getHistory(scope, id);
+    const skipNum = skip ? parseInt(skip, 10) : undefined;
+    const takeNum = take ? parseInt(take, 10) : undefined;
+    return this.subscriptionService.getHistory(scope, id, skipNum, takeNum);
   }
 
   // ==================== Galleries ====================

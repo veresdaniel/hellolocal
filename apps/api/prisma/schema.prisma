@@ -64,6 +64,7 @@ enum SubscriptionPlan {
 
 enum SubscriptionStatus {
   ACTIVE
+  CANCELLED
   SUSPENDED
   EXPIRED
 }
@@ -138,6 +139,7 @@ model Site {
   siteDomains      SiteDomain[]
   subscription     SiteSubscription?
   galleries        Gallery[]
+  activeUsers      User[]            @relation("UserActiveSite")
 
   @@index([brandId])
   @@index([plan])
@@ -571,6 +573,12 @@ model User {
   // Two-Factor Authentication (2FA)
   totpSecret    String?  // TOTP secret for 2FA
   isTwoFactorEnabled Boolean @default(false) // Whether 2FA is enabled for this user
+  
+  // Active site for visitor status
+  // activeSiteId === null → visitor (no active site)
+  // activeSiteId !== null → active user (has active site)
+  activeSiteId  String?
+  activeSite    Site?    @relation("UserActiveSite", fields: [activeSiteId], references: [id], onDelete: SetNull)
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

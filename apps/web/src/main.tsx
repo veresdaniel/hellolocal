@@ -1,5 +1,5 @@
 // src/main.tsx
-import React from "react";
+import { StrictMode, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,13 +12,14 @@ import "./i18n/config";
 import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
 import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import type { ReactNode } from "react";
 
 // Component to initialize default language and service worker
-function AppInitializer({ children }: { children: React.ReactNode }) {
+function AppInitializer({ children }: { children: ReactNode }) {
   useDefaultLanguage();
 
   // Register service worker on mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       NotificationService.register().then((registered) => {
         if (registered) {
@@ -42,7 +43,7 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AppInitializer>
@@ -57,5 +58,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </AppInitializer>
       </QueryClientProvider>
     </ErrorBoundary>
-  </React.StrictMode>
+  </StrictMode>
 );
