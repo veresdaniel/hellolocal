@@ -36,6 +36,7 @@ import { AdminSiteInstanceService, CreateSiteInstanceDto, UpdateSiteInstanceDto 
 import { AdminSiteMembershipService, CreateSiteMembershipDto, UpdateSiteMembershipDto } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembershipDto } from "./admin-place-membership.service";
 import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
+import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -71,6 +72,7 @@ export class AdminController {
     private readonly siteMembershipService: AdminSiteMembershipService,
     private readonly placeMembershipService: AdminPlaceMembershipService,
     private readonly subscriptionService: AdminSubscriptionService,
+    private readonly galleryService: AdminGalleryService,
     private readonly placeUpsellService: PlaceUpsellService,
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
@@ -614,11 +616,24 @@ export class AdminController {
     }
     
     const place = await this.placeService.findOne(id, siteId);
-    const currentImageCount = (place.gallery?.length || 0) + (place.heroImage ? 1 : 0);
+    // Extract all images from galleries and count them
+    const galleryImages = (place.galleries || [])
+      .flatMap((gallery: any) => {
+        try {
+          const images = typeof gallery.images === 'string' 
+            ? JSON.parse(gallery.images) 
+            : gallery.images;
+          return Array.isArray(images) ? images : [];
+        } catch {
+          return [];
+        }
+      });
+    const currentImageCount = galleryImages.length + (place.heroImage ? 1 : 0);
     
     return this.placeUpsellService.getPlaceUpsellState(
       siteId,
       id,
+      place.plan,
       place.isFeatured || false,
       currentImageCount,
       place.galleryLimitOverride
@@ -1662,18 +1677,112 @@ export class AdminController {
   async updateSubscription(
     @Param("scope") scope: "site" | "place",
     @Param("id") id: string,
-    @Body() dto: UpdateSubscriptionDto
+    @Body() dto: UpdateSubscriptionDto,
+    @CurrentUser() user: { id: string }
   ) {
-    return this.subscriptionService.update(scope, id, dto);
+    return this.subscriptionService.update(scope, id, dto, user.id);
   }
 
   @Post("/subscriptions/:scope/:id/extend")
   @Roles(UserRole.superadmin)
   async extendSubscription(
     @Param("scope") scope: "site" | "place",
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.subscriptionService.extend(scope, id, user.id);
+  }
+
+  @Get("/subscriptions/:scope/:id/history")
+  @Roles(UserRole.superadmin)
+  async getSubscriptionHistory(
+    @Param("scope") scope: "site" | "place",
     @Param("id") id: string
   ) {
-    return this.subscriptionService.extend(scope, id);
+    return this.subscriptionService.getHistory(scope, id);
+  }
+
+  // ==================== Galleries ====================
+
+  @Get("/galleries")
+  async getGalleries(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Query("siteId") siteIdParam?: string,
+    @Query("placeId") placeId?: string,
+    @Query("eventId") eventId?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.galleryService.findAll(user.id, siteId, placeId, eventId, pageNum, limitNum);
+  }
+
+  @Get("/galleries/:id")
+  async getGallery(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Query("siteId") siteIdParam?: string
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    return this.galleryService.findOne(user.id, id, siteId);
+  }
+
+  @Post("/galleries")
+  async createGallery(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Body() dto: CreateGalleryDto
+  ) {
+    if (!user.siteIds.includes(dto.siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    return this.galleryService.create(user.id, dto);
+  }
+
+  @Put("/galleries/:id")
+  async updateGallery(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Body() dto: UpdateGalleryDto,
+    @Query("siteId") siteIdParam?: string
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    return this.galleryService.update(id, user.id, siteId, dto);
+  }
+
+  @Delete("/galleries/:id")
+  async deleteGallery(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Query("siteId") siteIdParam?: string
+  ) {
+    const siteId = siteIdParam || user.siteIds[0];
+    if (!siteId) {
+      throw new Error("User has no associated site");
+    }
+    if (!user.siteIds.includes(siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    return this.galleryService.delete(user.id, id, siteId);
   }
 }
 

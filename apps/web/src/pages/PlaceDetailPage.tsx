@@ -15,6 +15,7 @@ import { HAS_MULTIPLE_SITES } from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -502,8 +503,14 @@ export function PlaceDetailPage() {
                     <div
                       ref={addressRef}
                       style={{ color: "white", fontSize: "clamp(14px, 3.5vw, 16px)", lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
-                      dangerouslySetInnerHTML={{ __html: place.contact.address }}
-                    />
+                    >
+                      <ShortcodeRenderer
+                        content={place.contact.address}
+                        lang={lang!}
+                        siteKey={siteKey!}
+                        style={{ color: "white" }}
+                      />
+                    </div>
                   </div>
                 )}
                 {place.contact.phone && (
@@ -846,24 +853,24 @@ export function PlaceDetailPage() {
             );
           })()}
 
-          {/* Description */}
+          {/* Description with shortcode support */}
           {place.description && (
             <div
               ref={descriptionRef}
               style={{
-                fontSize: 18,
-                lineHeight: 1.8,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                color: "#333",
                 margin: "0 16px 32px",
                 background: "white",
                 padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
               }}
-              dangerouslySetInnerHTML={{ __html: place.description }}
-            />
+            >
+              <ShortcodeRenderer
+                content={place.description}
+                lang={lang!}
+                siteKey={siteKey!}
+              />
+            </div>
           )}
 
           {/* Accessibility */}
@@ -896,8 +903,13 @@ export function PlaceDetailPage() {
               <div
                 ref={accessibilityRef}
                 style={{ color: "#333", fontSize: 16, lineHeight: 1.8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
-                dangerouslySetInnerHTML={{ __html: place.accessibility }}
-              />
+              >
+                <ShortcodeRenderer
+                  content={place.accessibility}
+                  lang={lang!}
+                  siteKey={siteKey!}
+                />
+              </div>
             </div>
           )}
 

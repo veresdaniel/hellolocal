@@ -15,6 +15,7 @@ import { HAS_MULTIPLE_SITES } from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
@@ -520,7 +521,7 @@ export function EventDetailPage() {
             </div>
           )}
 
-          {/* Description */}
+          {/* Description with shortcode support */}
           {event.description && (
             <div
               ref={descriptionRef}
@@ -532,41 +533,12 @@ export function EventDetailPage() {
                 color: "#555",
                 margin: "0 16px 32px",
               }}
-              dangerouslySetInnerHTML={{ __html: event.description }}
-            />
-          )}
-
-          {/* Gallery */}
-          {event.gallery && event.gallery.length > 0 && (
-            <div style={{ margin: "0 16px 32px" }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginBottom: 16, color: "#1a1a1a" }}>
-                {t("public.gallery")}
-              </h2>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                {event.gallery.map((image, index) => (
-                  <div key={index} style={{ position: "relative", width: "100%", height: 200, borderRadius: 12, overflow: "hidden", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}>
-                    <ImageWithSkeleton
-                      src={image}
-                      alt={`${event.name} - ${index + 1}`}
-                      style={{
-                        width: "100%",
-                        height: 200,
-                        objectFit: "cover",
-                        borderRadius: 12,
-                      }}
-                      skeletonStyle={{
-                        borderRadius: 12,
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+            >
+              <ShortcodeRenderer
+                content={event.description}
+                lang={lang!}
+                siteKey={siteKey!}
+              />
             </div>
           )}
 

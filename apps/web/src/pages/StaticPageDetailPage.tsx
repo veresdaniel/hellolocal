@@ -12,6 +12,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorState } from "../components/ErrorState";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { HAS_MULTIPLE_SITES } from "../app/config";
+import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 
 export function StaticPageDetailPage() {
   const { t } = useTranslation();
@@ -276,8 +277,13 @@ export function StaticPageDetailPage() {
               lineHeight: 1.8,
               color: "#333",
             }}
-            dangerouslySetInnerHTML={{ __html: staticPage.content }}
-          />
+          >
+            <ShortcodeRenderer
+              content={staticPage.content}
+              lang={safeLang}
+              siteKey={effectiveSiteKey || "default"}
+            />
+          </div>
         </article>
       </div>
     </>

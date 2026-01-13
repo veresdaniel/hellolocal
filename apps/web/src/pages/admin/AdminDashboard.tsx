@@ -241,6 +241,14 @@ export function AdminDashboard() {
             isMobile={isMobile}
             variant="content"
           />
+          <DashboardCard
+            title={t("admin.dashboardCards.galleries")}
+            description={t("admin.dashboardCards.galleriesDesc")}
+            link={adminPath("/galleries")}
+            icon="🖼️"
+            isMobile={isMobile}
+            variant="content"
+          />
           {user?.role === "superadmin" && (
             <DashboardCard
               title={t("admin.dashboardCards.siteInstances")}
@@ -529,8 +537,14 @@ function DashboardCard({
         }}
       >
         <div style={{ 
-          fontSize: "clamp(26px, 6vw, 32px)",
+          fontSize: "32px",
+          width: "32px",
+          height: "32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
+          flexShrink: 0,
         }}>
           {icon}
         </div>

@@ -9,6 +9,7 @@ import { generateWebPageSchema } from "../seo/schemaOrg";
 import { getPlatformSettings } from "../api/places.api";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FloatingHeader } from "../components/FloatingHeader";
+import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 
 type Props = {
   pageKey: "imprint" | "terms" | "privacy";
@@ -20,7 +21,7 @@ export function LegalPage({ pageKey }: Props) {
   const safeLang = lang ?? "hu";
   const safeSiteKey = siteKey || "default";
 
-  const { data, isLoading, error } = useLegalPage(safeLang, safeTenantKey, pageKey);
+  const { data, isLoading, error } = useLegalPage(safeLang, safeSiteKey, pageKey);
 
   // Load site settings for SEO
   const { data: platformSettings } = useQuery({
@@ -265,8 +266,13 @@ export function LegalPage({ pageKey }: Props) {
               lineHeight: 1.8,
               color: "#333",
             }}
-            dangerouslySetInnerHTML={{ __html: data.content }}
-          />
+          >
+            <ShortcodeRenderer
+              content={data.content}
+              lang={safeLang}
+              siteKey={safeSiteKey}
+            />
+          </div>
         </article>
       </div>
     </>

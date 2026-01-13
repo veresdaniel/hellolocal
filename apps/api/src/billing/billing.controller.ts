@@ -65,7 +65,7 @@ export class BillingController {
       throw new ForbiddenException("Only admins can update subscriptions");
     }
 
-    return this.billingService.updatePlaceSubscription(placeId, data);
+    return this.billingService.updatePlaceSubscription(placeId, data, user.id);
   }
 
   /**

@@ -90,6 +90,7 @@
       },
       "categories": {
         "places": "Places",
+        "place": "Location",
         "visibility": "Visibility",
         "events": "Events",
         "seo": "SEO",
@@ -105,6 +106,10 @@
         "heroImage": "Hero image",
         "contacts": "Contacts (tel/email/web)",
         "extraFields": "Extra fields (extras JSON)",
+        "galleriesMax": "Number of galleries (site admin + retail user)",
+        "imagesPerGalleryMax": "Images per gallery",
+        "galleriesPerPlaceMax": "Galleries per place (retail user)",
+        "galleriesPerEventMax": "Galleries per event (retail user)",
         "featuredPlaces": "Featured places",
         "featuredBoost": "Featured boost (ranking weight)",
         "eventsEnabled": "Events enabled",
@@ -119,7 +124,11 @@
         "siteMembers": "Site members (memberships)",
         "eventLog": "Event log",
         "pushSubscription": "PushSubscription",
-        "optionalAddon": "optional add-on"
+        "optionalAddon": "optional add-on",
+        "placeImages": "Number of images",
+        "featuredPlacement": "Featured placement",
+        "placeTitle": "Location Plans",
+        "placeSubtitle": "Choose a plan for your location"
       },
       "featureMatrix": {
         "feature": "Feature"
@@ -212,6 +221,7 @@
     "titleSuffix": "Admin",
     "edit": "Edit",
     "dashboard": "Dashboard",
+    "description": "Description",
     "categories": "Categories",
     "tags": "Tags",
     "priceBands": "Price Bands",
@@ -296,6 +306,12 @@
     "mapDefaultZoom": "Default zoom",
     "platformSettings": "Platform Settings",
     "platformSettingsDescription": "Configure the platform name, description, and default SEO settings.",
+    "featureMatrix": "Feature Matrix Configuration",
+    "featureMatrixDescription": "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values.",
+    "placeFeatureMatrix": "Place Subscription Matrix Configuration",
+    "placeFeatureMatrixDescription": "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values.",
+    "resetToDefaults": "Reset to Defaults",
+    "overridden": "Overridden",
     "siteName": "Site Name",
     "siteNamePlaceholder": "e.g. HelloLocal",
     "siteDescription": "Site Description",
@@ -416,6 +432,11 @@
       "quickActions": "Quick Actions",
       "openPublicPage": "Open Public Page"
     },
+    "siteEdit": {
+      "quickActions": "Quick Actions",
+      "openPublicPage": "Open Public Page"
+    },
+    "changePlan": "Change Plan",
     "placeActive": "Place is Active",
     "placeInactive": "Place is Inactive",
     "placeActiveDescription": "This place is visible to visitors",
@@ -446,11 +467,20 @@
     "availableFeatures": "Available Features",
     "billingAndPlan": "Billing and Plan",
     "planInfo": "You can modify the plan in Site settings.",
+    "placePlanInfo": "You can modify the location plan here.",
+    "placePlanInfoReadOnly": "Current location plan.",
+    "confirmPlanChange": "Are you sure you want to switch to the {{plan}} plan?",
+    "subscriptionDetails": "Subscription Details",
+    "lastChanged": "Last Changed",
+    "price": "Price",
+    "validUntil": "Valid Until",
     "manageFeatured": "Manage Featured Places",
     "subscriptionOverview": "Subscription Overview",
     "subscriptionOverviewSubtitle": "Site subscriptions and usage data",
     "subscriptionsDashboard": "Subscriptions Dashboard",
     "subscriptionsDashboardSubtitle": "Superadmin subscription management",
+    "noDate": "No date",
+    "invalidDate": "Invalid date",
     "subscriptions": {
       "activeCount": "Active",
       "mrr": "MRR",
@@ -484,6 +514,19 @@
     "previous": "Previous",
     "next": "Next",
     "noData": "No data",
+    "history": "History",
+    "subscriptionHistory": "Subscription History",
+    "noHistory": "No history",
+    "planChange": "Plan Change",
+    "statusChange": "Status Change",
+    "payment": "Payment",
+    "extension": "Extension",
+    "created": "Created",
+    "update": "Update",
+    "from": "From",
+    "to": "To",
+    "paymentDue": "Payment Due",
+    "amount": "Amount",
     "planFree": "Free",
     "planBasic": "Basic",
     "planPro": "Pro",
@@ -496,6 +539,7 @@
     "statusActive": "Active",
     "statusSuspended": "Suspended",
     "statusExpired": "Expired",
+    "actions": "Actions",
     "dashboardCards": {
       "userProfile": "User Profile",
       "userProfileDesc": "View and edit your profile",
@@ -517,6 +561,8 @@
       "legalPagesDesc": "Manage legal pages",
       "staticPages": "Static Pages",
       "staticPagesDesc": "Manage blog, knowledge base and info pages",
+      "galleries": "Galleries",
+      "galleriesDesc": "Manage image galleries and generate shortcodes",
       "appSettingsDesc": "Manage system-wide settings",
       "usersDesc": "Manage users and permissions",
       "eventLog": "Event Log",
@@ -722,7 +768,8 @@
       "brands": "Search among brands...",
       "siteInstances": "Search among site instances (tenant, language, domain)...",
       "tenantMemberships": "Search among site memberships (site, user, role)...",
-      "placeMemberships": "Search among place memberships (place, user, role)..."
+      "placeMemberships": "Search among place memberships (place, user, role)...",
+      "galleries": "Search among galleries (name, ID)..."
     },
     "validation": {
       "hungarianNameRequired": "Hungarian name is required",
@@ -744,12 +791,27 @@
       "placeRequired": "Place is required",
       "roleRequired": "Role is required"
     },
+    "common": {
+      "isActive": "Active",
+      "yes": "Yes",
+      "no": "No",
+      "optional": "Optional",
+      "selectSite": "Select a site",
+      "uploading": "Uploading...",
+      "remove": "Remove",
+      "save": "Save",
+      "cancel": "Cancel",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
     "confirmations": {
       "deleteCategory": "Are you sure you want to delete this category?",
       "deleteTag": "Are you sure you want to delete this tag?",
       "deletePriceBand": "Are you sure you want to delete this price band?",
       "deletePlace": "Are you sure you want to delete this place?",
       "deleteTown": "Are you sure you want to delete this town?",
+      "deleteGallery": "Are you sure you want to delete this gallery?",
       "deleteLegalPage": "Are you sure you want to delete this legal page?",
       "deleteUser": "Are you sure you want to delete this user? This action cannot be undone.",
       "deleteSite": "Are you sure you want to delete this site?",
@@ -773,6 +835,7 @@
       "placeCreated": "Place successfully created",
       "placeUpdated": "Place successfully updated",
       "placeDeleted": "Place successfully deleted",
+      "placePlanUpdated": "Location plan successfully updated",
       "priceBandCreated": "Price band successfully created",
       "priceBandUpdated": "Price band successfully updated",
       "priceBandDeleted": "Price band successfully deleted"
@@ -983,4 +1046,3 @@
     "maxLength": "Maximum {{max}} characters"
   }
 }
-

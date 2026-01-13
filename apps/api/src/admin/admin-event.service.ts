@@ -30,7 +30,6 @@ export interface CreateEventDto {
   startDate: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
-  gallery?: string[];
   lat?: number | null;
   lng?: number | null;
 }
@@ -58,7 +57,6 @@ export interface UpdateEventDto {
   startDate?: Date | string;
   endDate?: Date | string | null;
   heroImage?: string | null;
-  gallery?: string[];
   lat?: number | null;
   lng?: number | null;
 }
@@ -441,7 +439,7 @@ export class AdminEventService {
         isPinned: dto.isPinned ?? false,
         isRainSafe: dto.isRainSafe ?? false,
         showOnMap: dto.showOnMap ?? true,
-        gallery: dto.gallery ?? [],
+        // Gallery is now managed via Gallery entities and shortcodes, not event.gallery array
         translations: {
           create: translations.map((t) => ({
             lang: t.lang,
@@ -612,9 +610,7 @@ export class AdminEventService {
     if (dto.endDate !== undefined) {
       updateData.endDate = dto.endDate ? (typeof dto.endDate === "string" ? new Date(dto.endDate) : dto.endDate) : null;
     }
-    if (dto.gallery !== undefined) {
-      updateData.gallery = dto.gallery;
-    }
+    // Gallery is now managed via Gallery entities and shortcodes, not event.gallery array
     if (dto.isRainSafe !== undefined) {
       updateData.isRainSafe = dto.isRainSafe;
     }

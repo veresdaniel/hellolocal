@@ -12,6 +12,10 @@ export type Entitlements = {
     siteMembersMax: number;
     domainAliasesMax: number;
     languagesMax: number;
+    galleriesMax: number; // Maximum number of galleries per site
+    imagesPerGalleryMax: number; // Maximum images per gallery
+    galleriesPerPlaceMax: number; // Maximum galleries per place
+    galleriesPerEventMax: number; // Maximum galleries per event
   };
 
   features: {
@@ -29,6 +33,7 @@ export type Entitlements = {
     siteMembersCount: number;
     domainAliasesCount: number;
     languagesCount: number;
+    galleriesCount: number; // Total galleries for this site
   };
 };
 
@@ -42,6 +47,10 @@ export const PLAN_DEFS = {
       siteMembersMax: 2,
       domainAliasesMax: 0,
       languagesMax: 1,
+      galleriesMax: 5,
+      imagesPerGalleryMax: 10,
+      galleriesPerPlaceMax: 1,
+      galleriesPerEventMax: 1,
     },
     features: {
       eventsEnabled: false,
@@ -60,6 +69,10 @@ export const PLAN_DEFS = {
       siteMembersMax: 5,
       domainAliasesMax: 0,
       languagesMax: 2,
+      galleriesMax: 20,
+      imagesPerGalleryMax: 30,
+      galleriesPerPlaceMax: 3,
+      galleriesPerEventMax: 2,
     },
     features: {
       eventsEnabled: true,
@@ -78,6 +91,10 @@ export const PLAN_DEFS = {
       siteMembersMax: 20,
       domainAliasesMax: 5,
       languagesMax: 3,
+      galleriesMax: Infinity,
+      imagesPerGalleryMax: 100,
+      galleriesPerPlaceMax: Infinity,
+      galleriesPerEventMax: Infinity,
     },
     features: {
       eventsEnabled: true,

@@ -52,13 +52,6 @@ export async function getPublicDefaultLanguage(): Promise<DefaultLanguageRespons
   return (await res.json()) as DefaultLanguageResponse;
 }
 
-export interface ActiveSitesCountResponse {
-  count: number;
-}
-
-// Backward compatibility
-export type ActiveTenantsCountResponse = ActiveSitesCountResponse;
-
 /**
  * Get active sites count from public endpoint (no authentication required)
  */

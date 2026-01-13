@@ -286,6 +286,9 @@ export class PlacesService {
         openingHours: {
           orderBy: { dayOfWeek: 'asc' },
         },
+        galleries: {
+          where: { isActive: true },
+        },
       },
     });
 
@@ -412,6 +415,19 @@ export class PlacesService {
       const placeTranslation = p.translations.find((t) => t.lang === site.lang) ||
         p.translations.find((t) => t.lang === "hu");
 
+      // Extract all images from galleries and combine into a single array
+      const galleryImages = (p.galleries || [])
+        .flatMap((gallery: any) => {
+          try {
+            const images = typeof gallery.images === 'string' 
+              ? JSON.parse(gallery.images) 
+              : gallery.images;
+            return Array.isArray(images) ? images : [];
+          } catch {
+            return [];
+          }
+        });
+
       return {
         id: p.id,
         slug: canonicalPlaceSlug, // Public slug comes from the Slug table
@@ -423,7 +439,7 @@ export class PlacesService {
         shortDescription: placeTranslation?.shortDescription ?? null, // HTML - for list view cards
         description: placeTranslation?.description ?? null,
         heroImage: p.heroImage ?? null,
-        gallery: p.gallery,
+        gallery: galleryImages,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
         priceBand: priceBandName,
         priceBandId: priceBandId,
@@ -519,6 +535,7 @@ export class PlacesService {
         openingHours: {
           orderBy: { dayOfWeek: 'asc' },
         },
+        galleries: true,
       },
     });
 
@@ -603,7 +620,6 @@ export class PlacesService {
       shortDescription: placeTranslation?.shortDescription ?? null,
       description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,
-      gallery: place.gallery,
       location: { lat: place.lat ?? null, lng: place.lng ?? null },
       contact: {
         phone: placeTranslation?.phone ?? null,

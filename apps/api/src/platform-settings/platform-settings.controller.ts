@@ -123,6 +123,34 @@ export class AdminPlatformSettingsController {
       faviconUrl: dto.faviconUrl,
     });
   }
+
+  @Get("feature-matrix")
+  @Roles(UserRole.superadmin)
+  async getFeatureMatrix() {
+    return this.service.getFeatureMatrix();
+  }
+
+  @Put("feature-matrix")
+  @Roles(UserRole.superadmin)
+  async setFeatureMatrix(
+    @Body() dto: {
+      planOverrides?: {
+        FREE?: any;
+        BASIC?: any;
+        PRO?: any;
+      } | null;
+      placePlanOverrides?: {
+        free?: any;
+        basic?: any;
+        pro?: any;
+      } | null;
+    }
+  ) {
+    return this.service.setFeatureMatrix(
+      dto.planOverrides !== undefined ? dto.planOverrides : undefined,
+      dto.placePlanOverrides !== undefined ? dto.placePlanOverrides : undefined
+    );
+  }
 }
 
 /**

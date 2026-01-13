@@ -48,4 +48,15 @@ export type PlatformSettingsDto = {
     knowledgeBase: boolean;
     cookieConsent: boolean;
   };
+
+  // Feature matrix overrides (for pricing page)
+  featureMatrix?: {
+    planOverrides?: any;
+    placePlanOverrides?: any;
+  };
+
+  // SEO image (for backward compatibility)
+  seoImage?: string | null;
+  siteName?: string | null;
+  seoTitle?: string | null;
 };

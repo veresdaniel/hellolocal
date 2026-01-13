@@ -11,10 +11,12 @@ import {
   getSubscriptionTrends,
   updateSubscription,
   extendSubscription,
+  getSubscriptionHistory,
   type SubscriptionListItem,
   type SubscriptionSummary,
   type TrendPoint,
   type UpdateSubscriptionDto,
+  type SubscriptionHistoryItem,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
@@ -49,6 +51,9 @@ export function SubscriptionsDashboardPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const hasShownErrorRef = useRef(false);
   const isLoadingRef = useRef(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState<string | null>(null);
+  const [history, setHistory] = useState<SubscriptionHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const pageSize = 20;
 
@@ -201,6 +206,20 @@ export function SubscriptionsDashboardPage() {
     }
   };
 
+  const handleViewHistory = async (item: SubscriptionListItem) => {
+    setHistoryModalOpen(item.id);
+    setIsLoadingHistory(true);
+    try {
+      const historyData = await getSubscriptionHistory(item.scope, item.id);
+      setHistory(historyData);
+    } catch (err) {
+      showToast(t("admin.errors.loadFailed") || "Failed to load history", "error");
+      setHistory([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   const formatCurrency = (cents?: number) => {
     if (!cents) return "N/A";
     return new Intl.NumberFormat("hu-HU", {
@@ -210,9 +229,19 @@ export function SubscriptionsDashboardPage() {
     }).format(cents / 100);
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("hu-HU");
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return t("admin.noDate") || "Nincs dátum";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return t("admin.invalidDate") || "Érvénytelen dátum";
+      return date.toLocaleDateString("hu-HU", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch (error) {
+      return t("admin.invalidDate") || "Érvénytelen dátum";
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -919,6 +948,21 @@ export function SubscriptionsDashboardPage() {
                             </button>
                           )}
                           <button
+                            onClick={() => handleViewHistory(item)}
+                            style={{
+                              padding: "4px 8px",
+                              background: "#8b5cf6",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 4,
+                              fontSize: 12,
+                              cursor: "pointer",
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            }}
+                          >
+                            {t("admin.history") || "Előzmények"}
+                          </button>
+                          <button
                             onClick={() => navigate(`/${lang}${item.adminUrl}`)}
                             style={{
                               padding: "4px 8px",
@@ -997,6 +1041,152 @@ export function SubscriptionsDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* History Modal */}
+      {historyModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: isMobile ? 16 : 24,
+          }}
+          onClick={() => setHistoryModalOpen(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: 12,
+              padding: isMobile ? 16 : 24,
+              maxWidth: isMobile ? "100%" : 800,
+              maxHeight: "90vh",
+              overflow: "auto",
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                {t("admin.subscriptionHistory") || "Előfizetés előzmények"}
+              </h2>
+              <button
+                onClick={() => setHistoryModalOpen(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: 24,
+                  cursor: "pointer",
+                  color: "#666",
+                  padding: 0,
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {isLoadingHistory ? (
+              <div style={{ padding: 48, textAlign: "center" }}>
+                <LoadingSpinner isLoading={true} delay={0} />
+              </div>
+            ) : history.length === 0 ? (
+              <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                {t("admin.noHistory") || "Nincs előzmény"}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {history.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: 16,
+                      background: "#f9fafb",
+                      borderRadius: 8,
+                      border: "1px solid #e5e7eb",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontWeight: 600, marginBottom: 4, fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+                          {item.changeType === "PLAN_CHANGE" && (t("admin.planChange") || "Csomagváltás")}
+                          {item.changeType === "STATUS_CHANGE" && (t("admin.statusChange") || "Státusz változás")}
+                          {item.changeType === "PAYMENT" && (t("admin.payment") || "Fizetés")}
+                          {item.changeType === "EXTENSION" && (t("admin.extension") || "Hosszabbítás")}
+                          {item.changeType === "CREATED" && (t("admin.created") || "Létrehozva")}
+                          {item.changeType === "UPDATE" && (t("admin.update") || "Frissítve")}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#666", fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+                          {new Date(item.createdAt).toLocaleString("hu-HU")}
+                        </div>
+                      </div>
+                    </div>
+
+                    {item.changeType === "PLAN_CHANGE" && (
+                      <div style={{ marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <div style={{ fontSize: 14, marginBottom: 4 }}>
+                          <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                          <span style={{ fontWeight: 600 }}>{item.oldPlan || "N/A"}</span>
+                          <span style={{ margin: "0 8px", color: "#999" }}>→</span>
+                          <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                          <span style={{ fontWeight: 600 }}>{item.newPlan || "N/A"}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.changeType === "STATUS_CHANGE" && (
+                      <div style={{ marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <div style={{ fontSize: 14, marginBottom: 4 }}>
+                          <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                          <span style={{ fontWeight: 600 }}>{item.oldStatus || "N/A"}</span>
+                          <span style={{ margin: "0 8px", color: "#999" }}>→</span>
+                          <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                          <span style={{ fontWeight: 600 }}>{item.newStatus || "N/A"}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.paymentDueDate && (
+                      <div style={{ marginTop: 8, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <span style={{ color: "#666" }}>{t("admin.paymentDue") || "Fizetési határidő"}: </span>
+                        <span style={{ fontWeight: 600, color: "#f59e0b" }}>
+                          {new Date(item.paymentDueDate).toLocaleDateString("hu-HU")}
+                        </span>
+                      </div>
+                    )}
+
+                    {item.amountCents && (
+                      <div style={{ marginTop: 4, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <span style={{ color: "#666" }}>{t("admin.amount") || "Összeg"}: </span>
+                        <span style={{ fontWeight: 600 }}>
+                          {formatCurrency(item.amountCents)} {item.currency || "HUF"}
+                        </span>
+                      </div>
+                    )}
+
+                    {item.note && (
+                      <div style={{ marginTop: 8, padding: 8, background: "white", borderRadius: 4, fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        {item.note}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -25,7 +25,8 @@ export function getMapSettings(lang: string, siteKey?: string): Promise<MapSetti
 
 // Legacy PlatformSettings interface - kept for backward compatibility
 // New code should use PlatformSettingsDto from types/platformSettings.ts
-export interface PlatformSettings {
+export interface PlatformSettings extends PlatformSettingsDto {
+  // Legacy fields for backward compatibility
   siteName: string;
   siteDescription: string;
   seoTitle: string;
@@ -35,6 +36,12 @@ export interface PlatformSettings {
   defaultEventPlaceholderCardImage: string | null;
   brandBadgeIcon: string | null;
   faviconUrl: string | null;
+  // Additional fields (already in PlatformSettingsDto, but explicitly listed for clarity)
+  seoImage?: string | null;
+  featureMatrix?: {
+    planOverrides?: any;
+    placePlanOverrides?: any;
+  };
 }
 
 // Legacy function - maps to new API endpoint
@@ -44,6 +51,8 @@ export function getPlatformSettings(lang: string, siteKey?: string): Promise<Pla
   const effectiveSiteKey = siteKey || "default";
   return apiGetPublic<PlatformSettingsDto>(`/public/${lang}/${effectiveSiteKey}/platform`).then(
     (dto) => ({
+      ...dto, // Include all PlatformSettingsDto fields
+      // Legacy fields for backward compatibility
       siteName: dto.site.name,
       siteDescription: dto.site.description || "",
       seoTitle: dto.seo.defaultTitle || "",
@@ -53,6 +62,9 @@ export function getPlatformSettings(lang: string, siteKey?: string): Promise<Pla
       defaultEventPlaceholderCardImage: dto.placeholders.eventCard || null,
       brandBadgeIcon: dto.placeholders.avatar || null,
       faviconUrl: dto.brand.faviconUrl || null,
+      // Additional fields
+      seoImage: dto.seoImage || null,
+      featureMatrix: dto.featureMatrix,
     })
   );
 }
@@ -102,6 +114,36 @@ export function getPlace(lang: string, slug: string, siteKey: string) {
  */
 export function getPlaceById(lang: string, siteKey: string, placeId: string) {
   return apiGetPublic<Place>(`/public/${lang}/${siteKey}/places/by-id/${placeId}`);
+}
+
+// Gallery API
+export interface GalleryImage {
+  id: string;
+  src: string;
+  thumbSrc?: string;
+  width?: number;
+  height?: number;
+  alt?: string;
+  caption?: string;
+}
+
+export interface PublicGallery {
+  id: string;
+  siteId: string;
+  placeId?: string | null;
+  eventId?: string | null;
+  name?: string | null;
+  images: GalleryImage[];
+  layout?: "grid" | "masonry" | "carousel";
+  columns?: { base: number; md: number; lg: number };
+  aspect?: "auto" | "square" | "4:3" | "16:9";
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getGallery(lang: string, siteKey: string, galleryId: string) {
+  return apiGetPublic<PublicGallery>(`/public/${lang}/${siteKey}/galleries/${galleryId}`);
 }
 
 export interface Category {
@@ -252,7 +294,6 @@ export interface Event {
   shortDescription: string | null;
   description: string | null;
   heroImage: string | null;
-  gallery: string[];
   location: { lat: number; lng: number } | null;
   placeId: string | null;
   placeSlug: string | null;

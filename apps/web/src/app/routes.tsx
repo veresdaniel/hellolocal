@@ -36,6 +36,7 @@ const PriceBandsPage = lazy(() => import("../pages/admin/PriceBandsPage").then(m
 const TownsPage = lazy(() => import("../pages/admin/TownsPage").then(m => ({ default: m.TownsPage })));
 const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m => ({ default: m.LegalPagesPage })));
 const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
+const GalleriesPage = lazy(() => import("../pages/admin/GalleriesPage").then(m => ({ default: m.GalleriesPage })));
 const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
 const SiteEditPage = lazy(() => import("../pages/admin/SiteEditPage").then(m => ({ default: m.SiteEditPage })));
 const SubscriptionOverviewPage = lazy(() => import("../pages/admin/SubscriptionOverviewPage").then(m => ({ default: m.SubscriptionOverviewPage })));
@@ -271,6 +272,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <StaticPagesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "galleries",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <GalleriesPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

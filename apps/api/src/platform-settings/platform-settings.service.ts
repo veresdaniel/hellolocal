@@ -111,6 +111,7 @@ export class PlatformSettingsService {
       },
     });
     if (!site) throw new NotFoundException("Site not found");
+    if (!site.brand) throw new NotFoundException("Site has no brand assigned");
 
     const t = site.translations[0];
 
@@ -141,8 +142,8 @@ export class PlatformSettingsService {
     };
 
     // 4) Brand defaults → SiteInstance overrides
-    const brandPlaceholders = (site.brand.placeholders ?? {}) as any;
-    const brandMapDefaults = (site.brand.mapDefaults ?? {}) as any;
+    const brandPlaceholders = (site.brand?.placeholders ?? {}) as any;
+    const brandMapDefaults = (site.brand?.mapDefaults ?? {}) as any;
 
     const instance = site.siteInstances[0];
     const instanceFeatures = (instance?.features ?? {}) as any;
@@ -165,6 +166,12 @@ export class PlatformSettingsService {
       instanceFeatures?.seo?.indexable ??
       appDefaults.seo.indexable;
 
+    // Get feature matrix overrides from Brand (for pricing page)
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { planOverrides: true, placePlanOverrides: true },
+    });
+
     return {
       lang,
       siteKey: resolvedSiteKey,
@@ -175,10 +182,10 @@ export class PlatformSettingsService {
         description: t?.description ?? null,
       },
       brand: {
-        name: site.brand.name,
-        logoUrl: site.brand.logoUrl ?? null,
-        faviconUrl: site.brand.faviconUrl ?? null,
-        theme: site.brand.theme ?? null,
+        name: site.brand?.name ?? "HelloLocal",
+        logoUrl: site.brand?.logoUrl ?? null,
+        faviconUrl: site.brand?.faviconUrl ?? null,
+        theme: site.brand?.theme ?? null,
       },
       seo: {
         defaultTitle: t?.seoTitle ?? null,
@@ -192,6 +199,10 @@ export class PlatformSettingsService {
         blog: mergedFeatures?.enableBlog ?? appDefaults.features.blog,
         knowledgeBase: mergedFeatures?.enableStaticPages ?? appDefaults.features.knowledgeBase,
         cookieConsent: mergedFeatures?.cookieConsent ?? appDefaults.features.cookieConsent,
+      },
+      featureMatrix: {
+        planOverrides: (brand?.planOverrides as any) || null,
+        placePlanOverrides: (brand?.placePlanOverrides as any) || null,
       },
     };
   }
@@ -548,5 +559,58 @@ export class PlatformSettingsService {
 
     // Return fresh data from database
     return this.getPlatformSettingsForAdmin(siteId);
+  }
+
+  /**
+   * Get feature matrix (plan overrides) - superadmin only
+   * Returns the planOverrides from the first Brand (global setting)
+   */
+  async getFeatureMatrix() {
+    // Get the first brand (assuming single brand for global settings)
+    // In multi-brand scenarios, you might want to use a specific brand or create a global config table
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { id: true, planOverrides: true, placePlanOverrides: true },
+    });
+
+    if (!brand) {
+      // Return empty overrides if no brand exists
+      return { planOverrides: null, placePlanOverrides: null };
+    }
+
+    return {
+      planOverrides: (brand.planOverrides as any) || null,
+      placePlanOverrides: (brand.placePlanOverrides as any) || null,
+    };
+  }
+
+  /**
+   * Set feature matrix (plan overrides) - superadmin only
+   * Updates planOverrides in the first Brand (global setting)
+   */
+  async setFeatureMatrix(planOverrides: any, placePlanOverrides?: any) {
+    // Get the first brand (assuming single brand for global settings)
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!brand) {
+      throw new BadRequestException("No brand found. Please create a brand first.");
+    }
+
+    const updateData: any = {};
+    if (planOverrides !== undefined) {
+      updateData.planOverrides = planOverrides;
+    }
+    if (placePlanOverrides !== undefined) {
+      updateData.placePlanOverrides = placePlanOverrides;
+    }
+
+    await this.prisma.brand.update({
+      where: { id: brand.id },
+      data: updateData,
+    });
+
+    return this.getFeatureMatrix();
   }
 }

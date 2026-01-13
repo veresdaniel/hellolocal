@@ -40,9 +40,8 @@ export interface CreatePlaceDto {
   }>;
   isActive?: boolean;
   heroImage?: string | null;
-  gallery?: string[];
-  lat?: number | null;
-  lng?: number | null;
+  lat?: number | string | null; // Can be string from HTTP requests
+  lng?: number | string | null; // Can be string from HTTP requests
   ratingAvg?: number | null;
   ratingCount?: number | null;
   extras?: any;
@@ -76,9 +75,8 @@ export interface UpdatePlaceDto {
   }>;
   isActive?: boolean;
   heroImage?: string | null;
-  gallery?: string[];
-  lat?: number | null;
-  lng?: number | null;
+  lat?: number | string | null; // Can be string from HTTP requests
+  lng?: number | string | null; // Can be string from HTTP requests
   ratingAvg?: number | null;
   ratingCount?: number | null;
   extras?: any;
@@ -348,6 +346,7 @@ export class AdminPlaceService {
         openingHours: {
           orderBy: { dayOfWeek: 'asc' },
         },
+        galleries: true,
       },
     });
 
@@ -359,16 +358,17 @@ export class AdminPlaceService {
   }
 
   async create(dto: CreatePlaceDto) {
-    const { tagIds = [], translations, openingHours = [], ...placeData } = dto;
+    const { tagIds = [], translations, openingHours = [], lat: _lat, lng: _lng, ...placeData } = dto;
 
     // Validate image limit based on plan (default: free)
+    // Note: Gallery images are now managed via Gallery entities and shortcodes, not place.gallery array
     const plan: PlacePlanType = (dto.plan as PlacePlanType) || "free";
-    const gallery = dto.gallery || [];
-    const imageCount = gallery.length + (dto.heroImage ? 1 : 0);
+    const imageCount = dto.heroImage ? 1 : 0;
     
     if (!canAddImage(plan, imageCount)) {
+      const limit = plan === "free" ? 3 : plan === "basic" ? 15 : 30;
       throw new BadRequestException(
-        `Plan "${plan}" allows maximum ${plan === "free" ? 3 : 15} images. You are trying to add ${imageCount} images.`
+        `Plan "${plan}" allows maximum ${limit} images. You are trying to add ${imageCount} images.`
       );
     }
 
@@ -391,9 +391,24 @@ export class AdminPlaceService {
       }
     }
 
+    // Convert lat and lng from string to number if needed (HTTP requests send numbers as strings)
+    // Handle both number and string types (DTO says number, but HTTP can send strings)
+    const lat = dto.lat === null || dto.lat === undefined
+      ? null 
+      : typeof dto.lat === "string" 
+        ? (dto.lat === "" ? null : parseFloat(dto.lat))
+        : (typeof dto.lat === "number" ? dto.lat : null);
+    const lng = dto.lng === null || dto.lng === undefined
+      ? null 
+      : typeof dto.lng === "string" 
+        ? (dto.lng === "" ? null : parseFloat(dto.lng))
+        : (typeof dto.lng === "number" ? dto.lng : null);
+
     const place = await this.prisma.place.create({
       data: {
         ...placeData,
+        lat,
+        lng,
         plan: dto.plan || "free",
         isFeatured: dto.isFeatured ?? false,
         featuredUntil: dto.featuredUntil 
@@ -494,15 +509,16 @@ export class AdminPlaceService {
     }
 
     // Validate image limit based on plan
-    if (dto.gallery !== undefined || dto.heroImage !== undefined) {
+    // Note: Gallery images are now managed via Gallery entities and shortcodes, not place.gallery array
+    if (dto.heroImage !== undefined) {
       const plan: PlacePlanType = (dto.plan as PlacePlanType) || place.plan || "free";
-      const currentGallery = dto.gallery !== undefined ? dto.gallery : place.gallery;
       const currentHeroImage = dto.heroImage !== undefined ? dto.heroImage : place.heroImage;
-      const imageCount = currentGallery.length + (currentHeroImage ? 1 : 0);
+      const imageCount = currentHeroImage ? 1 : 0;
       
       if (!canAddImage(plan, imageCount)) {
+        const limit = plan === "free" ? 3 : plan === "basic" ? 15 : 30;
         throw new BadRequestException(
-          `Plan "${plan}" allows maximum ${plan === "free" ? 3 : 15} images. You are trying to use ${imageCount} images.`
+          `Plan "${plan}" allows maximum ${limit} images. You are trying to use ${imageCount} images.`
         );
       }
     }
@@ -528,7 +544,8 @@ export class AdminPlaceService {
       }
     }
 
-    const { tagIds, translations, openingHours, ...restData } = dto;
+    // Extract lat and lng separately to avoid them being included in restData as strings
+    const { tagIds, translations, openingHours, lat: _lat, lng: _lng, ...restData } = dto;
 
     // Build update data object, explicitly handling all fields to ensure proper updates
     const updateData: any = {};
@@ -538,7 +555,7 @@ export class AdminPlaceService {
     if (restData.townId !== undefined) updateData.townId = restData.townId;
     if (restData.priceBandId !== undefined) updateData.priceBandId = restData.priceBandId;
     if (restData.heroImage !== undefined) updateData.heroImage = restData.heroImage;
-    if (restData.gallery !== undefined) updateData.gallery = restData.gallery;
+    // Gallery is now managed via Gallery entities and shortcodes, not place.gallery array
     if (restData.isActive !== undefined) updateData.isActive = restData.isActive;
     if (restData.ratingAvg !== undefined) updateData.ratingAvg = restData.ratingAvg;
     if (restData.ratingCount !== undefined) updateData.ratingCount = restData.ratingCount;
@@ -550,11 +567,21 @@ export class AdminPlaceService {
     if (restData.galleryLimitOverride !== undefined) updateData.galleryLimitOverride = restData.galleryLimitOverride;
     
     // Explicitly handle lat and lng to ensure null values are properly set
+    // Convert string to number if needed (HTTP requests send numbers as strings)
+    // Handle both number and string types (DTO says number, but HTTP can send strings)
     if (dto.lat !== undefined) {
-      updateData.lat = dto.lat;
+      updateData.lat = dto.lat === null || dto.lat === undefined
+        ? null 
+        : typeof dto.lat === "string" 
+          ? (dto.lat === "" ? null : parseFloat(dto.lat))
+          : (typeof dto.lat === "number" ? dto.lat : null);
     }
     if (dto.lng !== undefined) {
-      updateData.lng = dto.lng;
+      updateData.lng = dto.lng === null || dto.lng === undefined
+        ? null 
+        : typeof dto.lng === "string" 
+          ? (dto.lng === "" ? null : parseFloat(dto.lng))
+          : (typeof dto.lng === "number" ? dto.lng : null);
     }
     // Handle featuredUntil date conversion
     if (dto.featuredUntil !== undefined) {

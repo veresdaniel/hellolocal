@@ -1,8 +1,10 @@
 // src/pages/PricingPage.tsx
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useSiteContext } from "../app/site/useSiteContext";
+import { useSearchParams } from "react-router-dom";
+import { useRouteCtx } from "../app/useRouteCtx";
 import { getPlatformSettings } from "../api/places.api";
+import { getFeatureMatrix, type FeatureMatrix } from "../api/admin.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
 import { FloatingHeader } from "../components/FloatingHeader";
@@ -20,14 +22,19 @@ interface Feature {
 
 export function PricingPage() {
   const { t } = useTranslation();
-  const { lang, siteKey } = useSiteContext();
+  const [searchParams] = useSearchParams();
+  const { lang, siteKey } = useRouteCtx();
+  
   const safeLang = lang ?? "hu";
+  const pricingType = searchParams.get("type") || "site"; // "site" or "place"
+  const placeId = searchParams.get("placeId") || null;
 
-  // Load site settings for SEO
+  // Load site settings for SEO (only if siteKey is available)
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", safeLang, siteKey],
     queryFn: () => getPlatformSettings(safeLang, siteKey),
     staleTime: 5 * 60 * 1000,
+    enabled: !!siteKey, // Only fetch if siteKey is available
   });
 
   const pageUrl = window.location.href;
@@ -72,51 +79,166 @@ export function PricingPage() {
     siteName: platformSettings?.siteName,
   });
 
-  // Feature matrix data
-  const features: Feature[] = [
-    // Places
+  // Helper function to get value with override support
+  const getValueWithOverride = (
+    plan: "FREE" | "BASIC" | "PRO" | "free" | "basic" | "pro",
+    defaultValue: any,
+    overrides?: any,
+    path?: string[]
+  ): any => {
+    if (!overrides) return defaultValue;
+    
+    const planOverride = overrides[plan];
+    if (!planOverride) return defaultValue;
+    
+    if (path && path.length > 0) {
+      let current: any = planOverride;
+      for (const key of path) {
+        if (current === undefined || current === null) return defaultValue;
+        current = current[key];
+      }
+      if (current !== undefined) {
+        // Handle Infinity values
+        if (current === Infinity || current === "∞") {
+          return "∞";
+        }
+        return current;
+      }
+      return defaultValue;
+    }
+    
+    if (planOverride !== undefined) {
+      // Handle Infinity values
+      if (planOverride === Infinity || planOverride === "∞") {
+        return "∞";
+      }
+      return planOverride;
+    }
+    
+    return defaultValue;
+  };
+
+  // Feature matrix data - different for site vs place plans
+  // Merge with overrides from platformSettings
+  const featureMatrix = platformSettings?.featureMatrix;
+  
+  const features: Feature[] = pricingType === "place" ? [
+    // Place-specific features
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.placeImages") || "Képek száma",
+      free: getValueWithOverride("free", 3, featureMatrix?.placePlanOverrides, ["images"]) ?? 3,
+      basic: getValueWithOverride("basic", 15, featureMatrix?.placePlanOverrides, ["images"]) ?? 15,
+      pro: getValueWithOverride("pro", Infinity, featureMatrix?.placePlanOverrides, ["images"]) ?? "∞",
+    },
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.heroImage") || "Hero kép",
+      free: true,
+      basic: true,
+      pro: true,
+    },
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.contacts") || "Kapcsolatok",
+      free: true,
+      basic: true,
+      pro: true,
+    },
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.extraFields") || "Extra mezők",
+      free: false,
+      basic: true,
+      pro: true,
+    },
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.featuredPlacement") || "Kiemelt megjelenés",
+      free: getValueWithOverride("free", false, featureMatrix?.placePlanOverrides, ["featured"]) ?? false,
+      basic: getValueWithOverride("basic", false, featureMatrix?.placePlanOverrides, ["featured"]) ?? false,
+      pro: getValueWithOverride("pro", true, featureMatrix?.placePlanOverrides, ["featured"]) ?? true,
+    },
+    {
+      category: t("public.pricing.categories.place") || "Helyszín",
+      name: t("public.pricing.features.placeSeo") || "SEO beállítások",
+      free: false,
+      basic: true,
+      pro: true,
+    },
+  ] : [
+    // Site-specific features (existing)
     {
       category: t("public.pricing.categories.places"),
       name: t("public.pricing.features.placesCount"),
-      free: 3,
-      basic: 30,
-      pro: 150,
+      free: getValueWithOverride("FREE", 3, featureMatrix?.planOverrides, ["limits", "placesMax"]) ?? 3,
+      basic: getValueWithOverride("BASIC", 30, featureMatrix?.planOverrides, ["limits", "placesMax"]) ?? 30,
+      pro: getValueWithOverride("PRO", 150, featureMatrix?.planOverrides, ["limits", "placesMax"]) ?? 150,
     },
     {
       category: t("public.pricing.categories.places"),
       name: t("public.pricing.features.imagesPerPlace"),
-      free: 3,
-      basic: 10,
-      pro: 30,
+      free: getValueWithOverride("FREE", 3, featureMatrix?.planOverrides, ["limits", "galleryImagesPerPlaceMax"]) ?? 3,
+      basic: getValueWithOverride("BASIC", 10, featureMatrix?.planOverrides, ["limits", "galleryImagesPerPlaceMax"]) ?? 10,
+      pro: getValueWithOverride("PRO", 30, featureMatrix?.planOverrides, ["limits", "galleryImagesPerPlaceMax"]) ?? 30,
     },
     {
       category: t("public.pricing.categories.places"),
       name: t("public.pricing.features.heroImage"),
-      free: true,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", true, featureMatrix?.planOverrides, ["features", "heroImage"]) ?? true,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "heroImage"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "heroImage"]) ?? true,
     },
     {
       category: t("public.pricing.categories.places"),
       name: t("public.pricing.features.contacts"),
-      free: true,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", true, featureMatrix?.planOverrides, ["features", "contacts"]) ?? true,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "contacts"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "contacts"]) ?? true,
     },
     {
       category: t("public.pricing.categories.places"),
       name: t("public.pricing.features.extraFields"),
-      free: false,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "extrasEnabled"]) ?? false,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "extrasEnabled"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "extrasEnabled"]) ?? true,
+    },
+    // Galleries
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesMax"),
+      free: getValueWithOverride("FREE", 5, featureMatrix?.planOverrides, ["limits", "galleriesMax"]) ?? 5,
+      basic: getValueWithOverride("BASIC", 20, featureMatrix?.planOverrides, ["limits", "galleriesMax"]) ?? 20,
+      pro: getValueWithOverride("PRO", Infinity, featureMatrix?.planOverrides, ["limits", "galleriesMax"]) ?? "∞",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.imagesPerGalleryMax"),
+      free: getValueWithOverride("FREE", 10, featureMatrix?.planOverrides, ["limits", "imagesPerGalleryMax"]) ?? 10,
+      basic: getValueWithOverride("BASIC", 30, featureMatrix?.planOverrides, ["limits", "imagesPerGalleryMax"]) ?? 30,
+      pro: getValueWithOverride("PRO", 100, featureMatrix?.planOverrides, ["limits", "imagesPerGalleryMax"]) ?? 100,
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesPerPlaceMax"),
+      free: getValueWithOverride("FREE", 1, featureMatrix?.planOverrides, ["limits", "galleriesPerPlaceMax"]) ?? 1,
+      basic: getValueWithOverride("BASIC", 3, featureMatrix?.planOverrides, ["limits", "galleriesPerPlaceMax"]) ?? 3,
+      pro: getValueWithOverride("PRO", Infinity, featureMatrix?.planOverrides, ["limits", "galleriesPerPlaceMax"]) ?? "∞",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesPerEventMax"),
+      free: getValueWithOverride("FREE", 1, featureMatrix?.planOverrides, ["limits", "galleriesPerEventMax"]) ?? 1,
+      basic: getValueWithOverride("BASIC", 2, featureMatrix?.planOverrides, ["limits", "galleriesPerEventMax"]) ?? 2,
+      pro: getValueWithOverride("PRO", Infinity, featureMatrix?.planOverrides, ["limits", "galleriesPerEventMax"]) ?? "∞",
     },
     // Visibility
     {
       category: t("public.pricing.categories.visibility"),
       name: t("public.pricing.features.featuredPlaces"),
-      free: 0,
-      basic: 3,
-      pro: 15,
+      free: getValueWithOverride("FREE", 0, featureMatrix?.planOverrides, ["limits", "featuredPlacesMax"]) ?? 0,
+      basic: getValueWithOverride("BASIC", 3, featureMatrix?.planOverrides, ["limits", "featuredPlacesMax"]) ?? 3,
+      pro: getValueWithOverride("PRO", 15, featureMatrix?.planOverrides, ["limits", "featuredPlacesMax"]) ?? 15,
     },
     {
       category: t("public.pricing.categories.visibility"),
@@ -129,46 +251,46 @@ export function PricingPage() {
     {
       category: t("public.pricing.categories.events"),
       name: t("public.pricing.features.eventsEnabled"),
-      free: false,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "eventsEnabled"]) ?? false,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "eventsEnabled"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "eventsEnabled"]) ?? true,
     },
     {
       category: t("public.pricing.categories.events"),
       name: t("public.pricing.features.eventsPerMonth"),
-      free: 0,
-      basic: 30,
-      pro: 200,
+      free: getValueWithOverride("FREE", 0, featureMatrix?.planOverrides, ["limits", "eventsPerMonthMax"]) ?? 0,
+      basic: getValueWithOverride("BASIC", 30, featureMatrix?.planOverrides, ["limits", "eventsPerMonthMax"]) ?? 30,
+      pro: getValueWithOverride("PRO", 200, featureMatrix?.planOverrides, ["limits", "eventsPerMonthMax"]) ?? 200,
     },
     // SEO
     {
       category: t("public.pricing.categories.seo"),
       name: t("public.pricing.features.siteSeo"),
-      free: true,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", true, featureMatrix?.planOverrides, ["features", "siteSeo"]) ?? true,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "siteSeo"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "siteSeo"]) ?? true,
     },
     {
       category: t("public.pricing.categories.seo"),
       name: t("public.pricing.features.placeSeo"),
-      free: false,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "placeSeoEnabled"]) ?? false,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "placeSeoEnabled"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "placeSeoEnabled"]) ?? true,
     },
     {
       category: t("public.pricing.categories.seo"),
       name: t("public.pricing.features.canonicalSupport"),
-      free: true,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", true, featureMatrix?.planOverrides, ["features", "canonicalSupport"]) ?? true,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "canonicalSupport"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "canonicalSupport"]) ?? true,
     },
     // Domain
     {
       category: t("public.pricing.categories.domain"),
       name: t("public.pricing.features.customDomain"),
-      free: false,
-      basic: false,
-      pro: true,
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "customDomainEnabled"]) ?? false,
+      basic: getValueWithOverride("BASIC", false, featureMatrix?.planOverrides, ["features", "customDomainEnabled"]) ?? false,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "customDomainEnabled"]) ?? true,
     },
     {
       category: t("public.pricing.categories.domain"),
@@ -181,33 +303,33 @@ export function PricingPage() {
     {
       category: t("public.pricing.categories.languages"),
       name: t("public.pricing.features.additionalLanguages"),
-      free: 1,
-      basic: 2,
-      pro: 3,
+      free: getValueWithOverride("FREE", 1, featureMatrix?.planOverrides, ["limits", "languagesMax"]) ?? 1,
+      basic: getValueWithOverride("BASIC", 2, featureMatrix?.planOverrides, ["limits", "languagesMax"]) ?? 2,
+      pro: getValueWithOverride("PRO", 3, featureMatrix?.planOverrides, ["limits", "languagesMax"]) ?? 3,
     },
     // Permissions
     {
       category: t("public.pricing.categories.permissions"),
       name: t("public.pricing.features.siteMembers"),
-      free: 2,
-      basic: 5,
-      pro: 20,
+      free: getValueWithOverride("FREE", 2, featureMatrix?.planOverrides, ["limits", "siteMembersMax"]) ?? 2,
+      basic: getValueWithOverride("BASIC", 5, featureMatrix?.planOverrides, ["limits", "siteMembersMax"]) ?? 5,
+      pro: getValueWithOverride("PRO", 20, featureMatrix?.planOverrides, ["limits", "siteMembersMax"]) ?? 20,
     },
     // Admin
     {
       category: t("public.pricing.categories.admin"),
       name: t("public.pricing.features.eventLog"),
-      free: false,
-      basic: true,
-      pro: true,
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "eventLogEnabled"]) ?? false,
+      basic: getValueWithOverride("BASIC", true, featureMatrix?.planOverrides, ["features", "eventLogEnabled"]) ?? true,
+      pro: getValueWithOverride("PRO", true, featureMatrix?.planOverrides, ["features", "eventLogEnabled"]) ?? true,
     },
     // Push
     {
       category: t("public.pricing.categories.push"),
       name: t("public.pricing.features.pushSubscription"),
-      free: false,
-      basic: false,
-      pro: t("public.pricing.features.optionalAddon"),
+      free: getValueWithOverride("FREE", false, featureMatrix?.planOverrides, ["features", "pushSubscription"]) ?? false,
+      basic: getValueWithOverride("BASIC", false, featureMatrix?.planOverrides, ["features", "pushSubscription"]) ?? false,
+      pro: getValueWithOverride("PRO", t("public.pricing.features.optionalAddon"), featureMatrix?.planOverrides, ["features", "pushSubscription"]) ?? t("public.pricing.features.optionalAddon"),
     },
   ];
 
@@ -218,13 +340,15 @@ export function PricingPage() {
           color: "#22c55e", 
           fontSize: "clamp(20px, 3vw, 24px)", 
           fontWeight: 700,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          display: "inline-block",
         }}>✓</span>
       ) : (
         <span style={{ 
           color: "#9ca3af", 
           fontSize: "clamp(18px, 2.5vw, 20px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          display: "inline-block",
         }}>–</span>
       );
     }
@@ -233,14 +357,16 @@ export function PricingPage() {
         fontWeight: 700, 
         color: "#1a1a1a", 
         fontSize: "clamp(16px, 2.5vw, 20px)",
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        display: "inline-block",
       }}>{value}</span>;
     }
     return <span style={{ 
       fontWeight: 600, 
       color: "#1a1a1a", 
       fontSize: "clamp(15px, 2.2vw, 18px)",
-      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      display: "inline-block",
     }}>{value}</span>;
   };
 
@@ -406,8 +532,66 @@ export function PricingPage() {
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         paddingTop: "clamp(80px, 12vw, 100px)",
         paddingBottom: "clamp(40px, 8vw, 80px)",
+        position: "relative",
+        overflow: "hidden",
       }}
       >
+        {/* Animated background elements */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-50%",
+            left: "-50%",
+            width: "200%",
+            height: "200%",
+            background: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
+            backgroundSize: "50px 50px",
+            animation: "float 20s infinite linear",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: "20%",
+            right: "10%",
+            width: "300px",
+            height: "300px",
+            background: "rgba(255, 255, 255, 0.1)",
+            borderRadius: "50%",
+            filter: "blur(40px)",
+            animation: "pulse 4s infinite ease-in-out",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            left: "10%",
+            width: "200px",
+            height: "200px",
+            background: "rgba(255, 255, 255, 0.1)",
+            borderRadius: "50%",
+            filter: "blur(30px)",
+            animation: "pulse 6s infinite ease-in-out",
+            animationDelay: "2s",
+            pointerEvents: "none",
+          }}
+        />
+
+        <style>
+          {`
+            @keyframes float {
+              0% { transform: translate(0, 0) rotate(0deg); }
+              100% { transform: translate(-50px, -50px) rotate(360deg); }
+            }
+            @keyframes pulse {
+              0%, 100% { transform: scale(1); opacity: 0.5; }
+              50% { transform: scale(1.2); opacity: 0.8; }
+            }
+          `}
+        </style>
         <div
           style={{
             maxWidth: "min(100%, 1200px)",
@@ -425,11 +609,13 @@ export function PricingPage() {
                 marginBottom: 20,
                 color: "#ffffff",
                 lineHeight: 1.2,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
               }}
             >
-              {t("public.pricing.title")}
+              {pricingType === "place" 
+                ? (t("public.pricing.features.placeTitle") || "Helyszín csomagok")
+                : t("public.pricing.title")}
             </h1>
             <p
               style={{
@@ -439,11 +625,13 @@ export function PricingPage() {
                 margin: "0 auto",
                 lineHeight: 1.6,
                 padding: "0 16px",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
               }}
             >
-              {t("public.pricing.subtitle")}
+              {pricingType === "place"
+                ? (t("public.pricing.features.placeSubtitle") || "Válassz egy csomagot a helyszíned számára")
+                : t("public.pricing.subtitle")}
             </p>
           </div>
 
@@ -503,7 +691,7 @@ export function PricingPage() {
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: 0.8,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       boxShadow: "0 4px 12px rgba(34, 197, 94, 0.4)",
                     }}
                   >
@@ -519,7 +707,7 @@ export function PricingPage() {
                     fontWeight: 700,
                     marginBottom: 12,
                     color: "#1a1a1a",
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   {plan.name}
@@ -530,7 +718,7 @@ export function PricingPage() {
                     color: "#4b5563",
                     marginBottom: 0,
                     lineHeight: 1.6,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   {plan.description}
@@ -570,7 +758,7 @@ export function PricingPage() {
                   fontWeight: 700,
                   color: "#ffffff",
                   fontSize: "clamp(16px, 2.5vw, 20px)",
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 {t("public.pricing.featureMatrix.feature")}
@@ -592,7 +780,7 @@ export function PricingPage() {
                       color: "#ffffff",
                       fontSize: "clamp(18px, 2.8vw, 22px)",
                       textAlign: "center",
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {plan.name}
@@ -619,7 +807,7 @@ export function PricingPage() {
                       fontWeight: 700,
                       color: "#1a1a1a",
                       margin: 0,
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily: "Poppins, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {category}
@@ -655,7 +843,7 @@ export function PricingPage() {
                         color: "#374151",
                         fontWeight: 500,
                         lineHeight: 1.6,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
                       {feature.name}
@@ -666,6 +854,8 @@ export function PricingPage() {
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
+                        minHeight: "40px",
+                        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
                       {renderFeatureValue(feature.free)}
@@ -676,6 +866,8 @@ export function PricingPage() {
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
+                        minHeight: "40px",
+                        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
                       {renderFeatureValue(feature.basic)}
@@ -686,6 +878,8 @@ export function PricingPage() {
                         display: "flex",
                         justifyContent: "center",
                         alignItems: "center",
+                        minHeight: "40px",
+                        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
                       {renderFeatureValue(feature.pro)}
@@ -716,7 +910,7 @@ export function PricingPage() {
                 color: "#4b5563",
                 margin: 0,
                 lineHeight: 1.7,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
               }}
             >

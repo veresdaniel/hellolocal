@@ -523,6 +523,74 @@ export function TipTapEditorWithUpload({
       <style>{`
         .tiptap-editor {
           outline: none;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-size: clamp(15px, 3.5vw, 16px) !important;
+          color: #333;
+          line-height: 1.6;
+        }
+        .tiptap-editor p {
+          margin: 0.5em 0;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-size: clamp(15px, 3.5vw, 16px) !important;
+        }
+        .tiptap-editor p.is-editor-empty:first-child::before {
+          color: #999;
+          content: attr(data-placeholder);
+          float: left;
+          height: 0;
+          pointer-events: none;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-size: clamp(15px, 3.5vw, 16px) !important;
+        }
+        .tiptap-editor ul, .tiptap-editor ol {
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-size: clamp(15px, 3.5vw, 16px) !important;
+        }
+        .tiptap-editor li {
+          margin: 0.25em 0;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-size: clamp(15px, 3.5vw, 16px) !important;
+        }
+        .tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
+          margin: 1em 0 0.5em 0;
+          font-weight: 600;
+          font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        }
+        .tiptap-editor h1 {
+          font-size: 2em;
+        }
+        .tiptap-editor h2 {
+          font-size: 1.5em;
+        }
+        .tiptap-editor h3 {
+          font-size: 1.25em;
+        }
+        .tiptap-editor blockquote {
+          border-left: 3px solid #ddd;
+          padding-left: 1em;
+          margin: 1em 0;
+          color: #666;
+          font-style: italic;
+        }
+        .tiptap-editor code {
+          background: #f5f5f5;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 0.9em;
+        }
+        .tiptap-editor pre {
+          background: #f5f5f5;
+          padding: 1em;
+          border-radius: 4px;
+          overflow-x: auto;
+          margin: 1em 0;
+        }
+        .tiptap-editor pre code {
+          background: none;
+          padding: 0;
         }
         .tiptap-editor img.tiptap-image {
           max-width: 100%;

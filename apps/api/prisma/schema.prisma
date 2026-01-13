@@ -86,6 +86,8 @@ model Brand {
   theme           Json?   // colors, typography
   placeholders    Json?   // default images (card, detail hero, event card)
   mapDefaults     Json?   // default map style, zoom, center
+  planOverrides   Json?   // feature matrix overrides per plan (FREE, BASIC, PRO) - for site subscriptions
+  placePlanOverrides Json? // feature matrix overrides per plan (free, basic, pro) - for place subscriptions
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -135,6 +137,7 @@ model Site {
   siteMemberships  SiteMembership[]
   siteDomains      SiteDomain[]
   subscription     SiteSubscription?
+  galleries        Gallery[]
 
   @@index([brandId])
   @@index([plan])
@@ -366,7 +369,6 @@ model Place {
 
   // Media + discoverability
   heroImage   String?
-  gallery     String[]      @default([])
 
   // Map
   lat         Float?
@@ -395,6 +397,7 @@ model Place {
   openingHours PlaceOpeningHours[]
   memberships PlaceMembership[]
   subscription PlaceSubscription?
+  galleries    Gallery[]
 
   @@index([siteId, categoryId])
   @@index([townId])
@@ -676,7 +679,6 @@ model Event {
   startDate  DateTime // Event start date/time
   endDate    DateTime? // Optional end date/time
   heroImage  String?  // Hero image URL
-  gallery    String[]  @default([]) // Array of image URLs
   lat        Float?    // Optional latitude for map display
   lng        Float?    // Optional longitude for map display
   
@@ -690,6 +692,7 @@ model Event {
   translations EventTranslation[]
   tags       EventTag[]
   categories EventCategory[] // Many-to-many relationship with categories
+  galleries  Gallery[]
   
   @@index([siteId, startDate])
   @@index([placeId])
@@ -887,4 +890,56 @@ model PlaceSubscription {
   @@index([status])
   @@index([validUntil])
   @@index([statusChangedAt])
+}
+
+// SubscriptionHistory: Tracks package changes, payment dates, and subscription events
+model SubscriptionHistory {
+  id                String             @id @default(cuid())
+  scope             String             // "site" or "place"
+  subscriptionId    String             // ID of SiteSubscription or PlaceSubscription
+  changeType        String             // "PLAN_CHANGE", "STATUS_CHANGE", "PAYMENT", "EXTENSION", "CREATED"
+  oldPlan           SubscriptionPlan?
+  newPlan           SubscriptionPlan?
+  oldStatus         SubscriptionStatus?
+  newStatus         SubscriptionStatus?
+  oldValidUntil     DateTime?
+  newValidUntil     DateTime?
+  paymentDueDate    DateTime?          // mikor kell fizetnie
+  amountCents       Int?               // fizetett/tervezett összeg
+  currency          String?             // "HUF"
+  note              String?             // megjegyzés (pl. "Upgrade from BASIC to PRO")
+  changedBy         String?             // user ID who made the change (if admin)
+  
+  createdAt         DateTime           @default(now())
+
+  @@index([scope, subscriptionId])
+  @@index([changeType])
+  @@index([createdAt])
+  @@index([paymentDueDate])
+}
+
+// Gallery: Reusable image galleries that can be embedded in content
+model Gallery {
+  id          String   @id @default(cuid())
+  siteId      String
+  placeId     String?  // Optional: gallery linked to a place
+  eventId     String?  // Optional: gallery linked to an event
+  name        String?  // Optional name for admin identification
+  images      Json     // Array of GalleryImage objects: [{id, src, thumbSrc?, width?, height?, alt?, caption?}]
+  layout      String?  @default("grid") // grid | masonry | carousel
+  columns     Json?    // {base: number, md: number, lg: number}
+  aspect      String?  @default("auto") // auto | square | 4:3 | 16:9
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place       Place?    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  event       Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([placeId])
+  @@index([eventId])
+  @@index([siteId, isActive])
 }

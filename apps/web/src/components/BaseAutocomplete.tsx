@@ -1,5 +1,5 @@
 // src/components/BaseAutocomplete.tsx
-import { useState, useRef, useEffect, ReactNode } from "react";
+import React, { useState, useRef, useEffect, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 export interface AutocompleteItem {
@@ -477,9 +477,14 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           boxSizing: "border-box",
         }}
       >
-        {selectedItems.map((item) =>
-          chipRenderer(item, () => handleItemRemove(item.id))
-        )}
+        {selectedItems.map((item) => {
+          const chip = chipRenderer(item, () => handleItemRemove(item.id));
+          // If chip is already a React element with key, return it directly
+          // Otherwise wrap it in a div with key
+          return React.isValidElement(chip) && chip.key ? chip : (
+            <div key={item.id}>{chip}</div>
+          );
+        })}
         <input
           ref={inputRef}
           type="text"

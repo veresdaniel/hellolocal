@@ -1,15 +1,50 @@
 // apps/api/src/billing/billing.service.ts
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { PlacePlan, SitePlan } from "@prisma/client";
+import { PlacePlan, SitePlan, SubscriptionPlan } from "@prisma/client";
 import { getPlaceLimits, type PlaceLimits } from "../config/place-limits.config";
 import { getSiteLimits, type SiteLimits } from "../config/site-limits.config";
+
+// Helper function to convert PlacePlan to SubscriptionPlan
+function placePlanToSubscriptionPlan(plan: PlacePlan): SubscriptionPlan {
+  switch (plan) {
+    case "free":
+      return "FREE";
+    case "basic":
+      return "BASIC";
+    case "pro":
+      return "PRO";
+    default:
+      return "FREE";
+  }
+}
+
+// Helper function to get the first day of next month
+function getFirstDayOfNextMonth(): Date {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return nextMonth;
+}
+
+// Helper function to add one month to a date
+function addOneMonth(date: Date): Date {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + 1);
+  return result;
+}
 
 export interface PlaceSubscriptionDto {
   placeId: string;
   plan: PlacePlan;
   isFeatured: boolean;
   featuredUntil: Date | null;
+  // Subscription details from PlaceSubscription model
+  validUntil: Date | null;
+  priceCents: number | null;
+  currency: string | null;
+  statusChangedAt: Date | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface SiteSubscriptionDto {
@@ -53,6 +88,17 @@ export class BillingService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Get place plan overrides from Brand
+   */
+  private async getPlacePlanOverrides(): Promise<any> {
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { placePlanOverrides: true },
+    });
+    return (brand?.placePlanOverrides as any) || null;
+  }
+
+  /**
    * Get subscription for a place
    */
   async getPlaceSubscription(placeId: string): Promise<PlaceSubscriptionDto> {
@@ -63,6 +109,16 @@ export class BillingService {
         plan: true,
         isFeatured: true,
         featuredUntil: true,
+        subscription: {
+          select: {
+            validUntil: true,
+            priceCents: true,
+            currency: true,
+            statusChangedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -75,6 +131,12 @@ export class BillingService {
       plan: place.plan,
       isFeatured: place.isFeatured,
       featuredUntil: place.featuredUntil,
+      validUntil: place.subscription?.validUntil || null,
+      priceCents: place.subscription?.priceCents || null,
+      currency: place.subscription?.currency || null,
+      statusChangedAt: place.subscription?.statusChangedAt || null,
+      createdAt: place.subscription?.createdAt || null,
+      updatedAt: place.subscription?.updatedAt || null,
     };
   }
 
@@ -83,19 +145,74 @@ export class BillingService {
    */
   async updatePlaceSubscription(
     placeId: string,
-    data: Partial<Omit<PlaceSubscriptionDto, "placeId">>
+    data: Partial<Omit<PlaceSubscriptionDto, "placeId">>,
+    changedBy?: string
   ): Promise<PlaceSubscriptionDto> {
     const place = await this.prisma.place.findUnique({
       where: { id: placeId },
+      include: {
+        events: {
+          select: { id: true },
+        },
+        galleries: true,
+        subscription: true, // Include existing subscription to track old plan
+      },
     });
 
     if (!place) {
       throw new NotFoundException(`Place with ID ${placeId} not found`);
     }
 
+    // Get old subscription data for history tracking
+    const oldSubscription = place.subscription;
+    // If no subscription exists, use the place's current plan as the old plan
+    const oldPlan = oldSubscription?.plan || (place.plan === "free" ? "FREE" : place.plan === "basic" ? "BASIC" : "PRO");
+
+    // If plan is being changed, validate that current usage doesn't exceed new plan limits
+    if (data.plan && data.plan !== place.plan) {
+      const overrides = await this.getPlacePlanOverrides();
+      const newLimits = getPlaceLimits(data.plan, overrides);
+      // Extract all images from galleries and count them
+      const galleryImages = (place.galleries || [])
+        .flatMap((gallery: any) => {
+          try {
+            const images = typeof gallery.images === 'string' 
+              ? JSON.parse(gallery.images) 
+              : gallery.images;
+            return Array.isArray(images) ? images : [];
+          } catch {
+            return [];
+          }
+        });
+      const currentImageCount = galleryImages.length + (place.heroImage ? 1 : 0);
+      const currentEventCount = place.events?.length || 0;
+
+      // Validate image limit
+      if (newLimits.images !== Infinity && currentImageCount > newLimits.images) {
+        throw new BadRequestException(
+          `Cannot downgrade to "${data.plan}" plan. Current image count (${currentImageCount}) exceeds the plan limit (${newLimits.images}). Please remove ${currentImageCount - newLimits.images} image(s) first.`
+        );
+      }
+
+      // Validate event limit
+      if (newLimits.events !== Infinity && currentEventCount > newLimits.events) {
+        throw new BadRequestException(
+          `Cannot downgrade to "${data.plan}" plan. Current event count (${currentEventCount}) exceeds the plan limit (${newLimits.events}). Please remove ${currentEventCount - newLimits.events} event(s) first.`
+        );
+      }
+
+      // Validate featured status
+      if (place.isFeatured && !newLimits.featured) {
+        throw new BadRequestException(
+          `Cannot downgrade to "${data.plan}" plan. This place is currently featured, but the "${data.plan}" plan does not support featured status. Please disable featured status first.`
+        );
+      }
+    }
+
     // Validate featured status based on plan
     if (data.isFeatured && data.plan) {
-      const limits = getPlaceLimits(data.plan);
+      const overrides = await this.getPlacePlanOverrides();
+      const limits = getPlaceLimits(data.plan, overrides);
       if (!limits.featured) {
         throw new BadRequestException(
           `Plan ${data.plan} does not support featured status`
@@ -103,6 +220,7 @@ export class BillingService {
       }
     }
 
+    // Update place plan and featured status
     const updated = await this.prisma.place.update({
       where: { id: placeId },
       data: {
@@ -118,11 +236,134 @@ export class BillingService {
       },
     });
 
+    // Update or create PlaceSubscription record
+    const subscriptionData: any = {};
+    if (data.priceCents !== undefined) subscriptionData.priceCents = data.priceCents;
+    if (data.currency !== undefined) subscriptionData.currency = data.currency;
+    
+    // If plan changed, update statusChangedAt and plan in subscription
+    const newPlan = data.plan || place.plan;
+    const planChanged = data.plan && data.plan !== place.plan;
+    const isNewSubscription = !oldSubscription;
+    const newSubscriptionPlan = placePlanToSubscriptionPlan(newPlan);
+    
+    if (planChanged) {
+      subscriptionData.statusChangedAt = new Date();
+      subscriptionData.plan = newSubscriptionPlan;
+      
+      // If plan changed and validUntil is not explicitly set, set to first day of next month
+      if (data.validUntil === undefined) {
+        subscriptionData.validUntil = getFirstDayOfNextMonth();
+      } else if (data.validUntil !== null) {
+        subscriptionData.validUntil = data.validUntil;
+      }
+    } else if (!data.plan) {
+      // If plan is not being updated, ensure subscription plan matches place plan
+      subscriptionData.plan = newSubscriptionPlan;
+      // Keep existing validUntil if not explicitly changed
+      if (data.validUntil !== undefined) {
+        subscriptionData.validUntil = data.validUntil;
+      }
+    } else {
+      // Plan not changed, but validUntil might be updated
+      if (data.validUntil !== undefined) {
+        subscriptionData.validUntil = data.validUntil;
+      }
+    }
+
+    // If creating new subscription and validUntil is not set, set to first day of next month
+    const createValidUntil = isNewSubscription && !data.validUntil
+      ? getFirstDayOfNextMonth()
+      : (data.validUntil ?? null);
+    
+    const subscription = await this.prisma.placeSubscription.upsert({
+      where: { placeId },
+      create: {
+        placeId,
+        plan: newSubscriptionPlan,
+        validUntil: createValidUntil,
+        priceCents: data.priceCents ?? null,
+        currency: data.currency ?? null,
+        statusChangedAt: subscriptionData.statusChangedAt || new Date(),
+      },
+      update: subscriptionData,
+      select: {
+        id: true,
+        plan: true,
+        validUntil: true,
+        priceCents: true,
+        currency: true,
+        statusChangedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Create history entry if plan changed
+    // Only create history if plan actually changed (not on first creation unless plan is different from default)
+    if (planChanged) {
+      try {
+        const oldPlanValue = oldPlan as any;
+        const newPlanValue = newSubscriptionPlan;
+
+        await this.prisma.subscriptionHistory.create({
+          data: {
+            scope: "place",
+            subscriptionId: subscription.id,
+            changeType: "PLAN_CHANGE",
+            oldPlan: oldPlanValue,
+            newPlan: newPlanValue,
+            oldStatus: oldSubscription?.status || "ACTIVE",
+            newStatus: oldSubscription?.status || "ACTIVE",
+            oldValidUntil: oldSubscription?.validUntil || null,
+            newValidUntil: subscription.validUntil,
+            amountCents: subscription.priceCents,
+            currency: subscription.currency,
+            note: `Plan changed from ${oldPlanValue} to ${newPlanValue}`,
+            changedBy: changedBy || null,
+          },
+        });
+      } catch (error) {
+        console.error("Error creating subscription history entry:", error);
+        // Don't throw - history logging should not break the main operation
+      }
+    } else if (isNewSubscription && newSubscriptionPlan !== "FREE") {
+      // If subscription is created with a non-FREE plan, create history entry
+      try {
+        await this.prisma.subscriptionHistory.create({
+          data: {
+            scope: "place",
+            subscriptionId: subscription.id,
+            changeType: "CREATED",
+            oldPlan: null,
+            newPlan: newSubscriptionPlan,
+            oldStatus: null,
+            newStatus: "ACTIVE",
+            oldValidUntil: null,
+            newValidUntil: subscription.validUntil,
+            amountCents: subscription.priceCents,
+            currency: subscription.currency,
+            note: `Subscription created with plan ${newSubscriptionPlan}`,
+            changedBy: changedBy || null,
+          },
+        });
+      } catch (error) {
+        console.error("Error creating subscription history entry:", error);
+        // Don't throw - history logging should not break the main operation
+      }
+    }
+
     return {
       placeId: updated.id,
       plan: updated.plan,
       isFeatured: updated.isFeatured,
       featuredUntil: updated.featuredUntil,
+      validUntil: subscription.validUntil,
+      priceCents: subscription.priceCents,
+      currency: subscription.currency,
+      statusChangedAt: subscription.statusChangedAt,
+      createdAt: subscription.createdAt,
+      updatedAt: subscription.updatedAt,
     };
   }
 
@@ -136,6 +377,7 @@ export class BillingService {
         events: {
           select: { id: true },
         },
+        galleries: true,
       },
     });
 
@@ -143,8 +385,21 @@ export class BillingService {
       throw new NotFoundException(`Place with ID ${placeId} not found`);
     }
 
-    const limits = getPlaceLimits(place.plan);
-    const imageCount = (place.gallery?.length || 0) + (place.heroImage ? 1 : 0);
+    const overrides = await this.getPlacePlanOverrides();
+    const limits = getPlaceLimits(place.plan, overrides);
+    // Extract all images from galleries and count them
+    const galleryImages = (place.galleries || [])
+      .flatMap((gallery: any) => {
+        try {
+          const images = typeof gallery.images === 'string' 
+            ? JSON.parse(gallery.images) 
+            : gallery.images;
+          return Array.isArray(images) ? images : [];
+        } catch {
+          return [];
+        }
+      });
+    const imageCount = galleryImages.length + (place.heroImage ? 1 : 0);
     const eventCount = place.events?.length || 0;
 
     // Determine if upgrade/downgrade is possible

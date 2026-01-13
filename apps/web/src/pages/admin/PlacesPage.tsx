@@ -31,7 +31,6 @@ interface Place {
   isFeatured?: boolean;
   featuredUntil?: string | null;
   heroImage: string | null;
-  gallery: string[];
   lat: number | null;
   lng: number | null;
   category: { translations: Array<{ lang: string; name: string }> };
@@ -661,6 +660,22 @@ export function PlacesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString(), isCreating, editingId]);
+
+  // Handle edit query parameter
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && !editingId && !isCreating && places.length > 0) {
+      const placeToEdit = places.find((p) => p.id === editId);
+      if (placeToEdit) {
+        startEdit(placeToEdit);
+        // Remove edit param from URL after opening edit form
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("edit");
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("edit"), places.length, editingId, isCreating]);
 
   // Reset edit state when navigating away from this page
   useEffect(() => {
@@ -1396,61 +1411,65 @@ export function PlacesPage() {
             </div>
           </div>
 
-          {/* isActive checkbox - prominent at the top */}
-          {canModifyPublish() && (
-            <div style={{ 
-              marginBottom: 24, 
-              padding: 20, 
-              background: formData.isActive 
-                ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
-                : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-              borderRadius: 12,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-              border: "2px solid",
-              borderColor: formData.isActive ? "#10b981" : "#ef4444",
+          {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
+          <div style={{ 
+            marginBottom: 24, 
+            padding: 20, 
+            background: formData.isActive 
+              ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
+              : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            borderRadius: 12,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            border: "2px solid",
+            borderColor: formData.isActive ? "#10b981" : "#ef4444",
+            opacity: canModifyPublish() ? 1 : 0.7,
+          }}>
+            <label style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 12, 
+              cursor: canModifyPublish() ? "pointer" : "not-allowed",
+              color: "white",
             }}>
-              <label style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: 12, 
-                cursor: "pointer",
-                color: "white",
-              }}>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ 
-                    width: 24, 
-                    height: 24, 
-                    cursor: "pointer",
-                    accentColor: "white",
-                  }}
-                />
-                <div>
-                  <div style={{ 
-                    fontSize: "clamp(16px, 4vw, 20px)", 
-                    fontWeight: 700, 
-                    marginBottom: 4,
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {formData.isActive 
-                      ? (t("admin.placeActive") || "Place is Active") 
-                      : (t("admin.placeInactive") || "Place is Inactive")}
-                  </div>
-                  <div style={{ 
-                    fontSize: "clamp(14px, 3.5vw, 16px)", 
-                    opacity: 0.9,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {formData.isActive 
-                      ? (t("admin.placeActiveDescription") || "This place is visible to visitors")
-                      : (t("admin.placeInactiveDescription") || "This place is hidden from visitors")}
-                  </div>
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                disabled={!canModifyPublish()}
+                onChange={(e) => {
+                  if (!canModifyPublish()) return;
+                  setFormData({ ...formData, isActive: e.target.checked });
+                }}
+                style={{ 
+                  width: 24, 
+                  height: 24, 
+                  cursor: canModifyPublish() ? "pointer" : "not-allowed",
+                  accentColor: "white",
+                  opacity: canModifyPublish() ? 1 : 0.6,
+                }}
+              />
+              <div>
+                <div style={{ 
+                  fontSize: "clamp(16px, 4vw, 20px)", 
+                  fontWeight: 700, 
+                  marginBottom: 4,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {formData.isActive 
+                    ? (t("admin.placeActive") || "Place is Active") 
+                    : (t("admin.placeInactive") || "Place is Inactive")}
                 </div>
-              </label>
-            </div>
-          )}
+                <div style={{ 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  opacity: 0.9,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {formData.isActive 
+                    ? (t("admin.placeActiveDescription") || "This place is visible to visitors")
+                    : (t("admin.placeInactiveDescription") || "This place is hidden from visitors")}
+                </div>
+              </div>
+            </label>
+          </div>
 
           {/* Hero kép teljes szélességben */}
           <div style={{ marginBottom: 16 }}>
@@ -1470,8 +1489,8 @@ export function PlacesPage() {
             />
           </div>
 
-          {/* Billing/Plan fields - only visible to owner/manager */}
-          {canModifyPublish() && editingId && (
+          {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
+          {editingId && (
             <div style={{ marginBottom: 16 }}>
               <h3 style={{ 
                 margin: "0 0 16px 0", 
@@ -1492,6 +1511,13 @@ export function PlacesPage() {
                 currentFeaturedUntil={formData.featuredUntil}
                 siteId={selectedSiteId || ""}
                 userRole={currentUser?.role || "viewer"}
+                onPlanChange={async (newPlan) => {
+                  // Just update the form data - the PlaceBillingSection component
+                  // will handle the API call and update the subscription
+                  setFormData({ ...formData, plan: newPlan });
+                  // No need to reload the entire page or call updatePlace here
+                  // The subscription update is handled by PlaceBillingSection
+                }}
               />
             </div>
           )}
@@ -1556,7 +1582,9 @@ export function PlacesPage() {
                 return townTranslation?.name || "-";
               },
             },
-            {
+            // Only show status column if user has admin permissions (admin/superadmin/siteadmin)
+            // Editor/viewer should not see isActive status
+            ...((currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin) ? [{
               key: "status",
               label: t("admin.table.status"),
               render: (place) => (
@@ -1576,7 +1604,7 @@ export function PlacesPage() {
                   {place.isActive ? t("common.active") : t("common.inactive")}
                 </span>
               ),
-            },
+            }] : []),
           ]}
           cardTitle={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
@@ -1609,7 +1637,9 @@ export function PlacesPage() {
                 ) : null;
               },
             },
-            {
+            // Only show status field if user has admin permissions (admin/superadmin/siteadmin)
+            // Editor/viewer should not see isActive status
+            ...((currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin) ? [{
               key: "status",
               render: (place) => (
                 <span
@@ -1629,7 +1659,7 @@ export function PlacesPage() {
                   {place.isActive ? t("common.active") : t("common.inactive")}
                 </span>
               ),
-            },
+            }] : []),
           ]}
           onEdit={startEdit}
           onDelete={(place) => {

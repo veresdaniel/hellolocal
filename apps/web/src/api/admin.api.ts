@@ -897,6 +897,124 @@ export function setPlatformSettings(data: SetPlatformSettingsDto & { siteId: str
   return apiPut<PlatformSettings>("/admin/platform-settings", data);
 }
 
+// Feature Matrix (Plan Overrides)
+export interface FeatureMatrix {
+  planOverrides: {
+    FREE?: {
+      limits?: {
+        placesMax?: number;
+        featuredPlacesMax?: number;
+        galleryImagesPerPlaceMax?: number;
+        eventsPerMonthMax?: number;
+        siteMembersMax?: number;
+        domainAliasesMax?: number;
+        languagesMax?: number;
+        galleriesMax?: number | "∞";
+        imagesPerGalleryMax?: number;
+        galleriesPerPlaceMax?: number | "∞";
+        galleriesPerEventMax?: number | "∞";
+      };
+      features?: {
+        eventsEnabled?: boolean;
+        placeSeoEnabled?: boolean;
+        extrasEnabled?: boolean;
+        customDomainEnabled?: boolean;
+        eventLogEnabled?: boolean;
+        heroImage?: boolean;
+        contacts?: boolean;
+        siteSeo?: boolean;
+        canonicalSupport?: boolean;
+        multipleDomainAliases?: boolean;
+        pushSubscription?: boolean | "optional add-on";
+      };
+    };
+    BASIC?: {
+      limits?: {
+        placesMax?: number;
+        featuredPlacesMax?: number;
+        galleryImagesPerPlaceMax?: number;
+        eventsPerMonthMax?: number;
+        siteMembersMax?: number;
+        domainAliasesMax?: number;
+        languagesMax?: number;
+        galleriesMax?: number | "∞";
+        imagesPerGalleryMax?: number;
+        galleriesPerPlaceMax?: number | "∞";
+        galleriesPerEventMax?: number | "∞";
+      };
+      features?: {
+        eventsEnabled?: boolean;
+        placeSeoEnabled?: boolean;
+        extrasEnabled?: boolean;
+        customDomainEnabled?: boolean;
+        eventLogEnabled?: boolean;
+        heroImage?: boolean;
+        contacts?: boolean;
+        siteSeo?: boolean;
+        canonicalSupport?: boolean;
+        multipleDomainAliases?: boolean;
+        pushSubscription?: boolean | "optional add-on";
+      };
+    };
+    PRO?: {
+      limits?: {
+        placesMax?: number;
+        featuredPlacesMax?: number;
+        galleryImagesPerPlaceMax?: number;
+        eventsPerMonthMax?: number;
+        siteMembersMax?: number;
+        domainAliasesMax?: number;
+        languagesMax?: number;
+        galleriesMax?: number | "∞";
+        imagesPerGalleryMax?: number;
+        galleriesPerPlaceMax?: number | "∞";
+        galleriesPerEventMax?: number | "∞";
+      };
+      features?: {
+        eventsEnabled?: boolean;
+        placeSeoEnabled?: boolean;
+        extrasEnabled?: boolean;
+        customDomainEnabled?: boolean;
+        eventLogEnabled?: boolean;
+        heroImage?: boolean;
+        contacts?: boolean;
+        siteSeo?: boolean;
+        canonicalSupport?: boolean;
+        multipleDomainAliases?: boolean;
+        pushSubscription?: boolean | "optional add-on";
+      };
+    };
+  } | null;
+  placePlanOverrides?: {
+    free?: {
+      images?: number;
+      events?: number;
+      featured?: boolean;
+    };
+    basic?: {
+      images?: number;
+      events?: number;
+      featured?: boolean;
+    };
+    pro?: {
+      images?: number;
+      events?: number;
+      featured?: boolean;
+    };
+  } | null;
+}
+
+export function getFeatureMatrix() {
+  return apiGet<FeatureMatrix>("/admin/platform-settings/feature-matrix");
+}
+
+export function setFeatureMatrix(data: { 
+  planOverrides?: FeatureMatrix["planOverrides"];
+  placePlanOverrides?: FeatureMatrix["placePlanOverrides"];
+}) {
+  return apiPut<FeatureMatrix>("/admin/platform-settings/feature-matrix", data);
+}
+
 // Events
 export interface Event {
   id: string;
@@ -910,7 +1028,6 @@ export interface Event {
   startDate: string;
   endDate: string | null;
   heroImage: string | null;
-  gallery: string[];
   lat: number | null;
   lng: number | null;
   place?: {
@@ -1150,6 +1267,13 @@ export interface PlaceSubscription {
   plan: "free" | "basic" | "pro";
   isFeatured: boolean;
   featuredUntil: string | null;
+  // Subscription details
+  validUntil: string | null;
+  priceCents: number | null;
+  currency: string | null;
+  statusChangedAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface PlaceEntitlements {
@@ -1346,4 +1470,106 @@ export function updateSubscription(scope: "site" | "place", id: string, data: Up
 
 export function extendSubscription(scope: "site" | "place", id: string) {
   return apiPost<any>(`/admin/subscriptions/${scope}/${id}/extend`, {});
+}
+
+export interface SubscriptionHistoryItem {
+  id: string;
+  scope: "site" | "place";
+  subscriptionId: string;
+  changeType: "PLAN_CHANGE" | "STATUS_CHANGE" | "PAYMENT" | "EXTENSION" | "CREATED" | "UPDATE";
+  oldPlan?: "FREE" | "BASIC" | "PRO" | null;
+  newPlan?: "FREE" | "BASIC" | "PRO" | null;
+  oldStatus?: "ACTIVE" | "SUSPENDED" | "EXPIRED" | null;
+  newStatus?: "ACTIVE" | "SUSPENDED" | "EXPIRED" | null;
+  oldValidUntil?: string | null;
+  newValidUntil?: string | null;
+  paymentDueDate?: string | null;
+  amountCents?: number | null;
+  currency?: string | null;
+  note?: string | null;
+  changedBy?: string | null;
+  createdAt: string;
+}
+
+export function getSubscriptionHistory(scope: "site" | "place", id: string) {
+  return apiGet<SubscriptionHistoryItem[]>(`/admin/subscriptions/${scope}/${id}/history`);
+}
+
+// Galleries
+export interface GalleryImage {
+  id: string; // stable id (uuid/cuid)
+  src: string; // CDN url
+  thumbSrc?: string; // optional CDN thumbnail
+  width?: number;
+  height?: number;
+  alt?: string;
+  caption?: string; // képaláírás
+}
+
+export interface Gallery {
+  id: string;
+  siteId: string;
+  placeId?: string | null;
+  eventId?: string | null;
+  name?: string | null;
+  images: GalleryImage[];
+  layout?: "grid" | "masonry" | "carousel";
+  columns?: { base: number; md: number; lg: number };
+  aspect?: "auto" | "square" | "4:3" | "16:9";
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGalleryDto {
+  siteId: string;
+  placeId?: string | null;
+  eventId?: string | null;
+  name?: string | null;
+  images: GalleryImage[];
+  layout?: "grid" | "masonry" | "carousel";
+  columns?: { base: number; md: number; lg: number };
+  aspect?: "auto" | "square" | "4:3" | "16:9";
+  isActive?: boolean;
+}
+
+export interface UpdateGalleryDto {
+  placeId?: string | null;
+  eventId?: string | null;
+  name?: string | null;
+  images?: GalleryImage[];
+  layout?: "grid" | "masonry" | "carousel";
+  columns?: { base: number; md: number; lg: number };
+  aspect?: "auto" | "square" | "4:3" | "16:9";
+  isActive?: boolean;
+}
+
+export function getGalleries(siteId?: string, placeId?: string, eventId?: string, page?: number, limit?: number) {
+  const params = new URLSearchParams();
+  if (siteId) params.append("siteId", siteId);
+  if (placeId) params.append("placeId", placeId);
+  if (eventId) params.append("eventId", eventId);
+  if (page !== undefined) params.append("page", String(page));
+  if (limit !== undefined) params.append("limit", String(limit));
+  const queryString = params.toString();
+  return apiGet<{ galleries: Gallery[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/galleries${queryString ? `?${queryString}` : ""}`);
+}
+
+export function getGallery(id: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiGet<Gallery>(`/admin/galleries/${id}${params}`);
+}
+
+export function createGallery(data: CreateGalleryDto) {
+  return apiPost<Gallery>("/admin/galleries", data);
+}
+
+export function updateGallery(id: string, data: UpdateGalleryDto, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiPut<Gallery>(`/admin/galleries/${id}${params}`, data);
+}
+
+export function deleteGallery(id: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
+  return apiDelete<{ success: boolean }>(`/admin/galleries/${id}${params}`);
 }

@@ -148,7 +148,7 @@ export class AdminSubscriptionService {
             email: admin?.email || "",
             phone: null,
           },
-          adminUrl: `/admin/sites/${site.id}`,
+          adminUrl: `/admin/sites/${site.id}/edit`,
           publicUrl: site.primaryDomain || undefined,
         });
       }
@@ -185,6 +185,11 @@ export class AdminSubscriptionService {
                 OR: [
                   { translations: { some: { name: { contains: q, mode: "insensitive" } } } },
                   { owner: { email: { contains: q, mode: "insensitive" } } },
+                  { owner: { firstName: { contains: q, mode: "insensitive" } } },
+                  { owner: { lastName: { contains: q, mode: "insensitive" } } },
+                  { memberships: { some: { role: "owner", user: { email: { contains: q, mode: "insensitive" } } } } },
+                  { memberships: { some: { role: "owner", user: { firstName: { contains: q, mode: "insensitive" } } } } },
+                  { memberships: { some: { role: "owner", user: { lastName: { contains: q, mode: "insensitive" } } } } },
                 ],
               }
             : undefined,
@@ -194,6 +199,15 @@ export class AdminSubscriptionService {
             include: {
               translations: true,
               owner: true,
+              memberships: {
+                where: {
+                  role: "owner",
+                },
+                include: {
+                  user: true,
+                },
+                take: 1,
+              },
               site: {
                 include: {
                   translations: true,
@@ -210,7 +224,10 @@ export class AdminSubscriptionService {
       for (const sub of placeSubscriptions) {
         const place = sub.place;
         const translation = place.translations[0] || { name: `Place ${place.id}` };
-        const owner = place.owner;
+        
+        // Get owner from PlaceMembership (owner role) first, fallback to Place.ownerId
+        const ownerMembership = place.memberships?.[0];
+        const owner = ownerMembership?.user || place.owner;
 
         items.push({
           scope: "place",
@@ -225,7 +242,7 @@ export class AdminSubscriptionService {
             email: owner?.email || "",
             phone: translation.phone || null,
           },
-          adminUrl: `/admin/places/${place.id}`,
+          adminUrl: `/admin/places?edit=${place.id}`,
         });
       }
 
@@ -502,33 +519,118 @@ export class AdminSubscriptionService {
   }
 
   /**
+   * Helper method to create history entry
+   */
+  private async createHistoryEntry(data: {
+    scope: "site" | "place";
+    subscriptionId: string;
+    changeType: string;
+    oldPlan?: SubscriptionPlan | null;
+    newPlan?: SubscriptionPlan | null;
+    oldStatus?: SubscriptionStatus | null;
+    newStatus?: SubscriptionStatus | null;
+    oldValidUntil?: Date | null;
+    newValidUntil?: Date | null;
+    paymentDueDate?: Date | null;
+    amountCents?: number | null;
+    currency?: string | null;
+    note?: string | null;
+    changedBy?: string | null;
+  }) {
+    try {
+      await this.prisma.subscriptionHistory.create({
+        data: {
+          scope: data.scope,
+          subscriptionId: data.subscriptionId,
+          changeType: data.changeType,
+          oldPlan: data.oldPlan,
+          newPlan: data.newPlan,
+          oldStatus: data.oldStatus,
+          newStatus: data.newStatus,
+          oldValidUntil: data.oldValidUntil,
+          newValidUntil: data.newValidUntil,
+          paymentDueDate: data.paymentDueDate,
+          amountCents: data.amountCents,
+          currency: data.currency,
+          note: data.note,
+          changedBy: data.changedBy,
+        },
+      });
+    } catch (error) {
+      console.error("Error creating subscription history entry:", error);
+      // Don't throw - history logging should not break the main operation
+    }
+  }
+
+  /**
    * Update subscription
    */
   async update(
     scope: "site" | "place",
     id: string,
-    dto: UpdateSubscriptionDto
+    dto: UpdateSubscriptionDto,
+    changedBy?: string
   ): Promise<any> {
     try {
-    const oldStatus = scope === "site"
-      ? (await this.prisma.siteSubscription.findUnique({ where: { id } }))?.status
-      : (await this.prisma.placeSubscription.findUnique({ where: { id } }))?.status;
+    // Get old subscription data
+    const oldSubscription = scope === "site"
+      ? await this.prisma.siteSubscription.findUnique({ where: { id } })
+      : await this.prisma.placeSubscription.findUnique({ where: { id } });
+
+    if (!oldSubscription) {
+      throw new NotFoundException(`${scope} subscription not found`);
+    }
 
     const updateData: any = {
       ...(dto.plan !== undefined && { plan: dto.plan }),
       ...(dto.status !== undefined && { status: dto.status }),
-      ...(dto.validUntil !== undefined && {
-        validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
-      }),
       ...(dto.billingPeriod !== undefined && { billingPeriod: dto.billingPeriod }),
       ...(dto.priceCents !== undefined && { priceCents: dto.priceCents }),
       ...(dto.currency !== undefined && { currency: dto.currency }),
       ...(dto.note !== undefined && { note: dto.note }),
     };
+    
+    // Handle validUntil: if explicitly set, use it; otherwise handle based on status/plan changes
+    if (dto.validUntil !== undefined) {
+      updateData.validUntil = dto.validUntil ? new Date(dto.validUntil) : null;
+    } else if (dto.plan !== undefined && dto.plan !== oldSubscription.plan) {
+      // If plan changed and validUntil not set, set to first day of next month
+      updateData.validUntil = this.getFirstDayOfNextMonth();
+    }
 
     // Track status change
-    if (dto.status !== undefined && dto.status !== oldStatus) {
+    if (dto.status !== undefined && dto.status !== oldSubscription.status) {
       updateData.statusChangedAt = new Date();
+      
+      // If status is changed to SUSPENDED or EXPIRED, set validUntil to first day of next month
+      // (unless validUntil is explicitly set)
+      if ((dto.status === "SUSPENDED" || dto.status === "EXPIRED") && dto.validUntil === undefined) {
+        updateData.validUntil = this.getFirstDayOfNextMonth();
+      }
+    }
+
+    // Determine change type and create history entry
+    let changeType = "UPDATE";
+    const planChanged = dto.plan !== undefined && dto.plan !== oldSubscription.plan;
+    const statusChanged = dto.status !== undefined && dto.status !== oldSubscription.status;
+    const validUntilChanged = dto.validUntil !== undefined && 
+      (dto.validUntil ? new Date(dto.validUntil).getTime() : null) !== 
+      (oldSubscription.validUntil?.getTime() || null);
+
+    if (planChanged) {
+      changeType = "PLAN_CHANGE";
+    } else if (statusChanged) {
+      changeType = "STATUS_CHANGE";
+    } else if (validUntilChanged) {
+      changeType = "PAYMENT"; // Payment date change
+    }
+
+    // Calculate payment due date (next billing cycle)
+    let paymentDueDate: Date | null = null;
+    if (dto.validUntil) {
+      paymentDueDate = new Date(dto.validUntil);
+    } else if (updateData.validUntil) {
+      paymentDueDate = new Date(updateData.validUntil);
     }
 
     if (scope === "site") {
@@ -543,6 +645,25 @@ export class AdminSubscriptionService {
           },
         },
       });
+
+      // Create history entry
+      await this.createHistoryEntry({
+        scope: "site",
+        subscriptionId: id,
+        changeType,
+        oldPlan: oldSubscription.plan,
+        newPlan: dto.plan !== undefined ? dto.plan : oldSubscription.plan,
+        oldStatus: oldSubscription.status,
+        newStatus: dto.status !== undefined ? dto.status : oldSubscription.status,
+        oldValidUntil: oldSubscription.validUntil,
+        newValidUntil: subscription.validUntil,
+        paymentDueDate,
+        amountCents: dto.priceCents !== undefined ? dto.priceCents : oldSubscription.priceCents,
+        currency: dto.currency !== undefined ? dto.currency : oldSubscription.currency,
+        note: dto.note || (planChanged ? `Plan changed from ${oldSubscription.plan} to ${dto.plan}` : undefined),
+        changedBy,
+      });
+
       return subscription;
     } else {
       const subscription = await this.prisma.placeSubscription.update({
@@ -556,6 +677,25 @@ export class AdminSubscriptionService {
           },
         },
       });
+
+      // Create history entry
+      await this.createHistoryEntry({
+        scope: "place",
+        subscriptionId: id,
+        changeType,
+        oldPlan: oldSubscription.plan,
+        newPlan: dto.plan !== undefined ? dto.plan : oldSubscription.plan,
+        oldStatus: oldSubscription.status,
+        newStatus: dto.status !== undefined ? dto.status : oldSubscription.status,
+        oldValidUntil: oldSubscription.validUntil,
+        newValidUntil: subscription.validUntil,
+        paymentDueDate,
+        amountCents: dto.priceCents !== undefined ? dto.priceCents : oldSubscription.priceCents,
+        currency: dto.currency !== undefined ? dto.currency : oldSubscription.currency,
+        note: dto.note || (planChanged ? `Plan changed from ${oldSubscription.plan} to ${dto.plan}` : undefined),
+        changedBy,
+      });
+
       return subscription;
     }
     } catch (error) {
@@ -565,9 +705,27 @@ export class AdminSubscriptionService {
   }
 
   /**
-   * Extend subscription by 30 days
+   * Helper function to get the first day of next month
    */
-  async extend(scope: "site" | "place", id: string): Promise<any> {
+  private getFirstDayOfNextMonth(): Date {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return nextMonth;
+  }
+
+  /**
+   * Helper function to add one month to a date
+   */
+  private addOneMonth(date: Date): Date {
+    const result = new Date(date);
+    result.setMonth(result.getMonth() + 1);
+    return result;
+  }
+
+  /**
+   * Extend subscription by one month
+   */
+  async extend(scope: "site" | "place", id: string, changedBy?: string): Promise<any> {
     try {
     if (scope === "site") {
       const subscription = await this.prisma.siteSubscription.findUnique({
@@ -577,11 +735,12 @@ export class AdminSubscriptionService {
         throw new NotFoundException("Site subscription not found");
       }
 
+      const oldValidUntil = subscription.validUntil;
       const newValidUntil = subscription.validUntil
-        ? new Date(subscription.validUntil.getTime() + 30 * 24 * 60 * 60 * 1000)
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        ? this.addOneMonth(subscription.validUntil)
+        : this.getFirstDayOfNextMonth();
 
-      return this.prisma.siteSubscription.update({
+      const updated = await this.prisma.siteSubscription.update({
         where: { id },
         data: { validUntil: newValidUntil },
         include: {
@@ -592,6 +751,26 @@ export class AdminSubscriptionService {
           },
         },
       });
+
+      // Create history entry
+      await this.createHistoryEntry({
+        scope: "site",
+        subscriptionId: id,
+        changeType: "EXTENSION",
+        oldPlan: subscription.plan,
+        newPlan: subscription.plan,
+        oldStatus: subscription.status,
+        newStatus: subscription.status,
+        oldValidUntil,
+        newValidUntil,
+        paymentDueDate: newValidUntil,
+        amountCents: subscription.priceCents,
+        currency: subscription.currency,
+        note: "Extended by 1 month",
+        changedBy,
+      });
+
+      return updated;
     } else {
       const subscription = await this.prisma.placeSubscription.findUnique({
         where: { id },
@@ -600,11 +779,12 @@ export class AdminSubscriptionService {
         throw new NotFoundException("Place subscription not found");
       }
 
+      const oldValidUntil = subscription.validUntil;
       const newValidUntil = subscription.validUntil
-        ? new Date(subscription.validUntil.getTime() + 30 * 24 * 60 * 60 * 1000)
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        ? this.addOneMonth(subscription.validUntil)
+        : this.getFirstDayOfNextMonth();
 
-      return this.prisma.placeSubscription.update({
+      const updated = await this.prisma.placeSubscription.update({
         where: { id },
         data: { validUntil: newValidUntil },
         include: {
@@ -615,10 +795,54 @@ export class AdminSubscriptionService {
           },
         },
       });
+
+      // Create history entry
+      await this.createHistoryEntry({
+        scope: "place",
+        subscriptionId: id,
+        changeType: "EXTENSION",
+        oldPlan: subscription.plan,
+        newPlan: subscription.plan,
+        oldStatus: subscription.status,
+        newStatus: subscription.status,
+        oldValidUntil,
+        newValidUntil,
+        paymentDueDate: newValidUntil,
+        amountCents: subscription.priceCents,
+        currency: subscription.currency,
+        note: "Extended by 1 month",
+        changedBy,
+      });
+
+      return updated;
     }
     } catch (error) {
       console.error("Error in extend subscription:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Get subscription history
+   */
+  async getHistory(
+    scope: "site" | "place",
+    subscriptionId: string
+  ): Promise<any[]> {
+    try {
+      const history = await this.prisma.subscriptionHistory.findMany({
+        where: {
+          scope,
+          subscriptionId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      return history;
+    } catch (error) {
+      console.error("Error in getHistory:", error);
+      return [];
     }
   }
 }

@@ -267,4 +267,27 @@ export class RbacService {
       );
     }
   }
+
+  /**
+   * Check site access with userId and allowed roles (throws if not)
+   * This is the proper way to check site access in services
+   */
+  async checkSiteAccessWithUser(
+    userId: string,
+    siteId: string,
+    allowedRoles: SiteRole[]
+  ): Promise<void> {
+    // Check if user has any of the allowed roles
+    for (const role of allowedRoles) {
+      const hasPermission = await this.hasSitePermission(userId, siteId, role);
+      if (hasPermission) {
+        return; // User has at least one of the required roles
+      }
+    }
+    
+    // User doesn't have any of the required roles
+    throw new ForbiddenException(
+      `User does not have required site permission. Required: ${allowedRoles.join(" or ")}`
+    );
+  }
 }

@@ -36,7 +36,19 @@ export class EntitlementsService {
     const status = isExpired ? "EXPIRED" : sub.status;
 
     const plan = sub.plan as "FREE" | "BASIC" | "PRO";
-    const def = PLAN_DEFS[plan];
+    
+    // Get plan overrides from Brand (global setting)
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { planOverrides: true },
+    });
+    
+    const planOverrides = (brand?.planOverrides as any) || null;
+    const planOverride = planOverrides?.[plan];
+    
+    // Merge default plan def with override
+    const baseDef = PLAN_DEFS[plan];
+    const def = planOverride ? this.deepMergePlanDef(baseDef, planOverride) : baseDef;
 
     // 3) usage számolás (live)
     const [
@@ -46,6 +58,7 @@ export class EntitlementsService {
       eventsThisMonthCount,
       domainAliasesCount,
       languagesCount,
+      galleriesCount,
     ] = await Promise.all([
       this.prisma.place.count({ 
         where: { siteId, isActive: true } 
@@ -69,6 +82,9 @@ export class EntitlementsService {
         where: { siteId, isActive: true } 
       }),
       this.countLanguages(siteId),
+      this.prisma.gallery.count({ 
+        where: { siteId, isActive: true } 
+      }),
     ]);
 
     return {
@@ -86,6 +102,7 @@ export class EntitlementsService {
         siteMembersCount,
         domainAliasesCount,
         languagesCount,
+        galleriesCount,
       },
     };
   }
@@ -110,7 +127,19 @@ export class EntitlementsService {
     const status = isExpired ? "EXPIRED" : sub.status;
 
     const plan = sub.plan as "FREE" | "BASIC" | "PRO";
-    const def = PLAN_DEFS[plan];
+    
+    // Get plan overrides from Brand (global setting)
+    const brand = await this.prisma.brand.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { planOverrides: true },
+    });
+    
+    const planOverrides = (brand?.planOverrides as any) || null;
+    const planOverride = planOverrides?.[plan];
+    
+    // Merge default plan def with override
+    const baseDef = PLAN_DEFS[plan];
+    const def = planOverride ? this.deepMergePlanDef(baseDef, planOverride) : baseDef;
 
     // 3) usage számolás (live)
     const [
@@ -120,6 +149,7 @@ export class EntitlementsService {
       eventsThisMonthCount,
       domainAliasesCount,
       languagesCount,
+      galleriesCount,
     ] = await Promise.all([
       this.prisma.place.count({ 
         where: { siteId, isActive: true } 
@@ -143,6 +173,9 @@ export class EntitlementsService {
         where: { siteId, isActive: true } 
       }),
       this.countLanguages(siteId),
+      this.prisma.gallery.count({ 
+        where: { siteId, isActive: true } 
+      }),
     ]);
 
     return {
@@ -160,8 +193,28 @@ export class EntitlementsService {
         siteMembersCount,
         domainAliasesCount,
         languagesCount,
+        galleriesCount,
       },
     };
+  }
+
+  /**
+   * Deep merge plan definition with override
+   */
+  private deepMergePlanDef(base: any, override: any): any {
+    const result = { ...base };
+    
+    // Merge limits
+    if (override.limits) {
+      result.limits = { ...base.limits, ...override.limits };
+    }
+    
+    // Merge features
+    if (override.features) {
+      result.features = { ...base.features, ...override.features };
+    }
+    
+    return result;
   }
 
   private async countEventsThisMonth(siteId: string): Promise<number> {

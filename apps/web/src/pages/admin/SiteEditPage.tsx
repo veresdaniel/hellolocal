@@ -1377,7 +1377,6 @@ function MapTab({
                     setFormData({ ...formData, zoom: zoom.toString() });
                   }}
                   hideLocationButton={true}
-                  }}
                   height={400}
                   interactive={true}
                   defaultZoom={formData.zoom ? parseFloat(formData.zoom) : undefined}
@@ -2072,6 +2071,9 @@ function SubscriptionTab({
                     transform: currentPlan === plan ? "translateY(-2px)" : "translateY(0)",
                     position: "relative",
                     overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100%",
                   }}
                   onMouseEnter={(e) => {
                     if (!isSaving && currentPlan !== plan) {
@@ -2126,6 +2128,7 @@ function SubscriptionTab({
                     lineHeight: 1.6,
                     minHeight: 40,
                     marginBottom: 16,
+                    flex: 1,
                   }}>
                     {planDescriptions[plan] || ""}
                   </div>
@@ -2151,6 +2154,7 @@ function SubscriptionTab({
                         transition: "all 0.2s",
                         opacity: isSaving ? 0.6 : 1,
                         boxShadow: `0 2px 8px ${planColors[plan]}30`,
+                        marginTop: "auto",
                       }}
                       onMouseEnter={(e) => {
                         if (!isSaving) {
@@ -2182,6 +2186,7 @@ function SubscriptionTab({
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       fontWeight: 600,
                       textAlign: "center",
+                      marginTop: "auto",
                     }}>
                       {t("admin.current") || "Jelenlegi"}
                     </div>

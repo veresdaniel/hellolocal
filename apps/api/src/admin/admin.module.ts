@@ -18,15 +18,19 @@ import { AdminSiteInstanceService } from "./admin-site-instance.service";
 import { AdminSiteMembershipService } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService } from "./admin-place-membership.service";
 import { AdminSubscriptionService } from "./admin-subscription.service";
+import { AdminGalleryService } from "./admin-gallery.service";
+import { GalleryPublicService } from "./gallery-public.service";
+import { GalleryPublicController } from "./gallery-public.controller";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
+import { SiteModule } from "../site/site.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { AuthModule } from "../auth/auth.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, EntitlementsModule],
-  controllers: [AdminController],
+  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, EntitlementsModule, SiteModule],
+  controllers: [AdminController, GalleryPublicController],
   providers: [
     AdminCategoryService,
     AdminTagService,
@@ -44,6 +48,8 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSiteMembershipService,
     AdminPlaceMembershipService,
     AdminSubscriptionService,
+    AdminGalleryService,
+    GalleryPublicService,
     // AdminEventLogService is now provided by EventLogModule
   ],
   exports: [
@@ -63,6 +69,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSiteMembershipService,
     AdminPlaceMembershipService,
     AdminSubscriptionService,
+    AdminGalleryService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

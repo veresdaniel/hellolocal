@@ -1,8 +1,7 @@
 // apps/web/src/components/PlaceBillingSection.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { getPlaceUpsellState, type PlaceUpsellState, type FeatureGate } from "../api/admin.api";
+import { getPlaceUpsellState, type PlaceUpsellState, type FeatureGate, getPlaceSubscription, updatePlaceSubscription, type PlaceSubscription } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 
 interface PlaceBillingSectionProps {
@@ -12,6 +11,7 @@ interface PlaceBillingSectionProps {
   currentFeaturedUntil: string | "";
   siteId: string; // Required for navigation to Site Edit
   userRole: "superadmin" | "admin" | "editor" | "viewer";
+  onPlanChange?: (newPlan: "free" | "basic" | "pro") => void; // Callback when plan changes
 }
 
 export function PlaceBillingSection({
@@ -21,45 +21,38 @@ export function PlaceBillingSection({
   currentFeaturedUntil,
   siteId,
   userRole,
+  onPlanChange,
 }: PlaceBillingSectionProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const [upsellState, setUpsellState] = useState<PlaceUpsellState | null>(null);
+  const [subscription, setSubscription] = useState<PlaceSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const isSuperadmin = userRole === "superadmin";
 
   useEffect(() => {
     loadData();
-  }, [placeId, siteId]);
+  }, [placeId, siteId, currentPlan]);
 
   const loadData = async () => {
     if (!placeId || !siteId) return;
     setIsLoading(true);
     try {
-      const state = await getPlaceUpsellState(placeId, siteId);
+      const [state, sub] = await Promise.all([
+        getPlaceUpsellState(placeId, siteId),
+        getPlaceSubscription(placeId).catch(() => null), // Subscription may not exist yet
+      ]);
       setUpsellState(state);
+      setSubscription(sub);
     } catch (error) {
-      console.error("Failed to load upsell state:", error);
+      console.error("Failed to load billing data:", error);
       showToast(t("admin.errorLoadingBilling") || "Failed to load billing information", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleViewPlans = () => {
-    // Navigate to Site Edit page, subscription tab
-    if (siteId) {
-      navigate(`/admin/sites/${siteId}/edit?tab=subscription`);
-    } else {
-      showToast(t("admin.siteNotFound") || "Site not found", "error");
-    }
-  };
-
-  const handleManageFeatured = () => {
-    // Navigate to places list with featured filter
-    navigate(`/admin/places?siteId=${siteId}&featured=true`);
-  };
 
   const renderFeatureGate = (gate: FeatureGate, label: string, icon: string) => {
     if (gate.state === "enabled") {
@@ -104,36 +97,6 @@ export function PlaceBillingSection({
           }}>
             {gate.reason}
           </div>
-          {gate.upgradeCta === "viewPlans" && (
-            <button
-              type="button"
-              onClick={handleViewPlans}
-              style={{
-                marginLeft: 26,
-                marginTop: 4,
-                padding: "8px 16px",
-                background: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#5568d3";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#667eea";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              {t("admin.viewPlans") || "Csomagok összehasonlítása"}
-            </button>
-          )}
         </div>
       );
     }
@@ -157,62 +120,6 @@ export function PlaceBillingSection({
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}>
             {gate.reason}
-          </div>
-          <div style={{ display: "flex", gap: 8, marginLeft: 26, marginTop: 4, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={handleViewPlans}
-              style={{
-                padding: "8px 16px",
-                background: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#5568d3";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#667eea";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              {t("admin.upgradePlan") || "Frissítés"}
-            </button>
-            {gate.alternativeCta === "manageExisting" && (
-              <button
-                type="button"
-                onClick={handleManageFeatured}
-                style={{
-                  padding: "8px 16px",
-                  background: "white",
-                  color: "#667eea",
-                  border: "1px solid #667eea",
-                  borderRadius: 6,
-                  fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#f0f4ff";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "white";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                {t("admin.manageFeatured") || "Kiemelések kezelése"}
-              </button>
-            )}
           </div>
         </div>
       );
@@ -240,6 +147,9 @@ export function PlaceBillingSection({
     basic: "#3b82f6",
     pro: "#667eea",
   };
+
+  // Show billing section to everyone, but only allow modification for admin/superadmin
+  const canModifyBilling = isSuperadmin || userRole === "admin";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -292,14 +202,149 @@ export function PlaceBillingSection({
             </div>
           </div>
 
-          <div style={{ 
-            fontSize: "clamp(13px, 3vw, 15px)", 
-            color: "#666", 
-            marginTop: 16,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
-            {t("admin.planInfo") || "A csomagot a Site beállításokban módosíthatod."}
-          </div>
+          {/* Show modification info only for admin/superadmin */}
+          {canModifyBilling && (
+            <div style={{ 
+              fontSize: "clamp(13px, 3vw, 15px)", 
+              color: "#666", 
+              marginTop: 16,
+              marginBottom: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              {t("admin.placePlanInfo") || "A helyszín csomagját itt módosíthatod."}
+            </div>
+          )}
+          
+          {/* Show read-only info for editors/viewers */}
+          {!canModifyBilling && (
+            <div style={{ 
+              fontSize: "clamp(13px, 3vw, 15px)", 
+              color: "#666", 
+              marginTop: 16,
+              marginBottom: 16,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              {t("admin.placePlanInfoReadOnly") || "A helyszín jelenlegi csomagja."}
+            </div>
+          )}
+          
+          {/* Subscription details */}
+          {subscription && (
+            <div style={{ 
+              marginTop: 16, 
+              padding: 12, 
+              background: "#f9fafb", 
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+            }}>
+              <div style={{ 
+                fontSize: "clamp(12px, 2.5vw, 14px)", 
+                color: "#6b7280",
+                marginBottom: 8,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
+                {t("admin.subscriptionDetails") || "Előfizetés részletei"}
+              </div>
+              {subscription.statusChangedAt && (
+                <div style={{ 
+                  fontSize: "clamp(12px, 2.5vw, 14px)", 
+                  color: "#374151",
+                  marginBottom: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.lastChanged") || "Utolsó módosítás"}: {new Date(subscription.statusChangedAt).toLocaleDateString('hu-HU', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              )}
+              {subscription.priceCents !== null && subscription.priceCents !== undefined && (
+                <div style={{ 
+                  fontSize: "clamp(12px, 2.5vw, 14px)", 
+                  color: "#374151",
+                  marginBottom: 4,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.price") || "Ár"}: {subscription.priceCents / 100} {subscription.currency || "HUF"}
+                </div>
+              )}
+              {subscription.validUntil && (
+                <div style={{ 
+                  fontSize: "clamp(12px, 2.5vw, 14px)", 
+                  color: "#374151",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.validUntil") || "Érvényes"}: {new Date(subscription.validUntil).toLocaleDateString('hu-HU', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric'
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Plan selector - visible to everyone, but disabled for editors/viewers */}
+          {onPlanChange && (
+            <div style={{ marginTop: 16 }}>
+              <label style={{ 
+                display: "block", 
+                fontSize: "clamp(13px, 3vw, 15px)", 
+                fontWeight: 600,
+                marginBottom: 8,
+                color: "#333",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
+                {t("admin.changePlan") || "Csomag módosítása"}
+              </label>
+              <select
+                value={currentPlan}
+                disabled={isUpdating || !canModifyBilling}
+                onChange={async (e) => {
+                  if (!canModifyBilling) return;
+                  const newPlan = e.target.value as "free" | "basic" | "pro";
+                  const confirmMessage = t("admin.confirmPlanChange", { plan: planLabels[newPlan] }) || `Biztosan át szeretnéd váltani a ${planLabels[newPlan]} csomagra?`;
+                  if (window.confirm(confirmMessage)) {
+                    setIsUpdating(true);
+                    try {
+                      // Update subscription via API (this will update both Place and PlaceSubscription)
+                      await updatePlaceSubscription(placeId, { plan: newPlan });
+                      // Reload subscription data and upsell state to reflect new limits
+                      await loadData();
+                      // Call the callback to update parent component
+                      if (onPlanChange) {
+                        onPlanChange(newPlan);
+                      }
+                      showToast(t("admin.messages.placePlanUpdated") || "Csomag frissítve", "success");
+                    } catch (error) {
+                      console.error("Failed to update plan:", error);
+                      showToast(t("admin.errors.updatePlaceFailed") || "Hiba a csomag frissítésekor", "error");
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  border: "1px solid #ddd",
+                  borderRadius: 6,
+                  background: canModifyBilling ? "white" : "#f3f4f6",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  cursor: (isUpdating || !canModifyBilling) ? "not-allowed" : "pointer",
+                  opacity: (isUpdating || !canModifyBilling) ? 0.6 : 1,
+                }}
+              >
+                <option value="free">{planLabels.free}</option>
+                <option value="basic">{planLabels.basic}</option>
+                <option value="pro">{planLabels.pro}</option>
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Right: Feature Gates */}
@@ -340,35 +385,6 @@ export function PlaceBillingSection({
         </div>
       </div>
 
-      {/* CTA Button */}
-      <button
-        type="button"
-        onClick={handleViewPlans}
-        style={{
-          padding: "10px 20px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 600,
-          cursor: "pointer",
-          transition: "all 0.2s",
-          boxShadow: "0 2px 4px rgba(102, 126, 234, 0.3)",
-          alignSelf: "flex-start",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 8px rgba(102, 126, 234, 0.4)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 2px 4px rgba(102, 126, 234, 0.3)";
-        }}
-      >
-        {t("admin.viewPlans") || "Csomagok összehasonlítása"}
-      </button>
     </div>
   );
 }

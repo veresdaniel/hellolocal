@@ -20,17 +20,49 @@ export const PLACE_LIMITS: Record<PlacePlan, PlaceLimits> = {
     featured: false,
   },
   pro: {
-    images: Infinity,
+    images: 30,
     events: Infinity,
     featured: true,
   },
 };
 
 /**
- * Get limits for a place plan
+ * Deep merge place limits with override
  */
-export function getPlaceLimits(plan: PlacePlan): PlaceLimits {
-  return PLACE_LIMITS[plan];
+function deepMergePlaceLimits(base: PlaceLimits, override: any): PlaceLimits {
+  const result = { ...base };
+  
+  if (override.images !== undefined) {
+    result.images = override.images === "∞" || override.images === Infinity ? Infinity : override.images;
+  }
+  if (override.events !== undefined) {
+    result.events = override.events === "∞" || override.events === Infinity ? Infinity : override.events;
+  }
+  if (override.featured !== undefined) {
+    result.featured = override.featured;
+  }
+  
+  return result;
+}
+
+/**
+ * Get limits for a place plan with optional overrides
+ * @param plan - The place plan
+ * @param overrides - Optional overrides from Brand.placePlanOverrides
+ */
+export function getPlaceLimits(plan: PlacePlan, overrides?: any): PlaceLimits {
+  const base = PLACE_LIMITS[plan];
+  
+  if (!overrides) {
+    return base;
+  }
+  
+  const planOverride = overrides[plan];
+  if (!planOverride) {
+    return base;
+  }
+  
+  return deepMergePlaceLimits(base, planOverride);
 }
 
 /**
