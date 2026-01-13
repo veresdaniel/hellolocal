@@ -9,5 +9,9 @@ export type Event = BaseEntity & {
   endDate?: string | null; // ISO date string
   isPinned: boolean;
   shortDescription?: string; // HTML - for list view cards
+  rating?: {
+    avg: number | null; // Average rating (1-5)
+    count: number | null; // Number of ratings
+  };
 };
 

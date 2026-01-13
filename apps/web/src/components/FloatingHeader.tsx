@@ -110,10 +110,11 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
       setIsActivating(true);
       const result = await activateFreeSite(lang);
       showToast(t("public.activateFree.success") || "Free site activated successfully!", "success");
-      // Refresh user data and redirect to dashboard
-      if (authContext) {
-        // Reload user data
-        window.location.href = `/${lang}/admin`;
+      // Refresh user data without page reload
+      if (authContext && authContext.refreshUser) {
+        // Refresh user data to get updated activeSiteId
+        await authContext.refreshUser();
+        // No redirect needed - user will stay on current page, just state updates
       }
     } catch (err) {
       showToast(

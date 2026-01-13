@@ -226,6 +226,7 @@ export class EventsService {
           isRainSafe: event.isRainSafe ?? false,
           showOnMap: event.showOnMap ?? true,
           tags: tagNames,
+          rating: { avg: event.ratingAvg ?? null, count: event.ratingCount ?? null },
           seo: {
             title: eventTranslation?.seoTitle ?? null,
             description: eventTranslation?.seoDescription ?? null,
@@ -402,6 +403,7 @@ export class EventsService {
       isPinned: event.isPinned,
       isRainSafe: event.isRainSafe ?? false,
       tags: tagNames,
+      rating: { avg: event.ratingAvg ?? null, count: event.ratingCount ?? null },
       seo: {
         title: eventTranslation?.seoTitle ?? null,
         description: eventTranslation?.seoDescription ?? null,

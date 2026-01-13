@@ -76,7 +76,8 @@ export function ImageWithSkeleton({
         style={{
           ...combinedStyle,
           maxWidth: "100%",
-          height: "auto",
+          height: style?.height || "auto",
+          width: style?.width || "100%",
           display: "block",
         }}
         loading="lazy"

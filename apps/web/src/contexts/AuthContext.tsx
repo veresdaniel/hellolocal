@@ -54,6 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Logout error", e);
     } finally {
+      const currentPath = window.location.pathname;
+      const lang = getLanguageCode();
+      
+      // Store current path as return URL if we're on a public page
+      const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+      if (!isInAdminArea) {
+        // We're on a public page, store it for return after login
+        sessionStorage.setItem("authReturnUrl", currentPath);
+      }
+      
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
@@ -61,27 +71,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setShowSessionToast(false); // Hide toast on logout
       
-      const currentPath = window.location.pathname;
-      const lang = getLanguageCode();
-      
       // Skip redirect if already on the target page
       if (isManualLogout) {
-        // Manual logout from admin: redirect to admin login with current language
-        const logoutLang = localStorage.getItem("logoutRedirectLang") || lang;
-        localStorage.removeItem("logoutRedirectLang");
-        sessionStorage.setItem("wasManualLogout", "true"); // Use sessionStorage instead of localStorage
-        
-        if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
-          return;
+        // Manual logout: if in admin area, redirect to admin login
+        // If on public page, stay there (no redirect, no reload - just state update)
+        if (isInAdminArea) {
+          const logoutLang = localStorage.getItem("logoutRedirectLang") || lang;
+          localStorage.removeItem("logoutRedirectLang");
+          sessionStorage.setItem("wasManualLogout", "true");
+          
+          if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
+            return;
+          }
+          // Redirect to admin login page only if in admin area
+          window.location.href = `/${logoutLang}/admin/login`;
         }
-        // Redirect to admin login page
-        window.location.href = `/${logoutLang}/admin/login`;
+        // If on public page, don't redirect or reload - just clear auth state
+        // The component will re-render automatically when user state changes
       } else {
         // Automatic logout (session expired): only redirect if we're in admin area
-        const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
-        
         if (!isInAdminArea) {
-          // Not in admin area, don't redirect to login
+          // Not in admin area, don't redirect - just clear auth state
           return;
         }
         

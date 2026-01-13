@@ -304,6 +304,10 @@ export interface Event {
   isRainSafe: boolean;
   showOnMap: boolean;
   tags: string[];
+  rating?: {
+    avg: number | null; // Average rating (1-5)
+    count: number | null; // Number of ratings
+  };
   seo: {
     title: string | null;
     description: string | null;

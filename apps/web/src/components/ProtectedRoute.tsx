@@ -173,6 +173,12 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
     return <Navigate to={`/${lang}`} replace />;
   }
 
+  // Check if user is a viewer - viewers should not access admin routes at all
+  // BUT: if user has activeSiteId (not a visitor), they can access admin even as viewer
+  // This allows users who activated free plan to access admin dashboard
+  // Only block viewers who are still visitors (no activeSiteId)
+  // Note: This is handled by the isVisitor check above, so viewers with activeSiteId can proceed
+
   if (requiredRole) {
     const roleHierarchy: Record<string, number> = {
       viewer: 1,

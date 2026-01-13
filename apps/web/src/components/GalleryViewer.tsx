@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 
@@ -34,9 +35,11 @@ interface GalleryViewerProps {
   name?: string;
   layout?: "grid" | "masonry" | "carousel";
   aspect?: "auto" | "square" | "4:3" | "16:9";
+  compact?: boolean; // If true, render in compact mode (smaller size)
 }
 
-export function GalleryViewer({ images, name, layout = "grid", aspect = "auto" }: GalleryViewerProps) {
+export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", compact = false }: GalleryViewerProps) {
+  const { t, i18n } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -95,69 +98,116 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto" }
 
   if (!images || images.length === 0) return null;
 
-  // Calculate aspect ratio height
-  const getAspectHeight = (baseWidth: number = 200) => {
-    switch (aspect) {
-      case "square":
-        return baseWidth;
-      case "4:3":
-        return (baseWidth * 3) / 4;
-      case "16:9":
-        return (baseWidth * 9) / 16;
-      default:
-        return "auto";
+  // Randomize order for 4 images on each page load
+  const shuffledImages = useMemo(() => {
+    if (images.length === 4) {
+      // Create a shuffled copy of the images array
+      const shuffled = [...images];
+      // Fisher-Yates shuffle algorithm
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
     }
-  };
+    return images;
+  }, [images]);
+
+  // Determine how many images to show and grid layout based on count
+  const totalImages = shuffledImages.length;
+  let imagesToShow = shuffledImages;
+  let gridColumns = "1fr";
+  let showCount = false;
+
+  if (totalImages === 1) {
+    gridColumns = "1fr";
+    imagesToShow = shuffledImages;
+  } else if (totalImages === 2) {
+    gridColumns = "1fr 1fr";
+    imagesToShow = shuffledImages;
+  } else if (totalImages === 3) {
+    gridColumns = "1fr 1fr";
+    imagesToShow = shuffledImages.slice(0, 2); // Only show 2
+    showCount = true;
+  } else if (totalImages === 4) {
+    gridColumns = "1fr 1fr";
+    imagesToShow = shuffledImages;
+  } else {
+    // 5+ images: show only 4
+    gridColumns = "1fr 1fr";
+    imagesToShow = shuffledImages.slice(0, 4);
+    showCount = true;
+  }
+
+  // Override with layout prop if it's not "grid"
+  if (layout === "masonry") {
+    gridColumns = "repeat(auto-fill, minmax(min(100%, clamp(200px, 30vw, 400px)), 1fr))";
+  } else if (layout === "carousel") {
+    gridColumns = "repeat(auto-fit, minmax(min(100%, clamp(250px, 35vw, 450px)), 1fr))";
+  }
 
   return (
     <>
-      <div style={{ margin: "clamp(16px, 4vw, 32px) 0" }}>
+      <div style={{ margin: compact ? "0" : "clamp(16px, 4vw, 32px) 0" }}>
         {name && (
           <h3
             style={{
               fontSize: "clamp(18px, 3vw, 24px)",
               fontWeight: 600,
               fontFamily: '"Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-              marginBottom: "clamp(12px, 2vw, 20px)",
+              marginBottom: compact ? "8px" : "clamp(12px, 2vw, 20px)",
+              marginTop: 0,
               color: "#1a1a1a",
+              display: "flex",
+              alignItems: "baseline",
+              gap: "8px",
             }}
           >
-            {name}
+            <span>{name}</span>
+            {showCount && (
+              <span
+                style={{
+                  fontSize: "clamp(14px, 2vw, 18px)",
+                  fontWeight: 400,
+                  color: "#6b7280",
+                }}
+              >
+                ({totalImages} {totalImages === 1 
+                  ? (i18n.language === "hu" ? "kép" : i18n.language === "en" ? "image" : "Bild")
+                  : (i18n.language === "hu" ? "kép" : i18n.language === "en" ? "images" : "Bilder")})
+              </span>
+            )}
           </h3>
         )}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns:
-              layout === "masonry"
-                ? "repeat(auto-fill, minmax(min(100%, clamp(200px, 30vw, 400px)), 1fr))"
-                : layout === "carousel"
-                ? "repeat(auto-fit, minmax(min(100%, clamp(250px, 35vw, 450px)), 1fr))"
-                : "repeat(auto-fit, minmax(min(100%, clamp(200px, 30vw, 400px)), 1fr))",
-            gap: layout === "masonry" ? "clamp(8px, 2vw, 16px)" : "clamp(12px, 2vw, 20px)",
+            gridTemplateColumns: gridColumns,
+            gap: compact ? "6px" : (layout === "masonry" ? "clamp(8px, 2vw, 16px)" : "clamp(12px, 2vw, 20px)"),
           }}
         >
-          {images.map((image, index) => {
+          {imagesToShow.map((image, displayIndex) => {
             const imageSrc = sanitizeImageUrl(image.src) || "";
+            // Find the original index in the full images array (not shuffled)
+            const originalIndex = images.findIndex(img => 
+              (img.id && image.id && img.id === image.id) || 
+              (!img.id && !image.id && img.src === image.src)
+            );
 
             return (
               <div
-                key={image.id || index}
-                onClick={() => openFullscreen(index)}
+                key={image.id || image.src || displayIndex}
+                onClick={() => openFullscreen(originalIndex >= 0 ? originalIndex : displayIndex)}
                 style={{
                   position: "relative",
                   width: "100%",
-                  minHeight: aspect === "auto" ? "clamp(250px, 40vh, 400px)" : aspect === "square" ? "clamp(250px, 30vw, 400px)" : aspect === "4:3" ? "clamp(188px, 22.5vw, 300px)" : "clamp(141px, 17vw, 225px)",
-                  aspectRatio: aspect === "auto" ? "auto" : aspect === "square" ? "1" : aspect === "4:3" ? "4/3" : "16/9",
+                  aspectRatio: aspect === "auto" ? "4/3" : aspect === "square" ? "1" : aspect === "4:3" ? "4/3" : aspect === "16:9" ? "16/9" : "4/3",
                   cursor: "pointer",
                   overflow: "hidden",
                   borderRadius: "clamp(6px, 1vw, 12px)",
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "transparent",
                   transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "scale(1.03) translateY(-4px)";
@@ -174,7 +224,8 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto" }
                   style={{
                     width: "100%",
                     height: "100%",
-                    objectFit: "contain",
+                    objectFit: "cover",
+                    objectPosition: "center",
                     display: "block",
                     transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}

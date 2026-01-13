@@ -161,7 +161,12 @@ export function PublicAuthBadge() {
 
   const handleLogout = async () => {
     if (!hasDragged) {
-      await logout(true); // Manual logout - redirect to home page
+      // Store current location as return URL before logout
+      const currentPath = location.pathname + location.search + location.hash;
+      if (!currentPath.includes('/admin') && !currentPath.includes('/login')) {
+        sessionStorage.setItem("authReturnUrl", currentPath);
+      }
+      await logout(true); // Manual logout - will handle redirect based on location
     }
   };
 

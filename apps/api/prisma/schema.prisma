@@ -79,67 +79,67 @@ enum BillingPeriod {
 // Brand: Visual identity and branding assets
 // Represents who is speaking, visual style, default assets
 model Brand {
-  id              String   @id @default(cuid())
-  name            String
-  logoUrl         String?
-  faviconUrl      String?
+  id         String  @id @default(cuid())
+  name       String
+  logoUrl    String?
+  faviconUrl String?
 
-  theme           Json?   // colors, typography
-  placeholders    Json?   // default images (card, detail hero, event card)
-  mapDefaults     Json?   // default map style, zoom, center
-  planOverrides   Json?   // feature matrix overrides per plan (FREE, BASIC, PRO) - for site subscriptions
+  theme              Json? // colors, typography
+  placeholders       Json? // default images (card, detail hero, event card)
+  mapDefaults        Json? // default map style, zoom, center
+  planOverrides      Json? // feature matrix overrides per plan (FREE, BASIC, PRO) - for site subscriptions
   placePlanOverrides Json? // feature matrix overrides per plan (free, basic, pro) - for place subscriptions
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sites          Site[]
+  sites Site[]
 }
 
 model Site {
-  id               String   @id @default(cuid())
-  slug             String   @unique
-  isActive         Boolean  @default(true)
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  isActive Boolean @default(true)
 
   // optional: for domain/whitelabel later
-  primaryDomain    String?  @unique
+  primaryDomain String? @unique
 
   // Subscription/billing fields
-  plan             SitePlan  @default(free)
-  planStatus       String?   @default("active") // trial/active/past_due/canceled
-  planValidUntil  DateTime?
-  planLimits       Json?     // override/experiments (places, featured, events limits)
-  billingEmail     String?
-  billingMeta      Json?     // stripe ids later
+  plan           SitePlan  @default(free)
+  planStatus     String?   @default("active") // trial/active/past_due/canceled
+  planValidUntil DateTime?
+  planLimits     Json? // override/experiments (places, featured, events limits)
+  billingEmail   String?
+  billingMeta    Json? // stripe ids later
 
   // Brand relationship - site belongs to a brand
-  brandId         String
-  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  towns            Town[]
-  places           Place[]
-  events           Event[]
-  legalPages       LegalPage[]
-  staticPages      StaticPage[]
-  translations     SiteTranslation[]
+  towns        Town[]
+  places       Place[]
+  events       Event[]
+  legalPages   LegalPage[]
+  staticPages  StaticPage[]
+  translations SiteTranslation[]
 
-  siteKeys         SiteKey[]
-  slugs            Slug[]
-  categories       Category[]
-  tags             Tag[]
-  priceBands       PriceBand[]
-  users            UserSite[]
+  siteKeys          SiteKey[]
+  slugs             Slug[]
+  categories        Category[]
+  tags              Tag[]
+  priceBands        PriceBand[]
+  users             UserSite[]
   pushSubscriptions PushSubscription[]
-  eventLogs        EventLog[]
-  siteInstances    SiteInstance[]
-  siteMemberships  SiteMembership[]
-  siteDomains      SiteDomain[]
-  subscription     SiteSubscription?
-  galleries        Gallery[]
-  activeUsers      User[]            @relation("UserActiveSite")
+  eventLogs         EventLog[]
+  siteInstances     SiteInstance[]
+  siteMemberships   SiteMembership[]
+  siteDomains       SiteDomain[]
+  subscription      SiteSubscription?
+  galleries         Gallery[]
+  activeUsers       User[]             @relation("UserActiveSite")
 
   @@index([brandId])
   @@index([plan])
@@ -147,44 +147,44 @@ model Site {
 }
 
 model SiteTranslation {
-  id              String  @id @default(cuid())
-  siteId           String
-  lang            Lang
+  id     String @id @default(cuid())
+  siteId String
+  lang   Lang
 
-  name            String
+  name             String
   shortDescription String? // HTML
-  description     String?  // HTML
-  heroImage       String?
+  description      String? // HTML
+  heroImage        String?
 
   // SEO (per language)
-  seoTitle        String?
-  seoDescription  String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
-  site            Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, lang])
   @@index([lang])
 }
 
 model SiteKey {
-  id            String   @id @default(cuid())
-  siteId        String
-  lang          Lang
-  slug          String
+  id     String @id @default(cuid())
+  siteId String
+  lang   Lang
+  slug   String
 
-  isPrimary     Boolean  @default(true)
-  isActive      Boolean  @default(true)
+  isPrimary Boolean @default(true)
+  isActive  Boolean @default(true)
 
   redirectToId  String?
   redirectTo    SiteKey?  @relation("SiteKeyRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
   redirectsFrom SiteKey[] @relation("SiteKeyRedirect")
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site          Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, lang, slug])
   @@index([lang, slug])
@@ -192,25 +192,25 @@ model SiteKey {
 }
 
 model Slug {
-  id            String         @id @default(cuid())
-  siteId        String
-  lang          Lang
-  slug          String
+  id     String @id @default(cuid())
+  siteId String
+  lang   Lang
+  slug   String
 
-  entityType    SlugEntityType
-  entityId      String
+  entityType SlugEntityType
+  entityId   String
 
-  isPrimary     Boolean        @default(true)
-  isActive      Boolean        @default(true)
+  isPrimary Boolean @default(true)
+  isActive  Boolean @default(true)
 
   redirectToId  String?
-  redirectTo    Slug?          @relation("SlugRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
-  redirectsFrom Slug[]         @relation("SlugRedirect")
+  redirectTo    Slug?   @relation("SlugRedirect", fields: [redirectToId], references: [id], onDelete: SetNull)
+  redirectsFrom Slug[]  @relation("SlugRedirect")
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site          Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, lang, slug])
   @@index([siteId, lang, slug])
@@ -218,62 +218,62 @@ model Slug {
 }
 
 model Town {
-  id         String   @id @default(cuid())
-  siteId     String
-  isActive   Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  isActive Boolean @default(true)
 
   // Map coordinates
-  lat        Float?
-  lng        Float?
+  lat Float?
+  lng Float?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  places     Place[]
+  site         Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  places       Place[]
   translations TownTranslation[]
 
   @@index([siteId])
 }
 
 model TownTranslation {
-  id              String @id @default(cuid())
-  townId          String
-  lang            Lang
+  id     String @id @default(cuid())
+  townId String
+  lang   Lang
 
-  name            String
-  description     String? // HTML
-  heroImage       String?
+  name        String
+  description String? // HTML
+  heroImage   String?
 
   // SEO
-  seoTitle        String?
-  seoDescription  String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
-  town            Town   @relation(fields: [townId], references: [id], onDelete: Cascade)
+  town Town @relation(fields: [townId], references: [id], onDelete: Cascade)
 
   @@unique([townId, lang])
   @@index([lang])
 }
 
 model Category {
-  id         String   @id @default(cuid())
-  siteId     String
-  parentId   String?  // Parent category for hierarchy
-  isActive   Boolean  @default(true)
-  color      String?  // Hex color code for card border (e.g., "#667eea")
-  order      Int      @default(0) // Sort order within parent (or root level)
+  id       String  @id @default(cuid())
+  siteId   String
+  parentId String? // Parent category for hierarchy
+  isActive Boolean @default(true)
+  color    String? // Hex color code for card border (e.g., "#667eea")
+  order    Int     @default(0) // Sort order within parent (or root level)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  parent     Category? @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children   Category[] @relation("CategoryHierarchy")
-  translations CategoryTranslation[]
-  places     Place[]
-  events     Event[]
+  site            Site                  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  parent          Category?             @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Category[]            @relation("CategoryHierarchy")
+  translations    CategoryTranslation[]
+  places          Place[]
+  events          Event[]
   eventCategories EventCategory[]
 
   @@index([siteId])
@@ -282,124 +282,125 @@ model Category {
 }
 
 model CategoryTranslation {
-  id          String   @id @default(cuid())
+  id         String @id @default(cuid())
   categoryId String
-  lang        Lang
+  lang       Lang
 
   name        String
   description String? // HTML
 
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([categoryId, lang])
   @@index([lang])
 }
 
 model Tag {
-  id         String   @id @default(cuid())
-  siteId     String
-  isActive   Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  isActive Boolean @default(true)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations TagTranslation[]
-  places     PlaceTag[]
-  events     EventTag[]
+  places       PlaceTag[]
+  events       EventTag[]
 
   @@index([siteId])
 }
 
 model TagTranslation {
-  id          String   @id @default(cuid())
-  tagId       String
-  lang        Lang
+  id    String @id @default(cuid())
+  tagId String
+  lang  Lang
 
   name        String
   description String? // HTML
 
-  tag         Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([tagId, lang])
   @@index([lang])
 }
 
 model PriceBand {
-  id         String   @id @default(cuid())
-  siteId     String
-  isActive   Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  isActive Boolean @default(true)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site                   @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations PriceBandTranslation[]
-  places     Place[]
+  places       Place[]
 
   @@index([siteId])
 }
 
 model PriceBandTranslation {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   priceBandId String
   lang        Lang
 
   name        String
   description String? // HTML
 
-  priceBand   PriceBand @relation(fields: [priceBandId], references: [id], onDelete: Cascade)
+  priceBand PriceBand @relation(fields: [priceBandId], references: [id], onDelete: Cascade)
 
   @@unique([priceBandId, lang])
   @@index([lang])
 }
 
 model Place {
-  id          String        @id @default(cuid())
-  siteId      String
-  townId      String?
-  ownerId    String?
+  id      String  @id @default(cuid())
+  siteId  String
+  townId  String?
+  ownerId String?
 
-  categoryId  String
-  isActive    Boolean       @default(true)
+  categoryId String
+  isActive   Boolean @default(true)
 
   // Subscription/upsell fields
-  plan        PlacePlan     @default(free)
-  isFeatured  Boolean       @default(false)
-  featuredUntil DateTime?
+  plan                 PlacePlan @default(free)
+  isFeatured           Boolean   @default(false)
+  featuredUntil        DateTime?
   galleryLimitOverride Int? // optional per-place add-on: additional gallery images beyond plan limit
 
   // Media + discoverability
-  heroImage   String?
+  heroImage String?
 
   // Map
-  lat         Float?
-  lng         Float?
+  lat Float?
+  lng Float?
 
   priceBandId String?
 
   // Aggregated rating (read-only in v1; write later)
-  ratingAvg   Float?        // e.g. 4.6
-  ratingCount Int?          // e.g. 18
+  ratingAvg   Float? // e.g. 4.6
+  ratingCount Int? // e.g. 18
 
   // Flexible details (capacity, services, etc.)
-  extras      Json?
+  extras Json?
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site        Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  town        Town?         @relation(fields: [townId], references: [id], onDelete: SetNull)
-  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  priceBand   PriceBand?    @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
-  owner       User?         @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  site         Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  town         Town?               @relation(fields: [townId], references: [id], onDelete: SetNull)
+  category     Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceBand    PriceBand?          @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
+  owner        User?               @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   translations PlaceTranslation[]
-  tags        PlaceTag[]
-  events      Event[]
+  tags         PlaceTag[]
+  events       Event[]
   openingHours PlaceOpeningHours[]
-  memberships PlaceMembership[]
+  memberships  PlaceMembership[]
   subscription PlaceSubscription?
   galleries    Gallery[]
+  ratings      PlaceRating[]
 
   @@index([siteId, categoryId])
   @@index([townId])
@@ -410,32 +411,32 @@ model Place {
 
 // Opening hours for places (one entry per day of week)
 model PlaceOpeningHours {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   placeId   String
-  dayOfWeek Int      // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
-  isClosed  Boolean  @default(false) // If true, place is closed on this day
-  openTime  String?  // Format: "HH:mm" (e.g., "09:00"), null if isClosed
-  closeTime String?  // Format: "HH:mm" (e.g., "17:30"), null if isClosed
-  
+  dayOfWeek Int // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+  isClosed  Boolean @default(false) // If true, place is closed on this day
+  openTime  String? // Format: "HH:mm" (e.g., "09:00"), null if isClosed
+  closeTime String? // Format: "HH:mm" (e.g., "17:30"), null if isClosed
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
   @@unique([placeId, dayOfWeek])
   @@index([placeId])
 }
 
 // Many-to-many relationship between Place and Tag
 model PlaceTag {
-  id        String   @id @default(cuid())
-  placeId   String
-  tagId     String
+  id      String @id @default(cuid())
+  placeId String
+  tagId   String
 
   createdAt DateTime @default(now())
 
-  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([placeId, tagId])
   @@index([placeId])
@@ -443,48 +444,48 @@ model PlaceTag {
 }
 
 model PlaceTranslation {
-  id              String  @id @default(cuid())
-  placeId         String
-  lang            Lang
+  id      String @id @default(cuid())
+  placeId String
+  lang    Lang
 
-  name            String
+  name             String
   // HTML content
   shortDescription String? // HTML - for list view cards
-  description     String? // full HTML for detail
+  description      String? // full HTML for detail
 
   // Contact-ish fields (can be HTML or plain)
-  address         String? // HTML or plain
-  phone           String?
-  email           String?
-  website         String?
-  facebook        String? // Facebook page URL
-  whatsapp        String? // WhatsApp number or link
+  address  String? // HTML or plain
+  phone    String?
+  email    String?
+  website  String?
+  facebook String? // Facebook page URL
+  whatsapp String? // WhatsApp number or link
 
-  openingHours    String? // HTML
-  accessibility   String? // HTML
+  openingHours  String? // HTML
+  accessibility String? // HTML
 
   // SEO
-  seoTitle        String?
-  seoDescription  String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
-  place           Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@unique([placeId, lang])
   @@index([lang])
 }
 
 model LegalPage {
-  id         String   @id @default(cuid())
-  siteId     String
-  key        String   // imprint | terms | privacy
-  isActive   Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  key      String // imprint | terms | privacy
+  isActive Boolean @default(true)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site                   @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations LegalPageTranslation[]
 
   @@unique([siteId, key])
@@ -492,36 +493,36 @@ model LegalPage {
 }
 
 model LegalPageTranslation {
-  id              String @id @default(cuid())
-  legalPageId     String
-  lang            Lang
+  id          String @id @default(cuid())
+  legalPageId String
+  lang        Lang
 
-  title           String
+  title            String
   shortDescription String? // HTML - for list view cards
-  content         String? // HTML
+  content          String? // HTML
 
   // SEO
-  seoTitle        String?
-  seoDescription  String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
-  legalPage       LegalPage @relation(fields: [legalPageId], references: [id], onDelete: Cascade)
+  legalPage LegalPage @relation(fields: [legalPageId], references: [id], onDelete: Cascade)
 
   @@unique([legalPageId, lang])
   @@index([lang])
 }
 
 model StaticPage {
-  id         String   @id @default(cuid())
-  siteId     String
-  category   String   // blog | tudastar | infok
-  isActive   Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  category String // blog | tudastar | infok
+  isActive Boolean @default(true)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site                    @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations StaticPageTranslation[]
 
   @@index([siteId])
@@ -529,96 +530,138 @@ model StaticPage {
 }
 
 model StaticPageTranslation {
-  id              String @id @default(cuid())
-  staticPageId    String
-  lang            Lang
+  id           String @id @default(cuid())
+  staticPageId String
+  lang         Lang
 
-  title           String
+  title            String
   shortDescription String? // HTML - for list view cards
-  content         String? // HTML
+  content          String? // HTML
 
   // SEO
-  seoTitle        String?
-  seoDescription   String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
-  staticPage      StaticPage @relation(fields: [staticPageId], references: [id], onDelete: Cascade)
+  staticPage StaticPage @relation(fields: [staticPageId], references: [id], onDelete: Cascade)
 
   @@unique([staticPageId, lang])
   @@index([lang])
 }
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  email         String   @unique
-  passwordHash  String   // bcrypt hashed password
-  
-  firstName     String
-  lastName      String
-  bio           String?
-  
-  role          UserRole @default(viewer)
-  isActive      Boolean  @default(true)
-  
+  id           String @id @default(cuid())
+  username     String @unique
+  email        String @unique
+  passwordHash String // bcrypt hashed password
+
+  firstName String
+  lastName  String
+  bio       String?
+
+  role     UserRole @default(viewer)
+  isActive Boolean  @default(true)
+
   // Password reset
-  resetToken    String?
+  resetToken          String?
   resetTokenExpiresAt DateTime?
-  
+
   // Session management
-  refreshToken  String?
+  refreshToken          String?
   refreshTokenExpiresAt DateTime?
-  
+
   // Two-Factor Authentication (2FA)
-  totpSecret    String?  // TOTP secret for 2FA
+  totpSecret         String? // TOTP secret for 2FA
   isTwoFactorEnabled Boolean @default(false) // Whether 2FA is enabled for this user
-  
+
   // Active site for visitor status
   // activeSiteId === null → visitor (no active site)
   // activeSiteId !== null → active user (has active site)
-  activeSiteId  String?
-  activeSite    Site?    @relation("UserActiveSite", fields: [activeSiteId], references: [id], onDelete: SetNull)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  activeSiteId String?
+  activeSite   Site?   @relation("UserActiveSite", fields: [activeSiteId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Many-to-many with sites (user can belong to multiple sites)
-  sites          UserSite[]
-  
+  sites UserSite[]
+
   // Place ownership (for future - when user has appropriate role)
-  ownedPlaces   Place[]  @relation("PlaceOwner")
-  
+  ownedPlaces Place[] @relation("PlaceOwner")
+
   // Event logs for this user's activities
-  eventLogs     EventLog[]
-  
+  eventLogs EventLog[]
+
   // Site memberships (RBAC)
   siteMemberships SiteMembership[]
-  
+
   // Place memberships (RBAC)
   placeMemberships PlaceMembership[]
-  
+
   // Events created by this user
   createdEvents Event[] @relation("EventCreator")
+
+  // Place ratings
+  placeRatings PlaceRating[]
   
+  // Event ratings
+  eventRatings EventRating[]
+
   @@index([email])
   @@index([username])
   @@index([isActive])
 }
 
+// PlaceRating: User ratings for places (1-5 stars)
+model PlaceRating {
+  id      String @id @default(cuid())
+  placeId String
+  userId  String
+  value   Int // 1..5
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, userId])
+  @@index([placeId])
+  @@index([userId])
+}
+
+// EventRating: User ratings for events (1-5 stars)
+model EventRating {
+  id      String @id @default(cuid())
+  eventId String
+  userId  String
+  value   Int // 1..5
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
 // Junction table for many-to-many relationship between User and Site
 // Legacy: kept for backward compatibility, but SiteMembership should be used for RBAC
 model UserSite {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
   siteId    String
-  isPrimary Boolean   @default(false) // One site can be marked as primary
-  
+  isPrimary Boolean @default(false) // One site can be marked as primary
+
   createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
   @@unique([userId, siteId])
   @@index([userId])
   @@index([siteId])
@@ -626,15 +669,15 @@ model UserSite {
 
 // SiteMembership: RBAC for site-level permissions
 model SiteMembership {
-  id        String     @id @default(cuid())
-  siteId    String
-  userId    String
-  role      SiteRole   @default(editor)
+  id     String   @id @default(cuid())
+  siteId String
+  userId String
+  role   SiteRole @default(editor)
 
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 
-  site      Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, userId])
   @@index([userId])
@@ -644,15 +687,15 @@ model SiteMembership {
 
 // PlaceMembership: RBAC for place-level permissions
 model PlaceMembership {
-  id        String     @id @default(cuid())
-  placeId   String
-  userId    String
-  role      PlaceRole @default(editor)
+  id      String    @id @default(cuid())
+  placeId String
+  userId  String
+  role    PlaceRole @default(editor)
 
-  createdAt DateTime   @default(now())
+  createdAt DateTime @default(now())
 
-  place     Place      @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([placeId, userId])
   @@index([userId])
@@ -662,46 +705,51 @@ model PlaceMembership {
 
 // Application settings (global, not site-specific)
 model AppSetting {
-  id        String   @id @default(cuid())
-  key       String   @unique // e.g., "defaultLanguage", "appName", etc.
-  value     String   // JSON string or simple string value
-  type      String   @default("string") // "string", "number", "boolean", "json"
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g., "defaultLanguage", "appName", etc.
+  value       String // JSON string or simple string value
+  type        String  @default("string") // "string", "number", "boolean", "json"
   description String? // Human-readable description
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([key])
 }
 
 model Event {
-  id         String   @id @default(cuid())
-  siteId     String
-  placeId    String?  // Optional: event can be linked to a place
-  categoryId String?  // Optional: event can have a category
+  id              String    @id @default(cuid())
+  siteId          String
+  placeId         String? // Optional: event can be linked to a place
+  categoryId      String? // Optional: event can have a category
   createdByUserId String? // User who created the event (for audit trail)
-  isActive   Boolean  @default(true)
-  isPinned   Boolean  @default(false) // Pinned events appear at top of lists
-  isRainSafe Boolean  @default(false) // Whether the event is rain-safe (indoor or covered)
-  showOnMap  Boolean  @default(true) // Whether to show event in map view event box
-  startDate  DateTime // Event start date/time
-  endDate    DateTime? // Optional end date/time
-  heroImage  String?  // Hero image URL
-  lat        Float?    // Optional latitude for map display
-  lng        Float?    // Optional longitude for map display
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  place      Place?   @relation(fields: [placeId], references: [id], onDelete: SetNull)
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Legacy: kept for backward compatibility
-  createdBy  User?    @relation("EventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  isActive        Boolean   @default(true)
+  isPinned        Boolean   @default(false) // Pinned events appear at top of lists
+  isRainSafe      Boolean   @default(false) // Whether the event is rain-safe (indoor or covered)
+  showOnMap       Boolean   @default(true) // Whether to show event in map view event box
+  startDate       DateTime // Event start date/time
+  endDate         DateTime? // Optional end date/time
+  heroImage       String? // Hero image URL
+  lat             Float? // Optional latitude for map display
+  lng             Float? // Optional longitude for map display
+
+  // Aggregated rating (read-only in v1; write later)
+  ratingAvg   Float? // e.g. 4.6
+  ratingCount Int? // e.g. 18
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site         Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place        Place?             @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  category     Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Legacy: kept for backward compatibility
+  createdBy    User?              @relation("EventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   translations EventTranslation[]
-  tags       EventTag[]
-  categories EventCategory[] // Many-to-many relationship with categories
-  galleries  Gallery[]
-  
+  tags         EventTag[]
+  categories   EventCategory[] // Many-to-many relationship with categories
+  galleries    Gallery[]
+  ratings      EventRating[]
+
   @@index([siteId, startDate])
   @@index([placeId])
   @@index([categoryId])
@@ -709,22 +757,22 @@ model Event {
 }
 
 model EventTranslation {
-  id          String @id @default(cuid())
-  eventId     String
-  lang        Lang
-  
-  title       String
+  id      String @id @default(cuid())
+  eventId String
+  lang    Lang
+
+  title            String
   shortDescription String? // 2-line description
-  description String? // Full description (HTML)
-  
+  description      String? // Full description (HTML)
+
   // SEO
-  seoTitle        String?
-  seoDescription  String?
-  seoImage        String?
-  seoKeywords     String[] @default([])
-  
-  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  seoTitle       String?
+  seoDescription String?
+  seoImage       String?
+  seoKeywords    String[] @default([])
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, lang])
   @@index([lang])
 }
@@ -733,10 +781,10 @@ model EventTag {
   id      String @id @default(cuid())
   eventId String
   tagId   String
-  
-  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, tagId])
   @@index([eventId])
   @@index([tagId])
@@ -744,15 +792,15 @@ model EventTag {
 
 // Many-to-many relationship between Event and Category
 model EventCategory {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   eventId    String
   categoryId String
-  
-  createdAt  DateTime @default(now())
-  
-  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
+
+  createdAt DateTime @default(now())
+
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, categoryId])
   @@index([eventId])
   @@index([categoryId])
@@ -760,20 +808,20 @@ model EventCategory {
 
 // Push notification subscriptions
 model PushSubscription {
-  id         String   @id @default(cuid())
-  siteId     String
-  endpoint   String
-  p256dh     String   // Public key
-  auth       String   // Auth secret
-  
-  userAgent  String?  // Optional: browser/device info
-  isActive   Boolean  @default(true)
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(cuid())
+  siteId   String
+  endpoint String
+  p256dh   String // Public key
+  auth     String // Auth secret
+
+  userAgent String? // Optional: browser/device info
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
   @@unique([siteId, endpoint])
   @@index([siteId])
   @@index([isActive])
@@ -781,20 +829,20 @@ model PushSubscription {
 
 // Event log for tracking user activities (superadmin and admin only)
 model EventLog {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   siteId      String
-  userId      String   // User who performed the action
-  action      String   // e.g., "create", "update", "delete", "login", "logout"
-  entityType  String?  // e.g., "place", "event", "category", "tag", "user", etc.
-  entityId    String?  // ID of the affected entity (if applicable)
-  description String?  // Human-readable description of the action
-  metadata    Json?    // Additional context (e.g., changed fields, IP address, etc.)
-  
-  createdAt   DateTime @default(now())
-  
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  userId      String // User who performed the action
+  action      String // e.g., "create", "update", "delete", "login", "logout"
+  entityType  String? // e.g., "place", "event", "category", "tag", "user", etc.
+  entityId    String? // ID of the affected entity (if applicable)
+  description String? // Human-readable description of the action
+  metadata    Json? // Additional context (e.g., changed fields, IP address, etc.)
+
+  createdAt DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([siteId])
   @@index([userId])
   @@index([action])
@@ -807,21 +855,21 @@ model EventLog {
 // SiteDomain: Domain-to-site mapping (supports multi-language domains)
 // Example: example.com can serve /hu/... and /en/... for the same site
 model SiteDomain {
-  id          String   @id @default(cuid())
-  siteId      String
-  domain      String   @unique  // example.com, etyek.localo.app
-  isActive    Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  domain   String  @unique // example.com, etyek.localo.app
+  isActive Boolean @default(true)
 
   // Optional: mark one domain as primary (canonical)
-  isPrimary   Boolean  @default(false)
+  isPrimary Boolean @default(false)
 
   // Optional: default language for this domain (used when "/" or "/admin" is accessed)
-  defaultLang Lang     @default(hu)
+  defaultLang Lang @default(hu)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@index([siteId])
   @@index([isActive])
@@ -831,23 +879,23 @@ model SiteDomain {
 // Represents language-specific configuration (map config, features)
 // Domain is handled separately via SiteDomain model
 model SiteInstance {
-  id          String   @id @default(cuid())
-  siteId      String
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  siteId String
+  site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  lang        Lang
-  isDefault   Boolean   @default(false)
+  lang      Lang
+  isDefault Boolean @default(false)
 
-  mapConfig   Json?     // instance-specific map settings (overrides brand defaults)
-  features    Json?      // enable events, blog, etc.
+  mapConfig        Json? // instance-specific map settings (overrides brand defaults)
+  features         Json? // enable events, blog, etc.
   sitePlaceholders Json? // site-level placeholder images override (card, hero, event card)
 
   // Branding overrides (optional, inherits from Brand if null)
-  logoUrl   String?
-  faviconUrl  String?
+  logoUrl    String?
+  faviconUrl String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([siteId, lang])
   @@index([siteId])
@@ -855,21 +903,21 @@ model SiteInstance {
 }
 
 model SiteSubscription {
-  id             String             @id @default(cuid())
-  siteId         String             @unique
-  plan           SubscriptionPlan   @default(FREE)
-  status         SubscriptionStatus @default(ACTIVE)
-  validUntil     DateTime?
-  billingPeriod  BillingPeriod       @default(MONTHLY)
-  priceCents     Int?               // manuális, ha akarod KPI-hoz
-  currency       String?             // "HUF"
-  statusChangedAt DateTime?         // mikor váltott státuszt (churn tracking)
-  note           String?            // manuális admin megjegyzés (pl. "2026 Q1 promo")
+  id              String             @id @default(cuid())
+  siteId          String             @unique
+  plan            SubscriptionPlan   @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  validUntil      DateTime?
+  billingPeriod   BillingPeriod      @default(MONTHLY)
+  priceCents      Int? // manuális, ha akarod KPI-hoz
+  currency        String? // "HUF"
+  statusChangedAt DateTime? // mikor váltott státuszt (churn tracking)
+  note            String? // manuális admin megjegyzés (pl. "2026 Q1 promo")
 
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site           Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@index([plan])
   @@index([status])
@@ -878,21 +926,21 @@ model SiteSubscription {
 }
 
 model PlaceSubscription {
-  id             String             @id @default(cuid())
-  placeId        String             @unique
-  plan           SubscriptionPlan   @default(FREE)
-  status         SubscriptionStatus @default(ACTIVE)
-  validUntil     DateTime?
-  billingPeriod  BillingPeriod       @default(MONTHLY)
-  priceCents     Int?               // manuális, ha akarod KPI-hoz
-  currency       String?             // "HUF"
-  statusChangedAt DateTime?         // mikor váltott státuszt (churn tracking)
-  note           String?            // manuális admin megjegyzés
+  id              String             @id @default(cuid())
+  placeId         String             @unique
+  plan            SubscriptionPlan   @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  validUntil      DateTime?
+  billingPeriod   BillingPeriod      @default(MONTHLY)
+  priceCents      Int? // manuális, ha akarod KPI-hoz
+  currency        String? // "HUF"
+  statusChangedAt DateTime? // mikor váltott státuszt (churn tracking)
+  note            String? // manuális admin megjegyzés
 
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  place          Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@index([plan])
   @@index([status])
@@ -902,23 +950,23 @@ model PlaceSubscription {
 
 // SubscriptionHistory: Tracks package changes, payment dates, and subscription events
 model SubscriptionHistory {
-  id                String             @id @default(cuid())
-  scope             String             // "site" or "place"
-  subscriptionId    String             // ID of SiteSubscription or PlaceSubscription
-  changeType        String             // "PLAN_CHANGE", "STATUS_CHANGE", "PAYMENT", "EXTENSION", "CREATED"
-  oldPlan           SubscriptionPlan?
-  newPlan           SubscriptionPlan?
-  oldStatus         SubscriptionStatus?
-  newStatus         SubscriptionStatus?
-  oldValidUntil     DateTime?
-  newValidUntil     DateTime?
-  paymentDueDate    DateTime?          // mikor kell fizetnie
-  amountCents       Int?               // fizetett/tervezett összeg
-  currency          String?             // "HUF"
-  note              String?             // megjegyzés (pl. "Upgrade from BASIC to PRO")
-  changedBy         String?             // user ID who made the change (if admin)
-  
-  createdAt         DateTime           @default(now())
+  id             String              @id @default(cuid())
+  scope          String // "site" or "place"
+  subscriptionId String // ID of SiteSubscription or PlaceSubscription
+  changeType     String // "PLAN_CHANGE", "STATUS_CHANGE", "PAYMENT", "EXTENSION", "CREATED"
+  oldPlan        SubscriptionPlan?
+  newPlan        SubscriptionPlan?
+  oldStatus      SubscriptionStatus?
+  newStatus      SubscriptionStatus?
+  oldValidUntil  DateTime?
+  newValidUntil  DateTime?
+  paymentDueDate DateTime? // mikor kell fizetnie
+  amountCents    Int? // fizetett/tervezett összeg
+  currency       String? // "HUF"
+  note           String? // megjegyzés (pl. "Upgrade from BASIC to PRO")
+  changedBy      String? // user ID who made the change (if admin)
+
+  createdAt DateTime @default(now())
 
   @@index([scope, subscriptionId])
   @@index([changeType])
@@ -928,23 +976,23 @@ model SubscriptionHistory {
 
 // Gallery: Reusable image galleries that can be embedded in content
 model Gallery {
-  id          String   @id @default(cuid())
-  siteId      String
-  placeId     String?  // Optional: gallery linked to a place
-  eventId     String?  // Optional: gallery linked to an event
-  name        String?  // Optional name for admin identification
-  images      Json     // Array of GalleryImage objects: [{id, src, thumbSrc?, width?, height?, alt?, caption?}]
-  layout      String?  @default("grid") // grid | masonry | carousel
-  columns     Json?    // {base: number, md: number, lg: number}
-  aspect      String?  @default("auto") // auto | square | 4:3 | 16:9
-  isActive    Boolean  @default(true)
+  id       String  @id @default(cuid())
+  siteId   String
+  placeId  String? // Optional: gallery linked to a place
+  eventId  String? // Optional: gallery linked to an event
+  name     String? // Optional name for admin identification
+  images   Json // Array of GalleryImage objects: [{id, src, thumbSrc?, width?, height?, alt?, caption?}]
+  layout   String? @default("grid") // grid | masonry | carousel
+  columns  Json? // {base: number, md: number, lg: number}
+  aspect   String? @default("auto") // auto | square | 4:3 | 16:9
+  isActive Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  place       Place?    @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  event       Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  site  Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place Place? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([siteId])
   @@index([placeId])

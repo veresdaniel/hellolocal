@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createHash } from "crypto";
@@ -52,6 +52,39 @@ export default defineConfig({
         generateVersionJson();
       },
     },
+    {
+      name: 'favicon-fallback',
+      configureServer(server) {
+        // Add middleware early to catch favicon requests before other handlers
+        server.middlewares.use((req, res, next) => {
+          // Skip WebSocket upgrade requests
+          if (req.headers.upgrade === 'websocket') {
+            return next();
+          }
+          
+          // Handle favicon.ico requests by serving vite.svg
+          if (req.url === '/favicon.ico' || req.url?.startsWith('/favicon.ico?')) {
+            try {
+              const viteSvgPath = join(__dirname, 'public', 'vite.svg');
+              if (existsSync(viteSvgPath)) {
+                const svgContent = readFileSync(viteSvgPath, 'utf-8');
+                res.setHeader('Content-Type', 'image/svg+xml');
+                res.setHeader('Cache-Control', 'public, max-age=31536000');
+                res.statusCode = 200;
+                res.end(svgContent);
+                return;
+              } else {
+                console.warn('[Vite] favicon-fallback: vite.svg not found at', viteSvgPath);
+              }
+            } catch (error) {
+              console.error('[Vite] favicon-fallback error:', error);
+              // Fall through to next() on error
+            }
+          }
+          next();
+        });
+      },
+    },
   ],
   define: {
     // Inject version from package.json at build time
@@ -63,15 +96,10 @@ export default defineConfig({
     },
   },
   server: {
-    host: true, // Listen on all addresses
+    host: 'localhost', // Listen on localhost only (fixes EPERM on macOS)
     port: 5173,
     strictPort: false, // Allow fallback to next available port
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5173,
-      clientPort: 5173,
-    },
+    // HMR is automatically configured by Vite, no need for explicit config
     proxy: {
       "/api": {
         target: "http://localhost:3002",

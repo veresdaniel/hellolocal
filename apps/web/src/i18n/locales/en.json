@@ -225,7 +225,9 @@
       "legal": "Legal Information",
       "quickLinks": "Quick Links",
       "rights": "All rights reserved."
-    }
+    },
+    "beTheFirst": "Be the first!",
+    "saving": "Saving..."
   },
   "admin": {
     "titleSuffix": "Admin",

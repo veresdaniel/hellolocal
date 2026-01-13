@@ -227,7 +227,9 @@
       "legal": "Jogi információk",
       "quickLinks": "Gyors linkek",
       "rights": "Minden jog fenntartva."
-    }
+    },
+    "beTheFirst": "Legyél Te az első!",
+    "saving": "Mentés..."
   },
   "admin": {
     "titleSuffix": "Admin",

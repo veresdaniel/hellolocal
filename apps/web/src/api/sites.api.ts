@@ -8,5 +8,5 @@ export interface ActivateFreeSiteResponse {
 }
 
 export function activateFreeSite(lang: string): Promise<ActivateFreeSiteResponse> {
-  return apiPost<ActivateFreeSiteResponse>(`/api/${lang}/sites/activate-free`, {});
+  return apiPost<ActivateFreeSiteResponse>(`/${lang}/sites/activate-free`, {});
 }

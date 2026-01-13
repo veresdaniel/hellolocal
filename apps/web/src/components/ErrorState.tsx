@@ -271,23 +271,27 @@ export function ErrorState({
               to={backLink}
               style={{
                 padding: "14px 32px",
-                background: "white",
-                color: "#667eea",
+                background: "rgba(255, 255, 255, 0.2)",
+                color: "white",
+                border: "2px solid rgba(255, 255, 255, 0.5)",
                 textDecoration: "none",
                 borderRadius: "12px",
                 fontWeight: 600,
                 fontSize: 16,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "all 0.3s ease",
-                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
+                backdropFilter: "blur(10px)",
                 display: "inline-block",
               }}
               onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.8)";
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
               }}
               onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
               }}
             >
               {defaultBackLinkText}
@@ -304,6 +308,7 @@ export function ErrorState({
                 borderRadius: "12px",
                 fontWeight: 600,
                 fontSize: 16,
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 backdropFilter: "blur(10px)",

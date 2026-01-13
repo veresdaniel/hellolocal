@@ -17,7 +17,8 @@ function getApiBaseUrl(): string {
   
   if (apiUrl) {
     // Remove trailing slash if present
-    return apiUrl.replace(/\/$/, "");
+    // Also remove /api suffix if present (apiPost will add it)
+    return apiUrl.replace(/\/$/, "").replace(/\/api$/, "");
   }
   
   // In development, use relative path (Vite proxy will handle it)

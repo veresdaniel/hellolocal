@@ -1,9 +1,10 @@
 // src/pages/EventDetailPage.tsx
-import { useMemo, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useEffect, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getEvent, getEventById, getPlatformSettings } from "../api/places.api";
+import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
 import { buildUrl } from "../app/urls";
@@ -16,10 +17,16 @@ import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
+import { StarRating } from "../components/StarRating";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
   const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const resolveQ = useResolvedSlugRedirect({
     lang: lang ?? "",
@@ -48,6 +55,60 @@ export function EventDetailPage() {
     queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Load user's rating if authenticated
+  const { data: myRating, refetch: refetchMyRating } = useQuery({
+    queryKey: ["myEventRating", resolveQ.data?.entityId, lang],
+    queryFn: () => {
+      if (!resolveQ.data?.entityId || !lang) throw new Error("Missing event ID or lang");
+      return getMyEventRating(lang, resolveQ.data.entityId);
+    },
+    enabled: isAuthenticated && !!resolveQ.data?.entityId && !!lang,
+    retry: false, // Don't retry on 401
+  });
+
+  // Handle rating submission
+  const [isRatingSaving, setIsRatingSaving] = useState(false);
+  const handleRate = async (value: number) => {
+    if (!isAuthenticated) {
+      // Redirect to login
+      navigate(`/${lang}/admin/login`);
+      return;
+    }
+
+    if (!resolveQ.data?.entityId || !lang) return;
+
+    setIsRatingSaving(true);
+    try {
+      await createOrUpdateEventRating(lang, resolveQ.data.entityId, value);
+      // Refresh event data to get updated rating
+      queryClient.invalidateQueries({ queryKey: ["event", resolveQ.data.entityId, lang, siteKey] });
+      // Refresh my rating
+      await refetchMyRating();
+      // Show success toast
+      const langCode = lang || "hu";
+      if (langCode === "hu") {
+        showToast("Köszönjük az értékelést!", "success");
+      } else if (langCode === "en") {
+        showToast("Thank you for your rating!", "success");
+      } else {
+        showToast("Vielen Dank für Ihre Bewertung!", "success");
+      }
+    } catch (error) {
+      console.error("Failed to save rating:", error);
+      // Show error toast
+      const langCode = lang || "hu";
+      if (langCode === "hu") {
+        showToast("Hiba történt az értékelés mentésekor.", "error");
+      } else if (langCode === "en") {
+        showToast("An error occurred while saving your rating.", "error");
+      } else {
+        showToast("Ein Fehler ist beim Speichern Ihrer Bewertung aufgetreten.", "error");
+      }
+    } finally {
+      setIsRatingSaving(false);
+    }
+  };
 
   // Listen for site settings changes from admin
   useEffect(() => {
@@ -352,11 +413,13 @@ export function EventDetailPage() {
             <div
               style={{
                 width: "calc(100% - 32px)",
-                margin: "24px 16px 24px",
+                margin: "24px 16px 16px",
                 height: "clamp(250px, 50vw, 400px)",
                 borderRadius: 16,
                 overflow: "hidden",
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                position: "relative",
+                boxSizing: "border-box",
               }}
             >
               <img
@@ -369,11 +432,39 @@ export function EventDetailPage() {
                   display: "block",
                 }}
               />
+
+              {/* Tags overlaid on image - bottom right */}
+              {event.tags && event.tags.length > 0 && (
+                <div style={{ 
+                  position: "absolute", 
+                  bottom: 12,
+                  right: 12,
+                  display: "flex", 
+                  gap: 8, 
+                  flexWrap: "wrap",
+                  justifyContent: "flex-end",
+                }}>
+                  {event.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="tag"
+                      size="medium"
+                      opacity={0.95}
+                      style={{
+                        backdropFilter: "blur(8px)",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Header */}
-          <div style={{ margin: "0 16px 32px" }}>
+          {/* Back Link */}
+          <div style={{ margin: "0 16px 16px" }}>
             <Link
               to={buildUrl({ lang, siteKey, path: "" })}
               style={{
@@ -385,7 +476,6 @@ export function EventDetailPage() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 500,
-                marginBottom: 24,
                 transition: "color 0.2s",
               }}
               onMouseEnter={(e) => {
@@ -397,10 +487,13 @@ export function EventDetailPage() {
             >
               ← {t("public.backToHome")}
             </Link>
+          </div>
+
+          {/* Title - directly below image with small offset */}
+          <div style={{ margin: "0 16px 16px" }}>
             <h1
               style={{
                 margin: 0,
-                marginBottom: 16,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -414,6 +507,88 @@ export function EventDetailPage() {
               {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
               {event.name}
             </h1>
+          </div>
+
+          {/* Rating Section with Share Icons in frame */}
+          <div style={{ margin: "0 16px 24px" }}>
+            {isAuthenticated ? (
+              /* Interactive rating (if authenticated) with share icons */
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: "200px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
+                    {!myRating 
+                      ? (lang === "hu" ? "Értékeld az eseményt:" : lang === "en" ? "Rate this event:" : "Bewerten Sie diese Veranstaltung:")
+                      : (lang === "hu" ? "Módosítsd az értékelésed:" : lang === "en" ? "Update your rating:" : "Aktualisieren Sie Ihre Bewertung:")
+                    }
+                  </span>
+                  <StarRating
+                    avg={event.rating?.avg ?? null}
+                    count={event.rating?.count ?? null}
+                    interactive={true}
+                    initialValue={myRating?.value ?? null}
+                    onRate={handleRate}
+                    saving={isRatingSaving}
+                    size="md"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                  <SocialShareButtons
+                    url={window.location.href}
+                    title={event.name}
+                    description={event.shortDescription || event.description || ""}
+                    image={event.heroImage || undefined}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Read-only rating display (if not authenticated) with share icons */
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <StarRating
+                    avg={event.rating?.avg ?? null}
+                    count={event.rating?.count ?? null}
+                    interactive={false}
+                    size="md"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                  <SocialShareButtons
+                    url={window.location.href}
+                    title={event.name}
+                    description={event.shortDescription || event.description || ""}
+                    image={event.heroImage || undefined}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+            
+          {/* Event Details */}
+          <div style={{ margin: "0 16px 32px" }}>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 16, color: "#666", fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 📅 {new Date(event.startDate).toLocaleDateString(
@@ -479,29 +654,6 @@ export function EventDetailPage() {
                 </Link>
               </div>
             )}
-            {event.tags && event.tags.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-                {event.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="tag"
-                    size="small"
-                  >
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Social Share Buttons */}
-          <div style={{ margin: "0 16px 32px" }}>
-            <SocialShareButtons
-              url={window.location.href}
-              title={event.name}
-              description={event.shortDescription || event.description || ""}
-              image={event.heroImage || undefined}
-            />
           </div>
 
           {/* Short Description */}

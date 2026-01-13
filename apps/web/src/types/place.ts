@@ -56,6 +56,12 @@ export type Place = {
   priceBandId?: string | null; // Price band ID
   tags?: string[]; // Array of localized tag names
 
+  // Rating
+  rating?: {
+    avg: number | null; // Average rating (1-5)
+    count: number | null; // Number of ratings
+  };
+
   // category-specifikus, szabad struktúra
   extras?: Record<string, unknown>;
 

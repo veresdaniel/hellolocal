@@ -1,8 +1,10 @@
-import { useMemo, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useEffect, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPlace, getPlaceById, getPlatformSettings } from "../api/places.api";
+import { getPlace, getPlaceById, getPlatformSettings, getGallery, type PublicGallery } from "../api/places.api";
+import { GalleryViewer } from "../components/GalleryViewer";
+import { createOrUpdateRating, getMyRating } from "../api/rating.api";
 import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
 import { buildUrl } from "../app/urls";
@@ -16,10 +18,16 @@ import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
+import { StarRating } from "../components/StarRating";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
   const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const resolveQ = useResolvedSlugRedirect({
     lang: lang ?? "",
@@ -48,6 +56,95 @@ export function PlaceDetailPage() {
     queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Load user's rating if authenticated
+  const { data: myRating, refetch: refetchMyRating } = useQuery({
+    queryKey: ["myRating", resolveQ.data?.entityId, lang],
+    queryFn: () => {
+      if (!resolveQ.data?.entityId || !lang) throw new Error("Missing place ID or lang");
+      return getMyRating(lang, resolveQ.data.entityId);
+    },
+    enabled: isAuthenticated && !!resolveQ.data?.entityId && !!lang,
+    retry: false, // Don't retry on 401
+  });
+
+  // Extract gallery IDs from description
+  const galleryIds = useMemo(() => {
+    if (!place?.description) return [];
+    const regex = /\[gallery\s+id="([^"]+)"\]/g;
+    const matches: string[] = [];
+    let match;
+    while ((match = regex.exec(place.description)) !== null) {
+      matches.push(match[1]);
+    }
+    return matches;
+  }, [place?.description]);
+
+  // Load galleries for the opening hours section
+  const { data: galleriesData } = useQuery({
+    queryKey: ["galleries", galleryIds, lang, siteKey],
+    queryFn: async () => {
+      if (!lang || !siteKey || galleryIds.length === 0) return {};
+      const galleries: Record<string, PublicGallery> = {};
+      await Promise.all(
+        galleryIds.map(async (galleryId) => {
+          try {
+            const gallery = await getGallery(lang, siteKey, galleryId);
+            galleries[galleryId] = gallery;
+          } catch (error) {
+            console.error(`Failed to load gallery ${galleryId}:`, error);
+          }
+        })
+      );
+      return galleries;
+    },
+    enabled: galleryIds.length > 0 && !!lang && !!siteKey,
+  });
+
+  const galleries = galleriesData || {};
+
+  // Handle rating submission
+  const [isRatingSaving, setIsRatingSaving] = useState(false);
+  const handleRate = async (value: number) => {
+    if (!isAuthenticated) {
+      // Redirect to login
+      navigate(`/${lang}/admin/login`);
+      return;
+    }
+
+    if (!resolveQ.data?.entityId || !lang) return;
+
+    setIsRatingSaving(true);
+    try {
+      await createOrUpdateRating(lang, resolveQ.data.entityId, value);
+      // Refresh place data to get updated rating
+      queryClient.invalidateQueries({ queryKey: ["place", resolveQ.data.entityId, lang, siteKey] });
+      // Refresh my rating
+      await refetchMyRating();
+      // Show success toast
+      const langCode = lang || "hu";
+      if (langCode === "hu") {
+        showToast("Köszönjük az értékelést!", "success");
+      } else if (langCode === "en") {
+        showToast("Thank you for your rating!", "success");
+      } else {
+        showToast("Vielen Dank für Ihre Bewertung!", "success");
+      }
+    } catch (error) {
+      console.error("Failed to save rating:", error);
+      // Show error toast
+      const langCode = lang || "hu";
+      if (langCode === "hu") {
+        showToast("Hiba történt az értékelés mentésekor.", "error");
+      } else if (langCode === "en") {
+        showToast("An error occurred while saving your rating.", "error");
+      } else {
+        showToast("Ein Fehler ist beim Speichern Ihrer Bewertung aufgetreten.", "error");
+      }
+    } finally {
+      setIsRatingSaving(false);
+    }
+  };
 
   // Listen for site settings changes from admin
   useEffect(() => {
@@ -315,12 +412,12 @@ export function PlaceDetailPage() {
                 }}
               />
               
-              {/* Category badges overlaid on image */}
+              {/* Category badges overlaid on image - top left */}
               {place.category && (
                 <div style={{ 
                   position: "absolute", 
-                  top: 12,     // Felülre
-                  left: 12,    // Balra
+                  top: 12,
+                  left: 12,
                   display: "flex", 
                   gap: 8, 
                   flexWrap: "wrap",
@@ -354,46 +451,39 @@ export function PlaceDetailPage() {
                   )}
                 </div>
               )}
+
+              {/* Tags overlaid on image - bottom right */}
+              {place.tags && place.tags.length > 0 && (
+                <div style={{ 
+                  position: "absolute", 
+                  bottom: 12,
+                  right: 12,
+                  display: "flex", 
+                  gap: 8, 
+                  flexWrap: "wrap",
+                  justifyContent: "flex-end",
+                }}>
+                  {place.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="tag"
+                      size="medium"
+                      opacity={0.95}
+                      style={{
+                        backdropFilter: "blur(8px)",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Tags and Social Share in one row */}
-          <div style={{ 
-            margin: "0 16px 24px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-            flexWrap: "wrap",
-          }}>
-            {/* Tags on the left */}
-            {place.tags && place.tags.length > 0 && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", flex: 1 }}>
-                {place.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="tag"
-                    size="medium"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            {/* Social Share on the right */}
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <SocialShareButtons
-                url={window.location.href}
-                title={place.name}
-                description={place.description || ""}
-                image={place.heroImage || undefined}
-              />
-            </div>
-          </div>
-
-          {/* Header */}
-          <div style={{ margin: "0 16px 24px" }}>
+          {/* Title - directly below image with small offset */}
+          <div style={{ margin: "0 16px 16px" }}>
             <h1
               style={{
                 margin: 0,
@@ -411,6 +501,84 @@ export function PlaceDetailPage() {
             </h1>
           </div>
 
+          {/* Rating Section with Share Icons in frame */}
+          <div style={{ margin: "0 16px 24px" }}>
+            {isAuthenticated ? (
+              /* Interactive rating (if authenticated) with share icons */
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: "200px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
+                    {!myRating 
+                      ? (lang === "hu" ? "Értékeld a helyet:" : lang === "en" ? "Rate this place:" : "Bewerten Sie diesen Ort:")
+                      : (lang === "hu" ? "Módosítsd az értékelésed:" : lang === "en" ? "Update your rating:" : "Aktualisieren Sie Ihre Bewertung:")
+                    }
+                  </span>
+                  <StarRating
+                    avg={place.rating?.avg ?? null}
+                    count={place.rating?.count ?? null}
+                    interactive={true}
+                    initialValue={myRating?.value ?? null}
+                    onRate={handleRate}
+                    saving={isRatingSaving}
+                    size="md"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                  <SocialShareButtons
+                    url={window.location.href}
+                    title={place.name}
+                    description={place.description || ""}
+                    image={place.heroImage || undefined}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Read-only rating display (if not authenticated) with share icons */
+              <div 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <StarRating
+                    avg={place.rating?.avg ?? null}
+                    count={place.rating?.count ?? null}
+                    interactive={false}
+                    size="md"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                  <SocialShareButtons
+                    url={window.location.href}
+                    title={place.name}
+                    description={place.description || ""}
+                    image={place.heroImage || undefined}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Contact and Opening Hours side by side */}
           {(() => {
             // Check if contact has any actual data (not just null/undefined fields)
@@ -423,10 +591,15 @@ export function PlaceDetailPage() {
               place.contact.whatsapp
             );
             const hasOpeningHours = place.openingHours && place.openingHours.length > 0;
+            const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
             
-            if (!hasContact && !hasOpeningHours) {
+            // Show grid if we have contact, opening hours, or gallery
+            if (!hasContact && !hasOpeningHours && !hasGallery) {
               return null;
             }
+            
+            // Always two columns on desktop if we have gallery or both contact and opening hours
+            const shouldShowTwoColumns = (hasContact && hasOpeningHours) || hasGallery;
             
             return (
               <div 
@@ -434,7 +607,7 @@ export function PlaceDetailPage() {
                 style={{ 
                   margin: "0 16px 24px",
                   display: "grid",
-                  gridTemplateColumns: (hasContact && hasOpeningHours) ? "1fr 1fr" : "1fr",
+                  gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
                   gap: 12,
                 }}
               >
@@ -442,6 +615,9 @@ export function PlaceDetailPage() {
                 @media (max-width: 767px) {
                   .contact-opening-hours-grid {
                     gridTemplateColumns: 1fr !important;
+                  }
+                  .gallery-compact {
+                    order: 2;
                   }
                 }
               `}</style>
@@ -456,29 +632,31 @@ export function PlaceDetailPage() {
                 place.contact.whatsapp
               );
               
+              // Use compact mode if gallery is shown on the right (no opening hours)
+              const isCompact = hasGallery && !hasOpeningHours;
+              
               return hasContact ? (
               <div
                 style={{
                   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  padding: "16px",
+                  padding: isCompact ? "12px" : "16px",
                   borderRadius: 12,
                   boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)",
                   color: "white",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
               >
                 <h3
                   style={{
-                    fontSize: 16,
+                    fontSize: "clamp(18px, 3vw, 24px)",
                     fontWeight: 600,
                     fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     color: "white",
-                    marginBottom: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
+                    marginBottom: isCompact ? "8px" : "clamp(12px, 2vw, 20px)",
+                    marginTop: 0,
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>📞</span>
                   {t("public.contact") || "Kapcsolat"}
                 </h3>
                 <div style={{ 
@@ -747,8 +925,8 @@ export function PlaceDetailPage() {
               ) : null;
             })()}
 
-            {/* Opening Hours - Right */}
-            {place.openingHours && place.openingHours.length > 0 && (
+            {/* Opening Hours - Right, or Gallery if no opening hours but has address */}
+            {place.openingHours && place.openingHours.length > 0 ? (
               <div
                 style={{
                   background: "white",
@@ -841,6 +1019,37 @@ export function PlaceDetailPage() {
                   })}
                 </div>
               </div>
+            ) : (
+              // Gallery in opening hours position if no opening hours (or empty space if no gallery)
+              hasGallery ? (
+                <div
+                  style={{
+                    background: "white",
+                    padding: "12px",
+                    borderRadius: 12,
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                    border: "1px solid rgba(102, 126, 234, 0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                  className="gallery-compact"
+                >
+                  {galleryIds.map((galleryId) => {
+                    const gallery = galleries[galleryId];
+                    if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                    return (
+                      <GalleryViewer
+                        key={galleryId}
+                        images={gallery.images}
+                        name={gallery.name}
+                        layout={gallery.layout}
+                        aspect={gallery.aspect}
+                        compact={true}
+                      />
+                    );
+                  })}
+                </div>
+              ) : null
             )}
               </div>
             );
@@ -862,6 +1071,12 @@ export function PlaceDetailPage() {
                 content={place.description}
                 lang={lang!}
                 siteKey={siteKey!}
+                hideGalleries={
+                  // Hide galleries in description if they're shown in opening hours position
+                  !place.openingHours?.length && 
+                  galleryIds.length > 0 && 
+                  Object.keys(galleries).length > 0
+                }
               />
             </div>
           )}

@@ -8,6 +8,7 @@ import { getPlatformSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
+import { StarRating } from "../../components/StarRating";
 
 // Function to get color for category
 function getCategoryColor(categoryName: string | null | undefined): string {
@@ -181,6 +182,18 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
             }}
             dangerouslySetInnerHTML={{ __html: place.shortDescription }}
           />
+        )}
+
+        {/* Rating */}
+        {place.rating && (place.rating.avg !== null || place.rating.count !== null) && (
+          <div style={{ marginTop: 8 }}>
+            <StarRating
+              avg={place.rating.avg}
+              count={place.rating.count}
+              interactive={false}
+              size="sm"
+            />
+          </div>
         )}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "auto" }}>
