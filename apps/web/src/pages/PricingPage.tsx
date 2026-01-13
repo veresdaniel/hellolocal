@@ -441,7 +441,7 @@ export function PricingPage() {
         </div>
       );
     } else if (tier === "basic") {
-      // Helmet with deer antlers
+      // Enhanced Viking helmet with detailed design
       return (
         <div style={{
           width: circleSize,
@@ -455,37 +455,68 @@ export function PricingPage() {
           boxShadow: "0 6px 20px rgba(102, 126, 234, 0.25)",
         }}>
           <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Helmet dome - more pronounced, traditional shape */}
-            <path d="M12 4.5C9 4.5 6.5 6 6.5 8.5V13C6.5 14.5 7.5 16 9 16.5H15C16.5 16.5 17.5 15 17.5 13.5V8.5C17.5 6 15 4.5 12 4.5Z" fill="#8b4513" stroke="#654321" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            {/* Helmet rim/brim */}
-            <path d="M6.5 13L17.5 13" stroke="#654321" strokeWidth="2" strokeLinecap="round"/>
-            {/* Metallic brow guard - more prominent */}
-            <rect x="7" y="8" width="10" height="2.5" rx="0.5" fill="#708090" stroke="#556b2f" strokeWidth="0.8"/>
-            {/* Vertical metallic strip - more visible */}
-            <rect x="11" y="4.5" width="2" height="5" rx="0.5" fill="#708090" stroke="#556b2f" strokeWidth="0.5"/>
-            {/* Rivets on brow guard */}
-            <circle cx="8.5" cy="9.25" r="0.8" fill="#2f2f2f"/>
-            <circle cx="12" cy="9.25" r="0.8" fill="#2f2f2f"/>
-            <circle cx="15.5" cy="9.25" r="0.8" fill="#2f2f2f"/>
+            {/* Helmet dome - improved shape with better curves */}
+            <path d="M12 3.5C8.5 3.5 5.5 5.5 5.5 8.5V12.5C5.5 14.5 6.5 16.5 8.5 17.5H15.5C17.5 16.5 18.5 14.5 18.5 12.5V8.5C18.5 5.5 15.5 3.5 12 3.5Z" fill="#8b4513" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Helmet highlight/shine */}
+            <ellipse cx="12" cy="7" rx="4" ry="3" fill="#a0522d" opacity="0.4"/>
+            {/* Helmet rim/brim - more defined */}
+            <path d="M5.5 12.5L18.5 12.5" stroke="#654321" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M5.5 13L18.5 13" stroke="#8b4513" strokeWidth="1" strokeLinecap="round" opacity="0.6"/>
+            
+            {/* Enhanced metallic brow guard with gradient effect */}
+            <rect x="6.5" y="7.5" width="11" height="3" rx="0.8" fill="#9ca3af" stroke="#6b7280" strokeWidth="0.8"/>
+            <rect x="6.5" y="7.5" width="11" height="1.5" rx="0.8" fill="#d1d5db" opacity="0.7"/>
+            {/* Decorative pattern on brow guard */}
+            <path d="M8 8.5H16" stroke="#6b7280" strokeWidth="0.4" strokeLinecap="round"/>
+            
+            {/* Enhanced vertical metallic strip with decorative elements */}
+            <rect x="11" y="3.5" width="2" height="6" rx="0.5" fill="#9ca3af" stroke="#6b7280" strokeWidth="0.5"/>
+            <rect x="11" y="3.5" width="2" height="3" rx="0.5" fill="#d1d5db" opacity="0.6"/>
+            
+            {/* Enhanced rivets on brow guard with depth */}
+            <circle cx="7.5" cy="9" r="0.9" fill="#1f2937" stroke="#111827" strokeWidth="0.3"/>
+            <circle cx="7.5" cy="9" r="0.4" fill="#4b5563" opacity="0.6"/>
+            <circle cx="12" cy="9" r="0.9" fill="#1f2937" stroke="#111827" strokeWidth="0.3"/>
+            <circle cx="12" cy="9" r="0.4" fill="#4b5563" opacity="0.6"/>
+            <circle cx="16.5" cy="9" r="0.9" fill="#1f2937" stroke="#111827" strokeWidth="0.3"/>
+            <circle cx="16.5" cy="9" r="0.4" fill="#4b5563" opacity="0.6"/>
+            
             {/* Rivet on vertical strip */}
-            <circle cx="12" cy="6.5" r="0.6" fill="#2f2f2f"/>
-            {/* Left deer antler - with multiple tines/branches */}
-            <path d="M5 11L4 8L3.5 5.5L4.5 4.5L6 5.5L6.5 7.5L7 9.5L6.5 11.5L5.5 12.5L5 11Z" fill="#8b7355" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-            {/* Left antler tines/branches */}
-            <path d="M4 8L3 6.5L3.5 5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M5.5 10L5 8.5L4.5 7" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M6.5 9.5L7 7.5L7.5 5.5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            {/* Right deer antler - with multiple tines/branches */}
-            <path d="M19 11L20 8L20.5 5.5L19.5 4.5L18 5.5L17.5 7.5L17 9.5L17.5 11.5L18.5 12.5L19 11Z" fill="#8b7355" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-            {/* Right antler tines/branches */}
-            <path d="M20 8L21 6.5L20.5 5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M18.5 10L19 8.5L19.5 7" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M17.5 9.5L17 7.5L16.5 5.5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            {/* Face guard/nose piece - more defined */}
-            <path d="M9.5 16.5V18.5C9.5 19.5 10 20.5 11 20.5H13C14 20.5 14.5 19.5 14.5 18.5V16.5" stroke="#654321" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            {/* Cheek guards */}
-            <path d="M6.5 13L6 15L7 16" stroke="#654321" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M17.5 13L18 15L17 16" stroke="#654321" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <circle cx="12" cy="6" r="0.7" fill="#1f2937" stroke="#111827" strokeWidth="0.3"/>
+            <circle cx="12" cy="6" r="0.3" fill="#4b5563" opacity="0.6"/>
+            
+            {/* Enhanced left deer antler - more realistic with better proportions */}
+            <path d="M4.5 10.5L3.5 7.5L3 5L4 3.5L5.5 4.5L6 6.5L6.5 8.5L6 10.5L5 11.5L4.5 10.5Z" fill="#a0826d" stroke="#654321" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Left antler main branch */}
+            <path d="M3.5 7.5L2.5 5.5L3 4" stroke="#654321" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            {/* Left antler secondary branches */}
+            <path d="M5 9.5L4.5 7.5L4 5.5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M6 8.5L6.5 6L7 4" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M5.5 10L5.5 8L5.5 6" stroke="#654321" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            
+            {/* Enhanced right deer antler - more realistic */}
+            <path d="M19.5 10.5L20.5 7.5L21 5L20 3.5L18.5 4.5L18 6.5L17.5 8.5L18 10.5L19 11.5L19.5 10.5Z" fill="#a0826d" stroke="#654321" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Right antler main branch */}
+            <path d="M20.5 7.5L21.5 5.5L21 4" stroke="#654321" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            {/* Right antler secondary branches */}
+            <path d="M19 9.5L19.5 7.5L20 5.5" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M18 8.5L17.5 6L17 4" stroke="#654321" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M18.5 10L18.5 8L18.5 6" stroke="#654321" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            
+            {/* Enhanced face guard/nose piece with better definition */}
+            <path d="M9 17.5V19.5C9 20.5 9.5 21.5 10.5 21.5H13.5C14.5 21.5 15 20.5 15 19.5V17.5" stroke="#654321" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M10 17.5L10.5 19.5" stroke="#654321" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M14 17.5L13.5 19.5" stroke="#654321" strokeWidth="1.5" strokeLinecap="round"/>
+            
+            {/* Enhanced cheek guards with better shape */}
+            <path d="M5.5 12.5L5 14.5L6 15.5L6.5 14.5" stroke="#654321" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M5.5 12.5L6 13.5" stroke="#654321" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M18.5 12.5L19 14.5L18 15.5L17.5 14.5" stroke="#654321" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <path d="M18.5 12.5L18 13.5" stroke="#654321" strokeWidth="1.5" strokeLinecap="round"/>
+            
+            {/* Additional decorative metalwork - side reinforcements */}
+            <path d="M6.5 10L6.5 12" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" opacity="0.7"/>
+            <path d="M17.5 10L17.5 12" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" opacity="0.7"/>
           </svg>
         </div>
       );

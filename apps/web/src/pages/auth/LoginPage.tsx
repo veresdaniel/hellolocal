@@ -391,6 +391,7 @@ export function LoginPage() {
             required
             pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
             title={t("admin.enterValidEmail")}
+            autoComplete="username"
             style={{ 
               width: "100%", 
               padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",

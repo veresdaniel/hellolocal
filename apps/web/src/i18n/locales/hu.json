@@ -246,6 +246,7 @@
     "places": "Helyek",
     "priceList": "Árlap",
     "priceListDesc": "Árlista kezelése",
+    "analytics": "Analytics",
     "newBlock": "Új blokk",
     "newItem": "Új sor",
     "blockTitle": "Blokk címe",
@@ -424,7 +425,8 @@
         "appearance": "Megjelenés",
         "map": "Térkép",
         "features": "Funkciók",
-        "subscription": "Előfizetés"
+        "subscription": "Előfizetés",
+        "analytics": "Analytics"
       },
       "overview": {
         "title": "Alap adatok"
@@ -744,14 +746,38 @@
       "placeMemberships": "Hely tagságok",
       "placeMembershipsDesc": "Hely tagságok kezelése",
       "subscriptionsDesc": "Előfizetések kezelése és monitoring",
+      "analytics": "Analytics",
+      "analyticsDesc": "Site és hely analytics megtekintése, oldal megtekintések és CTA kattintások",
       "settings": "Beállítások",
       "settingsDesc": "Beállítások"
     },
     "dashboardSections": {
       "contentCreation": "Tartalom létrehozás",
       "publicAppearance": "Oldal / megjelenés / SEO",
+      "analytics": "Analytics & Insights",
       "permissions": "Jogosultságok és emberek",
       "system": "Rendszer / admin"
+    },
+    "analytics": {
+      "noData": "Nincs adat",
+      "noDataYet": "Még nincs adat",
+      "onlyAvailableOnSite": "Csak a site analytics-ban érhető el",
+      "failedToLoad": "Nem sikerült betölteni az analytics adatokat",
+      "trafficTrend": "Forgalmi trend",
+      "ctaDistribution": "CTA eloszlás",
+      "ctaBreakdown": "CTA bontás",
+      "topPlaces": "Top helyek",
+      "pageViews": "Oldal megtekintések",
+      "placeViews": "Hely megtekintések",
+      "ctaClicks": "CTA kattintások",
+      "uniqueVisitors": "Egyedi látogatók",
+      "conversionRate": "Konverziós arány",
+      "timeRange": "Időszak",
+      "days": "nap",
+      "ctaPhone": "Telefon",
+      "ctaEmail": "Email",
+      "ctaWebsite": "Weboldal",
+      "ctaMaps": "Térkép"
     },
     "viewPublicSite": "Publikus oldal megnyitása",
     "brands": "Márkák",
@@ -1152,6 +1178,7 @@
     "seoKeywordsPlaceholder": "kulcsszó1, kulcsszó2, kulcsszó3",
     "seoKeywordsHint": "Vesszővel elválasztott kulcsszavak a keresőmotorok számára",
     "eventLog": "Esemény napló",
+    "eventLog.title": "Előfizetés események",
     "eventLog.description": "Felhasználói tevékenység naplók megtekintése és kezelése",
     "eventLog.filters": "Szűrők",
     "eventLog.filterSite": "Site",

@@ -12,11 +12,15 @@ import {
   updateSubscription,
   extendSubscription,
   getSubscriptionHistory,
+  getEventLogs,
   type SubscriptionListItem,
   type SubscriptionSummary,
   type TrendPoint,
   type UpdateSubscriptionDto,
   type SubscriptionHistoryItem,
+  type EventLog,
+  type EventLogFilterDto,
+  type EventLogResponse,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
@@ -61,6 +65,13 @@ export function SubscriptionsDashboardPage() {
 
   const pageSize = 20;
 
+  // Event log state
+  const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
+  const [eventLogPage, setEventLogPage] = useState(0);
+  const [eventLogTotal, setEventLogTotal] = useState(0);
+  const [isLoadingEventLogs, setIsLoadingEventLogs] = useState(false);
+  const eventLogPageSize = 50;
+
   // Handle window resize for responsive layout
   useEffect(() => {
     const handleResize = () => {
@@ -84,6 +95,11 @@ export function SubscriptionsDashboardPage() {
   useEffect(() => {
     loadData();
   }, [scope, statusFilter, debouncedSearchQuery, planFilter, expiresWithinDays, page]);
+
+  // Load event logs
+  useEffect(() => {
+    loadEventLogs();
+  }, [eventLogPage]);
 
   const loadData = async () => {
     // Prevent multiple simultaneous loads
@@ -207,6 +223,27 @@ export function SubscriptionsDashboardPage() {
       loadData();
     } catch (err) {
       showToast(t("admin.errors.updateFailed") || "Failed to suspend", "error");
+    }
+  };
+
+  const loadEventLogs = async () => {
+    setIsLoadingEventLogs(true);
+    try {
+      // Load all event logs related to subscriptions
+      const filters: EventLogFilterDto = {
+        entityType: "subscription",
+        page: eventLogPage + 1, // API uses 1-based pagination
+        limit: eventLogPageSize,
+      };
+      const response = await getEventLogs(filters);
+      setEventLogs(response.logs || []);
+      setEventLogTotal(response.pagination?.total || 0);
+    } catch (err) {
+      console.error("Failed to load event logs:", err);
+      setEventLogs([]);
+      setEventLogTotal(0);
+    } finally {
+      setIsLoadingEventLogs(false);
     }
   };
 
@@ -1269,6 +1306,144 @@ export function SubscriptionsDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Event Log Section */}
+      <div style={{ marginTop: 48, padding: isMobile ? 16 : 24, background: "white", borderRadius: 12, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}>
+        <h2 style={{ 
+          margin: 0, 
+          marginBottom: 24, 
+          fontSize: isMobile ? 20 : 24, 
+          fontWeight: 600, 
+          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#333",
+        }}>
+          {t("admin.eventLog.title") || "Subscription Events"}
+        </h2>
+        
+        {isLoadingEventLogs ? (
+          <div style={{ padding: 48, textAlign: "center" }}>
+            <LoadingSpinner />
+          </div>
+        ) : eventLogs.length === 0 ? (
+          <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            {t("admin.eventLog.noLogs") || "No events found"}
+          </div>
+        ) : (
+          <>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
+                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                      {t("admin.eventLog.date") || "Date"}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                      {t("admin.eventLog.user") || "User"}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                      {t("admin.eventLog.action") || "Action"}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                      {t("admin.eventLog.description") || "Description"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eventLogs.map((log) => (
+                    <tr key={log.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#666" }}>
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <div>
+                          <div style={{ fontWeight: 500, color: "#333" }}>
+                            {log.user.firstName} {log.user.lastName}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#666" }}>{log.user.email}</div>
+                        </div>
+                      </td>
+                      <td style={{ padding: 12 }}>
+                        <span
+                          style={{
+                            padding: "4px 8px",
+                            background: log.action === "create" ? "#10b981" : log.action === "update" ? "#3b82f6" : log.action === "delete" ? "#ef4444" : "#6b7280",
+                            color: "white",
+                            borderRadius: 4,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {t(`admin.eventLog.actions.${log.action.toLowerCase()}`, { defaultValue: log.action })}
+                        </span>
+                      </td>
+                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#666" }}>
+                        {log.description || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination for event logs */}
+            {eventLogTotal > eventLogPageSize && (
+              <div style={{
+                marginTop: 20,
+                paddingTop: 20,
+                borderTop: "1px solid #e5e7eb",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 12,
+              }}>
+                <div style={{ 
+                  fontSize: 14, 
+                  color: "#666", 
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.showing") || "Showing"} {eventLogPage * eventLogPageSize + 1}-{Math.min((eventLogPage + 1) * eventLogPageSize, eventLogTotal)} {t("admin.of") || "of"} {eventLogTotal}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => setEventLogPage(Math.max(0, eventLogPage - 1))}
+                    disabled={eventLogPage === 0}
+                    style={{
+                      padding: "8px 16px",
+                      background: eventLogPage === 0 ? "#e5e7eb" : "#667eea",
+                      color: eventLogPage === 0 ? "#999" : "white",
+                      border: "none",
+                      borderRadius: 6,
+                      fontSize: 14,
+                      cursor: eventLogPage === 0 ? "not-allowed" : "pointer",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.previous") || "Előző"}
+                  </button>
+                  <button
+                    onClick={() => setEventLogPage(eventLogPage + 1)}
+                    disabled={(eventLogPage + 1) * eventLogPageSize >= eventLogTotal}
+                    style={{
+                      padding: "8px 16px",
+                      background: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#e5e7eb" : "#667eea",
+                      color: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#999" : "white",
+                      border: "none",
+                      borderRadius: 6,
+                      fontSize: 14,
+                      cursor: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "not-allowed" : "pointer",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.next") || "Következő"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

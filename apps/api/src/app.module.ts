@@ -22,6 +22,7 @@ import { TasksModule } from "./tasks/tasks.module";
 import { BillingModule } from "./billing/billing.module";
 import { EntitlementsModule } from "./entitlements/entitlements.module";
 import { SubscriptionModule } from "./subscription/subscription.module";
+import { AnalyticsModule } from "./analytics/analytics.module";
 import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middleware";
 import { SiteResolveMiddleware } from "./common/middleware/site-resolve.middleware";
 import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-redirect.interceptor";
@@ -62,6 +63,7 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
     BillingModule, // Billing and subscription management
     EntitlementsModule, // Entitlements and subscription management
     SubscriptionModule, // Subscription lifecycle management (cancel, expire)
+    AnalyticsModule, // Analytics tracking and dashboard
   ],
   controllers: [HealthController],
   providers: [

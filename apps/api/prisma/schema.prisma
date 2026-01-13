@@ -145,6 +145,7 @@ model Site {
   subscription      SiteSubscription?
   galleries         Gallery[]
   activeUsers       User[]             @relation("UserActiveSite")
+  analyticsDaily    AnalyticsDaily[]
 
   @@index([brandId])
   @@index([plan])
@@ -407,6 +408,7 @@ model Place {
   galleries    Gallery[]
   ratings      PlaceRating[]
   priceList    PlacePriceList?
+  analyticsDaily AnalyticsDaily[]
 
   @@index([siteId, categoryId])
   @@index([townId])
@@ -1025,4 +1027,30 @@ model Gallery {
   @@index([placeId])
   @@index([eventId])
   @@index([siteId, isActive])
+}
+
+// Analytics: Daily aggregated metrics for dashboard performance
+model AnalyticsDaily {
+  id        String   @id @default(cuid())
+  day       DateTime // date-only (00:00:00 UTC)
+  siteId    String
+  placeId   String?
+
+  pageViews       Int @default(0)
+  placeViews      Int @default(0)
+  ctaPhone        Int @default(0)
+  ctaEmail        Int @default(0)
+  ctaWebsite      Int @default(0)
+  ctaMaps         Int @default(0)
+  uniqueVisitors  Int @default(0) // MVP: daily uniq visitorId count (cron/batch later)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site  Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place Place? @relation(fields: [placeId], references: [id], onDelete: SetNull)
+
+  @@unique([day, siteId, placeId])
+  @@index([siteId, day])
+  @@index([placeId, day])
 }

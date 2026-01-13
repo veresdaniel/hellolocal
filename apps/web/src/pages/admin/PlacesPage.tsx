@@ -1641,6 +1641,43 @@ export function PlacesPage() {
                 </button>
               ),
             },
+            {
+              key: "analytics",
+              label: t("admin.analytics") || "Analytics",
+              align: "right" as const,
+              render: (place) => (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/${i18n.language || "hu"}/admin/places/${place.id}/analytics`);
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    marginLeft: 8,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                  }}
+                >
+                  {t("admin.analytics") || "Analytics"}
+                </button>
+              ),
+            },
           ]}
           cardTitle={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
@@ -1705,6 +1742,41 @@ export function PlacesPage() {
                   }}
                 >
                   {t("admin.priceList")}
+                </button>
+              ),
+            },
+            {
+              key: "analytics",
+              render: (place) => (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/${i18n.language || "hu"}/admin/places/${place.id}/analytics`);
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    marginTop: 8,
+                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                  }}
+                >
+                  {t("admin.analytics") || "Analytics"}
                 </button>
               ),
             },

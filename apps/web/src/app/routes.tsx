@@ -54,6 +54,8 @@ const PlacePriceListPage = lazy(() => import("../pages/admin/PlacePriceListPage"
 const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
 const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
 const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
+const SiteAnalyticsPage = lazy(() => import("../pages/admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
+const PlaceAnalyticsPage = lazy(() => import("../pages/admin/PlaceAnalyticsPage").then(m => ({ default: m.PlaceAnalyticsPage })));
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -262,6 +264,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "places/:placeId/analytics",
+        element: (
+          <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlaceAnalyticsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "towns",
         element: (
           <ProtectedRoute requiredRole="editor">
@@ -335,6 +349,18 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ) : (
           <NotFoundPage />
+        ),
+      },
+      {
+        path: "analytics",
+        element: (
+          <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SiteAnalyticsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
         ),
       },
       {

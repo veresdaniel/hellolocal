@@ -5,9 +5,10 @@ import { SitesController } from "./sites.controller";
 import { SitesPublicController } from "./sites-public.controller";
 import { SitesService } from "./sites.service";
 import { ConfigModule } from "@nestjs/config";
+import { EventLogModule } from "../event-log/event-log.module";
 
 @Module({
-  imports: [PrismaModule, SiteModule, ConfigModule],
+  imports: [PrismaModule, SiteModule, ConfigModule, EventLogModule],
   controllers: [SitesController, SitesPublicController],
   providers: [SitesService],
 })

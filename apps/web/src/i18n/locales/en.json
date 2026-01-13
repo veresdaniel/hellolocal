@@ -244,6 +244,7 @@
     "places": "Places",
     "priceList": "Price List",
     "priceListDesc": "Manage price list",
+    "analytics": "Analytics",
     "newBlock": "New Block",
     "newItem": "New Item",
     "blockTitle": "Block Title",
@@ -403,7 +404,8 @@
         "appearance": "Appearance",
         "map": "Map",
         "features": "Features",
-        "subscription": "Subscription"
+        "subscription": "Subscription",
+        "analytics": "Analytics"
       },
       "overview": {
         "title": "Basic Information"
@@ -635,14 +637,38 @@
       "placeMemberships": "Place Memberships",
       "placeMembershipsDesc": "Manage place memberships",
       "subscriptionsDesc": "Manage subscriptions and monitoring",
+      "analytics": "Analytics",
+      "analyticsDesc": "View site and place analytics, page views, and CTA clicks",
       "settings": "Settings",
       "settingsDesc": "Settings"
     },
     "dashboardSections": {
       "contentCreation": "Content Creation",
       "publicAppearance": "Page / Appearance / SEO",
+      "analytics": "Analytics & Insights",
       "permissions": "Permissions & People",
       "system": "System / Admin"
+    },
+    "analytics": {
+      "noData": "No data",
+      "noDataYet": "No data yet",
+      "onlyAvailableOnSite": "Only available on site analytics",
+      "failedToLoad": "Failed to load analytics data",
+      "trafficTrend": "Traffic Trend",
+      "ctaDistribution": "CTA Distribution",
+      "ctaBreakdown": "CTA Breakdown",
+      "topPlaces": "Top Places",
+      "pageViews": "Page Views",
+      "placeViews": "Place Views",
+      "ctaClicks": "CTA Clicks",
+      "uniqueVisitors": "Unique Visitors",
+      "conversionRate": "Conversion Rate",
+      "timeRange": "Time Range",
+      "days": "days",
+      "ctaPhone": "Phone",
+      "ctaEmail": "Email",
+      "ctaWebsite": "Website",
+      "ctaMaps": "Maps"
     },
     "viewPublicSite": "View Public Site",
     "brands": "Brands",
@@ -1019,6 +1045,7 @@
     "seoKeywordsPlaceholder": "keyword1, keyword2, keyword3",
     "seoKeywordsHint": "Comma-separated keywords for search engines",
     "eventLog": "Event Log",
+    "eventLog.title": "Subscription Events",
     "eventLog.description": "View and manage user activity logs",
     "eventLog.filters": "Filters",
     "eventLog.filterSite": "Site",

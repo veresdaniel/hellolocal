@@ -168,7 +168,7 @@ export function AdminDashboard() {
             ? "repeat(auto-fit, minmax(85px, 1fr))" 
             : isTablet
             ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fill, minmax(240px, min(1fr, 320px)))",
+            : "repeat(auto-fit, minmax(240px, 1fr))",
           gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
           width: "100%",
           maxWidth: "100%",
@@ -225,6 +225,34 @@ export function AdminDashboard() {
         </div>
       </div>
 
+      {/* Analytics & Insights Block - Only for editor+ */}
+      {!isGlobalViewer && (
+        <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
+          <SectionTitle label={t("admin.dashboardSections.analytics") || "Analytics & Insights"} />
+          <div style={{ 
+            display: "grid",
+            gridTemplateColumns: isMobile 
+              ? "repeat(auto-fit, minmax(85px, 1fr))" 
+              : isTablet
+              ? "repeat(auto-fit, minmax(180px, 1fr))"
+              : "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}>
+            <DashboardCard
+              title={t("admin.dashboardCards.analytics") || "Analytics"}
+              description={t("admin.dashboardCards.analyticsDesc") || "View site and place analytics, page views, and CTA clicks"}
+              link={adminPath("/analytics")}
+              icon="📊"
+              isMobile={isMobile}
+              variant="content"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Public Appearance Block */}
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <SectionTitle label={t("admin.dashboardSections.publicAppearance")} />
@@ -234,7 +262,7 @@ export function AdminDashboard() {
             ? "repeat(auto-fit, minmax(85px, 1fr))" 
             : isTablet
             ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fill, minmax(240px, min(1fr, 320px)))",
+            : "repeat(auto-fit, minmax(240px, 1fr))",
           gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
           width: "100%",
           maxWidth: "100%",

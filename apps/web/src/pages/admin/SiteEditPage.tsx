@@ -12,8 +12,9 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { MapComponent } from "../../components/MapComponent";
 import { getSite, updateSite, getBrands, getSiteInstances, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
 import { getSiteSubscription, getSiteEntitlements, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
+import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 
-type TabId = "overview" | "domain" | "appearance" | "map" | "features" | "subscription";
+type TabId = "overview" | "domain" | "appearance" | "map" | "features" | "subscription" | "analytics";
 
 export function SiteEditPage() {
   const { t, i18n } = useTranslation();
@@ -35,7 +36,7 @@ export function SiteEditPage() {
   // Initialize activeTab from URL query param or default to "overview"
   const tabFromUrl = searchParams.get("tab") as TabId | null;
   const [activeTab, setActiveTab] = useState<TabId>(
-    tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription"].includes(tabFromUrl)
+    tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(tabFromUrl)
       ? tabFromUrl
       : "overview"
   );
@@ -43,7 +44,7 @@ export function SiteEditPage() {
   // Update tab when URL changes
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab") as TabId | null;
-    if (tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription"].includes(tabFromUrl)) {
+    if (tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     }
   }, [searchParams]);
@@ -231,6 +232,7 @@ export function SiteEditPage() {
     { id: "map", label: t("admin.siteEdit.tabs.map") || "Térkép" },
     { id: "features", label: t("admin.siteEdit.tabs.features") || "Funkciók" },
     { id: "subscription", label: t("admin.siteEdit.tabs.subscription") || "Előfizetés" },
+    { id: "analytics", label: t("admin.siteEdit.tabs.analytics") || "Analytics" },
   ];
 
   return (
@@ -403,6 +405,11 @@ export function SiteEditPage() {
             showToast={showToast}
             t={t}
           />
+        )}
+        {activeTab === "analytics" && (
+          <div>
+            <SiteAnalyticsPage />
+          </div>
         )}
         </div>
       </div>

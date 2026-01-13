@@ -1,0 +1,110 @@
+import { create } from "zustand";
+
+type Range = 7 | 30 | 90;
+
+type SiteDashboard = {
+  scope: "site";
+  days: number;
+  summary: {
+    pageViews: number;
+    placeViews: number;
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+  };
+  timeseries: Array<{
+    day: string;
+    pageViews: number;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+  ctaBreakdown: {
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+  };
+  topPlaces: Array<{
+    placeId: string;
+    name: string;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+};
+
+type PlaceDashboard = {
+  scope: "place";
+  placeId: string;
+  days: number;
+  summary: {
+    placeViews: number;
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+    ctaTotal: number;
+    conversionPct: number;
+  };
+  timeseries: Array<{
+    day: string;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+  ctaBreakdown: {
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+  };
+};
+
+type State = {
+  loading: boolean;
+  error?: string;
+  site?: SiteDashboard;
+  place?: PlaceDashboard;
+  fetchSite: (range: Range, lang?: string) => Promise<void>;
+  fetchPlace: (placeId: string, range: Range, lang?: string) => Promise<void>;
+};
+
+export const useAnalyticsStore = create<State>((set) => ({
+  loading: false,
+  error: undefined,
+  site: undefined,
+  place: undefined,
+
+  fetchSite: async (range, lang = "hu") => {
+    set({ loading: true, error: undefined });
+    try {
+      const r = await fetch(`/api/${lang}/analytics/site?range=${range}`, { 
+        credentials: "include" 
+      });
+      if (!r.ok) {
+        const errorText = await r.text();
+        throw new Error(`HTTP ${r.status}: ${errorText}`);
+      }
+      const data = await r.json();
+      set({ site: data, loading: false });
+    } catch (e: any) {
+      set({ error: e?.message ?? "Failed to fetch analytics", loading: false });
+    }
+  },
+
+  fetchPlace: async (placeId, range, lang = "hu") => {
+    set({ loading: true, error: undefined });
+    try {
+      const r = await fetch(`/api/${lang}/analytics/place/${placeId}?range=${range}`, { 
+        credentials: "include" 
+      });
+      if (!r.ok) {
+        const errorText = await r.text();
+        throw new Error(`HTTP ${r.status}: ${errorText}`);
+      }
+      const data = await r.json();
+      set({ place: data, loading: false });
+    } catch (e: any) {
+      set({ error: e?.message ?? "Failed to fetch analytics", loading: false });
+    }
+  },
+}));

@@ -391,7 +391,8 @@
         "appearance": "Erscheinungsbild",
         "map": "Karte",
         "features": "Funktionen",
-        "subscription": "Abonnement"
+        "subscription": "Abonnement",
+        "analytics": "Analytics"
       },
       "overview": {
         "title": "Grundinformationen"
@@ -625,8 +626,30 @@
     "dashboardSections": {
       "contentCreation": "Inhaltserstellung",
       "publicAppearance": "Seite / Erscheinungsbild / SEO",
+      "analytics": "Analytics & Insights",
       "permissions": "Berechtigungen & Personen",
       "system": "System / Admin"
+    },
+    "analytics": {
+      "noData": "Keine Daten",
+      "noDataYet": "Noch keine Daten",
+      "onlyAvailableOnSite": "Nur in der Site-Analyse verfügbar",
+      "failedToLoad": "Analysedaten konnten nicht geladen werden",
+      "trafficTrend": "Verkehrstrend",
+      "ctaDistribution": "CTA-Verteilung",
+      "ctaBreakdown": "CTA-Aufschlüsselung",
+      "topPlaces": "Top Orte",
+      "pageViews": "Seitenaufrufe",
+      "placeViews": "Ortsaufrufe",
+      "ctaClicks": "CTA-Klicks",
+      "uniqueVisitors": "Eindeutige Besucher",
+      "conversionRate": "Conversion-Rate",
+      "timeRange": "Zeitraum",
+      "days": "Tage",
+      "ctaPhone": "Telefon",
+      "ctaEmail": "E-Mail",
+      "ctaWebsite": "Website",
+      "ctaMaps": "Karte"
     },
     "viewPublicSite": "Öffentliche Seite öffnen",
     "brands": "Marken",
@@ -1009,6 +1032,7 @@
     "seoKeywordsPlaceholder": "Stichwort1, Stichwort2, Stichwort3",
     "seoKeywordsHint": "Durch Komma getrennte Stichwörter für Suchmaschinen",
     "eventLog": "Ereignisprotokoll",
+    "eventLog.title": "Abonnement-Ereignisse",
     "eventLog.description": "Benutzeraktivitätsprotokolle anzeigen und verwalten",
     "eventLog.filters": "Filter",
     "eventLog.filterSite": "Site",

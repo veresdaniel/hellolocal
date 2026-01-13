@@ -85,6 +85,22 @@ export default defineConfig({
         });
       },
     },
+    {
+      name: 'suppress-tabreply-warning',
+      configureServer(server) {
+        // Suppress "tabReply will be removed" deprecation warning
+        // This warning typically comes from browser extensions or Vite's HMR
+        const originalWarn = console.warn;
+        console.warn = (...args: unknown[]) => {
+          const message = args.join(' ');
+          if (typeof message === 'string' && message.includes('tabReply')) {
+            // Suppress this specific warning
+            return;
+          }
+          originalWarn.apply(console, args);
+        };
+      },
+    },
   ],
   define: {
     // Inject version from package.json at build time

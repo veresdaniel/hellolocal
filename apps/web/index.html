@@ -14,6 +14,22 @@
   </head>
   <body style="margin: 0 !important; padding: 0 !important;">
     <div id="root"></div>
+    <script>
+      // Suppress "tabReply will be removed" deprecation warning
+      // This warning typically comes from browser extensions (e.g., React DevTools)
+      // or Vite's HMR system and is not from our application code
+      (function() {
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+          const message = args.join(' ');
+          if (typeof message === 'string' && message.includes('tabReply')) {
+            // Suppress this specific deprecation warning
+            return;
+          }
+          originalWarn.apply(console, args);
+        };
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
