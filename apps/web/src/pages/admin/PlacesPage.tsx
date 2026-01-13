@@ -1643,7 +1643,7 @@ export function PlacesPage() {
             },
             {
               key: "analytics",
-              label: t("admin.analytics") || "Analytics",
+              label: t("admin.analyticsLabel") || "Analytics",
               align: "right" as const,
               render: (place) => (
                 <button
@@ -1674,7 +1674,7 @@ export function PlacesPage() {
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                   }}
                 >
-                  {t("admin.analytics") || "Analytics"}
+                  {t("admin.analyticsLabel") || "Analytics"}
                 </button>
               ),
             },
@@ -1776,7 +1776,7 @@ export function PlacesPage() {
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                   }}
                 >
-                  {t("admin.analytics") || "Analytics"}
+                  {t("admin.analyticsLabel") || "Analytics"}
                 </button>
               ),
             },

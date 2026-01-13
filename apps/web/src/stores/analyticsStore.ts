@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { apiGet } from "../api/client";
 
 type Range = 7 | 30 | 90;
 
@@ -77,14 +78,7 @@ export const useAnalyticsStore = create<State>((set) => ({
   fetchSite: async (range, lang = "hu") => {
     set({ loading: true, error: undefined });
     try {
-      const r = await fetch(`/api/${lang}/analytics/site?range=${range}`, { 
-        credentials: "include" 
-      });
-      if (!r.ok) {
-        const errorText = await r.text();
-        throw new Error(`HTTP ${r.status}: ${errorText}`);
-      }
-      const data = await r.json();
+      const data = await apiGet<SiteDashboard>(`/${lang}/analytics/site?range=${range}`);
       set({ site: data, loading: false });
     } catch (e: any) {
       set({ error: e?.message ?? "Failed to fetch analytics", loading: false });
@@ -94,14 +88,7 @@ export const useAnalyticsStore = create<State>((set) => ({
   fetchPlace: async (placeId, range, lang = "hu") => {
     set({ loading: true, error: undefined });
     try {
-      const r = await fetch(`/api/${lang}/analytics/place/${placeId}?range=${range}`, { 
-        credentials: "include" 
-      });
-      if (!r.ok) {
-        const errorText = await r.text();
-        throw new Error(`HTTP ${r.status}: ${errorText}`);
-      }
-      const data = await r.json();
+      const data = await apiGet<PlaceDashboard>(`/${lang}/analytics/place/${placeId}?range=${range}`);
       set({ place: data, loading: false });
     } catch (e: any) {
       set({ error: e?.message ?? "Failed to fetch analytics", loading: false });

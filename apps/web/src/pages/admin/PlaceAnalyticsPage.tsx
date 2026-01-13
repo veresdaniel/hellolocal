@@ -14,7 +14,7 @@ export function PlaceAnalyticsPage() {
   const [placeName, setPlaceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   
-  usePageTitle("admin.analytics");
+  usePageTitle("admin.analyticsLabel");
 
   useEffect(() => {
     if (placeId) {
@@ -42,7 +42,7 @@ export function PlaceAnalyticsPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
-        title={`${t("admin.analytics") || "Analytics"}: ${placeName}`}
+        title={`${t("admin.analyticsLabel") || "Analytics"}: ${placeName}`}
         subtitle={t("admin.dashboardCards.analyticsDesc") || "View place analytics, views, and CTA clicks"}
         showNewButton={false}
         backTo={`/${lang || i18n.language || "hu"}/admin/places/${placeId}`}

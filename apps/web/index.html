@@ -1,4 +1,31 @@
 <!doctype html>
+<script>
+  // CRITICAL: This must run IMMEDIATELY, before any other scripts
+  // Suppress "tabReply will be removed" deprecation warning from browser extensions
+  (function() {
+    'use strict';
+    if (typeof console === 'undefined') return;
+    
+    const filterTabReply = function(...args) {
+      const message = String(args.join(' '));
+      return message.includes('tabReply') || message.includes('tabReply will be removed');
+    };
+    
+    // Intercept all console methods that might log the warning
+    const methods = ['warn', 'error', 'log', 'info'];
+    methods.forEach(method => {
+      if (console[method]) {
+        const original = console[method];
+        console[method] = function(...args) {
+          if (filterTabReply(...args)) {
+            return; // Suppress tabReply warnings
+          }
+          original.apply(console, args);
+        };
+      }
+    });
+  })();
+</script>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,25 +38,6 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#667eea" />
     <title></title>
-    <script>
-      // Suppress "tabReply will be removed" deprecation warning
-      // This warning comes from browser extensions (e.g., TronWeb wallet extension)
-      // and is not from our application code. Filter must run early in <head> to catch
-      // extension-injected scripts that run before page scripts.
-      (function() {
-        if (typeof console !== 'undefined' && console.warn) {
-          const originalWarn = console.warn;
-          console.warn = function(...args) {
-            const message = String(args.join(' '));
-            if (message.includes('tabReply') || message.includes('tabReply will be removed')) {
-              // Suppress this specific deprecation warning from browser extensions
-              return;
-            }
-            originalWarn.apply(console, args);
-          };
-        }
-      })();
-    </script>
   </head>
   <body style="margin: 0 !important; padding: 0 !important;">
     <div id="root"></div>

@@ -14,6 +14,28 @@ import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { ReactNode } from "react";
 
+// Backup filter for "tabReply" deprecation warnings from browser extensions
+// The main filter runs in index.html, but this ensures coverage if extensions inject later
+if (typeof window !== "undefined" && typeof console !== "undefined") {
+  const filterTabReply = (...args: unknown[]) => {
+    const message = String(args.join(" "));
+    return message.includes("tabReply") || message.includes("tabReply will be removed");
+  };
+  
+  const methods = ["warn", "error", "log", "info"] as const;
+  methods.forEach((method) => {
+    if (console[method]) {
+      const current = console[method];
+      console[method] = function (...args: unknown[]) {
+        if (filterTabReply(...args)) {
+          return; // Suppress tabReply warnings
+        }
+        current.apply(console, args);
+      } as typeof console[typeof method];
+    }
+  });
+}
+
 // Component to initialize default language and service worker
 function AppInitializer({ children }: { children: ReactNode }) {
   useDefaultLanguage();
