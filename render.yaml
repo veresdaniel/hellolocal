@@ -5,7 +5,7 @@ services:
     env: node
     rootDir: apps/api
     buildCommand: npm install -g pnpm@10.27.0 && pnpm install && pnpm prisma generate && pnpm run build
-    startCommand: pnpm prisma migrate deploy && node dist/main.js
+    startCommand: pnpm db:setup:reset && node dist/main.js
     envVars:
       - key: NODE_ENV
         value: production
