@@ -1,4 +1,4 @@
-import { Controller, Get, Param, BadRequestException, Logger } from "@nestjs/common";
+import { Controller, Get, Param, BadRequestException, NotFoundException, Logger } from "@nestjs/common";
 import { GalleryPublicService } from "./gallery-public.service";
 
 /**
@@ -42,11 +42,19 @@ export class GalleryPublicController {
     try {
       return await this.galleryService.findOne(lang, siteKey, id);
     } catch (error) {
+      // Re-throw NotFoundException and BadRequestException as-is (they have proper status codes)
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      
+      // Log and re-throw other errors
       this.logger.error(
         `Error getting gallery: lang=${lang}, siteKey=${siteKey}, id=${id}`,
         error instanceof Error ? error.stack : String(error)
       );
-      throw error;
+      
+      // For unexpected errors, throw as NotFoundException to avoid exposing internal errors
+      throw new NotFoundException("Gallery not found");
     }
   }
 }

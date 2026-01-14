@@ -313,7 +313,7 @@ export function ErrorPage() {
         </p>
 
         {/* Show error details in development mode */}
-        {process.env.NODE_ENV !== "production" && errorDetails && (
+        {import.meta.env.DEV && errorDetails && (
           <details
             style={{
               marginBottom: 32,

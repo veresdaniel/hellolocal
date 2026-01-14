@@ -13,11 +13,15 @@ import { ErrorState } from "../components/ErrorState";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { HAS_MULTIPLE_SITES } from "../app/config";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
+import { useAuth } from "../contexts/AuthContext";
+import { getSiteMemberships } from "../api/admin.api";
+import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 
 export function StaticPageDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { lang, siteKey } = useSiteContext();
+  const { isAuthenticated, user } = useAuth();
   const safeLang = lang ?? "hu";
 
   // Get siteKey for API call (only if multi-site mode)
@@ -226,6 +230,53 @@ export function StaticPageDetailPage() {
     }
   }, [staticPage?.content]);
 
+  // Check if user can edit this static page (site admin permissions)
+  const [canEditStaticPage, setCanEditStaticPage] = useState(false);
+  const [staticPageSiteId, setStaticPageSiteId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (staticPage?.siteId) {
+      setStaticPageSiteId(staticPage.siteId);
+    }
+  }, [staticPage?.siteId]);
+
+  // Check static page permissions
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!isAuthenticated || !user || !staticPageSiteId) {
+        setCanEditStaticPage(false);
+        return;
+      }
+
+      try {
+        // Check global role (superadmin, admin, editor can edit)
+        if (isSuperadmin(user.role) || isAdmin(user.role) || canEdit(user.role)) {
+          setCanEditStaticPage(true);
+          return;
+        }
+
+        // Check site-level role
+        try {
+          const siteMemberships = await getSiteMemberships(staticPageSiteId, user.id);
+          const siteMembership = siteMemberships.find(m => m.siteId === staticPageSiteId && m.userId === user.id);
+          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+            setCanEditStaticPage(true);
+            return;
+          }
+        } catch (err) {
+          // Site membership check failed
+        }
+
+        setCanEditStaticPage(false);
+      } catch (err) {
+        console.error("Failed to check static page permissions", err);
+        setCanEditStaticPage(false);
+      }
+    };
+
+    checkPermissions();
+  }, [isAuthenticated, user, staticPageSiteId]);
+
   if (error || (!isLoading && !staticPage)) {
     return (
       <ErrorState
@@ -240,10 +291,15 @@ export function StaticPageDetailPage() {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
 
+  // Build edit URL if user can edit
+  const editUrl = canEditStaticPage && id 
+    ? `/${lang}/admin/static-pages?edit=${id}`
+    : undefined;
+
   return (
     <>
       <LoadingSpinner isLoading={isLoading} />
-      <FloatingHeader />
+      <FloatingHeader editUrl={editUrl} showEditButton={canEditStaticPage} />
       <div
         style={{
           minHeight: "100vh",

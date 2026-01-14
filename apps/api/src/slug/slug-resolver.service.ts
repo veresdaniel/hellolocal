@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Lang, SlugEntityType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { generateSlug } from "./slug.helper";
 
 export type ResolvedSlug = {
   siteId: string;
@@ -39,7 +40,7 @@ export class SlugResolverService {
   async resolve(args: { siteId: string; lang: Lang; slug: string }): Promise<ResolvedSlug> {
     // Look up the slug in the Slug table
     // The unique constraint is on (siteId, lang, slug)
-    const hit = await this.prisma.slug.findUnique({
+    let hit = await this.prisma.slug.findUnique({
       where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: args.slug } },
       select: {
         id: true,
@@ -59,6 +60,34 @@ export class SlugResolverService {
         },
       },
     });
+
+    // Fallback: If slug not found and contains accented characters, try normalized version
+    if (!hit || !hit.isActive) {
+      const normalizedSlug = generateSlug(args.slug);
+      // Only try fallback if the normalized slug is different from the original
+      if (normalizedSlug !== args.slug && normalizedSlug) {
+        hit = await this.prisma.slug.findUnique({
+          where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: normalizedSlug } },
+          select: {
+            id: true,
+            siteId: true,
+            lang: true,
+            slug: true,
+            entityType: true,
+            entityId: true,
+            isActive: true,
+            isPrimary: true,
+            redirectToId: true,
+            redirectTo: {
+              select: {
+                slug: true,
+                isActive: true,
+              },
+            },
+          },
+        });
+      }
+    }
 
     if (!hit || !hit.isActive) throw new NotFoundException("Slug not found");
 

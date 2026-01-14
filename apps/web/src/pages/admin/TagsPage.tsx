@@ -14,6 +14,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 interface Tag {
   id: string;
@@ -187,7 +189,7 @@ export function TagsPage() {
 
   const startEdit = (tag: Tag) => {
     setEditingId(tag.id);
-    const hu = tag.translations.find((t) => t.lang === "hu");
+    const hu = findTranslation(tag.translations, "hu" as Lang);
     const en = tag.translations.find((t) => t.lang === "en");
     const de = tag.translations.find((t) => t.lang === "de");
     setFormData({
@@ -363,9 +365,9 @@ export function TagsPage() {
           isLoading={isLoading}
           filterFn={(tag, query) => {
             const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = tag.translations.find((t) => t.lang === currentLang) || 
-                               tag.translations.find((t) => t.lang === "hu");
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+            const translation = findTranslation(tag.translations, currentLang) || 
+                               findTranslation(tag.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -401,9 +403,9 @@ export function TagsPage() {
             },
           ]}
           cardTitle={(tag) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = tag.translations.find((t) => t.lang === currentLang) || 
-                               tag.translations.find((t) => t.lang === "hu");
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+            const translation = findTranslation(tag.translations, currentLang) || 
+                               findTranslation(tag.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(tag) => `#${tag.id.slice(0, 8)}`}

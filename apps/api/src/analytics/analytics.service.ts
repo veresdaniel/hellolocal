@@ -47,7 +47,16 @@ export class AnalyticsService {
 
     const day = this.toDayStart(new Date());
 
-    const inc: any = {};
+    type IncrementFields = {
+      pageViews?: number;
+      placeViews?: number;
+      ctaPhone?: number;
+      ctaEmail?: number;
+      ctaWebsite?: number;
+      ctaMaps?: number;
+    };
+
+    const inc: IncrementFields = {};
     if (args.dto.type === "page_view") inc.pageViews = 1;
     if (args.dto.type === "place_view") inc.placeViews = 1;
     if (args.dto.type === "cta_click") {
@@ -76,7 +85,7 @@ export class AnalyticsService {
           siteId: site.siteId,
           placeId: placeId ?? null,
         },
-      } as any as { day_siteId_placeId: { day: Date; siteId: string; placeId: string | null } },
+      } as any,
       create: {
         day,
         siteId: site.siteId,
@@ -268,6 +277,94 @@ export class AnalyticsService {
         ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps,
       })),
       ctaBreakdown: summary,
+    };
+  }
+
+  async getEventDashboard(args: { 
+    lang: string; 
+    siteKey?: string; 
+    eventId: string; 
+    rangeDays: number;
+    userId: string;
+  }) {
+    if (!args.userId) {
+      throw new BadRequestException("userId is required");
+    }
+    if (!args.eventId) {
+      throw new BadRequestException("eventId is required");
+    }
+    const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
+
+    // RBAC check: event editor+ required (similar to place)
+    // For now, we'll check if user has site editor+ permission
+    // TODO: Add event-specific permission check if needed
+    const hasPermission = await this.rbacService.hasSitePermission(
+      args.userId,
+      site.siteId,
+      "editor"
+    );
+    if (!hasPermission) {
+      throw new ForbiddenException("Insufficient permissions. Required: editor or higher");
+    }
+
+    const plan = await this.getSitePlan(site.siteId);
+    const days = this.clampRangeByPlan(plan, args.rangeDays);
+    const from = new Date();
+    from.setDate(from.getDate() - (days - 1));
+    const fromDay = this.toDayStart(from);
+
+    // For events, we'll use placeViews as eventViews for now
+    // TODO: Add eventId to AnalyticsDaily table if needed
+    // For now, we'll return empty data structure
+    // In a real implementation, you'd query event-specific analytics
+    const rows: Array<{
+      day: Date;
+      placeViews: number;
+      ctaPhone: number;
+      ctaEmail: number;
+      ctaWebsite: number;
+      ctaMaps: number;
+    }> = [];
+
+    const summary = rows.reduce(
+      (acc, r) => {
+        acc.placeViews += r.placeViews;
+        acc.ctaPhone += r.ctaPhone;
+        acc.ctaEmail += r.ctaEmail;
+        acc.ctaWebsite += r.ctaWebsite;
+        acc.ctaMaps += r.ctaMaps;
+        return acc;
+      },
+      { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0 }
+    );
+
+    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps;
+    const conversion = summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
+
+    return {
+      scope: "event",
+      eventId: args.eventId,
+      days,
+      summary: { 
+        eventViews: summary.placeViews, // Using placeViews as eventViews for now
+        ctaPhone: summary.ctaPhone,
+        ctaEmail: summary.ctaEmail,
+        ctaWebsite: summary.ctaWebsite,
+        ctaMaps: summary.ctaMaps,
+        ctaTotal, 
+        conversionPct: conversion 
+      },
+      timeseries: rows.map(r => ({
+        day: r.day.toISOString().slice(0, 10),
+        eventViews: r.placeViews, // Using placeViews as eventViews for now
+        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps,
+      })),
+      ctaBreakdown: {
+        ctaPhone: summary.ctaPhone,
+        ctaEmail: summary.ctaEmail,
+        ctaWebsite: summary.ctaWebsite,
+        ctaMaps: summary.ctaMaps,
+      },
     };
   }
 }

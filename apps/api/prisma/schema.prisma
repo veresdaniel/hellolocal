@@ -794,6 +794,13 @@ model EventTranslation {
   shortDescription String? // 2-line description
   description      String? // Full description (HTML)
 
+  // Contact information
+  phone    String?
+  email    String?
+  website  String?
+  facebook String?
+  whatsapp String?
+
   // SEO
   seoTitle       String?
   seoDescription String?

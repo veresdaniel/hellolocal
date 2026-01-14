@@ -22,6 +22,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
+import { ROLE_SUPERADMIN } from "../../types/enums";
 
 export function EventLogPage() {
   const { t } = useTranslation();
@@ -376,7 +377,7 @@ export function EventLogPage() {
         <h3 style={{ marginTop: 0, marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.eventLog.filters")}</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
           {/* Site Filter */}
-          {HAS_MULTIPLE_SITES && (currentUser?.role === "superadmin" || sites.length > 1) && (
+          {HAS_MULTIPLE_SITES && (currentUser?.role === ROLE_SUPERADMIN || sites.length > 1) && (
             <div>
               <label style={{ display: "block", marginBottom: 4, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.eventLog.filterSite")}

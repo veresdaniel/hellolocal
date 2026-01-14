@@ -9,7 +9,7 @@ export function LanguageSelector() {
   const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { lang: currentLang, tenantKey } = useRouteCtx();
+  const { lang: currentLang, siteKey } = useRouteCtx();
   const isAdminPage = location.pathname.includes("/admin");
 
   const handleLanguageChange = (lang: "hu" | "en" | "de") => {

@@ -207,7 +207,7 @@ export class RbacService {
    * Get user's places (places where user has membership)
    */
   async getUserPlaces(userId: string, siteId?: string): Promise<string[]> {
-    const where: any = { userId };
+    const where: { userId: string; place?: { siteId: string } } = { userId };
     if (siteId) {
       where.place = { siteId };
     }

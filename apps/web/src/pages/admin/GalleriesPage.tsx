@@ -51,6 +51,7 @@ export function GalleriesPage() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -155,6 +156,50 @@ export function GalleriesPage() {
     }));
   };
 
+  const handleAddImageUrl = () => {
+    const url = imageUrlInput.trim();
+    if (!url) return;
+
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      setError(t("admin.errors.invalidUrl") || "Invalid URL");
+      return;
+    }
+
+    // Get image dimensions if possible
+    const imageId = generateId();
+    const newImage: GalleryImage = {
+      id: imageId,
+      src: url,
+      alt: "",
+      caption: "",
+    };
+
+    // Add image first
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, newImage],
+    }));
+    setImageUrlInput("");
+
+    // Try to get image dimensions
+    const img = new Image();
+    img.onload = () => {
+      setFormData((prev) => ({
+        ...prev,
+        images: prev.images.map((imgItem) =>
+          imgItem.id === imageId ? { ...imgItem, width: img.width, height: img.height } : imgItem
+        ),
+      }));
+    };
+    img.onerror = () => {
+      // Image failed to load, but we'll still keep it in the list
+    };
+    img.src = url;
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -214,12 +259,12 @@ export function GalleriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (gallery: { id: string }) => {
     if (!selectedSiteId) return;
     if (!confirm(t("admin.confirmations.deleteGallery"))) return;
 
     try {
-      await deleteGallery(id, selectedSiteId);
+      await deleteGallery(gallery.id, selectedSiteId);
       await loadGalleries();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteGalleryFailed"));
@@ -332,7 +377,7 @@ export function GalleriesPage() {
   ];
 
   if (isSiteLoading || isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner isLoading={true} />;
   }
 
   if (!selectedSiteId) {
@@ -388,22 +433,60 @@ export function GalleriesPage() {
               onChange={(e) => handleFileSelect(e.target.files)}
               style={{ display: "none" }}
             />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              style={{
-                padding: "8px 16px",
-                background: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: isUploading ? "not-allowed" : "pointer",
-                marginBottom: "12px",
-              }}
-            >
-              {isUploading ? t("admin.common.uploading") : t("admin.galleries.addImages")}
-            </button>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                style={{
+                  padding: "8px 16px",
+                  background: "#667eea",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: isUploading ? "not-allowed" : "pointer",
+                }}
+              >
+                {isUploading ? t("admin.common.uploading") : t("admin.galleries.addImages")}
+              </button>
+              <div style={{ display: "flex", gap: "8px", flex: 1, minWidth: "200px" }}>
+                <input
+                  type="url"
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddImageUrl();
+                    }
+                  }}
+                  placeholder={t("admin.galleries.addImageUrl") || "Add image URL..."}
+                  style={{
+                    flex: 1,
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    fontSize: "14px",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImageUrl}
+                  disabled={!imageUrlInput.trim()}
+                  style={{
+                    padding: "8px 16px",
+                    background: imageUrlInput.trim() ? "#10b981" : "#ccc",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: imageUrlInput.trim() ? "pointer" : "not-allowed",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("admin.common.add") || "Add"}
+                </button>
+              </div>
+            </div>
 
             {formData.images.length > 0 && (
               <div

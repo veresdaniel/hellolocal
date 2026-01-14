@@ -1,6 +1,8 @@
 // src/components/CategoryAutocomplete.tsx
 import { useTranslation } from "react-i18next";
 import { BaseAutocomplete, AutocompleteItem } from "./BaseAutocomplete";
+import { getTranslation, getHuTranslation } from "../utils/langHelpers";
+import type { Lang } from "../types/enums";
 
 interface Category extends AutocompleteItem {
   id: string;
@@ -53,10 +55,10 @@ export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
         : []);
 
   const getCategoryName = (category: Category) => {
-    return category.translations.find((t) => t.lang === currentLang)?.name || 
-           category.translations.find((t) => t.lang === "hu")?.name || 
-           category.translations[0]?.name || 
-           category.id;
+    const currentLangCode = currentLang.split("-")[0] as Lang;
+    const translation = getTranslation(category.translations, currentLangCode, true) || 
+                       getHuTranslation(category.translations);
+    return translation?.name || category.id;
   };
 
   const handleSelect = (categoryId: string) => {

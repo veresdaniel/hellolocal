@@ -12,6 +12,7 @@ import {
 } from "../../api/admin.api";
 import type { User } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 
 export function UserProfilePage() {
   const { t } = useTranslation();
@@ -482,11 +483,11 @@ export function UserProfilePage() {
                   padding: "4px 12px",
                   borderRadius: 6,
                   background:
-                    user.role === "superadmin"
+                    user.role === ROLE_SUPERADMIN
                       ? "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-                      : user.role === "admin"
+                      : user.role === ROLE_ADMIN
                       ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                      : user.role === "editor"
+                      : user.role === ROLE_EDITOR
                       ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)"
                       : "#6c757d",
                   color: "white",
@@ -550,7 +551,7 @@ export function UserProfilePage() {
             boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
             border: "1px solid rgba(102, 126, 234, 0.1)",
           }}>
-            {!user.tenants || user.tenants.length === 0 ? (
+            {!user.sites || user.sites.length === 0 ? (
               <div style={{ 
                 color: "#6b7280", 
                 fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -558,13 +559,13 @@ export function UserProfilePage() {
               }}>{t("admin.profile.noTenantsAssigned")}</div>
             ) : (
               <ul style={{ margin: 0, paddingLeft: 20, color: "#374151" }}>
-                {user.tenants.map((ut: any) => (
-                  <li key={ut.id} style={{ 
+                {user.sites.map((ut) => (
+                  <li key={ut.siteId} style={{ 
                     marginBottom: 8, 
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}>
-                    {ut.tenant.slug}
+                    {ut.site.slug}
                     {ut.isPrimary && <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>★ {t("admin.profile.primary")}</span>}
                   </li>
                 ))}

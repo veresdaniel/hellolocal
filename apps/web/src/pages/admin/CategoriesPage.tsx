@@ -20,6 +20,8 @@ import {
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 interface Category {
   id: string;
@@ -211,9 +213,9 @@ export function CategoriesPage() {
 
   const startEdit = (category: Category) => {
     setEditingId(category.id);
-    const hu = category.translations.find((t) => t.lang === "hu");
-    const en = category.translations.find((t) => t.lang === "en");
-    const de = category.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(category.translations, "hu" as Lang);
+    const en = findTranslation(category.translations, "en" as Lang);
+    const de = findTranslation(category.translations, "de" as Lang);
     setFormData({
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
@@ -379,13 +381,13 @@ export function CategoriesPage() {
               {categories
                 .filter((cat) => !editingId || cat.id !== editingId) // Don't allow self as parent
                 .map((cat) => {
-                  const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                  const translation = cat.translations.find((t) => t.lang === currentLang) || 
-                                     cat.translations.find((t) => t.lang === "hu");
+                  const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                  const translation = findTranslation(cat.translations, currentLang) || 
+                                     findTranslation(cat.translations, "hu" as Lang);
                   const displayName = translation?.name || cat.id;
                   const parentName = cat.parent 
-                    ? (cat.parent.translations.find((t) => t.lang === currentLang) || 
-                       cat.parent.translations.find((t) => t.lang === "hu"))?.name || ""
+                    ? (findTranslation(cat.parent.translations, currentLang) || 
+                       findTranslation(cat.parent.translations, "hu" as Lang))?.name || ""
                     : "";
                   return (
                     <option key={cat.id} value={cat.id}>

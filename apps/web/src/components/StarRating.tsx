@@ -142,7 +142,7 @@ export function StarRating({
               }}
               title={
                 interactive
-                  ? `${star} ${star === 1 ? (i18n.language === "hu" ? "csillag" : i18n.language === "en" ? "star" : "Stern") : i18n.language === "hu" ? "csillag" : i18n.language === "en" ? "stars" : "Sterne"} - ${i18n.language === "hu" ? "Kattints az értékeléshez" : i18n.language === "en" ? "Click to rate" : "Klicken zum Bewerten"}`
+                  ? `${star} ${star === 1 ? t("public.rating.starSingular") : t("public.rating.starPlural")} - ${t("public.rating.clickToRate")}`
                   : undefined
               }
             >

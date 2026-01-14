@@ -4,6 +4,7 @@ import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/cli
 import { NotificationsService } from "../notifications/notifications.service";
 import { RbacService } from "../auth/rbac.service";
 import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
+import { generateSlug } from "../slug/slug.helper";
 
 export interface CreateEventDto {
   siteId: string;
@@ -15,8 +16,14 @@ export interface CreateEventDto {
   translations: Array<{
     lang: Lang;
     title: string;
+    slug?: string | null; // Optional custom slug, if not provided, will be generated from title
     shortDescription?: string | null;
     description?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+    facebook?: string | null;
+    whatsapp?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
     seoImage?: string | null;
@@ -42,8 +49,14 @@ export interface UpdateEventDto {
   translations?: Array<{
     lang: Lang;
     title: string;
+    slug?: string | null; // Optional custom slug, if not provided, will be generated from title
     shortDescription?: string | null;
     description?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+    facebook?: string | null;
+    whatsapp?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
     seoImage?: string | null;
@@ -69,25 +82,27 @@ export class AdminEventService {
     private readonly rbacService: RbacService
   ) {}
 
-  /**
-   * Generate a URL-friendly slug from text
-   */
-  private generateSlug(text: string): string {
-    return text
-      .toLowerCase()
-      .normalize("NFD") // Decompose accented characters
-      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
-      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-  }
 
   /**
    * Create slugs for an event in all languages
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForEvent(eventId: string, siteId: string, translations: Array<{ lang: Lang; title: string }>, throwOnConflict: boolean = false) {
+  private async createSlugsForEvent(eventId: string, siteId: string, translations: Array<{ lang: Lang; title: string; slug?: string | null }>, throwOnConflict: boolean = false) {
     for (const translation of translations) {
-      const baseSlug = this.generateSlug(translation.title);
+      // If custom slug is provided, use it (normalized), otherwise generate from title
+      let baseSlug: string;
+      if (translation.slug && translation.slug.trim() !== "") {
+        // Use custom slug, but normalize it
+        baseSlug = generateSlug(translation.slug);
+      } else {
+        // Generate slug from title
+        baseSlug = generateSlug(translation.title);
+      }
+      
+      if (!baseSlug || baseSlug.trim() === "") {
+        // If slug is empty, use event ID as fallback
+        baseSlug = `event-${eventId}`;
+      }
       let slug = baseSlug;
       let counter = 1;
 
@@ -155,12 +170,25 @@ export class AdminEventService {
   private async createSlugsForEventWithRedirects(
     eventId: string,
     siteId: string,
-    translations: Array<{ lang: Lang; title: string }>,
+    translations: Array<{ lang: Lang; title: string; slug?: string | null }>,
     existingSlugsByLang: Map<Lang, any>,
     throwOnConflict: boolean = false
   ) {
     for (const translation of translations) {
-      const baseSlug = this.generateSlug(translation.title);
+      // If custom slug is provided, use it (normalized), otherwise generate from title
+      let baseSlug: string;
+      if (translation.slug && translation.slug.trim() !== "") {
+        // Use custom slug, but normalize it
+        baseSlug = generateSlug(translation.slug);
+      } else {
+        // Generate slug from title
+        baseSlug = generateSlug(translation.title);
+      }
+      
+      if (!baseSlug || baseSlug.trim() === "") {
+        // If slug is empty, use event ID as fallback
+        baseSlug = `event-${eventId}`;
+      }
       let slug = baseSlug;
       let counter = 1;
 
@@ -214,9 +242,12 @@ export class AdminEventService {
 
       if (existingSlug) {
         const oldSlug = existingSlug.slug;
+        // Normalize the old slug to check if it contains accents
+        const normalizedOldSlug = generateSlug(oldSlug);
+        const needsNormalization = normalizedOldSlug !== oldSlug && normalizedOldSlug === slug;
 
-        // If the slug has changed, create a redirect from old to new
-        if (oldSlug !== slug) {
+        // If the slug has changed OR the old slug contains accents (needs normalization), create a redirect from old to new
+        if (oldSlug !== slug || needsNormalization) {
           // Check if there's already a slug with the new value
           const newSlugExists = await this.prisma.slug.findUnique({
             where: { siteId_lang_slug: { siteId, lang: translation.lang, slug } },
@@ -446,6 +477,11 @@ export class AdminEventService {
             title: t.title,
             shortDescription: t.shortDescription ?? null,
             description: t.description ?? null,
+            phone: t.phone ?? null,
+            email: t.email ?? null,
+            website: t.website ?? null,
+            facebook: t.facebook ?? null,
+            whatsapp: t.whatsapp ?? null,
             seoTitle: t.seoTitle ?? null,
             seoDescription: t.seoDescription ?? null,
             seoImage: t.seoImage ?? null,
@@ -501,7 +537,7 @@ export class AdminEventService {
     await this.createSlugsForEvent(
       event.id,
       dto.siteId,
-      translations.map((t) => ({ lang: t.lang, title: t.title })),
+      translations.map((t) => ({ lang: t.lang, title: t.title, slug: t.slug ?? undefined })),
       true
     );
 
@@ -535,6 +571,11 @@ export class AdminEventService {
           title: t.title,
           shortDescription: t.shortDescription ?? null,
           description: t.description ?? null,
+          phone: t.phone ?? null,
+          email: t.email ?? null,
+          website: t.website ?? null,
+          facebook: t.facebook ?? null,
+          whatsapp: t.whatsapp ?? null,
           seoTitle: t.seoTitle ?? null,
           seoDescription: t.seoDescription ?? null,
           seoImage: t.seoImage ?? null,
@@ -560,7 +601,7 @@ export class AdminEventService {
       await this.createSlugsForEventWithRedirects(
         id,
         siteId,
-        translations.map((t) => ({ lang: t.lang, title: t.title })),
+        translations.map((t) => ({ lang: t.lang, title: t.title, slug: t.slug ?? undefined })),
         existingSlugsByLang,
         true
       );

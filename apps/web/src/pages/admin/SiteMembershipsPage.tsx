@@ -21,6 +21,7 @@ import {
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { isSuperadmin } from "../../utils/roleHelpers";
 
 export function SiteMembershipsPage() {
   const { t } = useTranslation();
@@ -40,7 +41,7 @@ export function SiteMembershipsPage() {
   const [formData, setFormData] = useState({
     siteId: "",
     userId: "",
-    role: "editor" as "siteadmin" | "editor" | "viewer",
+    role: "editor" as "superadmin" | "siteadmin" | "editor" | "viewer",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -103,14 +104,44 @@ export function SiteMembershipsPage() {
       const dto: CreateSiteMembershipDto = {
         siteId: formData.siteId,
         userId: formData.userId,
-        role: formData.role,
+        role: formData.role === "superadmin" ? "siteadmin" : formData.role,
       };
       await createSiteMembership(dto);
       setIsCreating(false);
       resetForm();
       await loadMemberships();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createTenantMembershipFailed"));
+      const errorMessage = err instanceof Error ? err.message : t("admin.errors.createTenantMembershipFailed");
+      
+      // Check if membership already exists - if so, find it and switch to edit mode
+      if (errorMessage.includes("already exists") || errorMessage.includes("SiteMembership already exists")) {
+        try {
+          // Try to find the existing membership
+          const existingMemberships = await getSiteMemberships(formData.siteId);
+          const existing = existingMemberships.find(
+            (m) => m.siteId === formData.siteId && m.userId === formData.userId
+          );
+          
+          if (existing) {
+            // Switch to edit mode with the existing membership
+            setEditingId(existing.id);
+            setFormData({
+              siteId: existing.siteId,
+              userId: existing.userId,
+              role: existing.role,
+            });
+            setIsCreating(false);
+            setError(t("admin.errors.membershipAlreadyExistsEdit") || "This membership already exists. You can edit it below.");
+          } else {
+            setError(errorMessage);
+          }
+        } catch (findErr) {
+          // If we can't find it, just show the error
+          setError(errorMessage);
+        }
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -118,15 +149,15 @@ export function SiteMembershipsPage() {
     if (!validateForm()) return;
 
     try {
-      const dto: UpdateTenantMembershipDto = {
-        role: formData.role,
+      const dto: UpdateSiteMembershipDto = {
+        role: formData.role === "viewer" ? "editor" : formData.role,
       };
-      await updateTenantMembership(id, dto);
+      await updateSiteMembership(id, dto);
       setEditingId(null);
       resetForm();
       await loadMemberships();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateTenantMembershipFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.updateSiteMembershipFailed"));
     }
   };
 
@@ -192,14 +223,14 @@ export function SiteMembershipsPage() {
   ];
 
   const cardFields: CardField<SiteMembership>[] = [
-    { key: "site", label: t("admin.site"), render: (m) => m.site?.slug || m.siteId },
-    { key: "user", label: t("admin.user"), render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
-    { key: "role", label: t("admin.role"), render: (m) => t(`admin.roles.${m.role}`) },
+    { key: "site", render: (m) => m.site?.slug || m.siteId },
+    { key: "user", render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
+    { key: "role", render: (m) => t(`admin.roles.${m.role}`) },
   ];
 
-  const isSuperadmin = currentUser?.role === "superadmin";
+  const userIsSuperadmin = currentUser ? isSuperadmin(currentUser.role) : false;
 
-  if (!isSuperadmin) {
+  if (!userIsSuperadmin) {
     return <div style={{ padding: 24 }}>{t("admin.accessDenied")}</div>;
   }
 
@@ -327,7 +358,7 @@ export function SiteMembershipsPage() {
               </label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as "tenantadmin" | "editor" | "viewer" })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as "siteadmin" | "editor" | "viewer" })}
                 style={{
                   width: "100%",
                   padding: "12px 16px",

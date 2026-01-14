@@ -1,6 +1,6 @@
 import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
-import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
+import { DEFAULT_LANG, APP_LANGS, DEFAULT_BACKEND_URL, type Lang } from "../app/config";
 
 /**
  * Get API base URL from environment variable or use relative path for development
@@ -170,7 +170,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -203,7 +203,7 @@ export async function apiGet<T>(path: string): Promise<T> {
           } catch (err) {
             // Handle network errors during retry
             const isDev = import.meta.env.DEV;
-            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
             const errorMessage = isDev
               ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
               : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -298,7 +298,7 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -342,7 +342,7 @@ export async function apiPostPublic<T>(path: string, data: unknown): Promise<T> 
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -386,7 +386,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -417,7 +417,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           } catch (err) {
             // Handle network errors during retry
             const isDev = import.meta.env.DEV;
-            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
             const errorMessage = isDev
               ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
               : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -520,7 +520,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -551,7 +551,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           } catch (err) {
             // Handle network errors during retry
             const isDev = import.meta.env.DEV;
-            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
             const errorMessage = isDev
               ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
               : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -668,7 +668,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   } catch (err) {
     // Handle network errors (server not running, CORS, etc.)
     const isDev = import.meta.env.DEV;
-    const backendUrl = apiBaseUrl || "http://localhost:3002";
+    const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
       ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
       : "Failed to connect to the server. Please check your internet connection or try again later.";
@@ -701,7 +701,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
           } catch (err) {
             // Handle network errors during retry
             const isDev = import.meta.env.DEV;
-            const backendUrl = apiBaseUrl || "http://localhost:3002";
+            const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
             const errorMessage = isDev
               ? `Failed to connect to backend API at ${backendUrl}. Make sure the backend server is running.`
               : "Failed to connect to the server. Please check your internet connection or try again later.";

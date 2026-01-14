@@ -20,10 +20,13 @@ import {
 import { useAnalyticsStore } from "../../stores/analyticsStore";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { COLORS as APP_COLORS, GRADIENTS, BREAKPOINTS } from "../../app/colors";
+import { BREAKPOINTS as VIEWPORT_BREAKPOINTS } from "../../utils/viewport";
 
 type Props =
   | { scope: "site" }
-  | { scope: "place"; placeId: string };
+  | { scope: "place"; placeId: string }
+  | { scope: "event"; eventId: string };
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -52,23 +55,12 @@ const chartVariants = {
   },
 };
 
-// Gradient colors for charts
-const COLORS = {
-  primary: "#667eea",
-  secondary: "#764ba2",
-  success: "#10b981",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-  info: "#3b82f6",
-  purple: "#8b5cf6",
-  pink: "#ec4899",
-};
-
+// Gradient colors for charts (using centralized constants)
 const GRADIENT_COLORS = [
-  { start: "#667eea", end: "#764ba2" },
-  { start: "#10b981", end: "#059669" },
-  { start: "#3b82f6", end: "#2563eb" },
-  { start: "#f59e0b", end: "#d97706" },
+  { start: GRADIENTS.primary.start, end: GRADIENTS.primary.end },
+  { start: GRADIENTS.success.start, end: GRADIENTS.success.end },
+  { start: GRADIENTS.info.start, end: GRADIENTS.info.end },
+  { start: GRADIENTS.warning.start, end: GRADIENTS.warning.end },
 ];
 
 // Count-up animation component
@@ -135,17 +127,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export function AnalyticsDashboard(props: Props) {
   const { t } = useTranslation();
   const [range, setRange] = useState<7 | 30 | 90>(7);
-  const { loading, error, site, place, fetchSite, fetchPlace } = useAnalyticsStore();
+  const { loading, error, site, place, event, fetchSite, fetchPlace, fetchEvent } = useAnalyticsStore();
   const params = useParams<{ lang?: string }>();
   const lang = params.lang || "hu";
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < VIEWPORT_BREAKPOINTS.tablet;
+  });
+  const [isTablet, setIsTablet] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth >= VIEWPORT_BREAKPOINTS.tablet && window.innerWidth < VIEWPORT_BREAKPOINTS.desktop;
+  });
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
+      setIsMobile(width < VIEWPORT_BREAKPOINTS.tablet);
+      setIsTablet(width >= VIEWPORT_BREAKPOINTS.tablet && width < VIEWPORT_BREAKPOINTS.desktop);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -154,78 +152,117 @@ export function AnalyticsDashboard(props: Props) {
   useEffect(() => {
     if (props.scope === "site") {
       fetchSite(range, lang);
-    } else {
+    } else if (props.scope === "place") {
       fetchPlace(props.placeId, range, lang);
+    } else if (props.scope === "event") {
+      fetchEvent(props.eventId, range, lang);
     }
-  }, [props, range, lang, fetchSite, fetchPlace]);
+  }, [props, range, lang, fetchSite, fetchPlace, fetchEvent]);
 
-  const data = props.scope === "site" ? site : place;
+  const data = props.scope === "site" ? site : props.scope === "place" ? place : event;
+  const isSiteScope = props.scope === "site";
 
   const kpis = useMemo(() => {
     if (!data) return [];
     if (props.scope === "site") {
+      const siteData = data as { summary: { pageViews: number; placeViews: number; ctaPhone: number; ctaEmail: number; ctaWebsite: number; ctaMaps: number } };
       return [
         {
           label: "Page Views",
-          value: data.summary.pageViews ?? 0,
+          value: siteData.summary.pageViews ?? 0,
           icon: "👁️",
-          color: COLORS.primary,
+          color: APP_COLORS.primary,
           gradient: GRADIENT_COLORS[0],
         },
         {
           label: "Place Views",
-          value: data.summary.placeViews ?? 0,
+          value: siteData.summary.placeViews ?? 0,
           icon: "📍",
-          color: COLORS.success,
+          color: APP_COLORS.success,
           gradient: GRADIENT_COLORS[1],
         },
         {
           label: "CTA Clicks",
           value:
-            (data.summary.ctaPhone +
-              data.summary.ctaEmail +
-              data.summary.ctaWebsite +
-              data.summary.ctaMaps) ?? 0,
+            (siteData.summary.ctaPhone +
+              siteData.summary.ctaEmail +
+              siteData.summary.ctaWebsite +
+              siteData.summary.ctaMaps) || 0,
           icon: "🖱️",
-          color: COLORS.info,
+          color: APP_COLORS.info,
           gradient: GRADIENT_COLORS[2],
         },
         {
           label: "Unique Visitors",
           value: 0, // TODO: implement unique visitors
           icon: "👥",
-          color: COLORS.purple,
+          color: APP_COLORS.purple,
           gradient: GRADIENT_COLORS[3],
         },
       ];
     }
+    if (props.scope === "place") {
+      const placeData = data as { summary: { placeViews: number; ctaTotal: number; conversionPct: number }; days: number };
+      return [
+        {
+          label: "Place Views",
+          value: placeData.summary.placeViews ?? 0,
+          icon: "📍",
+          color: APP_COLORS.primary,
+          gradient: GRADIENT_COLORS[0],
+        },
+        {
+          label: "CTA Clicks",
+          value: placeData.summary.ctaTotal ?? 0,
+          icon: "🖱️",
+          color: APP_COLORS.success,
+          gradient: GRADIENT_COLORS[1],
+        },
+        {
+          label: "Conversion Rate",
+          value: `${placeData.summary.conversionPct ?? 0}%`,
+          icon: "📈",
+          color: APP_COLORS.info,
+          gradient: GRADIENT_COLORS[2],
+        },
+        {
+          label: "Time Range",
+          value: `${placeData.days ?? range} days`,
+          icon: "📅",
+          color: APP_COLORS.purple,
+          gradient: GRADIENT_COLORS[3],
+        },
+      ];
+    }
+    // Event scope
+    const eventData = data as { summary: { eventViews: number; ctaTotal: number; conversionPct: number }; days: number };
     return [
       {
-        label: "Place Views",
-        value: data.summary.placeViews ?? 0,
-        icon: "📍",
-        color: COLORS.primary,
+        label: "Event Views",
+        value: eventData.summary.eventViews ?? 0,
+        icon: "📅",
+        color: APP_COLORS.primary,
         gradient: GRADIENT_COLORS[0],
       },
       {
         label: "CTA Clicks",
-        value: data.summary.ctaTotal ?? 0,
+        value: eventData.summary.ctaTotal ?? 0,
         icon: "🖱️",
-        color: COLORS.success,
+        color: APP_COLORS.success,
         gradient: GRADIENT_COLORS[1],
       },
       {
         label: "Conversion Rate",
-        value: `${data.summary.conversionPct ?? 0}%`,
+        value: `${eventData.summary.conversionPct ?? 0}%`,
         icon: "📈",
-        color: COLORS.info,
+        color: APP_COLORS.info,
         gradient: GRADIENT_COLORS[2],
       },
       {
         label: "Time Range",
-        value: `${data.days ?? range} days`,
+        value: `${eventData.days ?? range} days`,
         icon: "📅",
-        color: COLORS.purple,
+        color: APP_COLORS.purple,
         gradient: GRADIENT_COLORS[3],
       },
     ];
@@ -235,10 +272,10 @@ export function AnalyticsDashboard(props: Props) {
     if (!data) return [];
     const s = data.ctaBreakdown;
     return [
-      { name: t("admin.analytics.ctaPhone"), value: s.ctaPhone ?? 0, color: COLORS.success },
-      { name: t("admin.analytics.ctaEmail"), value: s.ctaEmail ?? 0, color: COLORS.info },
-      { name: t("admin.analytics.ctaWebsite"), value: s.ctaWebsite ?? 0, color: COLORS.primary },
-      { name: t("admin.analytics.ctaMaps"), value: s.ctaMaps ?? 0, color: COLORS.warning },
+      { name: t("admin.analytics.ctaPhone"), value: s.ctaPhone ?? 0, color: APP_COLORS.success },
+      { name: t("admin.analytics.ctaEmail"), value: s.ctaEmail ?? 0, color: APP_COLORS.info },
+      { name: t("admin.analytics.ctaWebsite"), value: s.ctaWebsite ?? 0, color: APP_COLORS.primary },
+      { name: t("admin.analytics.ctaMaps"), value: s.ctaMaps ?? 0, color: APP_COLORS.warning },
     ];
   }, [data, t]);
 
@@ -427,12 +464,12 @@ export function AnalyticsDashboard(props: Props) {
                 <AreaChart data={data.timeseries}>
                 <defs>
                   <linearGradient id="colorPageViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0.1} />
+                    <stop offset="5%" stopColor={APP_COLORS.primary} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor={APP_COLORS.primary} stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="colorPlaceViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.1} />
+                    <stop offset="5%" stopColor={APP_COLORS.success} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor={APP_COLORS.success} stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
@@ -454,7 +491,7 @@ export function AnalyticsDashboard(props: Props) {
                     <Area
                       type="monotone"
                       dataKey="pageViews"
-                      stroke={COLORS.primary}
+                      stroke={APP_COLORS.primary}
                       strokeWidth={3}
                       fill="url(#colorPageViews)"
                       name={t("admin.analytics.pageViews")}
@@ -463,19 +500,19 @@ export function AnalyticsDashboard(props: Props) {
                     <Area
                       type="monotone"
                       dataKey="placeViews"
-                      stroke={COLORS.success}
+                      stroke={APP_COLORS.success}
                       strokeWidth={3}
                       fill="url(#colorPlaceViews)"
                       name={t("admin.analytics.placeViews")}
                       animationDuration={1000}
                     />
                   </>
-                ) : (
+                ) : props.scope === "place" ? (
                   <>
                     <Area
                       type="monotone"
                       dataKey="placeViews"
-                      stroke={COLORS.primary}
+                      stroke={APP_COLORS.primary}
                       strokeWidth={3}
                       fill="url(#colorPageViews)"
                       name={t("admin.analytics.placeViews")}
@@ -484,7 +521,28 @@ export function AnalyticsDashboard(props: Props) {
                     <Area
                       type="monotone"
                       dataKey="ctaTotal"
-                      stroke={COLORS.success}
+                      stroke={APP_COLORS.success}
+                      strokeWidth={3}
+                      fill="url(#colorPlaceViews)"
+                      name={t("admin.analytics.ctaClicks")}
+                      animationDuration={1000}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="eventViews"
+                      stroke={APP_COLORS.primary}
+                      strokeWidth={3}
+                      fill="url(#colorPageViews)"
+                      name={t("admin.analytics.eventViews") || "Event Views"}
+                      animationDuration={1000}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="ctaTotal"
+                      stroke={APP_COLORS.success}
                       strokeWidth={3}
                       fill="url(#colorPlaceViews)"
                       name={t("admin.analytics.ctaClicks")}
@@ -533,7 +591,7 @@ export function AnalyticsDashboard(props: Props) {
                     {pieData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={ctaBars[index]?.color || COLORS.primary}
+                        fill={ctaBars[index]?.color || APP_COLORS.primary}
                       />
                     ))}
                   </Pie>
@@ -748,7 +806,7 @@ function RangeButton(props: {
         transition: "all 0.2s",
         ...(props.active
           ? {
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: GRADIENTS.primary.css,
               color: "white",
               boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
             }

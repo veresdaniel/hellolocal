@@ -1,5 +1,7 @@
 // src/types/platformSettings.ts
-export type Lang = "hu" | "en" | "de";
+// Re-export from centralized enums
+import type { Lang } from "./enums";
+export type { Lang };
 
 export type PlatformSettingsDto = {
   lang: Lang;

@@ -8,6 +8,8 @@ import { useToast } from "../../contexts/ToastContext";
 import { getDefaultLanguage, setDefaultLanguage, getFeatureMatrix, setFeatureMatrix, type FeatureMatrix } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
+import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
+import type { UserRole } from "../../types/enums";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
@@ -62,15 +64,15 @@ export function AppSettingsPage() {
     }
   };
 
-  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
-  const isSuperadmin = user?.role === "superadmin";
+  const userIsAdmin = user ? isAdmin(user.role as UserRole) : false;
+  const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
 
   // Load feature matrix
   useEffect(() => {
-    if (isSuperadmin && (featureMatrixOpen || placeFeatureMatrixOpen)) {
+    if (userIsSuperadmin && (featureMatrixOpen || placeFeatureMatrixOpen)) {
       loadFeatureMatrix();
     }
-  }, [isSuperadmin, featureMatrixOpen, placeFeatureMatrixOpen]);
+  }, [userIsSuperadmin, featureMatrixOpen, placeFeatureMatrixOpen]);
 
   const loadFeatureMatrix = async () => {
     try {
@@ -153,7 +155,7 @@ export function AppSettingsPage() {
                   <select
                     value={defaultLang}
                     onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
-                    disabled={!isAdmin || isSaving}
+                    disabled={!userIsAdmin || isSaving}
                     style={{
                       padding: "10px 16px",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -161,7 +163,7 @@ export function AppSettingsPage() {
                       borderRadius: 6,
                       border: "1px solid #ddd",
                       background: "white",
-                      cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
+                      cursor: userIsAdmin && !isSaving ? "pointer" : "not-allowed",
                       minWidth: 200,
                     }}
                   >
@@ -169,7 +171,7 @@ export function AppSettingsPage() {
                     <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
                     <option value="de">🇩🇪 {t("admin.languageNames.de")}</option>
                   </select>
-                  {isAdmin && (
+                  {userIsAdmin && (
                     <button
                       type="button"
                       onClick={handleSave}
@@ -316,7 +318,7 @@ export function AppSettingsPage() {
       </div>
 
       {/* Feature Matrix Configuration Section - Superadmin only */}
-      {isSuperadmin && (
+      {userIsSuperadmin && (
         <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
           <button
             onClick={() => setFeatureMatrixOpen(!featureMatrixOpen)}
@@ -404,7 +406,7 @@ export function AppSettingsPage() {
       )}
 
       {/* Place Feature Matrix Configuration Section - Superadmin only */}
-      {isSuperadmin && (
+      {userIsSuperadmin && (
         <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
           <button
             onClick={() => setPlaceFeatureMatrixOpen(!placeFeatureMatrixOpen)}

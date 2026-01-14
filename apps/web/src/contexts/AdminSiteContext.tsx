@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
+import { ROLE_SUPERADMIN, ROLE_ADMIN } from "../types/enums";
 import { getSites, getSite, type Site } from "../api/admin.api";
 
 interface AdminSiteContextType {
@@ -48,7 +49,7 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
     
     try {
       // Only superadmin and admin can call getSites to see all sites
-      if (user.role === "superadmin" || user.role === "admin") {
+      if (user.role === ROLE_SUPERADMIN || user.role === ROLE_ADMIN) {
         const data = await getSites();
         setSites(data);
         setError(null); // Clear error on successful load

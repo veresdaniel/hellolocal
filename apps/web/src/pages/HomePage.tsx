@@ -14,6 +14,7 @@ import { Header } from "../ui/layout/Header";
 import { buildUrl } from "../app/urls";
 import { useNavigate } from "react-router-dom";
 import { HAS_MULTIPLE_SITES } from "../app/config";
+import { BREAKPOINTS } from "../utils/viewport";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorState } from "../components/ErrorState";
 import { useFiltersStore } from "../stores/useFiltersStore";
@@ -59,7 +60,7 @@ export function HomePage() {
   // Detect mobile viewport
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -80,6 +81,18 @@ export function HomePage() {
       window.removeEventListener("admin:places:changed", handlePlacesChanged);
     };
   }, [queryClient]);
+
+  // Listen for showMapView event (from FloatingHeader or other components)
+  useEffect(() => {
+    const handleShowMapView = () => {
+      setShowMap(true);
+    };
+
+    window.addEventListener("showMapView", handleShowMapView);
+    return () => {
+      window.removeEventListener("showMapView", handleShowMapView);
+    };
+  }, [setShowMap]);
 
   // Update map height when window resizes
   useEffect(() => {
@@ -520,7 +533,7 @@ export function HomePage() {
       const newZoom = Math.max(requiredZoom, mapCenter.zoom - 1); // Max decrease by 1 level
       // Use setTimeout to avoid synchronous setState in effect
       setTimeout(() => {
-        setMapCenter(prev => prev ? { ...prev, zoom: newZoom } : null);
+        setMapCenter({ ...mapCenter, zoom: newZoom });
       }, 0);
     }
 

@@ -15,12 +15,12 @@ import {
   type PlaceMembership,
   type CreatePlaceMembershipDto,
   type UpdatePlaceMembershipDto,
-  type Place,
   type User
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import type { Place } from "../../types/place";
 
 export function PlaceMembershipsPage() {
   const { t } = useTranslation();
@@ -240,7 +240,7 @@ export function PlaceMembershipsPage() {
                   border: "1px solid #ffc107",
                 }}
               >
-                {t("admin.restricted") || "Korlátozott"}
+                {t("admin.restricted")}
               </span>
             )}
           </div>
@@ -250,11 +250,10 @@ export function PlaceMembershipsPage() {
   ];
 
   const cardFields: CardField<PlaceMembership>[] = [
-    { key: "place", label: t("admin.place"), render: (m) => m.place?.translations?.[0]?.name || m.placeId },
-    { key: "user", label: t("admin.user"), render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
+    { key: "place", render: (m) => m.place?.translations?.[0]?.name || m.placeId },
+    { key: "user", render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
     { 
       key: "role", 
-      label: t("admin.role"), 
       render: (m) => {
         const roleLabel = t(`admin.roles.${m.role}`);
         const isManager = m.role === "manager";
@@ -273,7 +272,7 @@ export function PlaceMembershipsPage() {
                   border: "1px solid #ffc107",
                 }}
               >
-                {t("admin.restricted") || "Korlátozott"}
+                {t("admin.restricted")}
               </span>
             )}
           </div>
@@ -369,7 +368,7 @@ export function PlaceMembershipsPage() {
                 <option value="">{t("admin.selectPlace")}</option>
                 {Array.isArray(places) && places.map((place) => (
                   <option key={place.id} value={place.id}>
-                    {place.translations?.find(t => t.lang === "hu")?.name || place.id}
+                    {place.name || place.id}
                   </option>
                 ))}
               </select>

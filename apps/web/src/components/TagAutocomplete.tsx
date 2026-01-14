@@ -1,6 +1,7 @@
 // src/components/TagAutocomplete.tsx
 import { useTranslation } from "react-i18next";
 import { BaseAutocomplete, AutocompleteItem } from "./BaseAutocomplete";
+import { getHuTranslation } from "../utils/langHelpers";
 
 interface Tag extends AutocompleteItem {
   id: string;
@@ -18,7 +19,8 @@ export function TagAutocomplete({ tags, selectedTagIds, onChange, placeholder = 
   const { t } = useTranslation();
 
   const getTagName = (tag: Tag) => {
-    return tag.translations.find((t) => t.lang === "hu")?.name || tag.translations[0]?.name || tag.id;
+    const huTranslation = getHuTranslation(tag.translations);
+    return huTranslation?.name || tag.translations[0]?.name || tag.id;
   };
 
   const handleSelect = (tagId: string) => {

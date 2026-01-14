@@ -35,7 +35,10 @@ export function DraggableBox({
   baseZIndex = 3000,
   activeZIndex = 10000,
 }: DraggableBoxProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < BREAKPOINTS.tablet;
+  });
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
 
   // Load saved position from localStorage with lazy initializer (device-specific)
@@ -62,7 +65,7 @@ export function DraggableBox({
   // Detect mobile viewport changes
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
     };
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -281,7 +284,6 @@ export function DraggableBox({
           fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
           fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

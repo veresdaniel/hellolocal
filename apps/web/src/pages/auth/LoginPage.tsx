@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../../app/config";
 import { buildUrl } from "../../app/urls";
+import { ROLE_VIEWER } from "../../types/enums";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -129,7 +130,7 @@ export function LoginPage() {
   useEffect(() => {
     if (!authIsLoading && user) {
       // Check if user is viewer - viewers should not access admin
-      if (user.role === "viewer") {
+      if (user.role === ROLE_VIEWER) {
         // Get return URL from sessionStorage or use home page
         const returnUrl = sessionStorage.getItem("authReturnUrl") || `/${lang}`;
         sessionStorage.removeItem("authReturnUrl");

@@ -1,6 +1,6 @@
 // src/ui/layout/Header.tsx
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../../app/urls";
@@ -9,11 +9,18 @@ import { usePlatformSettingsContext } from "../../context/PlatformSettingsContex
 import { LanguageSelector } from "../../components/LanguageSelector";
 
 export function Header() {
-  const { lang, tenantKey } = useRouteCtx();
+  const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  
+  // Check if we're on map view (HomePage with showMap=true)
+  const isOnMapView = location.pathname.includes("/admin") === false && 
+                      (location.pathname === buildUrl({ lang, siteKey, path: "" }) || 
+                       location.pathname === buildUrl({ lang, siteKey, path: "" }) + "/");
   
   // Default positions: bal fent (top left)
   const defaultPositionDesktop = { top: 16, left: 16 };
@@ -50,15 +57,15 @@ export function Header() {
   useEffect(() => {
     const handlePlatformSettingsChanged = () => {
       // Refetch platform settings when changed in admin
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, tenantKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, tenantKey] });
+      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
+      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
     };
 
     window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     return () => {
       window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     };
-  }, [lang, tenantKey]);
+  }, [lang, siteKey]);
 
   const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
   const brandBadgeIcon = platformSettings?.placeholders.avatar;
@@ -208,7 +215,7 @@ export function Header() {
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {(siteName || brandBadgeIcon) && (
           <Link
-            to={buildUrl({ lang, tenantKey, path: "" })}
+            to={buildUrl({ lang, siteKey, path: "" })}
             style={{
               textDecoration: "none",
               display: "flex",
@@ -274,6 +281,66 @@ export function Header() {
               `}</style>
             </div>
           </div>
+        )}
+        {/* Map view button - show when NOT on map view */}
+        {!isOnMapView && (
+          <>
+            <div
+              style={{
+                width: 1,
+                height: 24,
+                background: "rgba(255, 255, 255, 0.3)",
+                marginLeft: 8,
+                marginRight: 8,
+              }}
+            />
+            <button
+              onClick={() => {
+                const homePath = buildUrl({ lang, siteKey, path: "" });
+                navigate(homePath);
+                // Trigger map view after navigation
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent("showMapView"));
+                }, 100);
+              }}
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderRadius: 8,
+                color: "white",
+                fontSize: "clamp(12px, 2.5vw, 14px)",
+                fontWeight: 500,
+                height: "clamp(32px, 4vw, 36px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxSizing: "border-box",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                cursor: "pointer",
+                padding: "6px 12px",
+                transition: "all 0.2s",
+                gap: 6,
+                lineHeight: 1,
+                pointerEvents: isDragging ? "none" : "auto",
+              }}
+              onMouseEnter={(e) => {
+                if (!isDragging) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isDragging) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                }
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              📍 {t("public.mapView")}
+            </button>
+          </>
         )}
       </div>
     </header>

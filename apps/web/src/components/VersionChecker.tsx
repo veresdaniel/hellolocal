@@ -1,6 +1,7 @@
 // src/components/VersionChecker.tsx
 import { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { TIMING } from "../app/config";
 
 interface VersionInfo {
   version: string;
@@ -14,9 +15,6 @@ export function VersionChecker() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const currentVersionRef = useRef<VersionInfo | null>(null);
   const checkIntervalRef = useRef<number | null>(null);
-
-  // Check for updates every 15 minutes (reduced frequency to avoid too many requests)
-  const CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
 
   const lastFetchTimeRef = useRef<number>(0);
   const FETCH_THROTTLE = 60 * 1000; // Throttle: max 1 request per minute
@@ -87,7 +85,7 @@ export function VersionChecker() {
     if (checkIntervalRef.current) {
       window.clearInterval(checkIntervalRef.current);
     }
-    checkIntervalRef.current = window.setInterval(checkForUpdates, 5 * 60 * 1000);
+    checkIntervalRef.current = window.setInterval(checkForUpdates, TIMING.VERSION_CHECK_INTERVAL_MS);
   };
 
   useEffect(() => {
@@ -95,7 +93,7 @@ export function VersionChecker() {
     checkForUpdates();
 
     // Set up periodic checks
-    checkIntervalRef.current = window.setInterval(checkForUpdates, CHECK_INTERVAL);
+    checkIntervalRef.current = window.setInterval(checkForUpdates, TIMING.VERSION_CHECK_INTERVAL_MS);
 
     // Check on window focus (user returns to tab) - with debouncing
     let focusTimeout: number | null = null;
@@ -106,10 +104,10 @@ export function VersionChecker() {
       }
       focusTimeout = window.setTimeout(() => {
         const timeSinceLastCheck = Date.now() - lastFetchTimeRef.current;
-        if (timeSinceLastCheck > 2 * 60 * 1000) { // Only if last check was > 2 minutes ago
+        if (timeSinceLastCheck > TIMING.FOCUS_CHECK_THRESHOLD_MS) { // Only if last check was > threshold ago
           checkForUpdates();
         }
-      }, 1000); // Wait 1 second after focus before checking
+      }, TIMING.FOCUS_DEBOUNCE_MS); // Wait after focus before checking
     };
     window.addEventListener("focus", handleFocus);
 

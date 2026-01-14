@@ -15,6 +15,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { UserRole } from "@prisma/client";
 import { BillingService, PlaceSubscriptionDto, SiteSubscriptionDto } from "./billing.service";
 import { RbacService } from "../auth/rbac.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Controller("/api/admin/billing")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,7 +45,7 @@ export class BillingController {
         "editor"
       );
       if (!hasPermission) {
-        throw new ForbiddenException("You don't have permission to view this place's subscription");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_PLACE_SUBSCRIPTION);
       }
     }
 
@@ -85,7 +86,7 @@ export class BillingController {
         "editor"
       );
       if (!hasPermission) {
-        throw new ForbiddenException("You don't have permission to view this place's entitlements");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_PLACE_ENTITLEMENTS);
       }
     }
 
@@ -104,7 +105,7 @@ export class BillingController {
   ) {
     // Check if user has access to this site
     if (user.role !== UserRole.superadmin && !user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("You don't have permission to view this site's subscription");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_SITE_SUBSCRIPTION);
     }
 
     return this.billingService.getSiteSubscription(siteId);
@@ -137,7 +138,7 @@ export class BillingController {
   ) {
     // Check if user has access to this site
     if (user.role !== UserRole.superadmin && !user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("You don't have permission to view this site's entitlements");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_SITE_ENTITLEMENTS);
     }
 
     return this.billingService.getSiteEntitlements(siteId);

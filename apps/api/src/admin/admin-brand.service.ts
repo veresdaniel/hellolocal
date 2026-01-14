@@ -1,5 +1,6 @@
 // src/admin/admin-brand.service.ts
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { isValidImageUrl, sanitizeImageUrl } from "../common/url-validation";
 
@@ -75,7 +76,7 @@ export class AdminBrandService {
     });
 
     if (!brand) {
-      throw new NotFoundException(`Brand with ID ${id} not found`);
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_BRAND);
     }
 
     return brand;
@@ -83,13 +84,13 @@ export class AdminBrandService {
 
   async create(dto: CreateBrandDto) {
     // Validate image URLs
-    if (dto.logoUrl && !sanitizeImageUrl(dto.logoUrl)) {
-      throw new BadRequestException("Invalid logo URL. Only http:// and https:// URLs are allowed.");
-    }
+        if (dto.logoUrl && !sanitizeImageUrl(dto.logoUrl)) {
+          throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LOGO_URL);
+        }
 
-    if (dto.faviconUrl && !sanitizeImageUrl(dto.faviconUrl)) {
-      throw new BadRequestException("Invalid favicon URL. Only http:// and https:// URLs are allowed.");
-    }
+        if (dto.faviconUrl && !sanitizeImageUrl(dto.faviconUrl)) {
+          throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_FAVICON_URL);
+        }
 
     // Validate placeholder image URLs
     if (dto.placeholders) {
@@ -127,13 +128,13 @@ export class AdminBrandService {
     // Validate image URLs
     if (dto.logoUrl !== undefined) {
       if (dto.logoUrl && !sanitizeImageUrl(dto.logoUrl)) {
-        throw new BadRequestException("Invalid logo URL. Only http:// and https:// URLs are allowed.");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LOGO_URL);
       }
     }
 
     if (dto.faviconUrl !== undefined) {
       if (dto.faviconUrl && !sanitizeImageUrl(dto.faviconUrl)) {
-        throw new BadRequestException("Invalid favicon URL. Only http:// and https:// URLs are allowed.");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_FAVICON_URL);
       }
     }
 

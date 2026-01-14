@@ -2,10 +2,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-
-type Lang = "hu" | "en" | "de";
-
-const LANGUAGES: Lang[] = ["hu", "en", "de"];
+import { LANG_VALUES, type Lang } from "../types/enums";
 
 interface LanguageAwareFormProps {
   children: (selectedLang: Lang) => ReactNode;
@@ -36,7 +33,7 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
             cursor: "pointer",
           }}
         >
-          {LANGUAGES.map((lang) => (
+          {LANG_VALUES.map((lang) => (
             <option key={lang} value={lang}>
               {t(`admin.languageNames.${lang}`)}
             </option>

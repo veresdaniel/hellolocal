@@ -9,6 +9,7 @@ import { getSiteInstances, createSiteInstance, updateSiteInstance, deleteSiteIns
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { ROLE_SUPERADMIN } from "../../types/enums";
 
 export function SiteInstancesPage() {
   const { t } = useTranslation();
@@ -224,12 +225,12 @@ export function SiteInstancesPage() {
   ];
 
   const cardFields: CardField<SiteInstance>[] = [
-    { key: "site", label: t("admin.tenant"), render: (instance) => instance.site?.slug || instance.siteId },
-    { key: "lang", label: t("common.language"), render: (instance) => instance.lang.toUpperCase() },
-    { key: "isDefault", label: t("admin.isDefault"), render: (instance) => instance.isDefault ? t("common.yes") : t("common.no") },
+    { key: "site", render: (instance) => instance.site?.slug || instance.siteId },
+    { key: "lang", render: (instance) => instance.lang.toUpperCase() },
+    { key: "isDefault", render: (instance) => instance.isDefault ? t("common.yes") : t("common.no") },
   ];
 
-  const isSuperadmin = currentUser?.role === "superadmin";
+  const isSuperadmin = currentUser?.role === ROLE_SUPERADMIN;
 
   if (!isSuperadmin) {
     return <div style={{ padding: 24 }}>{t("admin.accessDenied")}</div>;

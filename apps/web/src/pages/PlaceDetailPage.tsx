@@ -22,11 +22,13 @@ import { StarRating } from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatMoney } from "../utils/formatMoney";
+import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
+import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
   const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -93,7 +95,7 @@ export function PlaceDetailPage() {
   }, [place?.description]);
 
   // Load galleries for the opening hours section
-  const { data: galleriesData } = useQuery({
+  const { data: galleriesData, isError: isGalleriesError } = useQuery({
     queryKey: ["galleries", galleryIds, lang, siteKey],
     queryFn: async () => {
       if (!lang || !siteKey || galleryIds.length === 0) return {};
@@ -104,16 +106,84 @@ export function PlaceDetailPage() {
             const gallery = await getGallery(lang, siteKey, galleryId);
             galleries[galleryId] = gallery;
           } catch (error) {
-            console.error(`Failed to load gallery ${galleryId}:`, error);
+            // Log error but don't fail the entire query
+            // 404 errors are expected if gallery doesn't exist or is inactive
+            const status = (error as Error & { status?: number })?.status;
+            if (status === 404) {
+              console.warn(`Gallery ${galleryId} not found or inactive`);
+            } else {
+              console.error(`Failed to load gallery ${galleryId}:`, error);
+            }
+            // Don't add to galleries object if it fails
           }
         })
       );
       return galleries;
     },
     enabled: galleryIds.length > 0 && !!lang && !!siteKey,
+    retry: false, // Don't retry on error
   });
 
   const galleries = galleriesData || {};
+
+  // Check if user can edit this place
+  const [canEditPlace, setCanEditPlace] = useState(false);
+  const [placeSiteId, setPlaceSiteId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (place?.siteId) {
+      setPlaceSiteId(place.siteId);
+    }
+  }, [place?.siteId]);
+
+  // Check place permissions
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!isAuthenticated || !user || !resolveQ.data?.entityId || !placeSiteId) {
+        setCanEditPlace(false);
+        return;
+      }
+
+      try {
+        // Check global role (superadmin, admin, editor can edit)
+        if (isSuperadmin(user.role) || isAdmin(user.role) || canEdit(user.role)) {
+          setCanEditPlace(true);
+          return;
+        }
+
+        // Check site-level role
+        try {
+          const siteMemberships = await getSiteMemberships(placeSiteId, user.id);
+          const siteMembership = siteMemberships.find(m => m.siteId === placeSiteId && m.userId === user.id);
+          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+            setCanEditPlace(true);
+            return;
+          }
+        } catch (err) {
+          // Site membership check failed, continue to place membership check
+        }
+
+        // Check place-level role (owner, manager, editor can edit)
+        try {
+          const placeMemberships = await getPlaceMemberships(resolveQ.data.entityId, user.id);
+          const placeMembership = placeMemberships.find(m => m.placeId === resolveQ.data.entityId && m.userId === user.id);
+          if (placeMembership && (placeMembership.role === "owner" || placeMembership.role === "manager" || placeMembership.role === "editor")) {
+            setCanEditPlace(true);
+            return;
+          }
+        } catch (err) {
+          // Place membership check failed
+        }
+
+        setCanEditPlace(false);
+      } catch (err) {
+        console.error("Failed to check place permissions", err);
+        setCanEditPlace(false);
+      }
+    };
+
+    checkPermissions();
+  }, [isAuthenticated, user, resolveQ.data?.entityId, placeSiteId]);
 
   // Handle rating submission
   const [isRatingSaving, setIsRatingSaving] = useState(false);
@@ -375,9 +445,14 @@ export function PlaceDetailPage() {
     );
   }
 
+  // Build edit URL if user can edit
+  const editUrl = canEditPlace && resolveQ.data?.entityId 
+    ? `/${lang}/admin/places?edit=${resolveQ.data.entityId}`
+    : undefined;
+
   return (
     <>
-      <FloatingHeader />
+      <FloatingHeader editUrl={editUrl} showEditButton={canEditPlace} />
       <div
         style={{
           minHeight: "100vh",
@@ -423,6 +498,55 @@ export function PlaceDetailPage() {
                   borderRadius: 16,
                 }}
               />
+              
+              {/* Edit button - top right */}
+              {canEditPlace && editUrl && (
+                <Link
+                  to={editUrl}
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    padding: "10px 12px",
+                    background: "rgba(102, 126, 234, 0.9)",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+                    transition: "all 0.2s ease",
+                    textDecoration: "none",
+                    backdropFilter: "blur(8px)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 1)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.9)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
+                  }}
+                  title={t("common.edit") || "Szerkesztés"}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                    <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
+                  </svg>
+                </Link>
+              )}
               
               {/* Category badges overlaid on image - top left */}
               {place.category && (
@@ -669,7 +793,7 @@ export function PlaceDetailPage() {
                     marginTop: 0,
                   }}
                 >
-                  {t("public.contact") || "Kapcsolat"}
+                  {t("public.contact")}
                 </h3>
                 <div style={{ 
                   display: "flex",
@@ -1018,7 +1142,7 @@ export function PlaceDetailPage() {
                         >
                           {oh.isClosed ? (
                             <span style={{ fontStyle: "italic" }}>
-                              {t("common.closed") || "Zárva"}
+                              {t("common.closed")}
                             </span>
                           ) : oh.openTime && oh.closeTime ? (
                             `${oh.openTime} - ${oh.closeTime}`
@@ -1270,7 +1394,7 @@ export function PlaceDetailPage() {
           {/* Back Link */}
           <div style={{ margin: "48px 16px 0", paddingTop: 32, borderTop: "1px solid #e0e0e0" }}>
             <Link
-              to={buildUrl({ lang, siteKey, path: "" })}
+              to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: "" })}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1289,7 +1413,7 @@ export function PlaceDetailPage() {
                 e.currentTarget.style.color = "#667eea";
               }}
             >
-              ← {t("public.backToList") || "Vissza a listához"}
+              ← {t("public.backToList")}
             </Link>
           </div>
         </article>

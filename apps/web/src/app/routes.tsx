@@ -7,6 +7,7 @@ import { ProtectedRoute } from "../components/ProtectedRoute";
 import { RootRedirect } from "../components/RootRedirect";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
+import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
 
 // Public pages - loaded eagerly (main entry point)
 import { HomePage } from "../pages/HomePage";
@@ -56,6 +57,7 @@ const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then
 const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
 const SiteAnalyticsPage = lazy(() => import("../pages/admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
 const PlaceAnalyticsPage = lazy(() => import("../pages/admin/PlaceAnalyticsPage").then(m => ({ default: m.PlaceAnalyticsPage })));
+const EventAnalyticsPage = lazy(() => import("../pages/admin/EventAnalyticsPage").then(m => ({ default: m.EventAnalyticsPage })));
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -170,7 +172,7 @@ export const router = createBrowserRouter([
       {
         path: "",
         element: (
-          <ProtectedRoute requiredRole="viewer">
+          <ProtectedRoute requiredRole={ROLE_VIEWER}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <AdminDashboardWrapper />
@@ -182,7 +184,7 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: (
-          <ProtectedRoute requiredRole="viewer">
+          <ProtectedRoute requiredRole={ROLE_VIEWER}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <UserProfilePage />
@@ -194,7 +196,7 @@ export const router = createBrowserRouter([
       {
         path: "users",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <UsersPage />
@@ -276,6 +278,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "events/:eventId/analytics",
+        element: (
+          <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <EventAnalyticsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "towns",
         element: (
           <ProtectedRoute requiredRole="editor">
@@ -326,7 +340,7 @@ export const router = createBrowserRouter([
       {
         path: "sites",
         element: HAS_MULTIPLE_SITES ? (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SitesPage />
@@ -340,7 +354,7 @@ export const router = createBrowserRouter([
       {
         path: "sites/:id/edit",
         element: HAS_MULTIPLE_SITES ? (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteEditPage />
@@ -366,7 +380,7 @@ export const router = createBrowserRouter([
       {
         path: "subscription-overview",
         element: HAS_MULTIPLE_SITES ? (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SubscriptionOverviewPage />
@@ -380,7 +394,7 @@ export const router = createBrowserRouter([
       {
         path: "subscriptions",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SubscriptionsDashboardPage />
@@ -392,7 +406,7 @@ export const router = createBrowserRouter([
       {
         path: "brands",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <BrandsPage />
@@ -404,7 +418,7 @@ export const router = createBrowserRouter([
       {
         path: "site-instances",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteInstancesPage />
@@ -416,7 +430,7 @@ export const router = createBrowserRouter([
       {
         path: "site-memberships",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteMembershipsPage />
@@ -428,7 +442,7 @@ export const router = createBrowserRouter([
       {
         path: "place-memberships",
         element: (
-          <ProtectedRoute requiredRole="admin" considerSiteRole={true}>
+          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PlaceMembershipsPage />
@@ -440,7 +454,7 @@ export const router = createBrowserRouter([
       {
         path: "platform-settings",
         element: (
-          <ProtectedRoute requiredRole="superadmin">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <AppSettingsPage />
@@ -464,7 +478,7 @@ export const router = createBrowserRouter([
       {
         path: "event-log",
         element: (
-          <ProtectedRoute requiredRole="admin" considerSiteRole={true}>
+          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventLogPage />

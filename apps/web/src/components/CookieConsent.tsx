@@ -105,7 +105,6 @@ export function CookieConsent() {
               transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(255, 255, 255, 0.2)",
               whiteSpace: "nowrap",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
@@ -134,7 +133,6 @@ export function CookieConsent() {
               fontWeight: 500,
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";

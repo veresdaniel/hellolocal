@@ -1,33 +1,33 @@
 <!doctype html>
-<script>
-  // CRITICAL: This must run IMMEDIATELY, before any other scripts
-  // Suppress "tabReply will be removed" deprecation warning from browser extensions
-  (function() {
-    'use strict';
-    if (typeof console === 'undefined') return;
-    
-    const filterTabReply = function(...args) {
-      const message = String(args.join(' '));
-      return message.includes('tabReply') || message.includes('tabReply will be removed');
-    };
-    
-    // Intercept all console methods that might log the warning
-    const methods = ['warn', 'error', 'log', 'info'];
-    methods.forEach(method => {
-      if (console[method]) {
-        const original = console[method];
-        console[method] = function(...args) {
-          if (filterTabReply(...args)) {
-            return; // Suppress tabReply warnings
-          }
-          original.apply(console, args);
-        };
-      }
-    });
-  })();
-</script>
 <html lang="en">
   <head>
+    <script>
+      // CRITICAL: This must run IMMEDIATELY, before any other scripts
+      // Suppress "tabReply will be removed" deprecation warning from browser extensions
+      (function() {
+        'use strict';
+        if (typeof console === 'undefined') return;
+        
+        const filterTabReply = function(...args) {
+          const message = String(args.join(' '));
+          return message.includes('tabReply') || message.includes('tabReply will be removed');
+        };
+        
+        // Intercept all console methods that might log the warning
+        const methods = ['warn', 'error', 'log', 'info'];
+        methods.forEach(method => {
+          if (console[method]) {
+            const original = console[method];
+            console[method] = function(...args) {
+              if (filterTabReply(...args)) {
+                return; // Suppress tabReply warnings
+              }
+              original.apply(console, args);
+            };
+          }
+        });
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link rel="icon" type="image/x-icon" href="/vite.svg" />

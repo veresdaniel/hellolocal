@@ -1,6 +1,7 @@
 // src/components/SessionExtensionToast.tsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { TIMING } from "../app/config";
 import { refreshToken } from "../api/auth.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 
@@ -59,8 +60,8 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
           const now = Date.now();
           const elapsed = now - lastUpdateTimeRef.current;
           
-          // Update every second (1000ms) when tab is visible
-          if (elapsed >= 1000) {
+          // Update every second when tab is visible
+          if (elapsed >= TIMING.UI_UPDATE_INTERVAL_MS) {
             lastUpdateTimeRef.current = now;
             updateTimeRemaining();
           }
@@ -99,7 +100,7 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
         lastUpdateTimeRef.current = now;
         updateTimeRemaining();
       }
-    }, 1000);
+    }, TIMING.UI_UPDATE_INTERVAL_MS);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);

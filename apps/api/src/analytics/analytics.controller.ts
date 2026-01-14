@@ -83,4 +83,29 @@ export class AnalyticsController {
       userId: user.id
     });
   }
+
+  @Get("event/:eventId")
+  @UseGuards(JwtAuthGuard)
+  async eventDashboard(
+    @Param("lang") lang: string,
+    @Param("eventId") eventId: string,
+    @Query("range") range = "7",
+    @Query("siteKey") siteKey?: string,
+    @CurrentUser() user?: { id: string }
+  ) {
+    this.validateLang(lang);
+    if (!user?.id) {
+      throw new BadRequestException("User not found");
+    }
+    if (!eventId) {
+      throw new BadRequestException("eventId is required");
+    }
+    return this.analytics.getEventDashboard({ 
+      lang, 
+      siteKey, 
+      eventId, 
+      rangeDays: Number(range),
+      userId: user.id
+    });
+  }
 }

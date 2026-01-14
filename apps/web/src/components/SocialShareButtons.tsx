@@ -36,7 +36,7 @@ export function SocialShareButtons({ url, title, description, image }: SocialSha
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      alert(t("public.linkCopied") || "Link másolva!");
+      alert(t("public.linkCopied"));
     } catch (err) {
       console.error("Failed to copy link", err);
     }

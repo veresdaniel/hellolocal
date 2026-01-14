@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Site } from "../api/admin.api";
+import { getHuTranslation } from "../utils/langHelpers";
 
 interface SiteAutocompleteProps {
   selectedSiteIds: string[];
@@ -53,7 +54,8 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
 
   const getSiteName = (siteId: string) => {
     const site = allSites.find((s) => s.id === siteId);
-    return site?.translations.find((t) => t.lang === "hu")?.name || site?.slug || siteId;
+    const huTranslation = site ? getHuTranslation(site.translations) : undefined;
+    return huTranslation?.name || site?.slug || siteId;
   };
 
   return (
@@ -140,7 +142,7 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
                 e.currentTarget.style.background = "white";
               }}
             >
-              {site.translations.find((t) => t.lang === "hu")?.name || site.slug}
+              {getHuTranslation(site.translations)?.name || site.slug}
             </li>
           ))}
         </ul>

@@ -1,26 +1,26 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { Tenant } from "../../api/places.api";
-import { buildUrl } from "../../app/urls";
-import { useRouteCtx } from "../../app/useRouteCtx";
+import type { Site } from "../../../api/places.api";
+import { buildUrl } from "../../../app/urls";
+import { useRouteCtx } from "../../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
-import { getPlatformSettings } from "../../api/places.api";
-import { sanitizeImageUrl } from "../../utils/urlValidation";
-import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
+import { getPlatformSettings } from "../../../api/places.api";
+import { sanitizeImageUrl } from "../../../utils/urlValidation";
+import { ImageWithSkeleton } from "../../../components/ImageWithSkeleton";
 
 interface TenantCardProps {
-  tenant: Tenant;
+  tenant: Site;
   index?: number;
 }
 
 export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
-  const { lang, tenantKey } = useRouteCtx();
+  const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
 
   // Load site settings for default placeholder image
   const { data: platformSettings } = useQuery({
-    queryKey: ["platformSettings", lang, tenantKey],
-    queryFn: () => getPlatformSettings(lang, tenantKey),
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -67,7 +67,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
         }
       `}</style>
       <Link
-        to={buildUrl({ lang, tenantKey: tenant.slug, path: "" })}
+        to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey: tenant.slug, path: "" })}
         style={{
           textDecoration: "none",
           color: "inherit",
@@ -241,7 +241,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
                   fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
                 }}
               >
-                <span>{t("public.open") || "Megnyitás"}</span>
+                <span>{t("public.open")}</span>
                 <span
                   style={{
                     transition: "transform 0.3s ease",

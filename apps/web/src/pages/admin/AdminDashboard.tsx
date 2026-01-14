@@ -9,6 +9,9 @@ import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type La
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { getSiteMemberships } from "../../api/admin.api";
+import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
+import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR, ROLE_VIEWER } from "../../types/enums";
+import type { UserRole } from "../../types/enums";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -64,13 +67,13 @@ export function AdminDashboard() {
   const adminPath = (subPath: string) => `/${currentLang}/admin${subPath}`;
   
   // Determine permissions: consider both global role and tenant-level role
-  const isSuperadmin = user?.role === "superadmin";
-  const isGlobalAdmin = user?.role === "admin";
-  const isGlobalEditor = user?.role === "editor";
-  const isGlobalViewer = user?.role === "viewer";
+  const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
+  const userIsGlobalAdmin = user?.role === ROLE_ADMIN;
+  const userIsGlobalEditor = user?.role === ROLE_EDITOR;
+  const userIsGlobalViewer = user?.role === ROLE_VIEWER;
   
   // Effective admin permissions: superadmin OR global admin OR siteadmin
-  const hasAdminPermissions = isSuperadmin || isGlobalAdmin || isSiteAdmin;
+  const hasAdminPermissions = userIsSuperadmin || userIsGlobalAdmin || isSiteAdmin;
 
   // Determine if EventLog card should be shown (admin or siteadmin)
   const showEventLog = hasAdminPermissions;
@@ -78,15 +81,15 @@ export function AdminDashboard() {
   // Count cards in each section to conditionally show section titles
   const permissionsCardsCount = useMemo(() => {
     let count = 0;
-    if (user?.role === "superadmin") count += 2; // users + siteMemberships
+    if (userIsSuperadmin) count += 2; // users + siteMemberships
     if (hasAdminPermissions) count += 1; // placeMemberships
     return count;
   }, [user?.role, hasAdminPermissions]);
 
   const systemCardsCount = useMemo(() => {
     let count = 0;
-    if (user?.role === "superadmin") count += 3; // appSettings + brands + subscriptions
-    if (user?.role === "superadmin" && HAS_MULTIPLE_SITES) count += 1; // sites
+    if (user?.role === ROLE_SUPERADMIN) count += 3; // appSettings + brands + subscriptions
+    if (user?.role === ROLE_SUPERADMIN && HAS_MULTIPLE_SITES) count += 1; // sites
     if (showEventLog) count += 1; // eventLog
     return count;
   }, [user?.role, showEventLog]);
@@ -226,7 +229,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Analytics & Insights Block - Only for editor+ */}
-      {!isGlobalViewer && (
+      {!userIsGlobalViewer && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
           <SectionTitle label={t("admin.dashboardSections.analytics") || "Analytics & Insights"} />
           <div style={{ 
@@ -292,7 +295,7 @@ export function AdminDashboard() {
             isMobile={isMobile}
             variant="content"
           />
-          {user?.role === "superadmin" && (
+          {user?.role === ROLE_SUPERADMIN && (
             <DashboardCard
               title={t("admin.dashboardCards.siteInstances")}
               description={t("admin.dashboardCards.siteInstancesDesc")}
@@ -321,7 +324,7 @@ export function AdminDashboard() {
             maxWidth: "100%",
             boxSizing: "border-box",
           }}>
-            {user?.role === "superadmin" && (
+            {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.users")}
                 description={t("admin.dashboardCards.usersDesc")}
@@ -331,7 +334,7 @@ export function AdminDashboard() {
                 variant="admin"
               />
             )}
-            {user?.role === "superadmin" && (
+            {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.dashboardCards.siteMemberships")}
                 description={t("admin.dashboardCards.siteMembershipsDesc")}
@@ -371,7 +374,7 @@ export function AdminDashboard() {
             maxWidth: "100%",
             boxSizing: "border-box",
           }}>
-            {user?.role === "superadmin" && (
+            {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.appSettings")}
                 description={t("admin.dashboardCards.appSettingsDesc")}
@@ -381,7 +384,7 @@ export function AdminDashboard() {
                 variant="admin"
               />
             )}
-            {user?.role === "superadmin" && (
+            {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.dashboardCards.brands")}
                 description={t("admin.dashboardCards.brandsDesc")}
@@ -391,7 +394,7 @@ export function AdminDashboard() {
                 variant="admin"
               />
             )}
-            {user?.role === "superadmin" && HAS_MULTIPLE_SITES && (
+            {user?.role === ROLE_SUPERADMIN && HAS_MULTIPLE_SITES && (
               <DashboardCard
                 title={t("admin.sites")}
                 description={t("admin.dashboardCards.sitesDesc")}
@@ -411,7 +414,7 @@ export function AdminDashboard() {
                 variant="admin"
               />
             )}
-            {user?.role === "superadmin" && (
+            {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.subscriptionsDashboard")}
                 description={t("admin.dashboardCards.subscriptionsDesc")}

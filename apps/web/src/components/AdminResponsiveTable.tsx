@@ -1,6 +1,7 @@
 // src/components/AdminResponsiveTable.tsx
 import { useState, useEffect, useRef, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { BREAKPOINTS } from "../utils/viewport";
 import { Pagination } from "./Pagination";
 import { TableSkeleton } from "./TableSkeleton";
 
@@ -41,6 +42,8 @@ export interface AdminResponsiveTableProps<T> {
   // Actions
   onEdit: (item: T) => void;
   onDelete: (item: T) => void;
+  onView?: (item: T) => void; // Optional: view button (magnifying glass icon)
+  shouldShowView?: (item: T) => boolean; // Optional: condition to show view button
   
   // Pagination (optional - only for desktop)
   pagination?: {
@@ -70,12 +73,17 @@ export function AdminResponsiveTable<T>({
   cardFields,
   onEdit,
   onDelete,
+  onView,
+  shouldShowView,
   pagination,
   isLoading = false,
   error = null,
 }: AdminResponsiveTableProps<T>) {
   const { t } = useTranslation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < BREAKPOINTS.tablet;
+  });
   const [swipedCardId, setSwipedCardId] = useState<string | null>(null);
   const [currentMobileIndex, setCurrentMobileIndex] = useState(0);
   const [previousMobileIndex, setPreviousMobileIndex] = useState(0);
@@ -88,7 +96,7 @@ export function AdminResponsiveTable<T>({
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -287,20 +295,52 @@ export function AdminResponsiveTable<T>({
                 ))}
                 <td style={{ padding: 12, textAlign: "right", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                    {onView && (!shouldShowView || shouldShowView(item)) && (
+                      <button
+                        onClick={() => onView(item)}
+                        style={{
+                          padding: "6px 10px",
+                          background: "rgba(16, 185, 129, 0.1)",
+                          border: "1px solid rgba(16, 185, 129, 0.3)",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          fontSize: "clamp(13px, 3vw, 15px)",
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#10b981",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                          e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                          e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                        }}
+                        title={t("admin.viewPublic") || "Megnézem"}
+                      >
+                        🔍
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(item)}
                       style={{
-                        padding: "6px 12px",
+                        padding: "6px 10px",
                         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                         color: "white",
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
                         fontSize: "clamp(13px, 3vw, 15px)",
-                        fontWeight: 600,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
                         boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
@@ -310,23 +350,38 @@ export function AdminResponsiveTable<T>({
                         e.currentTarget.style.transform = "translateY(0)";
                         e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                       }}
+                      title={t("common.edit")}
                     >
-                      {t("common.edit")}
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                        <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
+                      </svg>
                     </button>
                     <button
                       onClick={() => onDelete(item)}
                       style={{
-                        padding: "6px 12px",
+                        padding: "6px 10px",
                         background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                         color: "white",
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
                         fontSize: "clamp(13px, 3vw, 15px)",
-                        fontWeight: 600,
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
                         boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
@@ -336,8 +391,24 @@ export function AdminResponsiveTable<T>({
                         e.currentTarget.style.transform = "translateY(0)";
                         e.currentTarget.style.boxShadow = "0 2px 8px rgba(245, 87, 108, 0.3)";
                       }}
+                      title={t("common.delete")}
                     >
-                      {t("common.delete")}
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
                     </button>
                   </div>
                 </td>
@@ -508,7 +579,7 @@ export function AdminResponsiveTable<T>({
                   (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50)
                 ) {
                   // Threshold based on screen width (same as card swipe)
-                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.mobile;
                   const SWIPE_THRESHOLD = screenWidth * 0.25; // 25% of screen width
                   const QUICK_SWIPE_THRESHOLD = screenWidth * 0.15; // 15% for quick swipes
                   const velocity = Math.abs(diffX) / timeDiff;
@@ -586,7 +657,7 @@ export function AdminResponsiveTable<T>({
 
                 // Styling based on position - Carousel layout (cards side by side with gap)
                 const getCardStyle = () => {
-                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.mobile;
                   const CARD_GAP = 16; // Gap between cards in pixels
                   const baseStyle = {
                     position: "absolute" as const,
@@ -724,11 +795,55 @@ export function AdminResponsiveTable<T>({
                             borderTopRightRadius: 12,
                             borderBottomRightRadius: 12,
                             overflow: "hidden",
-                            transform: isOpen ? "translateX(0)" : "translateX(100%)",
+                            transform: isOpen ? "translateX(0)" : `translateX(${onView ? 240 : 160}px)`,
                             transition: "transform 0.3s ease",
                             zIndex: 10,
+                            width: onView ? 240 : 160,
                           }}
                         >
+                          {onView && (!shouldShowView || shouldShowView(item)) && (
+                            <button
+                              onClick={() => {
+                                onView(item);
+                                setSwipedCardId(null);
+                              }}
+                              style={{
+                                width: 80,
+                                background: "rgba(16, 185, 129, 0.9)",
+                                color: "white",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.2s ease",
+                                boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
+                                padding: 0,
+                              }}
+                              onTouchStart={(e) => {
+                                e.currentTarget.style.filter = "brightness(0.9)";
+                              }}
+                              onTouchEnd={(e) => {
+                                e.currentTarget.style.filter = "brightness(1)";
+                              }}
+                              title={t("admin.viewPublic") || "Megnézem"}
+                            >
+                              <svg
+                                width="26"
+                                height="26"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ display: "block" }}
+                              >
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                              </svg>
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               onEdit(item);
@@ -753,29 +868,21 @@ export function AdminResponsiveTable<T>({
                             onTouchEnd={(e) => {
                               e.currentTarget.style.filter = "brightness(1)";
                             }}
+                            title={t("common.edit")}
                           >
                             <svg
                               width="26"
                               height="26"
                               viewBox="0 0 24 24"
                               fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                               style={{ display: "block" }}
                             >
-                              <path
-                                d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
+                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                              <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
                             </svg>
                           </button>
                           <button
@@ -802,43 +909,24 @@ export function AdminResponsiveTable<T>({
                             onTouchEnd={(e) => {
                               e.currentTarget.style.filter = "brightness(1)";
                             }}
+                            title={t("common.delete")}
                           >
                             <svg
                               width="26"
                               height="26"
                               viewBox="0 0 24 24"
                               fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                               style={{ display: "block" }}
                             >
-                              <path
-                                d="M3 6H5H21"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M10 11V17"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M14 11V17"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
+                              <path d="M3 6h18" />
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
                             </svg>
                           </button>
                         </div>
@@ -891,7 +979,7 @@ export function AdminResponsiveTable<T>({
                           setIsDragging(false);
                           
                           // Threshold based on screen width (25% of screen = swipe)
-                          const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+                          const screenWidth = typeof window !== 'undefined' ? window.innerWidth : BREAKPOINTS.mobile;
                           const SWIPE_THRESHOLD = screenWidth * 0.25; // 25% of screen width
                           const QUICK_SWIPE_THRESHOLD = screenWidth * 0.15; // 15% for quick swipes
                           const quickSwipe = timeDiff < 300;

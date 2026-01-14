@@ -14,6 +14,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 interface PriceBand {
   id: string;
@@ -189,9 +191,9 @@ export function PriceBandsPage() {
 
   const startEdit = (priceBand: PriceBand) => {
     setEditingId(priceBand.id);
-    const hu = priceBand.translations.find((t) => t.lang === "hu");
-    const en = priceBand.translations.find((t) => t.lang === "en");
-    const de = priceBand.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(priceBand.translations, "hu" as Lang);
+    const en = findTranslation(priceBand.translations, "en" as Lang);
+    const de = findTranslation(priceBand.translations, "de" as Lang);
     setFormData({
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
@@ -358,9 +360,9 @@ export function PriceBandsPage() {
           isLoading={isLoading}
           filterFn={(priceBand, query) => {
             const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = priceBand.translations.find((t) => t.lang === currentLang) || 
-                               priceBand.translations.find((t) => t.lang === "hu");
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+            const translation = findTranslation(priceBand.translations, currentLang) || 
+                               findTranslation(priceBand.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -370,7 +372,7 @@ export function PriceBandsPage() {
               render: (priceBand) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = priceBand.translations.find((t) => t.lang === currentLang) || 
-                                   priceBand.translations.find((t) => t.lang === "hu");
+                                   findTranslation(priceBand.translations, "hu" as Lang);
                 return translation?.name || "-";
               },
             },
@@ -396,9 +398,9 @@ export function PriceBandsPage() {
             },
           ]}
           cardTitle={(priceBand) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = priceBand.translations.find((t) => t.lang === currentLang) || 
-                               priceBand.translations.find((t) => t.lang === "hu");
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+            const translation = findTranslation(priceBand.translations, currentLang) || 
+                               findTranslation(priceBand.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(priceBand) => `💰 ${priceBand.id.slice(0, 8)}`}

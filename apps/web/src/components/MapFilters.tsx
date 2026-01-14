@@ -1,11 +1,18 @@
 // src/components/MapFilters.tsx
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { HAS_MULTIPLE_SITES } from "../app/config";
+import { BREAKPOINTS } from "../utils/viewport";
+import { buildUrl } from "../app/urls";
+import { useRouteCtx } from "../app/useRouteCtx";
 import type { Place } from "../types/place";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { useViewStore } from "../stores/useViewStore";
+import { useActiveBoxStore } from "../stores/useActiveBoxStore";
+import { getPlaces } from "../api/places.api";
 
 interface MapFiltersProps {
   selectedCategories: string[];
@@ -42,10 +49,22 @@ export function MapFilters({
   const { siteKey } = useSiteContext();
   const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
   const { t } = useTranslation();
+  const location = useLocation();
+  const { lang: routeLang, siteKey: routeSiteKey } = useRouteCtx();
+  const { showMap } = useViewStore();
+  const { activeBox, setActiveBox } = useActiveBoxStore();
   const userLocation = useFiltersStore((state) => state.userLocation);
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Check if we're on map view
+  const isOnHomePage = location.pathname === buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) ||
+                       location.pathname === buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) + "/";
+  const isOnMapView = isOnHomePage && showMap;
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < BREAKPOINTS.tablet;
+  });
   
   // Default positions: jobb, listanézet alatt (right, below list view button)
   // List view button is at top: 16, so filters should be at top: ~80
@@ -66,10 +85,27 @@ export function MapFilters({
     }
     return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
+  // Load saved height from localStorage (default: 400px for filters)
+  const [height, setHeight] = useState(() => {
+    if (typeof window === "undefined") return 400;
+    const saved = localStorage.getItem("mapFiltersHeight");
+    if (saved) {
+      try {
+        const parsed = parseInt(saved, 10);
+        return isNaN(parsed) ? 400 : Math.max(200, Math.min(parsed, 800)); // Min 200px, max 800px
+      } catch {
+        return 400;
+      }
+    }
+    return 400;
+  });
+  
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
+  const resizeStartPosRef = useRef({ y: 0, height: 0 });
   const filtersRef = useRef<HTMLDivElement>(null);
   const [shouldAnimateUp, setShouldAnimateUp] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -77,7 +113,7 @@ export function MapFilters({
   // Detect mobile viewport changes
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
     };
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -112,26 +148,23 @@ export function MapFilters({
     }
   }, [position, isDesktop]);
 
-  // Lock body scroll when drawer is open (best practice)
+  // Save height to localStorage whenever it changes
   useEffect(() => {
-    if (isOpen) {
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      
+    localStorage.setItem("mapFiltersHeight", String(height));
+  }, [height]);
+
+  // Hide vertical scrollbar on map view only (always, regardless of filter state)
+  // On other pages (list view, etc.): don't modify scrollbar at all
+  useEffect(() => {
+    if (isOnMapView) {
+      // On map view: always hide vertical scrollbar
+      document.body.style.overflowY = 'hidden';
       return () => {
-        // Restore scroll position
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
+        document.body.style.overflowY = '';
       };
     }
-  }, [isOpen]);
+    // On other pages: do nothing, let scrollbar be visible
+  }, [isOnMapView]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !filtersRef.current) return;
@@ -254,16 +287,61 @@ export function MapFilters({
     };
   }, [isDragging, dragOffset]);
 
-  // Use cached places data from React Query if available (don't fetch separately)
-  // This avoids duplicate API calls - we'll extract categories/price bands from existing cache
-  const queryClient = useQueryClient();
-  const places = queryClient.getQueryData<Place[]>(["places", lang, effectiveSiteKey]) ||
-                 queryClient.getQueryData<Place[]>(["places", lang, effectiveSiteKey, undefined, undefined]);
+  // Handle resize (only height, desktop only)
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    if (!isDesktop || !filtersRef.current) return;
+    e.preventDefault();
+    e.stopPropagation(); // Prevent drag from starting
+    setIsResizing(true);
+    const rect = filtersRef.current.getBoundingClientRect();
+    resizeStartPosRef.current = {
+      y: e.clientY,
+      height: rect.height,
+    };
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!filtersRef.current) return;
+      
+      const deltaY = e.clientY - resizeStartPosRef.current.y;
+      const newHeight = resizeStartPosRef.current.height + deltaY;
+      
+      // Constrain height: min 200px, max 800px
+      const constrainedHeight = Math.max(200, Math.min(newHeight, 800));
+      
+      setHeight(constrainedHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, isDesktop]);
+
+  // Fetch places data to extract categories and price bands
+  // Use a query key without filters to get all places (for filter options)
+  const { data: places } = useQuery({
+    queryKey: ["places", lang, effectiveSiteKey, [], []], // Empty filters to get all places
+    queryFn: () => getPlaces(lang, effectiveSiteKey || "", undefined, undefined),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    enabled: !!lang && !!effectiveSiteKey, // Only fetch if we have lang and siteKey
+  });
 
   // Extract unique categories and price bands from places
   // Note: For price bands, we use IDs. For categories, we still use names (can be updated later)
   const categories = useMemo(() => {
-    if (!places) return [];
+    if (!places || !Array.isArray(places)) return [];
     const categorySet = new Set<string>();
     places.forEach((place) => {
       if (place.category) {
@@ -274,7 +352,7 @@ export function MapFilters({
   }, [places]);
 
   const priceBands = useMemo(() => {
-    if (!places) return [];
+    if (!places || !Array.isArray(places)) return [];
     const priceBandMap = new Map<string, { id: string; name: string }>();
     places.forEach((place) => {
       if (place.priceBand) {
@@ -292,18 +370,30 @@ export function MapFilters({
     return result;
   }, [places]);
 
-  // Calculate dynamic z-index: higher only when actively dragging (not when just open)
+  // Calculate dynamic z-index: higher when actively dragging, resizing, or when this box is active
   const baseZIndex = 3000;
-  const activeZIndex = 10000; // High z-index when actively being used (dragging)
-  const currentZIndex = isDragging ? activeZIndex : baseZIndex;
+  const activeZIndex = 10000; // High z-index when actively being used (dragging, resizing, or selected)
+  const isActive = activeBox === "filters";
+  const currentZIndex = (isDragging || isResizing || isActive) ? activeZIndex : baseZIndex;
+  
+  // Set this box as active when clicked
+  const handleBoxClick = () => {
+    if (!isDragging && !isResizing) {
+      setActiveBox("filters");
+    }
+  };
 
   return (
     <div
       ref={filtersRef}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e) => {
+        handleBoxClick();
+        handleMouseDown(e);
+      }}
       onTouchStart={handleTouchStart}
+      onClick={handleBoxClick}
       style={{
-        position: "absolute",
+        position: isOnMapView ? "absolute" : "fixed", // Fixed on list view for sticky behavior, absolute on map view
         top: position.top,
         right: position.right,
         zIndex: currentZIndex, // Dynamic z-index based on active state
@@ -316,10 +406,10 @@ export function MapFilters({
         overflow: "hidden",
         minWidth: isMobile && !isOpen ? "auto" : 280,
         maxWidth: isMobile && !isOpen ? 44 : 320,
-        maxHeight: isOpen ? (isMobile ? "85vh" : "80vh") : "auto",
-        cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
+        height: isOpen ? (isMobile ? "85vh" : `${height}px`) : "auto",
+        cursor: isDesktop ? (isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab") : "default",
         userSelect: "none",
-        transition: isDragging 
+        transition: (isDragging || isResizing)
           ? "none" 
           : shouldAnimateUp 
             ? "top 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease"
@@ -331,12 +421,12 @@ export function MapFilters({
         flexDirection: "column",
       }}
       onMouseEnter={(e) => {
-        if (isDesktop && !isDragging) {
+        if (isDesktop && !isDragging && !isResizing) {
           e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
-        if (!isDragging) {
+        if (!isDragging && !isResizing) {
           e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
@@ -446,7 +536,7 @@ export function MapFilters({
             padding: 16,
             overflowY: "auto",
             overflowX: "hidden",
-            flex: 1,
+            height: isMobile ? "auto" : `${height - 50}px`, // Subtract header height (~50px including padding)
             // Custom scrollbar styling
             scrollbarWidth: "thin",
             scrollbarColor: "rgba(90, 61, 122, 0.3) transparent",
@@ -472,102 +562,104 @@ export function MapFilters({
               background-color: rgba(90, 61, 122, 0.5);
             }
           `}</style>
-          {/* Categories */}
-          <div style={{ marginBottom: 18 }}>
-            <h3
-              style={{
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontWeight: 600,
-                color: "#5a3d7a",
-                marginBottom: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              Kategóriák
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {categories?.map((category) => {
-                const isSelected = selectedCategories.includes(category.id);
-                return (
-                  <label
-                    key={category.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "6px 8px",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
-                      transition: "all 0.2s",
-                      border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          onCategoriesChange([...selectedCategories, category.id]);
-                        } else {
-                          onCategoriesChange(selectedCategories.filter((id) => id !== category.id));
+          {/* Categories - only show if there are categories */}
+          {categories && categories.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <h3
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#5a3d7a",
+                  marginBottom: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                Kategóriák
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {categories.map((category) => {
+                  const isSelected = selectedCategories.includes(category.id);
+                  return (
+                    <label
+                      key={category.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
+                        transition: "all 0.2s",
+                        border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
                         }
                       }}
-                      style={{
-                        width: 14,
-                        height: 14,
-                        cursor: "pointer",
-                        accentColor: "#5a3d7a",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        color: isSelected ? "#3d2952" : "#5a3d7a",
-                        fontWeight: isSelected ? 500 : 400,
-                        lineHeight: 1.4,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.background = "transparent";
+                        }
                       }}
                     >
-                      {category.name}
-                    </span>
-                  </label>
-                );
-              })}
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            onCategoriesChange([...selectedCategories, category.id]);
+                          } else {
+                            onCategoriesChange(selectedCategories.filter((id) => id !== category.id));
+                          }
+                        }}
+                        style={{
+                          width: 14,
+                          height: 14,
+                          cursor: "pointer",
+                          accentColor: "#5a3d7a",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          color: isSelected ? "#3d2952" : "#5a3d7a",
+                          fontWeight: isSelected ? 500 : 400,
+                          lineHeight: 1.4,
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {category.name}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Price Bands */}
-          <div style={{ marginBottom: 18 }}>
-            <h3
-              style={{
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontWeight: 600,
-                color: "#5a3d7a",
-                marginBottom: 10,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              Ár sávok
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {priceBands && priceBands.length > 0 ? (
-                priceBands.map((priceBand) => {
+          {/* Price Bands - only show if there are price bands */}
+          {priceBands && priceBands.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <h3
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#5a3d7a",
+                  marginBottom: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                Ár sávok
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {priceBands.map((priceBand) => {
                   const isSelected = selectedPriceBands.includes(priceBand.id);
                   return (
                     <label
@@ -625,14 +717,10 @@ export function MapFilters({
                       </span>
                     </label>
                   );
-                })
-              ) : (
-                <div style={{ padding: "8px 10px", color: "#8a7a9a", fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                  Nincs elérhető ár sáv
-                </div>
-              )}
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Context-based filters */}
           <div>
@@ -766,6 +854,46 @@ export function MapFilters({
               </button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Resize handle - only on desktop, only when open */}
+      {isOpen && isDesktop && (
+        <div
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 8,
+            cursor: "ns-resize",
+            zIndex: 1000,
+            background: "transparent",
+            borderBottomLeftRadius: 16,
+            borderBottomRightRadius: 16,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          {/* Visual indicator */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 2,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 40,
+              height: 4,
+              background: "rgba(102, 126, 234, 0.3)",
+              borderRadius: 2,
+              transition: "background 0.2s",
+            }}
+          />
         </div>
       )}
     </div>

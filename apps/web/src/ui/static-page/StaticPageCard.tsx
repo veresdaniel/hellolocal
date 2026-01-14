@@ -41,15 +41,15 @@ function getCategoryColor(category: string): string {
 }
 
 export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
-  const { lang, tenantKey } = useRouteCtx();
+  const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
   const categoryColor = getCategoryColor(staticPage.category);
   const categoryLabel = getCategoryLabel(staticPage.category);
 
   // Load site settings for default placeholder image
   const { data: platformSettings } = useQuery({
-    queryKey: ["platformSettings", lang, tenantKey],
-    queryFn: () => getPlatformSettings(lang, tenantKey),
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -178,7 +178,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               transition: "all 0.3s ease",
             }}
           >
-            <span>{t("public.open") || "Tovább"}</span>
+            <span>{t("public.open")}</span>
             <span
               style={{
                 transition: "transform 0.3s ease",
@@ -213,7 +213,7 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
         }
       `}</style>
       <Link
-        to={buildUrl({ lang, tenantKey, path: `static-page/${staticPage.id}` })}
+        to={buildUrl({ lang, siteKey, path: `static-page/${staticPage.id}` })}
         style={{
           textDecoration: "none",
           color: "inherit",

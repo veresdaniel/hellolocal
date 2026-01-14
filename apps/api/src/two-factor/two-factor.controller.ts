@@ -5,6 +5,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRole } from "@prisma/client";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export class SetupTwoFactorDto {
   userId?: string; // Optional: for admin to setup 2FA for other users
@@ -42,7 +43,7 @@ export class TwoFactorController {
       : user?.id || user?.sub;
 
     if (!targetUserId) {
-      throw new BadRequestException("User ID is required. Please ensure you are authenticated.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
 
     return this.twoFactorService.setupTwoFactor(targetUserId);
@@ -62,7 +63,7 @@ export class TwoFactorController {
       : user?.id || user?.sub;
 
     if (!targetUserId) {
-      throw new BadRequestException("User ID is required. Please ensure you are authenticated.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
 
     return this.twoFactorService.verifyAndEnableTwoFactor(targetUserId, dto.token);
@@ -79,13 +80,13 @@ export class TwoFactorController {
     const targetUserId = dto.userId || user?.id || user?.sub;
     
     if (!targetUserId) {
-      throw new BadRequestException("User ID is required. Please ensure you are authenticated.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
 
     // Users can only disable their own 2FA, admins can disable for any user
     const currentUserId = user?.id || user?.sub;
     if (currentUserId !== targetUserId && user.role !== UserRole.admin && user.role !== UserRole.superadmin) {
-      throw new UnauthorizedException("You can only disable your own 2FA");
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_DISABLE_OWN_2FA);
     }
 
     await this.twoFactorService.disableTwoFactor(targetUserId);

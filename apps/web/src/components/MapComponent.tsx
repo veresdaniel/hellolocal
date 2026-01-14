@@ -1,7 +1,7 @@
 // src/components/MapComponent.tsx
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import Map, { Marker, Source, Layer } from "react-map-gl";
+import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAX_DISTANCE_KM } from "../app/config";
@@ -32,39 +32,49 @@ interface MapComponentProps {
   hideLocationButton?: boolean; // Hide the "show my location" button (for admin pages)
 }
 
+// Constants for distance calculations
+const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
+const DEGREES_TO_RADIANS = Math.PI / 180;
+
 // Helper function to calculate distance in km using Haversine formula
 const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const dLat = (lat2 - lat1) * DEGREES_TO_RADIANS;
+  const dLng = (lng2 - lng1) * DEGREES_TO_RADIANS;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.cos(lat1 * DEGREES_TO_RADIANS) * Math.cos(lat2 * DEGREES_TO_RADIANS) *
     Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return EARTH_RADIUS_KM * c;
 };
+
+// Constants for distance formatting
+const METERS_PER_KM = 1000;
+const DISTANCE_THRESHOLD_KM = 1; // Show meters if distance is less than this
 
 // Helper function to format distance
 const formatDistance = (distance: number): string => {
-  if (distance < 1) {
-    return `${Math.round(distance * 1000)} m`;
+  if (distance < DISTANCE_THRESHOLD_KM) {
+    return `${Math.round(distance * METERS_PER_KM)} m`;
   }
   return `${distance.toFixed(1)} km`;
 };
 
+// Constants for travel time calculations
+const WALKING_SPEED_KMH = 5; // Average walking speed in km/h
+const CYCLING_SPEED_KMH = 15; // Average cycling speed in km/h
+const MINUTES_PER_HOUR = 60;
+
 // Helper function to calculate walking time (average walking speed: 5 km/h = 83.33 m/min)
 const calculateWalkingTime = (distanceKm: number): number => {
-  const walkingSpeedKmh = 5; // km/h
-  const timeHours = distanceKm / walkingSpeedKmh;
-  return timeHours * 60; // Convert to minutes
+  const timeHours = distanceKm / WALKING_SPEED_KMH;
+  return timeHours * MINUTES_PER_HOUR;
 };
 
 // Helper function to calculate cycling time (average cycling speed: 15 km/h)
 const calculateCyclingTime = (distanceKm: number): number => {
-  const cyclingSpeedKmh = 15; // km/h
-  const timeHours = distanceKm / cyclingSpeedKmh;
-  return timeHours * 60; // Convert to minutes
+  const timeHours = distanceKm / CYCLING_SPEED_KMH;
+  return timeHours * MINUTES_PER_HOUR;
 };
 
 // Helper function to format walking time (will be called inside component to access t())
@@ -82,6 +92,59 @@ const formatWalkingTime = (minutes: number, t: (key: string) => string): string 
   }
   return `${hours} ${hours === 1 ? t("public.hour") : t("public.hours")} ${mins} ${mins === 1 ? t("public.minute") : t("public.minutes")}`;
 };
+
+// Constants for zoom level thresholds
+const ZOOM_CLOSE_THRESHOLD = 13;
+const ZOOM_MEDIUM_THRESHOLD = 10;
+const ZOOM_FAR_THRESHOLD = 7;
+
+// Helper function to determine zoom level category
+type ZoomLevel = "close" | "medium" | "far" | "veryFar";
+const getZoomLevel = (zoom: number): ZoomLevel => {
+  if (zoom >= ZOOM_CLOSE_THRESHOLD) return "close";
+  if (zoom >= ZOOM_MEDIUM_THRESHOLD) return "medium";
+  if (zoom >= ZOOM_FAR_THRESHOLD) return "far";
+  return "veryFar";
+};
+
+// Simple clustering: group markers by grid cells to avoid overcrowding at veryFar zoom
+// Returns only one representative marker per cell at veryFar zoom
+function clusterMarkers<T extends { lat: number; lng: number }>(
+  markers: T[],
+  zoom: number
+): T[] {
+  const zoomLevel = getZoomLevel(zoom);
+  
+  // Only cluster at veryFar zoom level
+  if (zoomLevel !== "veryFar") {
+    return markers;
+  }
+  
+  // Constants for clustering
+  const CLUSTER_CELL_SIZE_DEGREES = 0.1; // degrees (roughly 11km at equator)
+  
+  // Grid cell size for clustering (larger cells = fewer markers shown)
+  // At veryFar zoom (< 7), use larger cells to show fewer markers
+  const cellSize = CLUSTER_CELL_SIZE_DEGREES;
+  
+  // Group markers by grid cell
+  // Use native JavaScript Map (not the react-map-gl Map component)
+  const cellMap = new Map<string, T>();
+  
+  markers.forEach((marker) => {
+    // Calculate grid cell coordinates
+    const cellLat = Math.floor(marker.lat / cellSize);
+    const cellLng = Math.floor(marker.lng / cellSize);
+    const cellKey = `${cellLat},${cellLng}`;
+    
+    // Only keep the first marker in each cell (or could use center marker)
+    if (!cellMap.has(cellKey)) {
+      cellMap.set(cellKey, marker);
+    }
+  });
+  
+  return Array.from(cellMap.values());
+}
 
 export function MapComponent({
   latitude,
@@ -124,9 +187,16 @@ export function MapComponent({
   
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   
+  // Constants for location control positioning
+  const LOCATION_CONTROL_DESKTOP_BOTTOM = 100;
+  const LOCATION_CONTROL_DESKTOP_LEFT = 16;
+  const LOCATION_CONTROL_MOBILE_BOTTOM = 80;
+  const LOCATION_CONTROL_MOBILE_LEFT = 12;
+  const LOCATION_CONTROL_MAX_WIDTH = 200; // Maximum width for position calculation
+  
   // Default positions: bal lent (bottom left) - using bottom instead of top
-  const defaultPositionDesktop = { bottom: 100, left: 16 };
-  const defaultPositionMobile = { bottom: 80, left: 12 };
+  const defaultPositionDesktop = { bottom: LOCATION_CONTROL_DESKTOP_BOTTOM, left: LOCATION_CONTROL_DESKTOP_LEFT };
+  const defaultPositionMobile = { bottom: LOCATION_CONTROL_MOBILE_BOTTOM, left: LOCATION_CONTROL_MOBILE_LEFT };
   
   // Draggable position for user location control (device-specific)
   const [locationControlPosition, setLocationControlPosition] = useState(() => {
@@ -142,6 +212,9 @@ export function MapComponent({
     }
     return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
+  
+  // Constants for drag handling
+  const DRAG_RESET_DELAY_MS = 100; // Delay before resetting drag flag to allow click
   
   const [isDraggingLocationControl, setIsDraggingLocationControl] = useState(false);
   const [hasDraggedLocationControl, setHasDraggedLocationControl] = useState(false);
@@ -182,7 +255,8 @@ export function MapComponent({
   const handleLocationControlMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !locationControlRef.current) return;
     // Don't allow dragging from the checkbox input itself (but allow from label)
-    if ((e.target as HTMLElement).tagName === "INPUT" && (e.target as HTMLElement).type === "checkbox") {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
       return;
     }
     e.preventDefault();
@@ -200,7 +274,8 @@ export function MapComponent({
   const handleLocationControlTouchStart = (e: React.TouchEvent) => {
     if (!locationControlRef.current) return;
     // Don't allow dragging from the checkbox input itself (but allow from label)
-    if ((e.target as HTMLElement).tagName === "INPUT" && (e.target as HTMLElement).type === "checkbox") {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
       return;
     }
     e.preventDefault();
@@ -232,7 +307,7 @@ export function MapComponent({
         const newBottom = window.innerHeight - newY - elementHeight;
         setLocationControlPosition({
           bottom: Math.max(0, Math.min(window.innerHeight - 50, newBottom)),
-          left: Math.max(0, Math.min(window.innerWidth - 200, newX)),
+          left: Math.max(0, Math.min(window.innerWidth - LOCATION_CONTROL_MAX_WIDTH, newX)),
         });
       }
     };
@@ -253,7 +328,7 @@ export function MapComponent({
         const newBottom = window.innerHeight - newY - elementHeight;
         setLocationControlPosition({
           bottom: Math.max(0, Math.min(window.innerHeight - 50, newBottom)),
-          left: Math.max(0, Math.min(window.innerWidth - 200, newX)),
+          left: Math.max(0, Math.min(window.innerWidth - LOCATION_CONTROL_MAX_WIDTH, newX)),
         });
       }
     };
@@ -263,7 +338,7 @@ export function MapComponent({
       // Reset drag flag after a short delay to allow click to work if no drag occurred
       setTimeout(() => {
         setHasDraggedLocationControl(false);
-      }, 100);
+      }, DRAG_RESET_DELAY_MS);
     };
     
     const handleTouchEnd = () => {
@@ -271,7 +346,7 @@ export function MapComponent({
       // Reset drag flag after a short delay to allow click to work if no drag occurred
       setTimeout(() => {
         setHasDraggedLocationControl(false);
-      }, 100);
+      }, DRAG_RESET_DELAY_MS);
     };
     
     document.addEventListener("mousemove", handleMouseMove);
@@ -608,6 +683,23 @@ export function MapComponent({
     }
   }, [showUserLocation, selectedMarkerId]);
 
+  // Automatically disable geotracking on medium, far and veryFar zoom levels
+  useEffect(() => {
+    const zoomLevel = getZoomLevel(viewState.zoom);
+    if ((zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") && showUserLocation) {
+      // Disable geotracking
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setShowUserLocation(false);
+      setUserLocation(null);
+      setSelectedMarkerId(null);
+      setRoutes([]);
+      lastRouteFetchPosition.current = null;
+    }
+  }, [viewState.zoom, showUserLocation, setShowUserLocation, setUserLocation]);
+
   // Calculate distances for markers
   // ONLY use route distance from API - don't show straight-line distance
   // Wait for API to return route before showing distance
@@ -635,6 +727,11 @@ export function MapComponent({
       };
     });
   }, [markers, userLocation, routes, selectedMarkerId, showUserLocation]);
+
+  // Apply clustering to reduce marker density at veryFar zoom
+  const visibleMarkers = useMemo(() => {
+    return clusterMarkers(markersWithDistance, viewState.zoom);
+  }, [markersWithDistance, viewState.zoom]);
 
   // Handle marker click - behavior depends on showUserLocation
   // If showUserLocation is false: navigate immediately (single click)
@@ -774,7 +871,7 @@ export function MapComponent({
           }
         }
       `}</style>
-      <Map
+      <ReactMapGl
         {...viewState}
         onMove={(evt) => {
           setViewState(evt.viewState);
@@ -786,18 +883,12 @@ export function MapComponent({
         style={{ width: "100%", height: "100%" }}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapLib={maplibregl as any}
-        mapStyle={memoizedMapStyle}
+        mapStyle={memoizedMapStyle as any}
         cursor={interactive && onLocationChange ? "crosshair" : "default"}
         dragRotate={false}
         touchZoomRotate={true}
         touchPitch={false}
-        transitionDuration={300}
-        dragPan={{
-          linearity: 0.3, // Lower value = less sensitive pan movement (default is ~0.5)
-          easing: (t) => t, // Linear easing
-          maxSpeed: 1400, // Maximum drag velocity
-          deceleration: 2500 // Rate at which speed reduces after pan ends
-        }}
+        dragPan={true}
         onLoad={(evt) => {
           // Reduce scroll wheel zoom sensitivity
           // Default is 1/450, using 1/800 makes it much less sensitive
@@ -926,6 +1017,7 @@ export function MapComponent({
               type="geojson"
               data={{
                 type: "Feature",
+                properties: {},
                 geometry: {
                   type: "LineString",
                   coordinates: route.coordinates,
@@ -990,11 +1082,22 @@ export function MapComponent({
         )}
 
         {/* Additional markers (for places on explore page) */}
-        {markersWithDistance.map((marker) => {
+        {visibleMarkers.map((marker) => {
+          const zoomLevel = getZoomLevel(viewState.zoom);
           // Show labels only when zoomed in (zoom >= 13) - but NOT distance unless selected
-          const showLabel = viewState.zoom >= 13 && marker.name;
+          const showLabel = zoomLevel === "close" && marker.name;
           const isClickable = !!marker.onClick;
           const isSelected = selectedMarkerId === marker.id;
+          
+          // Determine marker size and style based on zoom level
+          const isDot = zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar";
+          const markerSize = isSelected 
+            ? (zoomLevel === "close" ? 28 : zoomLevel === "medium" ? 16 : zoomLevel === "far" ? 12 : 8)
+            : (zoomLevel === "close" ? 24 : zoomLevel === "medium" ? 14 : zoomLevel === "far" ? 10 : 6);
+          const borderWidth = isSelected 
+            ? (zoomLevel === "close" ? 4 : zoomLevel === "medium" ? 3 : zoomLevel === "far" ? 2 : 1.5)
+            : (zoomLevel === "close" ? 3 : zoomLevel === "medium" ? 2 : zoomLevel === "far" ? 2 : 1.5);
+          const innerDotSize = zoomLevel === "close" ? 8 : zoomLevel === "medium" ? 6 : zoomLevel === "far" ? 4 : 3;
           
           return (
             <Marker
@@ -1028,59 +1131,131 @@ export function MapComponent({
                   e.stopPropagation();
                 }}
               >
-                {/* Modern marker pin design */}
-                <div
-                  style={{
-                    width: isSelected ? 28 : 24,
-                    height: isSelected ? 28 : 24,
-                    borderRadius: "50% 50% 50% 0",
-                    background: isSelected
-                      ? "#fbbf24"
-                      : isClickable 
-                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                      : "linear-gradient(135deg, #999 0%, #777 100%)",
-                    border: isSelected ? "4px solid white" : "3px solid white",
-                    boxShadow: isSelected
-                      ? "0 6px 16px rgba(251, 191, 36, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
-                      : isClickable
-                      ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
-                      : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
-                    cursor: isClickable ? "pointer" : "default",
-                    transform: isSelected ? "rotate(-45deg) scale(1.2)" : "rotate(-45deg)",
-                    transition: "all 0.2s ease",
-                    opacity: isClickable ? 1 : 0.7,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isClickable && !isSelected) {
-                      e.currentTarget.style.transform = "rotate(-45deg) scale(1.15)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.transform = isSelected ? "rotate(-45deg) scale(1.2)" : "rotate(-45deg) scale(1)";
-                      e.currentTarget.style.boxShadow = isSelected
-                        ? "0 6px 16px rgba(245, 158, 11, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
-                        : isClickable
-                        ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
-                        : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)";
-                    }
-                  }}
-                >
-                  {/* Inner dot */}
+                {/* Marker pin or dot design */}
+                {isDot ? (
+                  // Dot style for medium, far and veryFar zoom
+                  // VeryFar: simple dot without border/shadow
+                  zoomLevel === "veryFar" ? (
+                    <div
+                      style={{
+                        width: markerSize,
+                        height: markerSize,
+                        borderRadius: "50%",
+                        background: isSelected
+                          ? "#fbbf24"
+                          : isClickable 
+                          ? "#667eea"
+                          : "#999",
+                        cursor: isClickable ? "pointer" : "default",
+                        transform: isSelected ? "scale(1.2)" : "scale(1)",
+                        transition: "all 0.2s ease",
+                        opacity: isClickable ? 1 : 0.7,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isClickable && !isSelected) {
+                          e.currentTarget.style.transform = "scale(1.1)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }
+                      }}
+                    />
+                  ) : (
+                    // Medium and far: dot with border and shadow
+                    <div
+                      style={{
+                        width: markerSize,
+                        height: markerSize,
+                        borderRadius: "50%",
+                        background: isSelected
+                          ? "#fbbf24"
+                          : isClickable 
+                          ? "#667eea"
+                          : "#999",
+                        border: `${borderWidth}px solid white`,
+                        boxShadow: isSelected
+                          ? "0 4px 12px rgba(251, 191, 36, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)"
+                          : isClickable
+                          ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
+                          : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)",
+                        cursor: isClickable ? "pointer" : "default",
+                        transform: isSelected ? "scale(1.3)" : "scale(1)",
+                        transition: "all 0.2s ease",
+                        opacity: isClickable ? 1 : 0.7,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isClickable && !isSelected) {
+                          e.currentTarget.style.transform = "scale(1.2)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow = isClickable
+                            ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
+                            : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)";
+                        }
+                      }}
+                    />
+                  )
+                ) : (
+                  // Pin style for close zoom
                   <div
                     style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%) rotate(45deg)",
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: "white",
+                      width: markerSize,
+                      height: markerSize,
+                      borderRadius: "50% 50% 50% 0",
+                      background: isSelected
+                        ? "#fbbf24"
+                        : isClickable 
+                        ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                        : "linear-gradient(135deg, #999 0%, #777 100%)",
+                      border: `${borderWidth}px solid white`,
+                      boxShadow: isSelected
+                        ? "0 6px 16px rgba(251, 191, 36, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
+                        : isClickable
+                        ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                        : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
+                      cursor: isClickable ? "pointer" : "default",
+                      transform: isSelected ? "rotate(-45deg) scale(1.2)" : "rotate(-45deg)",
+                      transition: "all 0.2s ease",
+                      opacity: isClickable ? 1 : 0.7,
                     }}
-                  />
-                </div>
+                    onMouseEnter={(e) => {
+                      if (isClickable && !isSelected) {
+                        e.currentTarget.style.transform = "rotate(-45deg) scale(1.15)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = "rotate(-45deg) scale(1)";
+                        e.currentTarget.style.boxShadow = isSelected
+                          ? "0 6px 16px rgba(245, 158, 11, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
+                          : isClickable
+                          ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                          : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)";
+                      }
+                    }}
+                  >
+                    {/* Inner dot */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%) rotate(45deg)",
+                        width: innerDotSize,
+                        height: innerDotSize,
+                        borderRadius: "50%",
+                        background: "white",
+                      }}
+                    />
+                  </div>
+                )}
                 
                 {/* Label - shows name when zoomed in, distance and walking time ONLY when selected */}
                 {(showLabel || isSelected) && (
@@ -1153,7 +1328,7 @@ export function MapComponent({
                         )}
                         {marker.distance === undefined && (
                           <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
-                            ⏳ {t("public.calculatingRoute") || "Útvonal számítása..."}
+                            ⏳ {t("public.calculatingRoute")}
                           </span>
                         )}
                       </>
@@ -1164,7 +1339,7 @@ export function MapComponent({
             </Marker>
           );
         })}
-      </Map>
+      </ReactMapGl>
       
       {/* Draggable user location control */}
       {!hideLocationButton && (
@@ -1209,7 +1384,9 @@ export function MapComponent({
             display: "flex",
             alignItems: "center",
             gap: 8,
-            cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "pointer",
+            cursor: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") 
+              ? "not-allowed" 
+              : (isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "pointer"),
             flex: 1,
             fontSize: 15,
             fontWeight: 500,
@@ -1221,10 +1398,13 @@ export function MapComponent({
             touchAction: "manipulation",
             margin: 0,
             padding: "10px 20px 10px 20px",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar")
+              ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
+              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             borderRadius: isDesktop ? 16 : 12,
             minHeight: 48,
             boxSizing: "border-box",
+            opacity: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? 0.7 : 1,
           }}
           onMouseDown={isDesktop ? (e) => {
             // Allow drag on desktop when clicking on label (but not on checkbox)
@@ -1233,6 +1413,11 @@ export function MapComponent({
             }
           } : undefined}
           onClick={(e) => {
+            // Don't allow clicking if disabled (medium, far or veryFar zoom)
+            const zoomLevel = getZoomLevel(viewState.zoom);
+            if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
+              return;
+            }
             // Make entire label area clickable on both mobile and desktop
             // This gives a much larger tap/click target
             // Only toggle if user didn't drag (hasDraggedLocationControl is checked in mouseUp/touchEnd)
@@ -1272,10 +1457,11 @@ export function MapComponent({
             <input
               type="checkbox"
               checked={showUserLocation}
+              disabled={getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"}
               style={{
                 width: 16,
                 height: 16,
-                cursor: "pointer",
+                cursor: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? "not-allowed" : "pointer",
                 margin: 0,
                 padding: 0,
                 appearance: "none",
@@ -1287,10 +1473,17 @@ export function MapComponent({
                 position: "relative",
                 touchAction: "manipulation",
                 WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
-                pointerEvents: "auto",
+                pointerEvents: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? "none" : "auto",
                 zIndex: 1,
+                opacity: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? 0.5 : 1,
               }}
               onChange={(e) => {
+                // Don't allow enabling on medium, far or veryFar zoom
+                const zoomLevel = getZoomLevel(viewState.zoom);
+                if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
+                  e.target.checked = false;
+                  return;
+                }
                 // Handle checkbox change for both iOS and desktop
                 // Must call geolocation API directly in event handler to maintain user gesture context on iOS
                 const checked = e.target.checked;
@@ -1397,7 +1590,7 @@ export function MapComponent({
               </svg>
             )}
           </div>
-          <span style={{ fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.showMyLocation") || "Mutasd a helyzetem"}</span>
+          <span style={{ fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.showMyLocation")}</span>
         </label>
       </div>
       )}

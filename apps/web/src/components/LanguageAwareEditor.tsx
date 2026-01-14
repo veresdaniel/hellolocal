@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
-
-type Lang = "hu" | "en" | "de";
+import { LANG_VALUES, type Lang } from "../types/enums";
 
 interface LanguageAwareEditorProps {
   values: {
@@ -31,8 +30,6 @@ export function LanguageAwareEditor({
     // Update editor content when values change externally
   }, [values]);
 
-  const LANGUAGES: Lang[] = ["hu", "en", "de"];
-
   return (
     <div>
       {label && (
@@ -53,7 +50,7 @@ export function LanguageAwareEditor({
             fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          {LANGUAGES.map((lang) => (
+          {LANG_VALUES.map((lang) => (
             <option key={lang} value={lang}>
               {t(`admin.languageNames.${lang}`)}
             </option>

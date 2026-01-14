@@ -3,6 +3,7 @@ import { Lang, SlugEntityType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
+import { generateSlug } from "../slug/slug.helper";
 
 export type ResolveResult = {
   siteId: string;
@@ -51,10 +52,11 @@ export class ResolveService {
 
     // Step 2: Resolve slug to entity
     // First, try to find the slug directly
-    const slugRecord = await this.prisma.slug.findUnique({
+    let slugRecord = await this.prisma.slug.findUnique({
       where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: args.slug } },
       select: {
         id: true,
+        slug: true,
         entityType: true,
         entityId: true,
         isPrimary: true,
@@ -69,6 +71,39 @@ export class ResolveService {
       },
     });
 
+    // Fallback: If slug not found and contains accented characters, try normalized version
+    let shouldRedirectToNormalized = false;
+    if (!slugRecord || !slugRecord.isActive) {
+      const normalizedSlug = generateSlug(args.slug);
+      // Only try fallback if the normalized slug is different from the original
+      if (normalizedSlug !== args.slug && normalizedSlug) {
+        const normalizedSlugRecord = await this.prisma.slug.findUnique({
+          where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: normalizedSlug } },
+          select: {
+            id: true,
+            slug: true,
+            entityType: true,
+            entityId: true,
+            isPrimary: true,
+            isActive: true,
+            redirectToId: true,
+            redirectTo: {
+              select: {
+                slug: true,
+                isActive: true,
+              },
+            },
+          },
+        });
+        
+        if (normalizedSlugRecord && normalizedSlugRecord.isActive) {
+          // Found normalized version - use it and mark for redirect
+          slugRecord = normalizedSlugRecord;
+          shouldRedirectToNormalized = true;
+        }
+      }
+    }
+
     if (!slugRecord || !slugRecord.isActive) {
       throw new NotFoundException("Slug not found");
     }
@@ -77,6 +112,7 @@ export class ResolveService {
     let slugRedirected = false;
 
     // Step 3: Handle slug redirects and non-primary slugs
+    // Note: If we're redirecting from accented to normalized, slugRecord.slug is already the normalized version
     if (slugRecord.redirectToId && slugRecord.redirectTo?.isActive) {
       // Case 1: Slug redirects to another slug (canonical)
       canonicalSlug = slugRecord.redirectTo.slug;
@@ -99,19 +135,21 @@ export class ResolveService {
         canonicalSlug = primarySlug.slug;
         slugRedirected = true;
       } else {
-        // Fallback: use the current slug if no primary found
-        canonicalSlug = args.slug;
+        // Fallback: use the slugRecord.slug (which may be normalized if we're redirecting)
+        canonicalSlug = slugRecord.slug;
         slugRedirected = false;
       }
     } else {
       // Case 3: Slug is primary and has no redirect
-      canonicalSlug = args.slug;
+      // Use slugRecord.slug (which may be normalized if we're redirecting from accented version)
+      canonicalSlug = slugRecord.slug;
       slugRedirected = false;
     }
 
     // Step 4: Build canonical URL information
     const canonicalSiteKey = site.canonicalSiteKey ?? args.siteKey;
-    const needsRedirect = Boolean(site.redirected || slugRedirected);
+    // Redirect if site redirected, slug redirected, or we're redirecting from accented to normalized slug
+    const needsRedirect = Boolean(site.redirected || slugRedirected || shouldRedirectToNormalized);
 
     return {
       siteId: site.siteId,
@@ -121,7 +159,7 @@ export class ResolveService {
       canonical: {
         lang: site.lang,
         siteKey: canonicalSiteKey,
-        slug: canonicalSlug,
+        slug: canonicalSlug, // This is already the normalized slug if shouldRedirectToNormalized is true
       },
       needsRedirect,
     };

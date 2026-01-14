@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { UserRole } from "@prisma/client";
 
 export interface PriceListBlock {
   title: string;
@@ -157,6 +158,21 @@ export class AdminPriceListService {
    * Check if user has access to place (site admin or place owner/manager/editor)
    */
   private async hasPlaceAccess(userId: string, placeId: string, siteId: string): Promise<boolean> {
+    // Check global user role first - superadmin has access to everything
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return false;
+    }
+
+    // Superadmin has access to everything
+    if (user.role === UserRole.superadmin) {
+      return true;
+    }
+
     // Check site membership (site admin/editor)
     const siteMembership = await this.prisma.siteMembership.findUnique({
       where: {

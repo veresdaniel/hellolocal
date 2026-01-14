@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
 import { isTokenExpired, getTokenExpiration } from "../utils/tokenUtils";
-import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
-import { SessionExtensionToast } from "../components/SessionExtensionToast";
+import { DEFAULT_LANG, APP_LANGS, TIMING, type Lang } from "../app/config";
+import { SessionExpirationModal } from "../components/SessionExpirationModal";
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +29,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSessionToast, setShowSessionToast] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   // Helper function to extract language code from URL or localStorage
   const getLanguageCode = (): Lang => {
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("user");
       localStorage.removeItem("adminSelectedTenantId");
       setUser(null);
-      setShowSessionToast(false); // Hide toast on logout
+      setShowSessionModal(false); // Hide modal on logout
       
       // Skip redirect if already on the target page
       if (isManualLogout) {
@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkTokenExpiration();
 
     // Check every 10 seconds (more frequent for better responsiveness)
-    const interval = setInterval(checkTokenExpiration, 10000);
+    const interval = setInterval(checkTokenExpiration, TIMING.TOKEN_CHECK_INTERVAL_MS);
 
     // Listen for logout event from API client
     const handleLogoutEvent = () => {
@@ -196,19 +196,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         !currentPath.startsWith("/admin");
 
       if (isPublicPage || !user) {
-        setShowSessionToast(false);
+        setShowSessionModal(false);
         return;
       }
 
       const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
-        setShowSessionToast(false);
+        setShowSessionModal(false);
         return;
       }
 
       const expirationTime = getTokenExpiration(accessToken);
       if (!expirationTime) {
-        setShowSessionToast(false);
+        setShowSessionModal(false);
         return;
       }
 
@@ -216,11 +216,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const timeUntilExpiry = expirationTime - now;
       const thirtySeconds = 30 * 1000; // 30 seconds = 0.5 minutes
 
-      // Show toast if token expires in less than 30 seconds
+      // Show modal if token expires in less than 30 seconds
       if (timeUntilExpiry < thirtySeconds && timeUntilExpiry > 0) {
-        setShowSessionToast(true);
+        setShowSessionModal(true);
       } else {
-        setShowSessionToast(false);
+        setShowSessionModal(false);
       }
     };
 
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkSessionExpiring();
 
     // Check every second for accurate timing
-    const interval = setInterval(checkSessionExpiring, 1000);
+    const interval = setInterval(checkSessionExpiring, TIMING.SESSION_CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [user]);
@@ -265,17 +265,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const expiresAt = payload.exp * 1000; // Convert to milliseconds
         const now = Date.now();
         const timeUntilExpiry = expiresAt - now;
-        const fiveMinutes = 5 * 60 * 1000;
 
-        // If token expires in less than 5 minutes, refresh it
-        if (timeUntilExpiry < fiveMinutes && timeUntilExpiry > 0) {
+        // If token expires in less than threshold, refresh it
+        if (timeUntilExpiry < TIMING.TOKEN_REFRESH_THRESHOLD_MS && timeUntilExpiry > 0) {
           isRefreshing = true;
           try {
             const data = await refreshToken({ refreshToken: refreshTokenValue });
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem("refreshToken", data.refreshToken);
-            // Hide toast after successful refresh
-            setShowSessionToast(false);
+            // Hide modal after successful refresh
+            setShowSessionModal(false);
           } catch (error) {
             console.error("[Auth] Failed to refresh session on activity", error);
             // Don't logout here, let the normal expiration check handle it
@@ -360,7 +359,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const role = (freshUser.role || "").toLowerCase() as User["role"];
               // Backend now returns siteIds directly, but also has sites array
               // Use siteIds if available, otherwise extract from sites array
-              const siteIds = freshUser.siteIds || (freshUser as any).sites?.map((s: { siteId: string }) => s.siteId) || [];
+              const siteIds = freshUser.siteIds || 
+                (Array.isArray((freshUser as { sites?: Array<{ siteId: string }> }).sites) 
+                  ? (freshUser as { sites: Array<{ siteId: string }> }).sites.map((s) => s.siteId)
+                  : []) || [];
               const userData = {
                 ...freshUser,
                 role,
@@ -529,22 +531,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const handleSessionExtended = useCallback(() => {
-    setShowSessionToast(false);
+    setShowSessionModal(false);
   }, []);
 
-  const handleSessionToastDismiss = useCallback(() => {
-    // Toast only dismisses on logout, not manually
-    // But we can hide it if user extends session
-    setShowSessionToast(false);
+  const handleSessionModalDismiss = useCallback(() => {
+    // Modal only dismisses on logout or extend, not manually
+    setShowSessionModal(false);
   }, []);
 
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
-      {showSessionToast && (
-        <SessionExtensionToast
+      {showSessionModal && (
+        <SessionExpirationModal
           onExtend={handleSessionExtended}
-          onDismiss={handleSessionToastDismiss}
+          onDismiss={handleSessionModalDismiss}
         />
       )}
     </AuthContext.Provider>

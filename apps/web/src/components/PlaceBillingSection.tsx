@@ -1,7 +1,7 @@
 // apps/web/src/components/PlaceBillingSection.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { getPlaceUpsellState, type PlaceUpsellState, type FeatureGate, getPlaceSubscription, updatePlaceSubscription, type PlaceSubscription } from "../api/admin.api";
+import { getPlaceUpsellState, type PlaceUpsellState, type FeatureGate, getPlaceSubscription, updatePlaceSubscription, type PlaceSubscription, cancelSubscription, resumeSubscription, updateSubscription } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 
 interface PlaceBillingSectionProps {
@@ -39,12 +39,28 @@ export function PlaceBillingSection({
     if (!placeId || !siteId) return;
     setIsLoading(true);
     try {
-      const [state, sub] = await Promise.all([
+      const lang = (() => {
+        const stored = localStorage.getItem("i18nextLng");
+        if (stored && ["hu", "en", "de"].includes(stored.split("-")[0])) {
+          return stored.split("-")[0];
+        }
+        return "hu";
+      })();
+      const [state, sub, subscriptionData] = await Promise.all([
         getPlaceUpsellState(placeId, siteId),
         getPlaceSubscription(placeId).catch(() => null), // Subscription may not exist yet
+        // Also fetch from subscription service to get the subscription ID and status
+        fetch(`/api/${lang}/sites/places/${placeId}/subscription`)
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null),
       ]);
       setUpsellState(state);
-      setSubscription(sub);
+      // Merge subscription data (id and status from subscription service)
+      if (subscriptionData && subscriptionData.id) {
+        setSubscription(sub ? { ...sub, id: subscriptionData.id, status: subscriptionData.status } : subscriptionData);
+      } else {
+        setSubscription(sub);
+      }
     } catch (error) {
       console.error("Failed to load billing data:", error);
       showToast(t("admin.errorLoadingBilling") || "Failed to load billing information", "error");
@@ -185,7 +201,7 @@ export function PlaceBillingSection({
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div
               style={{
                 display: "inline-block",
@@ -200,6 +216,103 @@ export function PlaceBillingSection({
             >
               {planLabels[currentPlan]}
             </div>
+            {/* Suspend and Cancel buttons - only show if subscription exists and is active */}
+            {subscription && subscription.id && subscription.status === "ACTIVE" && canModifyBilling && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    const confirmMessage = t("admin.subscription.suspendConfirm") || "Biztosan felfüggeszted az előfizetést?";
+                    if (window.confirm(confirmMessage)) {
+                      setIsUpdating(true);
+                      try {
+                        await updateSubscription("place", subscription.id, { status: "SUSPENDED" });
+                        showToast(t("admin.subscription.suspended") || "Előfizetés felfüggesztve", "success");
+                        await loadData();
+                      } catch (error) {
+                        console.error("Failed to suspend subscription:", error);
+                        showToast(t("admin.errors.updateFailed") || "Hiba a felfüggesztés során", "error");
+                      } finally {
+                        setIsUpdating(false);
+                      }
+                    }
+                  }}
+                  disabled={isUpdating}
+                  style={{
+                    padding: "6px 12px",
+                    background: "#f59e0b",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: "clamp(12px, 2.5vw, 14px)",
+                    fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: isUpdating ? "not-allowed" : "pointer",
+                    opacity: isUpdating ? 0.6 : 1,
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUpdating) {
+                      e.currentTarget.style.background = "#d97706";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUpdating) {
+                      e.currentTarget.style.background = "#f59e0b";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }
+                  }}
+                >
+                  {t("admin.subscription.suspend") || "Felfüggesztem"}
+                </button>
+                <button
+                  onClick={async () => {
+                    const confirmMessage = t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.";
+                    if (window.confirm(confirmMessage)) {
+                      setIsUpdating(true);
+                      try {
+                        await cancelSubscription("place", subscription.id, placeId);
+                        showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
+                        await loadData();
+                      } catch (error) {
+                        console.error("Failed to cancel subscription:", error);
+                        showToast(t("admin.errors.updateFailed") || "Hiba a lemondás során", "error");
+                      } finally {
+                        setIsUpdating(false);
+                      }
+                    }
+                  }}
+                  disabled={isUpdating}
+                  style={{
+                    padding: "6px 12px",
+                    background: "#ef4444",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    fontSize: "clamp(12px, 2.5vw, 14px)",
+                    fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: isUpdating ? "not-allowed" : "pointer",
+                    opacity: isUpdating ? 0.6 : 1,
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUpdating) {
+                      e.currentTarget.style.background = "#dc2626";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUpdating) {
+                      e.currentTarget.style.background = "#ef4444";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }
+                  }}
+                >
+                  {t("admin.subscription.cancel") || "Lemondom"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Show modification info only for admin/superadmin */}
@@ -281,10 +394,91 @@ export function PlaceBillingSection({
                     year: 'numeric', 
                     month: 'long', 
                     day: 'numeric'
-                  })}
+                  }              )}
+              {/* Cancel/Resume subscription button */}
+              {subscription && subscription.id && subscription.status && (
+                <div style={{ marginTop: 16 }}>
+                  {subscription.status === "ACTIVE" ? (
+                    <button
+                      onClick={async () => {
+                        const confirmMessage = t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.";
+                        if (window.confirm(confirmMessage)) {
+                          try {
+                            await cancelSubscription("place", subscription.id, placeId);
+                            showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
+                            await loadData();
+                          } catch (error) {
+                            console.error("Failed to cancel subscription:", error);
+                            showToast(t("admin.errors.updateFailed") || "Hiba a lemondás során", "error");
+                          }
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "10px 16px",
+                        background: "#ef4444",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontWeight: 600,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#dc2626";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#ef4444";
+                        e.currentTarget.style.transform = "translateY(0)";
+                      }}
+                    >
+                      {t("admin.subscription.cancel") || "Előfizetés lemondása"}
+                    </button>
+                  ) : subscription.status === "CANCELLED" ? (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await resumeSubscription("place", subscription.id, placeId);
+                          showToast(t("admin.subscription.resumed") || "Előfizetés folytatva", "success");
+                          await loadData();
+                        } catch (error) {
+                          console.error("Failed to resume subscription:", error);
+                          showToast(t("admin.errors.updateFailed") || "Hiba a folytatás során", "error");
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "10px 16px",
+                        background: "#10b981",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontWeight: 600,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#059669";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#10b981";
+                        e.currentTarget.style.transform = "translateY(0)";
+                      }}
+                    >
+                      {t("admin.subscription.resume") || "Előfizetés folytatása"}
+                    </button>
+                  ) : null}
                 </div>
               )}
             </div>
+          )}
+        </div>
           )}
 
           {/* Plan selector - visible to everyone, but disabled for editors/viewers */}

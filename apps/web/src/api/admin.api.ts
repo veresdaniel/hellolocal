@@ -1,5 +1,6 @@
 // src/api/admin.api.ts
 import { apiGet, apiPost, apiPut, apiDelete } from "./client";
+import type { UserRole, SiteRole } from "../types/enums";
 
 export interface User {
   id: string;
@@ -213,8 +214,8 @@ export function getPlaces(siteId?: string, page?: number, limit?: number) {
   return apiGet<any[] | { places: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/places${queryString ? `?${queryString}` : ""}`);
 }
 
-export function getPlace(id: string, tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
+export function getPlace(id: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
   return apiGet<any>(`/admin/places/${id}${params}`);
 }
 
@@ -708,7 +709,7 @@ export interface SiteMembership {
   id: string;
   siteId: string;
   userId: string;
-  role: "siteadmin" | "editor" | "viewer";
+  role: SiteRole;
   createdAt: string;
   site?: {
     id: string;
@@ -727,11 +728,11 @@ export interface SiteMembership {
 export interface CreateSiteMembershipDto {
   siteId: string;
   userId: string;
-  role: "siteadmin" | "editor" | "viewer";
+  role: SiteRole;
 }
 
 export interface UpdateSiteMembershipDto {
-  role?: "superadmin" | "siteadmin" | "editor";
+  role?: UserRole | SiteRole;
 }
 
 export function getSiteMemberships(siteId?: string, userId?: string) {
@@ -944,34 +945,6 @@ export function setPlatformSettings(data: SetPlatformSettingsDto & { siteId: str
 // Feature Matrix (Plan Overrides)
 export interface FeatureMatrix {
   planOverrides: {
-    BASIC?: {
-      limits?: {
-        placesMax?: number;
-        featuredPlacesMax?: number;
-        galleryImagesPerPlaceMax?: number;
-        eventsPerMonthMax?: number;
-        siteMembersMax?: number;
-        domainAliasesMax?: number;
-        languagesMax?: number;
-        galleriesMax?: number | "∞";
-        imagesPerGalleryMax?: number;
-        galleriesPerPlaceMax?: number | "∞";
-        galleriesPerEventMax?: number | "∞";
-      };
-      features?: {
-        eventsEnabled?: boolean;
-        placeSeoEnabled?: boolean;
-        extrasEnabled?: boolean;
-        customDomainEnabled?: boolean;
-        eventLogEnabled?: boolean;
-        heroImage?: boolean;
-        contacts?: boolean;
-        siteSeo?: boolean;
-        canonicalSupport?: boolean;
-        multipleDomainAliases?: boolean;
-        pushSubscription?: boolean | "optional add-on";
-      };
-    };
     BASIC?: {
       limits?: {
         placesMax?: number;
@@ -1222,6 +1195,8 @@ export function deleteEvent(id: string, siteId?: string) {
 export interface EventLog {
   id: string;
   tenantId: string;
+  siteId?: string; // Backward compatibility - may be present
+  site?: { id: string; slug: string }; // Site relation if included
   userId: string;
   action: string;
   entityType?: string | null;
@@ -1335,11 +1310,13 @@ export function deleteEventLogs(filters: EventLogFilterDto) {
 // ==================== Billing ====================
 
 export interface PlaceSubscription {
+  id?: string; // Subscription ID (from PlaceSubscription table)
   placeId: string;
   plan: "free" | "basic" | "pro";
   isFeatured: boolean;
   featuredUntil: string | null;
   // Subscription details
+  status?: "ACTIVE" | "CANCELLED" | "SUSPENDED" | "EXPIRED"; // Status from PlaceSubscription table
   validUntil: string | null;
   priceCents: number | null;
   currency: string | null;
@@ -1367,6 +1344,7 @@ export interface PlaceEntitlements {
 }
 
 export interface SiteSubscription {
+  id?: string; // Subscription ID (from SiteSubscription table, may not be present if using billing service)
   siteId: string;
   plan: "basic" | "pro" | "business";
   planStatus: string | null;
@@ -1374,6 +1352,7 @@ export interface SiteSubscription {
   planLimits: Record<string, any> | null;
   billingEmail: string | null;
   allowPublicRegistration: boolean; // If false, only site owner can create users and places (pro/business only)
+  status?: "ACTIVE" | "CANCELLED" | "SUSPENDED" | "EXPIRED"; // Status from SiteSubscription table
 }
 
 export interface SiteEntitlements {
@@ -1474,7 +1453,7 @@ export interface TrendPoint {
 }
 
 export interface UpdateSubscriptionDto {
-  plan?: "FREE" | "BASIC" | "PRO";
+  plan?: "FREE" | "BASIC" | "PRO" | "BUSINESS";
   status?: "ACTIVE" | "SUSPENDED" | "EXPIRED";
   validUntil?: string | null;
   billingPeriod?: "MONTHLY" | "YEARLY";
@@ -1486,7 +1465,7 @@ export interface UpdateSubscriptionDto {
 export function getSubscriptions(params?: {
   scope?: "site" | "place" | "all";
   status?: "ACTIVE" | "SUSPENDED" | "EXPIRED";
-  plan?: "FREE" | "BASIC" | "PRO";
+  plan?: "FREE" | "BASIC" | "PRO" | "BUSINESS";
   q?: string;
   expiresWithinDays?: number;
   take?: number;
@@ -1543,6 +1522,40 @@ export function updateSubscription(scope: "site" | "place", id: string, data: Up
 
 export function extendSubscription(scope: "site" | "place", id: string) {
   return apiPost<any>(`/admin/subscriptions/${scope}/${id}/extend`, {});
+}
+
+export function cancelSubscription(scope: "site" | "place", subscriptionId: string, entityId: string) {
+  // Get language from localStorage or default to "hu"
+  const lang = (() => {
+    const stored = localStorage.getItem("i18nextLng");
+    if (stored && ["hu", "en", "de"].includes(stored.split("-")[0])) {
+      return stored.split("-")[0];
+    }
+    return "hu";
+  })();
+  
+  if (scope === "site") {
+    return apiPost<any>(`/api/${lang}/sites/${entityId}/subscription/${subscriptionId}/cancel`, {});
+  } else {
+    return apiPost<any>(`/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/cancel`, {});
+  }
+}
+
+export function resumeSubscription(scope: "site" | "place", subscriptionId: string, entityId: string) {
+  // Get language from localStorage or default to "hu"
+  const lang = (() => {
+    const stored = localStorage.getItem("i18nextLng");
+    if (stored && ["hu", "en", "de"].includes(stored.split("-")[0])) {
+      return stored.split("-")[0];
+    }
+    return "hu";
+  })();
+  
+  if (scope === "site") {
+    return apiPost<any>(`/api/${lang}/sites/${entityId}/subscription/${subscriptionId}/resume`, {});
+  } else {
+    return apiPost<any>(`/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/resume`, {});
+  }
 }
 
 export interface SubscriptionHistoryItem {

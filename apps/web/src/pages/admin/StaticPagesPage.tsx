@@ -12,6 +12,9 @@ import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/Load
 import { Pagination } from "../../components/Pagination";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
+import { buildUrl } from "../../app/urls";
 
 interface StaticPage {
   id: string;
@@ -33,7 +36,8 @@ interface StaticPage {
 
 export function StaticPagesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
+  const currentSite = sites.find((s) => s.id === selectedSiteId);
   const queryClient = useQueryClient();
   usePageTitle("admin.staticPages");
   const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
@@ -275,9 +279,9 @@ export function StaticPagesPage() {
 
   const startEdit = (staticPage: StaticPage) => {
     setEditingId(staticPage.id);
-    const hu = staticPage.translations.find((t) => t.lang === "hu");
-    const en = staticPage.translations.find((t) => t.lang === "en");
-    const de = staticPage.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(staticPage.translations, "hu" as Lang);
+    const en = findTranslation(staticPage.translations, "en" as Lang);
+    const de = findTranslation(staticPage.translations, "de" as Lang);
     setFormData({
       category: staticPage.category,
       titleHu: hu?.title || "",
@@ -311,6 +315,9 @@ export function StaticPagesPage() {
       titleHu: "",
       titleEn: "",
       titleDe: "",
+      shortDescriptionHu: "",
+      shortDescriptionEn: "",
+      shortDescriptionDe: "",
       contentHu: "",
       contentEn: "",
       contentDe: "",
@@ -737,7 +744,7 @@ export function StaticPagesPage() {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
-                               staticPage.translations.find((t) => t.lang === "hu");
+                               findTranslation(staticPage.translations, "hu" as Lang);
             return (
               getCategoryLabel(staticPage.category).toLowerCase().includes(lowerQuery) ||
               translation?.title.toLowerCase().includes(lowerQuery) || false
@@ -755,7 +762,7 @@ export function StaticPagesPage() {
               render: (staticPage) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
-                                   staticPage.translations.find((t) => t.lang === "hu");
+                                   findTranslation(staticPage.translations, "hu" as Lang);
                 return translation?.title || "-";
               },
             },
@@ -784,7 +791,7 @@ export function StaticPagesPage() {
           cardTitle={(staticPage) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = staticPage.translations.find((t) => t.lang === currentLang) || 
-                               staticPage.translations.find((t) => t.lang === "hu");
+                               findTranslation(staticPage.translations, "hu" as Lang);
             return translation?.title || "-";
           }}
           cardSubtitle={(staticPage) => getCategoryLabel(staticPage.category)}
@@ -810,8 +817,67 @@ export function StaticPagesPage() {
                 </span>
               ),
             },
+            {
+              key: "view",
+              render: (staticPage) => {
+                const publicUrl = currentSite?.slug 
+                  ? buildUrl({
+                      lang: i18n.language || "hu",
+                      siteKey: currentSite.slug,
+                      path: `static-page/${staticPage.id}`,
+                    })
+                  : null;
+                return publicUrl ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(publicUrl, "_blank");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      marginTop: 8,
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      color: "#10b981",
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                    }}
+                  >
+                    🔍 {t("admin.viewPublic") || "Megnézem"}
+                  </button>
+                ) : null;
+              },
+            },
           ]}
           onEdit={startEdit}
+          onView={(staticPage) => {
+            const publicUrl = currentSite?.slug 
+              ? buildUrl({
+                  lang: i18n.language || "hu",
+                  siteKey: currentSite.slug,
+                  path: `static-page/${staticPage.id}`,
+                })
+              : null;
+            if (publicUrl) {
+              window.open(publicUrl, "_blank");
+            }
+          }}
           onDelete={(staticPage) => handleDelete(staticPage.id)}
           error={error}
         />

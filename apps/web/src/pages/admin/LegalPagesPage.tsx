@@ -10,6 +10,9 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
+import { buildUrl } from "../../app/urls";
 
 interface LegalPage {
   id: string;
@@ -31,7 +34,8 @@ interface LegalPage {
 
 export function LegalPagesPage() {
   const { t, i18n } = useTranslation();
-  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
+  const currentSite = sites.find((s) => s.id === selectedSiteId);
   const queryClient = useQueryClient();
   usePageTitle("admin.legalPages");
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
@@ -279,9 +283,9 @@ export function LegalPagesPage() {
 
   const startEdit = (legalPage: LegalPage) => {
     setEditingId(legalPage.id);
-    const hu = legalPage.translations.find((t) => t.lang === "hu");
-    const en = legalPage.translations.find((t) => t.lang === "en");
-    const de = legalPage.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(legalPage.translations, "hu" as Lang);
+    const en = findTranslation(legalPage.translations, "en" as Lang);
+    const de = findTranslation(legalPage.translations, "de" as Lang);
     setFormData({
       key: legalPage.key,
       titleHu: hu?.title || "",
@@ -315,6 +319,9 @@ export function LegalPagesPage() {
       titleHu: "",
       titleEn: "",
       titleDe: "",
+      shortDescriptionHu: "",
+      shortDescriptionEn: "",
+      shortDescriptionDe: "",
       contentHu: "",
       contentEn: "",
       contentDe: "",
@@ -736,7 +743,7 @@ export function LegalPagesPage() {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                               legalPage.translations.find((t) => t.lang === "hu");
+                               findTranslation(legalPage.translations, "hu" as Lang);
             return (
               legalPage.key.toLowerCase().includes(lowerQuery) ||
               translation?.title.toLowerCase().includes(lowerQuery) || false
@@ -754,7 +761,7 @@ export function LegalPagesPage() {
               render: (legalPage) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                                   legalPage.translations.find((t) => t.lang === "hu");
+                                   findTranslation(legalPage.translations, "hu" as Lang);
                 return translation?.title || "-";
               },
             },
@@ -783,7 +790,7 @@ export function LegalPagesPage() {
           cardTitle={(legalPage) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                               legalPage.translations.find((t) => t.lang === "hu");
+                               findTranslation(legalPage.translations, "hu" as Lang);
             return translation?.title || "-";
           }}
           cardSubtitle={(legalPage) => legalPage.key}
@@ -809,8 +816,79 @@ export function LegalPagesPage() {
                 </span>
               ),
             },
+            {
+              key: "view",
+              render: (legalPage) => {
+                const keyMap: Record<string, string> = {
+                  imprint: "impresszum",
+                  terms: "aszf",
+                  privacy: "adatvedelem",
+                };
+                const path = keyMap[legalPage.key] || legalPage.key;
+                const publicUrl = currentSite?.slug 
+                  ? buildUrl({
+                      lang: i18n.language || "hu",
+                      siteKey: currentSite.slug,
+                      path,
+                    })
+                  : null;
+                return publicUrl ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(publicUrl, "_blank");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      marginTop: 8,
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      color: "#10b981",
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                    }}
+                  >
+                    🔍 {t("admin.viewPublic") || "Megnézem"}
+                  </button>
+                ) : null;
+              },
+            },
           ]}
           onEdit={startEdit}
+          onView={(legalPage) => {
+            const keyMap: Record<string, string> = {
+              imprint: "impresszum",
+              terms: "aszf",
+              privacy: "adatvedelem",
+            };
+            const path = keyMap[legalPage.key] || legalPage.key;
+            const publicUrl = currentSite?.slug 
+              ? buildUrl({
+                  lang: i18n.language || "hu",
+                  siteKey: currentSite.slug,
+                  path,
+                })
+              : null;
+            if (publicUrl) {
+              window.open(publicUrl, "_blank");
+            }
+          }}
           onDelete={(legalPage) => handleDelete(legalPage.id)}
           error={null}
         />

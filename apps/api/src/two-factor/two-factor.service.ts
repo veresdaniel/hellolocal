@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -41,7 +42,7 @@ export class TwoFactorService {
   private async ensureDependencies() {
     await loadTwoFactorDependencies();
     if (!speakeasy || !QRCode) {
-      throw new BadRequestException("2FA dependencies are not installed. Please install speakeasy and qrcode.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_DEPENDENCIES_NOT_INSTALLED);
     }
   }
 
@@ -53,7 +54,7 @@ export class TwoFactorService {
     await this.ensureDependencies();
 
     if (!userId) {
-      throw new BadRequestException("User ID is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -62,7 +63,7 @@ export class TwoFactorService {
     });
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
     // Generate TOTP secret
@@ -82,7 +83,7 @@ export class TwoFactorService {
 
     // Generate QR code
     if (!QRCode) {
-      throw new BadRequestException("QR code generation is not available. Please install qrcode package.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_QR_CODE_NOT_AVAILABLE);
     }
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
 
@@ -105,11 +106,11 @@ export class TwoFactorService {
     });
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
     if (!(user as any).totpSecret) {
-      throw new BadRequestException("2FA is not set up. Please set it up first.");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_NOT_SETUP);
     }
 
     // Verify the token
@@ -205,7 +206,7 @@ export class TwoFactorService {
     });
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
     await this.prisma.user.update({

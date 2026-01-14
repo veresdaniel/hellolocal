@@ -42,41 +42,45 @@ export function PlacePriceListPage() {
   const { data: place, isLoading: isLoadingPlace } = useQuery({
     queryKey: ["place", placeId, selectedSiteId],
     queryFn: () => {
-      if (!placeId || !selectedSiteId) throw new Error("Missing placeId or siteId");
+      if (!placeId) throw new Error("Missing placeId");
       return getPlace(placeId, selectedSiteId);
     },
-    enabled: !!placeId && !!selectedSiteId,
+    enabled: !!placeId,
   });
 
   // Load price list
-  const { data: priceList, isLoading: isLoadingPriceList, refetch } = useQuery({
+  const { data: priceList, isLoading: isLoadingPriceList, refetch, error: priceListError } = useQuery({
     queryKey: ["priceList", placeId, selectedSiteId],
     queryFn: () => {
       if (!placeId || !selectedSiteId) throw new Error("Missing placeId or siteId");
       return getPlacePriceList(placeId, selectedSiteId);
     },
     enabled: !!placeId && !!selectedSiteId,
-    onSuccess: (data) => {
-      if (data) {
-        setBlocks(data.blocks || []);
-        setCurrency(data.currency || "HUF");
-        setNote(data.note || "");
-        setIsActive(data.isActive ?? true);
-        setIsEnabled(data.isEnabled ?? true);
-        setRequireAuth(data.requireAuth ?? false);
-        setHasUnsavedChanges(false);
-      } else {
-        // Empty state - initialize with empty blocks
-        setBlocks([]);
-        setCurrency("HUF");
-        setNote("");
-        setIsActive(true);
-        setIsEnabled(true);
-        setRequireAuth(false);
-        setHasUnsavedChanges(false);
-      }
-    },
+    retry: false, // Don't retry on error - if price list doesn't exist, it's fine
   });
+
+  // Handle price list data changes (React Query v5 - no onSuccess callback)
+  useEffect(() => {
+    if (priceList) {
+      setBlocks(priceList.blocks || []);
+      setCurrency(priceList.currency || "HUF");
+      setNote(priceList.note || "");
+      setIsActive(priceList.isActive ?? true);
+      setIsEnabled(priceList.isEnabled ?? true);
+      setRequireAuth(priceList.requireAuth ?? false);
+      setHasUnsavedChanges(false);
+    } else if (!isLoadingPriceList && !priceListError) {
+      // Empty state - initialize with empty blocks (only if loading is complete and no error)
+      // If there's an error, keep the current state to avoid clearing user input
+      setBlocks([]);
+      setCurrency("HUF");
+      setNote("");
+      setIsActive(true);
+      setIsEnabled(true);
+      setRequireAuth(false);
+      setHasUnsavedChanges(false);
+    }
+  }, [priceList, isLoadingPriceList, priceListError]);
 
   const handleSave = async () => {
     if (!placeId || !selectedSiteId) return;
@@ -157,8 +161,9 @@ export function PlacePriceListPage() {
     return translation?.name || "-";
   };
 
-  const platformLocale = platformSettings?.platform?.locale || "hu-HU";
-  const platformCurrency = platformSettings?.platform?.currency || "HUF";
+  // Platform settings may not have platform property in all contexts
+  const platformLocale = (platformSettings as any)?.platform?.locale || "hu-HU";
+  const platformCurrency = (platformSettings as any)?.platform?.currency || "HUF";
 
   if (isLoadingPlace || isLoadingPriceList) {
     return (
@@ -179,25 +184,27 @@ export function PlacePriceListPage() {
     );
   }
 
+  // Log error if price list loading failed (but don't block the UI - allow creating new price list)
+  if (priceListError) {
+    console.warn("[PlacePriceListPage] Error loading price list:", priceListError);
+  }
+
+  // Show warning if selectedSiteId is missing
+  if (!selectedSiteId) {
+    return (
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(24px, 5vw, 32px)" }}>
+        <div style={{ textAlign: "center", padding: 48 }}>
+          <h2 style={{ color: "#dc3545", marginBottom: 16 }}>{t("error.errorOccurred")}</h2>
+          <p>{t("admin.errors.siteNotSelected")}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
       <AdminPageHeader
-        title={t("admin.priceList")}
-        subtitle={
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-            <span style={{ fontSize: "clamp(14px, 3.5vw, 16px)", color: "#666" }}>{getPlaceName()}</span>
-            {hasUnsavedChanges && (
-              <span style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "#ff9800", fontWeight: 500 }}>
-                {t("admin.unsavedChanges")}
-              </span>
-            )}
-            {!hasUnsavedChanges && priceList && (
-              <span style={{ fontSize: "clamp(12px, 3vw, 14px)", color: "#28a745", fontWeight: 500 }}>
-                {t("admin.saved")}
-              </span>
-            )}
-          </div>
-        }
+        title=""
         showNewButton={false}
         isCreatingOrEditing={true}
         onSave={handleSave}
@@ -218,11 +225,41 @@ export function PlacePriceListPage() {
           border: "1px solid rgba(102, 126, 234, 0.1)",
         }}
       >
+        {/* Header with title and saved status */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, paddingBottom: 16, borderBottom: "1px solid #e0e0e0" }}>
+          <h3 style={{ 
+            fontSize: "clamp(18px, 4vw, 22px)", 
+            fontWeight: 600, 
+            color: "#333", 
+            margin: 0,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}>
+            {t("admin.priceList")} - {getPlaceName()}
+          </h3>
+          {!hasUnsavedChanges && priceList && (
+            <span style={{ 
+              fontSize: "clamp(14px, 3.5vw, 16px)", 
+              color: "#28a745", 
+              fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              {t("admin.saved")}
+            </span>
+          )}
+          {hasUnsavedChanges && (
+            <span style={{ 
+              fontSize: "clamp(14px, 3.5vw, 16px)", 
+              color: "#ff9800", 
+              fontWeight: 500,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}>
+              {t("admin.unsavedChanges")}
+            </span>
+          )}
+        </div>
+
         {/* Settings */}
         <div style={{ marginBottom: 32, padding: "20px", background: "#f8f9fa", borderRadius: 12 }}>
-          <h3 style={{ marginBottom: 16, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "#333" }}>
-            {t("admin.settings")}
-          </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
             <div>
               <label style={{ display: "block", marginBottom: 8, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500 }}>
@@ -543,7 +580,7 @@ export function PlacePriceListPage() {
           </label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
             <TipTapEditorWithUpload
-              content={note}
+              value={note}
               onChange={(html) => {
                 setNote(html);
                 setHasUnsavedChanges(true);

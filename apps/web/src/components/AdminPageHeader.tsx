@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 interface AdminPageHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: string | ReactNode;
   newButtonLabel?: string;
   onNewClick?: () => void;
   showNewButton?: boolean;
@@ -125,7 +125,7 @@ export function AdminPageHeader({
             <span>{t("common.goBack") || t("common.back") || "Vissza"}</span>
           </button>
         )}
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
@@ -134,11 +134,15 @@ export function AdminPageHeader({
             margin: 0,
             marginBottom: subtitle ? 8 : 0,
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+            display: typeof title === "string" ? "block" : "flex",
+            justifyContent: typeof title === "string" ? "flex-start" : "space-between",
+            alignItems: "center",
+            width: "100%",
           }}>
             {title}
           </h1>
           {subtitle && (
-            <p style={{
+            <div style={{
               fontSize: "clamp(14px, 3.5vw, 16px)",
               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 400,
@@ -147,7 +151,7 @@ export function AdminPageHeader({
               textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
             }}>
               {subtitle}
-            </p>
+            </div>
           )}
         </div>
       </div>

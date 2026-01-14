@@ -42,10 +42,10 @@ export function PlaceAnalyticsPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
-        title={`${t("admin.analyticsLabel") || "Analytics"}: ${placeName}`}
+        title={`${placeName} ${t("admin.analyticsLabel") || "analitikája"}`}
         subtitle={t("admin.dashboardCards.analyticsDesc") || "View place analytics, views, and CTA clicks"}
         showNewButton={false}
-        backTo={`/${lang || i18n.language || "hu"}/admin/places/${placeId}`}
+        backTo={`/${lang || i18n.language || "hu"}/admin/places`}
       />
       <AnalyticsDashboard scope="place" placeId={placeId} />
     </div>

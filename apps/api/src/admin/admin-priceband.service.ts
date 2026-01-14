@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
 
@@ -67,7 +68,7 @@ export class AdminPriceBandService {
     });
 
     if (!priceBand) {
-      throw new NotFoundException("Price band not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRICE_BAND);
     }
 
     return priceBand;

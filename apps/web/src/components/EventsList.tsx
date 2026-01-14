@@ -7,16 +7,19 @@ import { useRouteCtx } from "../app/useRouteCtx";
 import { buildUrl } from "../app/urls";
 import { Link } from "react-router-dom";
 import { HAS_MULTIPLE_SITES } from "../app/config";
+import { BREAKPOINTS } from "../utils/viewport";
+import { useActiveBoxStore } from "../stores/useActiveBoxStore";
 import { Badge } from "./Badge";
 
 interface EventsListProps {
-  lang: string;
+  lang: "hu" | "en" | "de";
 }
 
 export function EventsList({ lang }: EventsListProps) {
   const { t } = useTranslation();
   const { siteKey } = useRouteCtx();
   const queryClient = useQueryClient();
+  const { activeBox, setActiveBox } = useActiveBoxStore();
   
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -43,17 +46,39 @@ export function EventsList({ lang }: EventsListProps) {
     return { top: 200, right: 24 };
   });
   
+  // Load saved height from localStorage (default: 200px)
+  const [height, setHeight] = useState(() => {
+    if (typeof window === "undefined") return 200;
+    const saved = localStorage.getItem("eventsListHeight");
+    if (saved) {
+      try {
+        const parsed = parseInt(saved, 10);
+        return isNaN(parsed) ? 200 : Math.max(150, Math.min(parsed, 800)); // Min 150px, max 800px
+      } catch {
+        return 200;
+      }
+    }
+    return 200;
+  });
+  
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
+  const resizeStartPosRef = useRef({ y: 0, height: 0 });
   const eventsListRef = useRef<HTMLDivElement>(null);
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
-  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < BREAKPOINTS.tablet;
 
   // Save position to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("eventsListPosition", JSON.stringify(position));
   }, [position]);
+
+  // Save height to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("eventsListHeight", String(height));
+  }, [height]);
 
   // Save open state to localStorage
   useEffect(() => {
@@ -226,6 +251,47 @@ export function EventsList({ lang }: EventsListProps) {
     };
   }, [isDragging, dragOffset, isMobile]);
 
+  // Handle resize (only height, desktop only)
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    if (!isDesktop || !eventsListRef.current) return;
+    e.preventDefault();
+    e.stopPropagation(); // Prevent drag from starting
+    setIsResizing(true);
+    const rect = eventsListRef.current.getBoundingClientRect();
+    resizeStartPosRef.current = {
+      y: e.clientY,
+      height: rect.height,
+    };
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!eventsListRef.current) return;
+      
+      const deltaY = e.clientY - resizeStartPosRef.current.y;
+      const newHeight = resizeStartPosRef.current.height + deltaY;
+      
+      // Constrain height: min 150px, max 800px
+      const constrainedHeight = Math.max(150, Math.min(newHeight, 800));
+      
+      setHeight(constrainedHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, isDesktop]);
+
   // Sort events: pinned first, then by start date
   const sortedEvents = [...events].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -243,16 +309,28 @@ export function EventsList({ lang }: EventsListProps) {
     return null;
   }
 
-  // Calculate dynamic z-index: higher only when actively dragging (not when just open)
+  // Calculate dynamic z-index: higher when actively dragging, resizing, or when this box is active
   const baseZIndex = 200;
-  const activeZIndex = 10000; // High z-index when actively being used (dragging)
-  const currentZIndex = isDragging ? activeZIndex : baseZIndex;
+  const activeZIndex = 10000; // High z-index when actively being used (dragging, resizing, or selected)
+  const isActive = activeBox === "events";
+  const currentZIndex = (isDragging || isResizing || isActive) ? activeZIndex : baseZIndex;
+  
+  // Set this box as active when clicked
+  const handleBoxClick = () => {
+    if (!isDragging && !isResizing) {
+      setActiveBox("events");
+    }
+  };
 
   return (
     <div
       ref={eventsListRef}
-      onMouseDown={handleMouseDown}
+      onMouseDown={(e) => {
+        handleBoxClick();
+        handleMouseDown(e);
+      }}
       onTouchStart={handleTouchStart}
+      onClick={handleBoxClick}
       style={{
         position: "fixed",
         top: `${position.top}px`,
@@ -266,21 +344,21 @@ export function EventsList({ lang }: EventsListProps) {
         border: "1px solid rgba(0, 0, 0, 0.06)",
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
         zIndex: currentZIndex, // Dynamic z-index based on active state
-        cursor: isDragging ? "grabbing" : isDesktop ? "grab" : "default",
+        cursor: isDragging ? "grabbing" : isResizing ? "ns-resize" : isDesktop ? "grab" : "default",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        transition: isDragging ? "none" : "box-shadow 0.2s",
+        transition: (isDragging || isResizing) ? "none" : "box-shadow 0.2s",
         userSelect: "none",
         touchAction: "none", // Prevent default touch behaviors
       }}
       onMouseEnter={(e) => {
-        if (!isDragging && isDesktop) {
+        if (!isDragging && !isResizing && isDesktop) {
           e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
-        if (!isDragging) {
+        if (!isDragging && !isResizing) {
           e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
@@ -347,7 +425,7 @@ export function EventsList({ lang }: EventsListProps) {
           style={{
             overflowY: "auto",
             padding: "16px 20px 20px",
-            maxHeight: "200px", // Height for ~1.5 events
+            height: `${height}px`, // Dynamic height from state
             background: "rgba(255, 255, 255, 0.98)",
           }}
         >
@@ -388,7 +466,7 @@ export function EventsList({ lang }: EventsListProps) {
                         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
                         fontWeight: 400,
                       }}>
-                        {t("public.placeSlugMissing") || "Részletek hamarosan..."}
+                        {t("public.placeSlugMissing")}
                       </div>
                     </div>
                   );
@@ -465,7 +543,7 @@ export function EventsList({ lang }: EventsListProps) {
                               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                             }}
                           >
-                            📌 {t("public.events") || "Esemény"}
+                            📌 {t("public.events")}
                           </Badge>
                         </div>
                       )}
@@ -501,7 +579,7 @@ export function EventsList({ lang }: EventsListProps) {
                     lineHeight: 1.5,
                   }}>
                     🗓️ {new Date(event.startDate).toLocaleDateString(
-                      lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                      (lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US") as "hu-HU" | "de-DE" | "en-US",
                       {
                         year: "numeric",
                         month: "short",
@@ -546,6 +624,46 @@ export function EventsList({ lang }: EventsListProps) {
               })}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Resize handle - only on desktop, only when open */}
+      {isOpen && isDesktop && (
+        <div
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 8,
+            cursor: "ns-resize",
+            zIndex: 1000,
+            background: "transparent",
+            borderBottomLeftRadius: 16,
+            borderBottomRightRadius: 16,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          {/* Visual indicator */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 2,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 40,
+              height: 4,
+              background: "rgba(102, 126, 234, 0.3)",
+              borderRadius: 2,
+              transition: "background 0.2s",
+            }}
+          />
         </div>
       )}
     </div>

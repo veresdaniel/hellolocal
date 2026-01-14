@@ -116,7 +116,7 @@ export function SubscriptionsDashboardPage() {
         getSubscriptions({
           scope,
           status: statusFilter !== "all" ? (statusFilter as any) : undefined,
-          plan: planFilter !== "all" ? (planFilter as any) : undefined,
+          plan: planFilter !== "all" ? (planFilter as "FREE" | "BASIC" | "PRO" | "BUSINESS") : undefined,
           q: debouncedSearchQuery || undefined,
           expiresWithinDays,
           take: pageSize,
@@ -131,7 +131,7 @@ export function SubscriptionsDashboardPage() {
       if (summaryResult.status === "fulfilled") {
         setSummary(summaryResult.value);
       } else {
-        errors.push(t("admin.errors.loadSubscriptionSummaryFailed") || "Summary betöltése sikertelen");
+        errors.push(t("admin.errors.loadSubscriptionSummaryFailed"));
         console.error("Failed to load summary:", summaryResult.reason);
       }
 
@@ -139,7 +139,7 @@ export function SubscriptionsDashboardPage() {
       if (expiringResult.status === "fulfilled") {
         setExpiring(expiringResult.value);
       } else {
-        errors.push(t("admin.errors.loadExpiringSubscriptionsFailed") || "Lejáró előfizetések betöltése sikertelen");
+        errors.push(t("admin.errors.loadExpiringSubscriptionsFailed"));
         console.error("Failed to load expiring subscriptions:", expiringResult.reason);
       }
 
@@ -147,7 +147,7 @@ export function SubscriptionsDashboardPage() {
       if (trendsResult.status === "fulfilled") {
         setTrends(trendsResult.value.points);
       } else {
-        errors.push(t("admin.errors.loadSubscriptionTrendsFailed") || "Trend adatok betöltése sikertelen");
+        errors.push(t("admin.errors.loadSubscriptionTrendsFailed"));
         console.error("Failed to load trends:", trendsResult.reason);
       }
 
@@ -165,7 +165,7 @@ export function SubscriptionsDashboardPage() {
       if (errors.length > 0 && !hasShownErrorRef.current) {
         const errorMessage = errors.length === 1 
           ? errors[0]
-          : `${errors.length} ${t("admin.errors.loadFailed") || "betöltési hiba"}: ${errors.join(", ")}`;
+          : `${errors.length} ${t("admin.errors.loadFailed")}: ${errors.join(", ")}`;
         showToast(errorMessage, "error");
         hasShownErrorRef.current = true;
       }
@@ -177,7 +177,7 @@ export function SubscriptionsDashboardPage() {
     } catch (err) {
       console.error("Unexpected error loading subscriptions data:", err);
       if (!hasShownErrorRef.current) {
-        showToast(t("admin.errors.loadFailed") || "Failed to load data", "error");
+        showToast(t("admin.errors.loadFailed"), "error");
         hasShownErrorRef.current = true;
       }
     } finally {
@@ -198,18 +198,18 @@ export function SubscriptionsDashboardPage() {
   const handleSave = async (item: SubscriptionListItem) => {
     try {
       await updateSubscription(item.scope, item.id, editData);
-      showToast(t("admin.subscriptions.updated") || "Subscription updated", "success");
+      showToast(t("admin.subscriptions.updated"), "success");
       setIsEditing(null);
       loadData();
     } catch (err) {
-      showToast(t("admin.errors.updateFailed") || "Failed to update", "error");
+      showToast(t("admin.errors.updateFailed"), "error");
     }
   };
 
   const handleExtend = async (item: SubscriptionListItem) => {
     try {
       await extendSubscription(item.scope, item.id);
-      showToast(t("admin.subscriptions.extended") || "Subscription extended by 30 days", "success");
+      showToast(t("admin.subscriptions.extended"), "success");
       loadData();
     } catch (err) {
       showToast(t("admin.errors.updateFailed") || "Failed to extend", "error");
@@ -219,7 +219,7 @@ export function SubscriptionsDashboardPage() {
   const handleSuspend = async (item: SubscriptionListItem) => {
     try {
       await updateSubscription(item.scope, item.id, { status: "SUSPENDED" });
-      showToast(t("admin.subscriptions.suspended") || "Subscription suspended", "success");
+      showToast(t("admin.subscriptions.suspended"), "success");
       loadData();
     } catch (err) {
       showToast(t("admin.errors.updateFailed") || "Failed to suspend", "error");
@@ -257,7 +257,7 @@ export function SubscriptionsDashboardPage() {
       setHistory(historyData.items);
       setHistoryTotal(historyData.total);
     } catch (err) {
-      showToast(t("admin.errors.loadFailed") || "Failed to load history", "error");
+      showToast(t("admin.errors.loadFailed"), "error");
       setHistory([]);
       setHistoryTotal(0);
     } finally {
@@ -275,17 +275,17 @@ export function SubscriptionsDashboardPage() {
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return t("admin.noDate") || "Nincs dátum";
+    if (!dateString) return t("admin.noDate");
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return t("admin.invalidDate") || "Érvénytelen dátum";
+      if (isNaN(date.getTime())) return t("admin.invalidDate");
       return date.toLocaleDateString("hu-HU", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
       });
     } catch (error) {
-      return t("admin.invalidDate") || "Érvénytelen dátum";
+      return t("admin.invalidDate");
     }
   };
 
@@ -382,7 +382,7 @@ export function SubscriptionsDashboardPage() {
               strokeWidth={3}
               dot={{ fill: "#22c55e", r: 5 }}
               activeDot={{ r: 7 }}
-              name={t("admin.subscriptions.activeCount") || "Aktív"}
+              name={t("admin.subscriptions.activeCount")}
             />
             <Line
               type="monotone"
@@ -888,7 +888,7 @@ export function SubscriptionsDashboardPage() {
                         <>
                           <select
                             value={editData.plan || item.plan}
-                            onChange={(e) => setEditData({ ...editData, plan: e.target.value as any })}
+                            onChange={(e) => setEditData({ ...editData, plan: e.target.value as "FREE" | "BASIC" | "PRO" | "BUSINESS" })}
                             style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                           >
                             <option value="BASIC">BASIC</option>
@@ -897,7 +897,7 @@ export function SubscriptionsDashboardPage() {
                           </select>
                           <select
                             value={editData.status || item.status}
-                            onChange={(e) => setEditData({ ...editData, status: e.target.value as any })}
+                            onChange={(e) => setEditData({ ...editData, status: e.target.value as "ACTIVE" | "SUSPENDED" | "EXPIRED" })}
                             style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                           >
                             <option value="ACTIVE">ACTIVE</option>
@@ -925,7 +925,7 @@ export function SubscriptionsDashboardPage() {
                               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             }}
                           >
-                            {t("admin.save") || "Mentés"}
+                            {t("admin.save")}
                           </button>
                           <button
                             onClick={() => setIsEditing(null)}
@@ -940,7 +940,7 @@ export function SubscriptionsDashboardPage() {
                               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             }}
                           >
-                            {t("admin.cancel") || "Mégse"}
+                            {t("admin.cancel")}
                           </button>
                         </>
                       ) : (
@@ -1322,7 +1322,7 @@ export function SubscriptionsDashboardPage() {
         
         {isLoadingEventLogs ? (
           <div style={{ padding: 48, textAlign: "center" }}>
-            <LoadingSpinner />
+            <LoadingSpinner isLoading={true} />
           </div>
         ) : eventLogs.length === 0 ? (
           <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>

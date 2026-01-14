@@ -11,6 +11,8 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 export function SitesPage() {
   const { t, i18n } = useTranslation();
@@ -210,9 +212,9 @@ export function SitesPage() {
 
   const startEditInline = (site: Site) => {
     setEditingId(site.id);
-    const hu = site.translations.find((t) => t.lang === "hu");
-    const en = site.translations.find((t) => t.lang === "en");
-    const de = site.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(site.translations, "hu" as Lang);
+    const en = findTranslation(site.translations, "en" as Lang);
+    const de = findTranslation(site.translations, "de" as Lang);
     setFormData({
       slug: site.slug,
       brandId: site.brandId || "",
@@ -345,7 +347,6 @@ export function SitesPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: formErrors.slug ? "#fef2f2" : "white",
                     boxSizing: "border-box",
                   }}
@@ -391,7 +392,6 @@ export function SitesPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: formErrors.brandId ? "#fef2f2" : "white",
                     boxSizing: "border-box",
                   }}
@@ -445,7 +445,6 @@ export function SitesPage() {
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     boxSizing: "border-box",
                   }}
                   placeholder="example.com"
@@ -496,7 +495,7 @@ export function SitesPage() {
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border:
                           ((selectedLang === "hu" && formErrors.nameHu) ||
                           (selectedLang === "en" && formErrors.nameEn) ||
@@ -506,7 +505,6 @@ export function SitesPage() {
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background: ((selectedLang === "hu" && formErrors.nameHu) ||
                                      (selectedLang === "en" && formErrors.nameEn) ||
                                      (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
@@ -572,12 +570,11 @@ export function SitesPage() {
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
@@ -653,12 +650,11 @@ export function SitesPage() {
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
@@ -676,7 +672,7 @@ export function SitesPage() {
                       marginTop: 6,
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
-                      {t("admin.heroImageDescription") || "URL a kártyán megjelenő képhez"}
+                      {t("admin.heroImageDescription")}
                     </div>
                   </div>
                 </div>
@@ -734,7 +730,7 @@ export function SitesPage() {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation =
                   site.translations.find((t) => t.lang === currentLang) ||
-                  site.translations.find((t) => t.lang === "hu");
+                  findTranslation(site.translations, "hu" as Lang);
                 return translation?.name || "-";
               },
             },
@@ -761,10 +757,10 @@ export function SitesPage() {
             },
           ]}
           cardTitle={(site) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation =
-              site.translations.find((t) => t.lang === currentLang) ||
-              site.translations.find((t) => t.lang === "hu");
+          const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+          const translation =
+            findTranslation(site.translations, currentLang) ||
+            findTranslation(site.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(site) => site.slug}

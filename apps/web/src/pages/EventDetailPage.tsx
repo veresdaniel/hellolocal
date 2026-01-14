@@ -3,7 +3,7 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getEvent, getEventById, getPlatformSettings } from "../api/places.api";
+import { getEvent, getEventById, getPlatformSettings, getGallery, type PublicGallery } from "../api/places.api";
 import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
@@ -20,11 +20,14 @@ import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
+import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
+import { GalleryViewer } from "../components/GalleryViewer";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
   const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -66,6 +69,113 @@ export function EventDetailPage() {
     enabled: isAuthenticated && !!resolveQ.data?.entityId && !!lang,
     retry: false, // Don't retry on 401
   });
+
+  // Extract gallery IDs from description
+  const galleryIds = useMemo(() => {
+    if (!event?.description) return [];
+    const regex = /\[gallery\s+id="([^"]+)"\]/g;
+    const matches: string[] = [];
+    let match;
+    while ((match = regex.exec(event.description)) !== null) {
+      matches.push(match[1]);
+    }
+    return matches;
+  }, [event?.description]);
+
+  // Load galleries for the opening hours section
+  const { data: galleriesData, isError: isGalleriesError } = useQuery({
+    queryKey: ["galleries", galleryIds, lang, siteKey],
+    queryFn: async () => {
+      if (!lang || !siteKey || galleryIds.length === 0) return {};
+      const galleries: Record<string, PublicGallery> = {};
+      await Promise.all(
+        galleryIds.map(async (galleryId) => {
+          try {
+            const gallery = await getGallery(lang, siteKey, galleryId);
+            galleries[galleryId] = gallery;
+          } catch (error) {
+            // Log error but don't fail the entire query
+            // 404 errors are expected if gallery doesn't exist or is inactive
+            const status = (error as Error & { status?: number })?.status;
+            if (status === 404) {
+              console.warn(`Gallery ${galleryId} not found or inactive`);
+            } else {
+              console.error(`Failed to load gallery ${galleryId}:`, error);
+            }
+            // Don't add to galleries object if it fails
+          }
+        })
+      );
+      return galleries;
+    },
+    enabled: galleryIds.length > 0 && !!lang && !!siteKey,
+    retry: false, // Don't retry on error
+  });
+
+  const galleries = galleriesData || {};
+
+  // Check if user can edit this event (based on place permissions)
+  const [canEditEvent, setCanEditEvent] = useState(false);
+  const [eventPlaceId, setEventPlaceId] = useState<string | null>(null);
+  const [eventSiteId, setEventSiteId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (event?.placeId) {
+      setEventPlaceId(event.placeId);
+    }
+    if (event?.siteId) {
+      setEventSiteId(event.siteId);
+    }
+  }, [event?.placeId, event?.siteId]);
+
+  // Check event permissions (based on place permissions)
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!isAuthenticated || !user || !eventPlaceId || !eventSiteId) {
+        setCanEditEvent(false);
+        return;
+      }
+
+      try {
+        // Check global role (superadmin, admin, editor can edit)
+        if (isSuperadmin(user.role) || isAdmin(user.role) || canEdit(user.role)) {
+          setCanEditEvent(true);
+          return;
+        }
+
+        // Check site-level role
+        try {
+          const siteMemberships = await getSiteMemberships(eventSiteId, user.id);
+          const siteMembership = siteMemberships.find(m => m.siteId === eventSiteId && m.userId === user.id);
+          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+            setCanEditEvent(true);
+            return;
+          }
+        } catch (err) {
+          // Site membership check failed, continue to place membership check
+        }
+
+        // Check place-level role (owner, manager, editor can edit events)
+        try {
+          const placeMemberships = await getPlaceMemberships(eventPlaceId, user.id);
+          const placeMembership = placeMemberships.find(m => m.placeId === eventPlaceId && m.userId === user.id);
+          if (placeMembership && (placeMembership.role === "owner" || placeMembership.role === "manager" || placeMembership.role === "editor")) {
+            setCanEditEvent(true);
+            return;
+          }
+        } catch (err) {
+          // Place membership check failed
+        }
+
+        setCanEditEvent(false);
+      } catch (err) {
+        console.error("Failed to check event permissions", err);
+        setCanEditEvent(false);
+      }
+    };
+
+    checkPermissions();
+  }, [isAuthenticated, user, eventPlaceId, eventSiteId]);
 
   // Handle rating submission
   const [isRatingSaving, setIsRatingSaving] = useState(false);
@@ -292,13 +402,13 @@ export function EventDetailPage() {
         image: eventImage,
       },
       twitter: {
-        card: eventImage ? "summary_large_image" : "summary",
+        card: (eventImage ? "summary_large_image" : "summary") as "summary" | "summary_large_image",
         title: event.seo?.title || event.name,
         description: event.seo?.description || fallbackDescription,
         image: eventImage,
       },
       schemaOrg: {
-        type: "Event",
+        type: "Event" as const,
         data: {
           name: event.name,
           description: stripHtml(event.seo?.description || event.description || event.shortDescription),
@@ -390,9 +500,14 @@ export function EventDetailPage() {
     );
   }
 
+  // Build edit URL if user can edit
+  const editUrl = canEditEvent && resolveQ.data?.entityId 
+    ? `/${lang}/admin/events?edit=${resolveQ.data.entityId}`
+    : undefined;
+
   return (
     <>
-      <FloatingHeader />
+      <FloatingHeader editUrl={editUrl} showEditButton={canEditEvent} />
       <div
         style={{
           minHeight: "100vh",
@@ -433,6 +548,55 @@ export function EventDetailPage() {
                 }}
               />
 
+              {/* Edit button - top right */}
+              {canEditEvent && editUrl && (
+                <Link
+                  to={editUrl}
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 12,
+                    padding: "10px 12px",
+                    background: "rgba(102, 126, 234, 0.9)",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+                    transition: "all 0.2s ease",
+                    textDecoration: "none",
+                    backdropFilter: "blur(8px)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 1)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.9)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
+                  }}
+                  title={t("common.edit") || "Szerkesztés"}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                    <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
+                  </svg>
+                </Link>
+              )}
+
               {/* Tags overlaid on image - bottom right */}
               {event.tags && event.tags.length > 0 && (
                 <div style={{ 
@@ -466,7 +630,7 @@ export function EventDetailPage() {
           {/* Back Link */}
           <div style={{ margin: "0 16px 16px" }}>
             <Link
-              to={buildUrl({ lang, siteKey, path: "" })}
+              to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: "" })}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -586,25 +750,84 @@ export function EventDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Opening Hours and Gallery side by side */}
+          {(() => {
+            const hasOpeningHours = true; // Events always have date/time
+            const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
             
-          {/* Event Details */}
-          <div style={{ margin: "0 16px 32px" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", marginBottom: 16 }}>
-              <div style={{ fontSize: 16, color: "#666", fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                📅 {new Date(event.startDate).toLocaleDateString(
-                  lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
+            // Show grid if we have opening hours or gallery
+            if (!hasOpeningHours && !hasGallery) {
+              return null;
+            }
+            
+            // Always two columns on desktop if we have gallery
+            const shouldShowTwoColumns = hasGallery;
+            
+            return (
+              <div 
+                className="opening-hours-gallery-grid"
+                style={{ 
+                  margin: "0 16px 24px",
+                  display: "grid",
+                  gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
+                  gap: 12,
+                }}
+              >
+              <style>{`
+                @media (max-width: 767px) {
+                  .opening-hours-gallery-grid {
+                    gridTemplateColumns: 1fr !important;
                   }
-                )}
-                {event.endDate && (
-                  <>
-                    {" - "}
-                    {new Date(event.endDate).toLocaleDateString(
+                  .gallery-compact {
+                    order: 2;
+                  }
+                }
+              `}</style>
+            {/* Opening Hours - Left */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                padding: "16px",
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(251, 191, 36, 0.2)",
+                color: "#1a1a1a",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "clamp(18px, 3vw, 24px)",
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#1a1a1a",
+                  marginBottom: "clamp(12px, 2vw, 20px)",
+                  marginTop: 0,
+                }}
+              >
+                {t("public.openingHours")}
+              </h3>
+              <div style={{ 
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}>
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.9)",
+                    backdropFilter: "blur(10px)",
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <strong style={{ color: "rgba(0, 0, 0, 0.7)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                    <span>📅</span>
+                    {lang === "hu" ? "Dátum és idő" : lang === "en" ? "Date and time" : "Datum und Uhrzeit"}
+                  </strong>
+                  <div style={{ color: "#1a1a1a", fontSize: "clamp(14px, 3.5vw, 16px)", lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
+                    {new Date(event.startDate).toLocaleDateString(
                       lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                       {
                         year: "numeric",
@@ -614,10 +837,108 @@ export function EventDetailPage() {
                         minute: "2-digit",
                       }
                     )}
-                  </>
+                    {event.endDate && (
+                      <>
+                        {" - "}
+                        {new Date(event.endDate).toLocaleDateString(
+                          lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                {event.placeName && (
+                  <div
+                    style={{
+                      background: "rgba(255, 255, 255, 0.9)",
+                      backdropFilter: "blur(10px)",
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <strong style={{ color: "rgba(0, 0, 0, 0.7)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <span>📍</span>
+                      {lang === "hu" ? "Helyszín" : lang === "en" ? "Location" : "Ort"}
+                    </strong>
+                    <Link
+                      to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: `place/${event.placeSlug}` })}
+                      style={{
+                        color: "#1a1a1a",
+                        textDecoration: "none",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontWeight: 400,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.textDecoration = "underline";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.textDecoration = "none";
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      {event.placeName}
+                      <span style={{ 
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}>→</span>
+                    </Link>
+                  </div>
                 )}
               </div>
-              {event.category && (
+            </div>
+
+            {/* Gallery - Right */}
+            {hasGallery ? (
+              <div
+                style={{
+                  background: "white",
+                  padding: "12px",
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid rgba(251, 191, 36, 0.1)",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                className="gallery-compact"
+              >
+                {galleryIds.map((galleryId) => {
+                  const gallery = galleries[galleryId];
+                  if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                  return (
+                    <GalleryViewer
+                      key={galleryId}
+                      images={gallery.images}
+                      name={gallery.name}
+                      layout={gallery.layout}
+                      aspect={gallery.aspect}
+                      compact={true}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+              </div>
+            );
+          })()}
+            
+          {/* Event Details */}
+          <div style={{ margin: "0 16px 32px" }}>
+            {event.category && (
+              <div style={{ marginBottom: 16 }}>
                 <Badge
                   variant="category"
                   color="#667eea"
@@ -626,32 +947,6 @@ export function EventDetailPage() {
                 >
                   {event.category}
                 </Badge>
-              )}
-            </div>
-            {event.placeName && (
-              <div style={{ marginBottom: 16 }}>
-                <Link
-                  to={buildUrl({ lang, siteKey, path: `place/${event.placeSlug}` })}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "#667eea",
-                    textDecoration: "none",
-                    fontSize: 16,
-                    fontWeight: 400,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#764ba2";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#667eea";
-                  }}
-                >
-                  📍 {event.placeName}
-                </Link>
               </div>
             )}
           </div>
@@ -689,6 +984,11 @@ export function EventDetailPage() {
                 content={event.description}
                 lang={lang!}
                 siteKey={siteKey!}
+                hideGalleries={
+                  // Hide galleries in description if they're shown in opening hours position
+                  galleryIds.length > 0 && 
+                  Object.keys(galleries).length > 0
+                }
               />
             </div>
           )}

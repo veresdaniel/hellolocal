@@ -26,6 +26,7 @@ export interface CreatePlaceDto {
   translations: Array<{
     lang: Lang;
     name: string;
+    slug?: string | null; // Optional custom slug, if not provided, will be generated from name
     shortDescription?: string | null; // HTML - for list view cards
     description?: string | null;
     address?: string | null;
@@ -61,6 +62,7 @@ export interface UpdatePlaceDto {
   translations?: Array<{
     lang: Lang;
     name: string;
+    slug?: string | null; // Optional custom slug, if not provided, will be generated from name
     shortDescription?: string | null; // HTML - for list view cards
     description?: string | null;
     address?: string | null;
@@ -100,7 +102,7 @@ export class AdminPlaceService {
    * If only Hungarian translation exists, create slugs for all languages (hu, en, de) using the Hungarian name
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForPlace(placeId: string, siteId: string, translations: Array<{ lang: Lang; name: string }>, throwOnConflict: boolean = false) {
+  private async createSlugsForPlace(placeId: string, siteId: string, translations: Array<{ lang: Lang; name: string; slug?: string | null }>, throwOnConflict: boolean = false) {
     // Find Hungarian translation to use as fallback for missing languages
     const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
     const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
@@ -129,10 +131,18 @@ export class AdminPlaceService {
       const translation = translationByLang.get(lang);
       const nameToUse = translation?.name || fallbackName;
 
-      // Generate slug from name, or use place ID as fallback if name is empty
-      let baseSlug = generateSlug(nameToUse);
+      // If custom slug is provided, use it (normalized), otherwise generate from name
+      let baseSlug: string;
+      if (translation?.slug && translation.slug.trim() !== "") {
+        // Use custom slug, but normalize it
+        baseSlug = generateSlug(translation.slug);
+      } else {
+        // Generate slug from name
+        baseSlug = generateSlug(nameToUse);
+      }
+      
       if (!baseSlug || baseSlug.trim() === "") {
-        // If name is empty or generates empty slug, use place ID as fallback
+        // If slug is empty, use place ID as fallback
         baseSlug = `place-${placeId}`;
       }
       let slug = baseSlug;
@@ -181,9 +191,12 @@ export class AdminPlaceService {
       // Create or update the slug with redirect support
       if (existingSlug) {
         const oldSlug = existingSlug.slug;
+        // Normalize the old slug to check if it contains accents
+        const normalizedOldSlug = generateSlug(oldSlug);
+        const needsNormalization = normalizedOldSlug !== oldSlug && normalizedOldSlug === slug;
         
-        // If the slug has changed, create a redirect from old to new
-        if (oldSlug !== slug) {
+        // If the slug has changed OR the old slug contains accents (needs normalization), create a redirect from old to new
+        if (oldSlug !== slug || needsNormalization) {
           // First, check if there's already a slug with the new value (shouldn't happen due to conflict check, but safety)
           const newSlugExists = await this.prisma.slug.findUnique({
             where: { siteId_lang_slug: { siteId, lang, slug } },
@@ -684,17 +697,24 @@ export class AdminPlaceService {
 
       // If we have translations from the update, merge them with existing ones
       // (prefer updated translations over existing ones)
-      const translationMap = new Map(allTranslations.map((t) => [t.lang, t.name]));
+      const translationMap = new Map<Lang, { name: string; slug?: string | null }>();
+      allTranslations.forEach((t) => {
+        translationMap.set(t.lang, { name: t.name });
+      });
       if (translations) {
         for (const translation of translations) {
-          translationMap.set(translation.lang, translation.name);
+          translationMap.set(translation.lang, {
+            name: translation.name,
+            slug: translation.slug ?? undefined,
+          });
         }
       }
 
       // Convert to array format expected by createSlugsForPlace
-      const translationsForSlugs = Array.from(translationMap.entries()).map(([lang, name]) => ({
+      const translationsForSlugs = Array.from(translationMap.entries()).map(([lang, data]) => ({
         lang: lang as Lang,
-        name,
+        name: data.name,
+        slug: data.slug,
       }));
 
       // Create/update slugs for all languages (only if user has permission)

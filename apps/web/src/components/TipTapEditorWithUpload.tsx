@@ -469,7 +469,7 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "float: left; margin: 0 16px 16px 0; max-width: 50%;" }).run();
+                editor.chain().focus().setImage({ ...attrs, style: "float: left; margin: 0 16px 16px 0; max-width: 50%;" } as any).run();
               }}
               title="Align Left"
             >
@@ -478,7 +478,7 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "display: block; margin: 0 auto; max-width: 100%;" }).run();
+                editor.chain().focus().setImage({ ...attrs, style: "display: block; margin: 0 auto; max-width: 100%;" } as any).run();
               }}
               title="Align Center"
             >
@@ -487,7 +487,7 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "float: right; margin: 0 0 16px 16px; max-width: 50%;" }).run();
+                editor.chain().focus().setImage({ ...attrs, style: "float: right; margin: 0 0 16px 16px; max-width: 50%;" } as any).run();
               }}
               title="Align Right"
             >

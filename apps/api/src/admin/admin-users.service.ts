@@ -32,7 +32,7 @@ export class AdminUsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(siteId?: string) {
-    const where: any = {};
+    const where: { sites?: { some: { siteId: string } } } = {};
     if (siteId) {
       where.sites = {
         some: {
@@ -252,19 +252,11 @@ export class AdminUsersService {
       throw new ForbiddenException("Only superadmin or admin can update users");
     }
 
-    const updateData: any = {
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      bio: dto.bio,
-      isActive: dto.isActive,
-    };
-
-    // Remove undefined fields
-    Object.keys(updateData).forEach((key) => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
+    const updateData: Partial<UpdateUserDto> = {};
+    if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
+    if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
+    if (dto.bio !== undefined) updateData.bio = dto.bio;
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
     // Update site relationships if provided
     if (dto.siteIds !== undefined) {

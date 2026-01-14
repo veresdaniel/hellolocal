@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateCategoryDto {
   siteId: string;
@@ -93,7 +94,7 @@ export class AdminCategoryService {
     });
 
     if (!category) {
-      throw new NotFoundException("Category not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_CATEGORY);
     }
 
     return category;
@@ -106,7 +107,7 @@ export class AdminCategoryService {
         where: { id: dto.parentId, siteId: dto.siteId },
       });
       if (!parent) {
-        throw new BadRequestException("Parent category not found");
+        throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_PARENT_CATEGORY);
       }
       // Prevent circular reference: check if parent is not a child of this category
       // (This check is not needed for create, but we validate parent exists)
@@ -165,13 +166,13 @@ export class AdminCategoryService {
           where: { id: dto.parentId, siteId },
         });
         if (!parent) {
-          throw new BadRequestException("Parent category not found");
+          throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_PARENT_CATEGORY);
         }
         // Prevent circular reference: check if parent is a descendant of this category
         let currentParentId = parent.parentId;
         while (currentParentId) {
           if (currentParentId === id) {
-            throw new BadRequestException("Cannot set parent: would create circular reference");
+            throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CATEGORY_CIRCULAR_REFERENCE);
           }
           const currentParent = await this.prisma.category.findFirst({
             where: { id: currentParentId, siteId },
@@ -268,7 +269,7 @@ export class AdminCategoryService {
         select: { id: true },
       });
       if (parents.length !== parentIds.length) {
-        throw new BadRequestException("Some parent categories not found or don't belong to site");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PARENT_CATEGORIES_NOT_FOUND_OR_NOT_BELONG);
       }
     }
 
@@ -299,7 +300,7 @@ export class AdminCategoryService {
     } catch (error: any) {
       // Handle Prisma errors
       if (error.code === "P2025") {
-        throw new BadRequestException("One or more categories not found during update");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CATEGORIES_NOT_FOUND_UPDATE);
       }
       // Re-throw other errors
       throw error;

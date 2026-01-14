@@ -241,7 +241,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
                   fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
                 }}
               >
-                <span>{t("public.open") || "Megnyitás"}</span>
+                <span>{t("public.open")}</span>
                 <span
                   style={{
                     transition: "transform 0.3s ease",

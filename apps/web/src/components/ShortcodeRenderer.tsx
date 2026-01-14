@@ -44,13 +44,22 @@ export function ShortcodeRenderer({ content, lang, siteKey, className, style, hi
             const gallery = await getGallery(lang, siteKey, galleryId);
             galleries[galleryId] = gallery;
           } catch (error) {
-            console.error(`Failed to load gallery ${galleryId}:`, error);
+            // Log error but don't fail the entire query
+            // 404 errors are expected if gallery doesn't exist or is inactive
+            const status = (error as Error & { status?: number })?.status;
+            if (status === 404) {
+              console.warn(`Gallery ${galleryId} not found or inactive`);
+            } else {
+              console.error(`Failed to load gallery ${galleryId}:`, error);
+            }
+            // Don't add to galleries object if it fails
           }
         })
       );
       return galleries;
     },
     enabled: galleryShortcodes.length > 0 && !!lang && !!siteKey,
+    retry: false, // Don't retry on error
   });
 
   const galleries = galleryQueries.data || {};

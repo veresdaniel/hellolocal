@@ -1,5 +1,6 @@
 // src/api/auth.api.ts
 import { apiPost, apiPostPublic } from "./client";
+import type { UserRole } from "../types/enums";
 
 export interface RegisterDto {
   username: string;
@@ -39,7 +40,7 @@ export interface AuthResponse {
     email: string;
     firstName: string;
     lastName: string;
-    role: "superadmin" | "admin" | "editor" | "viewer";
+    role: UserRole;
     siteIds: string[];
   };
 }
@@ -50,7 +51,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: "superadmin" | "admin" | "editor" | "viewer";
+  role: UserRole;
   siteIds: string[];
   activeSiteId?: string | null; // null = visitor, non-null = active user
   // Backward compatibility: backend may still return tenantIds

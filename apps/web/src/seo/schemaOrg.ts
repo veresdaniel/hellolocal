@@ -11,7 +11,6 @@ export interface PlaceSchemaData {
   address?: string;
   telephone?: string;
   email?: string;
-  url?: string;
   sameAs?: string[]; // Social media URLs
   geo?: {
     latitude: number;

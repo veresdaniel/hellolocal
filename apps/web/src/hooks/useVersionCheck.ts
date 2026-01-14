@@ -26,7 +26,7 @@ export function useVersionCheck() {
           if (serverVersion) {
             setVersionInfo(serverVersion);
             showToast(
-              t("common.newVersionAvailable") || "Új verzió érhető el. Az oldal frissül...",
+              t("common.newVersionAvailable"),
               "info"
             );
             await handleVersionUpdate(serverVersion.version);

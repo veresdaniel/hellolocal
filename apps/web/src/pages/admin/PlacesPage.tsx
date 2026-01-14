@@ -19,6 +19,10 @@ import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHo
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
+import { SlugInput } from "../../components/SlugInput";
+import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
+import type { UserRole, SiteRole } from "../../types/enums";
+import { buildPublicUrl } from "../../app/urls";
 
 interface Place {
   id: string;
@@ -41,6 +45,7 @@ interface Place {
   translations: Array<{
     lang: string;
     name: string;
+    slug?: string | null;
     shortDescription: string | null;
     description: string | null;
     address: string | null;
@@ -62,7 +67,8 @@ export function PlacesPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
+  const currentSite = sites.find((s) => s.id === selectedSiteId);
   const { showToast } = useToast();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
@@ -97,6 +103,9 @@ export function PlacesPage() {
     nameHu: "",
     nameEn: "",
     nameDe: "",
+    slugHu: "",
+    slugEn: "",
+    slugDe: "",
     shortDescriptionHu: "",
     shortDescriptionEn: "",
     shortDescriptionDe: "",
@@ -161,7 +170,12 @@ export function PlacesPage() {
     try {
       const memberships = await getSiteMemberships(selectedSiteId, currentUser.id);
       const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === currentUser.id);
-      setIsSiteAdmin(membership?.role === "siteadmin" || currentUser.role === "superadmin" || currentUser.role === "admin" || false);
+      setIsSiteAdmin(
+        membership?.role === "siteadmin" || 
+        isSuperadmin(currentUser.role) || 
+        isAdmin(currentUser.role as UserRole) || 
+        false
+      );
     } catch (err) {
       console.error("Failed to check site admin role", err);
       setIsSiteAdmin(false);
@@ -195,7 +209,7 @@ export function PlacesPage() {
   // Helper functions for permission checks
   const canModifyPublish = (): boolean => {
     if (!currentUser) return false;
-    if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
+    if (isSuperadmin(currentUser.role) || isAdmin(currentUser.role as UserRole)) return true;
     if (isSiteAdmin) return true;
     return currentPlaceRole === "owner" || currentPlaceRole === "manager";
   };
@@ -207,7 +221,7 @@ export function PlacesPage() {
 
   const canDeletePlace = (): boolean => {
     if (!currentUser) return false;
-    if (currentUser.role === "superadmin" || currentUser.role === "admin") return true;
+    if (isSuperadmin(currentUser.role) || isAdmin(currentUser.role as UserRole)) return true;
     if (isSiteAdmin) return true;
     return currentPlaceRole === "owner";
   };
@@ -313,10 +327,12 @@ export function PlacesPage() {
         seoDescription: string | null;
         seoImage: string | null;
         seoKeywords: string[];
+        shortDescription?: string | null;
       }> = [
         {
           lang: "hu",
           name: formData.nameHu,
+          slug: formData.slugHu || null,
           shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
           address: formData.addressHu || null,
@@ -336,6 +352,7 @@ export function PlacesPage() {
         translations.push({
           lang: "en",
           name: formData.nameEn,
+          slug: formData.slugEn || null,
           shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
           address: formData.addressEn || null,
@@ -355,6 +372,7 @@ export function PlacesPage() {
         translations.push({
           lang: "de",
           name: formData.nameDe,
+          slug: formData.slugDe || null,
           shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
           address: formData.addressDe || null,
@@ -432,10 +450,12 @@ export function PlacesPage() {
               seoDescription: string | null;
               seoImage: string | null;
               seoKeywords: string[];
+              shortDescription?: string | null;
             }> = [
               {
                 lang: "hu",
                 name: formData.nameHu,
+                slug: formData.slugHu || null,
                 shortDescription: formData.shortDescriptionHu || null,
                 description: formData.descriptionHu || null,
                 address: formData.addressHu || null,
@@ -455,6 +475,7 @@ export function PlacesPage() {
               translations.push({
                 lang: "en",
                 name: formData.nameEn,
+                slug: formData.slugEn || null,
                 shortDescription: formData.shortDescriptionEn || null,
                 description: formData.descriptionEn || null,
                 address: formData.addressEn || null,
@@ -474,6 +495,7 @@ export function PlacesPage() {
               translations.push({
                 lang: "de",
                 name: formData.nameDe,
+                slug: formData.slugDe || null,
                 shortDescription: formData.shortDescriptionDe || null,
                 description: formData.descriptionDe || null,
                 address: formData.addressDe || null,
@@ -548,6 +570,9 @@ export function PlacesPage() {
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
       nameDe: de?.name || "",
+      slugHu: hu?.slug || "",
+      slugEn: en?.slug || "",
+      slugDe: de?.slug || "",
       shortDescriptionHu: hu?.shortDescription || "",
       shortDescriptionEn: en?.shortDescription || "",
       shortDescriptionDe: de?.shortDescription || "",
@@ -597,6 +622,9 @@ export function PlacesPage() {
       nameHu: "",
       nameEn: "",
       nameDe: "",
+      slugHu: "",
+      slugEn: "",
+      slugDe: "",
       shortDescriptionHu: "",
       shortDescriptionEn: "",
       shortDescriptionDe: "",
@@ -698,12 +726,15 @@ export function PlacesPage() {
           townId: "",
           priceBandId: "",
           tagIds: [],
-          nameHu: "",
-          nameEn: "",
-          nameDe: "",
-          descriptionHu: "",
-          descriptionEn: "",
-          descriptionDe: "",
+    nameHu: "",
+    nameEn: "",
+    nameDe: "",
+    shortDescriptionHu: "",
+    shortDescriptionEn: "",
+    shortDescriptionDe: "",
+    descriptionHu: "",
+    descriptionEn: "",
+    descriptionDe: "",
           addressHu: "",
           addressEn: "",
           addressDe: "",
@@ -732,6 +763,9 @@ export function PlacesPage() {
           lat: "",
           lng: "",
           isActive: false,
+          plan: "free" as "free" | "basic" | "pro",
+          isFeatured: false,
+          featuredUntil: "",
         });
         setFormErrors({});
       }
@@ -1019,13 +1053,48 @@ export function PlacesPage() {
                       fontStyle: "italic",
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
-                      {t("admin.readOnlyEditor") || "Editor cannot modify name (affects SEO slugs)"}
+                      {t("admin.readOnlyEditor")}
                     </div>
                   </div>
                 )}
 
+                {/* Slug - only editable by owner/manager (affects URLs) */}
+                {canModifySeo() ? (
+                  <SlugInput
+                    value={
+                      selectedLang === "hu"
+                        ? formData.slugHu
+                        : selectedLang === "en"
+                        ? formData.slugEn
+                        : formData.slugDe
+                    }
+                    onChange={(value) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
+                      else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
+                      else setFormData({ ...formData, slugDe: value });
+                    }}
+                    sourceName={
+                      selectedLang === "hu"
+                        ? formData.nameHu
+                        : selectedLang === "en"
+                        ? formData.nameEn
+                        : formData.nameDe
+                    }
+                    lang={selectedLang}
+                    label={t("admin.slug") || "Slug"}
+                    placeholder="auto-generated-from-name"
+                    error={
+                      selectedLang === "hu"
+                        ? formErrors.slugHu
+                        : selectedLang === "en"
+                        ? formErrors.slugEn
+                        : formErrors.slugDe
+                    }
+                  />
+                ) : null}
+
                 <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
+                  <label style={labelStyle}>{t("admin.shortDescription")}</label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
@@ -1039,7 +1108,7 @@ export function PlacesPage() {
                       else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
                       else setFormData({ ...formData, shortDescriptionDe: value });
                     }}
-                    placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
+                    placeholder={t("admin.shortDescriptionPlaceholder")}
                     height={150}
                     uploadFolder="editor/places"
                   />
@@ -1050,7 +1119,7 @@ export function PlacesPage() {
                     display: "block",
                     fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}>
-                    {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
+                    {t("admin.shortDescriptionHint")}
                   </small>
                 </div>
 
@@ -1139,7 +1208,7 @@ export function PlacesPage() {
                         else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
                         else setFormData({ ...formData, seoTitleDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
+                      placeholder={t("admin.seoTitlePlaceholder")}
                       style={{ 
                         width: "100%", 
                         padding: 12, 
@@ -1156,7 +1225,7 @@ export function PlacesPage() {
                       display: "block",
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
-                      {t("admin.seoTitleHint") || "If empty, place name will be used"}
+                      {t("admin.seoTitleHint")}
                     </small>
                   </div>
 
@@ -1175,7 +1244,7 @@ export function PlacesPage() {
                         else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
                         else setFormData({ ...formData, seoDescriptionDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoDescriptionPlaceholder") || "SEO description (leave empty for auto)"}
+                      placeholder={t("admin.seoDescriptionPlaceholder")}
                       rows={3}
                       style={{ 
                         width: "100%", 
@@ -1187,7 +1256,7 @@ export function PlacesPage() {
                       }}
                     />
                     <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from description will be used"}
+                      {t("admin.seoDescriptionHint")}
                     </small>
                   </div>
 
@@ -1207,7 +1276,7 @@ export function PlacesPage() {
                         else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
                         else setFormData({ ...formData, seoImageDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoImagePlaceholder") || "SEO image URL (leave empty for hero image)"}
+                      placeholder={t("admin.seoImagePlaceholder")}
                       style={{ 
                         width: "100%", 
                         padding: 12, 
@@ -1218,7 +1287,7 @@ export function PlacesPage() {
                       }}
                     />
                     <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoImageHint") || "If empty, hero image will be used"}
+                      {t("admin.seoImageHint")}
                     </small>
                   </div>
 
@@ -1239,7 +1308,7 @@ export function PlacesPage() {
                         else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: keywords });
                         else setFormData({ ...formData, seoKeywordsDe: keywords });
                       }}
-                      placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
+                      placeholder={t("admin.seoKeywordsPlaceholder")}
                       style={{ 
                         width: "100%", 
                         padding: 12, 
@@ -1256,7 +1325,7 @@ export function PlacesPage() {
                       display: "block",
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}>
-                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                      {t("admin.seoKeywordsHint")}
                     </small>
                   </div>
                   </div>
@@ -1455,8 +1524,8 @@ export function PlacesPage() {
                   fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {formData.isActive 
-                    ? (t("admin.placeActive") || "Place is Active") 
-                    : (t("admin.placeInactive") || "Place is Inactive")}
+                    ? t("admin.placeActive")
+                    : t("admin.placeInactive")}
                 </div>
                 <div style={{ 
                   fontSize: "clamp(14px, 3.5vw, 16px)", 
@@ -1464,8 +1533,8 @@ export function PlacesPage() {
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {formData.isActive 
-                    ? (t("admin.placeActiveDescription") || "This place is visible to visitors")
-                    : (t("admin.placeInactiveDescription") || "This place is hidden from visitors")}
+                    ? t("admin.placeActiveDescription")
+                    : t("admin.placeInactiveDescription")}
                 </div>
               </div>
             </label>
@@ -1502,7 +1571,7 @@ export function PlacesPage() {
                 gap: 8,
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
-                🪙 {t("admin.billing") || "Billing & Plan"}
+                🪙 {t("admin.billing")}
               </h3>
               <PlaceBillingSection
                 placeId={editingId}
@@ -1643,7 +1712,7 @@ export function PlacesPage() {
             },
             {
               key: "analytics",
-              label: t("admin.analyticsLabel") || "Analytics",
+              label: t("admin.analyticsLabel"),
               align: "right" as const,
               render: (place) => (
                 <button
@@ -1674,7 +1743,7 @@ export function PlacesPage() {
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                   }}
                 >
-                  {t("admin.analyticsLabel") || "Analytics"}
+                  {t("admin.analyticsLabel")}
                 </button>
               ),
             },
@@ -1746,6 +1815,58 @@ export function PlacesPage() {
               ),
             },
             {
+              key: "view",
+              render: (place) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const translation = place.translations.find((t) => t.lang === currentLang) || 
+                                   place.translations.find((t) => t.lang === "hu");
+                const slug = translation?.slug || "";
+                const publicUrl = slug && currentSite?.slug 
+                  ? buildPublicUrl({
+                      lang: i18n.language || "hu",
+                      siteKey: currentSite.slug,
+                      entityType: "place",
+                      slug,
+                    })
+                  : null;
+                return publicUrl ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(publicUrl, "_blank");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      marginTop: 8,
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      color: "#10b981",
+                      fontWeight: 600,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                    }}
+                  >
+                    🔍 {t("admin.viewPublic") || "Megnézem"}
+                  </button>
+                ) : null;
+              },
+            },
+            {
               key: "analytics",
               render: (place) => (
                 <button
@@ -1776,7 +1897,7 @@ export function PlacesPage() {
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                   }}
                 >
-                  {t("admin.analyticsLabel") || "Analytics"}
+                  {t("admin.analyticsLabel")}
                 </button>
               ),
             },
@@ -1805,6 +1926,63 @@ export function PlacesPage() {
             }] : []),
           ]}
           onEdit={startEdit}
+          onView={(place) => {
+            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const translation = place.translations.find((t) => t.lang === currentLang) || 
+                               place.translations.find((t) => t.lang === "hu");
+            
+            if (!translation) {
+              showToast(t("admin.errors.placeHasNoTranslation") || "A helynek nincs fordítása", "error");
+              return;
+            }
+            
+            if (!currentSite?.slug) {
+              showToast(t("admin.errors.siteNotSelected") || "Kérjük, válassz ki egy helyet először", "error");
+              return;
+            }
+            
+            // Use slug if available, otherwise use place ID
+            const slug = translation.slug;
+            let publicUrl: string;
+            
+            if (slug) {
+              // Use slug-based URL (preferred)
+              publicUrl = buildPublicUrl({
+                lang: i18n.language || "hu",
+                siteKey: currentSite.slug,
+                entityType: "place",
+                slug,
+              });
+            } else {
+              // Fallback: use place ID directly (requires backend support for /place/by-id/:id route)
+              // For now, try to generate slug from name as fallback
+              if (translation.name) {
+                const generatedSlug = translation.name
+                  .toLowerCase()
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-+|-+$/g, "");
+                
+                if (generatedSlug) {
+                  publicUrl = buildPublicUrl({
+                    lang: i18n.language || "hu",
+                    siteKey: currentSite.slug,
+                    entityType: "place",
+                    slug: generatedSlug,
+                  });
+                } else {
+                  showToast(t("admin.errors.placeHasNoSlug") || "A helynek nincs slug-ja, nem lehet megnyitni", "error");
+                  return;
+                }
+              } else {
+                showToast(t("admin.errors.placeHasNoSlug") || "A helynek nincs slug-ja, nem lehet megnyitni", "error");
+                return;
+              }
+            }
+            
+            window.open(publicUrl, "_blank");
+          }}
           onDelete={(place) => {
             // Check if user can delete this place (owner or siteadmin)
             // We need to check the role for this specific place

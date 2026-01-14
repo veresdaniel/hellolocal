@@ -12,7 +12,7 @@ import { UserInfoDropdown } from "./UserInfoDropdown";
 import { LanguageSelector } from "./LanguageSelector";
 import { ToastContainer } from "./Toast";
 import { VersionDisplay } from "./VersionDisplay";
-import { Link, useLocation, useParams, useNavigation } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigation, useNavigate } from "react-router-dom";
 import { buildUrl } from "../app/urls";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
   
   // Track previous location to detect route changes
@@ -284,9 +285,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           pointerEvents: "auto",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", alignSelf: "stretch" }}>
           {/* Left section - Logo and Nav Links (Desktop) */}
-          <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1 }}>
+          <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1, alignSelf: "center" }}>
             {(siteName || brandBadgeIcon) ? (
               <Link
                 to={adminPath("")}
@@ -334,12 +335,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   pointerEvents: "auto",
                   position: "relative",
                   zIndex: 1002,
+                  display: "flex",
+                  alignItems: "center",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 title={t("admin.dashboard")}
                 onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
                 onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
               >
-                <span style={{ fontSize: "clamp(20px, 4vw, 24px)" }}>⚙️</span>
+                <span style={{ fontSize: "clamp(20px, 4vw, 24px)", display: "flex", alignItems: "center" }}>⚙️</span>
               </Link>
             )}
             
@@ -352,7 +356,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 alignItems: "center", 
                 pointerEvents: "auto", 
                 position: "relative", 
-                zIndex: 1001 
+                zIndex: 1001,
+                alignSelf: "center",
               }}>
                 {navLinks.map((link) => (
                   <Link
@@ -434,10 +439,46 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             
             {/* Language Selector */}
             {!isMobile && <LanguageSelector />}
-            
+
             {/* Site Selector */}
             {!isMobile && HAS_MULTIPLE_SITES && <SiteSelector />}
-            
+
+            {/* Map view button */}
+            {!isMobile && (
+              <button
+                onClick={() => {
+                  const publicPagePath = buildUrl({ lang, siteKey: selectedSiteId ? undefined : DEFAULT_SITE_SLUG, path: "" });
+                  window.open(publicPagePath, "_blank");
+                }}
+                style={{
+                  padding: "8px 14px",
+                  background: "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 8,
+                  color: "#667eea",
+                  fontSize: "clamp(13px, 3.2vw, 15px)",
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                }}
+                title={t("public.mapView")}
+              >
+                📍 {t("public.mapView")}
+              </button>
+            )}
+
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
             
@@ -498,8 +539,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   border: "1px solid #667eea",
                   borderRadius: 6,
                   cursor: "pointer",
-                  fontSize: 20,
-                  fontWeight: 700,
                   fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   display: "flex",
                   alignItems: "center",
@@ -507,9 +546,41 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   width: 44,
                   height: 44,
                   transition: "all 0.2s ease",
+                  lineHeight: 1,
                 }}
               >
-                {isMobileMenuOpen ? "✕" : "☰"}
+                {isMobileMenuOpen ? (
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ display: "block" }}
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ display: "block" }}
+                  >
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                )}
               </button>
             )}
           </div>
@@ -645,6 +716,41 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
                 <UserInfoDropdown />
               </div>
+              
+              {/* Map view button (mobile) */}
+              <button
+                onClick={() => {
+                  window.open(publicPagePath, "_blank");
+                }}
+                style={{
+                  padding: "14px 16px",
+                  background: "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 8,
+                  color: "#667eea",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  width: "100%",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                }}
+              >
+                📍 {t("public.mapView")}
+              </button>
               
               <Link
                 to={publicPagePath}

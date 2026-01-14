@@ -180,7 +180,11 @@
     "errorLoadingEvent": "Hiba az esemény betöltésekor",
     "backToList": "Vissza a listához",
     "backToHome": "Vissza a kezdőlapra",
-    "gallery": "Galéria",
+    "gallery": {
+      "title": "Galéria",
+      "imageSingular": "kép",
+      "imagePlural": "képek"
+    },
     "share": "Megosztás",
     "copyLink": "Link másolása",
     "linkCopied": "Link másolva!",
@@ -229,7 +233,12 @@
       "rights": "Minden jog fenntartva."
     },
     "beTheFirst": "Legyél Te az első!",
-    "saving": "Mentés..."
+    "saving": "Mentés...",
+    "rating": {
+      "starSingular": "csillag",
+      "starPlural": "csillag",
+      "clickToRate": "Kattints az értékeléshez"
+    }
   },
   "admin": {
     "titleSuffix": "Admin",
@@ -271,7 +280,9 @@
     "errors": {
       "updatePriceListFailed": "Árlista frissítése sikertelen",
       "placeNotFound": "Hely nem található",
-      "noAccessToPlace": "Nincs hozzáférésed ehhez a helyhez"
+      "noAccessToPlace": "Nincs hozzáférésed ehhez a helyhez",
+      "siteNotSelected": "Kérjük, válassz ki egy helyet először",
+      "placeHasNoSlug": "A helynek nincs slug-ja, nem lehet megnyitni"
     },
     "customPrice": "Egyedi árazás",
     "towns": "Települések",
@@ -351,6 +362,7 @@
     "sessionExpiring": "Munkamenet lejár",
     "sessionExpired": "Munkamenet lejárt. Kérlek jelentkezz be újra.",
     "sessionExpiringSoon": "Munkamenet hamarosan lejár",
+    "sessionExpiringWarning": "A munkameneted hamarosan lejár, és ki leszel dobva. Ha szeretnéd folytatni a munkát, hosszabbítsd meg a munkamenetet.",
     "sessionTimeRemaining": "Hátralévő idő: {{time}}",
     "extendSession": "Hosszabbítom",
     "extending": "Hosszabbítás...",
@@ -410,6 +422,7 @@
     "planBusiness": "Business",
     "planStatus": "Csomag státusz",
     "planValidUntil": "Csomag érvényes",
+    "limits": "Korlátok",
     "featuredSlots": "Kiemelt helyek",
     "switchToPro": "Váltás Pro csomagra",
     "siteUpdated": "Site sikeresen frissítve",
@@ -426,7 +439,7 @@
         "map": "Térkép",
         "features": "Funkciók",
         "subscription": "Előfizetés",
-        "analytics": "Analytics"
+        "analytics": "Elemzés"
       },
       "overview": {
         "title": "Alap adatok"
@@ -435,13 +448,13 @@
         "title": "Domain & URL",
         "domains": "Domain-ek",
         "siteKeys": "SiteKey-ek",
-        "primary": "Primary",
+        "primary": "Elsődleges",
         "aliases": "Aliasok",
         "defaultLang": "Alapértelmezett nyelv",
         "addDomain": "Új domain hozzáadása",
         "domain": "Domain",
-        "setAsPrimary": "Beállítás primary domain-ként",
-        "setPrimary": "Set Primary",
+        "setAsPrimary": "Elsődleges domain beállítása",
+        "setPrimary": "Elsődleges beállítása",
         "add": "Hozzáadás",
         "noDomains": "Nincs domain hozzáadva",
         "noSiteKeys": "Nincs SiteKey",
@@ -450,15 +463,15 @@
       },
       "appearance": {
         "title": "Megjelenés",
-        "brandDefaults": "Brand alapértelmezések",
+        "brandDefaults": "Márka alapértelmezések",
         "notSet": "Nincs beállítva",
         "logoUrl": "Logo URL",
         "faviconUrl": "Favicon URL",
-        "override": "override",
-        "placeholders": "Placeholder képek",
-        "placeholderCard": "Card placeholder",
-        "placeholderHero": "Hero placeholder",
-        "placeholderEventCard": "Event card placeholder",
+        "override": "felülírás",
+        "placeholders": "Helyőrző képek",
+        "placeholderCard": "Kártya helyőrző",
+        "placeholderHero": "Hero helyőrző",
+        "placeholderEventCard": "Esemény kártya helyőrző",
         "saved": "Megjelenés mentve",
         "createInstanceFirst": "Először hozz létre egy SiteInstance-t ezen a nyelven",
         "instanceNotFound": "SiteInstance nem található"
@@ -490,17 +503,23 @@
         "statusTrial": "Próbaidőszak",
         "statusPastDue": "Lejárt",
         "statusCanceled": "Megszakítva",
+        "statusSuspended": "Felfüggesztve",
+        "statusExpired": "Lejárt",
         "upgradeToPro": "Váltás Pro-ra",
         "lockedInPro": "Pro csomagban elérhető",
-        "contactToUpgrade": "Kérjük, lépjen kapcsolatba a csomagváltáshoz",
+        "contactToUpgrade": "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.",
         "planUpdated": "Csomag frissítve",
         "saved": "Mentve",
-        "advancedSettings": "Haladó beállítások"
+        "advancedSettings": "Haladó beállítások",
+        "currentPlan": "Jelenlegi csomag",
+        "changePlan": "Csomag módosítása",
+        "validUntil": "Érvényes",
+        "availablePlans": "Elérhető csomagok",
+        "planContents": "Csomag tartalma",
+        "usage": "Használat",
+        "allowPublicRegistration": "Publikus regisztráció engedélyezése",
+        "allowPublicRegistrationDescription": "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket."
       },
-      "quickActions": "Gyors műveletek",
-      "openPublicPage": "Publikus oldal megnyitása"
-    },
-    "siteEdit": {
       "quickActions": "Gyors műveletek",
       "openPublicPage": "Publikus oldal megnyitása"
     },
@@ -586,6 +605,16 @@
       "expiringEmailSubject": "Előfizetés lejár",
       "expiringEmailBody": "Szia {name}, az előfizetésed {date}-án lejár."
     },
+    "subscription": {
+      "cancel": "Lemondom",
+      "suspend": "Felfüggesztem",
+      "resume": "Előfizetés folytatása",
+      "cancelConfirm": "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
+      "suspendConfirm": "Biztosan felfüggeszted az előfizetést?",
+      "cancelled": "Előfizetés lemondva",
+      "suspended": "Előfizetés felfüggesztve",
+      "resumed": "Előfizetés folytatva"
+    },
     "search": "Keresés",
     "all": "Mind",
     "allPlans": "Minden csomag",
@@ -634,54 +663,6 @@
     "statusExpired": "Lejárt",
     "actions": "Akciók",
     "siteNotFound": "Site nem található",
-    "siteEdit": {
-      "tabs": {
-        "overview": "Áttekintés",
-        "domain": "Domain & URL",
-        "appearance": "Megjelenés",
-        "map": "Térkép",
-        "features": "Funkciók",
-        "subscription": "Előfizetés"
-      },
-      "overview": {
-        "title": "Alap adatok"
-      },
-      "features": {
-        "title": "Funkciók",
-        "enableEvents": "Események engedélyezése",
-        "enableBlog": "Blog / Statikus oldalak engedélyezése",
-        "enableStaticPages": "Statikus oldalak engedélyezése",
-        "isCrawlable": "Indexelhető (SEO)",
-        "saved": "Funkciók mentve",
-        "createInstanceFirst": "Először hozz létre egy SiteInstance-t ezen a nyelven",
-        "instanceNotFound": "SiteInstance nem található"
-      },
-      "subscription": {
-        "title": "Előfizetés",
-        "currentPlan": "Jelenlegi csomag",
-      "validUntil": "Érvényes",
-      "noDate": "Nincs dátum",
-      "invalidDate": "Érvénytelen dátum",
-      "changePlan": "Csomag módosítása",
-        "planContents": "Csomag tartalma",
-        "usage": "Használat",
-        "availablePlans": "Elérhető csomagok",
-        "statusActive": "Aktív",
-        "statusTrial": "Próbaidőszak",
-        "statusPastDue": "Lejárt",
-        "statusCanceled": "Megszakítva",
-        "statusSuspended": "Felfüggesztve",
-        "statusExpired": "Lejárt",
-        "planUpdated": "Csomag frissítve",
-        "saved": "Mentve",
-        "advancedSettings": "Haladó beállítások",
-        "contactToUpgrade": "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.",
-        "lockedInPro": "Pro csomagban elérhető",
-        "upgradeToPro": "Váltás Pro-ra",
-        "allowPublicRegistration": "Publikus regisztráció engedélyezése",
-        "allowPublicRegistrationDescription": "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket. Csak Pro és Business csomagoknál elérhető."
-      }
-    },
     "placesCount": "Helyek száma",
     "featuredPlacesCount": "Kiemelt helyek",
     "featuredPlaces": "Kiemelések",
@@ -945,6 +926,7 @@
       "deleteBrandFailed": "A márka törlése sikertelen",
       "loadTenantMembershipsFailed": "A site tagságok betöltése sikertelen",
       "createTenantMembershipFailed": "A site tagság létrehozása sikertelen",
+      "membershipAlreadyExistsEdit": "Ez a tagság már létezik. Az alábbi űrlapon szerkesztheted.",
       "updateTenantMembershipFailed": "A site tagság frissítése sikertelen",
       "deleteTenantMembershipFailed": "A site tagság törlése sikertelen",
       "loadPlaceMembershipsFailed": "A hely tagságok betöltése sikertelen",
@@ -958,7 +940,74 @@
       "invalidCategoryIds": "Érvénytelen kategória azonosítók",
       "categoriesNotFound": "Egy vagy több kategória nem található vagy nem tartozik a site-hoz",
       "parentCategoriesNotFound": "Egy vagy több szülő kategória nem található vagy nem tartozik a site-hoz",
-      "oneOrMoreCategoriesNotFound": "Egy vagy több kategória nem található a frissítés során"
+      "oneOrMoreCategoriesNotFound": "Egy vagy több kategória nem található a frissítés során",
+      "forbidden": {
+        "viewPlaceSubscription": "Nincs jogosultságod a hely előfizetésének megtekintéséhez",
+        "viewPlaceEntitlements": "Nincs jogosultságod a hely jogosultságainak megtekintéséhez",
+        "viewSiteSubscription": "Nincs jogosultságod a site előfizetésének megtekintéséhez",
+        "viewSiteEntitlements": "Nincs jogosultságod a site jogosultságainak megtekintéséhez",
+        "updateSubscription": "Csak az adminok frissíthetik az előfizetéseket",
+        "updateSiteSubscription": "Csak a superadmin frissítheti a site előfizetéseket",
+        "managePlaceMemberships": "Nincs jogosultságod a hely tagságok kezeléséhez",
+        "assignOwnerRole": "A menedzser nem rendelhet tulajdonos szerepkört",
+        "modifyOwnerRole": "A menedzser nem módosíthatja a tulajdonos szerepkört",
+        "actorNotFound": "A felhasználó nem található",
+        "actorNoPermissionManageMemberships": "Az aktornak nincs jogosultsága a hely tagságok kezeléséhez",
+        "managerCannotAssignOwner": "A manager nem rendelhet owner szerepkört",
+        "managerCannotModifyOwner": "A manager nem módosíthat owner szerepkört",
+        "editorCannotManageMemberships": "Az editor nem kezelheti a hely tagságokat",
+        "managerCannotDeleteOwner": "A manager nem törölhet owner tagságot"
+      },
+      "notFound": {
+        "user": "Felhasználó nem található",
+        "category": "Kategória nem található",
+        "parentCategory": "Szülő kategória nem található",
+        "place": "Hely nem található",
+        "site": "Site nem található",
+        "subscription": "Előfizetés nem található",
+        "legalPage": "Jogi oldal nem található",
+        "legalPageTranslation": "Jogi oldal fordítás nem található",
+        "town": "Település nem található",
+        "tag": "Címke nem található",
+        "staticPage": "Statikus oldal nem található",
+        "priceBand": "Ár szint nem található",
+        "brand": "Márka nem található",
+        "slug": "Slug nem található",
+        "siteKey": "Site kulcs nem található"
+      },
+      "badRequest": {
+        "categoryParentSelf": "A kategória nem lehet a saját szülője",
+        "categoryCircularReference": "Körkörös hivatkozás észlelve",
+        "categoriesNotFound": "Egy vagy több kategória nem található",
+        "parentCategoriesNotFound": "Egy vagy több szülő kategória nem található",
+        "circularReferenceDetected": "Körkörös hivatkozás észlelve",
+        "categoriesNotFoundUpdate": "Egy vagy több kategória nem található a frissítés során",
+        "subscriptionAlreadyCancelled": "Az előfizetés már le van mondva",
+        "subscriptionNotCancelled": "Az előfizetés nincs lemondva. Csak lemondott előfizetéseket lehet folytatni.",
+        "invalidLang": "Érvénytelen nyelv paraméter",
+        "langRequired": "A nyelv paraméter kötelező",
+        "userIdRequired": "A felhasználó azonosító kötelező",
+        "2FANotSetup": "A 2FA nincs beállítva",
+        "2FADependenciesNotInstalled": "A 2FA függőségek nincsenek telepítve. Kérjük, telepítsd a speakeasy és qrcode csomagokat.",
+        "2FAQRCodeNotAvailable": "A QR kód generálás nem elérhető. Kérjük, telepítsd a qrcode csomagot.",
+        "categoryCannotBeParent": "A kategória nem lehet a saját szülője",
+        "categoriesNotFoundOrNotBelong": "Egy vagy több kategória nem található vagy nem tartozik a site-hoz",
+        "parentCategoriesNotFoundOrNotBelong": "Egy vagy több szülő kategória nem található vagy nem tartozik a site-hoz",
+        "invalidLogoUrl": "Érvénytelen logo URL",
+        "invalidFaviconUrl": "Érvénytelen favicon URL",
+        "featuredUntilFuture": "A featuredUntil jövőbeli dátumnak kell lennie",
+        "planImageLimit": "A csomag maximális képkorlátja túllépve",
+        "planFeaturedNotSupported": "A csomag nem támogatja a kiemelést",
+        "slugConflict": "A slug már létezik",
+        "unsupportedLegalPage": "Nem támogatott jogi oldal"
+      },
+      "unauthorized": {
+        "disableOwn2FA": "Csak a saját 2FA-dat tilthatod le"
+      },
+      "internal": {
+        "error": "Belső szerver hiba",
+        "oauthError": "Google OAuth hitelesítés sikertelen"
+      }
     },
     "validation": {
       "hungarianNameRequired": "A magyar név kötelező",
@@ -1159,6 +1208,7 @@
     "galleries.createGallery": "Új galéria létrehozása",
     "galleries.editGallery": "Galéria szerkesztése",
     "galleries.addImages": "Képek hozzáadása",
+    "galleries.addImageUrl": "Kép URL hozzáadása...",
     "galleries.captionPlaceholder": "Képaláírás (opcionális)",
     "galleries.noGalleries": "Nincs galéria",
     "errors.loadGalleriesFailed": "Hiba a galériák betöltésekor",

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "@prisma/client";
 
@@ -88,7 +89,7 @@ export class AdminStaticPageService {
     });
 
     if (!staticPage) {
-      throw new NotFoundException("Static page not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_STATIC_PAGE);
     }
 
     return staticPage;

@@ -7,10 +7,13 @@ import { getSiteMemberships } from "../api/admin.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
+import { isSuperadmin, isAdmin } from "../utils/roleHelpers";
+import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN } from "../types/enums";
+import type { UserRole } from "../types/enums";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "superadmin" | "admin" | "editor" | "viewer";
+  requiredRole?: UserRole;
   considerSiteRole?: boolean; // If true, also check site-level role (siteadmin)
 }
 
@@ -168,8 +171,8 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
   // Check if user is a visitor (activeSiteId === null)
   // Visitors should not access admin routes (except login/register)
   // BUT: superadmin has access to everything, even without activeSiteId
-  const isSuperadmin = user.role === "superadmin";
-  const isVisitor = !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
+  const userIsSuperadmin = isSuperadmin(user.role);
+  const isVisitor = !userIsSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
   if (isVisitor) {
     // Redirect visitor to public pages (home page)
     return <Navigate to={`/${lang}`} replace />;
@@ -182,32 +185,25 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
   // Note: This is handled by the isVisitor check above, so viewers with activeSiteId can proceed
 
   if (requiredRole) {
-    const roleHierarchy: Record<string, number> = {
-      viewer: 1,
-      editor: 2,
-      admin: 3,
-      superadmin: 4,
-    };
-
-    const userRoleLevel = roleHierarchy[user.role] || 0;
-    const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
+    const userRoleLevel = USER_ROLE_HIERARCHY[user.role as UserRole] || 0;
+    const requiredRoleLevel = USER_ROLE_HIERARCHY[requiredRole as UserRole] || 0;
 
     // Superadmin has access to everything
-    if (user.role === "superadmin") {
+    if (userIsSuperadmin) {
       return <>{children}</>;
     }
     
     // Effective admin permissions: global admin OR siteadmin (if considerSiteRole is enabled)
-    const hasAdminPermissions = user.role === "admin" || (considerSiteRole && isSiteAdmin);
+    const hasAdminPermissions = isAdmin(user.role as UserRole, isSiteAdmin ? "siteadmin" : undefined);
     
     // Admin (global or site-level) has access to everything except superadmin-only routes
-    if (hasAdminPermissions && requiredRole !== "superadmin") {
+    if (hasAdminPermissions && requiredRole !== ROLE_SUPERADMIN) {
       return <>{children}</>;
     }
 
     // For editor/viewer roles, check if site-level role elevates permissions
     // Siteadmin can access admin-level routes (except superadmin-only)
-    if (considerSiteRole && isSiteAdmin && requiredRole === "admin") {
+    if (considerSiteRole && isSiteAdmin && requiredRole === ROLE_ADMIN) {
       return <>{children}</>;
     }
 

@@ -173,8 +173,8 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                 }}
               >
                 ({totalImages} {totalImages === 1 
-                  ? (i18n.language === "hu" ? "kép" : i18n.language === "en" ? "image" : "Bild")
-                  : (i18n.language === "hu" ? "kép" : i18n.language === "en" ? "images" : "Bilder")})
+                  ? t("public.gallery.imageSingular", { defaultValue: "image" })
+                  : t("public.gallery.imagePlural", { defaultValue: "images" })})
               </span>
             )}
           </h3>
@@ -220,7 +220,7 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
               >
                 <ImageWithSkeleton
                   src={imageSrc}
-                  alt={image.alt || `Gallery image ${index + 1}`}
+                  alt={image.alt || `Gallery image ${displayIndex + 1}`}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -398,14 +398,15 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
               alignItems: "center",
               justifyContent: "center",
               animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              paddingBottom: (images[selectedIndex].caption || images.length > 1) ? "80px" : "20px",
             }}
           >
             <img
               src={sanitizeImageUrl(images[selectedIndex].src) || ""}
               alt={images[selectedIndex].alt || `Gallery image ${selectedIndex + 1}`}
               style={{
-                width: "100%",
-                height: "100%",
+                maxWidth: "100%",
+                maxHeight: "calc(100vh - 100px)",
                 objectFit: "contain",
                 borderRadius: 8,
                 boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
@@ -415,12 +416,17 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
             {(images[selectedIndex].caption || images.length > 1) && (
               <div
                 style={{
-                  marginTop: 20,
+                  position: "absolute",
+                  bottom: 20,
+                  left: "50%",
+                  transform: "translateX(-50%)",
                   padding: "12px 20px",
-                  background: "rgba(0, 0, 0, 0.6)",
+                  background: "rgba(0, 0, 0, 0.8)",
                   borderRadius: 8,
                   backdropFilter: "blur(10px)",
-                  maxWidth: "80vw",
+                  maxWidth: "90vw",
+                  width: "auto",
+                  minWidth: "200px",
                 }}
               >
                 {images[selectedIndex].caption && (

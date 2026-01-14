@@ -17,6 +17,10 @@ import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { SlugInput } from "../../components/SlugInput";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
+import { buildPublicUrl } from "../../app/urls";
 
 export function EventsPage() {
   const { t, i18n } = useTranslation();
@@ -60,6 +64,9 @@ export function EventsPage() {
     titleHu: "",
     titleEn: "",
     titleDe: "",
+    slugHu: "",
+    slugEn: "",
+    slugDe: "",
     shortDescriptionHu: "",
     shortDescriptionEn: "",
     shortDescriptionDe: "",
@@ -78,6 +85,11 @@ export function EventsPage() {
     seoKeywordsHu: "",
     seoKeywordsEn: "",
     seoKeywordsDe: "",
+    phone: "",
+    email: "",
+    website: "",
+    facebook: "",
+    whatsapp: "",
     startDate: "",
     endDate: "",
     heroImage: "",
@@ -265,6 +277,11 @@ export function EventsPage() {
           title: formData.titleHu,
           shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
           seoImage: formData.seoImageHu || null,
@@ -277,6 +294,11 @@ export function EventsPage() {
           title: formData.titleEn,
           shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
           seoImage: formData.seoImageEn || null,
@@ -289,6 +311,11 @@ export function EventsPage() {
           title: formData.titleDe,
           shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
           seoImage: formData.seoImageDe || null,
@@ -337,8 +364,14 @@ export function EventsPage() {
         {
           lang: "hu",
           title: formData.titleHu,
+          slug: formData.slugHu || null,
           shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
           seoImage: formData.seoImageHu || null,
@@ -349,8 +382,14 @@ export function EventsPage() {
         translations.push({
           lang: "en",
           title: formData.titleEn,
+          slug: formData.slugEn || null,
           shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
           seoImage: formData.seoImageEn || null,
@@ -361,8 +400,14 @@ export function EventsPage() {
         translations.push({
           lang: "de",
           title: formData.titleDe,
+          slug: formData.slugDe || null,
           shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
           seoImage: formData.seoImageDe || null,
@@ -421,9 +466,9 @@ export function EventsPage() {
 
   const startEdit = (event: Event) => {
     setEditingId(event.id);
-    const hu = event.translations.find((t) => t.lang === "hu");
-    const en = event.translations.find((t) => t.lang === "en");
-    const de = event.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(event.translations, "hu" as Lang);
+    const en = findTranslation(event.translations, "en" as Lang);
+    const de = findTranslation(event.translations, "de" as Lang);
     setFormData({
       placeId: event.placeId || "",
       categoryId: event.categoryId || "",
@@ -432,6 +477,9 @@ export function EventsPage() {
       titleHu: hu?.title || "",
       titleEn: en?.title || "",
       titleDe: de?.title || "",
+      slugHu: hu?.slug || "",
+      slugEn: en?.slug || "",
+      slugDe: de?.slug || "",
       shortDescriptionHu: hu?.shortDescription || "",
       shortDescriptionEn: en?.shortDescription || "",
       shortDescriptionDe: de?.shortDescription || "",
@@ -450,6 +498,11 @@ export function EventsPage() {
       seoKeywordsHu: hu?.seoKeywords?.join(", ") || "",
       seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
       seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
+      phone: hu?.phone || "",
+      email: hu?.email || "",
+      website: hu?.website || "",
+      facebook: hu?.facebook || "",
+      whatsapp: hu?.whatsapp || "",
       startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
       endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
       heroImage: event.heroImage || "",
@@ -471,6 +524,9 @@ export function EventsPage() {
       titleHu: "",
       titleEn: "",
       titleDe: "",
+      slugHu: "",
+      slugEn: "",
+      slugDe: "",
       shortDescriptionHu: "",
       shortDescriptionEn: "",
       shortDescriptionDe: "",
@@ -489,6 +545,11 @@ export function EventsPage() {
       seoKeywordsHu: "",
       seoKeywordsEn: "",
       seoKeywordsDe: "",
+      phone: "",
+      email: "",
+      website: "",
+      facebook: "",
+      whatsapp: "",
       startDate: "",
       endDate: "",
       heroImage: "",
@@ -535,11 +596,11 @@ export function EventsPage() {
   }
 
   // Filter events based on search query
-  const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+  const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
   const filteredEvents = events.filter((event) => {
     if (!searchQuery.trim()) return true;
-    const translation = event.translations.find((t) => t.lang === currentLang) || 
-                       event.translations.find((t) => t.lang === "hu");
+    const translation = findTranslation(event.translations, currentLang) || 
+                       findTranslation(event.translations, "hu" as Lang);
     const searchLower = searchQuery.toLowerCase();
     return (
       translation?.title?.toLowerCase().includes(searchLower) ||
@@ -645,15 +706,16 @@ export function EventsPage() {
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Places and Categories Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+            {/* Place and Categories Row */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
               <div>
                 <label style={{ 
                   display: "block", 
                   marginBottom: 8,
                   color: "#667eea",
                   fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}>
                   {t("admin.places")}
                 </label>
@@ -697,7 +759,8 @@ export function EventsPage() {
                     }
                     
                     return placesToShow.map((place) => {
-                      const name = place.translations?.find((t: any) => t.lang === "hu")?.name || place.translations?.[0]?.name || place.id;
+                      const huTranslation = place.translations?.find((t: any) => t.lang === "hu");
+                      const name = huTranslation?.name || place.translations?.[0]?.name || place.id;
                       return (
                         <option key={place.id} value={place.id}>
                           {name}
@@ -726,84 +789,6 @@ export function EventsPage() {
                 selectedTagIds={formData.tagIds}
                 onChange={(tagIds) => setFormData({ ...formData, tagIds })}
               />
-            </div>
-
-            {/* Start and End Date Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: formErrors.startDate ? "#dc2626" : "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
-                }}>
-                  {t("admin.startDate")} *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: 15,
-                    border: `2px solid ${formErrors.startDate ? "#fca5a5" : "#e0e7ff"}`,
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: formErrors.startDate ? "#fef2f2" : "white",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    if (!formErrors.startDate) {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "#e0e7ff";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-                {formErrors.startDate && <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>{formErrors.startDate}</div>}
-              </div>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
-                }}>
-                  {t("admin.endDate")}
-                </label>
-                <input
-                  type="datetime-local"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  style={{ 
-                    width: "100%", 
-                    padding: "12px 16px",
-                    fontSize: 15,
-                    border: "2px solid #e0e7ff",
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e0e7ff";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-              </div>
             </div>
 
           <LanguageAwareForm>
@@ -884,6 +869,39 @@ export function EventsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Slug */}
+                <SlugInput
+                  value={
+                    selectedLang === "hu"
+                      ? formData.slugHu
+                      : selectedLang === "en"
+                      ? formData.slugEn
+                      : formData.slugDe
+                  }
+                  onChange={(value) => {
+                    if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
+                    else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
+                    else setFormData({ ...formData, slugDe: value });
+                  }}
+                  sourceName={
+                    selectedLang === "hu"
+                      ? formData.titleHu
+                      : selectedLang === "en"
+                      ? formData.titleEn
+                      : formData.titleDe
+                  }
+                  lang={selectedLang}
+                  label={t("admin.slug") || "Slug"}
+                  placeholder="auto-generated-from-title"
+                  error={
+                    selectedLang === "hu"
+                      ? formErrors.slugHu
+                      : selectedLang === "en"
+                      ? formErrors.slugEn
+                      : formErrors.slugDe
+                  }
+                />
 
                 {/* Short Description */}
                 <div>
@@ -1069,76 +1087,310 @@ export function EventsPage() {
             )}
           </LanguageAwareForm>
 
-          {/* Hero Image */}
-          <div>
-            <label style={{ 
-              display: "block", 
-              marginBottom: 8,
-              color: "#667eea",
-              fontWeight: 600,
-              fontSize: "clamp(13px, 3vw, 14px)",
-            }}>
-              {t("admin.heroImage")}
-            </label>
-            <input
-              type="text"
-              value={formData.heroImage}
-              onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-              style={{ 
-                width: "100%", 
-                padding: "12px 16px",
-                fontSize: 15,
-                border: "2px solid #e0e7ff",
-                borderRadius: 8,
-                outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                boxSizing: "border-box",
-              }}
-              placeholder={t("admin.urlPlaceholder")}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#667eea";
-                e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#e0e7ff";
-                e.target.style.boxShadow = "none";
-              }}
-            />
-          </div>
-
-          {/* Location and Map */}
-          <div>
-            <label style={{ 
-              display: "block", 
-              marginBottom: 8,
-              color: "#667eea",
-              fontWeight: 600,
-              fontSize: "clamp(13px, 3vw, 14px)",
-            }}>
-              {t("admin.location")} ({t("admin.coordinates")})
-            </label>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ width: "100%", maxWidth: 600 }}>
+              <div>
+                <label style={{
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  display: "block",
+                  marginBottom: 4,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#333",
+                }}>📱 {t("public.phone")}</label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+36 30 123 4567"
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  display: "block",
+                  marginBottom: 4,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#333",
+                }}>✉️ {t("public.email")}</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="info@example.com"
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  display: "block",
+                  marginBottom: 4,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#333",
+                }}>🌐 {t("public.website")}</label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  placeholder="https://example.com"
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  display: "block",
+                  marginBottom: 4,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#333",
+                }}>📘 Facebook</label>
+                <input
+                  type="url"
+                  value={formData.facebook}
+                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                  placeholder="https://facebook.com/yourpage"
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  display: "block",
+                  marginBottom: 4,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 600,
+                  color: "#333",
+                }}>💬 WhatsApp</label>
+                <input
+                  type="text"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="+36 30 123 4567"
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Jobb oszlop: Esemény specifikus információk */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Start and End Date */}
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: formErrors.startDate ? "#dc2626" : "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.startDate")} *
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: `2px solid ${formErrors.startDate ? "#fca5a5" : "#e0e7ff"}`,
+                    borderRadius: 8,
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    background: formErrors.startDate ? "#fef2f2" : "white",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    if (!formErrors.startDate) {
+                      e.target.style.borderColor = "#667eea";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                {formErrors.startDate && <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>{formErrors.startDate}</div>}
+              </div>
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.endDate")}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  style={{ 
+                    width: "100%", 
+                    padding: "12px 16px",
+                    fontSize: 15,
+                    border: "2px solid #e0e7ff",
+                    borderRadius: 8,
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </div>
+
+              {/* Hero Image */}
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.heroImage")}
+                </label>
+                <input
+                  type="text"
+                  value={formData.heroImage}
+                  onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
+                  style={{ 
+                    width: "100%", 
+                    padding: 12, 
+                    fontSize: "clamp(15px, 3.5vw, 16px)", 
+                    border: "1px solid #ddd", 
+                    borderRadius: 4,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                  placeholder={t("admin.urlPlaceholder")}
+                />
+              </div>
+
+              {/* Checkboxes */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.isPinned}
+                    onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  />
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isPinned")}</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.isRainSafe}
+                    onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  />
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
+                </label>
+                <div style={{ fontSize: 12, color: "#666", marginTop: -8, marginLeft: 28 }}>
+                  {t("common.isRainSafeHint")}
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.showOnMap}
+                    onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
+                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  />
+                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
+                </label>
+                <div style={{ fontSize: 12, color: "#666", marginTop: -8, marginLeft: 28 }}>
+                  {t("admin.showOnMapHint")}
+                </div>
+              </div>
+            </div>
+
+            {/* Jobb oszlop: Térkép és koordináták */}
+            <div>
+              <label style={{ 
+                display: "block", 
+                marginBottom: 8,
+                color: "#667eea",
+                fontWeight: 600,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}>
+                {t("admin.location")} ({t("admin.coordinates")})
+              </label>
+              <div style={{ marginBottom: 16 }}>
                 <MapComponent
                   latitude={formData.lat ? parseFloat(formData.lat) : null}
                   longitude={formData.lng ? parseFloat(formData.lng) : null}
                   onLocationChange={(lat, lng) => {
                     setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
                   }}
-                  height={400}
+                  height={500}
                   interactive={true}
                   hideLocationButton={true}
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
                   <label style={{ 
                     display: "block", 
                     marginBottom: 8,
                     color: "#667eea",
                     fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}>
                     {t("admin.latitude")}
                   </label>
@@ -1149,24 +1401,13 @@ export function EventsPage() {
                     onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
                     style={{ 
                       width: "100%", 
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border: "2px solid #e0e7ff",
-                      borderRadius: 8,
-                      outline: "none",
-                      transition: "all 0.3s ease",
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      boxSizing: "border-box",
                     }}
                     placeholder="47.4979"
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#e0e7ff";
-                      e.target.style.boxShadow = "none";
-                    }}
                   />
                 </div>
                 <div>
@@ -1175,7 +1416,8 @@ export function EventsPage() {
                     marginBottom: 8,
                     color: "#667eea",
                     fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}>
                     {t("admin.longitude")}
                   </label>
@@ -1186,74 +1428,71 @@ export function EventsPage() {
                     onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
                     style={{ 
                       width: "100%", 
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border: "2px solid #e0e7ff",
-                      borderRadius: 8,
-                      outline: "none",
-                      transition: "all 0.3s ease",
+                      padding: 12, 
+                      fontSize: "clamp(15px, 3.5vw, 16px)", 
+                      border: "1px solid #ddd", 
+                      borderRadius: 4,
                       fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      boxSizing: "border-box",
                     }}
                     placeholder="19.0402"
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#e0e7ff";
-                      e.target.style.boxShadow = "none";
-                    }}
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Checkboxes - Active and Pinned */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
+          {/* isActive checkbox - prominent at the bottom - visible to everyone */}
+          <div style={{ 
+            marginBottom: 24, 
+            padding: 20, 
+            background: formData.isActive 
+              ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
+              : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            borderRadius: 12,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            border: "2px solid",
+            borderColor: formData.isActive ? "#10b981" : "#ef4444",
+          }}>
+            <label style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 12, 
+              cursor: "pointer",
+              color: "white",
+            }}>
               <input
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ 
+                  width: 24, 
+                  height: 24, 
+                  cursor: "pointer",
+                  accentColor: "white",
+                }}
               />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+              <div>
+                <div style={{ 
+                  fontSize: "clamp(16px, 4vw, 20px)", 
+                  fontWeight: 700, 
+                  marginBottom: 4,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {formData.isActive 
+                    ? t("admin.eventActive")
+                    : t("admin.eventInactive")}
+                </div>
+                <div style={{ 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  opacity: 0.9,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {formData.isActive 
+                    ? t("admin.eventActiveDescription")
+                    : t("admin.eventInactiveDescription")}
+                </div>
+              </div>
             </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
-              <input
-                type="checkbox"
-                checked={formData.isPinned}
-                onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-              />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isPinned")}</span>
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
-              <input
-                type="checkbox"
-                checked={formData.isRainSafe}
-                onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-              />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
-            </label>
-            <div style={{ fontSize: 12, color: "#666", marginTop: 4, marginLeft: 28 }}>
-              {t("common.isRainSafeHint")}
-            </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 15 }}>
-              <input
-                type="checkbox"
-                checked={formData.showOnMap}
-                onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-              />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
-            </label>
-            <div style={{ fontSize: 12, color: "#666", marginTop: 4, marginLeft: 28 }}>
-              {t("admin.showOnMapHint")}
-            </div>
           </div>
         </div>
         </div>
@@ -1281,9 +1520,9 @@ export function EventsPage() {
               </thead>
               <tbody>
                 {filteredEvents.map((event) => {
-                  const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                  const translation = event.translations.find((t) => t.lang === currentLang) || 
-                                     event.translations.find((t) => t.lang === "hu");
+                  const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                  const translation = findTranslation(event.translations, currentLang) || 
+                                     findTranslation(event.translations, "hu" as Lang);
                   return (
                     <tr key={event.id} style={{ borderBottom: "1px solid #eee" }}>
                       <td style={{ padding: 12 }}>
@@ -1322,11 +1561,61 @@ export function EventsPage() {
                       </td>
                       <td style={{ padding: 12, textAlign: "right" }}>
                         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                          {(() => {
+                            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                            const translation = findTranslation(event.translations, currentLang) || 
+                                             findTranslation(event.translations, "hu" as Lang);
+                            const slug = translation?.slug || "";
+                            const publicUrl = slug && currentSite?.slug 
+                              ? buildPublicUrl({
+                                  lang: i18n.language || "hu",
+                                  siteKey: currentSite.slug,
+                                  entityType: "event",
+                                  slug,
+                                })
+                              : null;
+                            return publicUrl ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(publicUrl, "_blank");
+                                }}
+                                style={{
+                                  padding: "6px 10px",
+                                  background: "rgba(16, 185, 129, 0.1)",
+                                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                                  borderRadius: 6,
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  transition: "all 0.2s ease",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#10b981",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                                }}
+                                title={t("admin.viewPublic") || "Megnézem"}
+                              >
+                                🔍
+                              </button>
+                            ) : null;
+                          })()}
                           <button
-                            onClick={() => startEdit(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/${i18n.language || "hu"}/admin/events/${event.id}/analytics`);
+                            }}
                             style={{
                               padding: "6px 12px",
-                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                               color: "white",
                               border: "none",
                               borderRadius: 6,
@@ -1334,7 +1623,35 @@ export function EventsPage() {
                               fontSize: 12,
                               fontWeight: 600,
                               transition: "all 0.2s ease",
+                              boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.4)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(16, 185, 129, 0.3)";
+                            }}
+                          >
+                            {t("admin.analyticsLabel")}
+                          </button>
+                          <button
+                            onClick={() => startEdit(event)}
+                            style={{
+                              padding: "6px 10px",
+                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              transition: "all 0.2s ease",
                               boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = "translateY(-1px)";
@@ -1344,22 +1661,38 @@ export function EventsPage() {
                               e.currentTarget.style.transform = "translateY(0)";
                               e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
                             }}
+                            title={t("common.edit")}
                           >
-                            {t("common.edit")}
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                              <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
+                            </svg>
                           </button>
                           <button
                             onClick={() => handleDelete(event.id)}
                             style={{
-                              padding: "6px 12px",
+                              padding: "6px 10px",
                               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                               color: "white",
                               border: "none",
                               borderRadius: 6,
                               cursor: "pointer",
                               fontSize: 12,
-                              fontWeight: 600,
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               transition: "all 0.2s ease",
                               boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = "translateY(-1px)";
@@ -1369,8 +1702,24 @@ export function EventsPage() {
                               e.currentTarget.style.transform = "translateY(0)";
                               e.currentTarget.style.boxShadow = "0 2px 8px rgba(245, 87, 108, 0.3)";
                             }}
+                            title={t("common.delete")}
                           >
-                            {t("common.delete")}
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
                           </button>
                         </div>
                       </td>
@@ -1514,9 +1863,9 @@ export function EventsPage() {
                   }}
                 >
                   {filteredEvents.map((event, index) => {
-                    const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                    const translation = event.translations.find((t) => t.lang === currentLang) || 
-                                       event.translations.find((t) => t.lang === "hu");
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    const translation = findTranslation(event.translations, currentLang) || 
+                                       findTranslation(event.translations, "hu" as Lang);
                     const isOpen = swipedCardId === event.id;
                     
                     // Calculate position relative to current index
@@ -1615,6 +1964,80 @@ export function EventsPage() {
                                 zIndex: 10,
                               }}
                             >
+                              {(() => {
+                                const slug = translation?.slug || "";
+                                const publicUrl = slug && currentSite?.slug 
+                                  ? buildPublicUrl({
+                                      lang: i18n.language || "hu",
+                                      siteKey: currentSite.slug,
+                                      entityType: "event",
+                                      slug,
+                                    })
+                                  : null;
+                                return publicUrl ? (
+                                  <button
+                                    onClick={() => {
+                                      window.open(publicUrl, "_blank");
+                                      setSwipedCardId(null);
+                                    }}
+                                    style={{
+                                      width: 80,
+                                      background: "rgba(16, 185, 129, 0.2)",
+                                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                                      color: "#10b981",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      transition: "all 0.2s ease",
+                                      boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
+                                      padding: 0,
+                                    }}
+                                    onTouchStart={(e) => {
+                                      e.currentTarget.style.filter = "brightness(0.9)";
+                                    }}
+                                    onTouchEnd={(e) => {
+                                      e.currentTarget.style.filter = "brightness(1)";
+                                    }}
+                                  >
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                ) : null;
+                              })()}
+                              <button
+                                onClick={() => {
+                                  navigate(`/${i18n.language || "hu"}/admin/events/${event.id}/analytics`);
+                                  setSwipedCardId(null);
+                                }}
+                                style={{
+                                  width: 80,
+                                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                  color: "white",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  transition: "all 0.2s ease",
+                                  boxShadow: "-4px 0 12px rgba(0, 0, 0, 0.15)",
+                                  padding: 0,
+                                }}
+                                onTouchStart={(e) => {
+                                  e.currentTarget.style.filter = "brightness(0.9)";
+                                }}
+                                onTouchEnd={(e) => {
+                                  e.currentTarget.style.filter = "brightness(1)";
+                                }}
+                              >
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+                                  <path d="M3 3V21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M7 16L12 11L16 15L21 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M21 10V3H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
                               <button
                                 onClick={() => {
                                   startEdit(event);

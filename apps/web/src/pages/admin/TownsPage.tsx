@@ -14,6 +14,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 interface Town {
   id: string;
@@ -286,9 +288,9 @@ export function TownsPage() {
 
   const startEdit = (town: Town) => {
     setEditingId(town.id);
-    const hu = town.translations.find((t) => t.lang === "hu");
-    const en = town.translations.find((t) => t.lang === "en");
-    const de = town.translations.find((t) => t.lang === "de");
+    const hu = findTranslation(town.translations, "hu" as Lang);
+    const en = findTranslation(town.translations, "en" as Lang);
+    const de = findTranslation(town.translations, "de" as Lang);
     setFormData({
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
@@ -584,7 +586,7 @@ export function TownsPage() {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = town.translations.find((t) => t.lang === currentLang) || 
-                               town.translations.find((t) => t.lang === "hu");
+                               findTranslation(town.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -594,7 +596,7 @@ export function TownsPage() {
               render: (town) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
                 const translation = town.translations.find((t) => t.lang === currentLang) || 
-                                   town.translations.find((t) => t.lang === "hu");
+                                   findTranslation(town.translations, "hu" as Lang);
                 return translation?.name || "-";
               },
             },
@@ -622,7 +624,7 @@ export function TownsPage() {
           cardTitle={(town) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
             const translation = town.translations.find((t) => t.lang === currentLang) || 
-                               town.translations.find((t) => t.lang === "hu");
+                               findTranslation(town.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(town) => town.lat && town.lng ? `📍 ${town.lat.toFixed(4)}, ${town.lng.toFixed(4)}` : ""}

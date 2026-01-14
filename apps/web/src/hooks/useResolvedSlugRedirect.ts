@@ -37,7 +37,7 @@ export function useResolvedSlugRedirect({ lang, siteKey, slug }: Args) {
   const location = useLocation();
 
   const canonicalPath = useMemo(() => {
-    if (!q.data) return null;
+    if (!q.data || !q.data.canonical) return null;
     // Use canonical siteKey and slug from the response
     return buildPublicUrl({
       lang: q.data.canonical.lang,

@@ -1,6 +1,7 @@
 // src/hooks/useSessionWarning.ts
 import { useState, useEffect, useCallback } from "react";
 import { isTokenExpired, getTokenExpiration } from "../utils/tokenUtils";
+import { TIMING } from "../app/config";
 
 interface SessionWarningState {
   showWarning: boolean;
@@ -67,11 +68,12 @@ export function useSessionWarning() {
       const timeUntilExpiration = expirationTime - now;
       const secondsUntilExpiration = Math.max(0, Math.floor(timeUntilExpiration / 1000));
 
-      // Check if we're within 30 seconds of expiration
-      if (secondsUntilExpiration <= 30 && secondsUntilExpiration > 0) {
-        // Check if there was interaction in the last 5 seconds
+      // Check if we're within threshold of expiration
+      const warningThresholdSeconds = TIMING.SESSION_WARNING_THRESHOLD_MS / 1000;
+      if (secondsUntilExpiration <= warningThresholdSeconds && secondsUntilExpiration > 0) {
+        // Check if there was interaction in the last debounce period
         const timeSinceLastInteraction = now - lastInteraction;
-        const hasRecentInteraction = timeSinceLastInteraction < 5000; // 5 seconds
+        const hasRecentInteraction = timeSinceLastInteraction < TIMING.SESSION_EXTEND_DEBOUNCE_MS;
 
         if (!hasRecentInteraction) {
           setWarning({
@@ -92,7 +94,7 @@ export function useSessionWarning() {
     // Update every second to refresh the countdown
     // Even if the tab is inactive, when it becomes active again, the calculation
     // will be based on the actual expiration time, not a timer
-    const interval = setInterval(updateWarning, 1000);
+    const interval = setInterval(updateWarning, TIMING.SESSION_CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [lastInteraction]);

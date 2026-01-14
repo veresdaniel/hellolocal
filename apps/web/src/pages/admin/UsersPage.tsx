@@ -22,6 +22,7 @@ import { SiteAutocomplete } from "../../components/SiteAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import { ROLE_SUPERADMIN } from "../../types/enums";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -99,7 +100,7 @@ export function UsersPage() {
     setError(null);
     try {
       // Superadmin can see all users, others need siteId
-      const siteIdForQuery = currentUser?.role === "superadmin" ? undefined : (selectedSiteId || undefined);
+      const siteIdForQuery = currentUser?.role === ROLE_SUPERADMIN ? undefined : (selectedSiteId || undefined);
       const [usersData, sitesData] = await Promise.all([
         getUsers(siteIdForQuery),
         getSites(),
@@ -202,7 +203,7 @@ export function UsersPage() {
       bio: user.bio || "",
       role: user.role,
       isActive: user.isActive,
-      siteIds: user.sites?.map((us) => us.siteId) || user.tenants?.map((ut) => ut.tenantId) || [],
+      siteIds: user.sites?.map((us) => us.siteId) || [],
     });
   };
 
@@ -618,7 +619,7 @@ export function UsersPage() {
               key: "sites",
               label: t("admin.sites"),
               render: (user) => {
-                const userSites = user.sites || user.tenants || [];
+                const userSites = user.sites || [];
                 return userSites.length === 0 ? (
                   <span style={{ color: "#999" }}>{t("common.none")}</span>
                 ) : (
@@ -715,7 +716,7 @@ export function UsersPage() {
             {
               key: "sites",
               render: (user) => {
-                const userSites = user.sites || user.tenants || [];
+                const userSites = user.sites || [];
                 return userSites.length > 0 ? (
                   <div style={{ marginBottom: 8, fontSize: 13, color: "#666" }}>
                     <strong>{t("admin.sites")}:</strong>{" "}

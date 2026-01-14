@@ -7,6 +7,8 @@ import { getSites, getSiteSubscription, getSiteEntitlements, type Site, type Sit
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { useToast } from "../../contexts/ToastContext";
+import { findTranslation } from "../../utils/langHelpers";
+import type { Lang } from "../../types/enums";
 
 interface SiteSubscriptionSummary extends Site {
   subscription?: {
@@ -121,7 +123,7 @@ export function SubscriptionOverviewPage() {
           const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
           const translation =
             site.translations.find((t) => t.lang === currentLang) ||
-            site.translations.find((t) => t.lang === "hu");
+            findTranslation(site.translations, "hu" as Lang);
 
           return (
             <div

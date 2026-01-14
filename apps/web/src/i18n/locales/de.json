@@ -166,7 +166,11 @@
     "errorLoadingEvent": "Fehler beim Laden der Veranstaltung",
     "backToList": "Zurück zur Liste",
     "backToHome": "Zurück zur Startseite",
-    "gallery": "Galerie",
+    "gallery": {
+      "title": "Galerie",
+      "imageSingular": "Bild",
+      "imagePlural": "Bilder"
+    },
     "share": "Teilen",
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert!",
@@ -217,7 +221,12 @@
       "rights": "Alle Rechte vorbehalten."
     },
     "beTheFirst": "Sei der Erste!",
-    "saving": "Speichern..."
+    "saving": "Speichern...",
+    "rating": {
+      "starSingular": "Stern",
+      "starPlural": "Sterne",
+      "clickToRate": "Klicken zum Bewerten"
+    }
   },
   "admin": {
     "titleSuffix": "Admin",
@@ -255,7 +264,9 @@
     "errors": {
       "updatePriceListFailed": "Preisliste konnte nicht aktualisiert werden",
       "placeNotFound": "Ort nicht gefunden",
-      "noAccessToPlace": "Sie haben keinen Zugriff auf diesen Ort"
+      "noAccessToPlace": "Sie haben keinen Zugriff auf diesen Ort",
+      "siteNotSelected": "Bitte wählen Sie zuerst einen Standort aus",
+      "placeHasNoSlug": "Ort hat keinen Slug, kann nicht geöffnet werden"
     },
     "customPrice": "Individuelle Preisgestaltung",
     "towns": "Städte",
@@ -318,6 +329,7 @@
     "sessionExpiring": "Sitzung läuft ab",
     "sessionExpired": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
     "sessionExpiringSoon": "Sitzung läuft bald ab",
+    "sessionExpiringWarning": "Ihre Sitzung läuft bald ab und Sie werden abgemeldet. Wenn Sie weiterarbeiten möchten, verlängern Sie bitte Ihre Sitzung.",
     "sessionTimeRemaining": "Verbleibende Zeit: {{time}}",
     "extendSession": "Verlängern",
     "extending": "Verlängern...",
@@ -376,6 +388,7 @@
     "planPro": "Pro",
     "planStatus": "Plan-Status",
     "planValidUntil": "Plan gültig bis",
+    "limits": "Grenzen",
     "featuredSlots": "Hervorgehobene Plätze",
     "switchToPro": "Zu Pro wechseln",
     "siteEdit": "Site bearbeiten",
@@ -467,12 +480,20 @@
         "statusTrial": "Testphase",
         "statusPastDue": "Überfällig",
         "statusCanceled": "Gekündigt",
+        "statusSuspended": "Ausgesetzt",
+        "statusExpired": "Abgelaufen",
         "upgradeToPro": "Zu Pro wechseln",
         "lockedInPro": "Im Pro-Plan verfügbar",
         "contactToUpgrade": "Bitte kontaktieren Sie uns für einen Planwechsel",
         "planUpdated": "Plan aktualisiert",
         "saved": "Gespeichert",
         "advancedSettings": "Erweiterte Einstellungen",
+        "currentPlan": "Aktueller Plan",
+        "changePlan": "Plan ändern",
+        "validUntil": "Gültig bis",
+        "availablePlans": "Verfügbare Pläne",
+        "planContents": "Planinhalt",
+        "usage": "Nutzung",
         "allowPublicRegistration": "Öffentliche Registrierung zulassen",
         "allowPublicRegistrationDescription": "Wenn deaktiviert, kann nur der Site-Besitzer Benutzer und Orte erstellen. Nur für Pro- und Business-Pläne verfügbar."
       },
@@ -537,6 +558,16 @@
       "suspended": "Abonnement ausgesetzt",
       "expiringEmailSubject": "Abonnement läuft ab",
       "expiringEmailBody": "Hallo {name}, Ihr Abonnement läuft am {date} ab."
+    },
+    "subscription": {
+      "cancel": "Kündigen",
+      "suspend": "Aussetzen",
+      "resume": "Abonnement fortsetzen",
+      "cancelConfirm": "Möchten Sie das Abonnement wirklich kündigen? Sie haben bis zum Ende des aktuellen Monats Zugriff.",
+      "suspendConfirm": "Möchten Sie das Abonnement wirklich aussetzen?",
+      "cancelled": "Abonnement gekündigt",
+      "suspended": "Abonnement ausgesetzt",
+      "resumed": "Abonnement fortgesetzt"
     },
     "search": "Suchen",
     "all": "Alle",
@@ -764,6 +795,12 @@
       "createLegalPageFailed": "Rechtliche Seite konnte nicht erstellt werden",
       "updateLegalPageFailed": "Rechtliche Seite konnte nicht aktualisiert werden",
       "deleteLegalPageFailed": "Rechtliche Seite konnte nicht gelöscht werden",
+      "loadGalleriesFailed": "Galerien konnten nicht geladen werden",
+      "createGalleryFailed": "Galerie konnte nicht erstellt werden",
+      "updateGalleryFailed": "Galerie konnte nicht aktualisiert werden",
+      "deleteGalleryFailed": "Galerie konnte nicht gelöscht werden",
+      "uploadFailed": "Bild konnte nicht hochgeladen werden",
+      "invalidUrl": "Ungültige URL",
       "loadUsersFailed": "Benutzer konnten nicht geladen werden",
       "createUserFailed": "Benutzer konnte nicht erstellt werden",
       "updateUserFailed": "Benutzer konnte nicht aktualisiert werden",
@@ -805,6 +842,7 @@
       "deleteBrandFailed": "Marke konnte nicht gelöscht werden",
       "loadTenantMembershipsFailed": "Site-Mitgliedschaften konnten nicht geladen werden",
       "createTenantMembershipFailed": "Site-Mitgliedschaft konnte nicht erstellt werden",
+      "membershipAlreadyExistsEdit": "Diese Mitgliedschaft existiert bereits. Sie können sie unten bearbeiten.",
       "updateTenantMembershipFailed": "Site-Mitgliedschaft konnte nicht aktualisiert werden",
       "deleteTenantMembershipFailed": "Site-Mitgliedschaft konnte nicht gelöscht werden",
       "loadPlaceMembershipsFailed": "Ortsmitgliedschaften konnten nicht geladen werden",
@@ -822,7 +860,69 @@
       "deleteStaticPageFailed": "Statische Seite konnte nicht gelöscht werden",
       "categoriesNotFound": "Einige Kategorien wurden nicht gefunden oder gehören nicht zur Site",
       "parentCategoriesNotFound": "Einige übergeordnete Kategorien wurden nicht gefunden oder gehören nicht zur Site",
-      "oneOrMoreCategoriesNotFound": "Eine oder mehrere Kategorien wurden während der Aktualisierung nicht gefunden"
+      "oneOrMoreCategoriesNotFound": "Eine oder mehrere Kategorien wurden während der Aktualisierung nicht gefunden",
+      "forbidden": {
+        "viewPlaceSubscription": "Sie haben keine Berechtigung, das Abonnement dieses Ortes anzuzeigen",
+        "viewPlaceEntitlements": "Sie haben keine Berechtigung, die Berechtigungen dieses Ortes anzuzeigen",
+        "viewSiteSubscription": "Sie haben keine Berechtigung, das Abonnement dieser Site anzuzeigen",
+        "viewSiteEntitlements": "Sie haben keine Berechtigung, die Berechtigungen dieser Site anzuzeigen",
+        "updateSubscription": "Nur Administratoren können Abonnements aktualisieren",
+        "updateSiteSubscription": "Nur Superadministratoren können Site-Abonnements aktualisieren",
+        "managePlaceMemberships": "Sie haben keine Berechtigung, Ortsmitgliedschaften zu verwalten",
+        "assignOwnerRole": "Manager kann keine Eigentümerrolle zuweisen",
+        "modifyOwnerRole": "Manager kann die Eigentümerrolle nicht ändern",
+        "actorNotFound": "Benutzer nicht gefunden"
+      },
+      "notFound": {
+        "user": "Benutzer nicht gefunden",
+        "category": "Kategorie nicht gefunden",
+        "parentCategory": "Übergeordnete Kategorie nicht gefunden",
+        "place": "Ort nicht gefunden",
+        "site": "Site nicht gefunden",
+        "subscription": "Abonnement nicht gefunden",
+        "legalPage": "Rechtliche Seite nicht gefunden",
+        "legalPageTranslation": "Übersetzung der rechtlichen Seite nicht gefunden",
+        "town": "Stadt nicht gefunden",
+        "tag": "Tag nicht gefunden",
+        "staticPage": "Statische Seite nicht gefunden",
+        "priceBand": "Preisstufe nicht gefunden",
+        "brand": "Marke nicht gefunden",
+        "slug": "Slug nicht gefunden",
+        "siteKey": "Site-Schlüssel nicht gefunden"
+      },
+      "badRequest": {
+        "categoryParentSelf": "Kategorie kann nicht ihr eigener Elternteil sein",
+        "categoryCircularReference": "Zirkuläre Referenz erkannt",
+        "categoriesNotFound": "Einige Kategorien nicht gefunden",
+        "parentCategoriesNotFound": "Einige übergeordnete Kategorien nicht gefunden",
+        "circularReferenceDetected": "Zirkuläre Referenz erkannt",
+        "categoriesNotFoundUpdate": "Eine oder mehrere Kategorien wurden während des Updates nicht gefunden",
+        "subscriptionAlreadyCancelled": "Abonnement ist bereits gekündigt",
+        "subscriptionNotCancelled": "Abonnement ist nicht gekündigt. Nur gekündigte Abonnements können fortgesetzt werden.",
+        "invalidLang": "Ungültiger Sprachparameter",
+        "langRequired": "Sprachparameter ist erforderlich",
+        "userIdRequired": "Benutzer-ID ist erforderlich",
+        "2FANotSetup": "2FA ist nicht eingerichtet",
+        "2FADependenciesNotInstalled": "2FA-Abhängigkeiten sind nicht installiert. Bitte installieren Sie die Pakete speakeasy und qrcode.",
+        "2FAQRCodeNotAvailable": "QR-Code-Generierung ist nicht verfügbar. Bitte installieren Sie das qrcode-Paket.",
+        "categoryCannotBeParent": "Kategorie kann nicht ihr eigener Elternteil sein",
+        "categoriesNotFoundOrNotBelong": "Einige Kategorien nicht gefunden oder gehören nicht zur Site",
+        "parentCategoriesNotFoundOrNotBelong": "Einige übergeordnete Kategorien nicht gefunden oder gehören nicht zur Site",
+        "invalidLogoUrl": "Ungültige Logo-URL",
+        "invalidFaviconUrl": "Ungültige Favicon-URL",
+        "featuredUntilFuture": "featuredUntil muss in der Zukunft liegen",
+        "planImageLimit": "Bildlimit des Plans überschritten",
+        "planFeaturedNotSupported": "Plan unterstützt keine hervorgehobene Platzierung",
+        "slugConflict": "Slug existiert bereits",
+        "unsupportedLegalPage": "Nicht unterstützte rechtliche Seite"
+      },
+      "unauthorized": {
+        "disableOwn2FA": "Sie können nur Ihre eigene 2FA deaktivieren"
+      },
+      "internal": {
+        "error": "Interner Serverfehler",
+        "oauthError": "Google OAuth-Authentifizierung fehlgeschlagen"
+      }
     },
     "searchPlaceholder": "Suche nach Name oder Ort...",
     "searchPlaceholders": {
@@ -874,7 +974,34 @@
       "cancel": "Abbrechen",
       "create": "Erstellen",
       "edit": "Bearbeiten",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "add": "Hinzufügen"
+    },
+    "galleries": {
+      "title": "Galerien",
+      "name": "Name",
+      "namePlaceholder": "Galeriename (optional)",
+      "images": "Bilder",
+      "imagesCount": "Bild",
+      "layout": "Layout",
+      "layoutGrid": "Raster",
+      "layoutMasonry": "Masonry",
+      "layoutCarousel": "Karussell",
+      "aspect": "Seitenverhältnis",
+      "aspectAuto": "Automatisch",
+      "aspectSquare": "Quadrat",
+      "aspect4_3": "4:3",
+      "aspect16_9": "16:9",
+      "shortcode": "Shortcode",
+      "createGallery": "Neue Galerie erstellen",
+      "editGallery": "Galerie bearbeiten",
+      "addImages": "Bilder hinzufügen",
+      "addImageUrl": "Bild-URL hinzufügen...",
+      "captionPlaceholder": "Bildunterschrift (optional)",
+      "noGalleries": "Keine Galerien"
+    },
+    "validation": {
+      "atLeastOneImageRequired": "Mindestens ein Bild ist erforderlich"
     },
     "confirmations": {
       "deleteCategory": "Möchten Sie diese Kategorie wirklich löschen?",

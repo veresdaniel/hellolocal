@@ -4,6 +4,7 @@ import { useContext, useState, useEffect } from "react";
 import { AdminSiteContext } from "../contexts/AdminSiteContext";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { buildUrl } from "../app/urls";
+import { getHuTranslation } from "../utils/langHelpers";
 
 export function SiteSelector() {
   const { t } = useTranslation();
@@ -59,7 +60,7 @@ export function SiteSelector() {
 
   // Helper function to get site name in Hungarian (or first available)
   const getSiteName = (site: typeof sites[0]) => {
-    const huTranslation = site.translations.find((t) => t.lang === "hu");
+    const huTranslation = getHuTranslation(site.translations);
     return huTranslation?.name || site.translations[0]?.name || site.slug;
   };
 

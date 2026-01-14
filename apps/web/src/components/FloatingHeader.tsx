@@ -13,12 +13,18 @@ import { activateFreeSite } from "../api/sites.api";
 import { getCurrentUser } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 import { DEFAULT_LANG } from "../app/config";
+import { ROLE_SUPERADMIN } from "../types/enums";
+import { useViewStore } from "../stores/useViewStore";
+import { TIMING } from "../app/config";
+import { BREAKPOINTS } from "../utils/viewport";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
+  editUrl?: string; // Admin edit URL for current page (e.g., "/hu/admin/places/123")
+  showEditButton?: boolean; // Whether to show edit button (based on permissions)
 }
 
-export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
+export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
   const { lang, siteKey, siteKeyParam } = useRouteCtx();
   const location = useLocation();
@@ -34,6 +40,9 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   const [isMobile, setIsMobile] = useState(false);
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
+  
+  // Get showMap state from store to check if we're actually on map view (not just on home page)
+  const { showMap } = useViewStore();
 
   // Use site settings from context (loaded once at TenantLayout level)
   // If context is not available (e.g., on TenantsListPage), use undefined
@@ -46,7 +55,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
   // Detect mobile viewport
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -101,7 +110,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
 
   // Check if user is a visitor (activeSiteId === null)
   // Superadmin is never a visitor - they have access to everything
-  const isSuperadmin = user?.role === "superadmin";
+  const isSuperadmin = user?.role === ROLE_SUPERADMIN;
   const isVisitor = user && !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
   const hasActiveSite = user && (isSuperadmin || (user.activeSiteId !== null && user.activeSiteId !== undefined));
   // Show auth buttons on all non-map view pages
@@ -118,7 +127,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
       const effectiveSiteKey = siteKeyParam || undefined;
       console.log(`[activate-free] Activating with siteKey: ${effectiveSiteKey}, lang: ${lang}, siteKeyParam: ${siteKeyParam}`);
       const result = await activateFreeSite(lang, effectiveSiteKey);
-      showToast(t("public.activateFree.success") || "Free site activated successfully!", "success");
+      showToast(t("public.activateFree.success"), "success");
       
       // Fetch fresh user data from API to get updated activeSiteId
       try {
@@ -155,7 +164,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
       }
     } catch (err) {
       showToast(
-        err instanceof Error ? err.message : (t("public.activateFree.error") || "Failed to activate free site"),
+        err instanceof Error ? err.message : t("public.activateFree.error"),
         "error"
       );
     } finally {
@@ -292,6 +301,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
           flexWrap: "wrap",
           justifyContent: "flex-end",
           maxWidth: "100%",
+          alignSelf: "center",
         }}>
           {/* Not logged in: Sign in and Sign up buttons */}
             {!user && !isLoading && showAuthButtons && (
@@ -326,7 +336,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.1)";
                 }}
               >
-                {t("admin.login") || "Bejelentkezés"}
+                {t("admin.login")}
               </Link>
               <Link
                 to={buildUrl({ lang, path: "admin/register" })}
@@ -358,7 +368,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                 }}
               >
-                {t("admin.register") || "Regisztráció"}
+                {t("admin.register")}
               </Link>
               {/* Vertical separator */}
               <div
@@ -374,6 +384,50 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
           {/* Logged in: User info and action buttons */}
           {user && showAuthButtons && (
             <>
+              {/* Edit button - shown if user has edit permissions for current page */}
+              {showEditButton && editUrl && (
+                <>
+                  <button
+                    onClick={() => navigate(editUrl)}
+                    style={{
+                      padding: "6px 10px",
+                      background: "rgba(102, 126, 234, 0.1)",
+                      border: "1px solid rgba(102, 126, 234, 0.3)",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontSize: "clamp(12px, 2.5vw, 16px)",
+                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      transition: "all 0.2s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#667eea",
+                      fontWeight: 600,
+                      height: "clamp(36px, 4vw, 40px)",
+                      boxSizing: "border-box",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.2)";
+                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                    }}
+                    title={t("admin.edit") || "Szerkesztés"}
+                  >
+                    ✏️
+                  </button>
+                  {/* Vertical separator */}
+                  <div
+                    style={{
+                      width: 1,
+                      height: 24,
+                      background: "rgba(0, 0, 0, 0.08)",
+                    }}
+                  />
+                </>
+              )}
               {/* Username */}
               <span
                 style={{
@@ -386,8 +440,11 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   flexShrink: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  lineHeight: 1,
                 }}
-                title={user.username || user.email || t("admin.user") || "User"}
+                title={user.username || user.email || t("admin.user") || ""}
               >
                 {user.username || user.email || t("admin.user") || "User"}
               </span>
@@ -435,7 +492,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                     }}
                   >
-                    ✨ {t("public.activateFree.cta") || "Ingyenes oldal aktiválása"}
+                    ✨ {t("public.activateFree.cta")}
                   </button>
                   {/* Vertical separator */}
                   <div
@@ -481,7 +538,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                     }}
                   >
-                    📊 {t("admin.dashboard") || "Dashboard"}
+                    📊 {t("admin.dashboard")}
                   </Link>
                   {/* Vertical separator */}
                   <div
@@ -530,56 +587,86 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 87, 108, 0.3)";
                 }}
               >
-                🚪 {t("admin.logout") || "Kijelentkezés"}
+                🚪 {t("admin.logout")}
               </button>
             </>
           )}
 
-          {/* Map view button - only show on list view */}
-          {onMapViewClick && (
-            <>
-              <button
-                onClick={onMapViewClick}
-                style={{
-                  background: "rgba(102, 126, 234, 0.1)",
-                  border: "1px solid rgba(102, 126, 234, 0.3)",
-                  borderRadius: 8,
-                  color: "#667eea",
-                  fontSize: "clamp(12px, 2.5vw, 16px)",
-                  fontWeight: 500,
-                  height: "clamp(36px, 4vw, 40px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxSizing: "border-box",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  cursor: "pointer",
-                  padding: "8px 16px",
-                  transition: "all 0.2s",
-                  gap: 6,
-                  lineHeight: 1,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
-                }}
-              >
-                📍 {t("public.mapView")}
-              </button>
-              {/* Vertical separator */}
-              <div
-                style={{
-                  width: 1,
-                  height: 24,
-                  background: "rgba(0, 0, 0, 0.08)",
-                }}
-              />
-            </>
-          )}
+          {/* Map view button - show on all non-map view pages */}
+          {(() => {
+            // Don't show on admin pages
+            if (location.pathname.includes("/admin")) return null;
+            
+            // Check if we're on home page
+            const isOnHomePage = location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) || 
+                               location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
+            
+            // Check if we're actually on map view (homepage with showMap=true)
+            // If we're on home page, check the showMap state from store
+            // Otherwise, we're not on map view
+            const isOnMapView = isOnHomePage && showMap;
+            
+            // Don't show on map view
+            if (isOnMapView) return null;
+            
+            return (
+              <>
+                <button
+                  onClick={() => {
+                    if (onMapViewClick) {
+                      // If we have onMapViewClick prop (list view), use it
+                      onMapViewClick();
+                    } else {
+                      // Otherwise, navigate to home and trigger map view
+                      const homePath = buildUrl({ lang, siteKey: siteKey || undefined, path: "" });
+                      navigate(homePath);
+                      // Trigger map view after navigation - use longer timeout to ensure HomePage is mounted
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("showMapView"));
+                      }, TIMING.NAVIGATION_DELAY_MS);
+                    }
+                  }}
+                  style={{
+                    background: "rgba(102, 126, 234, 0.1)",
+                    border: "1px solid rgba(102, 126, 234, 0.3)",
+                    borderRadius: 8,
+                    color: "#667eea",
+                    fontSize: "clamp(12px, 2.5vw, 16px)",
+                    fontWeight: 500,
+                    height: "clamp(36px, 4vw, 40px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxSizing: "border-box",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: "pointer",
+                    padding: "8px 16px",
+                    transition: "all 0.2s",
+                    gap: 6,
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                  }}
+                >
+                  📍 {t("public.mapView")}
+                </button>
+                {/* Vertical separator */}
+                <div
+                  style={{
+                    width: 1,
+                    height: 24,
+                    background: "rgba(0, 0, 0, 0.08)",
+                  }}
+                />
+              </>
+            );
+          })()}
           {/* Language selector on list view - on the right side */}
           <LanguageSelector />
         </nav>
@@ -695,7 +782,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               touchAction: "manipulation",
               WebkitTapHighlightColor: "rgba(0, 0, 0, 0.1)",
             }}
-            aria-label={t("public.close") || "Bezárás"}
+            aria-label={t("public.close")}
           >
             <span
               style={{
@@ -755,7 +842,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                     e.currentTarget.style.background = "transparent";
                   }}
                 >
-                  {t("admin.login") || "Bejelentkezés"}
+                  {t("admin.login")}
                 </Link>
                 <Link
                   to={buildUrl({ lang, path: "admin/register" })}
@@ -786,7 +873,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                     e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  {t("admin.register") || "Regisztráció"}
+                  {t("admin.register")}
                 </Link>
               </>
             )}
@@ -841,7 +928,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                       e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    ✨ {t("public.activateFree.cta") || "Ingyenes oldal aktiválása"}
+                    ✨ {t("public.activateFree.cta")}
                   </button>
                 )}
                 {/* Has active site - Dashboard button - Mobile */}
@@ -875,7 +962,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                       e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    📊 {t("admin.dashboard") || "Dashboard"}
+                    📊 {t("admin.dashboard")}
                   </Link>
                 )}
                 {/* Logout button - Mobile */}
@@ -913,16 +1000,82 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                     e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  🚪 {t("admin.logout") || "Kijelentkezés"}
+                  🚪 {t("admin.logout")}
                 </button>
               </>
             )}
+            {/* Map view button - Mobile */}
+            {(() => {
+              // Don't show on admin pages
+              if (location.pathname.includes("/admin")) return null;
+              
+              // Check if we're on home page
+              const isOnHomePage = location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) || 
+                                 location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
+              
+              // Check if we're actually on map view (homepage with showMap=true)
+              // If we're on home page, check the showMap state from store
+              // Otherwise, we're not on map view
+              const isOnMapView = isOnHomePage && showMap;
+              
+              // Don't show on map view
+              if (isOnMapView) return null;
+              
+              return (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (onMapViewClick) {
+                      // If we have onMapViewClick prop (list view), use it
+                      onMapViewClick();
+                    } else {
+                      // Otherwise, navigate to home and trigger map view
+                      const homePath = buildUrl({ lang, siteKey: siteKey || undefined, path: "" });
+                      navigate(homePath);
+                      // Trigger map view after navigation - use longer timeout to ensure HomePage is mounted
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("showMapView"));
+                      }, TIMING.NAVIGATION_DELAY_MS);
+                    }
+                  }}
+                  style={{
+                    margin: "20px 24px",
+                    background: "rgba(102, 126, 234, 0.1)",
+                    border: "1px solid rgba(102, 126, 234, 0.3)",
+                    borderRadius: 12,
+                    color: "#667eea",
+                    fontSize: 18,
+                    fontWeight: 600,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: "pointer",
+                    padding: "16px 24px",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
+                    touchAction: "manipulation",
+                    WebkitTapHighlightColor: "rgba(102, 126, 234, 0.2)",
+                  }}
+                  onTouchStart={(e) => {
+                    e.currentTarget.style.transform = "scale(0.98)";
+                  }}
+                  onTouchEnd={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                >
+                  📍 {t("public.mapView")}
+                </button>
+              );
+            })()}
+            
             {/* Language selector in mobile menu */}
             <div style={{ padding: "20px 24px", borderTop: "1px solid rgba(0, 0, 0, 0.1)", marginTop: 12 }}>
               <LanguageSelector />
             </div>
             <Link
-              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "impresszum" })}
+              to={buildUrl({ lang, siteKey, path: "impresszum" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -966,7 +1119,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.imprint.title")}
             </Link>
             <Link
-              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "aszf" })}
+              to={buildUrl({ lang, siteKey, path: "aszf" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1010,7 +1163,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.terms.title")}
             </Link>
             <Link
-              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "adatvedelem" })}
+              to={buildUrl({ lang, siteKey, path: "adatvedelem" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1054,7 +1207,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
               {t("public.legal.privacy.title")}
             </Link>
             <Link
-              to={buildUrl({ lang, tenantKey: tenantKey || undefined, path: "static-pages" })}
+              to={buildUrl({ lang, siteKey, path: "static-pages" })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1156,7 +1309,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                 color: "#1a1a1a",
               }}
             >
-              {t("public.activateFree.modal.title") || "Ingyenes oldal aktiválása"}
+              {t("public.activateFree.modal.title")}
             </h2>
             <p
               style={{
@@ -1168,7 +1321,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                 lineHeight: 1.6,
               }}
             >
-              {t("public.activateFree.modal.description") || "Biztosan aktiválni szeretnéd az ingyenes oldalt? Ez lehetővé teszi, hogy hozzáférj a dashboardhoz és kezdj el dolgozni az oldaladon."}
+              {t("public.activateFree.modal.description")}
             </p>
             <div
               style={{
@@ -1205,7 +1358,7 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                   }
                 }}
               >
-                {t("common.cancel") || "Mégse"}
+                {t("common.cancel")}
               </button>
               <button
                 onClick={handleActivateFree}
@@ -1241,8 +1394,8 @@ export function FloatingHeader({ onMapViewClick }: FloatingHeaderProps = {}) {
                 }}
               >
                 {isActivating
-                  ? t("common.loading") || "Betöltés..."
-                  : t("public.activateFree.modal.confirm") || "Aktiválás"}
+                  ? t("common.loading")
+                  : t("public.activateFree.modal.confirm")}
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang, SitePlan } from "@prisma/client";
+import { generateSlug } from "../slug/slug.helper";
 
 export interface CreateSiteDto {
   slug: string;
@@ -171,13 +172,19 @@ export class AdminSiteService {
       throw new NotFoundException(`Brand with ID ${dto.brandId} not found`);
     }
 
+    // Normalize slug: remove accents and ensure it's URL-friendly
+    const normalizedSlug = generateSlug(dto.slug);
+    if (!normalizedSlug || normalizedSlug.trim() === "") {
+      throw new BadRequestException("Invalid slug: slug cannot be empty after normalization");
+    }
+
     // Check if slug already exists
     const existingSite = await this.prisma.site.findUnique({
-      where: { slug: dto.slug },
+      where: { slug: normalizedSlug },
     });
 
     if (existingSite) {
-      throw new BadRequestException(`Site with slug "${dto.slug}" already exists`);
+      throw new BadRequestException(`Site with slug "${normalizedSlug}" already exists`);
     }
 
     // Note: SiteKey unique constraint is now [siteId, lang, slug], so multiple sites
@@ -186,7 +193,7 @@ export class AdminSiteService {
     // Create site with translations
     const site = await this.prisma.site.create({
       data: {
-        slug: dto.slug,
+        slug: normalizedSlug, // Use normalized slug (accent-free)
         brandId: dto.brandId,
         isActive: dto.isActive ?? true,
         primaryDomain: dto.primaryDomain ?? null,
@@ -217,7 +224,7 @@ export class AdminSiteService {
         data: {
           siteId: site.id,
           lang: translation.lang,
-          slug: dto.slug, // Use site slug as the public-facing slug
+          slug: normalizedSlug, // Use normalized slug (accent-free) as the public-facing slug
           isPrimary: true,
           isActive: true,
         },
@@ -232,13 +239,22 @@ export class AdminSiteService {
 
     // Check if slug is being changed and if new slug already exists
     if (dto.slug && dto.slug !== site.slug) {
+      // Normalize slug: remove accents and ensure it's URL-friendly
+      const normalizedSlug = generateSlug(dto.slug);
+      if (!normalizedSlug || normalizedSlug.trim() === "") {
+        throw new BadRequestException("Invalid slug: slug cannot be empty after normalization");
+      }
+
       const existingSite = await this.prisma.site.findUnique({
-        where: { slug: dto.slug },
+        where: { slug: normalizedSlug },
       });
 
       if (existingSite) {
-        throw new BadRequestException(`Site with slug "${dto.slug}" already exists`);
+        throw new BadRequestException(`Site with slug "${normalizedSlug}" already exists`);
       }
+
+      // Update dto.slug to normalized version
+      dto.slug = normalizedSlug;
     }
 
     // Check if brand exists (if brandId is being updated)
@@ -328,7 +344,8 @@ export class AdminSiteService {
 
         // If this is a new translation (didn't exist before), create SiteKey for it
         if (!existingTranslation) {
-          const siteSlug = dto.slug ?? site.slug;
+          // Use normalized slug (either from dto or existing site slug)
+          const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
           // Check if SiteKey already exists for this site+lang+slug combination
           // Note: Unique constraint is now [siteId, lang, slug], so we check site-specific
           const existingKey = await this.prisma.siteKey.findFirst({
@@ -344,7 +361,7 @@ export class AdminSiteService {
               data: {
                 siteId: id,
                 lang: translation.lang,
-                slug: siteSlug,
+                slug: siteSlug, // Use normalized slug (accent-free)
                 isPrimary: true,
                 isActive: true,
               },

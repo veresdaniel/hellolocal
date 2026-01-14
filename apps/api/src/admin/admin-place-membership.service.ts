@@ -3,6 +3,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaceRole, UserRole, SiteRole } from "@prisma/client";
 import { RbacService } from "../auth/rbac.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreatePlaceMembershipDto {
   placeId: string;
@@ -210,7 +211,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (!actor) {
-      throw new ForbiddenException("Actor user not found");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
     // Superadmin and siteadmin can assign any role
@@ -243,7 +244,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (!placeMembership) {
-      throw new ForbiddenException("Actor does not have permission to manage place memberships");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NO_PERMISSION_MANAGE_MEMBERSHIPS);
     }
 
     // Owner can assign any role
@@ -254,7 +255,7 @@ export class AdminPlaceMembershipService {
     // Manager can assign manager/editor, but NOT owner
     if (placeMembership.role === PlaceRole.manager) {
       if (targetRole === PlaceRole.owner) {
-        throw new ForbiddenException("Manager cannot assign owner role");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_MANAGER_CANNOT_ASSIGN_OWNER);
       }
       // Also check if trying to modify an existing owner
       if (currentRole === PlaceRole.owner) {
@@ -264,7 +265,7 @@ export class AdminPlaceMembershipService {
     }
 
     // Editor cannot assign any role
-    throw new ForbiddenException("Editor cannot manage place memberships");
+    throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_EDITOR_CANNOT_MANAGE_MEMBERSHIPS);
   }
 
   /**
@@ -288,7 +289,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (!actor) {
-      throw new ForbiddenException("Actor user not found");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
     // Superadmin and siteadmin can delete any membership
@@ -332,7 +333,7 @@ export class AdminPlaceMembershipService {
     // Manager can delete manager/editor, but NOT owner
     if (placeMembership.role === PlaceRole.manager) {
       if (targetRole === PlaceRole.owner) {
-        throw new ForbiddenException("Manager cannot delete owner membership");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_MANAGER_CANNOT_DELETE_OWNER);
       }
       return;
     }

@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<Props, State> {
         data: {
           message: this.state.error.message || "An unexpected error occurred",
           error: this.state.error.name || "Error",
-          stack: process.env.NODE_ENV !== "production" ? this.state.error.stack : undefined,
+          stack: import.meta.env.DEV ? this.state.error.stack : undefined,
         },
       };
 
@@ -189,7 +189,7 @@ function ErrorPageWrapper({ error }: { error: any }) {
         >
           {error.data?.message || "An unexpected error occurred"}
         </p>
-        {process.env.NODE_ENV !== "production" && error.data?.stack && (
+        {import.meta.env.DEV && error.data?.stack && (
           <details
             style={{
               marginBottom: 32,

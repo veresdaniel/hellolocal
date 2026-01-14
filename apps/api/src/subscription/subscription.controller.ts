@@ -53,6 +53,28 @@ export class SubscriptionController {
   }
 
   /* =========================
+     RESUME SITE SUBSCRIPTION
+     ========================= */
+  @Post(":siteId/subscription/:id/resume")
+  @UseGuards(JwtAuthGuard)
+  async resumeSite(
+    @Param("id") id: string
+  ) {
+    return this.subscriptionService.resume(id, "site");
+  }
+
+  /* =========================
+     RESUME PLACE SUBSCRIPTION
+     ========================= */
+  @Post("places/:placeId/subscription/:id/resume")
+  @UseGuards(JwtAuthGuard)
+  async resumePlace(
+    @Param("id") id: string
+  ) {
+    return this.subscriptionService.resume(id, "place");
+  }
+
+  /* =========================
      ENTITLEMENTS (frontend!)
      ========================= */
   @Get("entitlements")

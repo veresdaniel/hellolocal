@@ -2,6 +2,7 @@
 import { useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../contexts/AuthContext";
+import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 
 export function UserInfoDropdown() {
   const { t } = useTranslation();
@@ -13,11 +14,11 @@ export function UserInfoDropdown() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "superadmin":
+      case ROLE_SUPERADMIN:
         return "#9c27b0"; // Sötétlila
-      case "admin":
+      case ROLE_ADMIN:
         return "#dc3545";
-      case "editor":
+      case ROLE_EDITOR:
         return "#28a745";
       default:
         return "#6c757d";
