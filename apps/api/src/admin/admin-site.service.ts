@@ -221,30 +221,87 @@ export class AdminSiteService {
     // This ensures the site is accessible via any language route, even if translation doesn't exist yet
     // The middleware will fallback to Site.slug if SiteKey is not found, but it's better to have all SiteKeys
     const allLanguages: Lang[] = ["hu", "en", "de"];
+    const createdSiteKeys: string[] = [];
+    
     for (const lang of allLanguages) {
-      // Check if SiteKey already exists (shouldn't happen, but just in case)
-      const existingKey = await this.prisma.siteKey.findFirst({
-        where: {
-          siteId: site.id,
-          lang,
-          slug: normalizedSlug,
-        },
-      });
-
-      if (!existingKey) {
-        await this.prisma.siteKey.create({
-          data: {
+      try {
+        // Check if SiteKey already exists (shouldn't happen, but just in case)
+        const existingKey = await this.prisma.siteKey.findFirst({
+          where: {
             siteId: site.id,
             lang,
-            slug: normalizedSlug, // Use normalized slug (accent-free) as the public-facing slug
-            isPrimary: true,
-            isActive: true,
+            slug: normalizedSlug,
           },
         });
+
+        if (!existingKey) {
+          const createdKey = await this.prisma.siteKey.create({
+            data: {
+              siteId: site.id,
+              lang,
+              slug: normalizedSlug, // Use normalized slug (accent-free) as the public-facing slug
+              isPrimary: true,
+              isActive: true,
+            },
+          });
+          createdSiteKeys.push(`${lang}:${createdKey.id}`);
+          console.log(`✅ Created SiteKey: ${createdKey.id} for site ${site.id}, lang ${lang}, slug ${normalizedSlug}`);
+        } else {
+          // Ensure existing SiteKey is active and primary
+          if (!existingKey.isActive || !existingKey.isPrimary) {
+            await this.prisma.siteKey.update({
+              where: { id: existingKey.id },
+              data: { isActive: true, isPrimary: true },
+            });
+            console.log(`✅ Updated SiteKey: ${existingKey.id} for site ${site.id}, lang ${lang}`);
+          } else {
+            console.log(`ℹ️  SiteKey already exists and is active: ${existingKey.id} for site ${site.id}, lang ${lang}`);
+          }
+          createdSiteKeys.push(`${lang}:${existingKey.id}`);
+        }
+      } catch (error: any) {
+        // Log error but don't fail site creation - SiteKey creation is important but not critical
+        console.error(`❌ Failed to create SiteKey for site ${site.id}, lang ${lang}, slug ${normalizedSlug}:`, error.message);
+        console.error(`   Error details:`, error);
+        // Re-throw only if it's a critical error (not a duplicate key error)
+        if (!error.message?.includes("Unique constraint") && !error.message?.includes("duplicate")) {
+          throw error;
+        }
       }
     }
 
-    return site;
+    // Verify that SiteKeys were created
+    if (createdSiteKeys.length === 0) {
+      console.warn(`⚠️  WARNING: No SiteKeys were created for site ${site.id} (${normalizedSlug})`);
+      console.warn(`   This will cause "Site not found" errors. Please run: pnpm db:ensure-site-keys`);
+    } else if (createdSiteKeys.length < allLanguages.length) {
+      console.warn(`⚠️  WARNING: Only ${createdSiteKeys.length}/${allLanguages.length} SiteKeys were created for site ${site.id}`);
+      console.warn(`   Created: ${createdSiteKeys.join(", ")}`);
+      console.warn(`   Please run: pnpm db:ensure-site-keys to fix missing SiteKeys`);
+    } else {
+      console.log(`✅ Successfully created/verified ${createdSiteKeys.length} SiteKeys for site ${site.id} (${normalizedSlug})`);
+    }
+
+    // Return site with SiteKeys included for verification
+    // Since we just created the site, findUnique should never return null
+    const result = await this.prisma.site.findUnique({
+      where: { id: site.id },
+      include: {
+        translations: true,
+        brand: true,
+        siteKeys: {
+          where: { isActive: true },
+          select: { id: true, lang: true, slug: true, isActive: true, isPrimary: true },
+        },
+      },
+    });
+
+    if (!result) {
+      // This should never happen since we just created the site
+      throw new Error(`Site ${site.id} was created but could not be retrieved`);
+    }
+
+    return result;
   }
 
   async update(id: string, dto: UpdateSiteDto) {

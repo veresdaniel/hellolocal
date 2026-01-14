@@ -1172,6 +1172,11 @@ export class AdminController {
   ) {
     const result = await this.siteService.create(dto);
     
+    // TypeScript null check - create() should never return null, but we check for safety
+    if (!result) {
+      throw new Error("Site creation failed: result is null");
+    }
+    
     // Log to the first available site (or the newly created one)
     const siteId = result.id;
     await this.eventLogService.create({

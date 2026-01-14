@@ -38,4 +38,5 @@ services:
       # VITE_CLOUDINARY_CLOUD_NAME - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
       # VITE_CLOUDINARY_API_KEY - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
       # VITE_CLOUDINARY_UPLOAD_PRESET - Optional, set in Render Dashboard (for TipTap editor image/video uploads)
+      # VITE_HAS_MULTIPLE_SITES - Optional, set to "true" to enable multi-site mode (default: true)
 
