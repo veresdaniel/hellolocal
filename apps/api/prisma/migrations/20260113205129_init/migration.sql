@@ -1,35 +1,85 @@
--- CreateEnum
-CREATE TYPE "Lang" AS ENUM ('hu', 'en', 'de');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'Lang') THEN
+        CREATE TYPE "Lang" AS ENUM ('hu', 'en', 'de');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SlugEntityType" AS ENUM ('place', 'placeType', 'town', 'page', 'region', 'event');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SlugEntityType') THEN
+        CREATE TYPE "SlugEntityType" AS ENUM ('place', 'placeType', 'town', 'page', 'region', 'event');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('superadmin', 'admin', 'editor', 'viewer');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'UserRole') THEN
+        CREATE TYPE "UserRole" AS ENUM ('superadmin', 'admin', 'editor', 'viewer');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SiteRole" AS ENUM ('siteadmin', 'editor', 'viewer');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SiteRole') THEN
+        CREATE TYPE "SiteRole" AS ENUM ('siteadmin', 'editor', 'viewer');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "PlaceRole" AS ENUM ('owner', 'manager', 'editor');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PlaceRole') THEN
+        CREATE TYPE "PlaceRole" AS ENUM ('owner', 'manager', 'editor');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "PlacePlan" AS ENUM ('free', 'basic', 'pro');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PlacePlan') THEN
+        CREATE TYPE "PlacePlan" AS ENUM ('free', 'basic', 'pro');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SitePlan" AS ENUM ('basic', 'pro', 'business');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SitePlan') THEN
+        CREATE TYPE "SitePlan" AS ENUM ('basic', 'pro', 'business');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PRO', 'BUSINESS');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SubscriptionPlan') THEN
+        CREATE TYPE "SubscriptionPlan" AS ENUM ('FREE', 'BASIC', 'PRO', 'BUSINESS');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELLED', 'SUSPENDED', 'EXPIRED');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SubscriptionStatus') THEN
+        CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'CANCELLED', 'SUSPENDED', 'EXPIRED');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "BillingPeriod" AS ENUM ('MONTHLY', 'YEARLY');
+-- CreateEnum (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BillingPeriod') THEN
+        CREATE TYPE "BillingPeriod" AS ENUM ('MONTHLY', 'YEARLY');
+    END IF;
+END $$;
 
 -- CreateTable
-CREATE TABLE "Brand" (
+CREATE TABLE IF NOT EXISTS "Brand" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "logoUrl" TEXT,
@@ -46,7 +96,7 @@ CREATE TABLE "Brand" (
 );
 
 -- CreateTable
-CREATE TABLE "Site" (
+CREATE TABLE IF NOT EXISTS "Site" (
     "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT false,
@@ -66,7 +116,7 @@ CREATE TABLE "Site" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteTranslation" (
+CREATE TABLE IF NOT EXISTS "SiteTranslation" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -83,7 +133,7 @@ CREATE TABLE "SiteTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteKey" (
+CREATE TABLE IF NOT EXISTS "SiteKey" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -98,7 +148,7 @@ CREATE TABLE "SiteKey" (
 );
 
 -- CreateTable
-CREATE TABLE "Slug" (
+CREATE TABLE IF NOT EXISTS "Slug" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -115,7 +165,7 @@ CREATE TABLE "Slug" (
 );
 
 -- CreateTable
-CREATE TABLE "Town" (
+CREATE TABLE IF NOT EXISTS "Town" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -128,7 +178,7 @@ CREATE TABLE "Town" (
 );
 
 -- CreateTable
-CREATE TABLE "TownTranslation" (
+CREATE TABLE IF NOT EXISTS "TownTranslation" (
     "id" TEXT NOT NULL,
     "townId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -144,7 +194,7 @@ CREATE TABLE "TownTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "Category" (
+CREATE TABLE IF NOT EXISTS "Category" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "parentId" TEXT,
@@ -158,7 +208,7 @@ CREATE TABLE "Category" (
 );
 
 -- CreateTable
-CREATE TABLE "CategoryTranslation" (
+CREATE TABLE IF NOT EXISTS "CategoryTranslation" (
     "id" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -169,7 +219,7 @@ CREATE TABLE "CategoryTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "Tag" (
+CREATE TABLE IF NOT EXISTS "Tag" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -180,7 +230,7 @@ CREATE TABLE "Tag" (
 );
 
 -- CreateTable
-CREATE TABLE "TagTranslation" (
+CREATE TABLE IF NOT EXISTS "TagTranslation" (
     "id" TEXT NOT NULL,
     "tagId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -191,7 +241,7 @@ CREATE TABLE "TagTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceBand" (
+CREATE TABLE IF NOT EXISTS "PriceBand" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -202,7 +252,7 @@ CREATE TABLE "PriceBand" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceBandTranslation" (
+CREATE TABLE IF NOT EXISTS "PriceBandTranslation" (
     "id" TEXT NOT NULL,
     "priceBandId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -213,7 +263,7 @@ CREATE TABLE "PriceBandTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "Place" (
+CREATE TABLE IF NOT EXISTS "Place" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "townId" TEXT,
@@ -238,7 +288,7 @@ CREATE TABLE "Place" (
 );
 
 -- CreateTable
-CREATE TABLE "PlacePriceList" (
+CREATE TABLE IF NOT EXISTS "PlacePriceList" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'HUF',
@@ -254,7 +304,7 @@ CREATE TABLE "PlacePriceList" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceOpeningHours" (
+CREATE TABLE IF NOT EXISTS "PlaceOpeningHours" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "dayOfWeek" INTEGER NOT NULL,
@@ -268,7 +318,7 @@ CREATE TABLE "PlaceOpeningHours" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceTag" (
+CREATE TABLE IF NOT EXISTS "PlaceTag" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "tagId" TEXT NOT NULL,
@@ -278,7 +328,7 @@ CREATE TABLE "PlaceTag" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceTranslation" (
+CREATE TABLE IF NOT EXISTS "PlaceTranslation" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -302,7 +352,7 @@ CREATE TABLE "PlaceTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "LegalPage" (
+CREATE TABLE IF NOT EXISTS "LegalPage" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "key" TEXT NOT NULL,
@@ -314,7 +364,7 @@ CREATE TABLE "LegalPage" (
 );
 
 -- CreateTable
-CREATE TABLE "LegalPageTranslation" (
+CREATE TABLE IF NOT EXISTS "LegalPageTranslation" (
     "id" TEXT NOT NULL,
     "legalPageId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -330,7 +380,7 @@ CREATE TABLE "LegalPageTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "StaticPage" (
+CREATE TABLE IF NOT EXISTS "StaticPage" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "category" TEXT NOT NULL,
@@ -342,7 +392,7 @@ CREATE TABLE "StaticPage" (
 );
 
 -- CreateTable
-CREATE TABLE "StaticPageTranslation" (
+CREATE TABLE IF NOT EXISTS "StaticPageTranslation" (
     "id" TEXT NOT NULL,
     "staticPageId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -358,7 +408,7 @@ CREATE TABLE "StaticPageTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -382,7 +432,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceRating" (
+CREATE TABLE IF NOT EXISTS "PlaceRating" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -394,7 +444,7 @@ CREATE TABLE "PlaceRating" (
 );
 
 -- CreateTable
-CREATE TABLE "EventRating" (
+CREATE TABLE IF NOT EXISTS "EventRating" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -406,7 +456,7 @@ CREATE TABLE "EventRating" (
 );
 
 -- CreateTable
-CREATE TABLE "UserSite" (
+CREATE TABLE IF NOT EXISTS "UserSite" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
@@ -417,7 +467,7 @@ CREATE TABLE "UserSite" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteMembership" (
+CREATE TABLE IF NOT EXISTS "SiteMembership" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -428,7 +478,7 @@ CREATE TABLE "SiteMembership" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceMembership" (
+CREATE TABLE IF NOT EXISTS "PlaceMembership" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -439,7 +489,7 @@ CREATE TABLE "PlaceMembership" (
 );
 
 -- CreateTable
-CREATE TABLE "AppSetting" (
+CREATE TABLE IF NOT EXISTS "AppSetting" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
@@ -452,7 +502,7 @@ CREATE TABLE "AppSetting" (
 );
 
 -- CreateTable
-CREATE TABLE "Event" (
+CREATE TABLE IF NOT EXISTS "Event" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "placeId" TEXT,
@@ -476,7 +526,7 @@ CREATE TABLE "Event" (
 );
 
 -- CreateTable
-CREATE TABLE "EventTranslation" (
+CREATE TABLE IF NOT EXISTS "EventTranslation" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -492,7 +542,7 @@ CREATE TABLE "EventTranslation" (
 );
 
 -- CreateTable
-CREATE TABLE "EventTag" (
+CREATE TABLE IF NOT EXISTS "EventTag" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "tagId" TEXT NOT NULL,
@@ -501,7 +551,7 @@ CREATE TABLE "EventTag" (
 );
 
 -- CreateTable
-CREATE TABLE "EventCategory" (
+CREATE TABLE IF NOT EXISTS "EventCategory" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
@@ -511,7 +561,7 @@ CREATE TABLE "EventCategory" (
 );
 
 -- CreateTable
-CREATE TABLE "PushSubscription" (
+CREATE TABLE IF NOT EXISTS "PushSubscription" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
@@ -526,7 +576,7 @@ CREATE TABLE "PushSubscription" (
 );
 
 -- CreateTable
-CREATE TABLE "EventLog" (
+CREATE TABLE IF NOT EXISTS "EventLog" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -541,7 +591,7 @@ CREATE TABLE "EventLog" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteDomain" (
+CREATE TABLE IF NOT EXISTS "SiteDomain" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "domain" TEXT NOT NULL,
@@ -555,7 +605,7 @@ CREATE TABLE "SiteDomain" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteInstance" (
+CREATE TABLE IF NOT EXISTS "SiteInstance" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "lang" "Lang" NOT NULL,
@@ -572,7 +622,7 @@ CREATE TABLE "SiteInstance" (
 );
 
 -- CreateTable
-CREATE TABLE "SiteSubscription" (
+CREATE TABLE IF NOT EXISTS "SiteSubscription" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "plan" "SubscriptionPlan" NOT NULL DEFAULT 'BASIC',
@@ -590,7 +640,7 @@ CREATE TABLE "SiteSubscription" (
 );
 
 -- CreateTable
-CREATE TABLE "PlaceSubscription" (
+CREATE TABLE IF NOT EXISTS "PlaceSubscription" (
     "id" TEXT NOT NULL,
     "placeId" TEXT NOT NULL,
     "plan" "SubscriptionPlan" NOT NULL DEFAULT 'BASIC',
@@ -608,7 +658,7 @@ CREATE TABLE "PlaceSubscription" (
 );
 
 -- CreateTable
-CREATE TABLE "SubscriptionHistory" (
+CREATE TABLE IF NOT EXISTS "SubscriptionHistory" (
     "id" TEXT NOT NULL,
     "scope" TEXT NOT NULL,
     "subscriptionId" TEXT NOT NULL,
@@ -630,7 +680,7 @@ CREATE TABLE "SubscriptionHistory" (
 );
 
 -- CreateTable
-CREATE TABLE "Gallery" (
+CREATE TABLE IF NOT EXISTS "Gallery" (
     "id" TEXT NOT NULL,
     "siteId" TEXT NOT NULL,
     "placeId" TEXT,
