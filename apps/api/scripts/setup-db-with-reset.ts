@@ -234,6 +234,19 @@ async function main() {
     console.warn(siteKeyError.message);
   }
 
+  // Ensure default site exists and is active
+  console.log("🔧 Ensuring default site exists...");
+  try {
+    execSync("tsx scripts/ensure-default-site.ts", {
+      stdio: "inherit",
+      cwd: apiDir,
+    });
+    console.log("✅ Default site ensured");
+  } catch (defaultSiteError: any) {
+    console.warn("⚠️  Default site check failed (this might be okay if no sites exist)");
+    console.warn(defaultSiteError.message);
+  }
+
   console.log("✅ Database setup completed");
 }
 

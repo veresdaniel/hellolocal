@@ -217,18 +217,31 @@ export class AdminSiteService {
       },
     });
 
-    // Create SiteKey records for each language that has a translation
-    // This enables multi-site mode to work with this site
-    for (const translation of dto.translations) {
-      await this.prisma.siteKey.create({
-        data: {
+    // Create SiteKey records for ALL languages (hu, en, de)
+    // This ensures the site is accessible via any language route, even if translation doesn't exist yet
+    // The middleware will fallback to Site.slug if SiteKey is not found, but it's better to have all SiteKeys
+    const allLanguages: Lang[] = ["hu", "en", "de"];
+    for (const lang of allLanguages) {
+      // Check if SiteKey already exists (shouldn't happen, but just in case)
+      const existingKey = await this.prisma.siteKey.findFirst({
+        where: {
           siteId: site.id,
-          lang: translation.lang,
-          slug: normalizedSlug, // Use normalized slug (accent-free) as the public-facing slug
-          isPrimary: true,
-          isActive: true,
+          lang,
+          slug: normalizedSlug,
         },
       });
+
+      if (!existingKey) {
+        await this.prisma.siteKey.create({
+          data: {
+            siteId: site.id,
+            lang,
+            slug: normalizedSlug, // Use normalized slug (accent-free) as the public-facing slug
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+      }
     }
 
     return site;
@@ -342,7 +355,9 @@ export class AdminSiteService {
           },
         });
 
-        // If this is a new translation (didn't exist before), create SiteKey for it
+        // If this is a new translation (didn't exist before), ensure SiteKey exists for this language
+        // Note: We should ensure SiteKey exists for ALL languages, not just when translation is added
+        // But for now, we'll create it when translation is added to maintain backward compatibility
         if (!existingTranslation) {
           // Use normalized slug (either from dto or existing site slug)
           const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
@@ -367,6 +382,38 @@ export class AdminSiteService {
               },
             });
           }
+        }
+      }
+      
+      // After processing translations, ensure SiteKey exists for ALL languages
+      // This ensures the site is accessible via any language route
+      const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
+      const allLanguages: Lang[] = ["hu", "en", "de"];
+      for (const lang of allLanguages) {
+        const existingKey = await this.prisma.siteKey.findFirst({
+          where: {
+            siteId: id,
+            lang,
+            slug: siteSlug,
+          },
+        });
+        
+        if (!existingKey) {
+          await this.prisma.siteKey.create({
+            data: {
+              siteId: id,
+              lang,
+              slug: siteSlug,
+              isPrimary: true,
+              isActive: true,
+            },
+          });
+        } else if (!existingKey.isActive || !existingKey.isPrimary) {
+          // Ensure existing SiteKey is active and primary
+          await this.prisma.siteKey.update({
+            where: { id: existingKey.id },
+            data: { isActive: true, isPrimary: true },
+          });
         }
       }
     }

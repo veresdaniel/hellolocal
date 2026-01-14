@@ -39,13 +39,26 @@ export class PlatformSettingsService {
     if (!siteKey) {
       // Single-site mode: use default site
       const defaultSlug = process.env.DEFAULT_SITE_SLUG ?? "etyek-budai";
-      const defaultSite = await this.prisma.site.findUnique({
+      let defaultSite = await this.prisma.site.findUnique({
         where: { slug: defaultSlug },
-        select: { id: true, slug: true },
+        select: { id: true, slug: true, isActive: true },
       });
-      if (!defaultSite) throw new NotFoundException("Default site not found");
+      
+      // If default site doesn't exist or is inactive, use first active site
+      if (!defaultSite || !defaultSite.isActive) {
+        defaultSite = await this.prisma.site.findFirst({
+          where: { isActive: true },
+          select: { id: true, slug: true, isActive: true },
+          orderBy: { createdAt: 'asc' }, // Use oldest active site as fallback
+        });
+        
+        if (!defaultSite) {
+          throw new NotFoundException("No active site found. Please create at least one active site.");
+        }
+      }
+      
       siteId = defaultSite.id;
-      resolvedSiteKey = defaultSlug;
+      resolvedSiteKey = defaultSite.slug;
     } else {
       // Multi-site mode: lookup SiteKey
       // Note: Since unique constraint is now [siteId, lang, slug], we use findFirst

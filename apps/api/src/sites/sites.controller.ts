@@ -160,12 +160,22 @@ export class SitesController {
       } else {
         // User has no sites, use default site
         const defaultSiteSlug = this.configService.get<string>("DEFAULT_SITE_SLUG") ?? "etyek-budai";
-        const defaultSite = await this.prisma.site.findUnique({
+        let defaultSite = await this.prisma.site.findUnique({
           where: { slug: defaultSiteSlug },
+          select: { id: true, slug: true, isActive: true },
         });
 
-        if (!defaultSite) {
-          throw new NotFoundException("Default site not found. Please contact support.");
+        // If default site doesn't exist or is inactive, use first active site
+        if (!defaultSite || !defaultSite.isActive) {
+          defaultSite = await this.prisma.site.findFirst({
+            where: { isActive: true },
+            select: { id: true, slug: true, isActive: true },
+            orderBy: { createdAt: 'asc' }, // Use oldest active site as fallback
+          });
+
+          if (!defaultSite) {
+            throw new NotFoundException("No active site found. Please create at least one active site.");
+          }
         }
 
         targetSiteId = defaultSite.id;
