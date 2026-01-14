@@ -14,6 +14,8 @@
     "db:setup": "tsx scripts/setup-db.ts",
     "db:setup:reset": "tsx scripts/setup-db-with-reset.ts",
     "db:seed": "prisma db seed",
+    "db:activate-sites": "tsx scripts/activate-all-sites.ts",
+    "db:ensure-site-keys": "tsx scripts/ensure-site-keys.ts",
     "db:fix-admin": "tsx scripts/fix-admin-user.ts",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
     "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",

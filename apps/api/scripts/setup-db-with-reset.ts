@@ -208,6 +208,32 @@ async function main() {
     console.warn(seedError.message);
   }
 
+  // Activate all sites (ensure they're enabled for production)
+  console.log("🔧 Activating all sites...");
+  try {
+    execSync("tsx scripts/activate-all-sites.ts", {
+      stdio: "inherit",
+      cwd: apiDir,
+    });
+    console.log("✅ Sites activated");
+  } catch (activateError: any) {
+    console.warn("⚠️  Site activation failed (this might be okay if no sites exist)");
+    console.warn(activateError.message);
+  }
+
+  // Ensure all sites have SiteKey entries for all languages
+  console.log("🔧 Ensuring SiteKey entries for all sites...");
+  try {
+    execSync("tsx scripts/ensure-site-keys.ts", {
+      stdio: "inherit",
+      cwd: apiDir,
+    });
+    console.log("✅ SiteKeys ensured");
+  } catch (siteKeyError: any) {
+    console.warn("⚠️  SiteKey creation failed (this might be okay if no sites exist)");
+    console.warn(siteKeyError.message);
+  }
+
   console.log("✅ Database setup completed");
 }
 
