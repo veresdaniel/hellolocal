@@ -2,19 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Lang } from "../config";
 import type { PlatformSettings } from "./TenantOutletContext";
+import { apiGetPublic } from "../api/client";
 
 type Args = { lang: Lang; siteKey: string; tenantKey?: string }; // Support both for backward compatibility
 
 async function fetchPlatformSettings({ lang, siteKey, tenantKey }: Args): Promise<PlatformSettings> {
   // Backend expects path parameters: /api/public/:lang/:siteKey/platform
   const key = siteKey || tenantKey || "";
-  const url = `/api/public/${lang}/${key}/platform`;
-
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) {
-    throw new Error(`Failed to load platform settings (${res.status})`);
-  }
-  return res.json();
+  // Use apiGetPublic to ensure correct API base URL in production
+  return apiGetPublic<PlatformSettings>(`/public/${lang}/${key}/platform`);
 }
 
 export function usePlatformSettings(args: Args) {

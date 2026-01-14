@@ -127,6 +127,10 @@ export class SiteResolveMiddleware implements NestMiddleware {
       const lang = this.normalizeLang(langParam);
       const siteKey = siteKeyParam.trim();
 
+      this.logger.debug(
+        `Attempting site resolution: lang=${lang}, siteKey=${siteKey}, path=${req.path}`
+      );
+
       // Step 1: siteKey + lang → SiteKey (SiteKey table lookup)
       // Note: Since unique constraint is now [siteId, lang, slug], we use findFirst
       // and prioritize isPrimary=true entries
@@ -156,6 +160,12 @@ export class SiteResolveMiddleware implements NestMiddleware {
         },
       });
 
+      if (!siteKeyRecord) {
+        this.logger.warn(
+          `SiteKey not found: lang=${lang}, siteKey=${siteKey}. Checking for Site.slug fallback...`
+        );
+      }
+
       // If SiteKey not found, try fallback to Site.slug (for backward compatibility)
       if (!siteKeyRecord || !siteKeyRecord.isActive) {
         const site = await this.prisma.site.findUnique({
@@ -177,6 +187,17 @@ export class SiteResolveMiddleware implements NestMiddleware {
           );
           return next();
         }
+
+        // Log detailed error for debugging
+        this.logger.error(
+          `Site resolution failed: lang=${lang}, siteKey=${siteKey}, path=${req.path}`
+        );
+        this.logger.error(
+          `  - SiteKey lookup: ${siteKeyRecord ? 'found but inactive' : 'not found'}`
+        );
+        this.logger.error(
+          `  - Site.slug fallback: ${site ? (site.isActive ? 'found but inactive' : 'found but not active') : 'not found'}`
+        );
 
         throw new NotFoundException(`Site key not found: ${siteKey} for lang: ${lang}`);
       }
@@ -233,6 +254,12 @@ export class SiteResolveMiddleware implements NestMiddleware {
       });
 
       if (!site || !site.isActive) {
+        this.logger.error(
+          `Site verification failed: siteId=${siteKeyRecord.siteId}, siteKey=${siteKey}, lang=${lang}`
+        );
+        this.logger.error(
+          `  - Site exists: ${site ? 'yes' : 'no'}, isActive: ${site?.isActive ?? 'N/A'}`
+        );
         throw new NotFoundException(`Site not found or inactive: siteId=${siteKeyRecord.siteId}`);
       }
 

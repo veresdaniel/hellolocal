@@ -208,30 +208,42 @@ async function main() {
     console.warn(seedError.message);
   }
 
-  // Activate all sites (ensure they're enabled for production)
-  console.log("🔧 Activating all sites...");
+  // Comprehensive fix for all sites (activate + ensure SiteKeys)
+  console.log("🔧 Fixing all sites (activate + ensure SiteKeys)...");
   try {
-    execSync("tsx scripts/activate-all-sites.ts", {
+    execSync("tsx scripts/fix-all-sites.ts", {
       stdio: "inherit",
       cwd: apiDir,
     });
-    console.log("✅ Sites activated");
-  } catch (activateError: any) {
-    console.warn("⚠️  Site activation failed (this might be okay if no sites exist)");
-    console.warn(activateError.message);
-  }
+    console.log("✅ All sites fixed");
+  } catch (fixError: any) {
+    console.warn("⚠️  Site fix failed, trying individual scripts...");
+    console.warn(fixError.message);
+    
+    // Fallback to individual scripts if comprehensive fix fails
+    try {
+      console.log("🔧 Activating all sites...");
+      execSync("tsx scripts/activate-all-sites.ts", {
+        stdio: "inherit",
+        cwd: apiDir,
+      });
+      console.log("✅ Sites activated");
+    } catch (activateError: any) {
+      console.warn("⚠️  Site activation failed");
+      console.warn(activateError.message);
+    }
 
-  // Ensure all sites have SiteKey entries for all languages
-  console.log("🔧 Ensuring SiteKey entries for all sites...");
-  try {
-    execSync("tsx scripts/ensure-site-keys.ts", {
-      stdio: "inherit",
-      cwd: apiDir,
-    });
-    console.log("✅ SiteKeys ensured");
-  } catch (siteKeyError: any) {
-    console.warn("⚠️  SiteKey creation failed (this might be okay if no sites exist)");
-    console.warn(siteKeyError.message);
+    try {
+      console.log("🔧 Ensuring SiteKey entries...");
+      execSync("tsx scripts/ensure-site-keys.ts", {
+        stdio: "inherit",
+        cwd: apiDir,
+      });
+      console.log("✅ SiteKeys ensured");
+    } catch (siteKeyError: any) {
+      console.warn("⚠️  SiteKey creation failed");
+      console.warn(siteKeyError.message);
+    }
   }
 
   // Ensure default site exists and is active

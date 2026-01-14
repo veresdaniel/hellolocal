@@ -1,255 +1,136 @@
-# ✅ Render.com Environment Variables - Ellenőrző Lista
+# Render.com Environment Variables Checklist
 
-## 🔴 KRITIKUS - Backend API (`hellolocal-api`)
+Ez a dokumentum tartalmazza az összes szükséges environment változót, amit be kell állítani a Render.com-on a helyes működéshez.
+
+## Backend API Service (`hellolocal-api`)
 
 ### Kötelező változók:
 
-1. **`CORS_ORIGIN`** ⚠️ **LEGFONTOSABB!**
-   ```
-   CORS_ORIGIN=https://hellolocal-fe.onrender.com
-   ```
-   - **Fontos**: Pontosan egyezzen a frontend URL-lel!
-   - **Nincs trailing slash!**
-   - Ha több origin-t szeretnél: `https://hellolocal-fe.onrender.com,https://hellolocal.com`
+1. **`DATABASE_URL`**
+   - Render Internal Database URL
+   - Formátum: `postgresql://user:password@host:port/database`
+   - Render Dashboard → Database → Internal Database URL
 
-2. **`DATABASE_URL`**
-   ```
-   DATABASE_URL=postgresql://user:password@dpg-xxxxx-INTERNAL/database
-   ```
-   - **Fontos**: Használd az **Internal Database URL**-t (nem az External-t)!
-   - Formátum: `postgresql://...` (nem `postgres://...`)
-
-3. **`JWT_SECRET`**
-   ```
-   JWT_SECRET=<64 karakteres random string>
-   ```
+2. **`JWT_SECRET`**
+   - JWT token titkosítási kulcs
    - Generálás: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   - Hossz: minimum 32 karakter
 
-4. **`NODE_ENV`**
-   ```
-   NODE_ENV=production
-   ```
+3. **`CORS_ORIGIN`** ⚠️ **KRITIKUS**
+   - Frontend URL-ek (vesszővel elválasztva)
+   - Példa: `https://hellolocal-fe.onrender.com`
+   - Több domain esetén: `https://hellolocal-fe.onrender.com,https://hellolocal.com`
+   - **Ha nincs beállítva, minden frontend request blokkolva lesz!**
 
-5. **`PORT`**
-   ```
-   PORT=3002
-   ```
+4. **`FRONTEND_URL`** (opcionális, fallback CORS_ORIGIN-hez)
+   - Frontend URL
+   - Példa: `https://hellolocal-fe.onrender.com`
+   - Használható CORS_ORIGIN helyett, ha csak egy domain van
 
-### Opcionális (de ajánlott):
-
-6. **`FRONTEND_URL`**
-   ```
-   FRONTEND_URL=https://hellolocal-fe.onrender.com
-   ```
-   - Fallback-ként használható, ha `CORS_ORIGIN` nincs beállítva
-   - **Ajánlott**: Állítsd be explicit módon
-
-7. **`JWT_EXPIRES_IN`**
-   ```
-   JWT_EXPIRES_IN=7d
-   ```
-
----
-
-## 🟢 Frontend (`hellolocal-fe` vagy `hellolocal-frontend`)
-
-### Kötelező változók:
-
-1. **`VITE_API_URL`** ⚠️ **LEGFONTOSABB!**
-   ```
-   VITE_API_URL=https://hellolocal-api.onrender.com
-   ```
-   - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
-   - Nincs trailing slash!
-
-2. **`API_URL`**
-   ```
-   API_URL=https://hellolocal-api.onrender.com
-   ```
-   - Runtime változó (ha a server.js használja)
-
-3. **`FRONTEND_URL`**
-   ```
-   FRONTEND_URL=https://hellolocal-fe.onrender.com
-   ```
-
-4. **`VITE_FRONTEND_URL`**
-   ```
-   VITE_FRONTEND_URL=https://hellolocal-fe.onrender.com
-   ```
-   - Build-time változó
+### Opcionális változók:
 
 5. **`NODE_ENV`**
-   ```
-   NODE_ENV=production
-   ```
+   - Alapértelmezett: `production` (beállítva a `render.yaml`-ban)
 
-### Opcionális (ha használod a Cloudinary-t):
+6. **`PORT`**
+   - Alapértelmezett: `3002` (beállítva a `render.yaml`-ban)
 
-8. **`VITE_CLOUDINARY_CLOUD_NAME`**
-   ```
-   VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
-   ```
-   - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
-   - Csak akkor szükséges, ha használod a TipTap editor-t képek/videók feltöltéséhez
+7. **`JWT_EXPIRES_IN`**
+   - Alapértelmezett: `7d`
+   - Példa: `15m` (access token), `7d` (refresh token)
 
-9. **`VITE_CLOUDINARY_API_KEY`**
-   ```
-   VITE_CLOUDINARY_API_KEY=your_api_key
-   ```
-   - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
+8. **`VAPID_PUBLIC_KEY`**, **`VAPID_PRIVATE_KEY`**, **`VAPID_SUBJECT`**
+   - Web Push Notification kulcsok
+   - Generálás: `npx web-push generate-vapid-keys`
 
-10. **`VITE_CLOUDINARY_UPLOAD_PRESET`**
-    ```
-    VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset_name
-    ```
-    - **Fontos**: Build-time változó! Változtatás után újra kell build-elni!
+## Frontend Web Service (`hellolocal-frontend`)
 
----
+### Kötelező változók:
 
-## 🔍 Gyors Diagnosztika
+1. **`VITE_API_URL`** ⚠️ **KRITIKUS**
+   - Backend API URL
+   - Példa: `https://hellolocal-api.onrender.com`
+   - **Fontos**: Build-time változó, újra kell buildelni, ha megváltozik!
 
-### 1. CORS Hiba Ellenőrzése
+2. **`FRONTEND_URL`** (opcionális, SEO-hoz)
+   - Frontend URL
+   - Példa: `https://hellolocal-fe.onrender.com`
 
-**Probléma**: `PreflightMissingAllowOriginHeader` vagy `CORS error`
+3. **`VITE_HAS_MULTIPLE_SITES`** (opcionális)
+   - Multi-site mód bekapcsolása
+   - Értékek: `"true"` vagy `"false"`
+   - Alapértelmezett: `true` (ha nincs beállítva)
+   - **Fontos**: Build-time változó!
 
-**Ellenőrzés**:
-1. Menj a **Backend API** service-hez
-2. Kattints az **"Environment"** tab-ra
-3. Ellenőrizd a `CORS_ORIGIN` értékét
-4. **Fontos**: A böngészőben nézd meg a frontend URL-t (pl. `https://hellolocal-fe.onrender.com`)
-5. A `CORS_ORIGIN`-nek **pontosan** egyeznie kell!
+### Opcionális változók:
 
-**Példa**:
-- Frontend URL: `https://hellolocal-fe.onrender.com`
-- `CORS_ORIGIN` értéke: `https://hellolocal-fe.onrender.com` ✅
-- `CORS_ORIGIN` értéke: `https://hellolocal-frontend.onrender.com` ❌ (nem egyezik!)
+4. **`NODE_ENV`**
+   - Alapértelmezett: `production` (beállítva a `render.yaml`-ban)
 
-### 2. 503 Service Unavailable Ellenőrzése
+5. **`VITE_VAPID_PUBLIC_KEY`**
+   - Web Push Notification public key (meg kell egyezzen a backend VAPID_PUBLIC_KEY-jével)
 
-**Probléma**: Backend API 503-as hibát ad vissza
+6. **`VITE_CLOUDINARY_CLOUD_NAME`**, **`VITE_CLOUDINARY_API_KEY`**, **`VITE_CLOUDINARY_UPLOAD_PRESET`**
+   - Cloudinary konfiguráció (TipTap editor image/video upload-hoz)
 
-**Ellenőrzés**:
-1. Menj a **Backend API** service-hez
-2. Kattints a **"Logs"** tab-ra
-3. Nézd meg, hogy fut-e a service
-4. Ha "spinned down", várj 1-2 percet (Render free tier 15 perc inaktivitás után alvó módba kerül)
+## Gyors ellenőrző lista
 
-**Megoldás**:
-- Várj 1-2 percet, amíg a service felébred
-- Vagy upgrade-elj fizetős tervre
+### Backend API:
+- [ ] `DATABASE_URL` beállítva
+- [ ] `JWT_SECRET` beállítva
+- [ ] `CORS_ORIGIN` beállítva (frontend URL-ek)
+- [ ] `FRONTEND_URL` beállítva (opcionális)
 
-### 3. Backend Logok Ellenőrzése
+### Frontend:
+- [ ] `VITE_API_URL` beállítva (backend API URL)
+- [ ] `VITE_HAS_MULTIPLE_SITES` beállítva (ha szükséges)
+- [ ] `FRONTEND_URL` beállítva (opcionális)
 
-A backend indításakor a logokban látnod kell:
+## Gyakori problémák
 
-**Ha CORS be van állítva:**
-```
-✅ CORS enabled for origins: https://hellolocal-fe.onrender.com
-```
+### "Site not found" hiba
+- Ellenőrizd, hogy a site-ok aktívak-e az adatbázisban
+- Futtasd: `pnpm db:fix-all-sites` a backend-en
+- Ellenőrizd a SiteKey-eket: `pnpm db:debug-site <site-slug>`
 
-**Ha CORS nincs beállítva:**
-```
-⚠️  WARNING: CORS_ORIGIN and FRONTEND_URL are not set! CORS will be disabled and frontend requests will fail!
-```
+### CORS hiba (Network tab-ban pending requests)
+- Ellenőrizd, hogy a `CORS_ORIGIN` tartalmazza-e a frontend URL-t
+- Ellenőrizd a backend logokat: `❌ CORS blocked: Origin "..." not in allowed list`
+- A `CORS_ORIGIN` értéke pontosan egyezzen a frontend URL-lel (https://...)
 
-**Ha egy kérés blokkolva van:**
-```
-❌ CORS blocked: Origin "https://hellolocal-fe.onrender.com" not in allowed list: [https://hellolocal-frontend.onrender.com]
-```
+### API hívások nem működnek
+- Ellenőrizd, hogy a `VITE_API_URL` helyes-e
+- **Fontos**: A `VITE_*` változókat build-time kell beállítani!
+- Ha megváltoztatod, újra kell buildelni a frontend-et
 
----
+### Multi-site mód nem működik
+- Ellenőrizd, hogy a `VITE_HAS_MULTIPLE_SITES` be van-e állítva `"true"`-ra
+- **Fontos**: Build-time változó, újra kell buildelni!
+- Ellenőrizd a build logokat, hogy a változó be van-e injektálva
 
-## 🛠️ Gyors Javítás Lépések
+## Render Dashboard beállítás
 
-### CORS Hiba Javítása:
+1. Menj a Render Dashboard-ra
+2. Válaszd ki a service-t (pl. `hellolocal-api`)
+3. Kattints az "Environment" fülre
+4. Add hozzá a szükséges változókat
+5. **Fontos**: A `VITE_*` változókat a frontend service-ben kell beállítani!
+6. Mentsd el és várj a redeploy-re
 
-1. **Határozd meg a pontos frontend URL-t**
-   - Nyisd meg a frontend-et a böngészőben
-   - Másold ki a pontos URL-t (pl. `https://hellolocal-fe.onrender.com`)
+## Tesztelés
 
-2. **Frissítsd a `CORS_ORIGIN` változót**
-   - Menj a Backend API service-hez
-   - Environment tab → `CORS_ORIGIN`
-   - Frissítsd a pontos frontend URL-re
-   - **Nincs trailing slash!**
+Miután beállítottad az env var-okat:
 
-3. **Mentsd el és várj**
-   - Kattints "Save Changes"
-   - Várj 1-2 percet, amíg a backend újraindul
+1. **Backend logok ellenőrzése**:
+   - Keress rá: `✅ CORS enabled for origins: ...`
+   - Ha nem látod, akkor a `CORS_ORIGIN` nincs beállítva!
 
-4. **Ellenőrizd a logokat**
-   - Logs tab → Nézd meg, hogy látod-e: `✅ CORS enabled for origins: ...`
+2. **Frontend Network tab**:
+   - Nyisd meg a DevTools Network tab-ot
+   - Próbáld meg betölteni egy site-ot
+   - Ha a request-ek pending maradnak, valószínűleg CORS probléma
 
-5. **Teszteld újra**
-   - Frissítsd a frontend oldalt
-   - A CORS hibáknak megszűnniük kell
-
----
-
-## 📋 Teljes Checklist
-
-### Backend API (`hellolocal-api`)
-
-- [ ] `CORS_ORIGIN` be van állítva és **pontosan egyezik** a frontend URL-lel
-- [ ] `DATABASE_URL` be van állítva (Internal Database URL)
-- [ ] `JWT_SECRET` be van állítva (erős, random generált)
-- [ ] `NODE_ENV=production`
-- [ ] `PORT=3002`
-- [ ] Backend logokban látod: `✅ CORS enabled for origins: ...`
-
-### Frontend (`hellolocal-fe`)
-
-- [ ] `VITE_API_URL` be van állítva (Backend API URL)
-- [ ] `API_URL` be van állítva (ha használja a server.js)
-- [ ] `FRONTEND_URL` be van állítva
-- [ ] `VITE_FRONTEND_URL` be van állítva
-- [ ] **Fontos**: `VITE_*` változók miatt újra kell build-elni, ha módosítod!
-
----
-
-## 🚨 Gyakori Hibák
-
-### 1. CORS_ORIGIN nem egyezik a frontend URL-lel
-
-**Hiba**: `PreflightMissingAllowOriginHeader`
-
-**Ok**: 
-- `CORS_ORIGIN=https://hellolocal-frontend.onrender.com`
-- De a frontend: `https://hellolocal-fe.onrender.com`
-
-**Megoldás**: Frissítsd a `CORS_ORIGIN`-t a pontos frontend URL-re
-
-### 2. Trailing Slash
-
-**Hiba**: CORS hiba
-
-**Ok**: `CORS_ORIGIN=https://hellolocal-fe.onrender.com/` (van trailing slash)
-
-**Megoldás**: Távolítsd el a trailing slash-t
-
-### 3. HTTP vs HTTPS
-
-**Hiba**: CORS hiba
-
-**Ok**: `CORS_ORIGIN=http://hellolocal-fe.onrender.com` (HTTP)
-
-**Megoldás**: Használj HTTPS-et: `https://hellolocal-fe.onrender.com`
-
-### 4. VITE_* változók nem frissülnek
-
-**Hiba**: Frontend még mindig a régi API URL-t használja
-
-**Ok**: `VITE_*` változók build-time-ban vannak beégetve
-
-**Megoldás**: 
-1. Frissítsd a `VITE_API_URL` változót
-2. Kattints "Manual Deploy" → "Deploy latest commit"
-
----
-
-## 📞 További Segítség
-
-- [CORS Hibaelhárítási Útmutató](./CORS_TROUBLESHOOTING.md)
-- [Render.com Deployment Útmutató](./deployment-render.md)
-- [Biztonsági Javítások](./SECURITY_FIXES.md)
+3. **Console ellenőrzése**:
+   - Nyisd meg a browser console-t
+   - Keress rá CORS hibákra
+   - Ha van "CORS policy" hiba, akkor a `CORS_ORIGIN` rosszul van beállítva

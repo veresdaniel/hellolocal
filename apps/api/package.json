@@ -18,6 +18,7 @@
     "db:ensure-site-keys": "tsx scripts/ensure-site-keys.ts",
     "db:ensure-default-site": "tsx scripts/ensure-default-site.ts",
     "db:debug-site": "tsx scripts/debug-site.ts",
+    "db:fix-all-sites": "tsx scripts/fix-all-sites.ts",
     "db:fix-admin": "tsx scripts/fix-admin-user.ts",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
     "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",
