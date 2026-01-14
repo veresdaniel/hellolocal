@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Lang } from "../config";
 import type { PlatformSettings } from "./SiteOutletContext";
-import { apiGetPublic } from "../api/client";
+import { apiGetPublic } from "../../api/client";
 
 type Args = { lang: Lang; siteKey: string; tenantKey?: string }; // Support both for backward compatibility
 
