@@ -10,7 +10,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { MapComponent } from "../../components/MapComponent";
-import { getSite, updateSite, getBrands, getSiteInstances, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
+import { getSite, updateSite, getBrands, getSiteInstances, createSiteInstance, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
 import { getSiteSubscription, getSiteEntitlements, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 
@@ -93,6 +93,45 @@ export function SiteEditPage() {
       const data = await getSite(id);
       setSite(data);
       
+      // Use SiteInstances from getSite API if available (fallback)
+      if (data.siteInstances && data.siteInstances.length > 0) {
+        console.log(`[SiteEditPage] Using SiteInstances from getSite API: ${data.siteInstances.length} instances`);
+        setSiteInstances(data.siteInstances);
+      } else if (data.translations && data.translations.length > 0) {
+        // If no SiteInstances but translations exist, try to create them automatically
+        console.warn(`[SiteEditPage] No SiteInstances found, but ${data.translations.length} translations exist. Attempting to create SiteInstances...`);
+        const createdInstances: SiteInstance[] = [];
+        let isFirst = true;
+        
+        for (const translation of data.translations) {
+          try {
+            const newInstance = await createSiteInstance({
+              siteId: data.id,
+              lang: translation.lang as "hu" | "en" | "de",
+              isDefault: isFirst,
+              features: {
+                isCrawlable: true,
+                enableEvents: true,
+                enableBlog: false,
+                enableStaticPages: true,
+              },
+            });
+            createdInstances.push(newInstance);
+            isFirst = false;
+            console.log(`[SiteEditPage] Created SiteInstance for lang ${translation.lang}`);
+          } catch (err: any) {
+            console.error(`[SiteEditPage] Failed to create SiteInstance for lang ${translation.lang}:`, err);
+            // Continue with other languages even if one fails
+          }
+        }
+        
+        if (createdInstances.length > 0) {
+          console.log(`[SiteEditPage] Created ${createdInstances.length} SiteInstances automatically`);
+          setSiteInstances(createdInstances);
+          showToast(t("admin.siteEdit.siteInstancesCreated") || `${createdInstances.length} SiteInstance létrehozva`, "success");
+        }
+      }
+      
       // Populate form data
       const translationHu = data.translations.find((t) => t.lang === "hu");
       const translationEn = data.translations.find((t) => t.lang === "en");
@@ -140,9 +179,16 @@ export function SiteEditPage() {
     if (!id) return;
     try {
       const data = await getSiteInstances(id);
-      setSiteInstances(data);
+      if (data && data.length > 0) {
+        console.log(`[SiteEditPage] Loaded SiteInstances from API: ${data.length} instances`);
+        setSiteInstances(data);
+      } else {
+        console.warn(`[SiteEditPage] No SiteInstances returned from API for site ${id}`);
+        // Keep existing SiteInstances from getSite API if available
+      }
     } catch (err) {
       console.error("Failed to load site instances", err);
+      // Don't clear existing SiteInstances if load fails - keep what we got from getSite
     }
   };
 
