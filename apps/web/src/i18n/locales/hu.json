@@ -198,6 +198,7 @@
     "menu": "Menü",
     "noResults": "Nincs találat",
     "filtersTitle": "Szűrők",
+    "placeSlugMissing": "Részletek hamarosan...",
     "filters": {
       "all": "Összes",
       "openNow": "Most nyitva",
@@ -495,6 +496,7 @@
         "createInstanceFirst": "Először hozz létre egy SiteInstance-t ezen a nyelven",
         "instanceNotFound": "SiteInstance nem található"
       },
+      "siteInstancesCreated": "{{count}} oldal példány sikeresen létrehozva",
       "subscription": {
         "title": "Előfizetés",
         "limits": "Korlátok",
@@ -924,6 +926,10 @@
       "createBrandFailed": "A márka létrehozása sikertelen",
       "updateBrandFailed": "A márka frissítése sikertelen",
       "deleteBrandFailed": "A márka törlése sikertelen",
+      "loadSiteInstancesFailed": "Az oldal példányok betöltése sikertelen",
+      "createSiteInstanceFailed": "Az oldal példány létrehozása sikertelen",
+      "updateSiteInstanceFailed": "Az oldal példány frissítése sikertelen",
+      "deleteSiteInstanceFailed": "Az oldal példány törlése sikertelen",
       "loadTenantMembershipsFailed": "A site tagságok betöltése sikertelen",
       "createTenantMembershipFailed": "A site tagság létrehozása sikertelen",
       "membershipAlreadyExistsEdit": "Ez a tagság már létezik. Az alábbi űrlapon szerkesztheted.",
@@ -1058,6 +1064,7 @@
       "deleteBrand": "Biztosan törölni szeretnéd ezt a márkát?",
       "deleteTenantMembership": "Biztosan törölni szeretnéd ezt a site tagságot?",
       "deletePlaceMembership": "Biztosan törölni szeretnéd ezt a hely tagságot?",
+      "deleteSiteInstance": "Biztosan törölni szeretnéd ezt az oldal példányt?",
       "disable2FA": "Biztosan letiltod a 2FA-t ennél a felhasználónál?"
     },
     "messages": {
