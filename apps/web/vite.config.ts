@@ -42,7 +42,7 @@ generateVersionJson();
 const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf-8"));
 const appVersion = packageJson.version || "0.1.0-beta";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     {
@@ -112,6 +112,10 @@ export default defineConfig({
     },
   },
   build: {
+    // Remove all console statements in production build
+    esbuild: {
+      drop: mode === "production" ? ["console", "debugger"] : [],
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -134,4 +138,4 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000, // Increase limit to 1MB for better visibility
   },
-});
+}));

@@ -1029,10 +1029,8 @@ function sample<T>(arr: T[], n: number, rand: () => number) {
 }
 
 async function clearAllData() {
-  console.log("🗑️  Clearing all data from database...");
-  
   try {
-    // First, count existing records to show what will be deleted
+    // First, count existing records to check if there's data to delete
     const counts = {
       events: await prisma.event.count({}),
       places: await prisma.place.count({}),
@@ -1046,18 +1044,8 @@ async function clearAllData() {
     const totalRecords = Object.values(counts).reduce((sum, count) => sum + count, 0);
     
     if (totalRecords === 0) {
-      console.log("  ℹ️  Database is already empty, nothing to clear");
       return;
     }
-
-    console.log(`  ℹ️  Found existing data:`);
-    console.log(`    - ${counts.events} events`);
-    console.log(`    - ${counts.places} places`);
-    console.log(`    - ${counts.sites} sites`);
-    console.log(`    - ${counts.users} users`);
-    console.log(`    - ${counts.brands} brands`);
-    console.log(`    - ${counts.slugs} slugs`);
-    console.log(`    - ${counts.siteKeys} site keys`);
 
     // Use TRUNCATE CASCADE for faster and more reliable deletion
     // This will delete all data from all tables, respecting foreign key constraints
@@ -1115,16 +1103,10 @@ async function clearAllData() {
         truncatedCount++;
       } catch (error: any) {
         // Table might not exist or might be empty, that's okay
-        if (!error.message?.includes("does not exist") && !error.message?.includes("relation") && !error.message?.includes("cannot truncate")) {
-          console.warn(`  ⚠️  Could not truncate ${table}: ${error.message}`);
-        }
+        // Silently ignore table not found errors
       }
     }
-    
-    console.log(`  ✓ Truncated ${truncatedCount} tables`);
-    console.log("✅ Database cleared successfully");
   } catch (error: any) {
-    console.error(`❌ Error clearing database: ${error.message}`);
     throw error;
   }
 }
@@ -1456,7 +1438,6 @@ async function main() {
       if (existingEvent) {
         // Event already exists, use existing ID
         eventId = existingEvent.id;
-        console.log(`ℹ️  Event already exists: ${eventTitle}, using existing ID: ${eventId}`);
       } else {
         // Create new event
         const created = await prisma.event.create({
@@ -1501,7 +1482,6 @@ async function main() {
     // analytics
     await seedAnalytics(site.id, placeIds, 45, 9000 + sIdx * 999);
 
-    console.log(`✅ Seeded site ${site.slug}: places=${placeIds.length}`);
   }
 
   console.log("✅ Seed completed");
