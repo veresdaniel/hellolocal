@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getEvents, getPlatformSettings } from "../api/places.api";
+import { getEvents, getPlatformSettings, type Event } from "../api/places.api";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { buildUrl } from "../app/urls";
 import { Link } from "react-router-dom";
@@ -114,7 +114,7 @@ export function EventsList({ lang }: EventsListProps) {
     select: (data) => {
       // Filter: only show events that have showOnMap = true and haven't ended
       const now = new Date();
-      return data.filter((event) => {
+      const filtered = data.filter((event) => {
         // Only show if showOnMap is true (default to true if not set)
         if (event.showOnMap === false) return false;
         // Filter out past events (events that have ended)
@@ -124,6 +124,57 @@ export function EventsList({ lang }: EventsListProps) {
         // If no endDate, check startDate
         return new Date(event.startDate) >= now;
       });
+      
+      // Deduplicate events by ID and slug (in case backend returns duplicates with/without slugs)
+      // Prefer events with valid slugs (slug !== id) over those without
+      const seenById = new Map<string, Event>();
+      const seenBySlug = new Map<string, Event>(); // Also track by slug to catch duplicates with different IDs
+      
+      filtered.forEach((event) => {
+        const hasValidSlug = event.slug && event.slug !== event.id;
+        
+        // Check for duplicate by ID
+        const existingById = seenById.get(event.id);
+        if (existingById) {
+          // Duplicate ID found - prefer the one with a valid slug
+          const existingHasValidSlug = existingById.slug && existingById.slug !== existingById.id;
+          
+          if (hasValidSlug && !existingHasValidSlug) {
+            // Current event has valid slug, existing doesn't - replace
+            seenById.set(event.id, event);
+            if (hasValidSlug) {
+              seenBySlug.set(event.slug, event);
+            }
+          }
+          // Otherwise keep existing (do nothing)
+          return; // Skip this duplicate
+        }
+        
+        // Check for duplicate by slug (if valid slug)
+        if (hasValidSlug) {
+          const existingBySlug = seenBySlug.get(event.slug);
+          if (existingBySlug) {
+            // Same slug but different ID - prefer the one with valid slug over ID fallback
+            const existingHasValidSlug = existingBySlug.slug && existingBySlug.slug !== existingBySlug.id;
+            if (hasValidSlug && !existingHasValidSlug) {
+              // Current has valid slug, existing doesn't - replace
+              seenById.delete(existingBySlug.id);
+              seenById.set(event.id, event);
+              seenBySlug.set(event.slug, event);
+            }
+            // Otherwise keep existing (do nothing)
+            return; // Skip this duplicate
+          }
+        }
+        
+        // New event - add it
+        seenById.set(event.id, event);
+        if (hasValidSlug) {
+          seenBySlug.set(event.slug, event);
+        }
+      });
+      
+      return Array.from(seenById.values());
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes to check for new events
   });

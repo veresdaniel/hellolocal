@@ -148,18 +148,56 @@ export class AdminEventService {
         }
       }
 
-      // Create the slug
-      await this.prisma.slug.create({
-        data: {
+      // Check if slug already exists for this event and language
+      const existingSlugForEvent = await this.prisma.slug.findFirst({
+        where: {
           siteId,
           lang: translation.lang,
-          slug,
           entityType: SlugEntityType.event,
           entityId: eventId,
-          isPrimary: true,
-          isActive: true,
         },
       });
+
+      if (existingSlugForEvent) {
+        // Update existing slug instead of creating a new one
+        // First, set all other slugs for this event+lang to isPrimary=false
+        await this.prisma.slug.updateMany({
+          where: {
+            siteId,
+            lang: translation.lang,
+            entityType: SlugEntityType.event,
+            entityId: eventId,
+            id: { not: existingSlugForEvent.id },
+          },
+          data: {
+            isPrimary: false,
+          },
+        });
+        
+        // Update the existing slug
+        await this.prisma.slug.update({
+          where: { id: existingSlugForEvent.id },
+          data: {
+            slug,
+            isPrimary: true,
+            isActive: true,
+            redirectToId: null, // Clear any redirects
+          },
+        });
+      } else {
+        // Create new slug
+        await this.prisma.slug.create({
+          data: {
+            siteId,
+            lang: translation.lang,
+            slug,
+            entityType: SlugEntityType.event,
+            entityId: eventId,
+            isPrimary: true,
+            isActive: true,
+          },
+        });
+      }
     }
   }
 
@@ -254,6 +292,20 @@ export class AdminEventService {
           });
 
           if (!newSlugExists) {
+            // First, set all other slugs for this event+lang to isPrimary=false
+            await this.prisma.slug.updateMany({
+              where: {
+                siteId,
+                lang: translation.lang,
+                entityType: SlugEntityType.event,
+                entityId: eventId,
+                id: { not: existingSlug.id },
+              },
+              data: {
+                isPrimary: false,
+              },
+            });
+
             // Create new slug with isPrimary = true
             const newSlug = await this.prisma.slug.create({
               data: {
@@ -289,6 +341,20 @@ export class AdminEventService {
           }
         } else {
           // Slug hasn't changed, just update if needed
+          // First, set all other slugs for this event+lang to isPrimary=false
+          await this.prisma.slug.updateMany({
+            where: {
+              siteId,
+              lang: translation.lang,
+              entityType: SlugEntityType.event,
+              entityId: eventId,
+              id: { not: existingSlug.id },
+            },
+            data: {
+              isPrimary: false,
+            },
+          });
+
           await this.prisma.slug.update({
             where: { id: existingSlug.id },
             data: {
@@ -301,6 +367,19 @@ export class AdminEventService {
         }
       } else {
         // No existing slug, create new one
+        // First, set all other slugs for this event+lang to isPrimary=false (safety check)
+        await this.prisma.slug.updateMany({
+          where: {
+            siteId,
+            lang: translation.lang,
+            entityType: SlugEntityType.event,
+            entityId: eventId,
+          },
+          data: {
+            isPrimary: false,
+          },
+        });
+
         await this.prisma.slug.create({
           data: {
             siteId,

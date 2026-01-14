@@ -65,35 +65,61 @@ export function SlugInput({
   }, [sourceName, isManuallyEdited, localValue, onChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Intercept space key and replace with hyphen
+    // Intercept space key and replace with hyphen immediately
     if (e.key === " " || e.key === "Spacebar" || e.keyCode === 32) {
       e.preventDefault();
       e.stopPropagation();
+      
       const input = e.currentTarget;
       const start = input.selectionStart || 0;
       const end = input.selectionEnd || 0;
-      const currentValue = localValue;
+      // Use the actual input value, not localValue state (which might be out of sync)
+      const currentValue = input.value;
       
       // Insert hyphen at cursor position
-      const newValue = currentValue.slice(0, start) + "-" + currentValue.slice(end);
+      const newValue = 
+        currentValue.substring(0, start) + 
+        "-" + 
+        currentValue.substring(end);
       
-      // Process the new value
-      let processedValue = newValue
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-        .replace(/[^a-zA-Z0-9_-]/g, "") // Only allow alphanumeric, hyphens, and underscores
-        .replace(/-+/g, "-") // Remove consecutive hyphens
-        .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
-        .toLowerCase();
-      
-      setLocalValue(processedValue);
-      onChange(processedValue);
+      // Update state immediately
+      setLocalValue(newValue);
+      onChange(newValue);
       setIsManuallyEdited(true);
       
-      // Restore cursor position after state update
+      // Set cursor position after the inserted hyphen
+      // Use requestAnimationFrame to ensure DOM is updated
       requestAnimationFrame(() => {
-        const newCursorPos = Math.min(start + 1, processedValue.length);
-        input.setSelectionRange(newCursorPos, newCursorPos);
+        input.setSelectionRange(start + 1, start + 1);
+      });
+    }
+  };
+
+  const handleBeforeInput = (e: React.FormEvent<HTMLInputElement>) => {
+    // Also catch space in beforeInput event (for better browser compatibility)
+    const nativeEvent = e.nativeEvent as InputEvent;
+    if (nativeEvent.data === " " || nativeEvent.inputType === "insertText" && nativeEvent.data === " ") {
+      e.preventDefault();
+      
+      const input = e.currentTarget;
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      const currentValue = input.value;
+      
+      // Insert hyphen at cursor position
+      const newValue = 
+        currentValue.substring(0, start) + 
+        "-" + 
+        currentValue.substring(end);
+      
+      // Update state immediately
+      setLocalValue(newValue);
+      onChange(newValue);
+      setIsManuallyEdited(true);
+      
+      // Set cursor position after the inserted hyphen
+      requestAnimationFrame(() => {
+        input.setSelectionRange(start + 1, start + 1);
       });
     }
   };
@@ -172,6 +198,7 @@ export function SlugInput({
         value={localValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onBeforeInput={handleBeforeInput}
         onBlur={handleBlur}
         placeholder={placeholder || `slug-${lang}`}
         required={required}

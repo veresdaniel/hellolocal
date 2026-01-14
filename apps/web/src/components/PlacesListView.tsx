@@ -254,21 +254,82 @@ export function PlacesListView({
     });
   }, [allPlaces, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
 
-  // Fetch events (filtered)
+  // Fetch events (filtered and deduplicated)
   const events = useMemo(() => {
     const now = new Date();
-    return eventsData.filter((event) => {
+    const filtered = eventsData.filter((event) => {
       if (event.endDate) {
         return new Date(event.endDate) >= now;
       }
       return new Date(event.startDate) >= now;
     });
+    
+    // Deduplicate events by ID and slug (in case backend returns duplicates with/without slugs)
+    // Prefer events with valid slugs (slug !== id) over those without
+    const seenById = new Map<string, Event>();
+    const seenBySlug = new Map<string, Event>(); // Also track by slug to catch duplicates with different IDs
+    
+    filtered.forEach((event) => {
+      const hasValidSlug = event.slug && event.slug !== event.id;
+      
+      // Check for duplicate by ID
+      const existingById = seenById.get(event.id);
+      if (existingById) {
+        // Duplicate ID found - prefer the one with a valid slug
+        const existingHasValidSlug = existingById.slug && existingById.slug !== existingById.id;
+        
+        if (hasValidSlug && !existingHasValidSlug) {
+          // Current event has valid slug, existing doesn't - replace
+          seenById.set(event.id, event);
+          if (hasValidSlug) {
+            seenBySlug.set(event.slug, event);
+          }
+        }
+        // Otherwise keep existing (do nothing)
+        return; // Skip this duplicate
+      }
+      
+      // Check for duplicate by slug (if valid slug)
+      if (hasValidSlug) {
+        const existingBySlug = seenBySlug.get(event.slug);
+        if (existingBySlug) {
+          // Same slug but different ID - prefer the one with valid slug over ID fallback
+          const existingHasValidSlug = existingBySlug.slug && existingBySlug.slug !== existingBySlug.id;
+          if (hasValidSlug && !existingHasValidSlug) {
+            // Current has valid slug, existing doesn't - replace
+            seenById.delete(existingBySlug.id);
+            seenById.set(event.id, event);
+            seenBySlug.set(event.slug, event);
+          }
+          // Otherwise keep existing (do nothing)
+          return; // Skip this duplicate
+        }
+      }
+      
+      // New event - add it
+      seenById.set(event.id, event);
+      if (hasValidSlug) {
+        seenBySlug.set(event.slug, event);
+      }
+    });
+    
+    return Array.from(seenById.values());
   }, [eventsData]);
 
   // Combine places and events, sort by date (pinned events first, then by start date)
   const combinedItems = useMemo(() => {
-    const pinnedEvents = events.filter((e) => e.isPinned);
-    const regularEvents = events.filter((e) => !e.isPinned);
+    // Additional deduplication check - ensure no duplicate events by ID
+    const eventIds = new Set<string>();
+    const uniqueEvents = events.filter((event) => {
+      if (eventIds.has(event.id)) {
+        return false; // Skip duplicate
+      }
+      eventIds.add(event.id);
+      return true;
+    });
+    
+    const pinnedEvents = uniqueEvents.filter((e) => e.isPinned);
+    const regularEvents = uniqueEvents.filter((e) => !e.isPinned);
     
     // Use a fixed date for places (far in the past) so events are sorted by date and appear first
     const placesDefaultDate = new Date(2000, 0, 1);

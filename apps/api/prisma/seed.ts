@@ -1,6 +1,6 @@
 
 import "dotenv/config";
-import { PrismaClient, Prisma, Lang, UserRole, SiteRole, PlaceRole, SlugEntityType, SubscriptionPlan, SubscriptionStatus, BillingPeriod } from "@prisma/client";
+import { PrismaClient, Prisma, Lang, UserRole, SiteRole, PlaceRole, SlugEntityType, SubscriptionPlan, SubscriptionStatus, BillingPeriod, SitePlan, PlacePlan } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
 
@@ -100,10 +100,10 @@ async function ensureSite(args: {
   slug: string;
   brandId: string;
   isActive?: boolean;
-  plan?: any;
+  plan?: SitePlan;
   translations: Array<{ lang: Lang; name: string; shortDescription?: string | null; description?: string | null; heroImage?: string | null; seoTitle?: string | null; seoDescription?: string | null; seoKeywords?: string[] }>;
 }) {
-  const { slug, brandId, isActive = true, translations } = args;
+  const { slug, brandId, isActive = true, plan, translations } = args;
 
   const existing = await prisma.site.findFirst({ where: { slug }, select: { id: true } });
 
@@ -113,6 +113,7 @@ async function ensureSite(args: {
         slug,
         brandId,
         isActive,
+        plan: plan ?? "basic",
         translations: {
           create: translations.map((t) => ({
             lang: t.lang,
@@ -132,7 +133,7 @@ async function ensureSite(args: {
   }
 
   // update base + upsert translations
-  await prisma.site.update({ where: { id: existing.id }, data: { isActive } });
+  await prisma.site.update({ where: { id: existing.id }, data: { isActive, ...(plan ? { plan } : {}) } });
   for (const t of translations) {
     await prisma.siteTranslation.upsert({
       where: { siteId_lang: { siteId: existing.id, lang: t.lang } },
@@ -385,6 +386,7 @@ async function ensureUser(args: {
   return prisma.user.update({
     where: { id: existing.id },
     data: {
+      email: args.email, // Update email if changed
       passwordHash,
       role: args.role,
       firstName: args.firstName,
@@ -420,6 +422,7 @@ async function ensurePlace(args: {
   categoryId: string;
 
   isActive?: boolean;
+  plan?: PlacePlan;
   heroImage?: string | null;
   lat?: number | null;
   lng?: number | null;
@@ -454,6 +457,7 @@ async function ensurePlace(args: {
     huName,
     categoryId,
     isActive = true,
+    plan,
     heroImage = null,
     lat = null,
     lng = null,
@@ -477,6 +481,7 @@ async function ensurePlace(args: {
         townId,
         categoryId,
         isActive,
+        plan: plan ?? "free",
         heroImage,
         lat,
         lng,
@@ -511,7 +516,7 @@ async function ensurePlace(args: {
   } else {
     await prisma.place.update({
       where: { id: place.id },
-      data: { townId, categoryId, isActive, heroImage, lat, lng, priceBandId, ratingAvg, ratingCount, extras },
+      data: { townId, categoryId, isActive, heroImage, lat, lng, priceBandId, ratingAvg, ratingCount, extras, ...(plan ? { plan } : {}) },
     });
 
     await prisma.placeTag.deleteMany({ where: { placeId: place.id } });
@@ -1023,16 +1028,120 @@ function sample<T>(arr: T[], n: number, rand: () => number) {
   return out;
 }
 
+async function clearAllData() {
+  console.log("🗑️  Clearing all data from database...");
+  
+  try {
+    // First, count existing records to show what will be deleted
+    const counts = {
+      events: await prisma.event.count({}),
+      places: await prisma.place.count({}),
+      sites: await prisma.site.count({}),
+      users: await prisma.user.count({}),
+      brands: await prisma.brand.count({}),
+      slugs: await prisma.slug.count({}),
+      siteKeys: await prisma.siteKey.count({}),
+    };
+
+    const totalRecords = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    
+    if (totalRecords === 0) {
+      console.log("  ℹ️  Database is already empty, nothing to clear");
+      return;
+    }
+
+    console.log(`  ℹ️  Found existing data:`);
+    console.log(`    - ${counts.events} events`);
+    console.log(`    - ${counts.places} places`);
+    console.log(`    - ${counts.sites} sites`);
+    console.log(`    - ${counts.users} users`);
+    console.log(`    - ${counts.brands} brands`);
+    console.log(`    - ${counts.slugs} slugs`);
+    console.log(`    - ${counts.siteKeys} site keys`);
+
+    // Use TRUNCATE CASCADE for faster and more reliable deletion
+    // This will delete all data from all tables, respecting foreign key constraints
+    const tables = [
+      "AnalyticsDaily",
+      "PlaceRating",
+      "EventRating",
+      "EventLog",
+      "PushSubscription",
+      "Gallery",
+      "PlacePriceList",
+      "PlaceOpeningHours",
+      "PlaceTag",
+      "EventTag",
+      "EventCategory",
+      "PlaceMembership",
+      "SiteMembership",
+      "UserSite",
+      "PlaceSubscription",
+      "SiteSubscription",
+      "SubscriptionHistory",
+      "SiteDomain",
+      "SiteInstance",
+      "Slug",
+      "SiteKey",
+      "EventTranslation",
+      "Event",
+      "PlaceTranslation",
+      "Place",
+      "TownTranslation",
+      "Town",
+      "CategoryTranslation",
+      "Category",
+      "TagTranslation",
+      "Tag",
+      "PriceBandTranslation",
+      "PriceBand",
+      "LegalPageTranslation",
+      "LegalPage",
+      "StaticPageTranslation",
+      "StaticPage",
+      "SiteTranslation",
+      "Site",
+      "User",
+      "Brand",
+      "AppSetting",
+    ];
+
+    // TRUNCATE CASCADE automatically handles foreign key constraints
+    // No need to disable foreign key checks - CASCADE handles it
+    let truncatedCount = 0;
+    for (const table of tables) {
+      try {
+        await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" CASCADE;`);
+        truncatedCount++;
+      } catch (error: any) {
+        // Table might not exist or might be empty, that's okay
+        if (!error.message?.includes("does not exist") && !error.message?.includes("relation") && !error.message?.includes("cannot truncate")) {
+          console.warn(`  ⚠️  Could not truncate ${table}: ${error.message}`);
+        }
+      }
+    }
+    
+    console.log(`  ✓ Truncated ${truncatedCount} tables`);
+    console.log("✅ Database cleared successfully");
+  } catch (error: any) {
+    console.error(`❌ Error clearing database: ${error.message}`);
+    throw error;
+  }
+}
+
 async function main() {
   mustEnv("DATABASE_URL");
+
+  // Clear all data before seeding
+  await clearAllData();
 
   const brand = await ensureBrand("HelloLocal");
 
   // global superadmin
   const superadmin = await ensureUser({
     username: "admin",
-    email: "admin@example.com",
-    password: "admin123",
+    email: "super@example.com",
+    password: "6DLzrjCBYutJcZyt7gwD",
     role: UserRole.superadmin,
     firstName: "Super",
     lastName: "Admin",
@@ -1050,9 +1159,13 @@ async function main() {
     const s = SITES[sIdx];
     const rand = rng(1000 + sIdx * 1337);
 
+    // Determine site plan based on subscription
+    const sitePlan: SitePlan = s.key === "szeged" ? "basic" : s.key === "balaton" ? "pro" : "business";
+
     const site = await ensureSite({
       slug: s.slug,
       brandId: brand.id,
+      plan: sitePlan,
       translations: s.langs.map((lang) => ({
         lang,
         name: s.nameByLang[lang],
@@ -1102,9 +1215,31 @@ async function main() {
     await ensureSiteMembership(site.id, owner.id, "siteadmin");
     await ensureSiteMembership(site.id, editor.id, "editor");
 
-    // Site keys (public)
-    for (const lang of s.langs) {
+    // Site keys (public) - create for ALL languages (hu, en, de) to ensure site is accessible via any language route
+    const allLanguages: Lang[] = ["hu", "en", "de"];
+    for (const lang of allLanguages) {
       await upsertSiteKey({ siteId: site.id, lang, slug: s.slug, isPrimary: true });
+    }
+
+    // Site instances - create for each translation language
+    let isFirstInstance = true;
+    for (const lang of s.langs) {
+      await prisma.siteInstance.upsert({
+        where: { siteId_lang: { siteId: site.id, lang } },
+        update: { isDefault: isFirstInstance },
+        create: {
+          siteId: site.id,
+          lang,
+          isDefault: isFirstInstance,
+          features: {
+            isCrawlable: true,
+            enableEvents: true,
+            enableBlog: false,
+            enableStaticPages: true,
+          },
+        },
+      });
+      isFirstInstance = false;
     }
 
     // town (1 per site for MVP)
@@ -1185,12 +1320,16 @@ async function main() {
           ? "balatoni kirándulóhely, panorámával és jó programokkal."
           : "szegedi ajánlott hely, hasznos információkkal és elérhetőségekkel.";
 
+      // Determine place plan (randomly assign some places to basic/pro)
+      const placePlan: PlacePlan = rand() > 0.7 ? (rand() > 0.5 ? "pro" : "basic") : "free";
+
       const placeId = await ensurePlace({
         siteId: site.id,
         townId,
         huName: name,
         categoryId,
         isActive: true,
+        plan: placePlan,
         heroImage: picsum(`${s.slug}-${slugify(name)}-hero`, 1600, 1000),
         lat: pos.lat,
         lng: pos.lng,
@@ -1293,38 +1432,70 @@ async function main() {
 
       const eventNameHu = s.key === "szeged" ? "Közösségi program" : "Kóstoló / túra";
       const eventTitle = `${eventNameHu}: ${e + 1}`;
+      
+      // Generate unique slug for this event
+      const baseSlug = slugify(eventTitle);
+      const eventSlugBase = `${baseSlug}-${e + 1}`;
 
-      const created = await prisma.event.create({
-        data: {
+      // Check if event with this title already exists for this site (to avoid duplicates on re-seed)
+      // We check by title in Hungarian translation to avoid duplicates
+      const existingEvent = await prisma.event.findFirst({
+        where: {
           siteId: site.id,
-          placeId,
-          isActive: true,
-          isPinned: rand() > 0.85,
-          isRainSafe: rand() > 0.5,
-          showOnMap: true,
-          startDate,
-          endDate,
-          heroImage: picsum(`${s.slug}-event-${e + 1}`, 1600, 900),
           translations: {
-            create: s.langs.map((lang) => ({
-              lang,
-              title: lang === "hu" ? eventTitle : lang === "en" ? `Event: ${e + 1}` : `Event: ${e + 1}`,
-              shortDescription: lang === "hu" ? "Rövid programleírás (demo)." : "Short event description (demo).",
-              description: lang === "hu" ? "<p>Demo esemény leírás, részletekkel.</p>" : "<p>Demo event details.</p>",
-              seoTitle: lang === "hu" ? eventTitle : null,
-              seoDescription: lang === "hu" ? "Demo esemény" : null,
-              seoKeywords: [],
-            })),
+            some: {
+              lang: "hu",
+              title: eventTitle,
+            },
           },
         },
         select: { id: true },
       });
 
-      for (const lang of s.langs) {
-        await upsertSlug({ siteId: site.id, lang, slug: `${slugify(eventTitle)}-${lang}`, entityType: "event", entityId: created.id });
+      let eventId: string;
+      if (existingEvent) {
+        // Event already exists, use existing ID
+        eventId = existingEvent.id;
+        console.log(`ℹ️  Event already exists: ${eventTitle}, using existing ID: ${eventId}`);
+      } else {
+        // Create new event
+        const created = await prisma.event.create({
+          data: {
+            siteId: site.id,
+            placeId,
+            isActive: true,
+            isPinned: rand() > 0.85,
+            isRainSafe: rand() > 0.5,
+            showOnMap: true,
+            startDate,
+            endDate,
+            heroImage: picsum(`${s.slug}-event-${e + 1}`, 1600, 900),
+            translations: {
+              create: s.langs.map((lang) => ({
+                lang,
+                title: lang === "hu" ? eventTitle : lang === "en" ? `Event: ${e + 1}` : `Event: ${e + 1}`,
+                shortDescription: lang === "hu" ? "Rövid programleírás (demo)." : "Short event description (demo).",
+                description: lang === "hu" ? "<p>Demo esemény leírás, részletekkel.</p>" : "<p>Demo event details.</p>",
+                seoTitle: lang === "hu" ? eventTitle : null,
+                seoDescription: lang === "hu" ? "Demo esemény" : null,
+                seoKeywords: [],
+              })),
+            },
+          },
+          select: { id: true },
+        });
+        eventId = created.id;
       }
 
-      await log(site.id, owner.id, "create", "event", created.id, `Event created: ${eventTitle}`, { placeId });
+      // Create/update slugs for event in all languages (ensure they point to the correct event)
+      for (const lang of s.langs) {
+        const eventSlug = `${baseSlug}-${e + 1}`;
+        await upsertSlug({ siteId: site.id, lang, slug: eventSlug, entityType: "event", entityId: eventId });
+      }
+
+      if (!existingEvent) {
+        await log(site.id, owner.id, "create", "event", eventId, `Event created: ${eventTitle}`, { placeId });
+      }
     }
 
     // analytics
@@ -1335,7 +1506,7 @@ async function main() {
 
   console.log("✅ Seed completed");
   console.log("👤 Credentials:");
-  console.log("- superadmin: admin@example.com / admin123");
+  console.log("- superadmin: super@example.com / 6DLzrjCBYutJcZyt7gwD");
   console.log("- etyek owner: etyek.owner@example.com / owner123");
   console.log("- etyek editor: etyek.editor@example.com / editor123");
   console.log("- balaton owner: balaton.owner@example.com / owner123");

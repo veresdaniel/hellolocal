@@ -128,6 +128,7 @@ export class EventsService {
     const eventsWithSlugs = await Promise.all(
       events.map(async (event) => {
         // Try to get slug in requested language
+        // Use orderBy to ensure we get the most recent one if there are duplicates
         let slug = await this.prisma.slug.findFirst({
           where: {
             siteId: site.siteId,
@@ -138,6 +139,7 @@ export class EventsService {
             isActive: true,
           },
           select: { slug: true },
+          orderBy: { createdAt: "desc" }, // Get the most recent one if duplicates exist
         });
         
         // Fallback to Hungarian if not found and requested language is not Hungarian
@@ -152,6 +154,7 @@ export class EventsService {
               isActive: true,
             },
             select: { slug: true },
+            orderBy: { createdAt: "desc" }, // Get the most recent one if duplicates exist
           });
         }
 
