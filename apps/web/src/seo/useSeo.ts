@@ -35,9 +35,17 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
 
     // Get site name from i18n or use provided siteName or default
     const siteName = opts?.siteName || t("common.siteName", { defaultValue: "" });
-    const fullTitle = seo.title ? `${seo.title} - ${siteName}` : siteName;
     
-    document.title = fullTitle;
+    // Only set document.title if title is provided and not empty
+    // This allows usePageTitle hook to handle titles on admin pages
+    if (seo.title) {
+      const fullTitle = siteName ? `${seo.title} - ${siteName}` : seo.title;
+      document.title = fullTitle;
+    } else if (siteName) {
+      // Only set siteName as title if no title provided and siteName exists
+      document.title = siteName;
+    }
+    // If neither title nor siteName, don't set document.title (let other hooks handle it)
 
     upsertMeta(`meta[name="description"]`, { name: "description" }, seo.description);
     if (seo.keywords?.length) {

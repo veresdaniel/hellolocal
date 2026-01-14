@@ -178,16 +178,12 @@ export function UserProfilePage() {
 
   if (!user) {
     return (
-      <>
-        <LoadingSpinner isLoading={isLoading} />
-        <div style={{ padding: 24 }}>{t("admin.errors.userNotFound")}</div>
-      </>
+      <div style={{ padding: 24 }}>{t("admin.errors.userNotFound")}</div>
     );
   }
 
   return (
     <>
-      <LoadingSpinner isLoading={isLoading} />
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         {/* Header matching AdminDashboard style */}
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>

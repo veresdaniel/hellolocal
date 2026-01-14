@@ -1,5 +1,5 @@
 // src/app/site/SiteLayout.tsx
-import { Outlet, useParams, Navigate } from "react-router-dom";
+import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
 import { Suspense } from "react";
 import {
   APP_LANGS,
@@ -23,6 +23,7 @@ function isLang(x: unknown): x is Lang {
 
 export function SiteLayout() {
   const params = useParams();
+  const location = useLocation();
   const { t } = useTranslation();
 
   const langParam = params.lang;
@@ -30,8 +31,11 @@ export function SiteLayout() {
 
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
+  // Check if we're on a collections route (which doesn't require siteKey)
+  const isCollectionsRoute = location.pathname.includes("/collections/");
+
   // Reserved paths that should not be treated as siteKey
-  const RESERVED_PATHS = ["sites", "teruletek", "regions", "regionen", "admin", "static-pages", "static-page", "impresszum", "aszf", "adatvedelem", "pricing", "tarife", "preise"];
+  const RESERVED_PATHS = ["sites", "teruletek", "regions", "regionen", "admin", "static-pages", "static-page", "impresszum", "aszf", "adatvedelem", "pricing", "tarife", "preise", "collections"];
 
   // multi-site módban siteKey elvárt, single-site módban fix
   // Ha a siteKeyParam egy foglalt path, akkor redirectálunk a sites listára
@@ -39,8 +43,10 @@ export function SiteLayout() {
     return <Navigate to={`/${lang}`} replace />;
   }
 
+  // Determine siteKey - use DEFAULT_SITE_SLUG if siteKeyParam is a reserved path
+  // For collections route, always use DEFAULT_SITE_SLUG (no siteKey in URL)
   const siteKey = HAS_MULTIPLE_SITES
-    ? siteKeyParam ?? DEFAULT_SITE_SLUG
+    ? (isCollectionsRoute ? DEFAULT_SITE_SLUG : (RESERVED_PATHS.includes(siteKeyParam || "") ? DEFAULT_SITE_SLUG : (siteKeyParam ?? DEFAULT_SITE_SLUG)))
     : DEFAULT_SITE_SLUG;
 
   // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
@@ -49,14 +55,15 @@ export function SiteLayout() {
 
   // rossz lang -> redirect a javított langra (megtartva a többit)
   if (langParam !== lang) {
-    const prefix = HAS_MULTIPLE_SITES ? `/${lang}/${siteKey}` : `/${lang}`;
+    const prefix = isCollectionsRoute ? `/${lang}` : (HAS_MULTIPLE_SITES ? `/${lang}/${siteKey}` : `/${lang}`);
     return <Navigate to={prefix} replace />;
   }
 
   // Ha multi-site és nincs siteKey param, akkor nem kellene ide jönni
   // (mert a /:lang route már kezeli a SitesListPage-et)
   // De ha mégis ide jön, akkor redirectáljuk a default site-ra
-  if (HAS_MULTIPLE_SITES && !siteKeyParam) {
+  // Exception: collections route doesn't need siteKey
+  if (HAS_MULTIPLE_SITES && !siteKeyParam && !isCollectionsRoute) {
     return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}`} replace />;
   }
 

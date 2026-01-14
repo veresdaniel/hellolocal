@@ -408,13 +408,9 @@ export function SubscriptionsDashboardPage() {
     );
   };
 
-  // Only show full page loading on initial load
+  // Only show full page loading on initial load - removed fullscreen loader
   if (isLoading && !summary && subscriptions.length === 0) {
-    return (
-      <div style={{ padding: "clamp(24px, 5vw, 32px)" }}>
-        <LoadingSpinner isLoading={true} delay={0} />
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -785,24 +781,6 @@ export function SubscriptionsDashboardPage() {
           position: "relative",
         }}
       >
-        {isLoading && subscriptions.length > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(255, 255, 255, 0.8)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 10,
-            }}
-          >
-            <LoadingSpinner isLoading={true} delay={0} />
-          </div>
-        )}
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: isMobile ? 600 : "auto" }}>
             <thead>
@@ -1150,11 +1128,7 @@ export function SubscriptionsDashboardPage() {
               </button>
             </div>
 
-            {isLoadingHistory ? (
-              <div style={{ padding: 48, textAlign: "center" }}>
-                <LoadingSpinner isLoading={true} delay={0} />
-              </div>
-            ) : history.length === 0 ? (
+            {isLoadingHistory ? null : history.length === 0 ? (
               <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t("admin.noHistory") || "Nincs előzmény"}
               </div>
@@ -1320,11 +1294,7 @@ export function SubscriptionsDashboardPage() {
           {t("admin.eventLog.title") || "Subscription Events"}
         </h2>
         
-        {isLoadingEventLogs ? (
-          <div style={{ padding: 48, textAlign: "center" }}>
-            <LoadingSpinner isLoading={true} />
-          </div>
-        ) : eventLogs.length === 0 ? (
+        {isLoadingEventLogs ? null : eventLogs.length === 0 ? (
           <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             {t("admin.eventLog.noLogs") || "No events found"}
           </div>

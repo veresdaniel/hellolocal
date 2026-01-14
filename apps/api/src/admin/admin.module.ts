@@ -20,6 +20,7 @@ import { AdminPlaceMembershipService } from "./admin-place-membership.service";
 import { AdminSubscriptionService } from "./admin-subscription.service";
 import { AdminGalleryService } from "./admin-gallery.service";
 import { AdminPriceListService } from "./admin-price-list.service";
+import { AdminCollectionService } from "./admin-collection.service";
 import { GalleryPublicService } from "./gallery-public.service";
 import { GalleryPublicController } from "./gallery-public.controller";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
@@ -51,6 +52,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSubscriptionService,
     AdminGalleryService,
     AdminPriceListService,
+    AdminCollectionService,
     GalleryPublicService,
     // AdminEventLogService is now provided by EventLogModule
   ],
@@ -73,6 +75,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminSubscriptionService,
     AdminGalleryService,
     AdminPriceListService,
+    AdminCollectionService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

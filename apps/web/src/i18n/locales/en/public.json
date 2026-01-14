@@ -1,0 +1,206 @@
+{
+  "home": {
+    "title": "Discover Local Experiences",
+    "description": "Wineries, gastronomy and tourist places on a map."
+  },
+  "explore": {
+    "title": "Explore",
+    "description": "Local experiences: winery, gastronomy, accommodation, crafts."
+  },
+  "listView": "List View",
+  "mapView": "Map View",
+  "place": {
+    "title": "Place Details",
+    "description": "View place details",
+    "placeSlugMissing": "Details coming soon..."
+  },
+  "legal": {
+    "imprint": {
+      "title": "Imprint"
+    },
+    "terms": {
+      "title": "Terms and Conditions"
+    },
+    "privacy": {
+      "title": "Privacy Policy"
+    }
+  },
+  "pricing": {
+    "title": "Pricing & Plans",
+    "description": "Choose the plan that fits your freedom",
+    "subtitle": "This is the minimum that can be well managed with manual billing (no Stripe, no invoicing, just status + validity + limits).",
+    "popular": "Popular",
+    "footerNote": "Billing is manual. No Stripe integration. Status, validity and limits can be managed manually.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Entry level, trial"
+      },
+      "basic": {
+        "name": "Basic",
+        "description": "\"Makes sense now\", content + events"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Growth + featured + domain + extra visibility"
+      }
+    },
+    "categories": {
+      "places": "Places",
+      "place": "Location",
+      "visibility": "Visibility",
+      "events": "Events",
+      "seo": "SEO",
+      "domain": "Domain",
+      "languages": "Languages",
+      "permissions": "Permissions",
+      "admin": "Admin",
+      "push": "Push"
+    },
+    "features": {
+      "placesCount": "Number of places",
+      "imagesPerPlace": "Images per place (gallery)",
+      "heroImage": "Hero image",
+      "contacts": "Contacts (tel/email/web)",
+      "extraFields": "Extra fields (extras JSON)",
+      "galleriesMax": "Number of galleries (site admin + retail user)",
+      "imagesPerGalleryMax": "Images per gallery",
+      "galleriesPerPlaceMax": "Galleries per place (retail user)",
+      "galleriesPerEventMax": "Galleries per event (retail user)",
+      "featuredPlaces": "Featured places",
+      "featuredBoost": "Featured boost (ranking weight)",
+      "eventsEnabled": "Events enabled",
+      "eventsPerMonth": "Events per month",
+      "siteSeo": "Site SEO (title/desc/image)",
+      "placeSeo": "Place SEO fields",
+      "canonicalSupport": "Canonical/redirect support",
+      "customDomain": "Custom domain",
+      "multipleDomainAliases": "Multiple domain aliases",
+      "max5": "✓ (max 5)",
+      "additionalLanguages": "Additional languages (hu+en+de)",
+      "siteMembers": "Site members (memberships)",
+      "eventLog": "Event log",
+      "pushSubscription": "PushSubscription",
+      "optionalAddon": "optional add-on",
+      "placeImages": "Number of images",
+      "featuredPlacement": "Featured placement",
+      "placeTitle": "Location Plans",
+      "placeSubtitle": "Choose a plan for your location"
+    },
+    "featureMatrix": {
+      "feature": "Feature"
+    }
+  },
+  "open": "Open",
+  "readMore": "Read more",
+  "category": "Category",
+  "activateFree": {
+    "cta": "Activate Free Site",
+    "success": "Free site activated successfully!",
+    "error": "Failed to activate site.",
+    "modal": {
+      "title": "Activate Free Site",
+      "description": "Are you sure you want to activate the free site? This will give you access to the dashboard and allow you to start working on your site.",
+      "confirm": "Activate"
+    }
+  },
+  "priceBand": "Price Band",
+  "tags": "Tags",
+  "address": "Address",
+  "phone": "Phone",
+  "email": "Email",
+  "website": "Website",
+  "openingHours": "Opening Hours",
+  "accessibility": "Accessibility",
+  "searchPlaces": "Search...",
+  "errorLoadingPlaces": "Error loading places",
+  "noPlacesFound": "No places found",
+  "sites": {
+    "title": "Sites",
+    "description": "Discover sites"
+  },
+  "collections": {
+    "title": "Curated Collections",
+    "description": "Discover curated collections",
+    "notFound": "Collection not found",
+    "notFoundDescription": "The requested collection does not exist or has been removed.",
+    "items": "Items",
+    "noItems": "No items in this list yet",
+    "highlighted": "Highlighted"
+  },
+  "searchSites": "Search sites...",
+  "errorLoadingSites": "Error loading sites",
+  "noSitesFound": "No sites found",
+  "staticPages": {
+    "title": "Static Pages",
+    "noStaticPagesFound": "No pages available",
+    "noBlogFound": "No blog posts found",
+    "noKnowledgeBaseFound": "No knowledge base articles found",
+    "noInfoPageFound": "No info pages found"
+  },
+  "errorLoadingPlace": "Error loading place",
+  "errorLoadingEvent": "Error loading event",
+  "backToList": "Back to list",
+  "backToHome": "Back to home",
+  "gallery": {
+    "title": "Gallery",
+    "imageSingular": "image",
+    "imagePlural": "images"
+  },
+  "share": "Share",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied!",
+  "event": {
+    "title": "Events",
+    "description": "Discover events"
+  },
+  "events": "Events",
+  "noEvents": "No events",
+  "contact": "Contact",
+  "menu": "Menu",
+  "close": "Close",
+  "noResults": "No results found",
+  "filtersTitle": "Filters",
+  "placeSlugMissing": "Details coming soon...",
+  "filters": {
+    "all": "All",
+    "openNow": "Open now",
+    "eventToday": "Event today",
+    "within10MinutesWalk": "10 minutes walk",
+    "rainSafe": "Rain-safe program",
+    "contextFilters": "Context-based filters"
+  },
+  "yourLocation": "I'm here now.",
+  "showMyLocation": "Show my location",
+  "showRoute": "Show route",
+  "hideRoute": "Hide route",
+  "distance": "Distance",
+  "routeDistance": "route",
+  "walkingTime": "Walking time",
+  "calculatingRoute": "Calculating route...",
+  "clickAgainToNavigate": "Click again to navigate",
+  "tooFarAway": "Too far away (more than {{distance}} km)",
+  "hour": "hour",
+  "hours": "hours",
+  "minute": "min",
+  "minutes": "min",
+  "locationPermissionDenied": "Location sharing denied. Please enable location sharing in your browser settings.",
+  "locationPermissionPrompt": "Please enable location sharing to show your position.",
+  "updateAvailable": "Update Available!",
+  "updateDescription": "Refresh the app to get the latest features.",
+  "refresh": "Refresh",
+  "later": "Later",
+  "footer": {
+    "tagline": "Discover local treasures",
+    "legal": "Legal Information",
+    "quickLinks": "Quick Links",
+    "rights": "All rights reserved."
+  },
+  "beTheFirst": "Be the first!",
+  "saving": "Saving...",
+  "rating": {
+    "starSingular": "star",
+    "starPlural": "stars",
+    "clickToRate": "Click to rate"
+  }
+}

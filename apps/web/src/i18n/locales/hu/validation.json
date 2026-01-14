@@ -1,0 +1,8 @@
+{
+  "required": "Kötelező mező",
+  "invalidEmail": "Érvénytelen email cím",
+  "invalidUrl": "Érvénytelen URL",
+  "invalidImageUrl": "Érvénytelen kép URL. Csak http:// és https:// URL-ek engedélyezettek.",
+  "minLength": "Minimum {{min}} karakter",
+  "maxLength": "Maximum {{max}} karakter"
+}

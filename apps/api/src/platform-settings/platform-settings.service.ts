@@ -175,10 +175,11 @@ export class PlatformSettingsService {
       avatar: brandPlaceholders.brandBadgeIcon ?? appDefaults.placeholders.avatar,
     };
 
-    // 5) indexable: instance.features.seo?.indexable felülírhatja
+    // 5) indexable: instance.features.seo?.indexable felülírhatja, fallback: globális crawlability
+    const globalCrawlability = await this.getGlobalCrawlability();
     const indexable =
       instanceFeatures?.seo?.indexable ??
-      appDefaults.seo.indexable;
+      globalCrawlability;
 
     // Get feature matrix overrides from Brand (for pricing page)
     const brand = await this.prisma.brand.findFirst({
@@ -220,6 +221,21 @@ export class PlatformSettingsService {
       },
       platform: await this.getPlatformLocaleSettings(),
     };
+  }
+
+  /**
+   * Get global crawlability setting from AppSetting
+   */
+  async getGlobalCrawlability(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: "globalCrawlability" },
+    });
+
+    if (setting && setting.type === "boolean") {
+      return setting.value === "true";
+    }
+
+    return true; // Default: crawlable
   }
 
   /**
@@ -410,11 +426,19 @@ export class PlatformSettingsService {
     // Get runtime features from SiteInstances (isCrawlable, enableEvents, etc.)
     // Use the default instance or first one if no default, or null if none exist
     const defaultInstance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
+    let hasSiteSpecificCrawlability = false;
     if (defaultInstance?.features) {
       const features = defaultInstance.features as any;
       if (features.isCrawlable !== undefined) {
         isCrawlable = features.isCrawlable;
+        hasSiteSpecificCrawlability = true;
       }
+    }
+    
+    // Fallback to global crawlability if no site-specific setting
+    if (!hasSiteSpecificCrawlability) {
+      const globalCrawlability = await this.getGlobalCrawlability();
+      isCrawlable = globalCrawlability;
     }
 
     return {

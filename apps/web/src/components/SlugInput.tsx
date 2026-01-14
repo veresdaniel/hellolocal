@@ -53,16 +53,16 @@ export function SlugInput({
     }
   }, [value, isManuallyEdited]);
 
-  // Auto-generate slug from name if empty and not manually edited
+  // Auto-generate slug from name and put it in the input field
   useEffect(() => {
-    if (!isManuallyEdited && !localValue && sourceName) {
+    if (!isManuallyEdited && sourceName) {
       const generated = generateSlug(sourceName);
-      if (generated) {
+      if (generated && generated !== localValue) {
         setLocalValue(generated);
         onChange(generated);
       }
     }
-  }, [sourceName, isManuallyEdited, localValue, onChange]);
+  }, [sourceName, isManuallyEdited, onChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Intercept space key and replace with hyphen immediately
@@ -208,11 +208,6 @@ export function SlugInput({
       {error && (
         <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
           {error}
-        </div>
-      )}
-      {!error && !localValue && sourceName && (
-        <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4, fontStyle: "italic" }}>
-          Auto-generated from name: {generateSlug(sourceName)}
         </div>
       )}
     </div>

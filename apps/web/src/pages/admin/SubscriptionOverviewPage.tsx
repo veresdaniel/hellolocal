@@ -98,11 +98,7 @@ export function SubscriptionOverviewPage() {
   };
 
   if (isLoading) {
-    return (
-      <div style={{ padding: "clamp(24px, 5vw, 32px)" }}>
-        <LoadingSpinner isLoading={true} delay={0} />
-      </div>
-    );
+    return null;
   }
 
   return (

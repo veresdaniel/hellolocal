@@ -50,10 +50,24 @@ export class ResolveService {
     // Step 1: Resolve site (handles SiteKey redirects)
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
-    // Step 2: Resolve slug to entity
-    // First, try to find the slug directly
+    // Step 2: Decode and normalize the slug
+    // NestJS may auto-decode path params, but we handle both cases
+    let decodedSlug = args.slug;
+    try {
+      decodedSlug = decodeURIComponent(args.slug);
+    } catch {
+      // If decoding fails, use original slug
+      decodedSlug = args.slug;
+    }
+
+    // Normalize the slug (remove accents, convert to lowercase, etc.)
+    // This handles cases where the URL contains accented characters but the DB has normalized slugs
+    const normalizedSlug = generateSlug(decodedSlug);
+
+    // Step 3: Resolve slug to entity
+    // First, try to find the slug directly (using decoded version)
     let slugRecord = await this.prisma.slug.findUnique({
-      where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: args.slug } },
+      where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: decodedSlug } },
       select: {
         id: true,
         slug: true,
@@ -71,36 +85,32 @@ export class ResolveService {
       },
     });
 
-    // Fallback: If slug not found and contains accented characters, try normalized version
+    // Fallback: If slug not found, try normalized version (handles accented characters)
     let shouldRedirectToNormalized = false;
-    if (!slugRecord || !slugRecord.isActive) {
-      const normalizedSlug = generateSlug(args.slug);
-      // Only try fallback if the normalized slug is different from the original
-      if (normalizedSlug !== args.slug && normalizedSlug) {
-        const normalizedSlugRecord = await this.prisma.slug.findUnique({
-          where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: normalizedSlug } },
-          select: {
-            id: true,
-            slug: true,
-            entityType: true,
-            entityId: true,
-            isPrimary: true,
-            isActive: true,
-            redirectToId: true,
-            redirectTo: {
-              select: {
-                slug: true,
-                isActive: true,
-              },
+    if ((!slugRecord || !slugRecord.isActive) && normalizedSlug !== decodedSlug && normalizedSlug) {
+      const normalizedSlugRecord = await this.prisma.slug.findUnique({
+        where: { siteId_lang_slug: { siteId: site.siteId, lang: site.lang, slug: normalizedSlug } },
+        select: {
+          id: true,
+          slug: true,
+          entityType: true,
+          entityId: true,
+          isPrimary: true,
+          isActive: true,
+          redirectToId: true,
+          redirectTo: {
+            select: {
+              slug: true,
+              isActive: true,
             },
           },
-        });
-        
-        if (normalizedSlugRecord && normalizedSlugRecord.isActive) {
-          // Found normalized version - use it and mark for redirect
-          slugRecord = normalizedSlugRecord;
-          shouldRedirectToNormalized = true;
-        }
+        },
+      });
+      
+      if (normalizedSlugRecord && normalizedSlugRecord.isActive) {
+        // Found normalized version - use it and mark for redirect
+        slugRecord = normalizedSlugRecord;
+        shouldRedirectToNormalized = true;
       }
     }
 

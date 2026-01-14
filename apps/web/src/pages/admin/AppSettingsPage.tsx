@@ -64,6 +64,7 @@ export function AppSettingsPage() {
     }
   };
 
+
   const userIsAdmin = user ? isAdmin(user.role as UserRole) : false;
   const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
 
@@ -103,7 +104,7 @@ export function AppSettingsPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading && HAS_MULTIPLE_SITES) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   // Show message if no site is selected (but allow language settings which don't need site)
@@ -148,7 +149,6 @@ export function AppSettingsPage() {
                 {t("admin.defaultLanguageDescription")}
               </p>
 
-              <LoadingSpinner isLoading={isLoading} />
               {!isLoading && (
                 <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
                   <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
@@ -202,6 +202,7 @@ export function AppSettingsPage() {
             </div>
           )}
         </div>
+
       </div>
     );
   }
@@ -260,7 +261,6 @@ export function AppSettingsPage() {
               {t("admin.defaultLanguageDescription")}
             </p>
 
-            <LoadingSpinner isLoading={isLoading} />
             {!isLoading && (
               <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
                 <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
@@ -348,7 +348,6 @@ export function AppSettingsPage() {
                 {t("admin.featureMatrixDescription") || "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values."}
               </p>
 
-              <LoadingSpinner isLoading={isLoadingFeatureMatrix} />
               {!isLoadingFeatureMatrix && featureMatrix && (
                 <FeatureMatrixEditor
                   featureMatrix={featureMatrix}
@@ -436,7 +435,6 @@ export function AppSettingsPage() {
                 {t("admin.placeFeatureMatrixDescription") || "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values."}
               </p>
 
-              <LoadingSpinner isLoading={isLoadingFeatureMatrix} />
               {!isLoadingFeatureMatrix && featureMatrix && (
                 <PlaceFeatureMatrixEditor
                   featureMatrix={featureMatrix}

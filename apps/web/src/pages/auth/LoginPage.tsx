@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../../app/config";
 import { buildUrl } from "../../app/urls";
 import { ROLE_VIEWER } from "../../types/enums";
+import { useSeo } from "../../seo/useSeo";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -66,6 +67,13 @@ export function LoginPage() {
       localStorage.setItem("i18nextLng", lang);
     }
   }, [lang, i18n]);
+
+  // Auth pages should have noindex, nofollow robots meta tag
+  useSeo({
+    title: t("admin.login") || "Login",
+    description: "",
+    robots: "noindex, nofollow",
+  });
 
   // Store return URL when login page is accessed from public pages
   useEffect(() => {
@@ -147,26 +155,13 @@ export function LoginPage() {
         return;
       }
       
-      // Check if user is visitor (no activeSiteId) - should not access admin
-      if (!user.activeSiteId) {
-        const returnUrl = sessionStorage.getItem("authReturnUrl") || `/${lang}`;
-        sessionStorage.removeItem("authReturnUrl");
-        
-        // If we're already on the return URL (public page), don't navigate
-        const currentPath = window.location.pathname + window.location.search + window.location.hash;
-        if (currentPath === returnUrl || currentPath === returnUrl + '/') {
-          return;
-        }
-        
-        navigate(returnUrl, { replace: true });
-        return;
-      }
-      
-      // For admin/editor/superadmin, check if we have a return URL
+      // For admin/editor/superadmin, always redirect to dashboard (ignore activeSiteId check)
+      // Check if we have a return URL
       const returnUrl = sessionStorage.getItem("authReturnUrl");
       if (returnUrl && !returnUrl.includes("/admin/login")) {
-        // If return URL is a public page, go there
-        if (!returnUrl.includes("/admin")) {
+        // If return URL is a public page, ignore it for admin users - always go to dashboard
+        // Only use return URL if it's an admin page
+        if (returnUrl.includes("/admin")) {
           sessionStorage.removeItem("authReturnUrl");
           
           // If we're already on the return URL, don't navigate
@@ -177,6 +172,9 @@ export function LoginPage() {
           
           navigate(returnUrl, { replace: true });
           return;
+        } else {
+          // Public return URL - clear it and go to dashboard instead
+          sessionStorage.removeItem("authReturnUrl");
         }
       }
       
@@ -203,8 +201,13 @@ export function LoginPage() {
 
     try {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
+      // Clear any public return URL - admin users should always go to dashboard
+      const returnUrl = sessionStorage.getItem("authReturnUrl");
+      if (returnUrl && !returnUrl.includes("/admin")) {
+        sessionStorage.removeItem("authReturnUrl");
+      }
       // Navigate after login completes - React will re-render when AuthContext updates
-      navigate(`/${lang}/admin`);
+      navigate(`/${lang}/admin`, { replace: true });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t("admin.loginFailed");
       const errorStatus = (err as any)?.status;

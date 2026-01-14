@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AdminSiteProvider } from "./contexts/AdminSiteContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { ToastContainer } from "./components/Toast";
+import { ConfirmationModalProvider } from "./contexts/ConfirmationModalContext";
 import { router } from "./app/routes";
 import "./i18n/config";
 import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
@@ -70,11 +71,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <AppInitializer>
           <ToastProvider>
-            <AuthProvider>
-              <AdminSiteProvider>
-                <RouterProvider router={router} />
-              </AdminSiteProvider>
-            </AuthProvider>
+            <ConfirmationModalProvider>
+              <AuthProvider>
+                <AdminSiteProvider>
+                  <RouterProvider router={router} />
+                </AdminSiteProvider>
+              </AuthProvider>
+            </ConfirmationModalProvider>
             <ToastContainer />
           </ToastProvider>
         </AppInitializer>

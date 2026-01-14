@@ -385,6 +385,14 @@ export function setDefaultLanguage(language: "hu" | "en" | "de") {
   return apiPut<{ defaultLanguage: "hu" | "en" | "de" }>("/admin/app-settings/default-language", { language });
 }
 
+export function getGlobalCrawlability() {
+  return apiGet<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability");
+}
+
+export function setGlobalCrawlability(isCrawlable: boolean) {
+  return apiPut<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability", { isCrawlable });
+}
+
 // Brands (admin only)
 export interface Brand {
   id: string;
@@ -1738,4 +1746,153 @@ export function invalidateCache(cacheType: string) {
   return apiPost<InvalidateCacheResponse>("/admin/cache/invalidate", {
     cacheType,
   });
+}
+
+// ==================== Collections ====================
+
+export interface Collection {
+  id: string;
+  slug: string;
+  domain?: string | null;
+  isActive: boolean;
+  isCrawlable: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+  translations: Array<{
+    id: string;
+    lang: "hu" | "en" | "de";
+    title: string;
+    description?: string | null;
+    heroImage?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+  items?: Array<{
+    id: string;
+    collectionId: string;
+    siteId: string;
+    order: number;
+    isHighlighted: boolean;
+    site: {
+      id: string;
+      slug: string;
+      translations: Array<{
+        lang: "hu" | "en" | "de";
+        name: string;
+        shortDescription?: string | null;
+        heroImage?: string | null;
+      }>;
+    };
+    translations: Array<{
+      id: string;
+      lang: "hu" | "en" | "de";
+      titleOverride?: string | null;
+      descriptionOverride?: string | null;
+      imageOverride?: string | null;
+    }>;
+  }>;
+  itemsCount?: number;
+}
+
+export interface CreateCollectionDto {
+  slug: string;
+  domain?: string | null;
+  isActive?: boolean;
+  isCrawlable?: boolean;
+  order?: number;
+  translations: Array<{
+    lang: "hu" | "en" | "de";
+    title: string;
+    description?: string | null;
+    heroImage?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+}
+
+export interface UpdateCollectionDto {
+  slug?: string;
+  domain?: string | null;
+  isActive?: boolean;
+  isCrawlable?: boolean;
+  order?: number;
+  translations?: Array<{
+    lang: "hu" | "en" | "de";
+    title: string;
+    description?: string | null;
+    heroImage?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoImage?: string | null;
+    seoKeywords?: string[];
+  }>;
+}
+
+export interface CreateCollectionItemDto {
+  collectionId: string;
+  siteId: string;
+  order?: number;
+  isHighlighted?: boolean;
+  translations?: Array<{
+    lang: "hu" | "en" | "de";
+    titleOverride?: string | null;
+    descriptionOverride?: string | null;
+    imageOverride?: string | null;
+  }>;
+}
+
+export interface UpdateCollectionItemDto {
+  order?: number;
+  isHighlighted?: boolean;
+  translations?: Array<{
+    lang: "hu" | "en" | "de";
+    titleOverride?: string | null;
+    descriptionOverride?: string | null;
+    imageOverride?: string | null;
+  }>;
+}
+
+export function getCollections() {
+  return apiGet<Collection[]>("/admin/collections");
+}
+
+export function getCollection(id: string) {
+  return apiGet<Collection>(`/admin/collections/${id}`);
+}
+
+export function createCollection(data: CreateCollectionDto) {
+  return apiPost<Collection>("/admin/collections", data);
+}
+
+export function updateCollection(id: string, data: UpdateCollectionDto) {
+  return apiPut<Collection>(`/admin/collections/${id}`, data);
+}
+
+export function deleteCollection(id: string) {
+  return apiDelete<{ success: boolean }>(`/admin/collections/${id}`);
+}
+
+export function addCollectionItem(collectionId: string, data: Omit<CreateCollectionItemDto, "collectionId">) {
+  return apiPost<Collection["items"][0]>(`/admin/collections/${collectionId}/items`, data);
+}
+
+export function updateCollectionItem(itemId: string, data: UpdateCollectionItemDto) {
+  return apiPut<Collection["items"][0]>(`/admin/collections/items/${itemId}`, data);
+}
+
+export function deleteCollectionItem(itemId: string) {
+  return apiDelete<{ success: boolean }>(`/admin/collections/items/${itemId}`);
+}
+
+export function reorderCollectionItems(collectionId: string, itemIds: string[]) {
+  return apiPut<Collection>(`/admin/collections/${collectionId}/items/reorder`, { itemIds });
+}
+
+export function updateCollectionItems(collectionId: string, items: Collection["items"]) {
+  return apiPut<Collection>(`/admin/collections/${collectionId}/items`, { items });
 }

@@ -6,6 +6,7 @@ import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
+import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags, getPlaceMemberships, getSiteMemberships } from "../../api/admin.api";
@@ -70,6 +71,7 @@ export function PlacesPage() {
   const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
   const currentSite = sites.find((s) => s.id === selectedSiteId);
   const { showToast } = useToast();
+  const confirm = useConfirm();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   usePageTitle("admin.places");
@@ -543,7 +545,16 @@ export function PlacesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deletePlace"))) return;
+    const confirmed = await confirm({
+      title: t("admin.confirmations.deletePlace") || "Delete Place",
+      message: t("admin.confirmations.deletePlace") || "Are you sure you want to delete this place? This action cannot be undone.",
+      confirmLabel: t("common.delete") || "Delete",
+      cancelLabel: t("common.cancel") || "Cancel",
+      confirmVariant: "danger",
+      size: "medium",
+    });
+
+    if (!confirmed) return;
 
     try {
       await deletePlace(id, selectedSiteId || undefined);
@@ -774,7 +785,7 @@ export function PlacesPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {
@@ -1058,7 +1069,7 @@ export function PlacesPage() {
                   </div>
                 )}
 
-                {/* Slug - only editable by owner/manager (affects URLs) */}
+                {/* Slug - right after Name */}
                 {canModifySeo() ? (
                   <SlugInput
                     value={
@@ -1093,6 +1104,29 @@ export function PlacesPage() {
                   />
                 ) : null}
 
+                {/* Description - right after Slug */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={labelStyle}>{t("common.description")}</label>
+                  <TipTapEditorWithUpload
+                    value={
+                      selectedLang === "hu"
+                        ? formData.descriptionHu
+                        : selectedLang === "en"
+                        ? formData.descriptionEn
+                        : formData.descriptionDe
+                    }
+                    onChange={(value) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
+                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                      else setFormData({ ...formData, descriptionDe: value });
+                    }}
+                    placeholder={t("common.description")}
+                    height={200}
+                    uploadFolder="editor/places"
+                  />
+                </div>
+
+                {/* Short Description - after Description */}
                 <div style={{ marginBottom: 16 }}>
                   <label style={labelStyle}>{t("admin.shortDescription")}</label>
                   <TipTapEditorWithUpload
@@ -1121,27 +1155,6 @@ export function PlacesPage() {
                   }}>
                     {t("admin.shortDescriptionHint")}
                   </small>
-                </div>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("common.description")}</label>
-                  <TipTapEditorWithUpload
-                    value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
-                      else setFormData({ ...formData, descriptionDe: value });
-                    }}
-                    placeholder={t("common.description")}
-                    height={200}
-                    uploadFolder="editor/places"
-                  />
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
@@ -1861,7 +1874,21 @@ export function PlacesPage() {
                       e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
                     }}
                   >
-                    🔍 {t("admin.viewPublic") || "Megnézem"}
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    {t("admin.viewPublic") || "Megnézem"}
                   </button>
                 ) : null;
               },

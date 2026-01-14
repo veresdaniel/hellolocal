@@ -67,7 +67,7 @@ export function SiteSelector() {
   // Get current site
   const currentSite = sites.find((s) => s.id === selectedSiteId);
 
-  // Function to open public page
+  // Function to open public page (same tab, not new tab)
   const openPublicPage = () => {
     if (!currentSite) return;
     const publicPath = buildUrl({
@@ -75,8 +75,8 @@ export function SiteSelector() {
       lang: "hu", // Default to Hungarian
       path: "" 
     });
-    // Open in new tab
-    window.open(publicPath, "_blank");
+    // Navigate in same tab
+    window.location.href = publicPath;
   };
 
   if (sites.length === 1) {

@@ -1,0 +1,196 @@
+{
+  "home": {
+    "title": "Lokale Erlebnisse entdecken",
+    "description": "Weingüter, Gastronomie und touristische Orte auf einer Karte."
+  },
+  "explore": {
+    "title": "Entdecken",
+    "description": "Lokale Erlebnisse: Weingut, Gastronomie, Unterkunft, Handwerk."
+  },
+  "listView": "Listenansicht",
+  "mapView": "Kartenansicht",
+  "place": {
+    "title": "Ortsdetails",
+    "description": "Ortsdetails anzeigen",
+    "placeSlugMissing": "Details in Kürze..."
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impressum"
+    },
+    "terms": {
+      "title": "Allgemeine Geschäftsbedingungen"
+    },
+    "privacy": {
+      "title": "Datenschutz"
+    }
+  },
+  "pricing": {
+    "title": "Preise & Pakete",
+    "description": "Wählen Sie den Plan, der zu Ihrer Freiheit passt",
+    "subtitle": "Dies ist das Minimum, das mit manueller Abrechnung gut verwaltet werden kann (kein Stripe, keine Rechnungsstellung, nur Status + Gültigkeit + Limits).",
+    "popular": "Beliebt",
+    "footerNote": "Die Abrechnung erfolgt manuell. Keine Stripe-Integration. Status, Gültigkeit und Limits können manuell verwaltet werden.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Einstiegslevel, Testversion"
+      },
+      "basic": {
+        "name": "Basic",
+        "description": "\"Macht jetzt Sinn\", Inhalt + Veranstaltungen"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Wachstum + hervorgehoben + Domain + zusätzliche Sichtbarkeit"
+      }
+    },
+    "categories": {
+      "places": "Orte",
+      "place": "Standort",
+      "visibility": "Sichtbarkeit",
+      "events": "Veranstaltungen",
+      "seo": "SEO",
+      "domain": "Domain",
+      "languages": "Sprachen",
+      "permissions": "Berechtigungen",
+      "admin": "Admin",
+      "push": "Push"
+    },
+    "features": {
+      "placesCount": "Anzahl der Orte",
+      "imagesPerPlace": "Bilder pro Ort (Galerie)",
+      "heroImage": "Hero-Bild",
+      "contacts": "Kontakte (Tel/E-Mail/Web)",
+      "extraFields": "Zusätzliche Felder (Extras JSON)",
+      "galleriesMax": "Anzahl der Galerien (Site Admin + Retail User)",
+      "imagesPerGalleryMax": "Bilder pro Galerie",
+      "galleriesPerPlaceMax": "Galerien pro Ort (Retail User)",
+      "galleriesPerEventMax": "Galerien pro Veranstaltung (Retail User)",
+      "featuredPlaces": "Hervorgehobene Orte",
+      "featuredBoost": "Hervorgehobener Boost (Ranking-Gewicht)",
+      "eventsEnabled": "Veranstaltungen aktiviert",
+      "eventsPerMonth": "Veranstaltungen pro Monat",
+      "siteSeo": "Site SEO (Titel/Beschreibung/Bild)",
+      "placeSeo": "Place SEO-Felder",
+      "canonicalSupport": "Canonical/Redirect-Unterstützung",
+      "customDomain": "Benutzerdefinierte Domain",
+      "multipleDomainAliases": "Mehrere Domain-Aliase",
+      "max5": "✓ (max. 5)",
+      "additionalLanguages": "Zusätzliche Sprachen (hu+en+de)",
+      "siteMembers": "Site-Mitglieder (Mitgliedschaften)",
+      "eventLog": "Event-Log",
+      "pushSubscription": "PushSubscription",
+      "optionalAddon": "optionales Add-on",
+      "placeImages": "Anzahl der Bilder",
+      "featuredPlacement": "Hervorgehobene Platzierung",
+      "placeTitle": "Standort-Pakete",
+      "placeSubtitle": "Wählen Sie ein Paket für Ihren Standort"
+    },
+    "featureMatrix": {
+      "feature": "Funktion"
+    }
+  },
+  "open": "Öffnen",
+  "readMore": "Weiterlesen",
+  "category": "Kategorie",
+  "priceBand": "Preisklasse",
+  "tags": "Tags",
+  "address": "Adresse",
+  "phone": "Telefon",
+  "email": "E-Mail",
+  "website": "Website",
+  "openingHours": "Öffnungszeiten",
+  "accessibility": "Barrierefreiheit",
+  "searchPlaces": "Suchen...",
+  "errorLoadingPlaces": "Fehler beim Laden der Orte",
+  "noPlacesFound": "Keine Orte gefunden",
+  "sites": {
+    "title": "Sites",
+    "description": "Sites entdecken"
+  },
+  "collections": {
+    "title": "Kuratierte Sammlungen",
+    "description": "Entdecken Sie kuratierte Sammlungen",
+    "notFound": "Kuratierte Sammlung nicht gefunden",
+    "notFoundDescription": "Die gesuchte kuratierte Sammlung existiert nicht oder wurde entfernt.",
+    "items": "Elemente",
+    "noItems": "Noch keine Elemente in dieser Liste",
+    "highlighted": "Hervorgehoben"
+  },
+  "searchSites": "Sites suchen...",
+  "errorLoadingSites": "Fehler beim Laden der Sites",
+  "noSitesFound": "Keine Sites gefunden",
+  "staticPages": {
+    "title": "Statische Seiten",
+    "noStaticPagesFound": "Keine Seiten verfügbar",
+    "noBlogFound": "Keine Blog-Beiträge gefunden",
+    "noKnowledgeBaseFound": "Keine Wissensdatenbank-Artikel gefunden",
+    "noInfoPageFound": "Keine Info-Seiten gefunden"
+  },
+  "errorLoadingPlace": "Fehler beim Laden des Ortes",
+  "errorLoadingEvent": "Fehler beim Laden der Veranstaltung",
+  "backToList": "Zurück zur Liste",
+  "backToHome": "Zurück zur Startseite",
+  "gallery": {
+    "title": "Galerie",
+    "imageSingular": "Bild",
+    "imagePlural": "Bilder"
+  },
+  "share": "Teilen",
+  "copyLink": "Link kopieren",
+  "linkCopied": "Link kopiert!",
+  "event": {
+    "title": "Veranstaltungen",
+    "description": "Veranstaltungen entdecken"
+  },
+  "events": "Veranstaltungen",
+  "noEvents": "Keine Veranstaltungen",
+  "contact": "Kontakt",
+  "menu": "Menü",
+  "close": "Schließen",
+  "noResults": "Keine Ergebnisse gefunden",
+  "filtersTitle": "Filter",
+  "placeSlugMissing": "Details in Kürze...",
+  "filters": {
+    "all": "Alle",
+    "openNow": "Jetzt geöffnet",
+    "eventToday": "Heute Veranstaltung",
+    "within10MinutesWalk": "10 Minuten zu Fuß",
+    "rainSafe": "Regensicheres Programm",
+    "contextFilters": "Kontextbasierte Filter"
+  },
+  "yourLocation": "Hier bin ich jetzt.",
+  "showMyLocation": "Meine Position anzeigen",
+  "showRoute": "Route anzeigen",
+  "hideRoute": "Route ausblenden",
+  "distance": "Entfernung",
+  "routeDistance": "Route",
+  "walkingTime": "Gehzeit",
+  "calculatingRoute": "Route wird berechnet...",
+  "clickAgainToNavigate": "Nochmal klicken zum Navigieren",
+  "tooFarAway": "Zu weit entfernt (mehr als {{distance}} km)",
+  "hour": "Stunde",
+  "hours": "Stunden",
+  "minute": "Minute",
+  "minutes": "Minuten",
+  "locationPermissionDenied": "Standortfreigabe verweigert. Bitte aktivieren Sie die Standortfreigabe in Ihren Browsereinstellungen.",
+  "locationPermissionPrompt": "Bitte aktivieren Sie die Standortfreigabe, um Ihre Position anzuzeigen.",
+  "updateAvailable": "Update verfügbar!",
+  "updateDescription": "Aktualisieren Sie die App, um die neuesten Funktionen zu erhalten.",
+  "refresh": "Aktualisieren",
+  "later": "Später",
+  "footer": {
+    "tagline": "Entdecke lokale Schätze",
+    "legal": "Rechtliche Informationen",
+    "quickLinks": "Schnellzugriff",
+    "rights": "Alle Rechte vorbehalten."
+  },
+  "beTheFirst": "Sei der Erste!",
+  "saving": "Speichern...",
+  "rating": {
+    "starSingular": "Stern",
+    "starPlural": "Sterne",
+    "clickToRate": "Klicken zum Bewerten"
+  }
+}

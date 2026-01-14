@@ -1,0 +1,205 @@
+{
+  "home": {
+    "title": "Helyi élmények felfedezése",
+    "description": "Borászatok, gasztro és turisztikai helyek egy térképen."
+  },
+  "explore": {
+    "title": "Felfedezés",
+    "description": "Helyi élmények: borászat, gasztro, szállás, kézműves."
+  },
+  "listView": "Lista nézet",
+  "mapView": "Térkép nézet",
+  "place": {
+    "title": "Hely részletei",
+    "description": "Hely részleteinek megtekintése",
+    "placeSlugMissing": "Részletek hamarosan..."
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impresszum"
+    },
+    "terms": {
+      "title": "Általános Szerződési Feltételek"
+    },
+    "privacy": {
+      "title": "Adatvédelem"
+    }
+  },
+  "pricing": {
+    "title": "Csomagok és Árazás",
+    "description": "Válassz a szabadságodnak megfelelő csomagot",
+    "subtitle": "Ez a minimum, amit manuális billinggel is jól lehet kezelni (nincs Stripe, nincs számlázás, csak státusz + érvényesség + limits).",
+    "popular": "Népszerű",
+    "footerNote": "A számlázás manuális. Nincs Stripe integráció. A státusz, érvényesség és limitek manuálisan kezelhetők.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Belépő, kipróbálás"
+      },
+      "basic": {
+        "name": "Alap",
+        "description": "\"Van már értelme\", tartalom + esemény"
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Növekedés + kiemelés + domain + extra láthatóság"
+      }
+    },
+    "categories": {
+      "places": "Helyek",
+      "place": "Helyszín",
+      "visibility": "Láthatóság",
+      "events": "Események",
+      "seo": "SEO",
+      "domain": "Domain",
+      "languages": "Nyelvek",
+      "permissions": "Jogosultság",
+      "admin": "Admin",
+      "push": "Push"
+    },
+    "features": {
+      "placesCount": "Helyek száma (places)",
+      "imagesPerPlace": "Képek / hely (gallery)",
+      "heroImage": "Hero kép",
+      "contacts": "Kapcsolatok (tel/email/web)",
+      "extraFields": "Extra mezők (extras JSON)",
+      "galleriesMax": "Galériák száma (site admin + retail user)",
+      "imagesPerGalleryMax": "Képek / galéria",
+      "galleriesPerPlaceMax": "Galériák / hely (retail user)",
+      "galleriesPerEventMax": "Galériák / esemény (retail user)",
+      "featuredPlaces": "Kiemelt helyek (featured places)",
+      "featuredBoost": "Kiemelt boost (ranking weight)",
+      "eventsEnabled": "Események engedélyezve",
+      "eventsPerMonth": "Események száma / hó",
+      "siteSeo": "Site SEO (title/desc/image)",
+      "placeSeo": "Place SEO mezők",
+      "canonicalSupport": "Canonical/redirect támogatás",
+      "customDomain": "Custom domain",
+      "multipleDomainAliases": "Több domain alias",
+      "max5": "✓ (max 5)",
+      "additionalLanguages": "További nyelvek (hu+en+de)",
+      "siteMembers": "Site tagok (memberships)",
+      "eventLog": "Event log",
+      "pushSubscription": "PushSubscription",
+      "optionalAddon": "optional add-on",
+      "placeImages": "Képek száma",
+      "featuredPlacement": "Kiemelt megjelenés",
+      "placeTitle": "Helyszín csomagok",
+      "placeSubtitle": "Válassz egy csomagot a helyszíned számára"
+    },
+    "featureMatrix": {
+      "feature": "Funkció"
+    }
+  },
+  "open": "Megnyitás",
+  "readMore": "Tovább",
+  "category": "Kategória",
+  "activateFree": {
+    "cta": "Ingyenes oldal aktiválása",
+    "success": "Az ingyenes oldal sikeresen aktiválva!",
+    "error": "Az oldal aktiválása sikertelen volt.",
+    "modal": {
+      "title": "Ingyenes oldal aktiválása",
+      "description": "Biztosan aktiválni szeretnéd az ingyenes oldalt? Ez lehetővé teszi, hogy hozzáférj a dashboardhoz és kezdj el dolgozni az oldaladon.",
+      "confirm": "Aktiválás"
+    }
+  },
+  "priceBand": "Ár szint",
+  "tags": "Címkék",
+  "address": "Cím",
+  "phone": "Telefon",
+  "email": "Email",
+  "website": "Weboldal",
+  "openingHours": "Nyitvatartás",
+  "accessibility": "Akadálymentesség",
+  "searchPlaces": "Keresés...",
+  "errorLoadingPlaces": "Hiba a helyek betöltésekor",
+  "noPlacesFound": "Nincs találat",
+  "sites": {
+    "title": "Site-ok",
+    "description": "Fedezd fel a site-okat"
+  },
+  "collections": {
+    "title": "Kurátori listák",
+    "description": "Fedezd fel a kurátori listákat",
+    "notFound": "Kurátori lista nem található",
+    "notFoundDescription": "A keresett kurátori lista nem létezik vagy el lett távolítva.",
+    "items": "Elemek",
+    "noItems": "Még nincs elem ebben a listában",
+    "highlighted": "Kiemelt"
+  },
+  "searchSites": "Keresés site-ok között...",
+  "errorLoadingSites": "Hiba a site-ok betöltésekor",
+  "noSitesFound": "Nincs találat",
+  "staticPages": {
+    "title": "Statikus Oldalak",
+    "noStaticPagesFound": "Nincs megjeleníthető oldal",
+    "noBlogFound": "Nincs blog bejegyzés",
+    "noKnowledgeBaseFound": "Nincs tudástár cikk",
+    "noInfoPageFound": "Nincs információ oldal"
+  },
+  "errorLoadingPlace": "Hiba a hely betöltésekor",
+  "errorLoadingEvent": "Hiba az esemény betöltésekor",
+  "backToList": "Vissza a listához",
+  "backToHome": "Vissza a kezdőlapra",
+  "gallery": {
+    "title": "Galéria",
+    "imageSingular": "kép",
+    "imagePlural": "képek"
+  },
+  "share": "Megosztás",
+  "copyLink": "Link másolása",
+  "linkCopied": "Link másolva!",
+  "event": {
+    "title": "Események",
+    "description": "Fedezd fel az eseményeket"
+  },
+  "events": "Események",
+  "noEvents": "Nincs esemény",
+  "contact": "Kapcsolat",
+  "menu": "Menü",
+  "noResults": "Nincs találat",
+  "filtersTitle": "Szűrők",
+  "placeSlugMissing": "Részletek hamarosan...",
+  "filters": {
+    "all": "Összes",
+    "openNow": "Most nyitva",
+    "eventToday": "Ma van esemény",
+    "within10MinutesWalk": "10 perc séta ide",
+    "rainSafe": "Esőbiztos program",
+    "contextFilters": "Kontextus alapú szűrők"
+  },
+  "yourLocation": "Itt vagy most.",
+  "showMyLocation": "Mutasd a helyzetem",
+  "showRoute": "Útvonal mutatása",
+  "hideRoute": "Útvonal elrejtése",
+  "distance": "Távolság",
+  "routeDistance": "útvonal",
+  "walkingTime": "Sétálási idő",
+  "calculatingRoute": "Útvonal számítása...",
+  "clickAgainToNavigate": "Kattints újra a navigációhoz",
+  "tooFarAway": "Túl messze ({{distance}} km-nél távolabb)",
+  "hour": "óra",
+  "hours": "óra",
+  "minute": "perc",
+  "minutes": "perc",
+  "locationPermissionDenied": "A helyzet megosztása elutasítva. Engedélyezd a böngésző beállításaiban a helyzet megosztását.",
+  "locationPermissionPrompt": "A helyzeted megjelenítéséhez engedélyezd a helyzet megosztását.",
+  "updateAvailable": "Új verzió érhető el!",
+  "updateDescription": "Frissítsd az alkalmazást a legújabb funkciók eléréséhez.",
+  "refresh": "Frissítés",
+  "later": "Később",
+  "footer": {
+    "tagline": "Fedezd fel a helyi kincseket",
+    "legal": "Jogi információk",
+    "quickLinks": "Gyors linkek",
+    "rights": "Minden jog fenntartva."
+  },
+  "beTheFirst": "Legyél Te az első!",
+  "saving": "Mentés...",
+  "rating": {
+    "starSingular": "csillag",
+    "starPlural": "csillag",
+    "clickToRate": "Kattints az értékeléshez"
+  }
+}

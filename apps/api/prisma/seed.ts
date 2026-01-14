@@ -42,9 +42,10 @@ function jitterLatLng(baseLat: number, baseLng: number, radiusKm: number, rand: 
 function slugify(s: string) {
   return s
     .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
+    .normalize("NFD") // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics (ékezetek eltávolítása)
+    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
+    .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
     .slice(0, 80);
 }
 

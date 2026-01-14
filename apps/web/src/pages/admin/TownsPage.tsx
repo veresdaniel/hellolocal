@@ -351,7 +351,7 @@ export function TownsPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {

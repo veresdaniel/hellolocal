@@ -38,10 +38,25 @@ export class SlugResolverService {
    * @throws NotFoundException if the slug doesn't exist or is inactive
    */
   async resolve(args: { siteId: string; lang: Lang; slug: string }): Promise<ResolvedSlug> {
+    // First, try to decode the slug in case it's URL-encoded
+    // React Router automatically decodes URL params, but we should handle both cases
+    let decodedSlug = args.slug;
+    try {
+      decodedSlug = decodeURIComponent(args.slug);
+    } catch {
+      // If decoding fails, use original slug
+      decodedSlug = args.slug;
+    }
+
+    // Normalize the slug (remove accents, convert to lowercase, etc.)
+    // This handles cases where the URL contains accented characters but the DB has normalized slugs
+    const normalizedSlug = generateSlug(decodedSlug);
+
     // Look up the slug in the Slug table
     // The unique constraint is on (siteId, lang, slug)
+    // Try both the original (decoded) and normalized versions
     let hit = await this.prisma.slug.findUnique({
-      where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: args.slug } },
+      where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: decodedSlug } },
       select: {
         id: true,
         siteId: true,
@@ -61,32 +76,28 @@ export class SlugResolverService {
       },
     });
 
-    // Fallback: If slug not found and contains accented characters, try normalized version
-    if (!hit || !hit.isActive) {
-      const normalizedSlug = generateSlug(args.slug);
-      // Only try fallback if the normalized slug is different from the original
-      if (normalizedSlug !== args.slug && normalizedSlug) {
-        hit = await this.prisma.slug.findUnique({
-          where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: normalizedSlug } },
-          select: {
-            id: true,
-            siteId: true,
-            lang: true,
-            slug: true,
-            entityType: true,
-            entityId: true,
-            isActive: true,
-            isPrimary: true,
-            redirectToId: true,
-            redirectTo: {
-              select: {
-                slug: true,
-                isActive: true,
-              },
+    // Fallback: If slug not found, try normalized version (handles accented characters)
+    if ((!hit || !hit.isActive) && normalizedSlug !== decodedSlug && normalizedSlug) {
+      hit = await this.prisma.slug.findUnique({
+        where: { siteId_lang_slug: { siteId: args.siteId, lang: args.lang, slug: normalizedSlug } },
+        select: {
+          id: true,
+          siteId: true,
+          lang: true,
+          slug: true,
+          entityType: true,
+          entityId: true,
+          isActive: true,
+          isPrimary: true,
+          redirectToId: true,
+          redirectTo: {
+            select: {
+              slug: true,
+              isActive: true,
             },
           },
-        });
-      }
+        },
+      });
     }
 
     if (!hit || !hit.isActive) throw new NotFoundException("Slug not found");

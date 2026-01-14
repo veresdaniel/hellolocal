@@ -201,8 +201,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
   const { user, logout, isLoading } = authContext;
 
-  const siteName = platformSettings?.siteName;
-  const brandBadgeIcon = platformSettings?.brandBadgeIcon;
+  // Note: siteName and brandBadgeIcon are not used in admin layout - we always show fixed "Adminisztrációs felület" title
+  // Public pages (FloatingHeader, Header components) still use dynamic logo
+
+  // All admin pages should have noindex, nofollow robots meta tag
+  // Note: title is handled by usePageTitle hook in each page, so we don't set it here
+  useEffect(() => {
+    // Only set robots meta tag, don't touch document.title (let usePageTitle handle it)
+    const robotsMeta = document.querySelector('meta[name="robots"]');
+    if (robotsMeta) {
+      robotsMeta.setAttribute("content", "noindex, nofollow");
+    } else {
+      const meta = document.createElement("meta");
+      meta.setAttribute("name", "robots");
+      meta.setAttribute("content", "noindex, nofollow");
+      document.head.appendChild(meta);
+    }
+  }, []);
 
   // If still loading, show skeleton screen (prevents layout shift)
   // Note: ProtectedRoute already handles authentication, so we don't need to check for user here
@@ -288,64 +303,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", alignSelf: "stretch" }}>
           {/* Left section - Logo and Nav Links (Desktop) */}
           <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1, alignSelf: "center" }}>
-            {(siteName || brandBadgeIcon) ? (
-              <Link
-                to={adminPath("")}
-                style={{
-                  textDecoration: "none",
-                  color: "#667eea",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  transition: "opacity 0.2s ease",
-                  pointerEvents: "auto",
-                  position: "relative",
-                  zIndex: 1002,
-                }}
-                title={t("admin.dashboard")}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-              >
-                {brandBadgeIcon && (
-                  <img 
-                    src={brandBadgeIcon} 
-                    alt={siteName || ""}
-                    style={{ 
-                      width: 24, 
-                      height: 24, 
-                      objectFit: "contain",
-                      borderRadius: 4,
-                    }}
-                  />
-                )}
-                {siteName && (
-                  <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: "-0.02em" }}>
-                    {siteName}
-                  </span>
-                )}
-              </Link>
-            ) : (
-              <Link
-                to={adminPath("")}
-                style={{
-                  textDecoration: "none",
-                  color: "#667eea",
-                  fontSize: "clamp(20px, 4vw, 24px)",
-                  transition: "opacity 0.2s ease",
-                  pointerEvents: "auto",
-                  position: "relative",
-                  zIndex: 1002,
-                  display: "flex",
-                  alignItems: "center",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-                title={t("admin.dashboard")}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-              >
-                <span style={{ fontSize: "clamp(20px, 4vw, 24px)", display: "flex", alignItems: "center" }}>⚙️</span>
-              </Link>
-            )}
+            <Link
+              to={adminPath("")}
+              style={{
+                textDecoration: "none",
+                color: "#667eea",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                transition: "opacity 0.2s ease",
+                pointerEvents: "auto",
+                position: "relative",
+                zIndex: 1002,
+              }}
+              title={t("admin.dashboard")}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+            >
+              <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: "-0.02em" }}>
+                {t("admin.header.title") || "Adminisztrációs felület"}
+              </span>
+            </Link>
+            {/* Note: Dynamic logo/siteName removed - always show fixed "Adminisztrációs felület" title in admin */}
+            {/* Public pages (FloatingHeader, Header) still use dynamic logo from platformSettings */}
             
             {/* Desktop Navigation - Tile Menu */}
             {!isMobile && (
@@ -443,41 +423,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Site Selector */}
             {!isMobile && HAS_MULTIPLE_SITES && <SiteSelector />}
 
-            {/* Map view button */}
-            {!isMobile && (
-              <button
-                onClick={() => {
-                  const publicPagePath = buildUrl({ lang, siteKey: selectedSiteId ? undefined : DEFAULT_SITE_SLUG, path: "" });
-                  window.open(publicPagePath, "_blank");
-                }}
-                style={{
-                  padding: "8px 14px",
-                  background: "rgba(102, 126, 234, 0.1)",
-                  border: "1px solid rgba(102, 126, 234, 0.3)",
-                  borderRadius: 8,
-                  color: "#667eea",
-                  fontSize: "clamp(13px, 3.2vw, 15px)",
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
-                }}
-                title={t("public.mapView")}
-              >
-                📍 {t("public.mapView")}
-              </button>
-            )}
 
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
@@ -716,41 +661,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
                 <UserInfoDropdown />
               </div>
-              
-              {/* Map view button (mobile) */}
-              <button
-                onClick={() => {
-                  window.open(publicPagePath, "_blank");
-                }}
-                style={{
-                  padding: "14px 16px",
-                  background: "rgba(102, 126, 234, 0.1)",
-                  border: "1px solid rgba(102, 126, 234, 0.3)",
-                  borderRadius: 8,
-                  color: "#667eea",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  width: "100%",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
-                }}
-              >
-                📍 {t("public.mapView")}
-              </button>
               
               <Link
                 to={publicPagePath}

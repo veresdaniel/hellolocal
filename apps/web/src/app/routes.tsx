@@ -59,6 +59,9 @@ const SiteAnalyticsPage = lazy(() => import("../pages/admin/SiteAnalyticsPage").
 const PlaceAnalyticsPage = lazy(() => import("../pages/admin/PlaceAnalyticsPage").then(m => ({ default: m.PlaceAnalyticsPage })));
 const EventAnalyticsPage = lazy(() => import("../pages/admin/EventAnalyticsPage").then(m => ({ default: m.EventAnalyticsPage })));
 const SiteStatusPage = lazy(() => import("../pages/admin/SiteStatusPage").then(m => ({ default: m.SiteStatusPage })));
+const CollectionsPage = lazy(() => import("../pages/admin/CollectionsPage").then(m => ({ default: m.CollectionsPage })));
+const CollectionEditPage = lazy(() => import("../pages/admin/CollectionEditPage").then(m => ({ default: m.CollectionEditPage })));
+const CollectionDetailPage = lazy(() => import("../pages/CollectionDetailPage").then(m => ({ default: m.CollectionDetailPage })));
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -109,6 +112,14 @@ const createPublicRoutes = () => {
           // Redirect old-style URLs (without siteKey) to default site
           { path: "place/:slug", element: <RedirectToSiteRoute entityType="place" /> },
           { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
+          // Collections route without siteKey - uses SiteLayout for header/footer
+          { 
+            path: "collections/:slug", 
+            element: <SiteLayout />,
+            children: [
+              { path: "", element: <CollectionDetailPage /> }
+            ]
+          },
         ],
       },
       {
@@ -364,6 +375,42 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ) : (
           <NotFoundPage />
+        ),
+      },
+      {
+        path: "collections",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <CollectionsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "collections/:id/edit",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <CollectionEditPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "collections/new",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <CollectionEditPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
         ),
       },
       {

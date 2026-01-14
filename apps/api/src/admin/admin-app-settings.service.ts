@@ -83,5 +83,31 @@ export class AdminAppSettingsService {
     });
   }
 
+  /**
+   * Get global crawlability setting
+   */
+  async getGlobalCrawlability(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: "globalCrawlability" },
+    });
+
+    if (setting && setting.type === "boolean") {
+      return setting.value === "true";
+    }
+
+    return true; // Default: crawlable
+  }
+
+  /**
+   * Set global crawlability setting
+   */
+  async setGlobalCrawlability(isCrawlable: boolean) {
+    return this.upsert("globalCrawlability", {
+      value: isCrawlable ? "true" : "false",
+      type: "boolean",
+      description: "Global platform crawlability setting. If false, all pages will have noindex meta tag by default.",
+    });
+  }
+
 }
 

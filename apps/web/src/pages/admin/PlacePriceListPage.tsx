@@ -166,11 +166,7 @@ export function PlacePriceListPage() {
   const platformCurrency = (platformSettings as any)?.platform?.currency || "HUF";
 
   if (isLoadingPlace || isLoadingPriceList) {
-    return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(24px, 5vw, 32px)" }}>
-        <LoadingSpinner isLoading={true} delay={0} />
-      </div>
-    );
+    return null;
   }
 
   if (!place) {

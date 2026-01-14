@@ -80,6 +80,15 @@ export function AdminResponsiveTable<T>({
   error = null,
 }: AdminResponsiveTableProps<T>) {
   const { t } = useTranslation();
+  
+  // Validate cardTitle prop
+  if (!cardTitle || typeof cardTitle !== 'function') {
+    console.error('AdminResponsiveTable: cardTitle prop is required and must be a function', { 
+      cardTitle, 
+      cardTitleType: typeof cardTitle,
+      hasCardTitle: !!cardTitle 
+    });
+  }
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.innerWidth < BREAKPOINTS.tablet;
@@ -322,7 +331,20 @@ export function AdminResponsiveTable<T>({
                         }}
                         title={t("admin.viewPublic") || "Megnézem"}
                       >
-                        🔍
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ display: "block" }}
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
                       </button>
                     )}
                     <button
@@ -839,8 +861,8 @@ export function AdminResponsiveTable<T>({
                                 strokeLinejoin="round"
                                 style={{ display: "block" }}
                               >
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="m21 21-4.35-4.35" />
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
                               </svg>
                             </button>
                           )}
@@ -1044,7 +1066,7 @@ export function AdminResponsiveTable<T>({
                               marginBottom: 4,
                             }}
                           >
-                            {cardTitle(item)}
+                            {cardTitle && typeof cardTitle === 'function' ? cardTitle(item) : String(item)}
                           </div>
                           {cardSubtitle && (
                             <div style={{ fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{cardSubtitle(item)}</div>

@@ -146,6 +146,7 @@ model Site {
   galleries         Gallery[]
   activeUsers       User[]             @relation("UserActiveSite")
   analyticsDaily    AnalyticsDaily[]
+  collectionItems   CollectionItem[]
 
   @@index([brandId])
   @@index([plan])
@@ -1060,4 +1061,75 @@ model AnalyticsDaily {
   @@unique([day, siteId, placeId])
   @@index([siteId, day])
   @@index([placeId, day])
+}
+
+// Curated Collections: Superadmin által összeválogatott site-listák
+model Collection {
+  id          String  @id @default(cuid())
+  slug        String  @unique // URL path (domain nélkül)
+  domain      String? @unique // opcionális custom domain
+  isActive    Boolean @default(false)
+  isCrawlable Boolean @default(true) // SEO: ha false, akkor noindex meta tag
+  order       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations CollectionTranslation[]
+  items        CollectionItem[]
+
+  @@index([isActive])
+  @@index([order])
+}
+
+model CollectionTranslation {
+  id          String @id @default(cuid())
+  collectionId String
+  lang        Lang
+
+  title       String
+  description String? // HTML
+  heroImage   String?
+
+  // SEO (per language)
+  seoTitle       String?
+  seoDescription String?
+  seoImage      String?
+  seoKeywords   String[] @default([])
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, lang])
+  @@index([lang])
+}
+
+model CollectionItem {
+  id          String @id @default(cuid())
+  collectionId String
+  siteId      String
+
+  order         Int     @default(0)
+  isHighlighted Boolean @default(false)
+
+  collection Collection                    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  site       Site                          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  translations CollectionItemTranslation[]
+
+  @@index([collectionId, order])
+  @@index([siteId])
+}
+
+model CollectionItemTranslation {
+  id              String @id @default(cuid())
+  collectionItemId String
+  lang            Lang
+
+  titleOverride       String? // opcionális override a site nevéhez
+  descriptionOverride String? // HTML / rövid
+  imageOverride       String?
+
+  collectionItem CollectionItem @relation(fields: [collectionItemId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionItemId, lang])
+  @@index([lang])
 }

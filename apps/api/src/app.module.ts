@@ -9,6 +9,7 @@ import { SitesModule } from "./sites/sites.module";
 import { EventsModule } from "./events/events.module";
 import { LegalModule } from "./legal/legal.module";
 import { StaticPagesModule } from "./static-pages/static-pages.module";
+import { CollectionsModule } from "./collections/collections.module";
 import { SlugModule } from "./slug/slug.module";
 import { SiteModule } from "./site/site.module";
 import { AuthModule } from "./auth/auth.module";
@@ -55,6 +56,7 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
     EventsModule,
     LegalModule,
     StaticPagesModule,
+    CollectionsModule, // Curated collections (public)
     SeoModule, // SEO metadata for SSR
     NotificationsModule, // Push notifications
     PlatformSettingsModule, // Platform settings API (Brand + Site + SiteInstance merged)

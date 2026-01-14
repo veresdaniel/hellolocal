@@ -95,6 +95,10 @@ export function SiteStatusPage() {
         case "staticPages":
           await queryClient.invalidateQueries({ queryKey: ["staticPages"] });
           break;
+        case "collections":
+          await queryClient.invalidateQueries({ queryKey: ["collections"] });
+          await queryClient.invalidateQueries({ queryKey: ["collection"] });
+          break;
         case "all":
           // Invalidate all caches
           await queryClient.invalidateQueries();
@@ -122,11 +126,7 @@ export function SiteStatusPage() {
   ];
 
   if (isLoading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "48px" }}>
-        <LoadingSpinner />
-      </div>
-    );
+    return null;
   }
 
   if (!data) {
@@ -390,6 +390,7 @@ function CacheManagementTab({
     { id: "platformSettings", label: t("admin.siteStatus.cache.platformSettings") || "Platform Settings", description: t("admin.siteStatus.cache.platformSettingsDesc") || "Invalidate platform settings cache" },
     { id: "mapSettings", label: t("admin.siteStatus.cache.mapSettings") || "Map Settings", description: t("admin.siteStatus.cache.mapSettingsDesc") || "Invalidate map settings cache" },
     { id: "staticPages", label: t("admin.siteStatus.cache.staticPages") || "Static Pages", description: t("admin.siteStatus.cache.staticPagesDesc") || "Invalidate static pages cache" },
+    { id: "collections", label: t("admin.siteStatus.cache.collections") || "Collections", description: t("admin.siteStatus.cache.collectionsDesc") || "Invalidate collections cache" },
     { id: "all", label: t("admin.siteStatus.cache.all") || "All Caches", description: t("admin.siteStatus.cache.allDesc") || "Invalidate all caches (use with caution)" },
   ];
 
