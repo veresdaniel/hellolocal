@@ -88,7 +88,7 @@ export function AdminDashboard() {
 
   const systemCardsCount = useMemo(() => {
     let count = 0;
-    if (user?.role === ROLE_SUPERADMIN) count += 3; // appSettings + brands + subscriptions
+    if (user?.role === ROLE_SUPERADMIN) count += 4; // appSettings + brands + subscriptions + siteStatus
     if (user?.role === ROLE_SUPERADMIN && HAS_MULTIPLE_SITES) count += 1; // sites
     if (showEventLog) count += 1; // eventLog
     return count;
@@ -420,6 +420,16 @@ export function AdminDashboard() {
                 description={t("admin.dashboardCards.subscriptionsDesc")}
                 link={adminPath("/subscriptions")}
                 icon="💳"
+                isMobile={isMobile}
+                variant="admin"
+              />
+            )}
+            {user?.role === ROLE_SUPERADMIN && (
+              <DashboardCard
+                title={t("admin.siteStatus.title") || "Site Status"}
+                description={t("admin.dashboardCards.siteStatusDesc") || "View site statistics and manage cache"}
+                link={adminPath("/site-status")}
+                icon="📊"
                 isMobile={isMobile}
                 variant="admin"
               />

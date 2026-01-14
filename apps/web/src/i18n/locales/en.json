@@ -668,7 +668,8 @@
       "analytics": "Analytics",
       "analyticsDesc": "View site and place analytics, page views, and CTA clicks",
       "settings": "Settings",
-      "settingsDesc": "Settings"
+      "settingsDesc": "Settings",
+      "siteStatusDesc": "View site statistics and manage cache"
     },
     "dashboardSections": {
       "contentCreation": "Content Creation",
@@ -697,6 +698,67 @@
       "ctaEmail": "Email",
       "ctaWebsite": "Website",
       "ctaMaps": "Maps"
+    },
+    "siteStatus": {
+      "title": "Site Status",
+      "subtitle": "Overview of site statistics and cache management",
+      "tabs": {
+        "overview": "Overview",
+        "cache": "Cache Management"
+      },
+      "stats": {
+        "sites": "Sites",
+        "places": "Places",
+        "events": "Events",
+        "users": "Users",
+        "subscriptions": "Subscriptions",
+        "categories": "Categories",
+        "tags": "Tags",
+        "towns": "Towns",
+        "galleries": "Galleries"
+      },
+      "recentActivity": {
+        "title": "Recent Activity (Last 7 Days)",
+        "places": "Places",
+        "events": "Events",
+        "users": "Users",
+        "eventLogs": "Event Logs"
+      },
+      "sitesByPlan": {
+        "title": "Sites by Plan"
+      },
+      "cache": {
+        "title": "Cache Management",
+        "description": "Manually invalidate caches for specific content types. This will force the system to refresh data on the next request.",
+        "places": "Places",
+        "placesDesc": "Invalidate all place-related caches",
+        "events": "Events",
+        "eventsDesc": "Invalidate all event-related caches",
+        "categories": "Categories",
+        "categoriesDesc": "Invalidate category caches and related places/events",
+        "tags": "Tags",
+        "tagsDesc": "Invalidate tag caches and related places/events",
+        "towns": "Towns",
+        "townsDesc": "Invalidate town caches and related places",
+        "priceBands": "Price Bands",
+        "priceBandsDesc": "Invalidate price band caches and related places",
+        "platformSettings": "Platform Settings",
+        "platformSettingsDesc": "Invalidate platform settings cache",
+        "mapSettings": "Map Settings",
+        "mapSettingsDesc": "Invalidate map settings cache",
+        "staticPages": "Static Pages",
+        "staticPagesDesc": "Invalidate static pages cache",
+        "all": "All Caches",
+        "allDesc": "Invalidate all caches (use with caution)",
+        "invalidate": "Invalidate Cache",
+        "invalidating": "Invalidating...",
+        "invalidated": "Cache invalidated: {{cacheType}}",
+        "error": "Failed to invalidate cache"
+      },
+      "error": {
+        "loadFailed": "Failed to load site status",
+        "noData": "No data available"
+      }
     },
     "viewPublicSite": "View Public Site",
     "brands": "Brands",

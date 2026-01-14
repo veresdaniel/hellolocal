@@ -58,6 +58,7 @@ const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => 
 const SiteAnalyticsPage = lazy(() => import("../pages/admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
 const PlaceAnalyticsPage = lazy(() => import("../pages/admin/PlaceAnalyticsPage").then(m => ({ default: m.PlaceAnalyticsPage })));
 const EventAnalyticsPage = lazy(() => import("../pages/admin/EventAnalyticsPage").then(m => ({ default: m.EventAnalyticsPage })));
+const SiteStatusPage = lazy(() => import("../pages/admin/SiteStatusPage").then(m => ({ default: m.SiteStatusPage })));
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -482,6 +483,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventLogPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "site-status",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SiteStatusPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

@@ -733,7 +733,8 @@
       "analytics": "Analytics",
       "analyticsDesc": "Site és hely analytics megtekintése, oldal megtekintések és CTA kattintások",
       "settings": "Beállítások",
-      "settingsDesc": "Beállítások"
+      "settingsDesc": "Beállítások",
+      "siteStatusDesc": "Site statisztikák megtekintése és cache kezelés"
     },
     "dashboardSections": {
       "contentCreation": "Tartalom létrehozás",
@@ -762,6 +763,67 @@
       "ctaEmail": "Email",
       "ctaWebsite": "Weboldal",
       "ctaMaps": "Térkép"
+    },
+    "siteStatus": {
+      "title": "Site Állapot",
+      "subtitle": "Site statisztikák áttekintése és cache kezelés",
+      "tabs": {
+        "overview": "Áttekintés",
+        "cache": "Cache kezelés"
+      },
+      "stats": {
+        "sites": "Site-ok",
+        "places": "Helyek",
+        "events": "Események",
+        "users": "Felhasználók",
+        "subscriptions": "Előfizetések",
+        "categories": "Kategóriák",
+        "tags": "Címkék",
+        "towns": "Települések",
+        "galleries": "Galériák"
+      },
+      "recentActivity": {
+        "title": "Legutóbbi tevékenység (Utolsó 7 nap)",
+        "places": "Helyek",
+        "events": "Események",
+        "users": "Felhasználók",
+        "eventLogs": "Esemény naplók"
+      },
+      "sitesByPlan": {
+        "title": "Site-ok csomag szerint"
+      },
+      "cache": {
+        "title": "Cache kezelés",
+        "description": "Manuálisan invalidálhatod a cache-t különböző tartalomtípusokhoz. Ez kényszeríti a rendszert, hogy frissítse az adatokat a következő kérésnél.",
+        "places": "Helyek",
+        "placesDesc": "Minden helyhez kapcsolódó cache invalidálása",
+        "events": "Események",
+        "eventsDesc": "Minden eseményhez kapcsolódó cache invalidálása",
+        "categories": "Kategóriák",
+        "categoriesDesc": "Kategória cache és kapcsolódó helyek/események invalidálása",
+        "tags": "Címkék",
+        "tagsDesc": "Címke cache és kapcsolódó helyek/események invalidálása",
+        "towns": "Települések",
+        "townsDesc": "Település cache és kapcsolódó helyek invalidálása",
+        "priceBands": "Ár szintek",
+        "priceBandsDesc": "Ár szint cache és kapcsolódó helyek invalidálása",
+        "platformSettings": "Platform beállítások",
+        "platformSettingsDesc": "Platform beállítások cache invalidálása",
+        "mapSettings": "Térkép beállítások",
+        "mapSettingsDesc": "Térkép beállítások cache invalidálása",
+        "staticPages": "Statikus oldalak",
+        "staticPagesDesc": "Statikus oldalak cache invalidálása",
+        "all": "Összes cache",
+        "allDesc": "Összes cache invalidálása (óvatosan használd)",
+        "invalidate": "Cache invalidálása",
+        "invalidating": "Invalidálás...",
+        "invalidated": "Cache invalidálva: {{cacheType}}",
+        "error": "A cache invalidálása sikertelen volt"
+      },
+      "error": {
+        "loadFailed": "A site állapot betöltése sikertelen volt",
+        "noData": "Nincs elérhető adat"
+      }
     },
     "viewPublicSite": "Publikus oldal megnyitása",
     "brands": "Márkák",

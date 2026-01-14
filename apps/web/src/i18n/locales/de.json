@@ -684,6 +684,67 @@
       "ctaWebsite": "Website",
       "ctaMaps": "Karte"
     },
+    "siteStatus": {
+      "title": "Site-Status",
+      "subtitle": "Übersicht über Site-Statistiken und Cache-Verwaltung",
+      "tabs": {
+        "overview": "Übersicht",
+        "cache": "Cache-Verwaltung"
+      },
+      "stats": {
+        "sites": "Sites",
+        "places": "Orte",
+        "events": "Veranstaltungen",
+        "users": "Benutzer",
+        "subscriptions": "Abonnements",
+        "categories": "Kategorien",
+        "tags": "Tags",
+        "towns": "Städte",
+        "galleries": "Galerien"
+      },
+      "recentActivity": {
+        "title": "Letzte Aktivität (Letzte 7 Tage)",
+        "places": "Orte",
+        "events": "Veranstaltungen",
+        "users": "Benutzer",
+        "eventLogs": "Ereignisprotokolle"
+      },
+      "sitesByPlan": {
+        "title": "Sites nach Plan"
+      },
+      "cache": {
+        "title": "Cache-Verwaltung",
+        "description": "Cache manuell für bestimmte Inhaltstypen invalidieren. Dies zwingt das System, die Daten bei der nächsten Anfrage zu aktualisieren.",
+        "places": "Orte",
+        "placesDesc": "Alle ortsbezogenen Caches invalidieren",
+        "events": "Veranstaltungen",
+        "eventsDesc": "Alle veranstaltungsbezogenen Caches invalidieren",
+        "categories": "Kategorien",
+        "categoriesDesc": "Kategorie-Caches und zugehörige Orte/Veranstaltungen invalidieren",
+        "tags": "Tags",
+        "tagsDesc": "Tag-Caches und zugehörige Orte/Veranstaltungen invalidieren",
+        "towns": "Städte",
+        "townsDesc": "Stadt-Caches und zugehörige Orte invalidieren",
+        "priceBands": "Preisklassen",
+        "priceBandsDesc": "Preisklassen-Caches und zugehörige Orte invalidieren",
+        "platformSettings": "Plattform-Einstellungen",
+        "platformSettingsDesc": "Plattform-Einstellungs-Cache invalidieren",
+        "mapSettings": "Karteneinstellungen",
+        "mapSettingsDesc": "Karteneinstellungs-Cache invalidieren",
+        "staticPages": "Statische Seiten",
+        "staticPagesDesc": "Statische Seiten-Cache invalidieren",
+        "all": "Alle Caches",
+        "allDesc": "Alle Caches invalidieren (mit Vorsicht verwenden)",
+        "invalidate": "Cache invalidieren",
+        "invalidating": "Invalidierung...",
+        "invalidated": "Cache invalidiert: {{cacheType}}",
+        "error": "Cache-Invalidierung fehlgeschlagen"
+      },
+      "error": {
+        "loadFailed": "Site-Status konnte nicht geladen werden",
+        "noData": "Keine Daten verfügbar"
+      }
+    },
     "viewPublicSite": "Öffentliche Seite öffnen",
     "brands": "Marken",
     "siteInstances": "Seiteninstanzen",

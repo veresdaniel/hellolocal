@@ -1670,3 +1670,72 @@ export function deleteGallery(id: string, siteId?: string) {
   const params = siteId ? `?siteId=${siteId}` : "";
   return apiDelete<{ success: boolean }>(`/admin/galleries/${id}${params}`);
 }
+
+// ==================== Site Status & Statistics ====================
+
+export interface SiteStatusResponse {
+  overview: {
+    sites: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    places: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    events: {
+      total: number;
+      active: number;
+      upcoming: number;
+      inactive: number;
+    };
+    users: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    content: {
+      categories: number;
+      tags: number;
+      towns: number;
+      galleries: number;
+    };
+    subscriptions: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+  };
+  recentActivity: {
+    places: number;
+    events: number;
+    users: number;
+    eventLogs: number;
+    period: string;
+  };
+  sitesByPlan: Array<{
+    plan: string;
+    count: number;
+  }>;
+}
+
+export function getSiteStatus() {
+  return apiGet<SiteStatusResponse>("/admin/site-status");
+}
+
+// ==================== Cache Management ====================
+
+export interface InvalidateCacheResponse {
+  success: boolean;
+  message: string;
+  cacheType: string;
+  timestamp: string;
+}
+
+export function invalidateCache(cacheType: string) {
+  return apiPost<InvalidateCacheResponse>("/admin/cache/invalidate", {
+    cacheType,
+  });
+}
