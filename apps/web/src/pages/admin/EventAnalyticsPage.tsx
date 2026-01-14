@@ -38,7 +38,7 @@ export function EventAnalyticsPage() {
   }
 
   if (isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   return (

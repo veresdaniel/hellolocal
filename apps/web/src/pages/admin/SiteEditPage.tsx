@@ -262,7 +262,7 @@ export function SiteEditPage() {
   };
 
   if (isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!site) {
@@ -2011,11 +2011,7 @@ function SubscriptionTab({
   };
 
   if (isLoading || !subscription || !entitlements) {
-    return (
-      <div style={{ padding: 48, textAlign: "center" }}>
-        <LoadingSpinner isLoading={true} />
-      </div>
-    );
+    return null;
   }
 
   const currentPlan = subscription.plan;

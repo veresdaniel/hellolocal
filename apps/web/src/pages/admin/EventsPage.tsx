@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
+import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
@@ -21,9 +22,12 @@ import { SlugInput } from "../../components/SlugInput";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
+import { useToast } from "../../contexts/ToastContext";
 
 export function EventsPage() {
   const { t, i18n } = useTranslation();
+  const { showToast } = useToast();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
@@ -452,15 +456,25 @@ export function EventsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmDeleteEvent"))) return;
+    const confirmed = await confirm({
+      title: t("admin.confirmDeleteEvent") || "Delete Event",
+      message: t("admin.confirmDeleteEvent") || "Are you sure you want to delete this event? This action cannot be undone.",
+      confirmLabel: t("common.delete") || "Delete",
+      cancelLabel: t("common.cancel") || "Cancel",
+      confirmVariant: "danger",
+      size: "medium",
+    });
+
+    if (!confirmed) return;
 
     try {
       await deleteEvent(id, selectedSiteId || undefined);
       await loadData();
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
+      showToast(t("admin.messages.eventDeleted") || "Event deleted successfully", "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"));
+      showToast(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"), "error");
     }
   };
 
@@ -588,7 +602,7 @@ export function EventsPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {
@@ -870,7 +884,7 @@ export function EventsPage() {
                   )}
                 </div>
 
-                {/* Slug */}
+                {/* Slug - right after Title */}
                 <SlugInput
                   value={
                     selectedLang === "hu"
@@ -903,7 +917,36 @@ export function EventsPage() {
                   }
                 />
 
-                {/* Short Description */}
+                {/* Description - right after Slug */}
+                <div>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: 8,
+                    color: "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(13px, 3vw, 14px)",
+                  }}>
+                    {t("common.description")} ({selectedLang.toUpperCase()})
+                  </label>
+                  <TipTapEditorWithUpload
+                    value={
+                      selectedLang === "hu"
+                        ? formData.descriptionHu
+                        : selectedLang === "en"
+                        ? formData.descriptionEn
+                        : formData.descriptionDe
+                    }
+                    onChange={(html) => {
+                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: html });
+                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: html });
+                      else setFormData({ ...formData, descriptionDe: html });
+                    }}
+                    uploadFolder="editor/events"
+                    enableVideo={true}
+                  />
+                </div>
+
+                {/* Short Description - after Description */}
                 <div>
                   <label style={{ 
                     display: "block", 
@@ -934,35 +977,6 @@ export function EventsPage() {
                   <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
                     {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
                   </small>
-                </div>
-
-                {/* Description (TipTap Editor) */}
-                <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8,
-                    color: "#667eea",
-                    fontWeight: 600,
-                    fontSize: "clamp(13px, 3vw, 14px)",
-                  }}>
-                    {t("common.description")} ({selectedLang.toUpperCase()})
-                  </label>
-                  <TipTapEditorWithUpload
-                    value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
-                    }
-                    onChange={(html) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: html });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: html });
-                      else setFormData({ ...formData, descriptionDe: html });
-                    }}
-                    uploadFolder="editor/events"
-                    enableVideo={true}
-                  />
                 </div>
               </div>
             )}
@@ -1604,7 +1618,20 @@ export function EventsPage() {
                                 }}
                                 title={t("admin.viewPublic") || "Megnézem"}
                               >
-                                🔍
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  style={{ display: "block" }}
+                                >
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
                               </button>
                             ) : null;
                           })()}

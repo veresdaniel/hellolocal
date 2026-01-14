@@ -22,9 +22,10 @@ interface FloatingHeaderProps {
   onMapViewClick?: () => void;
   editUrl?: string; // Admin edit URL for current page (e.g., "/hu/admin/places/123")
   showEditButton?: boolean; // Whether to show edit button (based on permissions)
+  hideMapViewButton?: boolean; // Whether to hide the map view button
 }
 
-export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false }: FloatingHeaderProps = {}) {
+export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false, hideMapViewButton = false }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
   const { lang, siteKey, siteKeyParam } = useRouteCtx();
   const location = useLocation();
@@ -594,6 +595,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
 
           {/* Map view button - show on all non-map view pages */}
           {(() => {
+            // Don't show if explicitly hidden
+            if (hideMapViewButton) return null;
             // Don't show on admin pages
             if (location.pathname.includes("/admin")) return null;
             
@@ -1006,6 +1009,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
             )}
             {/* Map view button - Mobile */}
             {(() => {
+              // Don't show if explicitly hidden
+              if (hideMapViewButton) return null;
               // Don't show on admin pages
               if (location.pathname.includes("/admin")) return null;
               

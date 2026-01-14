@@ -31,14 +31,19 @@ export function usePageTitle(titleKey: string) {
 
   useEffect(() => {
     const title = t(titleKey);
-    const siteName = platformSettings?.siteName || t("common.siteName", { defaultValue: "" });
     const adminSuffix = t("admin.titleSuffix", { defaultValue: "Admin" });
     
-    if (siteName) {
-      document.title = `${title} - ${adminSuffix} - ${siteName}`;
+    // Use shorter format for better browser tab display
+    // Format: "Page Title | Admin" (max ~60 chars for good tab display)
+    const fullTitle = `${title} | ${adminSuffix}`;
+    
+    // Truncate if too long (browser tabs typically show ~30-40 chars)
+    if (fullTitle.length > 50) {
+      const truncatedTitle = title.substring(0, 50 - adminSuffix.length - 3) + "...";
+      document.title = `${truncatedTitle} | ${adminSuffix}`;
     } else {
-      document.title = `${title} - ${adminSuffix}`;
+      document.title = fullTitle;
     }
-  }, [titleKey, t, platformSettings?.siteName]);
+  }, [titleKey, t]);
 }
 

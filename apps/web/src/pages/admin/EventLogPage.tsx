@@ -562,9 +562,7 @@ export function EventLogPage() {
       )}
 
       {/* Logs Table */}
-      {isLoading ? (
-        <LoadingSpinner isLoading={true} delay={0} />
-      ) : (
+      {isLoading ? null : (
         <>
           <div style={{ background: "white", border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
             <div style={{ overflowX: "auto" }}>

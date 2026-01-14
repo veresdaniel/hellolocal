@@ -11,6 +11,8 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { SlugInput } from "../../components/SlugInput";
+import { DomainInput } from "../../components/DomainInput";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
 
@@ -44,6 +46,7 @@ export function SitesPage() {
     heroImageEn: "",
     heroImageDe: "",
     primaryDomain: "",
+    primaryDomainEnabled: false,
     isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -126,7 +129,7 @@ export function SitesPage() {
         brandId: formData.brandId,
         translations,
         isActive: formData.isActive,
-        primaryDomain: formData.primaryDomain || null,
+        primaryDomain: formData.primaryDomainEnabled ? (formData.primaryDomain || null) : null,
       });
       setIsCreating(false);
       resetForm();
@@ -179,7 +182,7 @@ export function SitesPage() {
         brandId: formData.brandId,
         translations,
         isActive: formData.isActive,
-        primaryDomain: formData.primaryDomain || null,
+        primaryDomain: formData.primaryDomainEnabled ? (formData.primaryDomain || null) : null,
       });
       setEditingId(null);
       resetForm();
@@ -231,6 +234,7 @@ export function SitesPage() {
       heroImageEn: en?.heroImage || "",
       heroImageDe: de?.heroImage || "",
       primaryDomain: site.primaryDomain || "",
+      primaryDomainEnabled: !!site.primaryDomain,
       isActive: site.isActive,
     });
   };
@@ -252,6 +256,7 @@ export function SitesPage() {
       heroImageEn: "",
       heroImageDe: "",
       primaryDomain: "",
+      primaryDomainEnabled: false,
       isActive: true,
     });
     setFormErrors({});
@@ -321,149 +326,11 @@ export function SitesPage() {
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Slug, Brand, and Primary Domain Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: formErrors.slug ? "#dc2626" : "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {t("admin.fields.siteSlug")} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: `2px solid ${formErrors.slug ? "#fca5a5" : "#e0e7ff"}`,
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    background: formErrors.slug ? "#fef2f2" : "white",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    if (!formErrors.slug) {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.slug ? "#fca5a5" : "#e0e7ff";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-                {formErrors.slug && <div style={{ 
-                  color: "#dc2626", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  marginTop: 6, 
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.slug}</div>}
-              </div>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: formErrors.brandId ? "#dc2626" : "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {t("admin.brand")} *
-                </label>
-                <select
-                  value={formData.brandId}
-                  onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "#e0e7ff"}`,
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    background: formErrors.brandId ? "#fef2f2" : "white",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    if (!formErrors.brandId) {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                    }
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "#e0e7ff";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  <option value="">{t("admin.selectBrand")}</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.brandId && <div style={{ 
-                  color: "#dc2626", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  marginTop: 6, 
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.brandId}</div>}
-              </div>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {t("admin.primaryDomain")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.primaryDomain}
-                  onChange={(e) => setFormData({ ...formData, primaryDomain: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: "2px solid #e0e7ff",
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    boxSizing: "border-box",
-                  }}
-                  placeholder="example.com"
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#e0e7ff";
-                    e.target.style.boxShadow = "none";
-                  }}
-                />
-              </div>
-            </div>
-
+            {/* Name and Slug first - Language-aware */}
             <LanguageAwareForm>
               {(selectedLang) => (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Name */}
+                  {/* Name - FIRST */}
                   <div>
                     <label style={{ 
                       display: "block", 
@@ -678,6 +545,71 @@ export function SitesPage() {
                 </div>
               )}
             </LanguageAwareForm>
+
+            {/* Other fields - Brand, Domain, Active - after Name, Slug, Description */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: 8,
+                  color: formErrors.brandId ? "#dc2626" : "#667eea",
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.brand")} *
+                </label>
+                <select
+                  value={formData.brandId}
+                  onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "#e0e7ff"}`,
+                    borderRadius: 8,
+                    outline: "none",
+                    transition: "all 0.3s ease",
+                    background: formErrors.brandId ? "#fef2f2" : "white",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    if (!formErrors.brandId) {
+                      e.target.style.borderColor = "#667eea";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "#e0e7ff";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="">{t("admin.selectBrand")}</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.brandId && <div style={{ 
+                  color: "#dc2626", 
+                  fontSize: "clamp(14px, 3.5vw, 16px)", 
+                  marginTop: 6, 
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>{formErrors.brandId}</div>}
+              </div>
+              <div>
+                <DomainInput
+                  value={formData.primaryDomain}
+                  onChange={(value) => setFormData({ ...formData, primaryDomain: value })}
+                  checked={formData.primaryDomainEnabled}
+                  onCheckedChange={(checked) => setFormData({ ...formData, primaryDomainEnabled: checked })}
+                  label={t("admin.primaryDomain")}
+                />
+              </div>
+            </div>
 
             {/* Active Checkbox */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>

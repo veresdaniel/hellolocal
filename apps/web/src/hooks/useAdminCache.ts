@@ -62,6 +62,12 @@ export function useAdminCache() {
       await queryClient.invalidateQueries({ queryKey: ["mapSettings"] });
     };
 
+    const handleCollectionsChanged = async () => {
+      // Collections affect public collection pages
+      await queryClient.invalidateQueries({ queryKey: ["collections"] });
+      await queryClient.invalidateQueries({ queryKey: ["collection"] });
+    };
+
     // Register event listeners
     window.addEventListener("admin:places:changed", handlePlacesChanged);
     window.addEventListener("admin:events:changed", handleEventsChanged);
@@ -71,6 +77,7 @@ export function useAdminCache() {
     window.addEventListener("admin:tags:changed", handleTagsChanged);
     window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
     window.addEventListener("admin:mapSettings:changed", handleMapSettingsChanged);
+    window.addEventListener("admin:collections:changed", handleCollectionsChanged);
 
     return () => {
       // Cleanup event listeners
@@ -82,6 +89,7 @@ export function useAdminCache() {
       window.removeEventListener("admin:tags:changed", handleTagsChanged);
       window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
       window.removeEventListener("admin:mapSettings:changed", handleMapSettingsChanged);
+      window.removeEventListener("admin:collections:changed", handleCollectionsChanged);
     };
   }, [queryClient]);
 }
@@ -90,7 +98,7 @@ export function useAdminCache() {
  * Helper function to notify that an entity has changed
  * Use this after create/update/delete operations
  */
-export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "platformSettings" | "mapSettings" | "staticPages") {
+export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "platformSettings" | "mapSettings" | "staticPages" | "collections") {
   window.dispatchEvent(new CustomEvent(`admin:${entityType}:changed`));
 }
 

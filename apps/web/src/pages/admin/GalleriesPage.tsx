@@ -377,7 +377,7 @@ export function GalleriesPage() {
   ];
 
   if (isSiteLoading || isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {

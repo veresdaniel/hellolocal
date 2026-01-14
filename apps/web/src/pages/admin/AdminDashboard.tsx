@@ -296,14 +296,24 @@ export function AdminDashboard() {
             variant="content"
           />
           {user?.role === ROLE_SUPERADMIN && (
-            <DashboardCard
-              title={t("admin.dashboardCards.siteInstances")}
-              description={t("admin.dashboardCards.siteInstancesDesc")}
-              link={adminPath("/site-instances")}
-              icon="🌐"
-              isMobile={isMobile}
-              variant="content"
-            />
+            <>
+              <DashboardCard
+                title={t("admin.dashboardCards.collections")}
+                description={t("admin.dashboardCards.collectionsDesc")}
+                link={adminPath("/collections")}
+                icon="📚"
+                isMobile={isMobile}
+                variant="content"
+              />
+              <DashboardCard
+                title={t("admin.dashboardCards.siteInstances")}
+                description={t("admin.dashboardCards.siteInstancesDesc")}
+                link={adminPath("/site-instances")}
+                icon="🌐"
+                isMobile={isMobile}
+                variant="content"
+              />
+            </>
           )}
         </div>
       </div>

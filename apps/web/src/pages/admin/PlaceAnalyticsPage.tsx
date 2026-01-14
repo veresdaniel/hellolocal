@@ -36,7 +36,7 @@ export function PlaceAnalyticsPage() {
   }
 
   if (isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   return (

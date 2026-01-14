@@ -392,34 +392,42 @@ export function MapFilters({
       }}
       onTouchStart={handleTouchStart}
       onClick={handleBoxClick}
-      style={{
-        position: isOnMapView ? "absolute" : "fixed", // Fixed on list view for sticky behavior, absolute on map view
-        top: position.top,
-        right: position.right,
-        zIndex: currentZIndex, // Dynamic z-index based on active state
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderRadius: isMobile ? 12 : 16,
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-        border: "1px solid rgba(0, 0, 0, 0.06)",
-        overflow: "hidden",
-        minWidth: isMobile && !isOpen ? "auto" : 280,
-        maxWidth: isMobile && !isOpen ? 44 : 320,
-        height: isOpen ? (isMobile ? "85vh" : `${height}px`) : "auto",
-        cursor: isDesktop ? (isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab") : "default",
-        userSelect: "none",
-        transition: (isDragging || isResizing)
-          ? "none" 
-          : shouldAnimateUp 
-            ? "top 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease"
-            : isOpen
-              ? "box-shadow 0.2s ease, transform 0.3s ease-out"
-              : "box-shadow 0.2s ease",
-        touchAction: "none", // Prevent default touch behaviors
-        display: "flex",
-        flexDirection: "column",
-      }}
+        style={{
+          position: isOnMapView ? "absolute" : "fixed", // Fixed on list view for sticky behavior, absolute on map view
+          top: position.top,
+          right: position.right,
+          zIndex: currentZIndex, // Dynamic z-index based on active state
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRadius: isMobile ? 12 : 16,
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+          WebkitBoxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.06)",
+          overflow: "hidden",
+          minWidth: isMobile && !isOpen ? 44 : 280,
+          maxWidth: isMobile && !isOpen ? 44 : 320,
+          width: isMobile && !isOpen ? 44 : "auto",
+          height: isOpen ? (isMobile ? "85vh" : `${height}px`) : "auto",
+          maxHeight: isMobile && isOpen ? "85vh" : "none",
+          cursor: isDesktop ? (isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab") : "default",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          WebkitTouchCallout: "none",
+          transition: (isDragging || isResizing)
+            ? "none" 
+            : shouldAnimateUp 
+              ? "top 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease"
+              : isOpen
+                ? "box-shadow 0.2s ease, transform 0.3s ease-out"
+                : "box-shadow 0.2s ease",
+          touchAction: "none", // Prevent default touch behaviors
+          WebkitTapHighlightColor: "transparent",
+          display: "flex",
+          flexDirection: "column",
+          WebkitTransform: "translateZ(0)", // Force hardware acceleration for Safari
+          transform: "translateZ(0)",
+        }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging && !isResizing) {
           e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
@@ -472,41 +480,54 @@ export function MapFilters({
           alignItems: "center",
           cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "pointer",
           userSelect: "none",
+          WebkitUserSelect: "none",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          width: isMobile && !isOpen ? 44 : "auto",
+          width: isMobile && !isOpen ? 44 : "100%",
           height: isMobile && !isOpen ? 44 : "auto",
-          minWidth: isMobile && !isOpen ? 44 : "auto",
+          minWidth: isMobile && !isOpen ? 44 : 0,
           minHeight: isMobile && !isOpen ? 44 : "auto",
-          maxWidth: isMobile && !isOpen ? 44 : "auto",
-          maxHeight: isMobile && !isOpen ? 44 : "auto",
+          maxWidth: isMobile && !isOpen ? 44 : "100%",
+          maxHeight: isMobile && !isOpen ? 44 : "none",
           borderRadius: isMobile && !isOpen ? 12 : 0,
           boxSizing: "border-box",
+          flexShrink: 0,
         }}
       >
         <h3 style={{
           margin: 0,
           color: "white",
-          fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
+          fontSize: isMobile && !isOpen ? 20 : (isMobile ? 16 : "clamp(15px, 3.5vw, 16px)"),
           fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 700,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: isMobile && !isOpen ? "center" : "flex-start",
           gap: isMobile && !isOpen ? 0 : 8,
           paddingLeft: 0,
-          minWidth: isMobile && !isOpen ? 44 : "auto",
-          minHeight: isMobile && !isOpen ? 44 : "auto",
+          width: isMobile && !isOpen ? "100%" : "auto",
+          height: isMobile && !isOpen ? "100%" : "auto",
           flexShrink: 0,
+          WebkitFontSmoothing: "antialiased",
         }}>
           <span style={{ 
             display: "flex", 
             alignItems: "center", 
+            justifyContent: "center",
             lineHeight: 1,
-            minWidth: isMobile && !isOpen ? 44 : "auto",
-            minHeight: isMobile && !isOpen ? 44 : "auto",
+            width: isMobile && !isOpen ? "100%" : "auto",
+            height: isMobile && !isOpen ? "100%" : "auto",
             flexShrink: 0,
           }}>🔍</span>
-          {(!isMobile || isOpen) && <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{t("public.filtersTitle") || "Szűrők"}</span>}
+          {(!isMobile || isOpen) && (
+            <span style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              lineHeight: 1.2,
+              whiteSpace: "nowrap",
+            }}>
+              {t("public.filtersTitle") || "Szűrők"}
+            </span>
+          )}
         </h3>
         {(!isMobile || isOpen) && (
           <div
@@ -533,10 +554,12 @@ export function MapFilters({
       {isOpen && (
         <div 
           style={{ 
-            padding: 16,
+            padding: isMobile ? 12 : 16,
             overflowY: "auto",
             overflowX: "hidden",
+            WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
             height: isMobile ? "auto" : `${height - 50}px`, // Subtract header height (~50px including padding)
+            maxHeight: isMobile ? "calc(85vh - 64px)" : "none", // Account for header on mobile
             // Custom scrollbar styling
             scrollbarWidth: "thin",
             scrollbarColor: "rgba(90, 61, 122, 0.3) transparent",
@@ -567,13 +590,14 @@ export function MapFilters({
             <div style={{ marginBottom: 18 }}>
               <h3
                 style={{
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   fontWeight: 600,
                   color: "#5a3d7a",
                   marginBottom: 10,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  WebkitFontSmoothing: "antialiased",
                 }}
               >
                 Kategóriák
@@ -595,6 +619,10 @@ export function MapFilters({
                         transition: "all 0.2s",
                         border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
                       }}
+                      onClick={(e) => {
+                        // Prevent default label behavior - let checkbox handle it
+                        e.preventDefault();
+                      }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
                           e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
@@ -610,11 +638,15 @@ export function MapFilters({
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
                           if (e.target.checked) {
                             onCategoriesChange([...selectedCategories, category.id]);
                           } else {
                             onCategoriesChange(selectedCategories.filter((id) => id !== category.id));
                           }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling to label/parent
                         }}
                         style={{
                           width: 14,
@@ -626,11 +658,13 @@ export function MapFilters({
                       />
                       <span
                         style={{
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.4,
                           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          WebkitFontSmoothing: "antialiased",
+                          wordBreak: "break-word",
                         }}
                       >
                         {category.name}
@@ -647,13 +681,14 @@ export function MapFilters({
             <div style={{ marginBottom: 18 }}>
               <h3
                 style={{
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   fontWeight: 600,
                   color: "#5a3d7a",
                   marginBottom: 10,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  WebkitFontSmoothing: "antialiased",
                 }}
               >
                 Ár sávok
@@ -675,6 +710,10 @@ export function MapFilters({
                         transition: "all 0.2s",
                         border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
                       }}
+                      onClick={(e) => {
+                        // Prevent default label behavior - let checkbox handle it
+                        e.preventDefault();
+                      }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
                           e.currentTarget.style.background = "rgba(90, 61, 122, 0.05)";
@@ -690,11 +729,15 @@ export function MapFilters({
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
                           if (e.target.checked) {
                             onPriceBandsChange([...selectedPriceBands, priceBand.id]);
                           } else {
                             onPriceBandsChange(selectedPriceBands.filter((id) => id !== priceBand.id));
                           }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling to label/parent
                         }}
                         style={{
                           width: 16,
@@ -706,11 +749,13 @@ export function MapFilters({
                       />
                       <span
                         style={{
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.4,
                           fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          WebkitFontSmoothing: "antialiased",
+                          wordBreak: "break-word",
                         }}
                       >
                         {priceBand.name}
@@ -726,13 +771,14 @@ export function MapFilters({
           <div>
             <h3
               style={{
-                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                 fontWeight: 600,
                 color: "#5a3d7a",
                 marginBottom: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                WebkitFontSmoothing: "antialiased",
               }}
             >
               Kontextus alapú szűrők
@@ -747,7 +793,7 @@ export function MapFilters({
                   background: isOpenNow ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: isOpenNow ? "#3d2952" : "#5a3d7a",
                   fontWeight: isOpenNow ? 600 : 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -775,7 +821,7 @@ export function MapFilters({
                   background: hasEventToday ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: hasEventToday ? "#3d2952" : "#5a3d7a",
                   fontWeight: hasEventToday ? 600 : 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -804,7 +850,7 @@ export function MapFilters({
                     background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                     color: within30Minutes ? "#3d2952" : "#5a3d7a",
                     fontWeight: within30Minutes ? 600 : 500,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                     transition: "all 0.2s",
                     textAlign: "left",
                     border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
@@ -833,7 +879,7 @@ export function MapFilters({
                   background: rainSafe ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
                   color: rainSafe ? "#3d2952" : "#5a3d7a",
                   fontWeight: rainSafe ? 600 : 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",

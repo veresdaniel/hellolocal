@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { forgotPassword } from "../../api/auth.api";
 import { useTranslation } from "react-i18next";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+import { useSeo } from "../../seo/useSeo";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -26,6 +27,13 @@ export function ForgotPasswordPage() {
       localStorage.setItem("i18nextLng", lang);
     }
   }, [lang, i18n]);
+
+  // Auth pages should have noindex, nofollow robots meta tag
+  useSeo({
+    title: t("admin.forgotPassword") || "Forgot Password",
+    description: "",
+    robots: "noindex, nofollow",
+  });
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);

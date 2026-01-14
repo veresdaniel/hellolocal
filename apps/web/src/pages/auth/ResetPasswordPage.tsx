@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom"
 import { resetPassword } from "../../api/auth.api";
 import { useTranslation } from "react-i18next";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+import { useSeo } from "../../seo/useSeo";
 
 function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
@@ -33,6 +34,13 @@ export function ResetPasswordPage() {
       localStorage.setItem("i18nextLng", lang);
     }
   }, [lang, i18n]);
+
+  // Auth pages should have noindex, nofollow robots meta tag
+  useSeo({
+    title: t("admin.resetPassword") || "Reset Password",
+    description: "",
+    robots: "noindex, nofollow",
+  });
 
   const handlePasswordChange = (value: string) => {
     setNewPassword(value);

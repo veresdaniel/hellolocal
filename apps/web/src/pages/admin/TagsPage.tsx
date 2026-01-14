@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
+import { useConfirm } from "../../hooks/useConfirm";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
@@ -35,6 +36,7 @@ export function TagsPage() {
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   usePageTitle("admin.tags");
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,7 +176,16 @@ export function TagsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deleteTag"))) return;
+    const confirmed = await confirm({
+      title: t("admin.confirmations.deleteTag") || "Delete Tag",
+      message: t("admin.confirmations.deleteTag") || "Are you sure you want to delete this tag? This action cannot be undone.",
+      confirmLabel: t("common.delete") || "Delete",
+      cancelLabel: t("common.cancel") || "Cancel",
+      confirmVariant: "danger",
+      size: "medium",
+    });
+
+    if (!confirmed) return;
 
     try {
       await deleteTag(id, selectedSiteId || undefined);
@@ -218,7 +229,7 @@ export function TagsPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {

@@ -38,6 +38,7 @@ export interface PlatformSettings extends PlatformSettingsDto {
   faviconUrl: string | null;
   // Additional fields (already in PlatformSettingsDto, but explicitly listed for clarity)
   seoImage?: string | null;
+  isCrawlable?: boolean; // Derived from seo.indexable
   featureMatrix?: {
     planOverrides?: any;
     placePlanOverrides?: any;
@@ -64,6 +65,7 @@ export function getPlatformSettings(lang: string, siteKey?: string): Promise<Pla
       faviconUrl: dto.brand.faviconUrl || null,
       // Additional fields
       seoImage: dto.seoImage || null,
+      isCrawlable: dto.seo.indexable,
       featureMatrix: dto.featureMatrix,
     })
   );
@@ -406,5 +408,42 @@ export function getSites(
 
 export function getSite(lang: string, slug: string, siteKey: string) {
   return apiGetPublic<Site>(`/public/${lang}/${siteKey}/sites/${slug}`);
+}
+
+// Collections
+export interface CollectionView {
+  id: string;
+  slug: string;
+  domain?: string | null;
+  isCrawlable: boolean;
+  title: string;
+  description?: string | null;
+  heroImage?: string | null;
+  seo: {
+    title: string;
+    description?: string | null;
+    image?: string | null;
+    keywords?: string[];
+  };
+  items: Array<{
+    id: string;
+    siteId: string;
+    siteSlug: string;
+    order: number;
+    isHighlighted: boolean;
+    title: string;
+    description?: string | null;
+    image?: string | null;
+  }>;
+}
+
+export function getCollectionByDomain(domain: string, lang?: string) {
+  const langParam = lang ? `?lang=${lang}` : "";
+  return apiGetPublic<CollectionView>(`/public/collections/by-domain/${domain}${langParam}`);
+}
+
+export function getCollectionBySlug(slug: string, lang?: string) {
+  const langParam = lang ? `?lang=${lang}` : "";
+  return apiGetPublic<CollectionView>(`/public/collections/by-slug/${slug}${langParam}`);
 }
 

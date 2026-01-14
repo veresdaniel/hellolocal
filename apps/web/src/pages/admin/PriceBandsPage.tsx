@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
+import { useConfirm } from "../../hooks/useConfirm";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
@@ -37,6 +38,7 @@ export function PriceBandsPage() {
   const isTenantLoading = isSiteLoading;
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   usePageTitle("admin.priceBands");
   const [priceBands, setPriceBands] = useState<PriceBand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -176,7 +178,16 @@ export function PriceBandsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deletePriceBand"))) return;
+    const confirmed = await confirm({
+      title: t("admin.confirmations.deletePriceBand") || "Delete Price Band",
+      message: t("admin.confirmations.deletePriceBand") || "Are you sure you want to delete this price band? This action cannot be undone.",
+      confirmLabel: t("common.delete") || "Delete",
+      cancelLabel: t("common.cancel") || "Cancel",
+      confirmVariant: "danger",
+      size: "medium",
+    });
+
+    if (!confirmed) return;
 
     try {
       await deletePriceBand(id, selectedTenantId || undefined);
@@ -220,7 +231,7 @@ export function PriceBandsPage() {
 
   // Wait for site context to initialize
   if (isSiteLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return null;
   }
 
   if (!selectedSiteId) {

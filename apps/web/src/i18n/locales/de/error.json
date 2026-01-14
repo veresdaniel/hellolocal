@@ -1,0 +1,20 @@
+{
+  "pageNotFound": "Seite nicht gefunden",
+  "pageNotFoundDescription": "Die gesuchte Seite existiert nicht oder wurde entfernt.",
+  "errorOccurred": "Ein Fehler ist aufgetreten",
+  "unknownError": "Unbekannter Fehler",
+  "badRequest": "Ungültige Anfrage",
+  "unauthorized": "Nicht autorisiert",
+  "forbidden": "Zugriff verweigert",
+  "notFound": "Nicht gefunden",
+  "internalServerError": "Interner Serverfehler",
+  "badGateway": "Ungültiges Gateway",
+  "serviceUnavailable": "Dienst nicht verfügbar",
+  "goHome": "Zur Startseite",
+  "goBack": "Zurück",
+  "reload": "Seite neu laden",
+  "errorDetails": "Fehlerdetails",
+  "siteNotFound": "Site nicht gefunden",
+  "siteNotFoundMessage": "Die angegebene Site existiert nicht oder ist nicht aktiviert.",
+  "backToSites": "Zurück zu den Sites"
+}

@@ -1,0 +1,8 @@
+{
+  "required": "Required field",
+  "invalidEmail": "Invalid email address",
+  "invalidUrl": "Invalid URL",
+  "invalidImageUrl": "Invalid image URL. Only http:// and https:// URLs are allowed.",
+  "minLength": "Minimum {{min}} characters",
+  "maxLength": "Maximum {{max}} characters"
+}

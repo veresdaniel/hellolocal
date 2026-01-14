@@ -8,7 +8,7 @@ import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
 import { isSuperadmin, isAdmin } from "../utils/roleHelpers";
-import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN } from "../types/enums";
+import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 import type { UserRole } from "../types/enums";
 
 interface ProtectedRouteProps {
@@ -170,9 +170,12 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
 
   // Check if user is a visitor (activeSiteId === null)
   // Visitors should not access admin routes (except login/register)
-  // BUT: superadmin has access to everything, even without activeSiteId
+  // BUT: superadmin, admin, and editor have access to everything, even without activeSiteId
   const userIsSuperadmin = isSuperadmin(user.role);
-  const isVisitor = !userIsSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
+  const userIsAdmin = user.role === ROLE_ADMIN;
+  const userIsEditor = user.role === ROLE_EDITOR;
+  const hasAdminAccess = userIsSuperadmin || userIsAdmin || userIsEditor;
+  const isVisitor = !hasAdminAccess && (user.activeSiteId === null || user.activeSiteId === undefined);
   if (isVisitor) {
     // Redirect visitor to public pages (home page)
     return <Navigate to={`/${lang}`} replace />;

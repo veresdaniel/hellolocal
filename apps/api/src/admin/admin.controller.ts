@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   ForbiddenException,
+  NotFoundException,
   Res,
 } from "@nestjs/common";
 import type { Response } from "express";
@@ -38,6 +39,7 @@ import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembe
 import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
 import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
 import { AdminPriceListService, UpdatePriceListDto } from "./admin-price-list.service";
+import { AdminCollectionService, CreateCollectionDto, UpdateCollectionDto, CreateCollectionItemDto, UpdateCollectionItemDto } from "./admin-collection.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -80,6 +82,7 @@ export class AdminController {
     private readonly subscriptionService: AdminSubscriptionService,
     private readonly galleryService: AdminGalleryService,
     private readonly priceListService: AdminPriceListService,
+    private readonly collectionService: AdminCollectionService,
     private readonly placeUpsellService: PlaceUpsellService,
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
@@ -993,8 +996,8 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateCreateDescription(
       "legal page",
-      result.translations,
-      { pageKey: result.pageKey }
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      { pageKey: result.key }
     );
     await this.eventLogService.create({
       siteId: dto.siteId,
@@ -1030,9 +1033,9 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "legal page",
-      result.translations,
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldLegalPage.translations,
+        translations: oldLegalPage.translations.map(t => ({ lang: t.lang, name: t.title })),
       },
       {
         translations: result.translations,
@@ -1071,7 +1074,7 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "legal page",
-      legalPage.translations
+      legalPage.translations.map(t => ({ lang: t.lang, name: t.title }))
     );
     await this.eventLogService.create({
       siteId,
@@ -1140,7 +1143,7 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateCreateDescription(
       "static page",
-      result.translations,
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
       { category: result.category, isActive: result.isActive }
     );
     await this.eventLogService.create({
@@ -1177,14 +1180,14 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "static page",
-      result.translations,
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldStaticPage.translations,
+        translations: oldStaticPage.translations.map(t => ({ lang: t.lang, name: t.title })),
         category: oldStaticPage.category,
         isActive: oldStaticPage.isActive,
       },
       {
-        translations: result.translations,
+        translations: result.translations.map(t => ({ lang: t.lang, name: t.title })),
         category: result.category,
         isActive: result.isActive,
       }
@@ -1222,7 +1225,7 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "static page",
-      staticPage.translations
+      staticPage.translations.map(t => ({ lang: t.lang, name: t.title }))
     );
     await this.eventLogService.create({
       siteId,
@@ -1576,8 +1579,8 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateCreateDescription(
       "event",
-      result.translations,
-      { isActive: result.isActive, isPublished: result.isPublished }
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      { isActive: result.isActive }
     );
     await this.eventLogService.create({
       siteId: dto.siteId,
@@ -1613,19 +1616,17 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "event",
-      result.translations,
+      result.translations.map(t => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldEvent.translations,
+        translations: oldEvent.translations.map(t => ({ lang: t.lang, name: t.title })),
         isActive: oldEvent.isActive,
-        isPublished: oldEvent.isPublished,
         placeId: oldEvent.placeId,
         startDate: oldEvent.startDate,
         endDate: oldEvent.endDate,
       },
       {
-        translations: result.translations,
+        translations: result.translations.map(t => ({ lang: t.lang, name: t.title })),
         isActive: result.isActive,
-        isPublished: result.isPublished,
         placeId: result.placeId,
         startDate: result.startDate,
         endDate: result.endDate,
@@ -1664,7 +1665,7 @@ export class AdminController {
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "event",
-      event.translations
+      event.translations.map(t => ({ lang: t.lang, name: t.title }))
     );
     await this.eventLogService.create({
       siteId,
@@ -1697,6 +1698,18 @@ export class AdminController {
     return this.appSettingsService.setDefaultLanguage(dto.language as Lang);
   }
 
+  @Get("/app-settings/global-crawlability")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getGlobalCrawlability() {
+    const isCrawlable = await this.appSettingsService.getGlobalCrawlability();
+    return { isCrawlable };
+  }
+
+  @Put("/app-settings/global-crawlability")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async setGlobalCrawlability(@Body() dto: { isCrawlable: boolean }) {
+    return this.appSettingsService.setGlobalCrawlability(dto.isCrawlable);
+  }
 
   @Get("/app-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
@@ -2317,6 +2330,224 @@ export class AdminController {
       cacheType,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  // ==================== Collections ====================
+
+  @Get("/collections")
+  @Roles(UserRole.superadmin)
+  async getCollections(@CurrentUser() user: { id: string }) {
+    try {
+      return await this.collectionService.findAll();
+    } catch (error) {
+      console.error("Error in getCollections controller:", error);
+      throw error;
+    }
+  }
+
+  @Get("/collections/:id")
+  @Roles(UserRole.superadmin)
+  async getCollection(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    // Don't allow fetching with "new" as ID
+    if (id === "new") {
+      throw new NotFoundException("Collection not found");
+    }
+    return this.collectionService.findOne(id);
+  }
+
+  @Post("/collections")
+  @Roles(UserRole.superadmin)
+  async createCollection(
+    @Body() dto: CreateCollectionDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    const result = await this.collectionService.create(dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "", // Use first site if available
+      userId: user.id,
+      action: "create",
+      entityType: "collection",
+      entityId: result.id,
+      description: `Collection created: ${result.slug}`,
+    }).catch(err => console.error("Failed to log create collection:", err));
+    
+    return result;
+  }
+
+  @Put("/collections/:id")
+  @Roles(UserRole.superadmin)
+  async updateCollection(
+    @Param("id") id: string,
+    @Body() dto: UpdateCollectionDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    const oldCollection = await this.collectionService.findOne(id);
+    const result = await this.collectionService.update(id, dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "update",
+      entityType: "collection",
+      entityId: id,
+      description: `Collection updated: ${result.slug}`,
+    }).catch(err => console.error("Failed to log update collection:", err));
+    
+    return result;
+  }
+
+  @Delete("/collections/:id")
+  @Roles(UserRole.superadmin)
+  async deleteCollection(
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    const collection = await this.collectionService.findOne(id);
+    await this.collectionService.delete(id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "delete",
+      entityType: "collection",
+      entityId: id,
+      description: `Collection deleted: ${collection.slug}`,
+    }).catch(err => console.error("Failed to log delete collection:", err));
+    
+    return { success: true };
+  }
+
+  // Collection Items
+
+  @Post("/collections/:collectionId/items")
+  @Roles(UserRole.superadmin)
+  async addCollectionItem(
+    @Param("collectionId") collectionId: string,
+    @Body() dto: Omit<CreateCollectionItemDto, "collectionId">,
+    @CurrentUser() user: { id: string }
+  ) {
+    const result = await this.collectionService.addItem({
+      ...dto,
+      collectionId,
+    });
+    
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "create",
+      entityType: "collectionItem",
+      entityId: result.id,
+      description: `Collection item added to collection ${collectionId}`,
+    }).catch(err => console.error("Failed to log add collection item:", err));
+    
+    return result;
+  }
+
+  @Put("/collections/items/:itemId")
+  @Roles(UserRole.superadmin)
+  async updateCollectionItem(
+    @Param("itemId") itemId: string,
+    @Body() dto: UpdateCollectionItemDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    const result = await this.collectionService.updateItem(itemId, dto);
+    
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "update",
+      entityType: "collectionItem",
+      entityId: itemId,
+      description: `Collection item updated`,
+    }).catch(err => console.error("Failed to log update collection item:", err));
+    
+    return result;
+  }
+
+  @Delete("/collections/items/:itemId")
+  @Roles(UserRole.superadmin)
+  async deleteCollectionItem(
+    @Param("itemId") itemId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    await this.collectionService.deleteItem(itemId);
+    
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "delete",
+      entityType: "collectionItem",
+      entityId: itemId,
+      description: `Collection item deleted`,
+    }).catch(err => console.error("Failed to log delete collection item:", err));
+    
+    return { success: true };
+  }
+
+  @Put("/collections/:collectionId/items/reorder")
+  @Roles(UserRole.superadmin)
+  async reorderCollectionItems(
+    @Param("collectionId") collectionId: string,
+    @Body() body: { itemIds: string[] },
+    @CurrentUser() user: { id: string }
+  ) {
+    const result = await this.collectionService.reorderItems(collectionId, body.itemIds);
+    
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "update",
+      entityType: "collection",
+      entityId: collectionId,
+      description: `Collection items reordered`,
+    }).catch(err => console.error("Failed to log reorder collection items:", err));
+    
+    return result;
+  }
+
+  @Put("/collections/:collectionId/items")
+  @Roles(UserRole.superadmin)
+  async updateCollectionItems(
+    @Param("collectionId") collectionId: string,
+    @Body() body: { items: Array<{
+      id?: string;
+      siteId: string;
+      order: number;
+      isHighlighted?: boolean;
+      translations?: Array<{
+        lang: string;
+        titleOverride?: string | null;
+        descriptionOverride?: string | null;
+        imageOverride?: string | null;
+      }>;
+    }> },
+    @CurrentUser() user: { id: string }
+  ) {
+    // Convert lang strings to Lang enum
+    const itemsWithLangEnum = body.items.map(item => ({
+      ...item,
+      translations: item.translations?.map(t => ({
+        ...t,
+        lang: t.lang as any, // Lang enum from Prisma
+      })),
+    }));
+    
+    const result = await this.collectionService.updateItems(collectionId, itemsWithLangEnum);
+    
+    await this.eventLogService.create({
+      siteId: (user as any).siteIds?.[0] || "",
+      userId: user.id,
+      action: "update",
+      entityType: "collection",
+      entityId: collectionId,
+      description: `Collection items updated (${body.items.length} items)`,
+    }).catch(err => console.error("Failed to log update collection items:", err));
+    
+    return result;
   }
 }
 
