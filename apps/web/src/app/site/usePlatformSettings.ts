@@ -9,8 +9,30 @@ type Args = { lang: Lang; siteKey: string; tenantKey?: string }; // Support both
 async function fetchPlatformSettings({ lang, siteKey, tenantKey }: Args): Promise<PlatformSettings> {
   // Backend expects path parameters: /api/public/:lang/:siteKey/platform
   const key = siteKey || tenantKey || "";
-  // Use apiGetPublic to ensure correct API base URL in production
-  return apiGetPublic<PlatformSettings>(`/public/${lang}/${key}/platform`);
+  const apiPath = `/public/${lang}/${key}/platform`;
+  
+  console.log(`[usePlatformSettings] Fetching platform settings:`, {
+    lang,
+    siteKey: key,
+    apiPath,
+    apiUrl: import.meta.env.VITE_API_URL || 'not set',
+  });
+  
+  try {
+    const result = await apiGetPublic<PlatformSettings>(apiPath);
+    console.log(`[usePlatformSettings] Success:`, result);
+    return result;
+  } catch (error: any) {
+    console.error(`[usePlatformSettings] Error fetching platform settings:`, {
+      lang,
+      siteKey: key,
+      apiPath,
+      error: error.message,
+      status: error.status,
+      apiUrl: import.meta.env.VITE_API_URL || 'not set',
+    });
+    throw error;
+  }
 }
 
 export function usePlatformSettings(args: Args) {

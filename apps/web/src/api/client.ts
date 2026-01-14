@@ -288,15 +288,39 @@ export async function apiGet<T>(path: string): Promise<T> {
  */
 export async function apiGetPublic<T>(path: string): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
+  const fullUrl = `${apiBaseUrl}/api${path}`;
+  
+  console.log(`[apiGetPublic] Making request:`, {
+    path,
+    apiBaseUrl: apiBaseUrl || 'empty (using relative)',
+    fullUrl,
+    viteApiUrl: import.meta.env.VITE_API_URL || 'not set',
+  });
+  
   let res: Response;
   try {
-    res = await fetch(`${apiBaseUrl}/api${path}`, {
+    res = await fetch(fullUrl, {
       headers: {
         Accept: "application/json",
       },
     });
-  } catch (err) {
+    
+    console.log(`[apiGetPublic] Response:`, {
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
+      url: res.url,
+    });
+  } catch (err: any) {
     // Handle network errors (server not running, CORS, etc.)
+    console.error(`[apiGetPublic] Network error:`, {
+      path,
+      fullUrl,
+      error: err.message,
+      apiBaseUrl: apiBaseUrl || 'empty',
+      viteApiUrl: import.meta.env.VITE_API_URL || 'not set',
+    });
+    
     const isDev = import.meta.env.DEV;
     const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
@@ -314,6 +338,16 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
       const text = await res.text().catch(() => "");
       errorMessage = text || errorMessage;
     }
+    
+    console.error(`[apiGetPublic] Request failed:`, {
+      path,
+      fullUrl,
+      status: res.status,
+      statusText: res.statusText,
+      errorMessage,
+      headers: Object.fromEntries(res.headers.entries()),
+    });
+    
     const error = new Error(errorMessage) as Error & { status: number; response: Response };
     error.status = res.status;
     error.response = res;
