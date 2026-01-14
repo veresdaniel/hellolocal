@@ -28,78 +28,81 @@ async function deleteFailedMigrations() {
       DELETE FROM "_prisma_migrations"
       WHERE finished_at IS NULL
     `;
-
-    // Check if the problematic migration actually succeeded
-    const enumExists = await prisma.$queryRaw<Array<{ exists: boolean }>>`
-      SELECT EXISTS (
-        SELECT 1 FROM pg_enum 
-        WHERE enumlabel = 'event' 
-        AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'SlugEntityType')
-      );
-    `;
-    
-    const tableExists = await prisma.$queryRaw<Array<{ exists: boolean }>>`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'StaticPage'
-      );
-    `;
-
-    // If migration succeeded, mark it as finished
-    if (enumExists[0]?.exists && tableExists[0]?.exists) {
-      const { readFileSync, existsSync: fsExistsSync } = await import("fs");
-      const { join, resolve: pathResolve } = await import("path");
-      const { createHash, randomUUID } = await import("crypto");
-      
-      let apiDir = process.cwd();
-      if (!fsExistsSync(pathResolve(apiDir, "prisma"))) {
-        const parentDir = pathResolve(apiDir, "..");
-        if (fsExistsSync(pathResolve(parentDir, "prisma"))) {
-          apiDir = parentDir;
-        }
-      }
-      
-      const migrationName = "20260107155301_add_static_pages";
-      const migrationPath = join(apiDir, "prisma/migrations", migrationName, "migration.sql");
-      
-      if (fsExistsSync(migrationPath)) {
-        const existing = await prisma.$queryRaw<Array<{ id: string }>>`
-          SELECT id FROM "_prisma_migrations" 
-          WHERE "migration_name" = ${migrationName}
-          AND finished_at IS NOT NULL
-        `;
-
-        if (existing.length === 0) {
-          const migrationSql = readFileSync(migrationPath, "utf-8");
-          const checksum = createHash("sha256").update(migrationSql).digest("hex");
-          const migrationId = randomUUID();
-          
-          await prisma.$executeRaw`
-            INSERT INTO "_prisma_migrations" (
-              "id",
-              "checksum",
-              "finished_at",
-              "migration_name",
-              "started_at",
-              "applied_steps_count"
-            ) VALUES (
-              ${migrationId},
-              ${checksum},
-              CURRENT_TIMESTAMP,
-              ${migrationName},
-              CURRENT_TIMESTAMP,
-              1
-            )
-          `;
-          console.log(`✅ Migration ${migrationName} marked as finished`);
-        }
-      }
-    }
     
     console.log("✅ Failed migrations deleted/resolved");
   } catch (error) {
     console.log(`⚠️  Could not delete failed migrations: ${error}`);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function resetDatabase() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required");
+  }
+
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
+
+  try {
+    console.log("🗑️  Resetting database (dropping all tables and enums)...");
+    
+    // Get all table names (excluding system tables)
+    const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`
+      SELECT tablename 
+      FROM pg_tables 
+      WHERE schemaname = 'public'
+      AND tablename NOT LIKE '_prisma%'
+    `;
+
+    if (tables.length > 0) {
+      console.log(`🗑️  Dropping ${tables.length} tables...`);
+      
+      // Drop all tables with CASCADE to handle foreign keys
+      for (const table of tables) {
+        try {
+          await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "${table.tablename}" CASCADE;`);
+          console.log(`  ✓ Dropped table: ${table.tablename}`);
+        } catch (error: any) {
+          console.warn(`  ⚠️  Failed to drop table ${table.tablename}: ${error.message}`);
+        }
+      }
+    }
+
+    // Drop all enums
+    console.log("🗑️  Dropping enums...");
+    const enums = await prisma.$queryRaw<Array<{ typname: string }>>`
+      SELECT typname 
+      FROM pg_type 
+      WHERE typtype = 'e' 
+      AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+    `;
+
+    for (const enumType of enums) {
+      try {
+        await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "${enumType.typname}" CASCADE;`);
+        console.log(`  ✓ Dropped enum: ${enumType.typname}`);
+      } catch (error: any) {
+        console.warn(`  ⚠️  Failed to drop enum ${enumType.typname}: ${error.message}`);
+      }
+    }
+
+    // Clear Prisma migrations table
+    console.log("🗑️  Clearing Prisma migrations table...");
+    try {
+      await prisma.$executeRaw`TRUNCATE TABLE "_prisma_migrations" RESTART IDENTITY CASCADE;`;
+      console.log("  ✓ Cleared migrations table");
+    } catch (error: any) {
+      // Table might not exist yet, that's okay
+      console.log("  ℹ️  Migrations table doesn't exist yet (will be created)");
+    }
+
+    console.log("✅ Database reset complete");
+  } catch (error: any) {
+    console.error("❌ Error resetting database:", error);
+    throw error;
   } finally {
     await prisma.$disconnect();
   }
@@ -127,7 +130,7 @@ async function main() {
     throw new Error(`Prisma directory not found. Expected at: ${resolve(apiDir, "prisma")}`);
   }
 
-  // Delete all failed migrations first - this is the most direct approach
+  // Delete all failed migrations first
   await deleteFailedMigrations();
 
   // Try to run migrations
@@ -143,11 +146,11 @@ async function main() {
     migrationsSucceeded = true;
   } catch (migrationError: any) {
     const errorMessage = migrationError.message || String(migrationError);
-    console.log(`⚠️  Migration deploy failed`);
+    console.log(`⚠️  Migration deploy failed: ${errorMessage.substring(0, 200)}`);
     
-    // If still has failed migrations, delete them again and retry
+    // If still has failed migrations, delete them again and retry once
     if (errorMessage.includes("failed migrations") || errorMessage.includes("P3009")) {
-      console.log("🔄 Still has failed migrations, deleting again...");
+      console.log("🔄 Cleaning up failed migrations and retrying...");
       await deleteFailedMigrations();
       
       try {
@@ -162,33 +165,33 @@ async function main() {
       }
     }
     
-    // If migrations still haven't succeeded, try baseline
+    // If migrations still haven't succeeded, reset database completely
     if (!migrationsSucceeded) {
-      console.log("📋 Attempting baseline (this is safe if schema already exists)...");
+      console.error("🔄 Database appears to be in inconsistent state");
+      console.error("🔄 Resetting database completely and starting fresh...");
+      
+      // Reset the database completely
+      await resetDatabase();
+      
+      // Now try migrations again on clean database
+      console.log("📦 Running migrations on clean database...");
       try {
-        execSync("tsx scripts/baseline-migrations.ts", {
-          stdio: "inherit",
-          cwd: apiDir,
-        });
-        console.log("✅ Baseline completed");
-        
-        // Delete failed migrations one more time after baseline
-        await deleteFailedMigrations();
-        
-        // Now try migrate deploy again
-        console.log("📦 Running migrations again after baseline...");
         execSync("prisma migrate deploy", {
           stdio: "inherit",
           cwd: apiDir,
         });
-        console.log("✅ Migrations verified");
+        console.log("✅ Migrations applied successfully after reset");
         migrationsSucceeded = true;
-      } catch (baselineError: any) {
-        console.error("❌ Baseline failed");
-        console.error("This might indicate a database connection or permissions issue");
-        throw baselineError;
+      } catch (resetRetryError: any) {
+        console.error("❌ Migrations still failed after reset");
+        console.error("This indicates a problem with the migration files themselves");
+        throw resetRetryError;
       }
     }
+  }
+
+  if (!migrationsSucceeded) {
+    throw new Error("Failed to apply migrations after all recovery attempts");
   }
 
   // Seed database
