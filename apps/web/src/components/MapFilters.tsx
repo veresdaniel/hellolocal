@@ -608,6 +608,7 @@ export function MapFilters({
                   return (
                     <label
                       key={category.id}
+                      htmlFor={`category-${category.id}`}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -618,10 +619,6 @@ export function MapFilters({
                         background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                         transition: "all 0.2s",
                         border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
-                      }}
-                      onClick={(e) => {
-                        // Prevent default label behavior - let checkbox handle it
-                        e.preventDefault();
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
@@ -635,6 +632,7 @@ export function MapFilters({
                       }}
                     >
                       <input
+                        id={`category-${category.id}`}
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => {
@@ -645,12 +643,9 @@ export function MapFilters({
                             onCategoriesChange(selectedCategories.filter((id) => id !== category.id));
                           }
                         }}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent event bubbling to label/parent
-                        }}
                         style={{
-                          width: 14,
-                          height: 14,
+                          width: 16,
+                          height: 16,
                           cursor: "pointer",
                           accentColor: "#5a3d7a",
                           flexShrink: 0,
@@ -699,6 +694,7 @@ export function MapFilters({
                   return (
                     <label
                       key={priceBand.id}
+                      htmlFor={`priceband-${priceBand.id}`}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -709,10 +705,6 @@ export function MapFilters({
                         background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                         transition: "all 0.2s",
                         border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
-                      }}
-                      onClick={(e) => {
-                        // Prevent default label behavior - let checkbox handle it
-                        e.preventDefault();
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
@@ -726,6 +718,7 @@ export function MapFilters({
                       }}
                     >
                       <input
+                        id={`priceband-${priceBand.id}`}
                         type="checkbox"
                         checked={isSelected}
                         onChange={(e) => {
@@ -735,9 +728,6 @@ export function MapFilters({
                           } else {
                             onPriceBandsChange(selectedPriceBands.filter((id) => id !== priceBand.id));
                           }
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent event bubbling to label/parent
                         }}
                         style={{
                           width: 16,

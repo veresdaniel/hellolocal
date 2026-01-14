@@ -132,6 +132,7 @@ export function HomePage() {
   const hasInitializedCenter = useRef(false);
   const initialPlacesLoaded = useRef(false);
   const previousMarkersCount = useRef(0);
+  const hasEverLoadedPlaces = useRef(false);
 
   // Load events for "hasEventToday" filter
   const { data: eventsData } = useQuery({
@@ -154,7 +155,15 @@ export function HomePage() {
     refetchOnMount: false, // Don't refetch on mount if data is fresh
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes in background (increased from 5min)
     retry: false, // Don't retry on error (404 is expected for some languages)
+    placeholderData: (previousData) => previousData, // Keep previous data visible while fetching new data (prevents screen flash)
   });
+
+  // Track if we've ever successfully loaded places data
+  useEffect(() => {
+    if (placesData && Array.isArray(placesData)) {
+      hasEverLoadedPlaces.current = true;
+    }
+  }, [placesData]);
   
 
   // Get user location - always try to get it if available, not just for filter
@@ -409,6 +418,7 @@ export function HomePage() {
   useEffect(() => {
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
+    hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
   }, [lang, siteKey]);
   
   // Force reset and update when lang or tenant changes (ensures fresh initialization)
@@ -416,6 +426,7 @@ export function HomePage() {
     // Reset flags when lang or tenant changes
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
+    hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
   }, [lang, siteKey]);
   
   // Track previous mapSettings values to detect actual changes
@@ -584,8 +595,9 @@ export function HomePage() {
   // This prevents showing empty page with just header/footer
   // Show spinner if:
   // 1. Map settings are loading
-  // 2. Places are loading AND we don't have cached data yet
-  const isCriticalDataLoading = isLoadingMapSettings || (isLoadingPlaces && !placesData);
+  // 2. Places are loading AND we've never loaded places data before (initial load only)
+  // Don't show spinner when filters change - we have cached data and background refetch happens silently
+  const isCriticalDataLoading = isLoadingMapSettings || (isLoadingPlaces && !hasEverLoadedPlaces.current);
   
   if (isCriticalDataLoading) {
     return <LoadingSpinner isLoading={true} delay={200} />;
