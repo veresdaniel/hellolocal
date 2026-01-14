@@ -158,7 +158,8 @@ export class PlatformSettingsService {
     const brandPlaceholders = (site.brand?.placeholders ?? {}) as any;
     const brandMapDefaults = (site.brand?.mapDefaults ?? {}) as any;
 
-    const instance = site.siteInstances[0];
+    // Get SiteInstance (default or first one, or null if none exist)
+    const instance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
     const instanceFeatures = (instance?.features ?? {}) as any;
     const instanceMap = (instance?.mapConfig ?? {}) as any;
 
@@ -407,8 +408,8 @@ export class PlatformSettingsService {
     }
 
     // Get runtime features from SiteInstances (isCrawlable, enableEvents, etc.)
-    // Use the default instance or first one if no default
-    const defaultInstance = site.siteInstances.find(si => si.isDefault) || site.siteInstances[0];
+    // Use the default instance or first one if no default, or null if none exist
+    const defaultInstance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
     if (defaultInstance?.features) {
       const features = defaultInstance.features as any;
       if (features.isCrawlable !== undefined) {
@@ -571,8 +572,8 @@ export class PlatformSettingsService {
     }
 
     // Update SiteInstance (runtime features: isCrawlable, enableEvents, etc.)
-    // Use the default instance or first one if no default
-    let defaultInstance = site.siteInstances.find(si => si.isDefault) || site.siteInstances[0];
+    // Use the default instance or first one if no default, or null if none exist
+    let defaultInstance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
     
     if (!defaultInstance) {
       // Create default SiteInstance if it doesn't exist
