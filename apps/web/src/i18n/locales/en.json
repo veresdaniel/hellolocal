@@ -55,7 +55,8 @@
     "mapView": "Map View",
     "place": {
       "title": "Place Details",
-      "description": "View place details"
+      "description": "View place details",
+      "placeSlugMissing": "Details coming soon..."
     },
     "legal": {
       "imprint": {

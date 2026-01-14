@@ -59,7 +59,8 @@
     "mapView": "Térkép nézet",
     "place": {
       "title": "Hely részletei",
-      "description": "Hely részleteinek megtekintése"
+      "description": "Hely részleteinek megtekintése",
+      "placeSlugMissing": "Részletek hamarosan..."
     },
     "legal": {
       "imprint": {

@@ -55,7 +55,8 @@
     "mapView": "Kartenansicht",
     "place": {
       "title": "Ortsdetails",
-      "description": "Ortsdetails anzeigen"
+      "description": "Ortsdetails anzeigen",
+      "placeSlugMissing": "Details in Kürze..."
     },
     "legal": {
       "imprint": {
