@@ -147,11 +147,11 @@ async function main() {
     migrationsSucceeded = true;
   } catch (migrationError: any) {
     const errorMessage = migrationError.message || String(migrationError);
-    console.log(`⚠️  Migration deploy failed`);
+    console.log(`⚠️  Migration deploy failed: ${errorMessage.substring(0, 200)}`);
     
-    // If still has failed migrations, delete them again and retry
+    // If still has failed migrations, delete them again and retry once
     if (errorMessage.includes("failed migrations") || errorMessage.includes("P3009")) {
-      console.log("🔄 Still has failed migrations, deleting again...");
+      console.log("🔄 Cleaning up failed migrations and retrying...");
       await deleteFailedMigrations();
       
       try {
@@ -166,47 +166,27 @@ async function main() {
       }
     }
     
-    // If migrations still haven't succeeded, try baseline
+    // If migrations still haven't succeeded, reset database completely
     if (!migrationsSucceeded) {
-      console.log("📋 Attempting baseline (this is safe if schema already exists)...");
+      console.error("🔄 Database appears to be in inconsistent state");
+      console.error("🔄 Resetting database completely and starting fresh...");
+      
+      // Reset the database completely
+      await resetDatabase();
+      
+      // Now try migrations again on clean database
+      console.log("📦 Running migrations on clean database...");
       try {
-        execSync("tsx scripts/baseline-migrations.ts", {
-          stdio: "inherit",
-          cwd: apiDir,
-        });
-        console.log("✅ Baseline completed");
-        
-        // Delete failed migrations one more time after baseline
-        await deleteFailedMigrations();
-        
-        // Now try migrate deploy again
-        console.log("📦 Running migrations again after baseline...");
         execSync("prisma migrate deploy", {
           stdio: "inherit",
           cwd: apiDir,
         });
-        console.log("✅ Migrations verified");
+        console.log("✅ Migrations applied successfully after reset");
         migrationsSucceeded = true;
-      } catch (baselineError: any) {
-        console.error("❌ Baseline failed");
-        console.error("🔄 Resetting database completely and starting fresh...");
-        
-        // Reset the database completely
-        await resetDatabase();
-        
-        // Now try migrations again on clean database
-        console.log("📦 Running migrations on clean database...");
-        try {
-          execSync("prisma migrate deploy", {
-            stdio: "inherit",
-            cwd: apiDir,
-          });
-          console.log("✅ Migrations applied successfully after reset");
-          migrationsSucceeded = true;
-        } catch (resetRetryError: any) {
-          console.error("❌ Migrations still failed after reset");
-          throw resetRetryError;
-        }
+      } catch (resetRetryError: any) {
+        console.error("❌ Migrations still failed after reset");
+        console.error("This indicates a problem with the migration files themselves");
+        throw resetRetryError;
       }
     }
   }
