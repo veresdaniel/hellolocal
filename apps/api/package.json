@@ -17,6 +17,8 @@
     "db:activate-sites": "tsx scripts/activate-all-sites.ts",
     "db:ensure-site-keys": "tsx scripts/ensure-site-keys.ts",
     "db:ensure-default-site": "tsx scripts/ensure-default-site.ts",
+    "db:ensure-site-instances": "tsx scripts/ensure-site-instances.ts",
+    "db:fix-site-keys-and-instances": "tsx scripts/fix-site-keys-and-instances.ts",
     "db:debug-site": "tsx scripts/debug-site.ts",
     "db:fix-all-sites": "tsx scripts/fix-all-sites.ts",
     "db:fix-admin": "tsx scripts/fix-admin-user.ts",

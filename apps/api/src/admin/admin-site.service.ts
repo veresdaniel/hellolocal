@@ -282,6 +282,60 @@ export class AdminSiteService {
       console.log(`✅ Successfully created/verified ${createdSiteKeys.length} SiteKeys for site ${site.id} (${normalizedSlug})`);
     }
 
+    // Create SiteInstance records for all languages that have translations
+    // This ensures the site has SiteInstance entries for all configured languages
+    console.log(`🔧 Creating SiteInstance records for site ${site.id}...`);
+    const createdInstances: string[] = [];
+    let isFirstInstance = true;
+
+    for (const translation of site.translations) {
+      const lang = translation.lang;
+      
+      // Check if SiteInstance already exists (shouldn't happen, but just in case)
+      const existingInstance = await this.prisma.siteInstance.findUnique({
+        where: {
+          siteId_lang: {
+            siteId: site.id,
+            lang,
+          },
+        },
+      });
+
+      if (!existingInstance) {
+        try {
+          await this.prisma.siteInstance.create({
+            data: {
+              siteId: site.id,
+              lang,
+              isDefault: isFirstInstance, // First instance is default
+              features: {
+                isCrawlable: true, // Default: allow crawling
+                enableEvents: true, // Default: enable events
+                enableBlog: false, // Default: disable blog
+                enableStaticPages: true, // Default: enable static pages
+              },
+            },
+          });
+          createdInstances.push(lang);
+          console.log(`✅ Created SiteInstance: ${site.id} (${lang}), isDefault: ${isFirstInstance}`);
+          isFirstInstance = false;
+        } catch (error: any) {
+          console.error(`❌ Failed to create SiteInstance for site ${site.id}, lang ${lang}:`, error.message);
+          // Don't fail site creation if SiteInstance creation fails
+        }
+      } else {
+        console.log(`ℹ️  SiteInstance already exists: ${site.id} (${lang})`);
+        isFirstInstance = false;
+      }
+    }
+
+    if (createdInstances.length === 0 && site.translations.length > 0) {
+      console.warn(`⚠️  WARNING: No SiteInstances were created for site ${site.id} (${normalizedSlug})`);
+      console.warn(`   This will cause "SiteInstance not found" errors in the admin interface.`);
+    } else if (createdInstances.length > 0) {
+      console.log(`✅ Successfully created ${createdInstances.length} SiteInstance(s) for site ${site.id} (${normalizedSlug})`);
+    }
+
     // Return site with SiteKeys included for verification
     // Since we just created the site, findUnique should never return null
     const result = await this.prisma.site.findUnique({
@@ -292,6 +346,9 @@ export class AdminSiteService {
         siteKeys: {
           where: { isActive: true },
           select: { id: true, lang: true, slug: true, isActive: true, isPrimary: true },
+        },
+        siteInstances: {
+          select: { id: true, lang: true, isDefault: true },
         },
       },
     });

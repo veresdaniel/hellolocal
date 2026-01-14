@@ -465,15 +465,25 @@ export function SiteInstancesPage() {
               </h3>
               
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
-                  <input
-                    type="checkbox"
-                    style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-                    checked={formData.isCrawlable}
-                    onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
-                  />
-                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isCrawlable")}</span>
-                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+                    <input
+                      type="checkbox"
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                      checked={formData.isCrawlable}
+                      onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
+                    />
+                    <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isCrawlable")}</span>
+                  </label>
+                  <div style={{ 
+                    fontSize: 12, 
+                    color: "#666", 
+                    marginLeft: 32,
+                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}>
+                    {t("admin.isCrawlableDescription") || "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
+                  </div>
+                </div>
                 <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
                   <input
                     type="checkbox"

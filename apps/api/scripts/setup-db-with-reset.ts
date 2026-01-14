@@ -208,41 +208,66 @@ async function main() {
     console.warn(seedError.message);
   }
 
-  // Comprehensive fix for all sites (activate + ensure SiteKeys)
-  console.log("🔧 Fixing all sites (activate + ensure SiteKeys)...");
+  // Comprehensive fix for all sites (activate + ensure SiteKeys + SiteInstances)
+  console.log("🔧 Fixing all sites (activate + ensure SiteKeys + SiteInstances)...");
   try {
-    execSync("tsx scripts/fix-all-sites.ts", {
+    execSync("tsx scripts/fix-site-keys-and-instances.ts", {
       stdio: "inherit",
       cwd: apiDir,
     });
-    console.log("✅ All sites fixed");
+    console.log("✅ All sites fixed (SiteKeys + SiteInstances)");
   } catch (fixError: any) {
-    console.warn("⚠️  Site fix failed, trying individual scripts...");
+    console.warn("⚠️  Comprehensive site fix failed, trying individual scripts...");
     console.warn(fixError.message);
     
-    // Fallback to individual scripts if comprehensive fix fails
+    // Fallback 1: Try fix-all-sites (SiteKeys only)
     try {
-      console.log("🔧 Activating all sites...");
-      execSync("tsx scripts/activate-all-sites.ts", {
+      console.log("🔧 Fixing sites (activate + ensure SiteKeys)...");
+      execSync("tsx scripts/fix-all-sites.ts", {
         stdio: "inherit",
         cwd: apiDir,
       });
-      console.log("✅ Sites activated");
-    } catch (activateError: any) {
-      console.warn("⚠️  Site activation failed");
-      console.warn(activateError.message);
+      console.log("✅ Sites fixed (SiteKeys)");
+    } catch (fixAllError: any) {
+      console.warn("⚠️  fix-all-sites failed, trying individual scripts...");
+      
+      // Fallback 2: Individual scripts
+      try {
+        console.log("🔧 Activating all sites...");
+        execSync("tsx scripts/activate-all-sites.ts", {
+          stdio: "inherit",
+          cwd: apiDir,
+        });
+        console.log("✅ Sites activated");
+      } catch (activateError: any) {
+        console.warn("⚠️  Site activation failed");
+        console.warn(activateError.message);
+      }
+
+      try {
+        console.log("🔧 Ensuring SiteKey entries...");
+        execSync("tsx scripts/ensure-site-keys.ts", {
+          stdio: "inherit",
+          cwd: apiDir,
+        });
+        console.log("✅ SiteKeys ensured");
+      } catch (siteKeyError: any) {
+        console.warn("⚠️  SiteKey creation failed");
+        console.warn(siteKeyError.message);
+      }
     }
 
+    // Fallback 3: Ensure SiteInstances separately
     try {
-      console.log("🔧 Ensuring SiteKey entries...");
-      execSync("tsx scripts/ensure-site-keys.ts", {
+      console.log("🔧 Ensuring SiteInstance entries for all sites...");
+      execSync("tsx scripts/ensure-site-instances.ts", {
         stdio: "inherit",
         cwd: apiDir,
       });
-      console.log("✅ SiteKeys ensured");
-    } catch (siteKeyError: any) {
-      console.warn("⚠️  SiteKey creation failed");
-      console.warn(siteKeyError.message);
+      console.log("✅ SiteInstances ensured");
+    } catch (siteInstanceError: any) {
+      console.warn("⚠️  SiteInstance creation failed (this might be okay if no sites exist)");
+      console.warn(siteInstanceError.message);
     }
   }
 

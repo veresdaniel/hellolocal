@@ -1734,21 +1734,31 @@ function FeaturesTab({
               </span>
             </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={formData.isCrawlable}
-                onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-              />
-              <span style={{ 
-                fontSize: 14, 
-                fontWeight: 500,
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isCrawlable}
+                  onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                />
+                <span style={{ 
+                  fontSize: 14, 
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}>
+                  {t("admin.siteEdit.features.isCrawlable") || "Indexelhető (SEO)"}
+                </span>
+              </label>
+              <div style={{ 
+                fontSize: 12, 
+                color: "#666", 
+                marginLeft: 28,
                 fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}>
-                {t("admin.siteEdit.features.isCrawlable") || "Indexelhető (SEO)"}
-              </span>
-            </label>
+                {t("admin.isCrawlableDescription") || "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
+              </div>
+            </div>
           </div>
 
           <button
