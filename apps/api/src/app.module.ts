@@ -36,13 +36,13 @@ import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-re
         name: "default",
         ttl: 60000, // 1 perc (milliszekundumban)
         // Fejlesztésben sokkal lazább limit, productionban szigorúbb
-        limit: process.env.NODE_ENV === "production" ? 200 : 10000, // 200 kérés/perc production, 10000 fejlesztés
+        limit: process.env.NODE_ENV === "production" ? 400 : 10000, // 200 kérés/perc production, 10000 fejlesztés
       },
       {
         name: "strict",
         ttl: 60000, // 1 perc
         // Auth endpoint-ok: fejlesztésben lazább, productionban szigorúbb
-        limit: process.env.NODE_ENV === "production" ? 10 : 1000, // 10 kérés/perc production, 1000 fejlesztés
+        limit: process.env.NODE_ENV === "production" ? 200 : 1000, // 10 kérés/perc production, 1000 fejlesztés
       },
     ]),
     PrismaModule,
