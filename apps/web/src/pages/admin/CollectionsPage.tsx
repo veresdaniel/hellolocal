@@ -223,7 +223,7 @@ export function CollectionsPage() {
       <AdminPageHeader
         title={t("admin.collectionsPageTitle")}
         newButtonLabel={t("admin.collections.newCollection")}
-        onNewClick={() => navigate("/admin/collections/new")}
+        onNewClick={() => navigate("new")}
         showNewButton={true}
         isCreatingOrEditing={false}
       />

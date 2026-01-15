@@ -1,6 +1,6 @@
 {
   "name": "hellolocal-api",
-  "version": "1.0.0-beta",
+  "version": "1.0.1-beta",
   "description": "HelloLocal Backend API - Multi-tenant local tourism platform",
   "main": "index.js",
   "scripts": {
