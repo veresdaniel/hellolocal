@@ -140,6 +140,29 @@ export function getPlacePriceList(lang: string, siteKey: string, placeId: string
   return apiGetPublic<PublicPriceList>(`/public/${lang}/${siteKey}/places/by-id/${placeId}/pricelist`);
 }
 
+// Floorplan API
+export interface PublicFloorplanPin {
+  id: string;
+  floorplanId: string;
+  x: number;
+  y: number;
+  label: string | null;
+  sortOrder: number;
+}
+
+export interface PublicFloorplan {
+  id: string;
+  placeId: string;
+  title: string;
+  imageUrl: string;
+  sortOrder: number;
+  pins?: PublicFloorplanPin[];
+}
+
+export function getPlaceFloorplans(lang: string, siteKey: string, placeId: string) {
+  return apiGetPublic<PublicFloorplan[]>(`/public/${lang}/${siteKey}/places/by-id/${placeId}/floorplans`);
+}
+
 // Gallery API
 export interface GalleryImage {
   id: string;

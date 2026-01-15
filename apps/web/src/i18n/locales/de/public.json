@@ -192,5 +192,10 @@
     "starSingular": "Stern",
     "starPlural": "Sterne",
     "clickToRate": "Klicken zum Bewerten"
+  },
+  "floorplan": {
+    "title": "Standort-Grundriss",
+    "subtitle": "Klicken Sie auf die Punkte, um die Räume anzuzeigen",
+    "openFullscreen": "Vollbild öffnen"
   }
 }

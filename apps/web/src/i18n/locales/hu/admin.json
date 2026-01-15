@@ -136,6 +136,7 @@
     "loadExpiringSubscriptionsFailed": "A lejáró előfizetések betöltése sikertelen",
     "loadSubscriptionTrendsFailed": "A trend adatok betöltése sikertelen",
     "loadSubscriptionsFailed": "Az előfizetések betöltése sikertelen",
+    "loadFeatureSubscriptionsFailed": "A funkció előfizetések betöltése sikertelen",
     "updateDefaultLanguageFailed": "Az alapértelmezett nyelv frissítése sikertelen",
     "updateMapSettingsFailed": "A térkép beállítások frissítése sikertelen",
     "defaultLanguageUpdated": "Az alapértelmezett nyelv sikeresen frissítve",
@@ -612,14 +613,19 @@
     "expiringEmailBody": "Szia {name}, az előfizetésed {date}-án lejár."
   },
   "subscription": {
-    "cancel": "Lemondom",
-    "suspend": "Felfüggesztem",
+    "cancel": "Előfizetés lemondása",
+    "suspend": "Előfizetés felfüggesztése",
+    "cancelButton": "Lemondom",
+    "suspendButton": "Felfüggesztem",
     "resume": "Előfizetés folytatása",
     "cancelConfirm": "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
     "suspendConfirm": "Biztosan felfüggeszted az előfizetést?",
     "cancelled": "Előfizetés lemondva",
     "suspended": "Előfizetés felfüggesztve",
-    "resumed": "Előfizetés folytatva"
+    "resumed": "Előfizetés folytatva",
+    "created": "Előfizetés létrehozva",
+    "alreadySubscribed": "Erre a funkcióra már előfizetett ebben a csomagban.",
+    "activeSubscriptionInfo": "Az aktív előfizetés részletei a fenti szekcióban láthatók."
   },
   "search": "Keresés",
   "all": "Mind",
@@ -752,7 +758,8 @@
     "ctaPhone": "Telefon",
     "ctaEmail": "Email",
     "ctaWebsite": "Weboldal",
-    "ctaMaps": "Térkép"
+    "ctaMaps": "Térkép",
+    "ctaFloorplan": "Alaprajz"
   },
   "siteStatus": {
     "title": "Site Állapot",
@@ -1145,6 +1152,68 @@
     "user": "Felhasználó",
     "site": "Site",
     "legalPage": "Jogi oldal",
-    "staticPage": "Statikus oldal"
-  }
+    "staticPage": "Statikus oldal",
+    "floorplan": "Alaprajz",
+    "floorplanPin": "Alaprajz jelölő",
+    "featureSubscription": "Funkció előfizetés"
+  },
+  "floorplans": "Alaprajzok",
+  "floorplan": {
+    "title": "Alaprajz előfizetés",
+    "subscription": {
+      "title": "Alaprajz előfizetés",
+      "subtitle": "Válassz egy csomagot és számlázási időszakot",
+      "active": "Aktív előfizetés",
+      "noEndDate": "Nincs lejárati dátum",
+      "scope": "Hatály",
+      "thisPlace": "Ez a hely",
+      "thisPlaceDesc": "Csak erre a helyre vonatkozik",
+      "allPlaces": "Összes hely",
+      "allPlacesDesc": "Az összes helyre vonatkozik, beleértve a később létrehozottakat is",
+      "plan": "Csomag",
+      "plan1": "1 alaprajz",
+      "plan1Desc": "1 alaprajz feltöltése",
+      "plan5": "5 alaprajz",
+      "plan5Desc": "5 alaprajz feltöltése",
+      "planCustom": "Egyedi limit",
+      "billingPeriod": "Számlázási időszak",
+      "subscribe": "Előfizetés",
+      "expiresIn": "Lejár {days} nap múlva",
+      "expired": "Az előfizetés lejárt",
+      "freeAccountNotAllowed": "Free account-al nem lehet alaprajz előfizetést vásárolni. Kérjük, először frissítsd a hely csomagját."
+    },
+    "upload": "Alaprajz feltöltése",
+    "uploaded": "Alaprajz feltöltve",
+    "deleted": "Alaprajz törölve",
+    "deleteConfirm": "Biztosan törölni szeretnéd ezt az alaprajzot?",
+    "pinInstruction": "Kattints a képre egy jelölő hozzáadásához",
+    "howItWorks": "Hogyan működik?",
+    "instruction1": "Kattints az alaprajzra egy új jelölő hozzáadásához",
+    "instruction2": "Húzd a jelölőket az egérrel a pozíciójuk módosításához",
+    "instruction3": "Kattints a jelölő címkéjére a jobb oldali listában az átnevezéshez",
+    "instruction4": "Használd a zoom csúszkát a nagyításhoz/kicsinyítéshez",
+    "instruction5": "Kattints a \"Teljes képernyő\" gombra a részletes szerkesztéshez",
+    "pins": "Jelölők",
+    "noPins": "Még nincsenek jelölők. Kattints az alaprajzra egy hozzáadásához.",
+    "clickToEdit": "Kattints a szerkesztéshez",
+    "noLabel": "(címke nélkül)",
+    "zoom": "Nagyítás",
+    "fullscreen": "Teljes képernyő",
+    "noFloorplan": "Nincs alaprajz feltöltve"
+  },
+  "pin": {
+    "edit": "Jelölő szerkesztése",
+    "label": "Címke",
+    "updated": "Jelölő frissítve",
+    "deleted": "Jelölő törölve",
+    "deleteConfirm": "Biztosan törölni szeretnéd ezt a jelölőt?"
+  },
+  "errorLoadingData": "Hiba az adatok betöltésekor",
+  "errorCreatingPin": "Hiba a jelölő létrehozásakor",
+  "errorUpdatingPin": "Hiba a jelölő frissítésekor",
+  "errorDeletingPin": "Hiba a jelölő törlésekor",
+  "errorCreatingSubscription": "Hiba az előfizetés létrehozásakor",
+  "monthly": "Havi",
+  "yearly": "Éves",
+  "save": "Mentés"
 }

@@ -62,7 +62,7 @@ export class AdminSubscriptionService {
     skip?: number;
   }): Promise<{ items: SubscriptionListItem[]; total: number }> {
     try {
-      const { scope = "all", status, plan, q, expiresWithinDays, take = 50, skip = 0 } = params;
+      const { scope = "all", status, plan, q, expiresWithinDays, take = 10, skip = 0 } = params;
 
       const items: SubscriptionListItem[] = [];
       let total = 0;
@@ -844,7 +844,7 @@ export class AdminSubscriptionService {
             createdAt: "desc",
           },
           skip: skip || 0,
-          take: take || 50,
+          take: take || 10,
         }),
         this.prisma.subscriptionHistory.count({ where }),
       ]);

@@ -1,9 +1,11 @@
 // place-upsell.service.ts
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { PrismaService } from "../prisma/prisma.service";
 import { EntitlementsService } from "./entitlements.service";
 import { Entitlements } from "./entitlements.config";
 import { getPlaceLimits, type PlacePlan } from "../config/place-limits.config";
+import type { AdminFeatureSubscriptionService } from "../admin/admin-feature-subscription.service";
 
 export type FeatureGate =
   | { state: "enabled" }
@@ -13,14 +15,28 @@ export type FeatureGate =
 export type PlaceUpsellState = {
   featured: FeatureGate;
   gallery: FeatureGate;
+  floorplans: FeatureGate;
 };
 
 @Injectable()
-export class PlaceUpsellService {
+export class PlaceUpsellService implements OnModuleInit {
+  private featureSubscriptionService: AdminFeatureSubscriptionService | null = null;
+
   constructor(
     private readonly entitlementsService: EntitlementsService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly moduleRef: ModuleRef
   ) {}
+
+  async onModuleInit() {
+    // Lazy load AdminFeatureSubscriptionService to avoid circular dependency
+    try {
+      this.featureSubscriptionService = await this.moduleRef.get("AdminFeatureSubscriptionService", { strict: false });
+    } catch (error) {
+      // Service not available, that's okay - floorplan feature will be disabled
+      console.debug("AdminFeatureSubscriptionService not available, floorplan feature disabled");
+    }
+  }
 
   /**
    * Get place plan overrides from Brand
@@ -48,7 +64,7 @@ export class PlaceUpsellService {
     if (ent.limits.featuredPlacesMax === 0) {
       return {
         state: "locked",
-        reason: "A kiemelés nem érhető el ebben a csomagban.",
+        reason: "Kiemelt megjelenés nem érhető el ebben a csomagban.",
         upgradeCta: "viewPlans",
       };
     }
@@ -108,6 +124,67 @@ export class PlaceUpsellService {
   }
 
   /**
+   * Get feature gate for floorplans
+   */
+  async getFloorplanGate(siteId: string, placeId: string, placePlan?: PlacePlan): Promise<FeatureGate> {
+    // Free accounts cannot use floorplan feature at all
+    if (placePlan === "free") {
+      return {
+        state: "locked",
+        reason: "Alaprajzok nem érhető el ebben a csomagban.",
+        upgradeCta: "viewPlans",
+      };
+    }
+
+    // Lazy load service if not yet loaded
+    if (!this.featureSubscriptionService) {
+      try {
+        this.featureSubscriptionService = await this.moduleRef.get("AdminFeatureSubscriptionService", { strict: false });
+      } catch {
+        // Service not available
+      }
+    }
+
+    if (!this.featureSubscriptionService) {
+      return {
+        state: "locked",
+        reason: "Alaprajzok nem érhető el ebben a csomagban.",
+        upgradeCta: "contactAdmin",
+      };
+    }
+
+    try {
+      const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(placeId, siteId);
+
+      if (!entitlement.entitled) {
+        // This will be handled by frontend - it will show positive message when onClick is available
+        return {
+          state: "locked",
+          reason: "", // Frontend will generate the message based on label
+          upgradeCta: "viewPlans",
+        };
+      }
+
+      if (entitlement.status === "limit_reached") {
+        return {
+          state: "limit_reached",
+          reason: `Elérted az alaprajz limitet (${entitlement.used}/${entitlement.limit}).`,
+          upgradeCta: "upgradePlan",
+        };
+      }
+
+      return { state: "enabled" };
+    } catch (error) {
+      console.warn("Failed to check floorplan entitlement:", error);
+      return {
+        state: "locked",
+        reason: "Alaprajzok nem érhető el ebben a csomagban.",
+        upgradeCta: "contactAdmin",
+      };
+    }
+  }
+
+  /**
    * Get complete upsell state for a place
    */
   async getPlaceUpsellState(
@@ -123,6 +200,7 @@ export class PlaceUpsellService {
     return {
       featured: this.getFeaturedGate(ent, placeIsFeatured),
       gallery: await this.getGalleryGate(placePlan, currentImageCount, galleryLimitOverride),
+      floorplans: await this.getFloorplanGate(siteId, placeId, placePlan),
     };
   }
 }

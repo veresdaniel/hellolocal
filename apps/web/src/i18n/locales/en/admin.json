@@ -562,14 +562,19 @@
     "expiringEmailBody": "Hi {name}, your subscription expires on {date}."
   },
   "subscription": {
-    "cancel": "Cancel",
-    "suspend": "Suspend",
+    "cancel": "Cancel Subscription",
+    "suspend": "Suspend Subscription",
+    "cancelButton": "Cancel",
+    "suspendButton": "Suspend",
     "resume": "Resume Subscription",
     "cancelConfirm": "Are you sure you want to cancel the subscription? You will have access until the end of the current month.",
     "suspendConfirm": "Are you sure you want to suspend the subscription?",
     "cancelled": "Subscription cancelled",
     "suspended": "Subscription suspended",
-    "resumed": "Subscription resumed"
+    "resumed": "Subscription resumed",
+    "created": "Subscription created",
+    "alreadySubscribed": "You are already subscribed to this feature in this plan.",
+    "activeSubscriptionInfo": "The active subscription details are shown in the section above."
   },
   "search": "Search",
   "all": "All",
@@ -679,7 +684,8 @@
     "ctaPhone": "Phone",
     "ctaEmail": "Email",
     "ctaWebsite": "Website",
-    "ctaMaps": "Maps"
+    "ctaMaps": "Maps",
+    "ctaFloorplan": "Floorplan"
   },
   "siteStatus": {
     "title": "Site Status",
@@ -1046,6 +1052,68 @@
     "user": "User",
     "site": "Site",
     "legalPage": "Legal Page",
-    "staticPage": "Static Page"
-  }
+    "staticPage": "Static Page",
+    "floorplan": "Floorplan",
+    "floorplanPin": "Floorplan pin",
+    "featureSubscription": "Feature subscription"
+  },
+  "floorplans": "Floorplans",
+  "floorplan": {
+    "title": "Floorplan subscription",
+    "subscription": {
+      "title": "Floorplan subscription",
+      "subtitle": "Choose a plan and billing period",
+      "active": "Active subscription",
+      "noEndDate": "No expiration date",
+      "scope": "Scope",
+      "thisPlace": "This place",
+      "thisPlaceDesc": "Applies only to this place",
+      "allPlaces": "All places",
+      "allPlacesDesc": "Applies to all places, including those created later",
+      "plan": "Plan",
+      "plan1": "1 floorplan",
+      "plan1Desc": "Upload 1 floorplan",
+      "plan5": "5 floorplans",
+      "plan5Desc": "Upload 5 floorplans",
+      "planCustom": "Custom limit",
+      "billingPeriod": "Billing period",
+      "subscribe": "Subscribe",
+      "expiresIn": "Expires in {days} days",
+      "expired": "Subscription expired",
+      "freeAccountNotAllowed": "Free accounts cannot purchase floorplan subscriptions. Please upgrade the place plan first."
+    },
+    "upload": "Upload floorplan",
+    "uploaded": "Floorplan uploaded",
+    "deleted": "Floorplan deleted",
+    "deleteConfirm": "Are you sure you want to delete this floorplan?",
+    "pinInstruction": "Click on the image to add a pin",
+    "howItWorks": "How it works?",
+    "instruction1": "Click on the floorplan to add a new marker",
+    "instruction2": "Drag markers with the mouse to change their position",
+    "instruction3": "Click on the marker label in the right list to rename it",
+    "instruction4": "Use the zoom slider to zoom in/out",
+    "instruction5": "Click the \"Fullscreen\" button for detailed editing",
+    "pins": "Markers",
+    "noPins": "No markers yet. Click on the floorplan to add one.",
+    "clickToEdit": "Click to edit",
+    "noLabel": "(no label)",
+    "zoom": "Zoom",
+    "fullscreen": "Fullscreen",
+    "noFloorplan": "No floorplan uploaded"
+  },
+  "pin": {
+    "edit": "Edit pin",
+    "label": "Label",
+    "updated": "Pin updated",
+    "deleted": "Pin deleted",
+    "deleteConfirm": "Are you sure you want to delete this pin?"
+  },
+  "errorLoadingData": "Error loading data",
+  "errorCreatingPin": "Error creating pin",
+  "errorUpdatingPin": "Error updating pin",
+  "errorDeletingPin": "Error deleting pin",
+  "errorCreatingSubscription": "Error creating subscription",
+  "monthly": "Monthly",
+  "yearly": "Yearly",
+  "save": "Save"
 }

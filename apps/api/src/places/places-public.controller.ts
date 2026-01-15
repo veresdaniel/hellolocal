@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param, Query, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PlacesService } from "./places.service";
 import { PlacesPriceListService } from "./places-price-list.service";
+import { AdminFloorplanService } from "../admin/admin-floorplan.service";
 
 /**
  * Public controller for place-related endpoints.
@@ -16,7 +17,8 @@ import { PlacesPriceListService } from "./places-price-list.service";
 export class PlacesPublicController {
   constructor(
     private readonly placesService: PlacesService,
-    private readonly priceListService: PlacesPriceListService
+    private readonly priceListService: PlacesPriceListService,
+    private readonly floorplanService: AdminFloorplanService
   ) {}
 
   /**
@@ -137,5 +139,68 @@ export class PlacesPublicController {
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
     // For public endpoint, requireAuth is false (no authentication check)
     return this.priceListService.getPriceList(placeId, site.siteId, false);
+  }
+
+  /**
+   * Gets all floorplans for a place (public, read-only)
+   * 
+   * Path parameters:
+   * - lang: Language code (hu, en, de)
+   * - siteKey: Site key from URL path
+   * - placeId: Place entity ID
+   */
+  @Get("by-id/:placeId/floorplans")
+  async getFloorplans(
+    @Param("lang") lang: string,
+    @Param("siteKey") siteKey: string,
+    @Param("placeId") placeId: string
+  ) {
+    this.validateLang(lang);
+    const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
+    
+    // Verify place belongs to site
+    const place = await this.placesService.detailById({ lang, siteKey, placeId });
+    if (!place) {
+      throw new NotFoundException("Place not found");
+    }
+
+    // Get all floorplans for the place (public read-only, no auth required)
+    return this.floorplanService.findAll(placeId, "public-read");
+  }
+
+  /**
+   * Gets a floorplan with pins for a place (public, read-only)
+   * 
+   * Path parameters:
+   * - lang: Language code (hu, en, de)
+   * - siteKey: Site key from URL path
+   * - placeId: Place entity ID
+   * - floorplanId: Floorplan entity ID
+   */
+  @Get("by-id/:placeId/floorplans/:floorplanId")
+  async getFloorplan(
+    @Param("lang") lang: string,
+    @Param("siteKey") siteKey: string,
+    @Param("placeId") placeId: string,
+    @Param("floorplanId") floorplanId: string
+  ) {
+    this.validateLang(lang);
+    const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
+    
+    // Verify place belongs to site
+    const place = await this.placesService.detailById({ lang, siteKey, placeId });
+    if (!place) {
+      throw new NotFoundException("Place not found");
+    }
+
+    // Get floorplan (public read-only, no auth required)
+    const floorplan = await this.floorplanService.findOne(floorplanId, "public-read");
+    
+    // Verify floorplan belongs to the place
+    if (floorplan.placeId !== placeId) {
+      throw new NotFoundException("Floorplan not found for this place");
+    }
+    
+    return floorplan;
   }
 }

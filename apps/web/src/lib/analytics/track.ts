@@ -1,7 +1,7 @@
 import { getVisitorId } from "./visitor";
 
 export type TrackEventType = "page_view" | "place_view" | "cta_click";
-export type CtaType = "phone" | "email" | "website" | "maps";
+export type CtaType = "phone" | "email" | "website" | "maps" | "floorplan";
 
 export type TrackPayload = {
   type: TrackEventType;

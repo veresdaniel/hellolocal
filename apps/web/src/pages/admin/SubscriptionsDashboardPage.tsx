@@ -13,6 +13,11 @@ import {
   extendSubscription,
   getSubscriptionHistory,
   getEventLogs,
+  getAllFeatureSubscriptions,
+  updateFeatureSubscription,
+  cancelFeatureSubscription,
+  suspendFeatureSubscription,
+  resumeFeatureSubscription,
   type SubscriptionListItem,
   type SubscriptionSummary,
   type TrendPoint,
@@ -21,6 +26,8 @@ import {
   type EventLog,
   type EventLogFilterDto,
   type EventLogResponse,
+  type FeatureSubscription,
+  type UpdateFeatureSubscriptionDto,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
@@ -47,10 +54,14 @@ export function SubscriptionsDashboardPage() {
   const [trends, setTrends] = useState<TrendPoint[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionListItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [featureSubscriptions, setFeatureSubscriptions] = useState<FeatureSubscription[]>([]);
+  const [featureSubscriptionsTotal, setFeatureSubscriptionsTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editData, setEditData] = useState<UpdateSubscriptionDto>({});
+  const [isEditingFeature, setIsEditingFeature] = useState<string | null>(null);
+  const [editFeatureData, setEditFeatureData] = useState<UpdateFeatureSubscriptionDto>({});
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const hasShownErrorRef = useRef(false);
@@ -63,7 +74,7 @@ export function SubscriptionsDashboardPage() {
   const [currentHistoryItem, setCurrentHistoryItem] = useState<SubscriptionListItem | null>(null);
   const historyPageSize = 20;
 
-  const pageSize = 20;
+  const pageSize = 10;
 
   // Event log state
   const [eventLogs, setEventLogs] = useState<EventLog[]>([]);
@@ -122,9 +133,17 @@ export function SubscriptionsDashboardPage() {
           take: pageSize,
           skip: page * pageSize,
         }),
+        getAllFeatureSubscriptions({
+          scope: scope === "all" ? "all" : scope,
+          status: statusFilter !== "all" ? (statusFilter === "ACTIVE" ? "active" : statusFilter === "EXPIRED" ? "canceled" : "all" as any) : "all",
+          featureKey: "all",
+          q: debouncedSearchQuery || undefined,
+          take: pageSize,
+          skip: page * pageSize,
+        }),
       ]);
 
-      const [summaryResult, expiringResult, trendsResult, subscriptionsResult] = results;
+      const [summaryResult, expiringResult, trendsResult, subscriptionsResult, featureSubscriptionsResult] = results;
       const errors: string[] = [];
 
       // Process summary
@@ -158,6 +177,15 @@ export function SubscriptionsDashboardPage() {
       } else {
         errors.push(t("admin.errors.loadSubscriptionsFailed") || "Előfizetések betöltése sikertelen");
         console.error("Failed to load subscriptions:", subscriptionsResult.reason);
+      }
+
+      // Process feature subscriptions
+      if (featureSubscriptionsResult.status === "fulfilled") {
+        setFeatureSubscriptions(featureSubscriptionsResult.value.items);
+        setFeatureSubscriptionsTotal(featureSubscriptionsResult.value.total);
+      } else {
+        errors.push(t("admin.errors.loadFeatureSubscriptionsFailed") || "Funkció előfizetések betöltése sikertelen");
+        console.error("Failed to load feature subscriptions:", featureSubscriptionsResult.reason);
       }
 
       // Show error toast only if there are errors
@@ -806,7 +834,7 @@ export function SubscriptionsDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {subscriptions.length === 0 ? (
+              {subscriptions.length === 0 && featureSubscriptions.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {t("admin.noData") || "Nincs adat"}
@@ -1007,10 +1035,256 @@ export function SubscriptionsDashboardPage() {
                 </tr>
               ))
               )}
+              {/* Feature Subscriptions */}
+              {featureSubscriptions.map((item) => {
+                const entityName = item.placeId 
+                  ? (item.place?.translations?.[0]?.name || item.placeId)
+                  : (item.site?.translations?.[0]?.name || item.siteId);
+                const isExpired = item.currentPeriodEnd ? new Date(item.currentPeriodEnd) < new Date() : false;
+                const status = isExpired ? "canceled" : item.status;
+                
+                return (
+                  <tr key={`feature-${item.id}`} style={{ borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div>
+                        <div style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                          {entityName}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                          {item.scope === "place" 
+                            ? (t("admin.floorplan.subscription.thisPlace") || "Ez a hely")
+                            : (t("admin.floorplan.subscription.allPlaces") || "Összes hely")} • {item.featureKey}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          background: "#667eea",
+                          color: "white",
+                          borderRadius: 4,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.planKey === "FP_1" ? (t("admin.floorplan.subscription.plan1") || "1 alaprajz") : item.planKey} ({item.billingPeriod === "MONTHLY" ? (t("admin.monthly") || "Havi") : (t("admin.yearly") || "Éves")})
+                      </span>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          background: status === "active" ? "#22c55e" : status === "past_due" ? "#f59e0b" : status === "suspended" ? "#f59e0b" : "#dc2626",
+                          color: "white",
+                          borderRadius: 4,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {status === "active" ? (t("admin.statusActive") || "Aktív") :
+                         status === "past_due" ? (t("admin.statusPastDue") || "Lejárt") :
+                         status === "suspended" ? (t("admin.statusSuspended") || "Felfüggesztve") :
+                         status === "canceled" ? (t("admin.statusCanceled") || "Megszakítva") : status}
+                      </span>
+                    </td>
+                    <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      {item.currentPeriodEnd ? formatDate(item.currentPeriodEnd) : "-"}
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        {item.scope === "place" 
+                          ? (t("admin.floorplan.subscription.thisPlace") || "Ez a hely")
+                          : (t("admin.floorplan.subscription.allPlaces") || "Összes hely")}
+                      </div>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {isEditingFeature === item.id ? (
+                          <>
+                            <select
+                              value={editFeatureData.scope || item.scope}
+                              onChange={(e) => setEditFeatureData({ ...editFeatureData, scope: e.target.value as "place" | "site", placeId: e.target.value === "place" ? item.placeId || undefined : null })}
+                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                            >
+                              <option value="place">{t("admin.floorplan.subscription.thisPlace") || "Ez a hely"}</option>
+                              <option value="site">{t("admin.floorplan.subscription.allPlaces") || "Összes hely"}</option>
+                            </select>
+                            <select
+                              value={editFeatureData.status || item.status}
+                              onChange={(e) => setEditFeatureData({ ...editFeatureData, status: e.target.value as "active" | "past_due" | "canceled" | "suspended" })}
+                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                            >
+                              <option value="active">active</option>
+                              <option value="past_due">past_due</option>
+                              <option value="suspended">suspended</option>
+                              <option value="canceled">canceled</option>
+                            </select>
+                            <input
+                              type="date"
+                              value={editFeatureData.currentPeriodEnd ? new Date(editFeatureData.currentPeriodEnd).toISOString().split("T")[0] : ""}
+                              onChange={(e) =>
+                                setEditFeatureData({ ...editFeatureData, currentPeriodEnd: e.target.value ? e.target.value : undefined })
+                              }
+                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                            />
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await updateFeatureSubscription(item.id, editFeatureData);
+                                  showToast(t("admin.subscriptions.updated"), "success");
+                                  setIsEditingFeature(null);
+                                  loadData();
+                                } catch (err) {
+                                  showToast(t("admin.errors.updateFailed"), "error");
+                                }
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#22c55e",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.save")}
+                            </button>
+                            <button
+                              onClick={() => setIsEditingFeature(null)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#6b7280",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.cancel")}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setIsEditingFeature(item.id);
+                                setEditFeatureData({
+                                  scope: item.scope,
+                                  status: item.status,
+                                  currentPeriodEnd: item.currentPeriodEnd || undefined,
+                                  placeId: item.placeId || null,
+                                });
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#667eea",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.edit") || "Szerkesztés"}
+                            </button>
+                            {item.status === "active" && (
+                              <>
+                                <button
+                                  onClick={async () => {
+                                    if (confirm(t("admin.subscription.suspendConfirm") || "Biztosan felfüggeszted az előfizetést?")) {
+                                      try {
+                                        await suspendFeatureSubscription(item.id);
+                                        showToast(t("admin.subscription.suspended") || "Előfizetés felfüggesztve", "success");
+                                        loadData();
+                                      } catch (err) {
+                                        showToast(t("admin.errors.updateFailed"), "error");
+                                      }
+                                    }
+                                  }}
+                                  style={{
+                                    padding: "4px 8px",
+                                    background: "#f59e0b",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 4,
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  }}
+                                >
+                                  {t("admin.suspend") || "Felfüggeszt"}
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (confirm(t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést?")) {
+                                      try {
+                                        await cancelFeatureSubscription(item.id);
+                                        showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
+                                        loadData();
+                                      } catch (err) {
+                                        showToast(t("admin.errors.updateFailed"), "error");
+                                      }
+                                    }
+                                  }}
+                                  style={{
+                                    padding: "4px 8px",
+                                    background: "#ef4444",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: 4,
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  }}
+                                >
+                                  {t("admin.subscription.cancelButton") || "Lemondom"}
+                                </button>
+                              </>
+                            )}
+                            {(item.status === "canceled" || item.status === "suspended") && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await resumeFeatureSubscription(item.id);
+                                    showToast(t("admin.subscription.resumed") || "Előfizetés folytatva", "success");
+                                    loadData();
+                                  } catch (err) {
+                                    showToast(t("admin.errors.updateFailed"), "error");
+                                  }
+                                }}
+                                style={{
+                                  padding: "4px 8px",
+                                  background: "#10b981",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: 4,
+                                  fontSize: 12,
+                                  cursor: "pointer",
+                                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                {t("admin.subscription.resume") || "Folytatás"}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-        {total > pageSize && (
+        {(total + featureSubscriptionsTotal) > pageSize && (
           <div style={{ 
             padding: isMobile ? 12 : 16, 
             display: "flex", 
@@ -1025,7 +1299,7 @@ export function SubscriptionsDashboardPage() {
               fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textAlign: isMobile ? "center" : "left",
             }}>
-              {t("admin.showing") || "Megjelenítve"} {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total)} {t("admin.of") || "összesen"} {total}
+              {t("admin.showing") || "Megjelenítve"} {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total + featureSubscriptionsTotal)} {t("admin.of") || "összesen"} {total + featureSubscriptionsTotal}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: isMobile ? "center" : "flex-end" }}>
               <button

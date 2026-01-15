@@ -3,6 +3,8 @@
   "error": "Error",
   "save": "Save",
   "cancel": "Cancel",
+  "confirm": "Confirm",
+  "close": "Close",
   "delete": "Delete",
   "edit": "Edit",
   "create": "Create",
@@ -39,5 +41,6 @@
   "language": "Language",
   "newVersionAvailable": "New version available. The page will refresh...",
   "back": "Back",
-  "goBack": "Back"
+  "goBack": "Back",
+  "premiumFeature": "Premium Feature"
 }

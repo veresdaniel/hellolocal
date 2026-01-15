@@ -23,6 +23,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
 import { ROLE_SUPERADMIN } from "../../types/enums";
+import { useConfirm } from "../../hooks/useConfirm";
 
 export function EventLogPage() {
   const { t } = useTranslation();
@@ -31,6 +32,7 @@ export function EventLogPage() {
   const { selectedSiteId } = useAdminSite();
   usePageTitle("admin.eventLog");
   const { showToast } = useToast();
+  const confirm = useConfirm();
 
   const [logs, setLogs] = useState<EventLog[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -45,7 +47,7 @@ export function EventLogPage() {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });
@@ -58,7 +60,7 @@ export function EventLogPage() {
     startDate: undefined,
     endDate: undefined,
     page: 1,
-    limit: 50,
+    limit: 10,
   });
 
   const prevFiltersRef = useRef<string>("");
@@ -86,7 +88,7 @@ export function EventLogPage() {
           startDate: undefined,
           endDate: undefined,
           page: 1,
-          limit: 50,
+          limit: 10,
         };
         
         prevFiltersRef.current = JSON.stringify(initialFilters);
@@ -256,7 +258,14 @@ export function EventLogPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(t("admin.eventLog.deleteConfirm"))) {
+    const confirmed = await confirm({
+      title: t("admin.eventLog.delete") || "Eseménynapló törlése",
+      message: t("admin.eventLog.deleteConfirm") || "Biztosan törölni szeretnéd a kiválasztott eseménynapló bejegyzéseket?",
+      confirmLabel: t("common.delete") || "Törlés",
+      cancelLabel: t("common.cancel") || "Mégse",
+      confirmVariant: "danger",
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -527,7 +536,7 @@ export function EventLogPage() {
               setFilters({
                 siteId: selectedSiteId || undefined,
                 page: 1,
-                limit: 50,
+                limit: 10,
               });
             }}
             style={{

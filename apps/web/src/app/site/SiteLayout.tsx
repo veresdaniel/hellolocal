@@ -73,7 +73,25 @@ export function SiteLayout() {
   }
 
   // Hiba esetén (pl. rossz siteKey) - designhoz illeszkedő error state
+  // Ha 404, akkor NotFoundPage-et mutatunk
   if (isError || !platform) {
+    // Check if it's a 404 error
+    const errorStatus = (isError as any)?.status || (isError as any)?.response?.status;
+    if (errorStatus === 404) {
+      // Return null to let the router handle 404 with NotFoundPage
+      // But we need to show an error state since we're in SiteLayout
+      return (
+        <ErrorState
+          title={t("error.notFound")}
+          message={t("error.siteNotFoundMessage") || "A keresett oldal nem található."}
+          backLink={`/${lang}`}
+          backLinkText={t("error.backToSites") || "Vissza a területekhez"}
+          onRetry={() => refetch()}
+          variant="minimal"
+          statusCode={404}
+        />
+      );
+    }
     return (
       <ErrorState
         title={t("error.siteNotFound")}

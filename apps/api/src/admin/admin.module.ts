@@ -21,6 +21,9 @@ import { AdminSubscriptionService } from "./admin-subscription.service";
 import { AdminGalleryService } from "./admin-gallery.service";
 import { AdminPriceListService } from "./admin-price-list.service";
 import { AdminCollectionService } from "./admin-collection.service";
+import { AdminFeatureSubscriptionService } from "./admin-feature-subscription.service";
+import { AdminFloorplanService } from "./admin-floorplan.service";
+import { AdminFloorplanPinService } from "./admin-floorplan-pin.service";
 import { GalleryPublicService } from "./gallery-public.service";
 import { GalleryPublicController } from "./gallery-public.controller";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
@@ -53,6 +56,9 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminGalleryService,
     AdminPriceListService,
     AdminCollectionService,
+    AdminFeatureSubscriptionService,
+    AdminFloorplanService,
+    AdminFloorplanPinService,
     GalleryPublicService,
     // AdminEventLogService is now provided by EventLogModule
   ],
@@ -76,6 +82,9 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminGalleryService,
     AdminPriceListService,
     AdminCollectionService,
+    AdminFeatureSubscriptionService,
+    AdminFloorplanService,
+    AdminFloorplanPinService,
     // AdminEventLogService is now exported by EventLogModule
   ],
 })

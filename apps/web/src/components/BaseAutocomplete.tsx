@@ -122,6 +122,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
         color: "white",
         borderRadius: 4,
         fontSize: "clamp(14px, 3.5vw, 16px)",
+        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
       {getItemName(item)}
@@ -137,6 +138,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           marginLeft: 4,
           fontSize: 16,
           lineHeight: 1,
+          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         ×
@@ -401,6 +403,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   background: "#e7f3ff",
                   color: "#007bff",
                   fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 {getItemName(selectedItem)} ✓

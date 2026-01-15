@@ -54,6 +54,7 @@ export class AnalyticsService {
       ctaEmail?: number;
       ctaWebsite?: number;
       ctaMaps?: number;
+      ctaFloorplan?: number;
     };
 
     const inc: IncrementFields = {};
@@ -65,6 +66,7 @@ export class AnalyticsService {
       if (args.dto.ctaType === "email") inc.ctaEmail = 1;
       if (args.dto.ctaType === "website") inc.ctaWebsite = 1;
       if (args.dto.ctaType === "maps") inc.ctaMaps = 1;
+      if (args.dto.ctaType === "floorplan") inc.ctaFloorplan = 1;
     }
 
     // placeId csak place_view / cta_click esetén kötelező (MVP)
@@ -137,7 +139,8 @@ export class AnalyticsService {
         ctaPhone: true, 
         ctaEmail: true, 
         ctaWebsite: true, 
-        ctaMaps: true 
+        ctaMaps: true,
+        ctaFloorplan: true
       },
     });
 
@@ -149,9 +152,10 @@ export class AnalyticsService {
         acc.ctaEmail += r.ctaEmail;
         acc.ctaWebsite += r.ctaWebsite;
         acc.ctaMaps += r.ctaMaps;
+        acc.ctaFloorplan += r.ctaFloorplan;
         return acc;
       },
-      { pageViews: 0, placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0 }
+      { pageViews: 0, placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
     );
 
     // Top places (placeId != null) — last N days
@@ -163,7 +167,8 @@ export class AnalyticsService {
         ctaPhone: true, 
         ctaEmail: true, 
         ctaWebsite: true, 
-        ctaMaps: true 
+        ctaMaps: true,
+        ctaFloorplan: true
       },
       orderBy: { _sum: { placeViews: "desc" } },
       take: 10,
@@ -195,14 +200,14 @@ export class AnalyticsService {
         day: r.day.toISOString().slice(0, 10),
         pageViews: r.pageViews,
         placeViews: r.placeViews,
-        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps,
+        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
       })),
       ctaBreakdown: summary,
       topPlaces: top.map(t => ({
         placeId: t.placeId,
         name: nameById.get(t.placeId!) ?? t.placeId,
         placeViews: t._sum.placeViews ?? 0,
-        ctaTotal: (t._sum.ctaPhone ?? 0) + (t._sum.ctaEmail ?? 0) + (t._sum.ctaWebsite ?? 0) + (t._sum.ctaMaps ?? 0),
+        ctaTotal: (t._sum.ctaPhone ?? 0) + (t._sum.ctaEmail ?? 0) + (t._sum.ctaWebsite ?? 0) + (t._sum.ctaMaps ?? 0) + (t._sum.ctaFloorplan ?? 0),
       })),
     };
   }
@@ -247,7 +252,8 @@ export class AnalyticsService {
         ctaPhone: true, 
         ctaEmail: true, 
         ctaWebsite: true, 
-        ctaMaps: true 
+        ctaMaps: true,
+        ctaFloorplan: true
       },
     });
 
@@ -258,12 +264,13 @@ export class AnalyticsService {
         acc.ctaEmail += r.ctaEmail;
         acc.ctaWebsite += r.ctaWebsite;
         acc.ctaMaps += r.ctaMaps;
+        acc.ctaFloorplan += r.ctaFloorplan;
         return acc;
       },
-      { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0 }
+      { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
     );
 
-    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps;
+    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps + summary.ctaFloorplan;
     const conversion = summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
 
     return {
@@ -274,7 +281,7 @@ export class AnalyticsService {
       timeseries: rows.map(r => ({
         day: r.day.toISOString().slice(0, 10),
         placeViews: r.placeViews,
-        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps,
+        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
       })),
       ctaBreakdown: summary,
     };
@@ -324,6 +331,7 @@ export class AnalyticsService {
       ctaEmail: number;
       ctaWebsite: number;
       ctaMaps: number;
+      ctaFloorplan: number;
     }> = [];
 
     const summary = rows.reduce(
@@ -333,12 +341,13 @@ export class AnalyticsService {
         acc.ctaEmail += r.ctaEmail;
         acc.ctaWebsite += r.ctaWebsite;
         acc.ctaMaps += r.ctaMaps;
+        acc.ctaFloorplan += r.ctaFloorplan;
         return acc;
       },
-      { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0 }
+      { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
     );
 
-    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps;
+    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps + summary.ctaFloorplan;
     const conversion = summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
 
     return {
@@ -351,19 +360,21 @@ export class AnalyticsService {
         ctaEmail: summary.ctaEmail,
         ctaWebsite: summary.ctaWebsite,
         ctaMaps: summary.ctaMaps,
+        ctaFloorplan: summary.ctaFloorplan,
         ctaTotal, 
         conversionPct: conversion 
       },
       timeseries: rows.map(r => ({
         day: r.day.toISOString().slice(0, 10),
         eventViews: r.placeViews, // Using placeViews as eventViews for now
-        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps,
+        ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
       })),
       ctaBreakdown: {
         ctaPhone: summary.ctaPhone,
         ctaEmail: summary.ctaEmail,
         ctaWebsite: summary.ctaWebsite,
         ctaMaps: summary.ctaMaps,
+        ctaFloorplan: summary.ctaFloorplan,
       },
     };
   }

@@ -74,6 +74,21 @@ enum BillingPeriod {
   YEARLY
 }
 
+enum FeatureSubscriptionScope {
+  place
+  site
+}
+
+enum FeatureSubscriptionStatus {
+  active
+  past_due
+  canceled
+}
+
+enum FeatureKey {
+  FLOORPLANS
+}
+
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
 // Brand: Visual identity and branding assets
@@ -111,7 +126,7 @@ model Site {
   planLimits     Json? // override/experiments (places, featured, events limits)
   billingEmail   String?
   billingMeta    Json? // stripe ids later
-  
+
   // Access control: public registration
   // If false, only site owner (siteadmin/superadmin) can create users and places
   // Only available for pro/business plans (basic always allows public registration)
@@ -131,22 +146,23 @@ model Site {
   staticPages  StaticPage[]
   translations SiteTranslation[]
 
-  siteKeys          SiteKey[]
-  slugs             Slug[]
-  categories        Category[]
-  tags              Tag[]
-  priceBands        PriceBand[]
-  users             UserSite[]
-  pushSubscriptions PushSubscription[]
-  eventLogs         EventLog[]
-  siteInstances     SiteInstance[]
-  siteMemberships   SiteMembership[]
-  siteDomains       SiteDomain[]
-  subscription      SiteSubscription?
-  galleries         Gallery[]
-  activeUsers       User[]             @relation("UserActiveSite")
-  analyticsDaily    AnalyticsDaily[]
-  collectionItems   CollectionItem[]
+  siteKeys             SiteKey[]
+  slugs                Slug[]
+  categories           Category[]
+  tags                 Tag[]
+  priceBands           PriceBand[]
+  users                UserSite[]
+  pushSubscriptions    PushSubscription[]
+  eventLogs            EventLog[]
+  siteInstances        SiteInstance[]
+  siteMemberships      SiteMembership[]
+  siteDomains          SiteDomain[]
+  subscription         SiteSubscription?
+  galleries            Gallery[]
+  activeUsers          User[]                @relation("UserActiveSite")
+  analyticsDaily       AnalyticsDaily[]
+  collectionItems      CollectionItem[]
+  featureSubscriptions FeatureSubscription[]
 
   @@index([brandId])
   @@index([plan])
@@ -395,21 +411,23 @@ model Place {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  site         Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  town         Town?               @relation(fields: [townId], references: [id], onDelete: SetNull)
-  category     Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  priceBand    PriceBand?          @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
-  owner        User?               @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  translations PlaceTranslation[]
-  tags         PlaceTag[]
-  events       Event[]
-  openingHours PlaceOpeningHours[]
-  memberships  PlaceMembership[]
-  subscription PlaceSubscription?
-  galleries    Gallery[]
-  ratings      PlaceRating[]
-  priceList    PlacePriceList?
-  analyticsDaily AnalyticsDaily[]
+  site                 Site                  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  town                 Town?                 @relation(fields: [townId], references: [id], onDelete: SetNull)
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceBand            PriceBand?            @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
+  owner                User?                 @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  translations         PlaceTranslation[]
+  tags                 PlaceTag[]
+  events               Event[]
+  openingHours         PlaceOpeningHours[]
+  memberships          PlaceMembership[]
+  subscription         PlaceSubscription?
+  galleries            Gallery[]
+  ratings              PlaceRating[]
+  priceList            PlacePriceList?
+  analyticsDaily       AnalyticsDaily[]
+  floorplans           PlaceFloorplan[]
+  featureSubscriptions FeatureSubscription[]
 
   @@index([siteId, categoryId])
   @@index([townId])
@@ -420,13 +438,13 @@ model Place {
 
 // Price list for places
 model PlacePriceList {
-  id        String   @id @default(cuid())
-  placeId   String   @unique
-  currency  String   @default("HUF") // optional override for platform setting
-  blocks    Json     // [{ title: string, items: [{ label: string, price: number|null, note?: string }] }]
-  note      String?  // Rich text note at the end (HTML)
-  isActive  Boolean  @default(true)
-  isEnabled Boolean  @default(true) // Feature flag: can disable price list module
+  id          String  @id @default(cuid())
+  placeId     String  @unique
+  currency    String  @default("HUF") // optional override for platform setting
+  blocks      Json // [{ title: string, items: [{ label: string, price: number|null, note?: string }] }]
+  note        String? // Rich text note at the end (HTML)
+  isActive    Boolean @default(true)
+  isEnabled   Boolean @default(true) // Feature flag: can disable price list module
   requireAuth Boolean @default(false) // If true, only authenticated users can view
 
   createdAt DateTime @default(now())
@@ -634,7 +652,7 @@ model User {
 
   // Place ratings
   placeRatings PlaceRating[]
-  
+
   // Event ratings
   eventRatings EventRating[]
 
@@ -1039,18 +1057,19 @@ model Gallery {
 
 // Analytics: Daily aggregated metrics for dashboard performance
 model AnalyticsDaily {
-  id        String   @id @default(cuid())
-  day       DateTime // date-only (00:00:00 UTC)
-  siteId    String
-  placeId   String?
+  id      String   @id @default(cuid())
+  day     DateTime // date-only (00:00:00 UTC)
+  siteId  String
+  placeId String?
 
-  pageViews       Int @default(0)
-  placeViews      Int @default(0)
-  ctaPhone        Int @default(0)
-  ctaEmail        Int @default(0)
-  ctaWebsite      Int @default(0)
-  ctaMaps         Int @default(0)
-  uniqueVisitors  Int @default(0) // MVP: daily uniq visitorId count (cron/batch later)
+  pageViews      Int @default(0)
+  placeViews     Int @default(0)
+  ctaPhone       Int @default(0)
+  ctaEmail       Int @default(0)
+  ctaWebsite     Int @default(0)
+  ctaMaps        Int @default(0)
+  ctaFloorplan   Int @default(0)
+  uniqueVisitors Int @default(0) // MVP: daily uniq visitorId count (cron/batch later)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1083,9 +1102,9 @@ model Collection {
 }
 
 model CollectionTranslation {
-  id          String @id @default(cuid())
+  id           String @id @default(cuid())
   collectionId String
-  lang        Lang
+  lang         Lang
 
   title       String
   description String? // HTML
@@ -1094,8 +1113,8 @@ model CollectionTranslation {
   // SEO (per language)
   seoTitle       String?
   seoDescription String?
-  seoImage      String?
-  seoKeywords   String[] @default([])
+  seoImage       String?
+  seoKeywords    String[] @default([])
 
   collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
@@ -1104,15 +1123,15 @@ model CollectionTranslation {
 }
 
 model CollectionItem {
-  id          String @id @default(cuid())
+  id           String @id @default(cuid())
   collectionId String
-  siteId      String
+  siteId       String
 
   order         Int     @default(0)
   isHighlighted Boolean @default(false)
 
-  collection Collection                    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  site       Site                          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  collection   Collection                  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  site         Site                        @relation(fields: [siteId], references: [id], onDelete: Cascade)
   translations CollectionItemTranslation[]
 
   @@index([collectionId, order])
@@ -1120,9 +1139,9 @@ model CollectionItem {
 }
 
 model CollectionItemTranslation {
-  id              String @id @default(cuid())
+  id               String @id @default(cuid())
   collectionItemId String
-  lang            Lang
+  lang             Lang
 
   titleOverride       String? // opcionális override a site nevéhez
   descriptionOverride String? // HTML / rövid
@@ -1132,4 +1151,69 @@ model CollectionItemTranslation {
 
   @@unique([collectionItemId, lang])
   @@index([lang])
+}
+
+// FeatureSubscription: Extra feature subscriptions (e.g., floorplans) for sites or places
+model FeatureSubscription {
+  id                   String                    @id @default(cuid())
+  siteId               String
+  scope                FeatureSubscriptionScope
+  placeId              String? // Required if scope='place'
+  featureKey           FeatureKey
+  planKey              String // e.g., 'FP_1' | 'FP_5' | 'FP_CUSTOM'
+  billingPeriod        BillingPeriod
+  floorplanLimit       Int? // For FP_CUSTOM, set by superadmin
+  status               FeatureSubscriptionStatus
+  stripeSubscriptionId String?
+  currentPeriodEnd     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site  Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place Place? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([placeId])
+  @@index([scope, siteId])
+  @@index([scope, placeId])
+  @@index([featureKey, scope])
+  @@index([status])
+}
+
+// PlaceFloorplan: Floorplan images for places
+model PlaceFloorplan {
+  id        String  @id @default(cuid())
+  placeId   String
+  title     String  @default("Floorplan")
+  imageUrl  String
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place Place          @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  pins  FloorplanPin[]
+
+  @@index([placeId])
+  @@index([placeId, sortOrder])
+}
+
+// FloorplanPin: Pins/markers on floorplans
+model FloorplanPin {
+  id          String @id @default(cuid())
+  floorplanId String
+  x           Float // Normalized 0..1
+  y           Float // Normalized 0..1
+  label       String @default("")
+  sortOrder   Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  floorplan PlaceFloorplan @relation(fields: [floorplanId], references: [id], onDelete: Cascade)
+
+  @@index([floorplanId])
+  @@index([floorplanId, sortOrder])
 }

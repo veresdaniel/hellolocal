@@ -9,7 +9,7 @@ import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags, getPlaceMemberships, getSiteMemberships } from "../../api/admin.api";
+import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags, getPlaceMemberships, getSiteMemberships, getFloorplans, getPlaceFeatureSubscriptions, getFloorplanEntitlement } from "../../api/admin.api";
 import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
@@ -20,6 +20,7 @@ import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHo
 import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
+import { FloorplanEditor } from "../../components/FloorplanEditor";
 import { SlugInput } from "../../components/SlugInput";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
 import type { UserRole, SiteRole } from "../../types/enums";
@@ -63,6 +64,115 @@ interface Place {
   }>;
 }
 
+// Floorplan Section Component
+function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscription }: { placeId: string; siteId: string; refreshTrigger?: number; hasActiveSubscription?: boolean }) {
+  const [entitlement, setEntitlement] = useState<any>(null);
+  const [floorplans, setFloorplans] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Always load data when component mounts or dependencies change
+    // If refreshTrigger is provided and > 0, it means we need to force refresh
+    const shouldForceRefresh = refreshTrigger !== undefined && refreshTrigger > 0;
+    console.log("FloorplanSection - useEffect triggered. refreshTrigger:", refreshTrigger, "shouldForceRefresh:", shouldForceRefresh, "hasActiveSubscription:", hasActiveSubscription);
+    loadData(shouldForceRefresh);
+  }, [placeId, siteId, refreshTrigger, hasActiveSubscription]);
+
+  const loadData = async (forceRefresh: boolean = false) => {
+    setIsLoading(true);
+    try {
+      // If force refresh, add a small delay to ensure backend has processed the subscription
+      if (forceRefresh) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      console.log("FloorplanSection - Loading data for placeId:", placeId, "siteId:", siteId, "hasActiveSubscription:", hasActiveSubscription);
+      
+      // Try to get both entitlement and subscriptions to have a fallback
+      const [ent, floorplanData, subscriptions] = await Promise.all([
+        getFloorplanEntitlement(placeId, siteId).catch((err) => {
+          console.error("Failed to get floorplan entitlement:", err);
+          console.error("Error details:", err?.response?.data || err?.message || err);
+          return null;
+        }),
+        getFloorplans(placeId).catch((err) => {
+          console.error("Failed to get floorplans:", err);
+          return [];
+        }),
+        getPlaceFeatureSubscriptions(placeId).catch((err) => {
+          console.error("Failed to get feature subscriptions:", err);
+          return [];
+        }),
+      ]);
+      
+      console.log("FloorplanSection - Entitlement response:", ent);
+      console.log("FloorplanSection - Floorplans response:", floorplanData);
+      console.log("FloorplanSection - Subscriptions response:", subscriptions);
+      console.log("FloorplanSection - Entitlement.entitled:", ent?.entitled);
+      console.log("FloorplanSection - hasActiveSubscription fallback:", hasActiveSubscription);
+      
+      // Check if we have an active subscription as fallback
+      const activeSub = (subscriptions || []).find(
+        (s) => s.status === "active" && s.featureKey === "FLOORPLANS" && (!s.currentPeriodEnd || new Date(s.currentPeriodEnd) > new Date())
+      );
+      
+      console.log("FloorplanSection - Active subscription found:", !!activeSub, activeSub);
+      
+      // If entitlement API failed but we have active subscription, create a fallback entitlement
+      if (!ent && activeSub) {
+        console.log("FloorplanSection - Creating fallback entitlement from active subscription");
+        const fallbackEntitlement = {
+          entitled: true,
+          activeScope: activeSub.scope,
+          limit: 1, // All plans allow only 1 floorplan per place
+          used: (floorplanData || []).length,
+          status: (floorplanData || []).length >= 1 ? "limit_reached" : "active",
+        };
+        setEntitlement(fallbackEntitlement);
+      } else {
+        setEntitlement(ent);
+      }
+      
+      setFloorplans(floorplanData || []);
+    } catch (error) {
+      console.error("Failed to load floorplan data:", error);
+      setEntitlement(null);
+      setFloorplans([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div style={{ padding: 16, color: "#666" }}>Betöltés...</div>;
+  }
+
+  // Show if entitled (even if no floorplans yet - user can upload)
+  // Fallback: if we have active subscription from parent, show even if entitlement API fails
+  if (!entitlement && !hasActiveSubscription) {
+    console.log("FloorplanSection - No entitlement data and no active subscription. Entitlement:", entitlement);
+    return null;
+  }
+  
+  if (entitlement && !entitlement.entitled && !hasActiveSubscription) {
+    console.log("FloorplanSection - Not entitled and no active subscription. Entitlement:", entitlement);
+    return null;
+  }
+  
+  // If we have active subscription but entitlement API failed, still show the editor
+  if (hasActiveSubscription && (!entitlement || !entitlement.entitled)) {
+    console.log("FloorplanSection - Rendering with active subscription fallback. Entitlement:", entitlement);
+  } else {
+    console.log("FloorplanSection - Rendering FloorplanEditor. Entitlement:", entitlement);
+  }
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <FloorplanEditor placeId={placeId} siteId={siteId} />
+    </div>
+  );
+}
+
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
@@ -85,11 +195,13 @@ export function PlacesPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [floorplanRefreshTrigger, setFloorplanRefreshTrigger] = useState(0);
+  const [hasActiveFloorplanSubscription, setHasActiveFloorplanSubscription] = useState(false);
   const [isCreating, setIsCreating] = useState(() => {
     // Check URL on initial mount
     const params = new URLSearchParams(window.location.search);
@@ -271,7 +383,7 @@ export function PlacesPage() {
         if (paginationData) {
           // Ensure totalPages is calculated if missing or incorrect
           const total = paginationData.total || 0;
-          const limit = paginationData.limit || pagination.limit || 50;
+          const limit = paginationData.limit || pagination.limit || 10;
           const calculatedTotalPages = Math.ceil(total / limit) || 1;
           const totalPages = paginationData.totalPages || calculatedTotalPages;
           
@@ -1574,18 +1686,6 @@ export function PlacesPage() {
           {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
           {editingId && (
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ 
-                margin: "0 0 16px 0", 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 700, 
-                color: "#333", 
-                display: "flex", 
-                alignItems: "center", 
-                gap: 8,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
-                🪙 {t("admin.billing")}
-              </h3>
               <PlaceBillingSection
                 placeId={editingId}
                 currentPlan={formData.plan}
@@ -1600,6 +1700,37 @@ export function PlacesPage() {
                   // No need to reload the entire page or call updatePlace here
                   // The subscription update is handled by PlaceBillingSection
                 }}
+                onFloorplanSubscriptionChange={() => {
+                  // Trigger refresh of FloorplanSection when subscription changes
+                  setFloorplanRefreshTrigger(prev => prev + 1);
+                }}
+                onActiveFloorplanSubscriptionChange={(hasActive) => {
+                  console.log("PlacesPage - onActiveFloorplanSubscriptionChange called with:", hasActive);
+                  setHasActiveFloorplanSubscription(hasActive);
+                  // Also trigger refresh when subscription status changes
+                  if (hasActive) {
+                    setFloorplanRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* Floorplans section - separate block, only visible if entitled */}
+          {editingId && selectedSiteId && (
+            <div style={{ 
+              marginTop: 32,
+              padding: "clamp(24px, 5vw, 32px)", 
+              background: "white", 
+              borderRadius: 16, 
+              boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+              border: "1px solid rgba(102, 126, 234, 0.1)",
+            }}>
+              <FloorplanSection 
+                placeId={editingId} 
+                siteId={selectedSiteId} 
+                refreshTrigger={floorplanRefreshTrigger}
+                hasActiveSubscription={hasActiveFloorplanSubscription}
               />
             </div>
           )}

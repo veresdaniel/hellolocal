@@ -3,6 +3,8 @@
   "error": "Fehler",
   "save": "Speichern",
   "cancel": "Abbrechen",
+  "confirm": "Bestätigen",
+  "close": "Schließen",
   "delete": "Löschen",
   "edit": "Bearbeiten",
   "create": "Erstellen",
@@ -39,5 +41,6 @@
   "language": "Sprache",
   "newVersionAvailable": "Neue Version verfügbar. Die Seite wird aktualisiert...",
   "back": "Zurück",
-  "goBack": "Zurück"
+  "goBack": "Zurück",
+  "premiumFeature": "Premium-Funktion"
 }

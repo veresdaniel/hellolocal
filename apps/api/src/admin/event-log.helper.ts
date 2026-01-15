@@ -131,6 +131,21 @@ export function generateCreateDescription(
     if (additionalInfo.pageKey) {
       infoParts.push(`key: ${additionalInfo.pageKey}`);
     }
+    // Feature subscription specific fields
+    if (entityType === "featureSubscription") {
+      if (additionalInfo.featureKey) {
+        infoParts.push(`feature: ${additionalInfo.featureKey}`);
+      }
+      if (additionalInfo.planKey) {
+        infoParts.push(`plan: ${additionalInfo.planKey}`);
+      }
+      if (additionalInfo.scope) {
+        infoParts.push(`scope: ${additionalInfo.scope}`);
+      }
+      if (additionalInfo.billingPeriod) {
+        infoParts.push(`billing: ${additionalInfo.billingPeriod}`);
+      }
+    }
     if (infoParts.length > 0) {
       parts.push(`(${infoParts.join(", ")})`);
     }
@@ -146,7 +161,8 @@ export function generateUpdateDescription(
   entityType: string,
   translations?: Array<{ lang: Lang | string; name: string }> | null,
   oldData?: any,
-  newData?: any
+  newData?: any,
+  explicitChanges?: Record<string, { from: any; to: any }>
 ): string {
   let name: string;
   if (translations && translations.length > 0) {
@@ -217,11 +233,32 @@ export function generateUpdateDescription(
     }
   }
 
-  if (changes.length === 0) {
-    return `Updated ${entityType} ${name}`;
+  // Handle feature subscription specific fields
+  if (entityType === "featureSubscription") {
+    const featureFields = ["planKey", "billingPeriod", "status", "scope", "featureKey"];
+    for (const field of featureFields) {
+      if (oldData?.[field] !== undefined && newData?.[field] !== undefined) {
+        const oldValue = oldData[field];
+        const newValue = newData[field];
+        if (oldValue !== newValue) {
+          changes.push(`${field}: ${formatValue(oldValue)} → ${formatValue(newValue)}`);
+        }
+      }
+    }
   }
 
-  return `Updated ${entityType} ${name}: ${changes.join(", ")}`;
+  // Add explicit changes if provided (for complex changes like scope)
+  if (explicitChanges) {
+    for (const [field, change] of Object.entries(explicitChanges)) {
+      changes.push(`${field}: ${formatValue(change.from)} → ${formatValue(change.to)}`);
+    }
+  }
+
+  if (changes.length === 0) {
+    return `Updated ${entityType} ${name || "subscription"}`;
+  }
+
+  return `Updated ${entityType} ${name || "subscription"}: ${changes.join(", ")}`;
 }
 
 /**

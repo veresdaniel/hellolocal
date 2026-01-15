@@ -73,6 +73,7 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
               display: "flex",
               alignItems: "center",
               gap: 4,
+              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {getSiteName(siteId)}

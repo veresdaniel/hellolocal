@@ -564,14 +564,19 @@
     "expiringEmailBody": "Hallo {name}, Ihr Abonnement läuft am {date} ab."
   },
   "subscription": {
-    "cancel": "Kündigen",
-    "suspend": "Aussetzen",
+    "cancel": "Abonnement kündigen",
+    "suspend": "Abonnement aussetzen",
+    "cancelButton": "Kündigen",
+    "suspendButton": "Aussetzen",
     "resume": "Abonnement fortsetzen",
     "cancelConfirm": "Möchten Sie das Abonnement wirklich kündigen? Sie haben bis zum Ende des aktuellen Monats Zugriff.",
     "suspendConfirm": "Möchten Sie das Abonnement wirklich aussetzen?",
     "cancelled": "Abonnement gekündigt",
     "suspended": "Abonnement ausgesetzt",
-    "resumed": "Abonnement fortgesetzt"
+    "resumed": "Abonnement fortgesetzt",
+    "created": "Abonnement erstellt",
+    "alreadySubscribed": "Sie haben bereits ein Abonnement für diese Funktion in diesem Plan.",
+    "activeSubscriptionInfo": "Die Details des aktiven Abonnements finden Sie im obigen Abschnitt."
   },
   "search": "Suchen",
   "all": "Alle",
@@ -679,7 +684,8 @@
     "ctaPhone": "Telefon",
     "ctaEmail": "E-Mail",
     "ctaWebsite": "Website",
-    "ctaMaps": "Karte"
+    "ctaMaps": "Karte",
+    "ctaFloorplan": "Grundriss"
   },
   "siteStatus": {
     "title": "Site-Status",
@@ -1047,6 +1053,68 @@
     "user": "Benutzer",
     "site": "Site",
     "legalPage": "Rechtliche Seite",
-    "staticPage": "Statische Seite"
-  }
+    "staticPage": "Statische Seite",
+    "floorplan": "Grundriss",
+    "floorplanPin": "Grundriss-Markierung",
+    "featureSubscription": "Funktionsabonnement"
+  },
+  "floorplans": "Grundrisse",
+  "floorplan": {
+    "title": "Grundriss-Abonnement",
+    "subscription": {
+      "title": "Grundriss-Abonnement",
+      "subtitle": "Wählen Sie einen Plan und einen Abrechnungszeitraum",
+      "active": "Aktives Abonnement",
+      "noEndDate": "Kein Ablaufdatum",
+      "scope": "Geltungsbereich",
+      "thisPlace": "Dieser Ort",
+      "thisPlaceDesc": "Gilt nur für diesen Ort",
+      "allPlaces": "Alle Orte",
+      "allPlacesDesc": "Gilt für alle Orte, einschließlich der später erstellten",
+      "plan": "Plan",
+      "plan1": "1 Grundriss",
+      "plan1Desc": "1 Grundriss hochladen",
+      "plan5": "5 Grundrisse",
+      "plan5Desc": "5 Grundrisse hochladen",
+      "planCustom": "Individuelles Limit",
+      "billingPeriod": "Abrechnungszeitraum",
+      "subscribe": "Abonnieren",
+      "expiresIn": "Läuft in {days} Tagen ab",
+      "expired": "Abonnement abgelaufen",
+      "freeAccountNotAllowed": "Kostenlose Konten können keine Grundriss-Abonnements kaufen. Bitte aktualisieren Sie zuerst den Platzplan."
+    },
+    "upload": "Grundriss hochladen",
+    "uploaded": "Grundriss hochgeladen",
+    "deleted": "Grundriss gelöscht",
+    "deleteConfirm": "Möchten Sie diesen Grundriss wirklich löschen?",
+    "pinInstruction": "Klicken Sie auf das Bild, um eine Markierung hinzuzufügen",
+    "howItWorks": "Wie funktioniert es?",
+    "instruction1": "Klicken Sie auf den Grundriss, um einen neuen Marker hinzuzufügen",
+    "instruction2": "Ziehen Sie Marker mit der Maus, um ihre Position zu ändern",
+    "instruction3": "Klicken Sie auf die Marker-Beschriftung in der rechten Liste, um sie umzubenennen",
+    "instruction4": "Verwenden Sie den Zoom-Schieberegler zum Zoomen",
+    "instruction5": "Klicken Sie auf die Schaltfläche \"Vollbild\" für detaillierte Bearbeitung",
+    "pins": "Marker",
+    "noPins": "Noch keine Marker. Klicken Sie auf den Grundriss, um einen hinzuzufügen.",
+    "clickToEdit": "Zum Bearbeiten klicken",
+    "noLabel": "(keine Beschriftung)",
+    "zoom": "Zoomen",
+    "fullscreen": "Vollbild",
+    "noFloorplan": "Kein Grundriss hochgeladen"
+  },
+  "pin": {
+    "edit": "Markierung bearbeiten",
+    "label": "Beschriftung",
+    "updated": "Markierung aktualisiert",
+    "deleted": "Markierung gelöscht",
+    "deleteConfirm": "Möchten Sie diese Markierung wirklich löschen?"
+  },
+  "errorLoadingData": "Fehler beim Laden der Daten",
+  "errorCreatingPin": "Fehler beim Erstellen der Markierung",
+  "errorUpdatingPin": "Fehler beim Aktualisieren der Markierung",
+  "errorDeletingPin": "Fehler beim Löschen der Markierung",
+  "errorCreatingSubscription": "Fehler beim Erstellen des Abonnements",
+  "monthly": "Monatlich",
+  "yearly": "Jährlich",
+  "save": "Speichern"
 }

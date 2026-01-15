@@ -202,5 +202,10 @@
     "starSingular": "star",
     "starPlural": "stars",
     "clickToRate": "Click to rate"
+  },
+  "floorplan": {
+    "title": "Location Floorplan",
+    "subtitle": "Click on the points to view the rooms",
+    "openFullscreen": "Open in Fullscreen"
   }
 }

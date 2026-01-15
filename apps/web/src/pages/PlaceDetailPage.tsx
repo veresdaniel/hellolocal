@@ -2,8 +2,11 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPlace, getPlaceById, getPlatformSettings, getGallery, getPlacePriceList, type PublicGallery, type PublicPriceList } from "../api/places.api";
+import { getPlace, getPlaceById, getPlatformSettings, getGallery, getPlacePriceList, getPlaceFloorplans, type PublicGallery, type PublicPriceList, type PublicFloorplan } from "../api/places.api";
 import { GalleryViewer } from "../components/GalleryViewer";
+import { FloorplanViewer } from "../components/FloorplanViewer";
+import { FloorplanFullscreenModal } from "../components/FloorplanFullscreenModal";
+import { FloorplanImageViewer, type FloorplanPin } from "../components/FloorplanImageViewer";
 import { createOrUpdateRating, getMyRating } from "../api/rating.api";
 import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
@@ -24,6 +27,7 @@ import { useToast } from "../contexts/ToastContext";
 import { formatMoney } from "../utils/formatMoney";
 import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
 import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
+import { track } from "../lib/analytics/track";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -31,6 +35,18 @@ export function PlaceDetailPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [isMobile, setIsMobile] = useState(false);
+  const [isFloorplanModalOpen, setIsFloorplanModalOpen] = useState(false);
+  const [showPremiumTooltip, setShowPremiumTooltip] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const resolveQ = useResolvedSlugRedirect({
     lang: lang ?? "",
@@ -81,6 +97,39 @@ export function PlaceDetailPage() {
     enabled: shouldLoadPlace && place?.hasPriceList === true && !!siteKey && !!lang,
     retry: false,
   });
+
+  // Load floorplans for the place
+  // Only returns floorplans if there's an active subscription (checked on backend)
+  const { data: floorplans, isLoading: isLoadingFloorplans, error: floorplansError } = useQuery({
+    queryKey: ["floorplans", resolveQ.data?.entityId, lang, siteKey],
+    queryFn: () => {
+      if (!resolveQ.data?.entityId || !lang || !siteKey) throw new Error("Missing place ID, lang, or siteKey");
+      return getPlaceFloorplans(lang, siteKey, resolveQ.data.entityId);
+    },
+    enabled: shouldLoadPlace && !!siteKey && !!lang,
+    retry: false,
+  });
+
+  // Debug: log floorplans state
+  useEffect(() => {
+    if (shouldLoadPlace && resolveQ.data?.entityId) {
+      console.log("PlaceDetailPage - Floorplans state:", {
+        floorplans,
+        isLoadingFloorplans,
+        floorplansError,
+        hasFloorplans: floorplans && Array.isArray(floorplans) && floorplans.length > 0,
+        placeId: resolveQ.data?.entityId,
+        enabled: shouldLoadPlace && !!siteKey && !!lang,
+        lang,
+        siteKey,
+        shouldLoadPlace,
+      });
+      
+      if (floorplansError) {
+        console.error("PlaceDetailPage - Floorplans error:", floorplansError);
+      }
+    }
+  }, [floorplans, isLoadingFloorplans, floorplansError, resolveQ.data?.entityId, shouldLoadPlace, siteKey, lang]);
 
   // Extract gallery IDs from description
   const galleryIds = useMemo(() => {
@@ -1191,28 +1240,564 @@ export function PlaceDetailPage() {
             );
           })()}
 
-          {/* Description with shortcode support */}
-          {place.description && (
+          {/* Description and Floorplan section */}
+          {place.description && place.description.trim() && (
+            <>
+              {/* Description - Full width */}
+              <div
+                ref={descriptionRef}
+                style={{
+                  margin: "0 16px 32px",
+                  background: "white",
+                  padding: "clamp(16px, 4vw, 32px)",
+                  borderRadius: 16,
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                  width: "calc(100% - 32px)",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <style>{`
+                  .description-content {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: #374151;
+                  }
+                  .description-content p {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: #374151;
+                    margin: 0 0 1.2em 0;
+                  }
+                  .description-content p:last-child {
+                    margin-bottom: 0;
+                  }
+                  .description-content h1,
+                  .description-content h2,
+                  .description-content h3,
+                  .description-content h4,
+                  .description-content h5,
+                  .description-content h6 {
+                    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    color: #1a1a1a;
+                    margin-top: 1.5em;
+                    margin-bottom: 0.8em;
+                  }
+                  .description-content h1:first-child,
+                  .description-content h2:first-child,
+                  .description-content h3:first-child,
+                  .description-content h4:first-child,
+                  .description-content h5:first-child,
+                  .description-content h6:first-child {
+                    margin-top: 0;
+                  }
+                  .description-content ul,
+                  .description-content ol {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: #374151;
+                    margin: 1.2em 0;
+                    padding-left: 1.5em;
+                  }
+                  .description-content li {
+                    margin: 0.6em 0;
+                  }
+                  .description-content a {
+                    color: #667eea;
+                    text-decoration: none;
+                    transition: color 0.2s;
+                  }
+                  .description-content a:hover {
+                    color: #764ba2;
+                    text-decoration: underline;
+                  }
+                  .description-content strong,
+                  .description-content b {
+                    font-weight: 600;
+                    color: #1a1a1a;
+                  }
+                  .description-content em,
+                  .description-content i {
+                    font-style: italic;
+                  }
+                  .description-content blockquote {
+                    border-left: 4px solid #667eea;
+                    padding-left: 1.5em;
+                    margin: 1.5em 0;
+                    font-style: italic;
+                    color: #4b5563;
+                  }
+                `}</style>
+                <div className="description-content">
+                  <ShortcodeRenderer
+                    content={place.description}
+                    lang={lang!}
+                    siteKey={siteKey!}
+                    hideGalleries={
+                      // Hide galleries in description if they're shown in opening hours position
+                      !place.openingHours?.length && 
+                      galleryIds.length > 0 && 
+                      Object.keys(galleries).length > 0
+                    }
+                  />
+                </div>
+              </div>
+              
+              {/* Floorplan - Full width, below description */}
+              {floorplans && Array.isArray(floorplans) && floorplans.length > 0 && !isLoadingFloorplans && (
+                <div
+                  style={{
+                    margin: "0 16px 32px",
+                    background: "white",
+                    padding: "clamp(16px, 4vw, 32px)",
+                    borderRadius: 16,
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                    width: "calc(100% - 32px)",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "space-between",
+                    marginBottom: 16,
+                    position: "relative",
+                  }}>
+                    <h3
+                      style={{
+                        fontSize: "clamp(20px, 5vw, 24px)",
+                        fontWeight: 600,
+                        fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#1a1a1a",
+                        margin: 0,
+                      }}
+                    >
+                      {t("admin.floorplans") || "Alaprajzok"}
+                    </h3>
+                    {/* Premium circle icon */}
+                    <div
+                      style={{
+                        position: "relative",
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+                        cursor: "help",
+                        flexShrink: 0,
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        overflow: "hidden",
+                      }}
+                      onMouseEnter={(e) => {
+                        setShowPremiumTooltip(true);
+                        e.currentTarget.style.transform = "scale(1.1)";
+                        e.currentTarget.style.boxShadow = "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        setShowPremiumTooltip(false);
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                      }}
+                    >
+                      {/* Shine effect */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-50%",
+                          left: "-50%",
+                          width: "200%",
+                          height: "200%",
+                          background: "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
+                          transform: "rotate(45deg)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#78350f"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          position: "relative",
+                          zIndex: 1,
+                          filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+                        }}
+                      >
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                        <path d="M4 22h16" />
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                      </svg>
+                      {/* Tooltip */}
+                      {showPremiumTooltip && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "calc(100% + 12px)",
+                            right: 0,
+                            background: "#1a1a1a",
+                            color: "white",
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                            fontSize: 13,
+                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+                            zIndex: 1000,
+                            pointerEvents: "none",
+                          }}
+                        >
+                          {t("common.premiumFeature") || "Prémium funkció"}
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              right: 14,
+                              width: 0,
+                              height: 0,
+                              borderLeft: "6px solid transparent",
+                              borderRight: "6px solid transparent",
+                              borderTop: "6px solid #1a1a1a",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Floorplan preview - container size */}
+                  {floorplans.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      {floorplans.map((floorplan) => {
+                        const pins: FloorplanPin[] = floorplan.pins?.map((pin) => ({
+                          id: pin.id,
+                          x: pin.x,
+                          y: pin.y,
+                          label: pin.label,
+                        })) || [];
+                        
+                        return (
+                          <FloorplanImageViewer
+                            key={floorplan.id}
+                            imageUrl={floorplan.imageUrl}
+                            imageAlt={floorplan.title}
+                            pins={pins}
+                            showZoomSlider={true}
+                            pinCursor="pointer"
+                            enableMousePan={true}
+                            fitMode="contain"
+                            containerStyle={{
+                              width: "100%",
+                              minHeight: isMobile ? "300px" : "400px",
+                              height: isMobile ? "300px" : "400px",
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (place?.id) {
+                        track({
+                          type: "cta_click",
+                          placeId: place.id,
+                          ctaType: "floorplan",
+                        }).catch(() => {
+                          // Silently fail - analytics should not break the app
+                        });
+                      }
+                      setIsFloorplanModalOpen(true);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "16px 24px",
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      border: "none",
+                      borderRadius: 12,
+                      color: "white",
+                      fontSize: "clamp(16px, 3vw, 18px)",
+                      fontWeight: 600,
+                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                      transition: "all 0.2s",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                    }}
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                    </svg>
+                    {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
+                  </button>
+                  <FloorplanFullscreenModal
+                    floorplans={floorplans}
+                    isOpen={isFloorplanModalOpen}
+                    onClose={() => setIsFloorplanModalOpen(false)}
+                  />
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* Floorplan only (if no description but has floorplan) */}
+          {(!place.description || !place.description.trim()) && floorplans && Array.isArray(floorplans) && floorplans.length > 0 && !isLoadingFloorplans && (
             <div
-              ref={descriptionRef}
               style={{
                 margin: "0 16px 32px",
                 background: "white",
                 padding: "clamp(16px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                width: "calc(100% - 32px)",
+                maxWidth: "100%",
+                boxSizing: "border-box",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
-              <ShortcodeRenderer
-                content={place.description}
-                lang={lang!}
-                siteKey={siteKey!}
-                hideGalleries={
-                  // Hide galleries in description if they're shown in opening hours position
-                  !place.openingHours?.length && 
-                  galleryIds.length > 0 && 
-                  Object.keys(galleries).length > 0
-                }
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "space-between",
+                marginBottom: 16,
+                position: "relative",
+              }}>
+                <h3
+                  style={{
+                    fontSize: "clamp(20px, 5vw, 24px)",
+                    fontWeight: 600,
+                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    color: "#1a1a1a",
+                    margin: 0,
+                  }}
+                >
+                  {t("admin.floorplans") || "Alaprajzok"}
+                </h3>
+                {/* Premium circle icon */}
+                <div
+                  style={{
+                    position: "relative",
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+                    cursor: "help",
+                    flexShrink: 0,
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={(e) => {
+                    setShowPremiumTooltip(true);
+                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.boxShadow = "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    setShowPremiumTooltip(false);
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                  }}
+                >
+                  {/* Shine effect */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-50%",
+                      left: "-50%",
+                      width: "200%",
+                      height: "200%",
+                      background: "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
+                      transform: "rotate(45deg)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#78350f"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      position: "relative",
+                      zIndex: 1,
+                      filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+                    }}
+                  >
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                    <path d="M4 22h16" />
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                  </svg>
+                  {/* Tooltip */}
+                  {showPremiumTooltip && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "calc(100% + 12px)",
+                        right: 0,
+                        background: "#1a1a1a",
+                        color: "white",
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontWeight: 500,
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+                        zIndex: 1000,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      {t("common.premiumFeature") || "Prémium funkció"}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          right: 14,
+                          width: 0,
+                          height: 0,
+                          borderLeft: "6px solid transparent",
+                          borderRight: "6px solid transparent",
+                          borderTop: "6px solid #1a1a1a",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Floorplan preview - container size */}
+              {floorplans.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  {floorplans.map((floorplan) => {
+                    const pins: FloorplanPin[] = floorplan.pins?.map((pin) => ({
+                      id: pin.id,
+                      x: pin.x,
+                      y: pin.y,
+                      label: pin.label,
+                    })) || [];
+                    
+                    return (
+                      <FloorplanImageViewer
+                        key={floorplan.id}
+                        imageUrl={floorplan.imageUrl}
+                        imageAlt={floorplan.title}
+                        pins={pins}
+                        showZoomSlider={true}
+                        pinCursor="pointer"
+                        enableMousePan={true}
+                        fitMode="contain"
+                        containerStyle={{
+                          width: "100%",
+                          minHeight: isMobile ? "300px" : "400px",
+                          height: isMobile ? "300px" : "400px",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  if (place?.id) {
+                    track({
+                      type: "cta_click",
+                      placeId: place.id,
+                      ctaType: "floorplan",
+                    }).catch(() => {
+                      // Silently fail - analytics should not break the app
+                    });
+                  }
+                  setIsFloorplanModalOpen(true);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "16px 24px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                  borderRadius: 12,
+                  color: "white",
+                  fontSize: "clamp(16px, 3vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+                {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
+              </button>
+              <FloorplanFullscreenModal
+                floorplans={floorplans}
+                isOpen={isFloorplanModalOpen}
+                onClose={() => setIsFloorplanModalOpen(false)}
               />
             </div>
           )}
@@ -1378,9 +1963,83 @@ export function PlaceDetailPage() {
                 <span style={{ fontSize: 22 }}>♿</span>
                 {t("public.accessibility")}
               </h3>
+              <style>{`
+                .accessibility-content {
+                  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                  font-size: clamp(17px, 3.5vw, 19px);
+                  line-height: 1.8;
+                  color: #374151;
+                }
+                .accessibility-content p {
+                  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                  font-size: clamp(17px, 3.5vw, 19px);
+                  line-height: 1.8;
+                  color: #374151;
+                  margin: 0 0 1.2em 0;
+                }
+                .accessibility-content p:last-child {
+                  margin-bottom: 0;
+                }
+                .accessibility-content h1,
+                .accessibility-content h2,
+                .accessibility-content h3,
+                .accessibility-content h4,
+                .accessibility-content h5,
+                .accessibility-content h6 {
+                  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                  color: #1a1a1a;
+                  margin-top: 1.5em;
+                  margin-bottom: 0.8em;
+                }
+                .accessibility-content h1:first-child,
+                .accessibility-content h2:first-child,
+                .accessibility-content h3:first-child,
+                .accessibility-content h4:first-child,
+                .accessibility-content h5:first-child,
+                .accessibility-content h6:first-child {
+                  margin-top: 0;
+                }
+                .accessibility-content ul,
+                .accessibility-content ol {
+                  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                  font-size: clamp(17px, 3.5vw, 19px);
+                  line-height: 1.8;
+                  color: #374151;
+                  margin: 1.2em 0;
+                  padding-left: 1.5em;
+                }
+                .accessibility-content li {
+                  margin: 0.6em 0;
+                }
+                .accessibility-content a {
+                  color: #667eea;
+                  text-decoration: none;
+                  transition: color 0.2s;
+                }
+                .accessibility-content a:hover {
+                  color: #764ba2;
+                  text-decoration: underline;
+                }
+                .accessibility-content strong,
+                .accessibility-content b {
+                  font-weight: 600;
+                  color: #1a1a1a;
+                }
+                .accessibility-content em,
+                .accessibility-content i {
+                  font-style: italic;
+                }
+                .accessibility-content blockquote {
+                  border-left: 4px solid #667eea;
+                  padding-left: 1.5em;
+                  margin: 1.5em 0;
+                  font-style: italic;
+                  color: #4b5563;
+                }
+              `}</style>
               <div
                 ref={accessibilityRef}
-                style={{ color: "#333", fontSize: 16, lineHeight: 1.8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
+                className="accessibility-content"
               >
                 <ShortcodeRenderer
                   content={place.accessibility}

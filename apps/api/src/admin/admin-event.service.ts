@@ -399,7 +399,7 @@ export class AdminEventService {
     try {
       // Default pagination values
       const pageNum = page ? parseInt(String(page)) : 1;
-      const limitNum = limit ? parseInt(String(limit)) : 50;
+      const limitNum = limit ? parseInt(String(limit)) : 10;
       
       const where = { siteId };
       

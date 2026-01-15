@@ -46,7 +46,7 @@ export function TagsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });

@@ -1406,6 +1406,7 @@ export type FeatureGate =
 export type PlaceUpsellState = {
   featured: FeatureGate;
   gallery: FeatureGate;
+  floorplans: FeatureGate;
 };
 
 export function getPlaceUpsellState(placeId: string, siteId?: string) {
@@ -1895,4 +1896,215 @@ export function reorderCollectionItems(collectionId: string, itemIds: string[]) 
 
 export function updateCollectionItems(collectionId: string, items: Collection["items"]) {
   return apiPut<Collection>(`/admin/collections/${collectionId}/items`, { items });
+}
+
+// ==================== Feature Subscriptions ====================
+
+export interface FloorplanEntitlement {
+  entitled: boolean;
+  activeScope: "place" | "site" | null;
+  limit: number;
+  used: number;
+  status: "locked" | "active" | "limit_reached";
+  subscriptionId?: string;
+  currentPeriodEnd?: string;
+}
+
+export interface FeatureSubscription {
+  id: string;
+  siteId: string;
+  scope: "place" | "site";
+  placeId?: string | null;
+  featureKey: "FLOORPLANS";
+  planKey: string;
+  billingPeriod: "MONTHLY" | "YEARLY";
+  floorplanLimit?: number | null;
+  status: "active" | "past_due" | "canceled";
+  stripeSubscriptionId?: string | null;
+  currentPeriodEnd?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFeatureSubscriptionDto {
+  siteId: string;
+  scope: "place" | "site";
+  placeId?: string;
+  featureKey: "FLOORPLANS";
+  planKey: string;
+  billingPeriod: "MONTHLY" | "YEARLY";
+  floorplanLimit?: number;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: string;
+}
+
+export interface UpdateFeatureSubscriptionDto {
+  planKey?: string;
+  billingPeriod?: "MONTHLY" | "YEARLY";
+  floorplanLimit?: number;
+  status?: "active" | "past_due" | "canceled" | "suspended";
+  scope?: "place" | "site";
+  placeId?: string | null;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: string;
+}
+
+export function getFloorplanEntitlement(placeId: string, siteId: string) {
+  return apiGet<FloorplanEntitlement>(`/admin/places/${placeId}/floorplan-entitlement?siteId=${siteId}`);
+}
+
+export function createFeatureSubscription(data: CreateFeatureSubscriptionDto) {
+  return apiPost<FeatureSubscription>("/admin/feature-subscriptions", data);
+}
+
+
+export function updateFeatureSubscription(id: string, data: UpdateFeatureSubscriptionDto) {
+  return apiPut<FeatureSubscription>(`/admin/feature-subscriptions/${id}`, data);
+}
+
+export function cancelFeatureSubscription(id: string) {
+  return apiPost<FeatureSubscription>(`/admin/feature-subscriptions/${id}/cancel`, {});
+}
+
+export function suspendFeatureSubscription(id: string) {
+  return apiPost<FeatureSubscription>(`/admin/feature-subscriptions/${id}/suspend`, {});
+}
+
+export function resumeFeatureSubscription(id: string) {
+  return apiPost<FeatureSubscription>(`/admin/feature-subscriptions/${id}/resume`, {});
+}
+
+export function getSiteFeatureSubscriptions(siteId: string) {
+  return apiGet<FeatureSubscription[]>(`/admin/sites/${siteId}/feature-subscriptions`);
+}
+
+export function getPlaceFeatureSubscriptions(placeId: string) {
+  return apiGet<FeatureSubscription[]>(`/admin/places/${placeId}/feature-subscriptions`);
+}
+
+export function deleteFeatureSubscription(id: string) {
+  return apiDelete(`/admin/feature-subscriptions/${id}`);
+}
+
+export function getAllFeatureSubscriptions(params?: {
+  scope?: "place" | "site" | "all";
+  status?: "active" | "past_due" | "canceled" | "all";
+  featureKey?: "FLOORPLANS" | "all";
+  siteId?: string;
+  placeId?: string;
+  q?: string;
+  take?: number;
+  skip?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params?.scope) queryParams.append("scope", params.scope);
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.featureKey) queryParams.append("featureKey", params.featureKey);
+  if (params?.siteId) queryParams.append("siteId", params.siteId);
+  if (params?.placeId) queryParams.append("placeId", params.placeId);
+  if (params?.q) queryParams.append("q", params.q);
+  if (params?.take) queryParams.append("take", params.take.toString());
+  if (params?.skip) queryParams.append("skip", params.skip.toString());
+  
+  const query = queryParams.toString();
+  return apiGet<{ items: FeatureSubscription[]; total: number }>(
+    `/admin/feature-subscriptions${query ? `?${query}` : ""}`
+  );
+}
+
+// ==================== Floorplans ====================
+
+export interface FloorplanPin {
+  id: string;
+  floorplanId: string;
+  x: number;
+  y: number;
+  label: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlaceFloorplan {
+  id: string;
+  placeId: string;
+  title: string;
+  imageUrl: string;
+  sortOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+  pins?: FloorplanPin[];
+}
+
+export interface CreateFloorplanDto {
+  placeId: string;
+  title?: string;
+  imageUrl: string;
+  sortOrder?: number;
+  isPrimary?: boolean;
+}
+
+export interface UpdateFloorplanDto {
+  title?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  isPrimary?: boolean;
+}
+
+export function getFloorplans(placeId: string) {
+  return apiGet<PlaceFloorplan[]>(`/admin/places/${placeId}/floorplans`);
+}
+
+export function getFloorplan(id: string) {
+  return apiGet<PlaceFloorplan>(`/admin/floorplans/${id}`);
+}
+
+export function createFloorplan(data: CreateFloorplanDto) {
+  return apiPost<PlaceFloorplan>("/admin/floorplans", data);
+}
+
+export function updateFloorplan(id: string, data: UpdateFloorplanDto) {
+  return apiPut<PlaceFloorplan>(`/admin/floorplans/${id}`, data);
+}
+
+export function deleteFloorplan(id: string) {
+  return apiDelete(`/admin/floorplans/${id}`);
+}
+
+// ==================== Floorplan Pins ====================
+
+export interface CreateFloorplanPinDto {
+  floorplanId: string;
+  x: number;
+  y: number;
+  label: string;
+  sortOrder?: number;
+}
+
+export interface UpdateFloorplanPinDto {
+  x?: number;
+  y?: number;
+  label?: string;
+  sortOrder?: number;
+}
+
+export function getFloorplanPins(floorplanId: string) {
+  return apiGet<FloorplanPin[]>(`/admin/floorplans/${floorplanId}/pins`);
+}
+
+export function getFloorplanPin(id: string) {
+  return apiGet<FloorplanPin>(`/admin/floorplan-pins/${id}`);
+}
+
+export function createFloorplanPin(data: CreateFloorplanPinDto) {
+  return apiPost<FloorplanPin>("/admin/floorplan-pins", data);
+}
+
+export function updateFloorplanPin(id: string, data: UpdateFloorplanPinDto) {
+  return apiPut<FloorplanPin>(`/admin/floorplan-pins/${id}`, data);
+}
+
+export function deleteFloorplanPin(id: string) {
+  return apiDelete(`/admin/floorplan-pins/${id}`);
 }

@@ -5,13 +5,14 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { AuthContext } from "../../contexts/AuthContext";
+import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { MapComponent } from "../../components/MapComponent";
 import { getSite, updateSite, getBrands, getSiteInstances, createSiteInstance, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
-import { getSiteSubscription, getSiteEntitlements, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
+import { getSiteSubscription, getSiteEntitlements, cancelSubscription, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 
 type TabId = "overview" | "domain" | "appearance" | "map" | "features" | "subscription" | "analytics";
@@ -1850,6 +1851,7 @@ function SubscriptionTab({
   t: (key: string) => string;
 }) {
   const { i18n } = useTranslation();
+  const confirm = useConfirm();
   const [subscription, setSubscription] = useState<SiteSubscription | null>(null);
   const [entitlements, setEntitlements] = useState<SiteEntitlements | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -2143,8 +2145,14 @@ function SubscriptionTab({
               {(subscription.status === "ACTIVE" || subscription.planStatus === "active") ? (
                 <button
                   onClick={async () => {
-                    const confirmMessage = t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.";
-                    if (window.confirm(confirmMessage)) {
+                    const confirmed = await confirm({
+                      title: t("admin.subscription.cancel") || "Előfizetés lemondása",
+                      message: t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
+                      confirmLabel: t("admin.subscription.cancelButton") || "Lemondom",
+                      cancelLabel: t("common.cancel") || "Mégse",
+                      confirmVariant: "danger",
+                    });
+                    if (confirmed) {
                       try {
                         await cancelSubscription("site", subscription.id, site.id);
                         showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
@@ -2177,7 +2185,7 @@ function SubscriptionTab({
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  {t("admin.subscription.cancel") || "Előfizetés lemondása"}
+                  {t("admin.subscription.cancelButton") || "Lemondom"}
                 </button>
               ) : (subscription.status === "CANCELLED" || subscription.planStatus === "canceled") ? (
                 <button

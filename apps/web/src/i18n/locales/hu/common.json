@@ -3,6 +3,8 @@
   "error": "Hiba",
   "save": "Mentés",
   "cancel": "Mégse",
+  "confirm": "Megerősítés",
+  "close": "Bezárás",
   "delete": "Törlés",
   "edit": "Szerkesztés",
   "create": "Létrehozás",
@@ -43,5 +45,6 @@
   "remove": "Eltávolítás",
   "newVersionAvailable": "Új verzió érhető el. Az oldal frissül...",
   "back": "Vissza",
-  "goBack": "Vissza"
+  "goBack": "Vissza",
+  "premiumFeature": "Prémium funkció"
 }

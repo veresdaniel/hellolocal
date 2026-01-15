@@ -13,8 +13,8 @@ export class TrackDto {
   placeId?: string;
 
   @IsOptional()
-  @IsIn(["phone", "email", "website", "maps"])
-  ctaType?: "phone" | "email" | "website" | "maps";
+  @IsIn(["phone", "email", "website", "maps", "floorplan"])
+  ctaType?: "phone" | "email" | "website" | "maps" | "floorplan";
 
   @IsOptional()
   @IsString()

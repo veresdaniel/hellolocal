@@ -17,7 +17,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { UserRole, Lang } from "@prisma/client";
+import { UserRole, Lang, FeatureSubscriptionScope } from "@prisma/client";
 import { AdminCategoryService, CreateCategoryDto, UpdateCategoryDto } from "./admin-category.service";
 import { AdminTagService, CreateTagDto, UpdateTagDto } from "./admin-tag.service";
 import { AdminPriceBandService, CreatePriceBandDto, UpdatePriceBandDto } from "./admin-priceband.service";
@@ -40,6 +40,9 @@ import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscri
 import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
 import { AdminPriceListService, UpdatePriceListDto } from "./admin-price-list.service";
 import { AdminCollectionService, CreateCollectionDto, UpdateCollectionDto, CreateCollectionItemDto, UpdateCollectionItemDto } from "./admin-collection.service";
+import { AdminFeatureSubscriptionService, CreateFeatureSubscriptionDto, UpdateFeatureSubscriptionDto } from "./admin-feature-subscription.service";
+import { AdminFloorplanService, CreateFloorplanDto, UpdateFloorplanDto } from "./admin-floorplan.service";
+import { AdminFloorplanPinService, CreateFloorplanPinDto, UpdateFloorplanPinDto } from "./admin-floorplan-pin.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -83,6 +86,9 @@ export class AdminController {
     private readonly galleryService: AdminGalleryService,
     private readonly priceListService: AdminPriceListService,
     private readonly collectionService: AdminCollectionService,
+    private readonly featureSubscriptionService: AdminFeatureSubscriptionService,
+    private readonly floorplanService: AdminFloorplanService,
+    private readonly floorplanPinService: AdminFloorplanPinService,
     private readonly placeUpsellService: PlaceUpsellService,
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
@@ -2546,6 +2552,459 @@ export class AdminController {
       entityId: collectionId,
       description: `Collection items updated (${body.items.length} items)`,
     }).catch(err => console.error("Failed to log update collection items:", err));
+    
+    return result;
+  }
+
+  // ==================== Feature Subscriptions ====================
+
+  @Get("/places/:placeId/floorplan-entitlement")
+  async getFloorplanEntitlement(
+    @Param("placeId") placeId: string,
+    @Query("siteId") siteId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.featureSubscriptionService.getFloorplanEntitlement(placeId, siteId);
+  }
+
+  @Post("/feature-subscriptions")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async createFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Body() dto: CreateFeatureSubscriptionDto
+  ) {
+    if (!user.siteIds?.includes(dto.siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+
+    // Note: Free account check is handled in the frontend (feature gate is hidden)
+    // and in the backend via getFloorplanGate which returns "locked" state for free accounts.
+    // This prevents the API call from being made in the first place.
+
+    const result = await this.featureSubscriptionService.create(dto);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: dto.siteId,
+      userId: user.id,
+      action: "create",
+      entityType: "featureSubscription",
+      entityId: result.id,
+      description: generateCreateDescription("featureSubscription", null, { 
+        featureKey: dto.featureKey, 
+        planKey: dto.planKey,
+        scope: dto.scope,
+        billingPeriod: dto.billingPeriod,
+      }),
+    }).catch(err => console.error("Failed to log create feature subscription:", err));
+    
+    return result;
+  }
+
+  @Put("/feature-subscriptions/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async updateFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Body() dto: UpdateFeatureSubscriptionDto
+  ) {
+    // Get existing subscription for event log
+    const existingSub = await this.prisma.featureSubscription.findUnique({
+      where: { id },
+    });
+    
+    if (!existingSub) {
+      throw new NotFoundException(`Feature subscription with id ${id} not found`);
+    }
+
+    if (!user.siteIds?.includes(existingSub.siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+    
+    const result = await this.featureSubscriptionService.update(id, dto);
+    
+    // Log the action - include scope change if applicable
+    const changes: any = {};
+    if (dto.planKey && dto.planKey !== existingSub.planKey) {
+      changes.planKey = { from: existingSub.planKey, to: dto.planKey };
+    }
+    if (dto.billingPeriod && dto.billingPeriod !== existingSub.billingPeriod) {
+      changes.billingPeriod = { from: existingSub.billingPeriod, to: dto.billingPeriod };
+    }
+    if (dto.status && dto.status !== existingSub.status) {
+      changes.status = { from: existingSub.status, to: dto.status };
+    }
+    if (dto.scope && dto.scope !== existingSub.scope) {
+      changes.scope = { from: existingSub.scope, to: dto.scope };
+    }
+    
+    await this.eventLogService.create({
+      siteId: existingSub.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "featureSubscription",
+      entityId: id,
+      description: generateUpdateDescription("featureSubscription", null, existingSub, result, changes),
+    }).catch(err => console.error("Failed to log update feature subscription:", err));
+    
+    return result;
+  }
+
+  @Post("/feature-subscriptions/:id/cancel")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async cancelFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    const existingSub = await this.prisma.featureSubscription.findUnique({
+      where: { id },
+    });
+    
+    if (!existingSub) {
+      throw new NotFoundException(`Feature subscription with id ${id} not found`);
+    }
+
+    if (!user.siteIds?.includes(existingSub.siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+
+    const result = await this.featureSubscriptionService.cancel(id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existingSub.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "featureSubscription",
+      entityId: id,
+      description: `Feature subscription cancelled (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+    }).catch(err => console.error("Failed to log cancel feature subscription:", err));
+    
+    return result;
+  }
+
+  @Post("/feature-subscriptions/:id/suspend")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async suspendFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    const existingSub = await this.prisma.featureSubscription.findUnique({
+      where: { id },
+    });
+    
+    if (!existingSub) {
+      throw new NotFoundException(`Feature subscription with id ${id} not found`);
+    }
+
+    if (!user.siteIds?.includes(existingSub.siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+
+    const result = await this.featureSubscriptionService.suspend(id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existingSub.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "featureSubscription",
+      entityId: id,
+      description: `Feature subscription suspended (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+    }).catch(err => console.error("Failed to log suspend feature subscription:", err));
+    
+    return result;
+  }
+
+  @Post("/feature-subscriptions/:id/resume")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async resumeFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    const existingSub = await this.prisma.featureSubscription.findUnique({
+      where: { id },
+    });
+    
+    if (!existingSub) {
+      throw new NotFoundException(`Feature subscription with id ${id} not found`);
+    }
+
+    if (!user.siteIds?.includes(existingSub.siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+
+    const result = await this.featureSubscriptionService.resume(id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existingSub.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "featureSubscription",
+      entityId: id,
+      description: `Feature subscription resumed (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+    }).catch(err => console.error("Failed to log resume feature subscription:", err));
+    
+    return result;
+  }
+
+  @Get("/sites/:siteId/feature-subscriptions")
+  async getSiteFeatureSubscriptions(
+    @Param("siteId") siteId: string,
+    @CurrentUser() user: { id: string; siteIds: string[] }
+  ) {
+    if (!user.siteIds?.includes(siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+    return this.featureSubscriptionService.getBySite(siteId);
+  }
+
+  @Get("/places/:placeId/feature-subscriptions")
+  async getPlaceFeatureSubscriptions(
+    @Param("placeId") placeId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.featureSubscriptionService.getByPlace(placeId);
+  }
+
+  @Get("/feature-subscriptions")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async getAllFeatureSubscriptions(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Query("scope") scope?: "place" | "site" | "all",
+    @Query("status") status?: "active" | "past_due" | "canceled" | "all",
+    @Query("featureKey") featureKey?: "FLOORPLANS" | "all",
+    @Query("siteId") siteId?: string,
+    @Query("placeId") placeId?: string,
+    @Query("q") q?: string,
+    @Query("take") take?: string,
+    @Query("skip") skip?: string,
+  ) {
+    // If siteId is provided, check access
+    if (siteId && !user.siteIds?.includes(siteId)) {
+      throw new ForbiddenException("You don't have access to this site");
+    }
+
+    return this.featureSubscriptionService.getAll({
+      scope: scope as any,
+      status: status as any,
+      featureKey: featureKey as any,
+      siteId,
+      placeId,
+      q,
+      take: take ? parseInt(take, 10) : undefined,
+      skip: skip ? parseInt(skip, 10) : undefined,
+    });
+  }
+
+  @Delete("/feature-subscriptions/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async deleteFeatureSubscription(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    // Get existing subscription for event log before deletion
+    const existing = await this.prisma.featureSubscription.findUnique({
+      where: { id },
+    });
+    
+    const result = await this.featureSubscriptionService.delete(id);
+    
+    // Log the action
+    if (existing) {
+      await this.eventLogService.create({
+        siteId: existing.siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "featureSubscription",
+        entityId: id,
+        description: generateDeleteDescription("featureSubscription", null, { 
+          featureKey: existing.featureKey,
+          planKey: existing.planKey,
+        }),
+      }).catch(err => console.error("Failed to log delete feature subscription:", err));
+    }
+    
+    return result;
+  }
+
+  // ==================== Floorplans ====================
+
+  @Get("/places/:placeId/floorplans")
+  async getFloorplans(
+    @Param("placeId") placeId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.floorplanService.findAll(placeId, user.id);
+  }
+
+  @Get("/floorplans/:id")
+  async getFloorplan(
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.floorplanService.findOne(id, user.id);
+  }
+
+  @Post("/floorplans")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async createFloorplan(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Body() dto: CreateFloorplanDto
+  ) {
+    // Get place to get siteId for event log
+    const place = await this.prisma.place.findUnique({
+      where: { id: dto.placeId },
+      select: { siteId: true },
+    });
+    
+    const result = await this.floorplanService.create(dto, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: place?.siteId || user.siteIds[0] || "",
+      userId: user.id,
+      action: "create",
+      entityType: "floorplan",
+      entityId: result.id,
+      description: generateCreateDescription("floorplan", null, { title: result.title }),
+    }).catch(err => console.error("Failed to log create floorplan:", err));
+    
+    return result;
+  }
+
+  @Put("/floorplans/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async updateFloorplan(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Body() dto: UpdateFloorplanDto
+  ) {
+    // Get existing floorplan for event log
+    const existing = await this.floorplanService.findOne(id, user.id);
+    const result = await this.floorplanService.update(id, dto, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existing.place.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "floorplan",
+      entityId: id,
+      description: generateUpdateDescription("floorplan", null, existing, result),
+    }).catch(err => console.error("Failed to log update floorplan:", err));
+    
+    return result;
+  }
+
+  @Delete("/floorplans/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async deleteFloorplan(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    // Get existing floorplan for event log before deletion
+    const existing = await this.floorplanService.findOne(id, user.id);
+    const result = await this.floorplanService.delete(id, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existing.place.siteId,
+      userId: user.id,
+      action: "delete",
+      entityType: "floorplan",
+      entityId: id,
+      description: generateDeleteDescription("floorplan", null, { title: existing.title }),
+    }).catch(err => console.error("Failed to log delete floorplan:", err));
+    
+    return result;
+  }
+
+  // ==================== Floorplan Pins ====================
+
+  @Get("/floorplans/:floorplanId/pins")
+  async getFloorplanPins(
+    @Param("floorplanId") floorplanId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.floorplanPinService.findAll(floorplanId, user.id);
+  }
+
+  @Get("/floorplan-pins/:id")
+  async getFloorplanPin(
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.floorplanPinService.findOne(id, user.id);
+  }
+
+  @Post("/floorplan-pins")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async createFloorplanPin(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Body() dto: CreateFloorplanPinDto
+  ) {
+    // Get floorplan to get siteId for event log
+    const floorplan = await this.floorplanService.findOne(dto.floorplanId, user.id);
+    const result = await this.floorplanPinService.create(dto, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: floorplan.place.siteId,
+      userId: user.id,
+      action: "create",
+      entityType: "floorplanPin",
+      entityId: result.id,
+      description: generateCreateDescription("floorplanPin", null, { label: result.label, floorplanId: dto.floorplanId }),
+    }).catch(err => console.error("Failed to log create floorplan pin:", err));
+    
+    return result;
+  }
+
+  @Put("/floorplan-pins/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async updateFloorplanPin(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string,
+    @Body() dto: UpdateFloorplanPinDto
+  ) {
+    // Get existing pin for event log
+    const existing = await this.floorplanPinService.findOne(id, user.id);
+    const result = await this.floorplanPinService.update(id, dto, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existing.floorplan.place.siteId,
+      userId: user.id,
+      action: "update",
+      entityType: "floorplanPin",
+      entityId: id,
+      description: generateUpdateDescription("floorplanPin", null, existing, result),
+    }).catch(err => console.error("Failed to log update floorplan pin:", err));
+    
+    return result;
+  }
+
+  @Delete("/floorplan-pins/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async deleteFloorplanPin(
+    @CurrentUser() user: { id: string; siteIds: string[] },
+    @Param("id") id: string
+  ) {
+    // Get existing pin for event log before deletion
+    const existing = await this.floorplanPinService.findOne(id, user.id);
+    const result = await this.floorplanPinService.delete(id, user.id);
+    
+    // Log the action
+    await this.eventLogService.create({
+      siteId: existing.floorplan.place.siteId,
+      userId: user.id,
+      action: "delete",
+      entityType: "floorplanPin",
+      entityId: id,
+      description: generateDeleteDescription("floorplanPin", null, { label: existing.label }),
+    }).catch(err => console.error("Failed to log delete floorplan pin:", err));
     
     return result;
   }

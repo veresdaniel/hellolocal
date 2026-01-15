@@ -58,7 +58,7 @@ export class AdminGalleryService {
 
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
-    const limitNum = limit ? parseInt(String(limit)) : 50;
+    const limitNum = limit ? parseInt(String(limit)) : 10;
 
     // Get total count
     const total = await this.prisma.gallery.count({ where });

@@ -50,7 +50,7 @@ export function EventsPage() {
   const [swipedCardId, setSwipedCardId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });
@@ -222,7 +222,7 @@ export function EventsPage() {
         if (paginationData) {
           // Ensure totalPages is calculated if missing or incorrect
           const total = paginationData.total || 0;
-          const limit = paginationData.limit || pagination.limit || 50;
+          const limit = paginationData.limit || pagination.limit || 10;
           const calculatedTotalPages = Math.ceil(total / limit) || 1;
           const totalPages = paginationData.totalPages || calculatedTotalPages;
           
@@ -1575,6 +1575,47 @@ export function EventsPage() {
                       </td>
                       <td style={{ padding: 12, textAlign: "right" }}>
                         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => startEdit(event)}
+                            style={{
+                              padding: "6px 10px",
+                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 6,
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              transition: "all 0.2s ease",
+                              boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                            }}
+                            title={t("common.edit")}
+                          >
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
+                              <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
+                            </svg>
+                          </button>
                           {(() => {
                             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                             const translation = findTranslation(event.translations, currentLang) || 
@@ -1635,75 +1676,6 @@ export function EventsPage() {
                               </button>
                             ) : null;
                           })()}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/${i18n.language || "hu"}/admin/events/${event.id}/analytics`);
-                            }}
-                            style={{
-                              padding: "6px 12px",
-                              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                              fontSize: 12,
-                              fontWeight: 600,
-                              transition: "all 0.2s ease",
-                              boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(16, 185, 129, 0.3)";
-                            }}
-                          >
-                            {t("admin.analyticsLabel")}
-                          </button>
-                          <button
-                            onClick={() => startEdit(event)}
-                            style={{
-                              padding: "6px 10px",
-                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                              fontSize: 12,
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              transition: "all 0.2s ease",
-                              boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
-                            }}
-                            title={t("common.edit")}
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
-                              <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
-                            </svg>
-                          </button>
                           <button
                             onClick={() => handleDelete(event.id)}
                             style={{

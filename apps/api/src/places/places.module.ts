@@ -8,9 +8,10 @@ import { PlacesService } from "./places.service";
 import { PlacesPriceListService } from "./places-price-list.service";
 import { RatingService } from "./rating.service";
 import { RatingController } from "./rating.controller";
+import { AdminModule } from "../admin/admin.module";
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => SiteModule), SlugModule],
+  imports: [PrismaModule, forwardRef(() => SiteModule), SlugModule, forwardRef(() => AdminModule)],
   controllers: [PlacesController, PlacesPublicController, RatingController],
   providers: [PlacesService, PlacesPriceListService, RatingService],
   exports: [PlacesService, PlacesPriceListService, RatingService],

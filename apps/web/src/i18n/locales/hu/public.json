@@ -201,5 +201,10 @@
     "starSingular": "csillag",
     "starPlural": "csillag",
     "clickToRate": "Kattints az értékeléshez"
+  },
+  "floorplan": {
+    "title": "Helyszín alaprajza",
+    "subtitle": "Kattints a pontokra a helyiségek megtekintéséhez",
+    "openFullscreen": "Megnyitás teljes képernyőn"
   }
 }

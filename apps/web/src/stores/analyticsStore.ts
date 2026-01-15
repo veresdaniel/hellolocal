@@ -13,6 +13,7 @@ type SiteDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
   };
   timeseries: Array<{
     day: string;
@@ -25,6 +26,7 @@ type SiteDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
   };
   topPlaces: Array<{
     placeId: string;
@@ -44,6 +46,7 @@ type PlaceDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
     ctaTotal: number;
     conversionPct: number;
   };
@@ -57,6 +60,7 @@ type PlaceDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
   };
 };
 
@@ -70,6 +74,7 @@ type EventDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
     ctaTotal: number;
     conversionPct: number;
   };
@@ -83,6 +88,7 @@ type EventDashboard = {
     ctaEmail: number;
     ctaWebsite: number;
     ctaMaps: number;
+    ctaFloorplan: number;
   };
 };
 

@@ -276,6 +276,7 @@ export function AnalyticsDashboard(props: Props) {
       { name: t("admin.analytics.ctaEmail"), value: s.ctaEmail ?? 0, color: APP_COLORS.info },
       { name: t("admin.analytics.ctaWebsite"), value: s.ctaWebsite ?? 0, color: APP_COLORS.primary },
       { name: t("admin.analytics.ctaMaps"), value: s.ctaMaps ?? 0, color: APP_COLORS.warning },
+      { name: t("admin.analytics.ctaFloorplan") || "Floorplan", value: s.ctaFloorplan ?? 0, color: APP_COLORS.secondary },
     ];
   }, [data, t]);
 
