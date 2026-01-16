@@ -184,7 +184,6 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján,
 - Node.js 18+
 
 ### 🚧 Ismert Korlátok (Beta)
-- Push notification frontend integráció még nincs kész
 - Unit és E2E tesztek hiányoznak
 - Email szolgáltatás nincs konfigurálva (EmailService placeholder)
 - Képfeltöltés még file path alapú (nincs S3/CDN integráció)
@@ -201,19 +200,11 @@ A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján,
 ## [Unreleased]
 
 ### 🎯 Tervezett funkciók
-- [ ] Email értesítések
-- [ ] Képfeltöltés S3-ba vagy CDN-re
 - [ ] Redis cache layer
-- [ ] Rate limiting
-- [ ] Audit log admin műveletekhez
 - [ ] Export/Import funkció (CSV, JSON)
 - [ ] Bulk műveletek admin felületen
 - [ ] Nyelvi fordítások bővítése
 - [ ] A11y (accessibility) fejlesztések
-- [ ] Dark mode
-- [ ] Offline PWA támogatás (service worker cache)
-- [ ] Analytics integráció (Google Analytics, Plausible)
-- [ ] Comment/Review rendszer helyekhez és eseményekhez
 
 ---
 
