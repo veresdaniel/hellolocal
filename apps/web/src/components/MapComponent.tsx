@@ -1,13 +1,4 @@
 // src/components/MapComponent.tsx
-// Rebuilt + hardened (full-feature) MapComponent
-// Goals:
-// - Restore ALL features: markers, labels, selectable marker, route + distance + walking/cycling time, draggable geolocation toggle
-// - Fix mobile "tap opens immediately" by removing ghost-click issues:
-//   - Use Pointer Events for marker interactions (onPointerUp) and do NOT use onTouchEnd.
-//   - This works for both mouse and touch.
-// - Prevent geolocation toggle from disappearing: clamp + validate persisted position.
-// - Defensive checks for 0 coords (don't use truthy checks).
-
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl";
@@ -30,50 +21,84 @@ interface MapComponentProps {
     distance?: number; // Distance in km from user location
     walkingTime?: number; // Walking time in minutes
     cyclingTime?: number; // Cycling time in minutes
-    isRouteDistance?: boolean; // Whether distance is based on route
+    isRouteDistance?: boolean; // Whether distance is based on route or straight-line
   }>;
-  userLocation?: { lat: number; lng: number } | null;
-  showRoutes?: boolean;
-  height?: number | string;
+  userLocation?: { lat: number; lng: number } | null; // User's current location
+  showRoutes?: boolean; // Whether to show routes to markers
+                            height?: number | string;
   interactive?: boolean;
   defaultZoom?: number;
   mapStyle?: "default" | "hand-drawn" | "pastel";
-  hideLocationButton?: boolean;
+  hideLocationButton?: boolean; // Hide the "show my location" button (for admin pages)
 }
 
-// ---------- small utils ----------
-const hasNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+// Constants for distance calculations
+const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
+const DEGREES_TO_RADIANS = Math.PI / 180;
 
+// Helper function to calculate distance in km using Haversine formula
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const dLat = (lat2 - lat1) * DEGREES_TO_RADIANS;
+  const dLng = (lng2 - lng1) * DEGREES_TO_RADIANS;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * DEGREES_TO_RADIANS) * Math.cos(lat2 * DEGREES_TO_RADIANS) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
+};
+
+// Constants for distance formatting
 const METERS_PER_KM = 1000;
-const DISTANCE_THRESHOLD_KM = 1;
+const DISTANCE_THRESHOLD_KM = 1; // Show meters if distance is less than this
+
+// Helper function to format distance
 const formatDistance = (distance: number): string => {
-  if (distance < DISTANCE_THRESHOLD_KM) return `${Math.round(distance * METERS_PER_KM)} m`;
+  if (distance < DISTANCE_THRESHOLD_KM) {
+    return `${Math.round(distance * METERS_PER_KM)} m`;
+  }
   return `${distance.toFixed(1)} km`;
 };
 
-const WALKING_SPEED_KMH = 5;
-const CYCLING_SPEED_KMH = 15;
+// Constants for travel time calculations
+const WALKING_SPEED_KMH = 5; // Average walking speed in km/h
+const CYCLING_SPEED_KMH = 15; // Average cycling speed in km/h
 const MINUTES_PER_HOUR = 60;
 
-const calculateWalkingTime = (distanceKm: number): number => (distanceKm / WALKING_SPEED_KMH) * MINUTES_PER_HOUR;
-const calculateCyclingTime = (distanceKm: number): number => (distanceKm / CYCLING_SPEED_KMH) * MINUTES_PER_HOUR;
+// Helper function to calculate walking time (average walking speed: 5 km/h = 83.33 m/min)
+const calculateWalkingTime = (distanceKm: number): number => {
+  const timeHours = distanceKm / WALKING_SPEED_KMH;
+  return timeHours * MINUTES_PER_HOUR;
+};
 
+// Helper function to calculate cycling time (average cycling speed: 15 km/h)
+const calculateCyclingTime = (distanceKm: number): number => {
+  const timeHours = distanceKm / CYCLING_SPEED_KMH;
+  return timeHours * MINUTES_PER_HOUR;
+};
+
+// Helper function to format walking time (will be called inside component to access t())
 const formatWalkingTime = (minutes: number, t: (key: string) => string): string => {
-  if (minutes < 1) return `< 1 ${t("public.minute")}`;
+  if (minutes < 1) {
+    return `< 1 ${t("public.minute")}`;
+  }
   if (minutes < 60) {
-    const m = Math.round(minutes);
-    return `${m} ${m === 1 ? t("public.minute") : t("public.minutes")}`;
+    return `${Math.round(minutes)} ${Math.round(minutes) === 1 ? t("public.minute") : t("public.minutes")}`;
   }
   const hours = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
-  if (mins === 0) return `${hours} ${hours === 1 ? t("public.hour") : t("public.hours")}`;
+  if (mins === 0) {
+    return `${hours} ${hours === 1 ? t("public.hour") : t("public.hours")}`;
+  }
   return `${hours} ${hours === 1 ? t("public.hour") : t("public.hours")} ${mins} ${mins === 1 ? t("public.minute") : t("public.minutes")}`;
 };
 
+// Constants for zoom level thresholds
 const ZOOM_CLOSE_THRESHOLD = 13;
 const ZOOM_MEDIUM_THRESHOLD = 10;
 const ZOOM_FAR_THRESHOLD = 7;
 
+// Helper function to determine zoom level category
 type ZoomLevel = "close" | "medium" | "far" | "veryFar";
 const getZoomLevel = (zoom: number): ZoomLevel => {
   if (zoom >= ZOOM_CLOSE_THRESHOLD) return "close";
@@ -82,43 +107,45 @@ const getZoomLevel = (zoom: number): ZoomLevel => {
   return "veryFar";
 };
 
-// simple clustering at veryFar
-function clusterMarkers<T extends { lat: number; lng: number }>(markers: T[], zoom: number): T[] {
-  if (getZoomLevel(zoom) !== "veryFar") return markers;
-  const cellSize = 0.1;
+// Simple clustering: group markers by grid cells to avoid overcrowding at veryFar zoom
+// Returns only one representative marker per cell at veryFar zoom
+function clusterMarkers<T extends { lat: number; lng: number }>(
+  markers: T[],
+  zoom: number
+): T[] {
+  const zoomLevel = getZoomLevel(zoom);
+  
+  // Only cluster at veryFar zoom level
+  if (zoomLevel !== "veryFar") {
+    return markers;
+  }
+  
+  // Constants for clustering
+  const CLUSTER_CELL_SIZE_DEGREES = 0.1; // degrees (roughly 11km at equator)
+  
+  // Grid cell size for clustering (larger cells = fewer markers shown)
+  // At veryFar zoom (< 7), use larger cells to show fewer markers
+  const cellSize = CLUSTER_CELL_SIZE_DEGREES;
+  
+  // Group markers by grid cell
+  // Use native JavaScript Map (not the react-map-gl Map component)
   const cellMap = new Map<string, T>();
-  for (const marker of markers) {
+  
+  markers.forEach((marker) => {
+    // Calculate grid cell coordinates
     const cellLat = Math.floor(marker.lat / cellSize);
     const cellLng = Math.floor(marker.lng / cellSize);
-    const key = `${cellLat},${cellLng}`;
-    if (!cellMap.has(key)) cellMap.set(key, marker);
-  }
+    const cellKey = `${cellLat},${cellLng}`;
+    
+    // Only keep the first marker in each cell (or could use center marker)
+    if (!cellMap.has(cellKey)) {
+      cellMap.set(cellKey, marker);
+    }
+  });
+  
   return Array.from(cellMap.values());
 }
 
-// clamp draggable control position
-const LOCATION_CONTROL_MAX_WIDTH = 200;
-function clampPosition(pos: { bottom: number; left: number }, viewport: { w: number; h: number }) {
-  const bottom = Number.isFinite(pos.bottom) ? pos.bottom : 0;
-  const left = Number.isFinite(pos.left) ? pos.left : 0;
-  return {
-    bottom: Math.max(0, Math.min(viewport.h - 50, bottom)),
-    left: Math.max(0, Math.min(viewport.w - LOCATION_CONTROL_MAX_WIDTH, left)),
-  };
-}
-
-function safeParsePosition(raw: string | null): { bottom: number; left: number } | null {
-  if (!raw) return null;
-  try {
-    const v = JSON.parse(raw);
-    if (typeof v?.bottom !== "number" || typeof v?.left !== "number") return null;
-    return v;
-  } catch {
-    return null;
-  }
-}
-
-// ---------- component ----------
 export function MapComponent({
   latitude,
   longitude,
@@ -126,7 +153,7 @@ export function MapComponent({
   onZoomChange,
   markers = [],
   userLocation: userLocationProp = null,
-  showRoutes = true,
+  showRoutes = false,
   height = 400,
   interactive = true,
   defaultZoom = 13,
@@ -135,10 +162,14 @@ export function MapComponent({
 }: MapComponentProps) {
   const { t } = useTranslation();
   const { showUserLocation, setShowUserLocation, userLocation: userLocationFromStore, setUserLocation } = useFiltersStore();
+  
+  // Use userLocation from store if available, otherwise use prop
   const userLocation = userLocationFromStore || userLocationProp;
-
-  // geolocation watch
+  
+  // Watch ID ref for geolocation
   const watchIdRef = useRef<number | null>(null);
+  
+  // Cleanup geolocation watch on unmount
   useEffect(() => {
     return () => {
       if (watchIdRef.current !== null && navigator.geolocation) {
@@ -147,217 +178,345 @@ export function MapComponent({
       }
     };
   }, []);
-
-  // routes
+  
   const [routes, setRoutes] = useState<Array<{ coordinates: number[][]; markerId: string; distance?: number; duration?: number }>>([]);
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
+  const routesRef = useRef<Array<{ coordinates: number[][]; markerId: string; distance?: number; duration?: number }>>([]);
   const loadingRoutesRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    loadingRoutesRef.current = loadingRoutes;
-  }, [loadingRoutes]);
-
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
-
+  
   const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
-
-  // default positions per device
-  const defaultPositionDesktop = { bottom: 100, left: 16 };
-  const defaultPositionMobile = { bottom: 80, left: 12 };
-
-  const getDefaultPos = () => (isDesktop ? defaultPositionDesktop : defaultPositionMobile);
-
-  // draggable location control position (persisted)
+  
+  // Constants for location control positioning
+  const LOCATION_CONTROL_DESKTOP_BOTTOM = 100;
+  const LOCATION_CONTROL_DESKTOP_LEFT = 16;
+  const LOCATION_CONTROL_MOBILE_BOTTOM = 80;
+  const LOCATION_CONTROL_MOBILE_LEFT = 12;
+  const LOCATION_CONTROL_MAX_WIDTH = 200; // Maximum width for position calculation
+  
+  // Default positions: bal lent (bottom left) - using bottom instead of top
+  const defaultPositionDesktop = { bottom: LOCATION_CONTROL_DESKTOP_BOTTOM, left: LOCATION_CONTROL_DESKTOP_LEFT };
+  const defaultPositionMobile = { bottom: LOCATION_CONTROL_MOBILE_BOTTOM, left: LOCATION_CONTROL_MOBILE_LEFT };
+  
+  // Draggable position for user location control (device-specific)
   const [locationControlPosition, setLocationControlPosition] = useState(() => {
     if (typeof window === "undefined") return defaultPositionDesktop;
     const deviceKey = isDesktop ? "desktop" : "mobile";
-    const saved = safeParsePosition(localStorage.getItem(`mapLocationControlPosition_${deviceKey}`));
-    const base = saved ?? getDefaultPos();
-    return clampPosition(base, { w: window.innerWidth, h: window.innerHeight });
-  });
-
-  // load when device type changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const deviceKey = isDesktop ? "desktop" : "mobile";
-    const saved = safeParsePosition(localStorage.getItem(`mapLocationControlPosition_${deviceKey}`));
-    const base = saved ?? getDefaultPos();
-    setLocationControlPosition(clampPosition(base, { w: window.innerWidth, h: window.innerHeight }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDesktop]);
-
-  // clamp on resize
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onResize = () => {
-      setLocationControlPosition((pos) => clampPosition(pos, { w: window.innerWidth, h: window.innerHeight }));
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  // persist (only if moved)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const deviceKey = isDesktop ? "desktop" : "mobile";
-    const defaultPos = getDefaultPos();
-    const clamped = clampPosition(locationControlPosition, { w: window.innerWidth, h: window.innerHeight });
-
-    if (clamped.bottom !== defaultPos.bottom || clamped.left !== defaultPos.left) {
-      localStorage.setItem(`mapLocationControlPosition_${deviceKey}`, JSON.stringify(clamped));
-    } else {
-      localStorage.removeItem(`mapLocationControlPosition_${deviceKey}`);
+    const saved = localStorage.getItem(`mapLocationControlPosition_${deviceKey}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationControlPosition, isDesktop]);
-
-  // dragging state for location control
-  const DRAG_RESET_DELAY_MS = 100;
+    return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+  });
+  
+  // Constants for drag handling
+  const DRAG_RESET_DELAY_MS = 100; // Delay before resetting drag flag to allow click
+  
   const [isDraggingLocationControl, setIsDraggingLocationControl] = useState(false);
   const [hasDraggedLocationControl, setHasDraggedLocationControl] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragOffsetLocationControl, setDragOffsetLocationControl] = useState({ x: 0, y: 0 });
   const locationControlRef = useRef<HTMLDivElement>(null);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-
+  const dragStartPosLocationControlRef = useRef({ x: 0, y: 0 });
+  
+  // Load position when device type changes
+  useEffect(() => {
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const saved = localStorage.getItem(`mapLocationControlPosition_${deviceKey}`);
+    if (saved) {
+      try {
+        const savedPos = JSON.parse(saved);
+        setLocationControlPosition(savedPos);
+      } catch {
+        setLocationControlPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+      }
+    } else {
+      setLocationControlPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+    }
+  }, [isDesktop]);
+  
+  // Save position to localStorage (device-specific)
+  useEffect(() => {
+    const deviceKey = isDesktop ? "desktop" : "mobile";
+    const defaultPos = isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+    // Only save if position differs from default (user has moved it)
+    if (locationControlPosition.bottom !== defaultPos.bottom || locationControlPosition.left !== defaultPos.left) {
+      localStorage.setItem(`mapLocationControlPosition_${deviceKey}`, JSON.stringify(locationControlPosition));
+    } else {
+      // Remove saved position if it's back to default
+      localStorage.removeItem(`mapLocationControlPosition_${deviceKey}`);
+    }
+  }, [locationControlPosition, isDesktop]);
+  
+  // Handle dragging for location control - mouse
   const handleLocationControlMouseDown = (e: React.MouseEvent) => {
     if (!isDesktop || !locationControlRef.current) return;
+    // Don't allow dragging from the checkbox input itself (but allow from label)
     const target = e.target as HTMLElement;
-    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") return;
-
+    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
+      return;
+    }
     e.preventDefault();
     setHasDraggedLocationControl(false);
-
     const rect = locationControlRef.current.getBoundingClientRect();
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    dragStartPosLocationControlRef.current = { x: e.clientX, y: e.clientY };
+    setDragOffsetLocationControl({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
     setIsDraggingLocationControl(true);
   };
-
+  
+  // Handle dragging for location control - touch
   const handleLocationControlTouchStart = (e: React.TouchEvent) => {
     if (!locationControlRef.current) return;
+    // Don't allow dragging from the checkbox input itself (but allow from label)
     const target = e.target as HTMLElement;
-    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") return;
-
+    if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
+      return;
+    }
     e.preventDefault();
     setHasDraggedLocationControl(false);
-
     const touch = e.touches[0];
     const rect = locationControlRef.current.getBoundingClientRect();
-    dragStartRef.current = { x: touch.clientX, y: touch.clientY };
-    setDragOffset({ x: touch.clientX - rect.left, y: touch.clientY - rect.top });
+    dragStartPosLocationControlRef.current = { x: touch.clientX, y: touch.clientY };
+    setDragOffsetLocationControl({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
     setIsDraggingLocationControl(true);
   };
-
+  
+  // Handle mouse/touch move and up for location control
   useEffect(() => {
     if (!isDraggingLocationControl) return;
-
+    
     const handleMouseMove = (e: MouseEvent) => {
-      const moved = Math.abs(e.clientX - dragStartRef.current.x) > 5 || Math.abs(e.clientY - dragStartRef.current.y) > 5;
-      if (moved) setHasDraggedLocationControl(true);
-
-      if (!locationControlRef.current) return;
-
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      const elementHeight = locationControlRef.current.offsetHeight || 50;
-      const newBottom = window.innerHeight - newY - elementHeight;
-
-      setLocationControlPosition(clampPosition({ bottom: newBottom, left: newX }, { w: window.innerWidth, h: window.innerHeight }));
+      const moved = Math.abs(e.clientX - dragStartPosLocationControlRef.current.x) > 5 || Math.abs(e.clientY - dragStartPosLocationControlRef.current.y) > 5;
+      if (moved) {
+        setHasDraggedLocationControl(true);
+      }
+      if (locationControlRef.current) {
+        const newX = e.clientX - dragOffsetLocationControl.x;
+        const newY = e.clientY - dragOffsetLocationControl.y;
+        const elementHeight = locationControlRef.current.offsetHeight || 50;
+        // Convert top to bottom positioning
+        const newBottom = window.innerHeight - newY - elementHeight;
+        setLocationControlPosition({
+          bottom: Math.max(0, Math.min(window.innerHeight - 50, newBottom)),
+          left: Math.max(0, Math.min(window.innerWidth - LOCATION_CONTROL_MAX_WIDTH, newX)),
+        });
+      }
     };
-
+    
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
-      e.preventDefault();
+      e.preventDefault(); // Prevent scroll only during drag
       const touch = e.touches[0];
-
-      const moved = Math.abs(touch.clientX - dragStartRef.current.x) > 5 || Math.abs(touch.clientY - dragStartRef.current.y) > 5;
-      if (moved) setHasDraggedLocationControl(true);
-
-      if (!locationControlRef.current) return;
-
-      const newX = touch.clientX - dragOffset.x;
-      const newY = touch.clientY - dragOffset.y;
-      const elementHeight = locationControlRef.current.offsetHeight || 50;
-      const newBottom = window.innerHeight - newY - elementHeight;
-
-      setLocationControlPosition(clampPosition({ bottom: newBottom, left: newX }, { w: window.innerWidth, h: window.innerHeight }));
+      const moved = Math.abs(touch.clientX - dragStartPosLocationControlRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosLocationControlRef.current.y) > 5;
+      if (moved) {
+        setHasDraggedLocationControl(true);
+      }
+      if (locationControlRef.current) {
+        const newX = touch.clientX - dragOffsetLocationControl.x;
+        const newY = touch.clientY - dragOffsetLocationControl.y;
+        const elementHeight = locationControlRef.current.offsetHeight || 50;
+        // Convert top to bottom positioning
+        const newBottom = window.innerHeight - newY - elementHeight;
+        setLocationControlPosition({
+          bottom: Math.max(0, Math.min(window.innerHeight - 50, newBottom)),
+          left: Math.max(0, Math.min(window.innerWidth - LOCATION_CONTROL_MAX_WIDTH, newX)),
+        });
+      }
     };
-
-    const endDrag = () => {
+    
+    const handleMouseUp = () => {
       setIsDraggingLocationControl(false);
-      setTimeout(() => setHasDraggedLocationControl(false), DRAG_RESET_DELAY_MS);
+      // Reset drag flag after a short delay to allow click to work if no drag occurred
+      setTimeout(() => {
+        setHasDraggedLocationControl(false);
+      }, DRAG_RESET_DELAY_MS);
     };
-
+    
+    const handleTouchEnd = () => {
+      setIsDraggingLocationControl(false);
+      // Reset drag flag after a short delay to allow click to work if no drag occurred
+      setTimeout(() => {
+        setHasDraggedLocationControl(false);
+      }, DRAG_RESET_DELAY_MS);
+    };
+    
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("mouseup", handleMouseUp);
+    // Use passive: false only during actual drag to prevent scroll
     document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", endDrag, { passive: true });
-
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", endDrag);
+      document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", endDrag);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDraggingLocationControl, dragOffset]);
-
-  // view state
+  }, [isDraggingLocationControl, dragOffsetLocationControl]);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    routesRef.current = routes;
+  }, [routes]);
+  
+  useEffect(() => {
+    loadingRoutesRef.current = loadingRoutes;
+  }, [loadingRoutes]);
   const [viewState, setViewState] = useState(() => ({
-    longitude: hasNumber(longitude) ? longitude : 19.0402,
-    latitude: hasNumber(latitude) ? latitude : 47.4979,
+    longitude: longitude ?? 19.0402, // Default: Budapest
+    latitude: latitude ?? 47.4979,
     zoom: defaultZoom,
   }));
+  
+  // Track if this is the initial mount to prevent unnecessary updates
+  const isInitialMount = useRef(true);
+  // Track previous prop values to detect changes and force update on remount
+  const prevLatPropRef = useRef<number | null>(latitude);
+  const prevLngPropRef = useRef<number | null>(longitude);
+  const prevZoomPropRef = useRef<number | null>(defaultZoom);
 
-  // keep center in sync with props (avoid truthy checks)
   const isDraggingRef = useRef(false);
   const prevLatRef = useRef<number | null>(latitude);
   const prevLngRef = useRef<number | null>(longitude);
 
+  // Track zoom separately to allow smooth transitions
+  const prevZoomRef = useRef<number | null>(null);
+
+  // Update view state when latitude/longitude props change (from input fields)
+  // Only update if the values are significantly different to avoid jumping during drag
   useEffect(() => {
+    // Check if props changed from previous render (detects remount with different props)
+    const propsChanged = prevLatPropRef.current !== latitude || 
+                        prevLngPropRef.current !== longitude || 
+                        prevZoomPropRef.current !== defaultZoom;
+    
+    // On initial mount, set the viewState from props
+    if (isInitialMount.current && latitude != null && longitude != null) {
+      setViewState({
+        longitude,
+        latitude,
+        zoom: defaultZoom,
+      });
+      prevLatRef.current = latitude;
+      prevLngRef.current = longitude;
+      prevZoomRef.current = defaultZoom;
+      prevLatPropRef.current = latitude;
+      prevLngPropRef.current = longitude;
+      prevZoomPropRef.current = defaultZoom;
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // If props changed (e.g., lang switch causing remount), force update
+    if (propsChanged && latitude != null && longitude != null) {
+      setViewState({
+        longitude,
+        latitude,
+        zoom: defaultZoom,
+      });
+      prevLatRef.current = latitude;
+      prevLngRef.current = longitude;
+      prevZoomRef.current = defaultZoom;
+      prevLatPropRef.current = latitude;
+      prevLngPropRef.current = longitude;
+      prevZoomPropRef.current = defaultZoom;
+      return;
+    }
+    
     if (isDraggingRef.current) {
       prevLatRef.current = latitude;
       prevLngRef.current = longitude;
-      return;
+      return; // Don't update during drag
     }
-
-    if (hasNumber(latitude) && hasNumber(longitude)) {
+    
+    if (latitude != null && longitude != null) {
       const prevLat = prevLatRef.current;
       const prevLng = prevLngRef.current;
-
-      const shouldUpdate =
-        !hasNumber(prevLat) ||
-        !hasNumber(prevLng) ||
-        Math.abs(latitude - prevLat) > 0.0001 ||
-        Math.abs(longitude - prevLng) > 0.0001;
-
-      if (shouldUpdate) {
-        setViewState((prev) => ({ ...prev, latitude, longitude, zoom: defaultZoom }));
+      
+      if (prevLat != null && prevLng != null) {
+        const latDiff = Math.abs(latitude - prevLat);
+        const lngDiff = Math.abs(longitude - prevLng);
+        // Update if difference is significant (more than 0.0001 degrees, ~10m)
+        // This allows updates when mapSettings change (lang/tenant switch) but prevents flickering during filter changes
+        if (latDiff > 0.0001 || lngDiff > 0.0001) {
+          setViewState((prev) => ({
+            ...prev,
+            latitude,
+            longitude,
+            zoom: defaultZoom, // Also update zoom when center changes
+          }));
+          prevZoomRef.current = defaultZoom;
+        }
+      } else {
+        // First time setting coordinates
+        setViewState((prev) => ({
+          ...prev,
+          latitude,
+          longitude,
+          zoom: defaultZoom,
+        }));
+        prevZoomRef.current = defaultZoom;
       }
-
+      
       prevLatRef.current = latitude;
       prevLngRef.current = longitude;
     }
+    
+    // Update prop refs
+    prevLatPropRef.current = latitude;
+    prevLngPropRef.current = longitude;
+    prevZoomPropRef.current = defaultZoom;
+    // Don't reset to default if coordinates become null - keep current position
   }, [latitude, longitude, defaultZoom]);
 
-  // map click
+  // Update zoom separately with smooth transition
+  useEffect(() => {
+    if (defaultZoom != null && prevZoomRef.current !== defaultZoom) {
+      // Only update zoom if it actually changed
+      setViewState((prev) => ({
+        ...prev,
+        zoom: defaultZoom,
+      }));
+      prevZoomRef.current = defaultZoom;
+    }
+  }, [defaultZoom]);
+
   const handleMapClick = useCallback(
     (event: { lngLat: { lng: number; lat: number } }) => {
-      if (selectedMarkerId) setSelectedMarkerId(null);
-
+      // Deselect marker when clicking on map
+      if (selectedMarkerId) {
+        setSelectedMarkerId(null);
+      }
+      
       if (!interactive || !onLocationChange) return;
       const { lng, lat } = event.lngLat;
       onLocationChange(lat, lng);
-      setViewState((prev) => ({ ...prev, longitude: lng, latitude: lat }));
+      // Update viewState to center on clicked location
+      setViewState((prev) => ({
+        ...prev,
+        longitude: lng,
+        latitude: lat,
+      }));
     },
     [interactive, onLocationChange, selectedMarkerId],
   );
 
-  // main marker drag
   const handleDragStart = useCallback(() => {
     isDraggingRef.current = true;
   }, []);
 
   const handleDrag = useCallback(
     (event: { lngLat: { lng: number; lat: number } }) => {
+      // Update position continuously during drag
       if (!onLocationChange) return;
       const { lng, lat } = event.lngLat;
       onLocationChange(lat, lng);
@@ -370,116 +529,165 @@ export function MapComponent({
       isDraggingRef.current = false;
       if (!onLocationChange) return;
       const { lng, lat } = event.lngLat;
+      // Final update when drag ends
       onLocationChange(lat, lng);
     },
     [onLocationChange],
   );
 
-  const currentLat = hasNumber(latitude) ? latitude : viewState.latitude;
-  const currentLng = hasNumber(longitude) ? longitude : viewState.longitude;
+  // Use props if available, otherwise use viewState (for initial load)
+  // But only update from props if they're different from current viewState
+  // to avoid jumping during drag operations
+  const currentLat = latitude != null ? latitude : viewState.latitude;
+  const currentLng = longitude != null ? longitude : viewState.longitude;
 
-  // OSRM route fetch
-  const fetchRoute = useCallback(
-    async (markerLat: number, markerLng: number, markerId: string) => {
-      if (!userLocation) return;
-
-      setLoadingRoutes((prev) => new Set(prev).add(markerId));
-
-      try {
-        const start = `${userLocation.lng},${userLocation.lat}`;
-        const end = `${markerLng},${markerLat}`;
-        const profile = "driving";
-
-        const response = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${start};${end}?overview=full&geometries=geojson`,
-        );
-
-        if (!response.ok) {
-          console.warn(`OSRM API failed for marker ${markerId}:`, response.status, response.statusText);
-          setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
-          return;
-        }
-
-        const data = await response.json();
-        if (data.code === "Ok" && data.routes?.[0]?.geometry?.coordinates) {
-          const coordinates = data.routes[0].geometry.coordinates as number[][];
-          const distance = data.routes[0].distance / 1000;
-          const walkingDuration = calculateWalkingTime(distance);
-
-          setRoutes((prev) => {
-            const filtered = prev.filter((r) => r.markerId !== markerId);
-            return [...filtered, { coordinates, markerId, distance, duration: walkingDuration }];
-          });
-        } else {
-          setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
-        }
-      } catch (err) {
-        console.warn(`Failed to fetch route for marker ${markerId}:`, err);
-        setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
-      } finally {
-        setLoadingRoutes((prev) => {
-          const next = new Set(prev);
-          next.delete(markerId);
-          return next;
-        });
+  // Fetch route from user location to marker using OSRM (Open Source Routing Machine)
+  // OSRM is free and doesn't require an API key
+  const fetchRoute = useCallback(async (markerLat: number, markerLng: number, markerId: string) => {
+    if (!userLocation) {
+      return;
+    }
+    
+    setLoadingRoutes(prev => new Set(prev).add(markerId));
+    
+    try {
+      // Using OSRM (Open Source Routing Machine) - free, no API key needed
+      // Using the public OSRM demo server
+      const start = `${userLocation.lng},${userLocation.lat}`;
+      const end = `${markerLng},${markerLat}`;
+      const profile = "driving"; // Can be: driving, walking, cycling
+      
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/${profile}/${start};${end}?overview=full&geometries=geojson`
+      );
+      
+      if (!response.ok) {
+        console.warn(`OSRM API failed for marker ${markerId}:`, response.status, response.statusText);
+        // Remove route if API fails - don't show straight line
+        setRoutes(prev => prev.filter(r => r.markerId !== markerId));
+        return;
       }
-    },
-    [userLocation],
-  );
+      
+      const data = await response.json();
+      
+      if (data.code === "Ok" && data.routes && data.routes[0] && data.routes[0].geometry) {
+        const coordinates = data.routes[0].geometry.coordinates;
+        const distance = data.routes[0].distance / 1000; // Convert meters to km
+        const duration = data.routes[0].duration / 60; // Convert seconds to minutes (for driving)
+        // For walking, calculate based on distance
+        const walkingDuration = calculateWalkingTime(distance);
+        
+        const newRoute = {
+          coordinates,
+          markerId,
+          distance, // Store route distance
+          duration: walkingDuration, // Store walking duration
+        };
+        
+        setRoutes(prev => {
+          const filtered = prev.filter(r => r.markerId !== markerId);
+          return [...filtered, newRoute];
+        });
+        
+        // Remove from loading set
+        setLoadingRoutes(prev => {
+          const updated = new Set(prev);
+          updated.delete(markerId);
+          return updated;
+        });
+      } else {
+        console.warn(`OSRM returned error for marker ${markerId}:`, data.code);
+        setRoutes(prev => prev.filter(r => r.markerId !== markerId));
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch route for marker ${markerId}:`, error);
+      // Don't show straight line - just remove the route
+      setRoutes(prev => prev.filter(r => r.markerId !== markerId));
+    } finally {
+      setLoadingRoutes(prev => {
+        const next = new Set(prev);
+        next.delete(markerId);
+        return next;
+      });
+    }
+  }, [userLocation]);
 
+  // Keep track of last route fetch position to avoid excessive API calls
+  const lastRouteFetchPosition = useRef<{ lat: number; lng: number; markerId: string } | null>(null);
+  
+  // Store fetchRoute in a ref to avoid dependency issues
   const fetchRouteRef = useRef(fetchRoute);
   useEffect(() => {
     fetchRouteRef.current = fetchRoute;
   }, [fetchRoute]);
 
-  const lastRouteFetchPosition = useRef<{ lat: number; lng: number; markerId: string } | null>(null);
+  // Track whether we should have routes to avoid unnecessary clears
   const shouldHaveRoutesRef = useRef(false);
 
-  // update route for selected marker when user moves significantly
+  // Fetch routes only for selected marker and if showUserLocation is enabled
+  // Update route when userLocation changes significantly (>50m) for real-time tracking
   useEffect(() => {
-    if (!showRoutes) return;
-
-    if (showUserLocation && selectedMarkerId && userLocation && hasNumber(userLocation.lat) && hasNumber(userLocation.lng)) {
-      const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
-      if (selectedMarker && hasNumber(selectedMarker.lat) && hasNumber(selectedMarker.lng)) {
+    if (showUserLocation && selectedMarkerId && userLocation && userLocation.lat && userLocation.lng) {
+      const selectedMarker = markers.find(m => m.id === selectedMarkerId);
+      
+      if (selectedMarker && selectedMarker.lat && selectedMarker.lng) {
         const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
-
-        const last = lastRouteFetchPosition.current;
-        const shouldUpdate =
-          !last ||
-          last.markerId !== selectedMarkerId ||
-          Math.abs(last.lat - userLocation.lat) > 0.0005 ||
-          Math.abs(last.lng - userLocation.lng) > 0.0005;
-
+        
+        // Check if position has changed significantly (>50m or ~0.0005 degrees)
+        const lastFetch = lastRouteFetchPosition.current;
+        const shouldUpdate = !lastFetch || 
+                            lastFetch.markerId !== selectedMarkerId ||
+                            Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
+                            Math.abs(lastFetch.lng - userLocation.lng) > 0.0005;
+        
+        // Fetch route when marker changes or position changes significantly
         if (!isLoading && shouldUpdate) {
-          lastRouteFetchPosition.current = { lat: userLocation.lat, lng: userLocation.lng, markerId: selectedMarkerId };
+          lastRouteFetchPosition.current = { 
+            lat: userLocation.lat, 
+            lng: userLocation.lng, 
+            markerId: selectedMarkerId 
+          };
           fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
         }
         shouldHaveRoutesRef.current = true;
       }
     } else {
+      // Clear routes when no marker is selected or showUserLocation is disabled
+      // Only clear if we previously had routes to avoid unnecessary re-renders
       if (shouldHaveRoutesRef.current) {
         setRoutes([]);
         shouldHaveRoutesRef.current = false;
       }
       lastRouteFetchPosition.current = null;
     }
-  }, [showRoutes, selectedMarkerId, userLocation, markers, showUserLocation]);
+  }, [selectedMarkerId, userLocation, markers, showUserLocation]);
 
-  // clear selection if marker disappears
+  // Clear selected marker if it's no longer in the markers list (filtered out)
   useEffect(() => {
-    if (!selectedMarkerId) return;
-    if (!markers.some((m) => m.id === selectedMarkerId)) {
+    if (selectedMarkerId) {
+      const markerStillExists = markers.find(m => m.id === selectedMarkerId);
+      if (!markerStillExists) {
+        setSelectedMarkerId(null);
+        setRoutes([]);
+        lastRouteFetchPosition.current = null;
+      }
+    }
+  }, [markers, selectedMarkerId]);
+
+  // Clear selected marker when geolocation is disabled
+  useEffect(() => {
+    if (!showUserLocation && selectedMarkerId) {
       setSelectedMarkerId(null);
       setRoutes([]);
       lastRouteFetchPosition.current = null;
     }
-  }, [markers, selectedMarkerId]);
+  }, [showUserLocation, selectedMarkerId]);
 
-  // auto-disable geo on zoom out
+  // Automatically disable geotracking on medium, far and veryFar zoom levels
   useEffect(() => {
-    const zl = getZoomLevel(viewState.zoom);
-    if ((zl === "medium" || zl === "far" || zl === "veryFar") && showUserLocation) {
+    const zoomLevel = getZoomLevel(viewState.zoom);
+    if ((zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") && showUserLocation) {
+      // Disable geotracking
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -492,53 +700,73 @@ export function MapComponent({
     }
   }, [viewState.zoom, showUserLocation, setShowUserLocation, setUserLocation]);
 
-  // enrich markers with route distance ONLY for selected marker
+  // Calculate distances for markers
+  // ONLY use route distance from API - don't show straight-line distance
+  // Wait for API to return route before showing distance
+  // Only calculate if showUserLocation is enabled
   const markersWithDistance = useMemo(() => {
-    const base = Array.isArray(markers) ? markers : [];
-    if (!showUserLocation || !userLocation) return base;
-
-    return base.map((marker) => {
-      const route = selectedMarkerId === marker.id ? routes.find((r) => r.markerId === marker.id) : null;
+    if (!showUserLocation || !userLocation) return markers;
+    
+    return markers.map(marker => {
+      // Only use route distance for the currently selected marker
+      // This prevents showing stale route data when switching between markers
+      const route = (selectedMarkerId === marker.id) ? routes.find(r => r.markerId === marker.id) : null;
+      
+      // Only show distance if we have route data from API
+      // Don't use fallback straight-line calculation
       const distance = route?.distance;
       const walkingTime = route?.duration;
       const cyclingTime = distance !== undefined ? calculateCyclingTime(distance) : undefined;
-
+      
       return {
         ...marker,
         distance,
         walkingTime,
         cyclingTime,
-        isRouteDistance: !!route?.distance,
+        isRouteDistance: !!route?.distance, // Flag to indicate if this is route distance or straight-line
       };
     });
   }, [markers, userLocation, routes, selectedMarkerId, showUserLocation]);
 
-  const visibleMarkers = useMemo(() => clusterMarkers(markersWithDistance, viewState.zoom), [markersWithDistance, viewState.zoom]);
+  // Apply clustering to reduce marker density at veryFar zoom
+  const visibleMarkers = useMemo(() => {
+    return clusterMarkers(markersWithDistance, viewState.zoom);
+  }, [markersWithDistance, viewState.zoom]);
 
-  // Pointer-based marker interaction: works for mouse + touch without ghost clicks
-  const handleMarkerPointerUp = useCallback(
-    (marker: (typeof markersWithDistance)[0], e: React.PointerEvent) => {
-      e.stopPropagation();
-
-      // if geo is off: navigate on first interaction
-      if (!showUserLocation) {
-        marker.onClick?.();
-        return;
+  // Handle marker click - behavior depends on showUserLocation
+  // If showUserLocation is false: navigate immediately (single click)
+  // If showUserLocation is true: 
+  //   - First click on a marker: selects it and calculates route
+  //   - Click on different marker: switches to that marker immediately
+  //   - Second click on same marker: navigates to place detail page
+  const handleMarkerClick = useCallback((marker: typeof markersWithDistance[0], event: React.MouseEvent | React.TouchEvent) => {
+    event.stopPropagation(); // Prevent map click
+    // Don't preventDefault - it can block navigation
+    
+    if (!showUserLocation) {
+      // If user location is disabled, navigate immediately on first click
+      if (marker.onClick) {
+        marker.onClick();
       }
-
-      // geo on: 2-step interaction
-      if (selectedMarkerId === marker.id) {
-        marker.onClick?.();
-      } else {
-        setRoutes([]); // clear old route
-        lastRouteFetchPosition.current = null;
-        setSelectedMarkerId(marker.id);
+      return;
+    }
+    
+    // If user location is enabled, use two-click behavior
+    if (selectedMarkerId === marker.id) {
+      // Second click on same marker - navigate (only if onClick exists)
+      if (marker.onClick) {
+        marker.onClick();
       }
-    },
-    [selectedMarkerId, showUserLocation],
-  );
+    } else {
+      // Click on different marker (or first click if no marker selected) - switch immediately
+      // Clear all previous routes when selecting a new marker
+      setRoutes([]); // Clear all routes when selecting a new marker
+      lastRouteFetchPosition.current = null; // Reset route fetch position tracking
+      setSelectedMarkerId(marker.id);
+    }
+  }, [selectedMarkerId, markersWithDistance, showUserLocation]);
 
-  // map style
+  // Memoize map style to prevent re-initialization on every render
   const memoizedMapStyle = useMemo(() => {
     if (mapStyle === "hand-drawn") {
       return {
@@ -546,62 +774,110 @@ export function MapComponent({
         sources: {
           "hand-drawn-tiles": {
             type: "raster",
-            tiles: ["https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"],
+            tiles: [
+              "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"
+            ],
             tileSize: 256,
-            attribution: "© Stamen Design, © OpenStreetMap contributors",
-          },
+            attribution: "© Stamen Design, © OpenStreetMap contributors"
+          }
         },
-        layers: [{ id: "hand-drawn-layer", type: "raster", source: "hand-drawn-tiles", minzoom: 0, maxzoom: 18 }],
+        layers: [
+          {
+            id: "hand-drawn-layer",
+            type: "raster",
+            source: "hand-drawn-tiles",
+            minzoom: 0,
+            maxzoom: 18
+          }
+        ]
       };
-    }
-    if (mapStyle === "pastel") {
+    } else if (mapStyle === "pastel") {
       return {
         version: 8,
         sources: {
           "pastel-tiles": {
             type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tiles: [
+              "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
             tileSize: 256,
-            attribution: "© OpenStreetMap contributors",
-          },
+            attribution: "© OpenStreetMap contributors"
+          }
         },
-        layers: [{ id: "pastel-layer", type: "raster", source: "pastel-tiles", minzoom: 0, maxzoom: 22, paint: { "raster-saturation": -0.3 } }],
+        layers: [
+          {
+            id: "pastel-layer",
+            type: "raster",
+            source: "pastel-tiles",
+            minzoom: 0,
+            maxzoom: 22,
+            paint: {
+              "raster-saturation": -0.3
+            }
+          }
+        ]
+      };
+    } else {
+      return {
+        version: 8,
+        sources: {
+          "raster-tiles": {
+            type: "raster",
+            tiles: [
+              "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            ],
+            tileSize: 256,
+            attribution: "© OpenStreetMap contributors"
+          }
+        },
+        layers: [
+          {
+            id: "simple-tiles",
+            type: "raster",
+            source: "raster-tiles",
+            minzoom: 0,
+            maxzoom: 22,
+            paint: {
+              "raster-saturation": -0.3
+            }
+          }
+        ]
       };
     }
-    return {
-      version: 8,
-      sources: {
-        "raster-tiles": {
-          type: "raster",
-          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-          tileSize: 256,
-          attribution: "© OpenStreetMap contributors",
-        },
-      },
-      layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles", minzoom: 0, maxzoom: 22, paint: { "raster-saturation": -0.3 } }],
-    };
   }, [mapStyle]);
 
+  // Convert height to CSS value
   const heightStyle = typeof height === "number" ? `${height}px` : height;
-
+  
   return (
     <div style={{ width: "100%", height: heightStyle, position: "relative", overflow: "hidden", margin: 0, padding: 0 }}>
       <style>{`
         @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.4); }
+          0%, 100% {
+            opacity: 0.3;
+            transform: translate(-50%, -50%) scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: translate(-50%, -50%) scale(1.4);
+          }
         }
         @keyframes personPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
         }
       `}</style>
-
       <ReactMapGl
         {...viewState}
         onMove={(evt) => {
           setViewState(evt.viewState);
-          onZoomChange?.(evt.viewState.zoom);
+          if (onZoomChange) {
+            onZoomChange(evt.viewState.zoom);
+          }
         }}
         onClick={handleMapClick}
         style={{ width: "100%", height: "100%" }}
@@ -614,14 +890,33 @@ export function MapComponent({
         touchPitch={false}
         dragPan={true}
         onLoad={(evt) => {
+          // Reduce scroll wheel zoom sensitivity
+          // Default is 1/450, using 1/800 makes it much less sensitive
           const map = evt.target;
-          if (map?.scrollZoom) map.scrollZoom.setWheelZoomRate(1 / 800);
+          if (map && map.scrollZoom) {
+            map.scrollZoom.setWheelZoomRate(1 / 800);
+          }
         }}
       >
-        {/* User location marker */}
-        {showUserLocation && userLocation && hasNumber(userLocation.lat) && hasNumber(userLocation.lng) && (
-          <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="bottom">
-            <div style={{ position: "relative", width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        {/* User location marker - only show if showUserLocation is enabled */}
+        {showUserLocation && userLocation && typeof userLocation.lat === "number" && typeof userLocation.lng === "number" && (
+          <Marker
+            longitude={userLocation.lng}
+            latitude={userLocation.lat}
+            anchor="bottom"
+          >
+            <div
+              style={{
+                position: "relative",
+                width: 50,
+                height: 50,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1000,
+              }}
+            >
+              {/* Pulsing circle animation - centered */}
               <div
                 style={{
                   position: "absolute",
@@ -635,6 +930,7 @@ export function MapComponent({
                   transform: "translate(-50%, -50%)",
                 }}
               />
+              {/* User location marker - person icon (emoji) - centered on pulsing circle */}
               <div
                 style={{
                   width: 35,
@@ -647,16 +943,21 @@ export function MapComponent({
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 20,
+                  color: "white",
+                  fontWeight: 500,
+                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   position: "absolute",
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                   zIndex: 1001,
                   animation: "personPulse 2s ease-in-out infinite",
+                  boxSizing: "border-box",
                 }}
               >
                 👤
               </div>
+              {/* Label - centered horizontally with person icon center, very close to top of person icon circle */}
               <div
                 style={{
                   position: "absolute",
@@ -677,9 +978,13 @@ export function MapComponent({
                   color: "#1f2937",
                   border: "1.5px solid rgba(255, 255, 255, 0.5)",
                   zIndex: 1002,
+                  boxSizing: "border-box",
+                  letterSpacing: "0.01em",
+                  marginBottom: "4px",
                 }}
               >
                 {t("public.yourLocation")}
+                {/* Small pointer arrow pointing down to the icon - centered on label */}
                 <div
                   style={{
                     position: "absolute",
@@ -699,34 +1004,45 @@ export function MapComponent({
           </Marker>
         )}
 
-        {/* Route line (selected marker only) */}
-        {showRoutes && showUserLocation && selectedMarkerId && userLocation && routes.length > 0 &&
-          routes.map((route) => {
-            const markerExists = markers.find((m) => m.id === route.markerId);
-            if (!markerExists) return null;
-            return (
-              <Source
-                key={`route-${route.markerId}`}
-                id={`route-${route.markerId}`}
-                type="geojson"
-                data={{
-                  type: "Feature",
-                  properties: {},
-                  geometry: { type: "LineString", coordinates: route.coordinates },
+        {/* Route lines from user location to selected marker only - only show if showUserLocation is enabled */}
+        {showUserLocation && selectedMarkerId && userLocation && routes.length > 0 && routes.map((route) => {
+          // Only show route if the marker still exists in the markers list (not filtered out)
+          const markerExists = markers.find(m => m.id === route.markerId);
+          if (!markerExists) return null;
+          
+          return (
+            <Source
+              key={`route-${route.markerId}`}
+              id={`route-${route.markerId}`}
+              type="geojson"
+              data={{
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: route.coordinates,
+                },
+              }}
+            >
+              <Layer
+                id={`route-layer-${route.markerId}`}
+                type="line"
+                layout={{
+                  "line-join": "round",
+                  "line-cap": "round",
                 }}
-              >
-                <Layer
-                  id={`route-layer-${route.markerId}`}
-                  type="line"
-                  layout={{ "line-join": "round", "line-cap": "round" }}
-                  paint={{ "line-color": "#3b82f6", "line-width": 6, "line-opacity": 0.8 }}
-                />
-              </Source>
-            );
-          })}
+                paint={{
+                  "line-color": "#3b82f6",
+                  "line-width": 6,
+                  "line-opacity": 0.8,
+                }}
+              />
+            </Source>
+          );
+        })}
 
-        {/* Main marker (editable) */}
-        {hasNumber(currentLat) && hasNumber(currentLng) && onLocationChange && (
+        {/* Main marker (editable location) */}
+        {currentLat && currentLng && onLocationChange && (
           <Marker
             longitude={currentLng}
             latitude={currentLat}
@@ -745,8 +1061,10 @@ export function MapComponent({
                 boxShadow: "0 4px 12px rgba(0, 123, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)",
                 cursor: interactive && !!onLocationChange ? "move" : "default",
                 transform: "rotate(-45deg)",
+                transition: "all 0.2s ease",
               }}
             >
+              {/* Inner dot */}
               <div
                 style={{
                   position: "absolute",
@@ -763,64 +1081,128 @@ export function MapComponent({
           </Marker>
         )}
 
-        {/* Additional markers */}
+        {/* Additional markers (for places on explore page) */}
         {visibleMarkers.map((marker) => {
-          if (!hasNumber(marker.lat) || !hasNumber(marker.lng)) return null;
-
           const zoomLevel = getZoomLevel(viewState.zoom);
-          const showLabel = zoomLevel === "close" && !!marker.name;
+          // Show labels only when zoomed in (zoom >= 13) - but NOT distance unless selected
+          const showLabel = zoomLevel === "close" && marker.name;
           const isClickable = !!marker.onClick;
           const isSelected = selectedMarkerId === marker.id;
-
-          const isDot = zoomLevel !== "close";
-          const markerSize = isSelected
+          
+          // Determine marker size and style based on zoom level
+          const isDot = zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar";
+          const markerSize = isSelected 
             ? (zoomLevel === "close" ? 28 : zoomLevel === "medium" ? 16 : zoomLevel === "far" ? 12 : 8)
             : (zoomLevel === "close" ? 24 : zoomLevel === "medium" ? 14 : zoomLevel === "far" ? 10 : 6);
-          const borderWidth = isSelected
+          const borderWidth = isSelected 
             ? (zoomLevel === "close" ? 4 : zoomLevel === "medium" ? 3 : zoomLevel === "far" ? 2 : 1.5)
             : (zoomLevel === "close" ? 3 : zoomLevel === "medium" ? 2 : zoomLevel === "far" ? 2 : 1.5);
           const innerDotSize = zoomLevel === "close" ? 8 : zoomLevel === "medium" ? 6 : zoomLevel === "far" ? 4 : 3;
-
+          
           return (
-            <Marker key={marker.id} longitude={marker.lng} latitude={marker.lat}>
+            <Marker
+              key={marker.id}
+              longitude={marker.lng}
+              latitude={marker.lat}
+            >
               <div
-                style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", cursor: isClickable ? "pointer" : "default", touchAction: "manipulation" }}
-                onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => handleMarkerPointerUp(marker, e)}
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent map click
+                  handleMarkerClick(marker, e as any);
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation(); // Prevent map click
+                  // Don't preventDefault - it blocks navigation on second tap
+                  handleMarkerClick(marker, e as any);
+                }}
+                onMouseDown={(e) => {
+                  // Also stop propagation on mousedown to prevent map click
+                  e.stopPropagation();
+                }}
+                onTouchStart={(e) => {
+                  // Also stop propagation on touchstart to prevent map click
+                  e.stopPropagation();
+                }}
               >
+                {/* Marker pin or dot design */}
                 {isDot ? (
+                  // Dot style for medium, far and veryFar zoom
+                  // VeryFar: simple dot without border/shadow
                   zoomLevel === "veryFar" ? (
                     <div
                       style={{
                         width: markerSize,
                         height: markerSize,
                         borderRadius: "50%",
-                        background: isSelected ? "#fbbf24" : isClickable ? "#667eea" : "#999",
-                        opacity: isClickable ? 1 : 0.7,
+                        background: isSelected
+                          ? "#fbbf24"
+                          : isClickable 
+                          ? "#667eea"
+                          : "#999",
+                        cursor: isClickable ? "pointer" : "default",
                         transform: isSelected ? "scale(1.2)" : "scale(1)",
                         transition: "all 0.2s ease",
+                        opacity: isClickable ? 1 : 0.7,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isClickable && !isSelected) {
+                          e.currentTarget.style.transform = "scale(1.1)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.transform = "scale(1)";
+                        }
                       }}
                     />
                   ) : (
+                    // Medium and far: dot with border and shadow
                     <div
                       style={{
                         width: markerSize,
                         height: markerSize,
                         borderRadius: "50%",
-                        background: isSelected ? "#fbbf24" : isClickable ? "#667eea" : "#999",
+                        background: isSelected
+                          ? "#fbbf24"
+                          : isClickable 
+                          ? "#667eea"
+                          : "#999",
                         border: `${borderWidth}px solid white`,
                         boxShadow: isSelected
                           ? "0 4px 12px rgba(251, 191, 36, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)"
                           : isClickable
                           ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
                           : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)",
-                        opacity: isClickable ? 1 : 0.7,
+                        cursor: isClickable ? "pointer" : "default",
                         transform: isSelected ? "scale(1.3)" : "scale(1)",
                         transition: "all 0.2s ease",
+                        opacity: isClickable ? 1 : 0.7,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isClickable && !isSelected) {
+                          e.currentTarget.style.transform = "scale(1.2)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow = isClickable
+                            ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
+                            : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)";
+                        }
                       }}
                     />
                   )
                 ) : (
+                  // Pin style for close zoom
                   <div
                     style={{
                       width: markerSize,
@@ -828,7 +1210,7 @@ export function MapComponent({
                       borderRadius: "50% 50% 50% 0",
                       background: isSelected
                         ? "#fbbf24"
-                        : isClickable
+                        : isClickable 
                         ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                         : "linear-gradient(135deg, #999 0%, #777 100%)",
                       border: `${borderWidth}px solid white`,
@@ -837,11 +1219,29 @@ export function MapComponent({
                         : isClickable
                         ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
                         : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
-                      opacity: isClickable ? 1 : 0.7,
+                      cursor: isClickable ? "pointer" : "default",
                       transform: isSelected ? "rotate(-45deg) scale(1.2)" : "rotate(-45deg)",
                       transition: "all 0.2s ease",
+                      opacity: isClickable ? 1 : 0.7,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isClickable && !isSelected) {
+                        e.currentTarget.style.transform = "rotate(-45deg) scale(1.15)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = "rotate(-45deg) scale(1)";
+                        e.currentTarget.style.boxShadow = isSelected
+                          ? "0 6px 16px rgba(245, 158, 11, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
+                          : isClickable
+                          ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
+                          : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)";
+                      }
                     }}
                   >
+                    {/* Inner dot */}
                     <div
                       style={{
                         position: "absolute",
@@ -856,8 +1256,8 @@ export function MapComponent({
                     />
                   </div>
                 )}
-
-                {/* Label */}
+                
+                {/* Label - shows name when zoomed in, distance and walking time ONLY when selected */}
                 {(showLabel || isSelected) && (
                   <div
                     style={{
@@ -880,7 +1280,10 @@ export function MapComponent({
                       marginBottom: 8,
                       pointerEvents: "none",
                       color: "#1a1a1a",
-                      border: isSelected ? "2px solid rgba(251, 191, 36, 1)" : "1px solid rgba(0, 0, 0, 0.05)",
+                      border: isSelected 
+                        ? "2px solid rgba(251, 191, 36, 1)"
+                        : "1px solid rgba(0, 0, 0, 0.05)",
+                      letterSpacing: "-0.01em",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -888,33 +1291,43 @@ export function MapComponent({
                       minWidth: isSelected ? 120 : "auto",
                     }}
                   >
-                    {marker.name && <span style={{ fontWeight: 500 }}>{marker.name}</span>}
-
+                    {marker.name && !isSelected && (
+                      <span style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        {marker.name}
+                      </span>
+                    )}
                     {isSelected && (
                       <>
+                        {marker.name && (
+                          <span style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                            {marker.name}
+                          </span>
+                        )}
                         {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
                           <>
-                            <span style={{ fontSize: 12, fontWeight: 400, opacity: 0.95 }}>
+                            <span style={{ fontSize: 12, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.95 }}>
                               {marker.isRouteDistance ? "🛣️" : "📍"} {formatDistance(marker.distance)}
                             </span>
-                            <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.9, display: "flex", gap: 8, alignItems: "center" }}>
-                              {marker.walkingTime !== undefined && <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>}
-                              {marker.cyclingTime !== undefined && <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>}
+                            <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.9, display: "flex", gap: 8, alignItems: "center" }}>
+                              {marker.walkingTime !== undefined && (
+                                <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>
+                              )}
+                              {marker.cyclingTime !== undefined && (
+                                <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>
+                              )}
                             </span>
-                            <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.8, marginTop: 2 }}>
+                            <span style={{ fontSize: 10, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, marginTop: 2 }}>
                               {t("public.clickAgainToNavigate")}!
                             </span>
                           </>
                         )}
-
                         {marker.distance !== undefined && marker.distance > MAX_DISTANCE_KM && (
-                          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.8, fontStyle: "italic" }}>
+                          <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, fontStyle: "italic" }}>
                             {t("public.tooFarAway", { distance: MAX_DISTANCE_KM })}
                           </span>
                         )}
-
-                        {marker.distance === undefined && showUserLocation && (
-                          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
+                        {marker.distance === undefined && (
+                          <span style={{ fontSize: 11, fontWeight: 400, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", opacity: 0.8, marginTop: 2, fontStyle: "italic" }}>
                             ⏳ {t("public.calculatingRoute")}
                           </span>
                         )}
@@ -927,165 +1340,177 @@ export function MapComponent({
           );
         })}
       </ReactMapGl>
-
+      
       {/* Draggable user location control */}
       {!hideLocationButton && (
         <div
           ref={locationControlRef}
-          onMouseDown={handleLocationControlMouseDown}
-          onTouchStart={handleLocationControlTouchStart}
+        onMouseDown={handleLocationControlMouseDown}
+        onTouchStart={handleLocationControlTouchStart}
+        style={{
+          position: "absolute",
+          bottom: locationControlPosition.bottom,
+          left: locationControlPosition.left,
+          zIndex: isDraggingLocationControl ? 10000 : 1000, // Dynamic z-index: higher when dragging
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRadius: isDesktop ? 16 : 12,
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.06)",
+          padding: 0,
+          cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "default",
+          userSelect: "none",
+          display: "flex",
+          alignItems: "center",
+          minWidth: "auto",
+          minHeight: 48,
+          transition: isDraggingLocationControl ? "none" : "box-shadow 0.2s ease",
+          touchAction: "none",
+        }}
+        onMouseEnter={(e) => {
+          if (isDesktop && !isDraggingLocationControl) {
+            e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDraggingLocationControl) {
+            e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
+          }
+        }}
+      >
+        <label
           style={{
-            position: "absolute",
-            bottom: locationControlPosition.bottom,
-            left: locationControlPosition.left,
-            zIndex: isDraggingLocationControl ? 10000 : 1000,
-            background: "rgba(255, 255, 255, 0.98)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            borderRadius: isDesktop ? 16 : 12,
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-            border: "1px solid rgba(0, 0, 0, 0.06)",
-            padding: 0,
-            cursor: isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "default",
-            userSelect: "none",
             display: "flex",
             alignItems: "center",
+            gap: 8,
+            cursor: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") 
+              ? "not-allowed" 
+              : (isDesktop ? (isDraggingLocationControl ? "grabbing" : "grab") : "pointer"),
+            flex: 1,
+            fontSize: 15,
+            fontWeight: 500,
+            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            whiteSpace: "nowrap",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            touchAction: "manipulation",
+            margin: 0,
+            padding: "10px 20px 10px 20px",
+            background: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar")
+              ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
+              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: isDesktop ? 16 : 12,
             minHeight: 48,
-            transition: isDraggingLocationControl ? "none" : "box-shadow 0.2s ease",
-            touchAction: "none",
+            boxSizing: "border-box",
+            opacity: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? 0.7 : 1,
+          }}
+          onMouseDown={isDesktop ? (e) => {
+            // Allow drag on desktop when clicking on label (but not on checkbox)
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault(); // Prevent text selection
+            }
+          } : undefined}
+          onClick={(e) => {
+            // Don't allow clicking if disabled (medium, far or veryFar zoom)
+            const zoomLevel = getZoomLevel(viewState.zoom);
+            if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
+              return;
+            }
+            // Make entire label area clickable on both mobile and desktop
+            // This gives a much larger tap/click target
+            // Only toggle if user didn't drag (hasDraggedLocationControl is checked in mouseUp/touchEnd)
+            if (hasDraggedLocationControl || isDraggingLocationControl) {
+              // If user was dragging, don't toggle
+              return;
+            }
+            const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (checkbox && (e.target as HTMLElement).tagName !== "INPUT") {
+              // Prevent default label behavior and manually toggle
+              e.preventDefault();
+              e.stopPropagation();
+              checkbox.click(); // Trigger checkbox click which will fire onChange
+            }
           }}
         >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              cursor:
-                getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                  ? "not-allowed"
-                  : isDesktop
-                  ? isDraggingLocationControl
-                    ? "grabbing"
-                    : "grab"
-                  : "pointer",
-              flex: 1,
-              fontSize: 15,
-              fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "white",
-              whiteSpace: "nowrap",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              touchAction: "manipulation",
-              margin: 0,
-              padding: "10px 20px 10px 20px",
-              background:
-                getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                  ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
-                  : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              borderRadius: isDesktop ? 16 : 12,
-              minHeight: 48,
-              boxSizing: "border-box",
-              opacity:
-                getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                  ? 0.7
-                  : 1,
-            }}
-            onMouseDown={
-              isDesktop
-                ? (e) => {
-                    if ((e.target as HTMLElement).tagName !== "INPUT") e.preventDefault();
-                  }
-                : undefined
-            }
-            onClick={(e) => {
-              const zl = getZoomLevel(viewState.zoom);
-              if (zl === "medium" || zl === "far" || zl === "veryFar") return;
-              if (hasDraggedLocationControl || isDraggingLocationControl) return;
-
-              const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
-              if (checkbox && (e.target as HTMLElement).tagName !== "INPUT") {
-                e.preventDefault();
-                e.stopPropagation();
-                checkbox.click();
-              }
-            }}
+          <div 
+            style={{ position: "relative", display: "inline-block", width: 16, height: 16 }}
           >
-            <div style={{ position: "relative", display: "inline-block", width: 16, height: 16 }}>
-              {showUserLocation && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 16,
-                    height: 16,
-                    borderRadius: 3,
-                    backgroundColor: "rgba(102, 126, 234, 0.3)",
-                    animation: "pulse 2s ease-in-out infinite",
-                    pointerEvents: "none",
-                    zIndex: 0,
-                  }}
-                />
-              )}
-              <input
-                type="checkbox"
-                checked={showUserLocation}
-                disabled={getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"}
+            {showUserLocation && (
+              <div
                 style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                   width: 16,
                   height: 16,
-                  cursor:
-                    getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                      ? "not-allowed"
-                      : "pointer",
-                  margin: 0,
-                  padding: 0,
-                  appearance: "none",
-                  WebkitAppearance: "none",
-                  MozAppearance: "none",
-                  backgroundColor: showUserLocation ? "#667eea" : "white",
-                  border: "2px solid rgba(255, 255, 255, 0.8)",
                   borderRadius: 3,
-                  position: "relative",
-                  touchAction: "manipulation",
-                  WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
-                  pointerEvents:
-                    getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                      ? "none"
-                      : "auto",
-                  zIndex: 1,
-                  opacity:
-                    getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"
-                      ? 0.5
-                      : 1,
+                  backgroundColor: "rgba(102, 126, 234, 0.3)",
+                  animation: "pulse 2s ease-in-out infinite",
+                  pointerEvents: "none",
+                  zIndex: 0,
                 }}
-                onChange={(e) => {
-                  const zl = getZoomLevel(viewState.zoom);
-                  if (zl === "medium" || zl === "far" || zl === "veryFar") {
-                    e.target.checked = false;
-                    return;
-                  }
-
-                  const checked = e.target.checked;
-
-                  if (checked) {
-                    if (!navigator.geolocation) {
-                      setShowUserLocation(false);
-                      e.target.checked = false;
-                      return;
-                    }
-
+              />
+            )}
+            <input
+              type="checkbox"
+              checked={showUserLocation}
+              disabled={getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar"}
+              style={{
+                width: 16,
+                height: 16,
+                cursor: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? "not-allowed" : "pointer",
+                margin: 0,
+                padding: 0,
+                appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                backgroundColor: showUserLocation ? "#667eea" : "white",
+                border: "2px solid rgba(255, 255, 255, 0.8)",
+                borderRadius: 3,
+                position: "relative",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
+                pointerEvents: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? "none" : "auto",
+                zIndex: 1,
+                opacity: (getZoomLevel(viewState.zoom) === "medium" || getZoomLevel(viewState.zoom) === "far" || getZoomLevel(viewState.zoom) === "veryFar") ? 0.5 : 1,
+              }}
+              onChange={(e) => {
+                // Don't allow enabling on medium, far or veryFar zoom
+                const zoomLevel = getZoomLevel(viewState.zoom);
+                if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
+                  e.target.checked = false;
+                  return;
+                }
+                // Handle checkbox change for both iOS and desktop
+                // Must call geolocation API directly in event handler to maintain user gesture context on iOS
+                const checked = e.target.checked;
+                
+                if (checked) {
+                  // User wants to enable location tracking
+                  if (navigator.geolocation) {
+                    // Request geolocation in user gesture context (required for iOS)
                     navigator.geolocation.getCurrentPosition(
                       (position) => {
-                        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+                        // Success: set location and enable tracking
+                        setUserLocation({
+                          lat: position.coords.latitude,
+                          lng: position.coords.longitude,
+                        });
                         setShowUserLocation(true);
-
-                        if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+                        
+                        // Start watching for updates
+                        if (watchIdRef.current !== null) {
+                          navigator.geolocation.clearWatch(watchIdRef.current);
+                        }
                         watchIdRef.current = navigator.geolocation.watchPosition(
                           (updatedPosition) => {
-                            setUserLocation({ lat: updatedPosition.coords.latitude, lng: updatedPosition.coords.longitude });
+                            setUserLocation({
+                              lat: updatedPosition.coords.latitude,
+                              lng: updatedPosition.coords.longitude,
+                            });
                           },
                           (error) => {
                             console.warn("Geolocation watch error:", error);
@@ -1094,54 +1519,82 @@ export function MapComponent({
                               setUserLocation(null);
                             }
                           },
-                          { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 },
+                          {
+                            enableHighAccuracy: true,
+                            maximumAge: 30000,
+                            timeout: 10000,
+                          }
                         );
                       },
                       (error) => {
+                        // Permission denied or error - don't enable
                         console.warn("Geolocation error:", error);
                         setShowUserLocation(false);
                         setUserLocation(null);
+                        // Reset checkbox state
                         e.target.checked = false;
                       },
-                      { enableHighAccuracy: true, maximumAge: 300000, timeout: 15000 },
+                      {
+                        enableHighAccuracy: true,
+                        maximumAge: 300000,
+                        timeout: 15000,
+                      }
                     );
                   } else {
-                    if (watchIdRef.current !== null) {
-                      navigator.geolocation.clearWatch(watchIdRef.current);
-                      watchIdRef.current = null;
-                    }
+                    // Geolocation not available
+                    console.warn("Geolocation not supported");
                     setShowUserLocation(false);
-                    setUserLocation(null);
-                    setSelectedMarkerId(null);
-                    setRoutes([]);
-                    lastRouteFetchPosition.current = null;
+                    e.target.checked = false;
                   }
+                } else {
+                  // User wants to disable location tracking
+                  if (watchIdRef.current !== null) {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                    watchIdRef.current = null;
+                  }
+                  setShowUserLocation(false);
+                  setUserLocation(null);
+                  // Clear selected marker and routes
+                  setSelectedMarkerId(null);
+                  setRoutes([]);
+                  lastRouteFetchPosition.current = null;
+                }
+              }}
+              onClick={(e) => {
+                // Stop propagation to prevent triggering drag on checkbox click
+                e.stopPropagation();
+              }}
+            />
+            {showUserLocation && (
+              <svg 
+                viewBox="0 0 12 12" 
+                style={{ 
+                  width: 9, 
+                  height: 9,
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  pointerEvents: "none",
+                  zIndex: 2,
                 }}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {showUserLocation && (
-                <svg
-                  viewBox="0 0 12 12"
-                  style={{
-                    width: 9,
-                    height: 9,
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    pointerEvents: "none",
-                    zIndex: 2,
-                  }}
-                >
-                  <path d="M2 6 L5 9 L10 2" stroke="white" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
-            <span style={{ fontWeight: 500, lineHeight: 1 }}>{t("public.showMyLocation")}</span>
-          </label>
-        </div>
+              >
+                <path
+                  d="M2 6 L5 9 L10 2"
+                  stroke="white"
+                  strokeWidth="3.5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </div>
+          <span style={{ fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.showMyLocation")}</span>
+        </label>
+      </div>
       )}
-
+      
       {interactive && onLocationChange && (
         <div
           style={{
@@ -1160,6 +1613,19 @@ export function MapComponent({
           {t("admin.clickOrDragMarker")}
         </div>
       )}
+      <style>{`
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
+
