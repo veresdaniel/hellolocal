@@ -43,12 +43,12 @@ export class AdminLegalService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.legalPage.count({ where });
-    
+
     // Get paginated results
     const legalPages = await this.prisma.legalPage.findMany({
       where,
@@ -59,7 +59,7 @@ export class AdminLegalService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       legalPages,
@@ -89,7 +89,9 @@ export class AdminLegalService {
 
   async findByKey(key: string, siteId: string) {
     if (!ALLOWED_KEYS.has(key as any)) {
-      throw new BadRequestException(`Invalid legal page key: ${key}. Must be one of: ${Array.from(ALLOWED_KEYS).join(", ")}`);
+      throw new BadRequestException(
+        `Invalid legal page key: ${key}. Must be one of: ${Array.from(ALLOWED_KEYS).join(", ")}`
+      );
     }
 
     const legalPage = await this.prisma.legalPage.findUnique({
@@ -108,7 +110,9 @@ export class AdminLegalService {
 
   async create(dto: CreateLegalPageDto) {
     if (!ALLOWED_KEYS.has(dto.key)) {
-      throw new BadRequestException(`Invalid legal page key: ${dto.key}. Must be one of: ${Array.from(ALLOWED_KEYS).join(", ")}`);
+      throw new BadRequestException(
+        `Invalid legal page key: ${dto.key}. Must be one of: ${Array.from(ALLOWED_KEYS).join(", ")}`
+      );
     }
 
     return this.prisma.legalPage.create({
@@ -194,4 +198,3 @@ export class AdminLegalService {
     return { message: "Legal page deleted successfully" };
   }
 }
-

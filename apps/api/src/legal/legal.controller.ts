@@ -3,10 +3,10 @@ import { LegalService } from "./legal.service";
 
 /**
  * Controller for legal page endpoints.
- * 
+ *
  * Routes:
  * - GET /api/:lang/legal/:page - Get a legal page (imprint, terms, or privacy)
- * 
+ *
  * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/legal")
@@ -24,10 +24,10 @@ export class LegalController {
 
   /**
    * Gets a legal page by key.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - page: Page key (imprint, terms, privacy)

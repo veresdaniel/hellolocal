@@ -1,5 +1,10 @@
 // src/admin/admin-place-membership.service.ts
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaceRole, UserRole, SiteRole } from "@prisma/client";
 import { RbacService } from "../auth/rbac.service";
@@ -133,7 +138,7 @@ export class AdminPlaceMembershipService {
 
   async update(id: string, dto: UpdatePlaceMembershipDto, actorUserId: string) {
     const membership = await this.findOne(id);
-    
+
     // Get place with site for RBAC check
     const place = await this.prisma.place.findUnique({
       where: { id: membership.placeId },
@@ -146,7 +151,13 @@ export class AdminPlaceMembershipService {
 
     // RBAC: Check if actor can assign this role
     if (dto.role !== undefined) {
-      await this.checkCanAssignRole(actorUserId, membership.placeId, place.siteId, dto.role, membership.role);
+      await this.checkCanAssignRole(
+        actorUserId,
+        membership.placeId,
+        place.siteId,
+        dto.role,
+        membership.role
+      );
     }
 
     const updateData: any = {};
@@ -170,7 +181,7 @@ export class AdminPlaceMembershipService {
 
   async delete(id: string, actorUserId: string) {
     const membership = await this.findOne(id);
-    
+
     // Get place with site for RBAC check
     const place = await this.prisma.place.findUnique({
       where: { id: membership.placeId },
@@ -182,7 +193,12 @@ export class AdminPlaceMembershipService {
     }
 
     // RBAC: Check if actor can delete this membership
-    await this.checkCanDeleteMembership(actorUserId, membership.placeId, place.siteId, membership.role);
+    await this.checkCanDeleteMembership(
+      actorUserId,
+      membership.placeId,
+      place.siteId,
+      membership.role
+    );
 
     return this.prisma.placeMembership.delete({
       where: { id },

@@ -33,7 +33,15 @@ export function LanguageAwareEditor({
   return (
     <div>
       {label && (
-        <label style={{ display: "block", marginBottom: 8, fontWeight: "bold", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: "bold",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {label}
         </label>
       )}
@@ -47,7 +55,8 @@ export function LanguageAwareEditor({
             borderRadius: 4,
             fontSize: "clamp(14px, 3.5vw, 16px)",
             background: "white",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {LANG_VALUES.map((lang) => (
@@ -60,11 +69,12 @@ export function LanguageAwareEditor({
       <TipTapEditorWithUpload
         value={values[selectedLang]}
         onChange={(value) => onChange(selectedLang, value)}
-        placeholder={placeholder ? `${placeholder} (${t(`admin.languageNames.${selectedLang}`)})` : undefined}
+        placeholder={
+          placeholder ? `${placeholder} (${t(`admin.languageNames.${selectedLang}`)})` : undefined
+        }
         height={height}
         uploadFolder="editor"
       />
     </div>
   );
 }
-

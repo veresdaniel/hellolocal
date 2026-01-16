@@ -35,7 +35,7 @@ interface StarRatingProps {
 
 /**
  * StarRating component for displaying and rating places.
- * 
+ *
  * Read-only mode: displays average rating with count
  * Interactive mode: allows users to rate (1-5 stars)
  */
@@ -53,9 +53,7 @@ export function StarRating({
   const [selectedValue, setSelectedValue] = useState<number | null>(initialValue ?? null);
 
   // For read-only mode, use avg; for interactive, use hover or selected
-  const displayValue = interactive
-    ? hoverValue ?? selectedValue ?? avg
-    : avg;
+  const displayValue = interactive ? (hoverValue ?? selectedValue ?? avg) : avg;
 
   // Round to nearest 0.5 for display (for half-star support later)
   const roundedValue = displayValue ? Math.round(displayValue * 2) / 2 : 0;
@@ -138,7 +136,10 @@ export function StarRating({
                 userSelect: "none",
                 position: "relative",
                 transform: interactive && isHovered ? "scale(1.2)" : "scale(1)",
-                filter: interactive && isHovered ? "drop-shadow(0 2px 4px rgba(251, 191, 36, 0.4))" : "none",
+                filter:
+                  interactive && isHovered
+                    ? "drop-shadow(0 2px 4px rgba(251, 191, 36, 0.4))"
+                    : "none",
               }}
               title={
                 interactive
@@ -151,7 +152,7 @@ export function StarRating({
           );
         })}
       </div>
-      {(count !== null && count > 0) && (
+      {count !== null && count > 0 && (
         <span
           style={{
             fontSize: size === "sm" ? "12px" : size === "md" ? "14px" : "16px",

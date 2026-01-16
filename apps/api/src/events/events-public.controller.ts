@@ -3,12 +3,12 @@ import { EventsService } from "./events.service";
 
 /**
  * Public controller for event-related endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/:lang/:siteKey/events - List events with optional filtering
  * - GET /api/public/:lang/:siteKey/events/:slug - Get a single event by slug
  * - GET /api/public/:lang/:siteKey/events/by-id/:eventId - Get a single event by ID (stable)
- * 
+ *
  * All endpoints use path parameters for siteKey (not query parameters).
  */
 @Controller("/api/public/:lang/:siteKey/events")
@@ -28,7 +28,7 @@ export class EventsPublicController {
 
   /**
    * Lists events with optional filtering.
-   * 
+   *
    * Query parameters:
    * - category: Filter by event category
    * - placeId: Filter by place ID
@@ -65,7 +65,7 @@ export class EventsPublicController {
 
   /**
    * Gets a single event by its public slug.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -91,10 +91,10 @@ export class EventsPublicController {
 
   /**
    * Gets a single event by its entity ID (stable, future-proof).
-   * 
+   *
    * This endpoint should be used after slug resolution to fetch event data by ID.
    * The slug is only used for UI/SEO purposes, but data loading always uses stable IDs.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path

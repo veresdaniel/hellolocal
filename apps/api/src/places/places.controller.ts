@@ -3,11 +3,11 @@ import { PlacesService } from "./places.service";
 
 /**
  * Controller for place-related endpoints.
- * 
+ *
  * Routes:
  * - GET /api/:lang/places - List places with optional filtering
  * - GET /api/:lang/places/:slug - Get a single place by slug
- * 
+ *
  * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/places")
@@ -25,7 +25,7 @@ export class PlacesController {
 
   /**
    * Lists places with optional filtering.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support
    * - category: Filter by place category (winery, accommodation, etc.)
@@ -64,10 +64,10 @@ export class PlacesController {
 
   /**
    * Gets a single place by its public slug.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - slug: Public-facing slug of the place

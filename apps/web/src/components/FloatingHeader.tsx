@@ -25,7 +25,12 @@ interface FloatingHeaderProps {
   hideMapViewButton?: boolean; // Whether to hide the map view button
 }
 
-export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false, hideMapViewButton = false }: FloatingHeaderProps = {}) {
+export function FloatingHeader({
+  onMapViewClick,
+  editUrl,
+  showEditButton = false,
+  hideMapViewButton = false,
+}: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
   const { lang, siteKey, siteKeyParam } = useRouteCtx();
   const location = useLocation();
@@ -41,7 +46,7 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
   const [isMobile, setIsMobile] = useState(false);
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
-  
+
   // Get showMap state from store to check if we're actually on map view (not just on home page)
   const { showMap } = useViewStore();
 
@@ -66,7 +71,7 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       // Show header when scrolling up, hide when scrolling down
       if (currentScrollY < 100) {
         setIsVisible(true);
@@ -75,7 +80,7 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
       } else if (currentScrollY < lastScrollY) {
         setIsVisible(true);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -86,10 +91,10 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
   // Close mobile menu when clicking outside
   useEffect(() => {
     if (!isMobileMenuOpen) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('[data-mobile-menu]') && !target.closest('[data-mobile-menu-button]')) {
+      if (!target.closest("[data-mobile-menu]") && !target.closest("[data-mobile-menu-button]")) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -112,8 +117,10 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
   // Check if user is a visitor (activeSiteId === null)
   // Superadmin is never a visitor - they have access to everything
   const isSuperadmin = user?.role === ROLE_SUPERADMIN;
-  const isVisitor = user && !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
-  const hasActiveSite = user && (isSuperadmin || (user.activeSiteId !== null && user.activeSiteId !== undefined));
+  const isVisitor =
+    user && !isSuperadmin && (user.activeSiteId === null || user.activeSiteId === undefined);
+  const hasActiveSite =
+    user && (isSuperadmin || (user.activeSiteId !== null && user.activeSiteId !== undefined));
   // Show auth buttons on all non-map view pages
   // FloatingHeader only appears on non-map view pages, so we should always show buttons here
   // The onMapViewClick prop indicates we're on a list view page (definitely show buttons)
@@ -128,13 +135,16 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
       const effectiveSiteKey = siteKeyParam || undefined;
       const result = await activateFreeSite(lang, effectiveSiteKey);
       showToast(t("public.activateFree.success"), "success");
-      
+
       // Fetch fresh user data from API to get updated activeSiteId
       try {
         const freshUser = await getCurrentUser();
         // Backend now returns siteIds directly, but also has sites array
         // Use siteIds if available, otherwise extract from sites array
-        const siteIds = (freshUser as any).siteIds || freshUser.sites?.map((s: { siteId: string }) => s.siteId) || [];
+        const siteIds =
+          (freshUser as any).siteIds ||
+          freshUser.sites?.map((s: { siteId: string }) => s.siteId) ||
+          [];
         const userData = {
           ...freshUser,
           siteIds,
@@ -142,7 +152,7 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
         };
         // Update localStorage with fresh user data
         localStorage.setItem("user", JSON.stringify(userData));
-        
+
         // Trigger AuthContext refresh to update UI
         if (authContext && authContext.refreshUser) {
           await authContext.refreshUser();
@@ -163,10 +173,7 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
         }
       }
     } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : t("public.activateFree.error"),
-        "error"
-      );
+      showToast(err instanceof Error ? err.message : t("public.activateFree.error"), "error");
     } finally {
       setIsActivating(false);
       setShowActivationModal(false);
@@ -200,464 +207,187 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
         }
       `}</style>
       <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: isMobileMenuOpen ? 10001 : 1000,
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        transform: isVisible ? "translateY(0)" : "translateY(-100%)",
-        transition: "transform 0.3s ease-in-out",
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
         style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: isMobileMenuOpen ? 10001 : 1000,
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+          transform: isVisible ? "translateY(0)" : "translateY(-100%)",
+          transition: "transform 0.3s ease-in-out",
           width: "100%",
-          padding: isMobile ? "12px 0" : "16px 0",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           boxSizing: "border-box",
-          gap: "clamp(16px, 4vw, 32px)",
         }}
       >
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          gap: 16, 
-          flexShrink: 0,
-          paddingLeft: isMobile ? 16 : 24,
-          boxSizing: "border-box",
-        }}>
-          <Link
-            to={buildUrl({ lang, siteKey: siteKey || undefined, path: "" })}
+        <div
+          style={{
+            width: "100%",
+            padding: isMobile ? "12px 0" : "16px 0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            boxSizing: "border-box",
+            gap: "clamp(16px, 4vw, 32px)",
+          }}
+        >
+          <div
             style={{
-              textDecoration: "none",
-              color: "#1a1a1a",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              lineHeight: 1,
-              margin: 0,
-              padding: 0,
+              gap: 16,
+              flexShrink: 0,
+              paddingLeft: isMobile ? 16 : 24,
+              boxSizing: "border-box",
             }}
           >
-            {brandBadgeIcon && !logoError && (
-              <img 
-                src={brandBadgeIcon} 
-                alt={siteName || ""}
-                style={{ 
-                  height: 32, 
-                  width: "auto",
-                  objectFit: "contain",
-                  borderRadius: 4,
-                  display: "block",
-                  verticalAlign: "middle",
-                  flexShrink: 0,
-                }}
-                onError={(e) => {
-                  console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
-                  setLogoError(true);
-                  e.currentTarget.style.display = "none";
-                }}
-                onLoad={() => {
-                  setLogoError(false);
-                }}
-              />
-            )}
-            <span style={{ 
-              display: "inline-flex",
-              alignItems: "center",
-              lineHeight: 1,
-            }}>
-              {siteName ? (
-                <span>{siteName}</span>
-              ) : (
-                <span>{t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"}</span>
+            <Link
+              to={buildUrl({ lang, siteKey: siteKey || undefined, path: "" })}
+              style={{
+                textDecoration: "none",
+                color: "#1a1a1a",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontSize: 20,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                lineHeight: 1,
+                margin: 0,
+                padding: 0,
+              }}
+            >
+              {brandBadgeIcon && !logoError && (
+                <img
+                  src={brandBadgeIcon}
+                  alt={siteName || ""}
+                  style={{
+                    height: 32,
+                    width: "auto",
+                    objectFit: "contain",
+                    borderRadius: 4,
+                    display: "block",
+                    verticalAlign: "middle",
+                    flexShrink: 0,
+                  }}
+                  onError={(e) => {
+                    console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                    setLogoError(true);
+                    e.currentTarget.style.display = "none";
+                  }}
+                  onLoad={() => {
+                    setLogoError(false);
+                  }}
+                />
               )}
-            </span>
-          </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav style={{ 
-          display: isMobile ? "none" : "flex", 
-          gap: "clamp(8px, 1.5vw, 16px)", 
-          alignItems: "center", 
-          flexShrink: 0,
-          paddingRight: isMobile ? 16 : 24,
-          boxSizing: "border-box",
-          flexWrap: "wrap",
-          justifyContent: "flex-end",
-          maxWidth: "100%",
-          alignSelf: "center",
-        }}>
-          {/* Not logged in: Sign in and Sign up buttons */}
-            {!user && !isLoading && showAuthButtons && (
-            <>
-              <Link
-                to={buildUrl({ lang, path: "admin/login" })}
-                style={{
-                  textDecoration: "none",
-                  color: "#1a1a1a",
-                  fontSize: "clamp(12px, 2.5vw, 16px)",
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  padding: "clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 16px)",
-                  borderRadius: 8,
-                  transition: "all 0.2s",
-                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                  background: "white",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  height: "clamp(36px, 4vw, 40px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxSizing: "border-box",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#f5f5f5";
-                  e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "white";
-                  e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.1)";
-                }}
-              >
-                {t("admin.login")}
-              </Link>
-              <Link
-                to={buildUrl({ lang, path: "admin/register" })}
-                style={{
-                  textDecoration: "none",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  fontSize: "clamp(12px, 2.5vw, 16px)",
-                  fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
-                  borderRadius: 8,
-                  transition: "all 0.2s",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  height: "clamp(36px, 4vw, 40px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxSizing: "border-box",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                }}
-              >
-                {t("admin.register")}
-              </Link>
-              {/* Vertical separator */}
-              <div
-                style={{
-                  width: 1,
-                  height: 24,
-                  background: "rgba(0, 0, 0, 0.08)",
-                }}
-              />
-            </>
-          )}
-
-          {/* Logged in: User info and action buttons */}
-          {user && showAuthButtons && (
-            <>
-              {/* Edit button - shown if user has edit permissions for current page */}
-              {showEditButton && editUrl && (
-                <>
-                  <button
-                    onClick={() => navigate(editUrl)}
-                    style={{
-                      padding: "6px 10px",
-                      background: "rgba(102, 126, 234, 0.1)",
-                      border: "1px solid rgba(102, 126, 234, 0.3)",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      fontSize: "clamp(12px, 2.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      transition: "all 0.2s ease",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#667eea",
-                      fontWeight: 600,
-                      height: "clamp(36px, 4vw, 40px)",
-                      boxSizing: "border-box",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.2)";
-                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.5)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
-                    }}
-                    title={t("admin.edit") || "Szerkesztés"}
-                  >
-                    ✏️
-                  </button>
-                  {/* Vertical separator */}
-                  <div
-                    style={{
-                      width: 1,
-                      height: 24,
-                      background: "rgba(0, 0, 0, 0.08)",
-                    }}
-                  />
-                </>
-              )}
-              {/* Username */}
               <span
                 style={{
-                  fontSize: "clamp(12px, 2.5vw, 16px)",
-                  fontWeight: 500,
-                  color: "#1a1a1a",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  maxWidth: "clamp(80px, 15vw, 200px)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  flexShrink: 1,
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
                   lineHeight: 1,
                 }}
-                title={user.username || user.email || t("admin.user") || ""}
               >
-                {user.username || user.email || t("admin.user") || "User"}
+                {siteName ? (
+                  <span>{siteName}</span>
+                ) : (
+                  <span>
+                    {t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"}
+                  </span>
+                )}
               </span>
-              {/* Vertical separator */}
-              <div
-                style={{
-                  width: 1,
-                  height: 24,
-                  background: "rgba(0, 0, 0, 0.08)",
-                }}
-              />
-              {/* Visitor - Switch to free plan */}
-              {isVisitor && (
-                <>
-                  <button
-                    onClick={() => setShowActivationModal(true)}
-                    style={{
-                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      border: "none",
-                      borderRadius: 8,
-                      color: "white",
-                      fontSize: "clamp(12px, 2.5vw, 16px)",
-                      fontWeight: 600,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      cursor: "pointer",
-                      padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
-                      transition: "all 0.2s",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "clamp(4px, 1vw, 8px)",
-                      height: "clamp(36px, 4vw, 40px)",
-                      lineHeight: 1,
-                      boxSizing: "border-box",
-                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                    }}
-                  >
-                    ✨ {t("public.activateFree.cta")}
-                  </button>
-                  {/* Vertical separator */}
-                  <div
-                    style={{
-                      width: 1,
-                      height: 24,
-                      background: "rgba(0, 0, 0, 0.08)",
-                    }}
-                  />
-                </>
-              )}
-              {/* Has active site - Dashboard button */}
-              {hasActiveSite && (
-                <>
-                  <Link
-                    to={buildUrl({ lang, path: "admin" })}
-                    style={{
-                      textDecoration: "none",
-                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      color: "white",
-                      fontSize: "clamp(12px, 2.5vw, 16px)",
-                      fontWeight: 600,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
-                      borderRadius: 8,
-                      transition: "all 0.2s",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "clamp(4px, 1vw, 8px)",
-                      height: "clamp(36px, 4vw, 40px)",
-                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      boxSizing: "border-box",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                    }}
-                  >
-                    📊 {t("admin.dashboard")}
-                  </Link>
-                  {/* Vertical separator */}
-                  <div
-                    style={{
-                      width: 1,
-                      height: 24,
-                      background: "rgba(0, 0, 0, 0.08)",
-                    }}
-                  />
-                </>
-              )}
-              {/* Logout button */}
-              <button
-                onClick={async () => {
-                  if (authContext) {
-                    await authContext.logout(true);
-                  }
-                }}
-                style={{
-                  background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                  border: "none",
-                  borderRadius: 8,
-                  color: "white",
-                  fontSize: "clamp(12px, 2.5vw, 16px)",
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  cursor: "pointer",
-                  padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "clamp(4px, 1vw, 8px)",
-                  height: "clamp(36px, 4vw, 40px)",
-                  boxShadow: "0 4px 12px rgba(245, 87, 108, 0.3)",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  boxSizing: "border-box",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(245, 87, 108, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 87, 108, 0.3)";
-                }}
-              >
-                🚪 {t("admin.logout")}
-              </button>
-            </>
-          )}
+            </Link>
+          </div>
 
-          {/* Map view button - show on all non-map view pages */}
-          {(() => {
-            // Don't show if explicitly hidden
-            if (hideMapViewButton) return null;
-            // Don't show on admin pages
-            if (location.pathname.includes("/admin")) return null;
-            
-            // Check if we're on home page
-            const isOnHomePage = location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) || 
-                               location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
-            
-            // Check if we're actually on map view (homepage with showMap=true)
-            // If we're on home page, check the showMap state from store
-            // Otherwise, we're not on map view
-            const isOnMapView = isOnHomePage && showMap;
-            
-            // Don't show on map view
-            if (isOnMapView) return null;
-            
-            return (
+          {/* Desktop Navigation */}
+          <nav
+            style={{
+              display: isMobile ? "none" : "flex",
+              gap: "clamp(8px, 1.5vw, 16px)",
+              alignItems: "center",
+              flexShrink: 0,
+              paddingRight: isMobile ? 16 : 24,
+              boxSizing: "border-box",
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+              maxWidth: "100%",
+              alignSelf: "center",
+            }}
+          >
+            {/* Not logged in: Sign in and Sign up buttons */}
+            {!user && !isLoading && showAuthButtons && (
               <>
-                <button
-                  onClick={() => {
-                    if (onMapViewClick) {
-                      // If we have onMapViewClick prop (list view), use it
-                      onMapViewClick();
-                    } else {
-                      // Otherwise, navigate to home and trigger map view
-                      const homePath = buildUrl({ lang, siteKey: siteKey || undefined, path: "" });
-                      navigate(homePath);
-                      // Trigger map view after navigation - use longer timeout to ensure HomePage is mounted
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("showMapView"));
-                      }, TIMING.NAVIGATION_DELAY_MS);
-                    }
-                  }}
+                <Link
+                  to={buildUrl({ lang, path: "admin/login" })}
                   style={{
-                    background: "rgba(102, 126, 234, 0.1)",
-                    border: "1px solid rgba(102, 126, 234, 0.3)",
-                    borderRadius: 8,
-                    color: "#667eea",
+                    textDecoration: "none",
+                    color: "#1a1a1a",
                     fontSize: "clamp(12px, 2.5vw, 16px)",
                     fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    padding: "clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 16px)",
+                    borderRadius: 8,
+                    transition: "all 0.2s",
+                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                    background: "white",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
                     height: "clamp(36px, 4vw, 40px)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     boxSizing: "border-box",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    cursor: "pointer",
-                    padding: "8px 16px",
-                    transition: "all 0.2s",
-                    gap: 6,
-                    lineHeight: 1,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
-                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                    e.currentTarget.style.background = "#f5f5f5";
+                    e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.2)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
-                    e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                    e.currentTarget.style.background = "white";
+                    e.currentTarget.style.borderColor = "rgba(0, 0, 0, 0.1)";
                   }}
                 >
-                  📍 {t("public.mapView")}
-                </button>
+                  {t("admin.login")}
+                </Link>
+                <Link
+                  to={buildUrl({ lang, path: "admin/register" })}
+                  style={{
+                    textDecoration: "none",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    fontSize: "clamp(12px, 2.5vw, 16px)",
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
+                    borderRadius: 8,
+                    transition: "all 0.2s",
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    height: "clamp(36px, 4vw, 40px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxSizing: "border-box",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                  }}
+                >
+                  {t("admin.register")}
+                </Link>
                 {/* Vertical separator */}
                 <div
                   style={{
@@ -667,146 +397,446 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                   }}
                 />
               </>
-            );
-          })()}
-          {/* Language selector on list view - on the right side */}
-          <LanguageSelector />
-        </nav>
+            )}
 
-        {/* Mobile Menu Button */}
+            {/* Logged in: User info and action buttons */}
+            {user && showAuthButtons && (
+              <>
+                {/* Edit button - shown if user has edit permissions for current page */}
+                {showEditButton && editUrl && (
+                  <>
+                    <button
+                      onClick={() => navigate(editUrl)}
+                      style={{
+                        padding: "6px 10px",
+                        background: "rgba(102, 126, 234, 0.1)",
+                        border: "1px solid rgba(102, 126, 234, 0.3)",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontSize: "clamp(12px, 2.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        transition: "all 0.2s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#667eea",
+                        fontWeight: 600,
+                        height: "clamp(36px, 4vw, 40px)",
+                        boxSizing: "border-box",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(102, 126, 234, 0.2)";
+                        e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.5)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                        e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                      }}
+                      title={t("admin.edit") || "Szerkesztés"}
+                    >
+                      ✏️
+                    </button>
+                    {/* Vertical separator */}
+                    <div
+                      style={{
+                        width: 1,
+                        height: 24,
+                        background: "rgba(0, 0, 0, 0.08)",
+                      }}
+                    />
+                  </>
+                )}
+                {/* Username */}
+                <span
+                  style={{
+                    fontSize: "clamp(12px, 2.5vw, 16px)",
+                    fontWeight: 500,
+                    color: "#1a1a1a",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    maxWidth: "clamp(80px, 15vw, 200px)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flexShrink: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    lineHeight: 1,
+                  }}
+                  title={user.username || user.email || t("admin.user") || ""}
+                >
+                  {user.username || user.email || t("admin.user") || "User"}
+                </span>
+                {/* Vertical separator */}
+                <div
+                  style={{
+                    width: 1,
+                    height: 24,
+                    background: "rgba(0, 0, 0, 0.08)",
+                  }}
+                />
+                {/* Visitor - Switch to free plan */}
+                {isVisitor && (
+                  <>
+                    <button
+                      onClick={() => setShowActivationModal(true)}
+                      style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        borderRadius: 8,
+                        color: "white",
+                        fontSize: "clamp(12px, 2.5vw, 16px)",
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        cursor: "pointer",
+                        padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "clamp(4px, 1vw, 8px)",
+                        height: "clamp(36px, 4vw, 40px)",
+                        lineHeight: 1,
+                        boxSizing: "border-box",
+                        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                      }}
+                    >
+                      ✨ {t("public.activateFree.cta")}
+                    </button>
+                    {/* Vertical separator */}
+                    <div
+                      style={{
+                        width: 1,
+                        height: 24,
+                        background: "rgba(0, 0, 0, 0.08)",
+                      }}
+                    />
+                  </>
+                )}
+                {/* Has active site - Dashboard button */}
+                {hasActiveSite && (
+                  <>
+                    <Link
+                      to={buildUrl({ lang, path: "admin" })}
+                      style={{
+                        textDecoration: "none",
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: "white",
+                        fontSize: "clamp(12px, 2.5vw, 16px)",
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
+                        borderRadius: 8,
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "clamp(4px, 1vw, 8px)",
+                        height: "clamp(36px, 4vw, 40px)",
+                        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        boxSizing: "border-box",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                      }}
+                    >
+                      📊 {t("admin.dashboard")}
+                    </Link>
+                    {/* Vertical separator */}
+                    <div
+                      style={{
+                        width: 1,
+                        height: 24,
+                        background: "rgba(0, 0, 0, 0.08)",
+                      }}
+                    />
+                  </>
+                )}
+                {/* Logout button */}
+                <button
+                  onClick={async () => {
+                    if (authContext) {
+                      await authContext.logout(true);
+                    }
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                    border: "none",
+                    borderRadius: 8,
+                    color: "white",
+                    fontSize: "clamp(12px, 2.5vw, 16px)",
+                    fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: "pointer",
+                    padding: "clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px)",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "clamp(4px, 1vw, 8px)",
+                    height: "clamp(36px, 4vw, 40px)",
+                    boxShadow: "0 4px 12px rgba(245, 87, 108, 0.3)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    boxSizing: "border-box",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(245, 87, 108, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 87, 108, 0.3)";
+                  }}
+                >
+                  🚪 {t("admin.logout")}
+                </button>
+              </>
+            )}
+
+            {/* Map view button - show on all non-map view pages */}
+            {(() => {
+              // Don't show if explicitly hidden
+              if (hideMapViewButton) return null;
+              // Don't show on admin pages
+              if (location.pathname.includes("/admin")) return null;
+
+              // Check if we're on home page
+              const isOnHomePage =
+                location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) ||
+                location.pathname ===
+                  buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
+
+              // Check if we're actually on map view (homepage with showMap=true)
+              // If we're on home page, check the showMap state from store
+              // Otherwise, we're not on map view
+              const isOnMapView = isOnHomePage && showMap;
+
+              // Don't show on map view
+              if (isOnMapView) return null;
+
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      if (onMapViewClick) {
+                        // If we have onMapViewClick prop (list view), use it
+                        onMapViewClick();
+                      } else {
+                        // Otherwise, navigate to home and trigger map view
+                        const homePath = buildUrl({
+                          lang,
+                          siteKey: siteKey || undefined,
+                          path: "",
+                        });
+                        navigate(homePath);
+                        // Trigger map view after navigation - use longer timeout to ensure HomePage is mounted
+                        setTimeout(() => {
+                          window.dispatchEvent(new CustomEvent("showMapView"));
+                        }, TIMING.NAVIGATION_DELAY_MS);
+                      }
+                    }}
+                    style={{
+                      background: "rgba(102, 126, 234, 0.1)",
+                      border: "1px solid rgba(102, 126, 234, 0.3)",
+                      borderRadius: 8,
+                      color: "#667eea",
+                      fontSize: "clamp(12px, 2.5vw, 16px)",
+                      fontWeight: 500,
+                      height: "clamp(36px, 4vw, 40px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxSizing: "border-box",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      cursor: "pointer",
+                      padding: "8px 16px",
+                      transition: "all 0.2s",
+                      gap: 6,
+                      lineHeight: 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.15)";
+                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
+                    }}
+                  >
+                    📍 {t("public.mapView")}
+                  </button>
+                  {/* Vertical separator */}
+                  <div
+                    style={{
+                      width: 1,
+                      height: 24,
+                      background: "rgba(0, 0, 0, 0.08)",
+                    }}
+                  />
+                </>
+              );
+            })()}
+            {/* Language selector on list view - on the right side */}
+            <LanguageSelector />
+          </nav>
+
+          {/* Mobile Menu Button */}
+          {isMobile && (
+            <button
+              data-mobile-menu-button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 8,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 16,
+              }}
+              aria-label={t("public.menu") || "Menu"}
+            >
+              <span
+                style={{
+                  width: 24,
+                  height: 2,
+                  background: isMobileMenuOpen ? "transparent" : "#1a1a1a",
+                  transition: "all 0.3s ease",
+                  transform: isMobileMenuOpen ? "rotate(45deg)" : "none",
+                  position: isMobileMenuOpen ? "absolute" : "relative",
+                }}
+              />
+              <span
+                style={{
+                  width: 24,
+                  height: 2,
+                  background: "#1a1a1a",
+                  transition: "all 0.3s ease",
+                  opacity: isMobileMenuOpen ? 0 : 1,
+                }}
+              />
+              <span
+                style={{
+                  width: 24,
+                  height: 2,
+                  background: "#1a1a1a",
+                  transition: "all 0.3s ease",
+                  transform: isMobileMenuOpen ? "rotate(-45deg)" : "none",
+                  position: isMobileMenuOpen ? "absolute" : "relative",
+                }}
+              />
+            </button>
+          )}
+        </div>
+
+        {/* Mobile Menu Overlay - Full Screen */}
         {isMobile && (
-          <button
-            data-mobile-menu-button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMobileMenuOpen(!isMobileMenuOpen);
-            }}
+          <nav
+            data-mobile-menu
             style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 8,
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "white",
+              zIndex: 10000,
+              opacity: isMobileMenuOpen ? 1 : 0,
+              visibility: isMobileMenuOpen ? "visible" : "hidden",
+              transition: "opacity 0.3s ease, visibility 0.3s ease",
+              pointerEvents: isMobileMenuOpen ? "auto" : "none",
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              padding: "80px 24px 24px",
               display: "flex",
               flexDirection: "column",
-              gap: 4,
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 16,
+              gap: 12,
             }}
-            aria-label={t("public.menu") || "Menu"}
-          >
-            <span
-              style={{
-                width: 24,
-                height: 2,
-                background: isMobileMenuOpen ? "transparent" : "#1a1a1a",
-                transition: "all 0.3s ease",
-                transform: isMobileMenuOpen ? "rotate(45deg)" : "none",
-                position: isMobileMenuOpen ? "absolute" : "relative",
-              }}
-            />
-            <span
-              style={{
-                width: 24,
-                height: 2,
-                background: "#1a1a1a",
-                transition: "all 0.3s ease",
-                opacity: isMobileMenuOpen ? 0 : 1,
-              }}
-            />
-            <span
-              style={{
-                width: 24,
-                height: 2,
-                background: "#1a1a1a",
-                transition: "all 0.3s ease",
-                transform: isMobileMenuOpen ? "rotate(-45deg)" : "none",
-                position: isMobileMenuOpen ? "absolute" : "relative",
-              }}
-            />
-          </button>
-        )}
-      </div>
-
-      {/* Mobile Menu Overlay - Full Screen */}
-      {isMobile && (
-        <nav
-          data-mobile-menu
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "white",
-            zIndex: 10000,
-            opacity: isMobileMenuOpen ? 1 : 0,
-            visibility: isMobileMenuOpen ? "visible" : "hidden",
-            transition: "opacity 0.3s ease, visibility 0.3s ease",
-            pointerEvents: isMobileMenuOpen ? "auto" : "none",
-            overflowY: "auto",
-            overflowX: "hidden",
-            WebkitOverflowScrolling: "touch",
-            padding: "80px 24px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-          onClick={(e) => {
-            // Close menu when clicking on the overlay (not on menu items)
-            if (e.target === e.currentTarget) {
-              setIsMobileMenuOpen(false);
-            }
-          }}
-        >
-          {/* Close Button - Top Right */}
-          <button
             onClick={(e) => {
-              e.stopPropagation();
-              setIsMobileMenuOpen(false);
+              // Close menu when clicking on the overlay (not on menu items)
+              if (e.target === e.currentTarget) {
+                setIsMobileMenuOpen(false);
+              }
             }}
-            style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 12,
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 10001,
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "rgba(0, 0, 0, 0.1)",
-            }}
-            aria-label={t("public.close")}
           >
-            <span
-              style={{
-                width: 24,
-                height: 2,
-                background: "#1a1a1a",
-                transition: "all 0.3s ease",
-                transform: "rotate(45deg)",
-                position: "absolute",
+            {/* Close Button - Top Right */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(false);
               }}
-            />
-            <span
               style={{
-                width: 24,
-                height: 2,
-                background: "#1a1a1a",
-                transition: "all 0.3s ease",
-                transform: "rotate(-45deg)",
                 position: "absolute",
+                top: 16,
+                right: 16,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 12,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10001,
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(0, 0, 0, 0.1)",
               }}
-            />
-          </button>
+              aria-label={t("public.close")}
+            >
+              <span
+                style={{
+                  width: 24,
+                  height: 2,
+                  background: "#1a1a1a",
+                  transition: "all 0.3s ease",
+                  transform: "rotate(45deg)",
+                  position: "absolute",
+                }}
+              />
+              <span
+                style={{
+                  width: 24,
+                  height: 2,
+                  background: "#1a1a1a",
+                  transition: "all 0.3s ease",
+                  transform: "rotate(-45deg)",
+                  position: "absolute",
+                }}
+              />
+            </button>
             {/* Not logged in: Sign in and Sign up buttons - Mobile */}
             {!user && !isLoading && showAuthButtons && (
               <>
@@ -818,7 +848,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                     color: "#1a1a1a",
                     fontSize: 20,
                     fontWeight: 500,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     padding: "20px 24px",
                     minHeight: "56px",
                     borderRadius: 12,
@@ -856,7 +887,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                     color: "white",
                     fontSize: 18,
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     padding: "16px 24px",
                     borderRadius: 12,
                     transition: "all 0.2s",
@@ -890,7 +922,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                     fontSize: 18,
                     fontWeight: 600,
                     color: "#1a1a1a",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
@@ -911,7 +944,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                       color: "white",
                       fontSize: 18,
                       fontWeight: 600,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       cursor: "pointer",
                       padding: "16px 24px",
                       transition: "all 0.2s",
@@ -945,7 +979,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                       color: "white",
                       fontSize: 18,
                       fontWeight: 600,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       padding: "16px 24px",
                       borderRadius: 12,
                       transition: "all 0.2s",
@@ -983,7 +1018,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                     color: "white",
                     fontSize: 18,
                     fontWeight: 500,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     cursor: "pointer",
                     padding: "16px 24px",
                     transition: "all 0.2s",
@@ -1012,19 +1048,21 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
               if (hideMapViewButton) return null;
               // Don't show on admin pages
               if (location.pathname.includes("/admin")) return null;
-              
+
               // Check if we're on home page
-              const isOnHomePage = location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) || 
-                                 location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
-              
+              const isOnHomePage =
+                location.pathname === buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) ||
+                location.pathname ===
+                  buildUrl({ lang, siteKey: siteKey || undefined, path: "" }) + "/";
+
               // Check if we're actually on map view (homepage with showMap=true)
               // If we're on home page, check the showMap state from store
               // Otherwise, we're not on map view
               const isOnMapView = isOnHomePage && showMap;
-              
+
               // Don't show on map view
               if (isOnMapView) return null;
-              
+
               return (
                 <button
                   onClick={() => {
@@ -1050,7 +1088,8 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                     color: "#667eea",
                     fontSize: 18,
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     cursor: "pointer",
                     padding: "16px 24px",
                     transition: "all 0.2s",
@@ -1073,9 +1112,15 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                 </button>
               );
             })()}
-            
+
             {/* Language selector in mobile menu */}
-            <div style={{ padding: "20px 24px", borderTop: "1px solid rgba(0, 0, 0, 0.1)", marginTop: 12 }}>
+            <div
+              style={{
+                padding: "20px 24px",
+                borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                marginTop: 12,
+              }}
+            >
               <LanguageSelector />
             </div>
             <Link
@@ -1086,12 +1131,15 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                 color: "#1a1a1a",
                 fontSize: 20,
                 fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 padding: "20px 24px",
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("impresszum") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                background: location.pathname.includes("impresszum")
+                  ? "rgba(102, 126, 234, 0.1)"
+                  : "transparent",
                 display: "flex",
                 alignItems: "center",
                 touchAction: "manipulation",
@@ -1130,12 +1178,15 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                 color: "#1a1a1a",
                 fontSize: 20,
                 fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 padding: "20px 24px",
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("aszf") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                background: location.pathname.includes("aszf")
+                  ? "rgba(102, 126, 234, 0.1)"
+                  : "transparent",
                 display: "flex",
                 alignItems: "center",
                 touchAction: "manipulation",
@@ -1174,12 +1225,15 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                 color: "#1a1a1a",
                 fontSize: 20,
                 fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 padding: "20px 24px",
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("adatvedelem") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                background: location.pathname.includes("adatvedelem")
+                  ? "rgba(102, 126, 234, 0.1)"
+                  : "transparent",
                 display: "flex",
                 alignItems: "center",
                 touchAction: "manipulation",
@@ -1218,12 +1272,15 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
                 color: "#1a1a1a",
                 fontSize: 20,
                 fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 padding: "20px 24px",
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("static-pages") ? "rgba(102, 126, 234, 0.1)" : "transparent",
+                background: location.pathname.includes("static-pages")
+                  ? "rgba(102, 126, 234, 0.1)"
+                  : "transparent",
                 display: "flex",
                 alignItems: "center",
                 touchAction: "manipulation",
@@ -1255,158 +1312,157 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
               {t("admin.dashboardCards.staticPages")}
             </Link>
           </nav>
-      )}
+        )}
 
-      {/* Activation Confirmation Modal */}
-      {showActivationModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10002,
-            padding: isMobile ? 16 : 24,
-            animation: "fadeIn 0.2s ease-out",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isActivating) {
-              setShowActivationModal(false);
-            }
-          }}
-        >
+        {/* Activation Confirmation Modal */}
+        {showActivationModal && (
           <div
             style={{
-              background: "white",
-              borderRadius: 12,
-              padding: "clamp(20px, 4vw, 32px)",
-              maxWidth: isMobile ? "calc(100% - 32px)" : "min(500px, calc(100% - 48px))",
-              width: "100%",
-              maxHeight: "calc(100vh - 48px)",
-              overflowY: "auto",
-              boxSizing: "border-box",
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-              animation: "modalSlideIn 0.3s ease-out",
-              transform: "translateY(0)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0, 0, 0, 0.5)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
               display: "flex",
-              flexDirection: "column",
-              gap: "clamp(16px, 3vw, 24px)",
-              position: "relative",
-              margin: "auto",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10002,
+              padding: isMobile ? 16 : 24,
+              animation: "fadeIn 0.2s ease-out",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !isActivating) {
+                setShowActivationModal(false);
+              }
+            }}
           >
-            <h2
-              style={{
-                margin: 0,
-                marginBottom: 16,
-                fontSize: isMobile ? 20 : 24,
-                fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#1a1a1a",
-              }}
-            >
-              {t("public.activateFree.modal.title")}
-            </h2>
-            <p
-              style={{
-                margin: 0,
-                marginBottom: 24,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#666",
-                lineHeight: 1.6,
-              }}
-            >
-              {t("public.activateFree.modal.description")}
-            </p>
             <div
               style={{
+                background: "white",
+                borderRadius: 12,
+                padding: "clamp(20px, 4vw, 32px)",
+                maxWidth: isMobile ? "calc(100% - 32px)" : "min(500px, calc(100% - 48px))",
+                width: "100%",
+                maxHeight: "calc(100vh - 48px)",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+                animation: "modalSlideIn 0.3s ease-out",
+                transform: "translateY(0)",
                 display: "flex",
-                gap: 12,
-                justifyContent: "flex-end",
-                flexWrap: "wrap",
+                flexDirection: "column",
+                gap: "clamp(16px, 3vw, 24px)",
+                position: "relative",
+                margin: "auto",
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => setShowActivationModal(false)}
-                disabled={isActivating}
+              <h2
                 style={{
-                  padding: "10px 20px",
+                  margin: 0,
+                  marginBottom: 16,
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: 700,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#1a1a1a",
+                }}
+              >
+                {t("public.activateFree.modal.title")}
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  marginBottom: 24,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 500,
-                  background: "#f5f5f5",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#666",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: isActivating ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
-                  opacity: isActivating ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActivating) {
-                    e.currentTarget.style.background = "#e0e0e0";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActivating) {
-                    e.currentTarget.style.background = "#f5f5f5";
-                  }
+                  lineHeight: 1.6,
                 }}
               >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={handleActivateFree}
-                disabled={isActivating}
+                {t("public.activateFree.modal.description")}
+              </p>
+              <div
                 style={{
-                  padding: "10px 20px",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  background: isActivating
-                    ? "#999"
-                    : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: isActivating ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
-                  boxShadow: isActivating
-                    ? "none"
-                    : "0 4px 12px rgba(102, 126, 234, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActivating) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActivating) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                  }
+                  display: "flex",
+                  gap: 12,
+                  justifyContent: "flex-end",
+                  flexWrap: "wrap",
                 }}
               >
-                {isActivating
-                  ? t("common.loading")
-                  : t("public.activateFree.modal.confirm")}
-              </button>
+                <button
+                  onClick={() => setShowActivationModal(false)}
+                  disabled={isActivating}
+                  style={{
+                    padding: "10px 20px",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 500,
+                    background: "#f5f5f5",
+                    color: "#666",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: isActivating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                    opacity: isActivating ? 0.5 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActivating) {
+                      e.currentTarget.style.background = "#e0e0e0";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActivating) {
+                      e.currentTarget.style.background = "#f5f5f5";
+                    }
+                  }}
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={handleActivateFree}
+                  disabled={isActivating}
+                  style={{
+                    padding: "10px 20px",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 600,
+                    background: isActivating
+                      ? "#999"
+                      : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: isActivating ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                    boxShadow: isActivating ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActivating) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActivating) {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                    }
+                  }}
+                >
+                  {isActivating ? t("common.loading") : t("public.activateFree.modal.confirm")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </header>
+        )}
+      </header>
     </>
   );
 }
-

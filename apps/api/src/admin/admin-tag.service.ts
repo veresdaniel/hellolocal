@@ -30,12 +30,12 @@ export class AdminTagService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.tag.count({ where });
-    
+
     // Get paginated results
     const tags = await this.prisma.tag.findMany({
       where,
@@ -46,7 +46,7 @@ export class AdminTagService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       tags,
@@ -153,4 +153,3 @@ export class AdminTagService {
     return { message: "Tag deleted successfully" };
   }
 }
-

@@ -3,17 +3,17 @@ import { EventsService } from "./events.service";
 
 /**
  * Controller for event-related endpoints.
- * 
+ *
  * Routes:
  * - GET /api/:lang/events - List events with optional filtering
  * - GET /api/:lang/events/:slug - Get a single event by slug
- * 
+ *
  * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/events")
 export class EventsController {
   private readonly logger = new Logger(EventsController.name);
-  
+
   constructor(private readonly eventsService: EventsService) {}
 
   /**
@@ -27,7 +27,7 @@ export class EventsController {
 
   /**
    * Lists events with optional filtering.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support
    * - category: Filter by event category
@@ -84,4 +84,3 @@ export class EventsController {
     }
   }
 }
-

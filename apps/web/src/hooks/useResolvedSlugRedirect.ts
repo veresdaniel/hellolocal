@@ -12,7 +12,7 @@ type Args = {
 
 /**
  * Hook that resolves a slug and handles redirects to canonical URLs.
- * 
+ *
  * Flow:
  * 1. Resolve slug to get entity information
  * 2. If redirect needed → navigate to canonical URL with replace

@@ -39,14 +39,14 @@ export function CollectionEditPage() {
   const confirm = useConfirm();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
-  
+
   // Use local state for id to avoid navigation/reload when creating new collection
   const [localId, setLocalId] = useState<string | undefined>(urlId);
   const id = localId || urlId;
   const isNew = !id || id === "new";
   const [collection, setCollection] = useState<Collection | null>(null);
-  
-    // Dynamic page title based on collection name
+
+  // Dynamic page title based on collection name
   useEffect(() => {
     const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
     const currentTranslation = collection
@@ -54,7 +54,7 @@ export function CollectionEditPage() {
       : null;
     const collectionTitle = currentTranslation?.title;
     const adminSuffix = t("admin.titleSuffix", { defaultValue: "Admin" });
-    
+
     let title: string;
     if (isNew) {
       title = `${t("admin.collections")} - ${t("common.new")} | ${adminSuffix}`;
@@ -63,7 +63,7 @@ export function CollectionEditPage() {
     } else {
       title = `${t("admin.collections")} | ${adminSuffix}`;
     }
-    
+
     // Truncate if too long (browser tabs typically show ~30-40 chars)
     if (title.length > 50) {
       const truncatedTitle = title.substring(0, 47) + "...";
@@ -137,7 +137,10 @@ export function CollectionEditPage() {
         seoDescription: formData.seoDescriptionHu || null,
         seoImage: formData.seoImageHu || null,
         seoKeywords: formData.seoKeywordsHu
-          ? formData.seoKeywordsHu.split(",").map((k) => k.trim()).filter(Boolean)
+          ? formData.seoKeywordsHu
+              .split(",")
+              .map((k) => k.trim())
+              .filter(Boolean)
           : [],
       });
     }
@@ -151,7 +154,10 @@ export function CollectionEditPage() {
         seoDescription: formData.seoDescriptionEn || null,
         seoImage: formData.seoImageEn || null,
         seoKeywords: formData.seoKeywordsEn
-          ? formData.seoKeywordsEn.split(",").map((k) => k.trim()).filter(Boolean)
+          ? formData.seoKeywordsEn
+              .split(",")
+              .map((k) => k.trim())
+              .filter(Boolean)
           : [],
       });
     }
@@ -165,7 +171,10 @@ export function CollectionEditPage() {
         seoDescription: formData.seoDescriptionDe || null,
         seoImage: formData.seoImageDe || null,
         seoKeywords: formData.seoKeywordsDe
-          ? formData.seoKeywordsDe.split(",").map((k) => k.trim()).filter(Boolean)
+          ? formData.seoKeywordsDe
+              .split(",")
+              .map((k) => k.trim())
+              .filter(Boolean)
           : [],
       });
     }
@@ -271,13 +280,15 @@ export function CollectionEditPage() {
   // Validate form - required fields: slug and at least one title
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
+
     if (!formData.slug || !formData.slug.trim()) {
       errors.slug = t("admin.validation.slugRequired") || "Slug is required";
     }
-    
+
     if (!formData.titleHu?.trim() && !formData.titleEn?.trim() && !formData.titleDe?.trim()) {
-      errors.titleHu = t("admin.validation.atLeastOneTitleRequired") || "At least one title (HU, EN, or DE) is required";
+      errors.titleHu =
+        t("admin.validation.atLeastOneTitleRequired") ||
+        "At least one title (HU, EN, or DE) is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -298,7 +309,7 @@ export function CollectionEditPage() {
       if (isNew || !id) {
         const newCollection = await createCollection({
           slug: formData.slug,
-          domain: formData.domainEnabled ? (formData.domain || null) : null,
+          domain: formData.domainEnabled ? formData.domain || null : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -308,7 +319,7 @@ export function CollectionEditPage() {
         const translationHu = newCollection.translations.find((t) => t.lang === "hu");
         const translationEn = newCollection.translations.find((t) => t.lang === "en");
         const translationDe = newCollection.translations.find((t) => t.lang === "de");
-        
+
         setFormData({
           slug: newCollection.slug,
           domain: newCollection.domain || "",
@@ -338,26 +349,26 @@ export function CollectionEditPage() {
           seoKeywordsEn: (translationEn?.seoKeywords || []).join(", "),
           seoKeywordsDe: (translationDe?.seoKeywords || []).join(", "),
         });
-        
+
         showToast(t("admin.messages.collectionCreated"), "success");
         notifyEntityChanged("collections");
-        
+
         // Update local ID and collection state without navigation to avoid page reload
         setLocalId(newCollection.id);
         setCollection(newCollection);
-        
+
         // Mark that auto-save completed - will switch tab after state update
         autoSaveCompletedRef.current = true;
         setIsAutoSaving(false);
-        
+
         // Update URL silently without navigation/reload
         window.history.replaceState({}, "", `/admin/collections/${newCollection.id}/edit`);
-        
+
         return true;
       } else if (id) {
         await updateCollection(id, {
           slug: formData.slug,
-          domain: formData.domainEnabled ? (formData.domain || null) : null,
+          domain: formData.domainEnabled ? formData.domain || null : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -373,7 +384,8 @@ export function CollectionEditPage() {
       return false;
     } catch (err: any) {
       console.error("handleAutoSave: error creating/updating collection", err);
-      const errorMessage = err?.response?.data?.message || err?.message || t("admin.errors.saveCollectionFailed");
+      const errorMessage =
+        err?.response?.data?.message || err?.message || t("admin.errors.saveCollectionFailed");
       console.error("handleAutoSave: error message", errorMessage);
       showToast(errorMessage, "error");
       if (err?.response?.data?.errors) {
@@ -399,7 +411,7 @@ export function CollectionEditPage() {
       if (isNew) {
         const newCollection = await createCollection({
           slug: formData.slug,
-          domain: formData.domainEnabled ? (formData.domain || null) : null,
+          domain: formData.domainEnabled ? formData.domain || null : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -412,18 +424,18 @@ export function CollectionEditPage() {
       } else if (id) {
         await updateCollection(id, {
           slug: formData.slug,
-          domain: formData.domainEnabled ? (formData.domain || null) : null,
+          domain: formData.domainEnabled ? formData.domain || null : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
           translations,
         });
-        
+
         // Save pending items changes if any (additions, deletions, reordering)
         if (pendingItems) {
           await saveItems();
         }
-        
+
         showToast(t("admin.messages.collectionUpdated"), "success");
         notifyEntityChanged("collections");
         await loadCollection();
@@ -431,7 +443,8 @@ export function CollectionEditPage() {
         navigate(-1);
       }
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err?.message || t("admin.errors.saveCollectionFailed");
+      const errorMessage =
+        err?.response?.data?.message || err?.message || t("admin.errors.saveCollectionFailed");
       showToast(errorMessage, "error");
       if (err?.response?.data?.errors) {
         setFormErrors(err.response.data.errors);
@@ -467,15 +480,18 @@ export function CollectionEditPage() {
 
     // Get current items (use pendingItems if exists, otherwise use collection.items)
     const currentItems = pendingItems || collection?.items || [];
-    
+
     // Check if site is already in the collection
-    if (currentItems.some(item => item.siteId === siteId)) {
-      showToast(t("admin.errors.itemAlreadyInCollection") || "This site is already in the collection", "error");
+    if (currentItems.some((item) => item.siteId === siteId)) {
+      showToast(
+        t("admin.errors.itemAlreadyInCollection") || "This site is already in the collection",
+        "error"
+      );
       return;
     }
 
     // Find the site to get its data
-    const site = sites.find(s => s.id === siteId);
+    const site = sites.find((s) => s.id === siteId);
     if (!site) {
       showToast(t("admin.errors.siteNotFound") || "Site not found", "error");
       return;
@@ -510,26 +526,26 @@ export function CollectionEditPage() {
 
     // Get current items (use pendingItems if exists, otherwise use collection.items)
     const currentItems = pendingItems || collection?.items || [];
-    
+
     // Remove the item
-    const updatedItems = currentItems.filter(item => item.id !== itemId);
+    const updatedItems = currentItems.filter((item) => item.id !== itemId);
     setPendingItems(updatedItems);
   };
 
   // Store pending item order changes locally (no API call)
   const handleReorderItems = (itemIds: string[]) => {
     if (!id || isNew) return;
-    
+
     // Get current items (use pendingItems if exists, otherwise use collection.items)
     const currentItems = pendingItems || collection?.items || [];
-    
+
     // Reorder items according to itemIds
-    const itemsMap = new Map(currentItems.map(item => [item.id, item]));
+    const itemsMap = new Map(currentItems.map((item) => [item.id, item]));
     const reorderedItems = itemIds
-      .map(id => itemsMap.get(id))
+      .map((id) => itemsMap.get(id))
       .filter((item): item is NonNullable<typeof item> => item !== undefined)
       .map((item, index) => ({ ...item, order: index }));
-    
+
     // Update pending items with new order
     setPendingItems(reorderedItems);
   };
@@ -540,19 +556,20 @@ export function CollectionEditPage() {
 
     try {
       // Prepare items for backend (only send necessary fields, not full objects)
-      const itemsToSave = pendingItems.map(item => ({
-        id: item.id.startsWith('temp-') ? undefined : item.id,
+      const itemsToSave = pendingItems.map((item) => ({
+        id: item.id.startsWith("temp-") ? undefined : item.id,
         siteId: item.siteId,
         order: item.order,
         isHighlighted: item.isHighlighted,
-        translations: item.translations?.map(t => ({
-          lang: t.lang,
-          titleOverride: t.titleOverride || null,
-          descriptionOverride: t.descriptionOverride || null,
-          imageOverride: t.imageOverride || null,
-        })) || [],
+        translations:
+          item.translations?.map((t) => ({
+            lang: t.lang,
+            titleOverride: t.titleOverride || null,
+            descriptionOverride: t.descriptionOverride || null,
+            imageOverride: t.imageOverride || null,
+          })) || [],
       }));
-      
+
       // Send the full items array to backend
       await updateCollectionItems(id, itemsToSave);
       notifyEntityChanged("collections");
@@ -607,186 +624,202 @@ export function CollectionEditPage() {
       `}</style>
       <div style={{ maxWidth: 1400, margin: "0 auto" }}>
         <AdminPageHeader
-        title={currentTranslation?.title || collection?.slug || t("admin.collections.newCollection")}
-        isCreatingOrEditing={true}
-        onSave={handleSave}
-        onCancel={() => navigate(-1)}
-        saveLabel={t("common.save")}
-        cancelLabel={t("common.cancel")}
-      />
+          title={
+            currentTranslation?.title || collection?.slug || t("admin.collections.newCollection")
+          }
+          isCreatingOrEditing={true}
+          onSave={handleSave}
+          onCancel={() => navigate(-1)}
+          saveLabel={t("common.save")}
+          cancelLabel={t("common.cancel")}
+        />
 
-      {/* Form container with white background and shadow */}
-      <div style={{ 
-        padding: "clamp(24px, 5vw, 32px)", 
-        background: "white", 
-        borderRadius: 16, 
-        marginBottom: 32, 
-        boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        border: "1px solid rgba(102, 126, 234, 0.1)",
-      }}>
-        {/* Status chips */}
-        {collection && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-            <span
-              style={{
-                padding: "6px 12px",
-                borderRadius: 6,
-                fontSize: "0.85em",
-                backgroundColor: collection.isActive ? "#d1fae5" : "#fee2e2",
-                color: collection.isActive ? "#065f46" : "#991b1b",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 500,
-              }}
-            >
-              {collection.isActive ? t("common.active") : t("common.inactive")}
-            </span>
-            {collection.domain && (
+        {/* Form container with white background and shadow */}
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          {/* Status chips */}
+          {collection && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
               <span
                 style={{
                   padding: "6px 12px",
                   borderRadius: 6,
                   fontSize: "0.85em",
-                  backgroundColor: "#dbeafe",
-                  color: "#1e40af",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  backgroundColor: collection.isActive ? "#d1fae5" : "#fee2e2",
+                  color: collection.isActive ? "#065f46" : "#991b1b",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 500,
                 }}
               >
-                {collection.domain}
+                {collection.isActive ? t("common.active") : t("common.inactive")}
               </span>
-            )}
-          </div>
-        )}
+              {collection.domain && (
+                <span
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    fontSize: "0.85em",
+                    backgroundColor: "#dbeafe",
+                    color: "#1e40af",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 500,
+                  }}
+                >
+                  {collection.domain}
+                </span>
+              )}
+            </div>
+          )}
 
-        {/* Tabs */}
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            overflow: "hidden",
-            background: "white",
-          }}
-        >
+          {/* Tabs */}
           <div
             style={{
-              display: "flex",
-              gap: 0,
-              overflowX: "auto",
-              borderBottom: "1px solid #e5e7eb",
-              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              overflow: "hidden",
+              background: "white",
             }}
           >
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleTabChange(tab.id);
-                }}
-                style={{
-                  padding: "16px 24px",
-                  border: "none",
-                  borderBottom: activeTab === tab.id ? "3px solid #667eea" : "3px solid transparent",
-                  background: activeTab === tab.id ? "white" : "transparent",
-                  color: activeTab === tab.id ? "#667eea" : "#6b7280",
-                  fontWeight: activeTab === tab.id ? 600 : 400,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.currentTarget.style.background = "#f3f4f6";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.currentTarget.style.background = activeTab === tab.id ? "white" : "transparent";
-                  }
-                }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {tab.label}
-                  {tab.id === "items" && isAutoSaving && (
-                    <span style={{ 
-                      display: "inline-block",
-                      width: 12,
-                      height: 12,
-                      border: "2px solid currentColor",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      animation: "spin 0.6s linear infinite",
-                    }} />
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 0,
+                overflowX: "auto",
+                borderBottom: "1px solid #e5e7eb",
+                background: "#f9fafb",
+              }}
+            >
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTabChange(tab.id);
+                  }}
+                  style={{
+                    padding: "16px 24px",
+                    border: "none",
+                    borderBottom:
+                      activeTab === tab.id ? "3px solid #667eea" : "3px solid transparent",
+                    background: activeTab === tab.id ? "white" : "transparent",
+                    color: activeTab === tab.id ? "#667eea" : "#6b7280",
+                    fontWeight: activeTab === tab.id ? 600 : 400,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.currentTarget.style.background = "#f3f4f6";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.currentTarget.style.background =
+                        activeTab === tab.id ? "white" : "transparent";
+                    }
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {tab.label}
+                    {tab.id === "items" && isAutoSaving && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: 12,
+                          height: 12,
+                          border: "2px solid currentColor",
+                          borderTopColor: "transparent",
+                          borderRadius: "50%",
+                          animation: "spin 0.6s linear infinite",
+                        }}
+                      />
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-          {/* Tab content */}
-          <div style={{ padding: "clamp(24px, 5vw, 32px)", minHeight: 400 }}>
-            {activeTab === "content" && (
-              <ContentTab
-                formData={formData}
-                setFormData={setFormData}
-                formErrors={formErrors}
-                t={t}
-                i18n={i18n}
-              />
-            )}
-            {activeTab === "items" && (
-              <>
-                {(!id || id === "new" || isAutoSaving) ? (
-                  <div style={{ 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    justifyContent: "center", 
-                    padding: 48,
-                    minHeight: 400,
-                    gap: 16
-                  }}>
-                    <div style={{ 
-                      color: "#6b7280",
-                      fontSize: 14,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      textAlign: "center"
-                    }}>
-                      {isAutoSaving 
-                        ? (t("admin.collectionEdit.savingCollection") || "Mentés...")
-                        : (t("admin.collectionEdit.saveCollectionFirst") || "Kérjük, először mentsd el a collection-t a Tartalom tab-on")
-                      }
+            {/* Tab content */}
+            <div style={{ padding: "clamp(24px, 5vw, 32px)", minHeight: 400 }}>
+              {activeTab === "content" && (
+                <ContentTab
+                  formData={formData}
+                  setFormData={setFormData}
+                  formErrors={formErrors}
+                  t={t}
+                  i18n={i18n}
+                />
+              )}
+              {activeTab === "items" && (
+                <>
+                  {!id || id === "new" || isAutoSaving ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 48,
+                        minHeight: 400,
+                        gap: 16,
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#6b7280",
+                          fontSize: 14,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          textAlign: "center",
+                        }}
+                      >
+                        {isAutoSaving
+                          ? t("admin.collectionEdit.savingCollection") || "Mentés..."
+                          : t("admin.collectionEdit.saveCollectionFirst") ||
+                            "Kérjük, először mentsd el a collection-t a Tartalom tab-on"}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <ItemsTab
-                    collection={collection}
-                    collectionId={id}
-                    items={sortedItems}
-                    sites={sites}
-                    siteSearchQuery={siteSearchQuery}
-                    setSiteSearchQuery={setSiteSearchQuery}
-                    onAddItem={handleAddItem}
-                    onDeleteItem={handleDeleteItem}
-                    onReorderItems={handleReorderItems}
-                    loadCollection={loadCollection}
-                    draggedItemId={draggedItemId}
-                    setDraggedItemId={setDraggedItemId}
-                    dragOverItemId={dragOverItemId}
-                    setDragOverItemId={setDragOverItemId}
-                    currentLang={currentLang}
-                    t={t}
-                  />
-                )}
-              </>
-            )}
+                  ) : (
+                    <ItemsTab
+                      collection={collection}
+                      collectionId={id}
+                      items={sortedItems}
+                      sites={sites}
+                      siteSearchQuery={siteSearchQuery}
+                      setSiteSearchQuery={setSiteSearchQuery}
+                      onAddItem={handleAddItem}
+                      onDeleteItem={handleDeleteItem}
+                      onReorderItems={handleReorderItems}
+                      loadCollection={loadCollection}
+                      draggedItemId={draggedItemId}
+                      setDraggedItemId={setDraggedItemId}
+                      dragOverItemId={dragOverItemId}
+                      setDragOverItemId={setDragOverItemId}
+                      currentLang={currentLang}
+                      t={t}
+                    />
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -813,16 +846,22 @@ function ContentTab({
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Title - FIRST */}
             <div>
-              <label style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 600,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: ((selectedLang === "hu" && formErrors.titleHu) ||
-                        (selectedLang === "en" && formErrors.titleEn) ||
-                        (selectedLang === "de" && formErrors.titleDe)) ? "#dc3545" : "#374151",
-              }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color:
+                    (selectedLang === "hu" && formErrors.titleHu) ||
+                    (selectedLang === "en" && formErrors.titleEn) ||
+                    (selectedLang === "de" && formErrors.titleDe)
+                      ? "#dc3545"
+                      : "#374151",
+                }}
+              >
                 {t("admin.collections.title")} ({selectedLang.toUpperCase()}) *
               </label>
               <input
@@ -831,36 +870,49 @@ function ContentTab({
                   selectedLang === "hu"
                     ? formData.titleHu
                     : selectedLang === "en"
-                    ? formData.titleEn
-                    : formData.titleDe
+                      ? formData.titleEn
+                      : formData.titleDe
                 }
                 onChange={(e) => {
                   if (selectedLang === "hu") setFormData({ ...formData, titleHu: e.target.value });
-                  else if (selectedLang === "en") setFormData({ ...formData, titleEn: e.target.value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, titleEn: e.target.value });
                   else setFormData({ ...formData, titleDe: e.target.value });
                 }}
                 style={{
                   width: "100%",
                   padding: "10px 14px",
-                  border: ((selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe)) ? "1px solid #dc3545" : "1px solid #d1d5db",
+                  border:
+                    (selectedLang === "hu" && formErrors.titleHu) ||
+                    (selectedLang === "en" && formErrors.titleEn) ||
+                    (selectedLang === "de" && formErrors.titleDe)
+                      ? "1px solid #dc3545"
+                      : "1px solid #d1d5db",
                   borderRadius: 6,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "border-color 0.2s ease",
                 }}
                 onFocus={(e) => {
-                  if (!((selectedLang === "hu" && formErrors.titleHu) ||
-                        (selectedLang === "en" && formErrors.titleEn) ||
-                        (selectedLang === "de" && formErrors.titleDe))) {
+                  if (
+                    !(
+                      (selectedLang === "hu" && formErrors.titleHu) ||
+                      (selectedLang === "en" && formErrors.titleEn) ||
+                      (selectedLang === "de" && formErrors.titleDe)
+                    )
+                  ) {
                     e.currentTarget.style.borderColor = "#667eea";
                   }
                 }}
                 onBlur={(e) => {
-                  if (!((selectedLang === "hu" && formErrors.titleHu) ||
-                        (selectedLang === "en" && formErrors.titleEn) ||
-                        (selectedLang === "de" && formErrors.titleDe))) {
+                  if (
+                    !(
+                      (selectedLang === "hu" && formErrors.titleHu) ||
+                      (selectedLang === "en" && formErrors.titleEn) ||
+                      (selectedLang === "de" && formErrors.titleDe)
+                    )
+                  ) {
                     e.currentTarget.style.borderColor = "#d1d5db";
                   }
                 }}
@@ -868,15 +920,20 @@ function ContentTab({
               {((selectedLang === "hu" && formErrors.titleHu) ||
                 (selectedLang === "en" && formErrors.titleEn) ||
                 (selectedLang === "de" && formErrors.titleDe)) && (
-                <div style={{ 
-                  color: "#dc3545", 
-                  fontSize: 14, 
-                  marginTop: 6,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {selectedLang === "hu" ? formErrors.titleHu :
-                   selectedLang === "en" ? formErrors.titleEn :
-                   formErrors.titleDe}
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: 14,
+                    marginTop: 6,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {selectedLang === "hu"
+                    ? formErrors.titleHu
+                    : selectedLang === "en"
+                      ? formErrors.titleEn
+                      : formErrors.titleDe}
                 </div>
               )}
             </div>
@@ -890,8 +947,8 @@ function ContentTab({
                   selectedLang === "hu"
                     ? formData.titleHu
                     : selectedLang === "en"
-                    ? formData.titleEn
-                    : formData.titleDe
+                      ? formData.titleEn
+                      : formData.titleDe
                 }
                 lang={selectedLang}
                 label={t("admin.collections.slug")}
@@ -903,14 +960,17 @@ function ContentTab({
 
             {/* Description */}
             <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: 8, 
-                fontWeight: 600, 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#374151",
-              }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#374151",
+                }}
+              >
                 {t("admin.collections.description")} ({selectedLang.toUpperCase()})
               </label>
               <TipTapEditorWithUpload
@@ -918,8 +978,8 @@ function ContentTab({
                   selectedLang === "hu"
                     ? formData.descriptionHu || ""
                     : selectedLang === "en"
-                    ? formData.descriptionEn || ""
-                    : formData.descriptionDe || ""
+                      ? formData.descriptionEn || ""
+                      : formData.descriptionDe || ""
                 }
                 onChange={(html) => {
                   if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: html });
@@ -931,14 +991,17 @@ function ContentTab({
 
             {/* Hero Image */}
             <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: 8, 
-                fontWeight: 600, 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#374151",
-              }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#374151",
+                }}
+              >
                 {t("admin.collections.heroImage")} ({selectedLang.toUpperCase()})
               </label>
               <input
@@ -947,12 +1010,14 @@ function ContentTab({
                   selectedLang === "hu"
                     ? formData.heroImageHu || ""
                     : selectedLang === "en"
-                    ? formData.heroImageEn || ""
-                    : formData.heroImageDe || ""
+                      ? formData.heroImageEn || ""
+                      : formData.heroImageDe || ""
                 }
                 onChange={(e) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, heroImageHu: e.target.value });
-                  else if (selectedLang === "en") setFormData({ ...formData, heroImageEn: e.target.value });
+                  if (selectedLang === "hu")
+                    setFormData({ ...formData, heroImageHu: e.target.value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, heroImageEn: e.target.value });
                   else setFormData({ ...formData, heroImageDe: e.target.value });
                 }}
                 placeholder="https://example.com/image.jpg"
@@ -962,7 +1027,8 @@ function ContentTab({
                   border: "1px solid #d1d5db",
                   borderRadius: 6,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "border-color 0.2s ease",
                 }}
                 onFocus={(e) => {
@@ -975,33 +1041,41 @@ function ContentTab({
             </div>
 
             {/* SEO Fields */}
-            <div style={{ 
-              marginTop: 24, 
-              padding: 20, 
-              background: "#f9fafb", 
-              borderRadius: 12, 
-              border: "1px solid #e5e7eb" 
-            }}>
-              <h4 style={{ 
-                marginBottom: 20, 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#374151",
-              }}>
+            <div
+              style={{
+                marginTop: 24,
+                padding: 20,
+                background: "#f9fafb",
+                borderRadius: 12,
+                border: "1px solid #e5e7eb",
+              }}
+            >
+              <h4
+                style={{
+                  marginBottom: 20,
+                  fontSize: "clamp(16px, 3.5vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#374151",
+                }}
+              >
                 SEO ({selectedLang.toUpperCase()})
               </h4>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8, 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#374151",
-                  }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collections.seoTitle")}
                   </label>
                   <input
@@ -1010,12 +1084,14 @@ function ContentTab({
                       selectedLang === "hu"
                         ? formData.seoTitleHu || ""
                         : selectedLang === "en"
-                        ? formData.seoTitleEn || ""
-                        : formData.seoTitleDe || ""
+                          ? formData.seoTitleEn || ""
+                          : formData.seoTitleDe || ""
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, seoTitleHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, seoTitleHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, seoTitleEn: e.target.value });
                       else setFormData({ ...formData, seoTitleDe: e.target.value });
                     }}
                     style={{
@@ -1024,7 +1100,8 @@ function ContentTab({
                       border: "1px solid #d1d5db",
                       borderRadius: 6,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
@@ -1037,14 +1114,17 @@ function ContentTab({
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8, 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#374151",
-                  }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collections.seoDescription")}
                   </label>
                   <textarea
@@ -1052,12 +1132,14 @@ function ContentTab({
                       selectedLang === "hu"
                         ? formData.seoDescriptionHu || ""
                         : selectedLang === "en"
-                        ? formData.seoDescriptionEn || ""
-                        : formData.seoDescriptionDe || ""
+                          ? formData.seoDescriptionEn || ""
+                          : formData.seoDescriptionDe || ""
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, seoDescriptionHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, seoDescriptionEn: e.target.value });
                       else setFormData({ ...formData, seoDescriptionDe: e.target.value });
                     }}
                     rows={3}
@@ -1067,7 +1149,8 @@ function ContentTab({
                       border: "1px solid #d1d5db",
                       borderRadius: 6,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       resize: "vertical",
                       transition: "border-color 0.2s ease",
                     }}
@@ -1081,14 +1164,17 @@ function ContentTab({
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8, 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#374151",
-                  }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collections.seoImage")}
                   </label>
                   <input
@@ -1097,12 +1183,14 @@ function ContentTab({
                       selectedLang === "hu"
                         ? formData.seoImageHu || ""
                         : selectedLang === "en"
-                        ? formData.seoImageEn || ""
-                        : formData.seoImageDe || ""
+                          ? formData.seoImageEn || ""
+                          : formData.seoImageDe || ""
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, seoImageHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, seoImageHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, seoImageEn: e.target.value });
                       else setFormData({ ...formData, seoImageDe: e.target.value });
                     }}
                     placeholder="https://example.com/seo-image.jpg"
@@ -1112,7 +1200,8 @@ function ContentTab({
                       border: "1px solid #d1d5db",
                       borderRadius: 6,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
@@ -1125,14 +1214,17 @@ function ContentTab({
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 8, 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#374151",
-                  }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collections.seoKeywords")}
                   </label>
                   <input
@@ -1141,12 +1233,14 @@ function ContentTab({
                       selectedLang === "hu"
                         ? formData.seoKeywordsHu || ""
                         : selectedLang === "en"
-                        ? formData.seoKeywordsEn || ""
-                        : formData.seoKeywordsDe || ""
+                          ? formData.seoKeywordsEn || ""
+                          : formData.seoKeywordsDe || ""
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, seoKeywordsHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, seoKeywordsHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, seoKeywordsEn: e.target.value });
                       else setFormData({ ...formData, seoKeywordsDe: e.target.value });
                     }}
                     placeholder={t("admin.collections.seoKeywordsPlaceholder")}
@@ -1156,7 +1250,8 @@ function ContentTab({
                       border: "1px solid #d1d5db",
                       borderRadius: 6,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
@@ -1185,69 +1280,84 @@ function ContentTab({
           />
         </div>
 
-        <div style={{ 
-          display: "flex", 
-          gap: 24, 
-          flexWrap: "wrap",
-          padding: "16px 20px",
-          background: "#f8f8ff",
-          borderRadius: 12,
-          border: "2px solid #e0e7ff",
-        }}>
-          <label style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: 10, 
-            cursor: "pointer",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            flexWrap: "wrap",
+            padding: "16px 20px",
+            background: "#f8f8ff",
+            borderRadius: 12,
+            border: "2px solid #e0e7ff",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              cursor: "pointer",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             <input
               type="checkbox"
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
               style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
             />
-            <span style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              fontWeight: 500,
-              color: "#374151",
-            }}>
+            <span
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontWeight: 500,
+                color: "#374151",
+              }}
+            >
               {t("admin.collections.active")}
             </span>
           </label>
 
-          <label style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: 10, 
-            cursor: "pointer",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              cursor: "pointer",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             <input
               type="checkbox"
               checked={formData.isCrawlable}
               onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
               style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
             />
-            <span style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              fontWeight: 500,
-              color: "#374151",
-            }}>
+            <span
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontWeight: 500,
+                color: "#374151",
+              }}
+            >
               {t("admin.collections.isCrawlable")}
             </span>
           </label>
         </div>
 
         <div>
-          <label style={{ 
-            display: "block", 
-            marginBottom: 8, 
-            fontWeight: 600, 
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "#374151",
-          }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: 8,
+              fontWeight: 600,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              color: "#374151",
+            }}
+          >
             {t("admin.collections.order")}
           </label>
           <input
@@ -1260,7 +1370,8 @@ function ContentTab({
               border: "1px solid #d1d5db",
               borderRadius: 6,
               fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "border-color 0.2s ease",
             }}
             onFocus={(e) => {
@@ -1324,34 +1435,34 @@ function ItemsTab({
   });
   // Track if user has made local reordering changes
   const hasLocalReorderingRef = useRef(false);
-  
+
   // Use collectionId prop or fallback to collection?.id
   const effectiveCollectionId = collectionId || collection?.id;
-  
+
   // Create a stable reference for items IDs to use in dependency array
   // Use a more stable comparison: include both IDs and order to detect actual changes
   const itemsIds = useMemo(() => {
     const sorted = [...items].sort((a, b) => a.order - b.order);
-    return sorted.map(i => `${i.id}:${i.order}`).join(',');
+    return sorted.map((i) => `${i.id}:${i.order}`).join(",");
   }, [items]);
-  
+
   // Use ref to track previous itemsIds to avoid infinite loops
-  const prevItemsIdsRef = useRef<string>('');
-  
+  const prevItemsIdsRef = useRef<string>("");
+
   // Sync local state with items prop whenever it changes from server
   // But don't override if user has made local reordering changes (those will be saved on explicit save)
   useEffect(() => {
     // Sort items to ensure consistent order
     const sorted = [...items].sort((a, b) => a.order - b.order);
-    const sortedIds = sorted.map(i => i.id).join(',');
-    
+    const sortedIds = sorted.map((i) => i.id).join(",");
+
     // Only sync if the items actually changed from the server AND user hasn't made local changes
     if (sortedIds !== prevItemsIdsRef.current && !hasLocalReorderingRef.current) {
       setCurrentItems(sorted);
       prevItemsIdsRef.current = sortedIds;
-      
+
       // If server order matches our local order, it means changes were saved - reset the flag
-      const currentItemsIds = currentItems.map(i => i.id).join(',');
+      const currentItemsIds = currentItems.map((i) => i.id).join(",");
       if (sortedIds === currentItemsIds) {
         hasLocalReorderingRef.current = false;
       }
@@ -1361,15 +1472,17 @@ function ItemsTab({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsIds]);
-  
+
   // Filter out already added sites
-  const availableSites = sites.filter((site) => !currentItems.some((item) => item.siteId === site.id));
-  
+  const availableSites = sites.filter(
+    (site) => !currentItems.some((item) => item.siteId === site.id)
+  );
+
   // Helper to check if a site ID is available (not already in collection)
   const isSiteAvailable = (siteId: string) => {
-    return availableSites.some(s => s.id === siteId);
+    return availableSites.some((s) => s.id === siteId);
   };
-  
+
   // Filter by search query
   const filteredAvailableSites = availableSites.filter((site) => {
     if (!siteSearchQuery.trim()) return true;
@@ -1443,15 +1556,16 @@ function ItemsTab({
       setDragOverCollectionPanel(false);
       return;
     }
-    
+
     // Always prevent default to allow drop (we'll check collection ID in drop handler)
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Check if dragging a site (from state or dataTransfer types)
-    const hasDraggedSite = draggedSiteId || 
-                          e.dataTransfer.types.includes("application/available-site") ||
-                          e.dataTransfer.types.includes("text/plain");
+    const hasDraggedSite =
+      draggedSiteId ||
+      e.dataTransfer.types.includes("application/available-site") ||
+      e.dataTransfer.types.includes("text/plain");
     if (hasDraggedSite) {
       e.dataTransfer.dropEffect = "copy";
       setDragOverCollectionPanel(true);
@@ -1478,59 +1592,60 @@ function ItemsTab({
   const handleCollectionPanelDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Capture the dragged IDs immediately before any async operations
     const currentDraggedSiteId = draggedSiteId;
     const currentDraggedItemId = draggedItemId;
-    
+
     // Use effectiveCollectionId (collectionId prop or collection?.id)
     const effectiveCollectionId = collectionId || collection?.id;
     // Ensure collection ID is available (not "new" and not undefined)
     if (!effectiveCollectionId || effectiveCollectionId === "new") {
-      console.error("Cannot add item: collection ID not available", { 
-        collectionId, 
+      console.error("Cannot add item: collection ID not available", {
+        collectionId,
         effectiveCollectionId,
         collectionIdFromProp: collectionId,
         collectionIdFromCollection: collection?.id,
-        hasCollection: !!collection
+        hasCollection: !!collection,
       });
-      e.dataTransfer.dropEffect = 'none';
+      e.dataTransfer.dropEffect = "none";
       // The onAddItem will handle showing the error toast
       return;
     }
-    
+
     // Ensure collection is loaded before proceeding
     if (!collection && loadCollection && effectiveCollectionId) {
       try {
         await loadCollection(false);
         // Wait for state to update - need to wait longer for React to re-render
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (err) {
         console.error("Failed to load collection:", err);
-        e.dataTransfer.dropEffect = 'none';
+        e.dataTransfer.dropEffect = "none";
         return;
       }
     }
-    
+
     // Try multiple ways to get the site ID
     const siteIdFromState = currentDraggedSiteId;
     const siteIdFromDataTransfer = e.dataTransfer.getData("text/plain");
-    
+
     const siteIdToAdd = siteIdFromState || siteIdFromDataTransfer;
-    
+
     // Check if it's an available site
-    const isAvailableSite = siteIdFromState || 
-                            e.dataTransfer.types.includes("application/available-site") ||
-                            (siteIdToAdd && availableSites.some(s => s.id === siteIdToAdd));
+    const isAvailableSite =
+      siteIdFromState ||
+      e.dataTransfer.types.includes("application/available-site") ||
+      (siteIdToAdd && availableSites.some((s) => s.id === siteIdToAdd));
     if (siteIdToAdd && isAvailableSite) {
       // Adding new site to collection - now just calls the handler (no API call)
       try {
         onAddItem(siteIdToAdd);
         // Set dropEffect to 'copy' to indicate successful drop
-        e.dataTransfer.dropEffect = 'copy';
+        e.dataTransfer.dropEffect = "copy";
       } catch (err) {
         console.error("Failed to add item:", err);
-        e.dataTransfer.dropEffect = 'none';
+        e.dataTransfer.dropEffect = "none";
       }
     } else if (currentDraggedItemId) {
       // Reordering within collection - drop at end
@@ -1542,23 +1657,23 @@ function ItemsTab({
         newItemIds.push(currentDraggedItemId);
         try {
           await onReorderItems(newItemIds);
-          e.dataTransfer.dropEffect = 'move';
+          e.dataTransfer.dropEffect = "move";
         } catch (err) {
           console.error("Failed to reorder items:", err);
-          e.dataTransfer.dropEffect = 'none';
+          e.dataTransfer.dropEffect = "none";
         }
       }
     } else {
-      console.warn("Drop event but no valid dragged item:", { 
-        siteIdToAdd, 
-        isAvailableSite, 
+      console.warn("Drop event but no valid dragged item:", {
+        siteIdToAdd,
+        isAvailableSite,
         currentDraggedItemId,
         currentDraggedSiteId,
         types: Array.from(e.dataTransfer.types),
-        allSites: sites.map(s => s.id),
-        existingItems: currentItems.map(i => i.siteId)
+        allSites: sites.map((s) => s.id),
+        existingItems: currentItems.map((i) => i.siteId),
       });
-      e.dataTransfer.dropEffect = 'none';
+      e.dataTransfer.dropEffect = "none";
     }
 
     // Clear state after processing (with a small delay to ensure dropEffect is set)
@@ -1574,7 +1689,7 @@ function ItemsTab({
   const handleCollectionItemDrop = async (e: React.DragEvent, itemId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Only handle reordering collection items, not site drops
     if (draggedItemId && draggedItemId !== itemId) {
       // Reordering within collection
@@ -1586,20 +1701,20 @@ function ItemsTab({
         const newItemIds = [...itemIds];
         newItemIds.splice(draggedIndex, 1);
         newItemIds.splice(dropIndex, 0, draggedItemId);
-        
+
         // Update local state immediately for instant UI feedback
-        const itemsMap = new Map(currentItems.map(item => [item.id, item]));
+        const itemsMap = new Map(currentItems.map((item) => [item.id, item]));
         const reorderedItems = newItemIds
-          .map(id => itemsMap.get(id))
+          .map((id) => itemsMap.get(id))
           .filter((item): item is NonNullable<typeof item> => item !== undefined);
-        
+
         // Mark that user has made local reordering changes BEFORE updating state
         // This prevents the sync effect from overriding our changes
         hasLocalReorderingRef.current = true;
-        
+
         // Update local state immediately for instant UI feedback
         setCurrentItems(reorderedItems);
-        
+
         // Notify parent about the change (no API call, just store for later save)
         onReorderItems(newItemIds);
       }
@@ -1622,7 +1737,7 @@ function ItemsTab({
   const handleDragEnd = (e: React.DragEvent) => {
     // Only clear state if drop was not successful (dropEffect is 'none')
     // If drop was successful, the drop handler will clear the state
-    if (e.dataTransfer.dropEffect === 'none') {
+    if (e.dataTransfer.dropEffect === "none") {
       setDraggedSiteId(null);
       setDraggedItemId(null);
       setDragOverCollectionPanel(false);
@@ -1641,46 +1756,59 @@ function ItemsTab({
   };
 
   return (
-    <div style={{ 
-      display: "grid", 
-      gridTemplateColumns: "1fr 1fr", 
-      gap: 24,
-      minHeight: 600,
-    }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 24,
+        minHeight: 600,
+      }}
+    >
       {/* Left Panel: Available Sites */}
-      <div style={{ 
-        background: "white", 
-        borderRadius: 12, 
-        border: "1px solid #e5e7eb",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}>
-        <div style={{ 
-          padding: 16, 
-          background: "#f9fafb", 
-          borderBottom: "1px solid #e5e7eb",
+      <div
+        style={{
+          background: "white",
+          borderRadius: 12,
+          border: "1px solid #e5e7eb",
+          overflow: "hidden",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 12,
-        }}>
-          <h3 style={{ 
-            fontSize: "1.1em", 
-            fontWeight: 600,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "#111827",
-            margin: 0,
-          }}>
-            {t("admin.collectionEdit.availableSites") || "Rendelkezésre álló site-ok"} ({sortedAvailableSites.length})
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            padding: 16,
+            background: "#f9fafb",
+            borderBottom: "1px solid #e5e7eb",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "1.1em",
+              fontWeight: 600,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              color: "#111827",
+              margin: 0,
+            }}
+          >
+            {t("admin.collectionEdit.availableSites") || "Rendelkezésre álló site-ok"} (
+            {sortedAvailableSites.length})
           </h3>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <label style={{ 
-              fontSize: "clamp(12px, 3vw, 14px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "#6b7280",
-            }}>
+            <label
+              style={{
+                fontSize: "clamp(12px, 3vw, 14px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                color: "#6b7280",
+              }}
+            >
               {t("admin.collectionEdit.sortBy") || "Rendezés:"}
             </label>
             <select
@@ -1691,13 +1819,16 @@ function ItemsTab({
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
                 fontSize: "clamp(12px, 3vw, 14px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 background: "white",
                 cursor: "pointer",
               }}
             >
               <option value="name">{t("admin.collectionEdit.sortByName") || "Név (ábécé)"}</option>
-              <option value="date">{t("admin.collectionEdit.sortByDate") || "Létrehozás dátuma"}</option>
+              <option value="date">
+                {t("admin.collectionEdit.sortByDate") || "Létrehozás dátuma"}
+              </option>
             </select>
           </div>
         </div>
@@ -1714,60 +1845,77 @@ function ItemsTab({
               fontSize: "clamp(14px, 3.5vw, 16px)",
               border: "1px solid #d1d5db",
               borderRadius: 6,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           />
         </div>
 
-        <div style={{ 
-          flex: 1,
-          overflowY: "auto",
-          padding: 8,
-        }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: 8,
+          }}
+        >
           {sortedAvailableSites.length === 0 ? (
-            <div style={{ 
-              padding: 48, 
-              textAlign: "center", 
-              color: "#6b7280",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {siteSearchQuery ? t("admin.collectionEdit.noSitesFound") || "Nincs találat" : t("admin.collectionEdit.allSitesAdded") || "Minden site hozzáadva"}
+            <div
+              style={{
+                padding: 48,
+                textAlign: "center",
+                color: "#6b7280",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {siteSearchQuery
+                ? t("admin.collectionEdit.noSitesFound") || "Nincs találat"
+                : t("admin.collectionEdit.allSitesAdded") || "Minden site hozzáadva"}
             </div>
           ) : (
-            <table style={{ 
-              width: "100%", 
-              borderCollapse: "collapse",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               <thead>
                 <tr style={{ background: "#f9fafb" }}>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb", 
-                    width: 40,
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}></th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      width: 40,
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  ></th>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("common.name")}
                   </th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collectionEdit.siteSlug") || "Site Slug"}
                   </th>
                 </tr>
@@ -1802,11 +1950,15 @@ function ItemsTab({
                         }
                       }}
                     >
-                      <td style={{ padding: 12, color: "#9ca3af", fontSize: 18 }}>
-                        ⋮⋮
-                      </td>
+                      <td style={{ padding: 12, color: "#9ca3af", fontSize: 18 }}>⋮⋮</td>
                       <td style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 500, fontSize: "clamp(14px, 3.5vw, 16px)", color: "#111827" }}>
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            color: "#111827",
+                          }}
+                        >
                           {name}
                         </div>
                       </td>
@@ -1822,24 +1974,27 @@ function ItemsTab({
             </table>
           )}
         </div>
-        <div style={{ 
-          padding: 12, 
-          background: "#f9fafb", 
-          borderTop: "1px solid #e5e7eb",
-          fontSize: 12,
-          color: "#6b7280",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          textAlign: "center",
-        }}>
+        <div
+          style={{
+            padding: 12,
+            background: "#f9fafb",
+            borderTop: "1px solid #e5e7eb",
+            fontSize: 12,
+            color: "#6b7280",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            textAlign: "center",
+          }}
+        >
           {t("admin.collectionEdit.dragToAdd") || "Húzd a site-okat a jobb oldalra a hozzáadáshoz"}
         </div>
       </div>
 
       {/* Right Panel: Collection Items */}
-      <div 
-        style={{ 
-          background: dragOverCollectionPanel ? "#e0e7ff" : "white", 
-          borderRadius: 12, 
+      <div
+        style={{
+          background: dragOverCollectionPanel ? "#e0e7ff" : "white",
+          borderRadius: 12,
           border: dragOverCollectionPanel ? "2px dashed #667eea" : "1px solid #e5e7eb",
           overflow: "hidden",
           display: "flex",
@@ -1857,45 +2012,56 @@ function ItemsTab({
           handleCollectionPanelDrop(e);
         }}
       >
-        <div style={{ 
-          padding: 16, 
-          background: "#f9fafb", 
-          borderBottom: "1px solid #e5e7eb",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}>
-          <h3 style={{ 
-            fontSize: "1.1em", 
-            fontWeight: 600,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "#111827",
-            margin: 0,
-          }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#f9fafb",
+            borderBottom: "1px solid #e5e7eb",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "1.1em",
+              fontWeight: 600,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              color: "#111827",
+              margin: 0,
+            }}
+          >
             {t("admin.collectionEdit.items")} ({currentItems.length})
           </h3>
           {currentItems.length > 0 && (
-            <div style={{ 
-              fontSize: 12, 
-              color: "#6b7280",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#6b7280",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.dragToReorder") || "Húzd az elemeket a rendezéshez"}
             </div>
           )}
         </div>
 
         {currentItems.length === 0 ? (
-          <div style={{ 
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 48, 
-            textAlign: "center", 
-            color: "#6b7280",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 48,
+              textAlign: "center",
+              color: "#6b7280",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             <div>
               <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📋</div>
               <div>{t("admin.collectionEdit.noItems")}</div>
@@ -1905,13 +2071,14 @@ function ItemsTab({
             </div>
           </div>
         ) : (
-          <div 
+          <div
             style={{ flex: 1, overflowY: "auto" }}
             onDragOver={(e) => {
               // Allow site drops on the table container too
-              const hasDraggedSite = draggedSiteId || 
-                                    e.dataTransfer.types.includes("application/available-site") ||
-                                    e.dataTransfer.types.includes("text/plain");
+              const hasDraggedSite =
+                draggedSiteId ||
+                e.dataTransfer.types.includes("application/available-site") ||
+                e.dataTransfer.types.includes("text/plain");
               if (hasDraggedSite) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1933,73 +2100,90 @@ function ItemsTab({
               handleCollectionPanelDrop(e);
             }}
           >
-            <table style={{ 
-              width: "100%", 
-              borderCollapse: "collapse",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               <thead>
                 <tr style={{ background: "#f9fafb" }}>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb", 
-                    width: 40,
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}></th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      width: 40,
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  ></th>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("common.name")}
                   </th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collectionEdit.siteSlug") || "Site Slug"}
                   </th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "left", 
-                    borderBottom: "2px solid #e5e7eb",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "left",
+                      borderBottom: "2px solid #e5e7eb",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.collectionEdit.status") || "Státusz"}
                   </th>
-                  <th style={{ 
-                    padding: 12, 
-                    textAlign: "right", 
-                    borderBottom: "2px solid #e5e7eb",
-                    width: "1%",
-                    whiteSpace: "nowrap",
-                    fontSize: "clamp(12px, 3vw, 14px)",
-                    fontWeight: 600,
-                    color: "#374151",
-                  }}>
+                  <th
+                    style={{
+                      padding: 12,
+                      textAlign: "right",
+                      borderBottom: "2px solid #e5e7eb",
+                      width: "1%",
+                      whiteSpace: "nowrap",
+                      fontSize: "clamp(12px, 3vw, 14px)",
+                      fontWeight: 600,
+                      color: "#374151",
+                    }}
+                  >
                     {t("admin.table.actions")}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {currentItems.map((item, index) => {
-                  const siteTranslation = item.site.translations.find((t) => t.lang === currentLang);
+                  const siteTranslation = item.site.translations.find(
+                    (t) => t.lang === currentLang
+                  );
                   const itemTranslation = item.translations.find((t) => t.lang === currentLang);
-                  const title = itemTranslation?.titleOverride || siteTranslation?.name || item.site.slug;
+                  const title =
+                    itemTranslation?.titleOverride || siteTranslation?.name || item.site.slug;
                   const isDragging = draggedItemId === item.id;
-                  const isDragOver = dragOverItemId === item.id || dragOverCollectionItemId === item.id;
+                  const isDragOver =
+                    dragOverItemId === item.id || dragOverCollectionItemId === item.id;
 
                   return (
                     <tr
@@ -2008,7 +2192,10 @@ function ItemsTab({
                       onDragStart={(e) => handleCollectionItemDragStart(e, item.id)}
                       onDragOver={(e) => {
                         // If dragging a site, allow it to pass through to the panel (don't handle here)
-                        if (draggedSiteId || e.dataTransfer.types.includes("application/available-site")) {
+                        if (
+                          draggedSiteId ||
+                          e.dataTransfer.types.includes("application/available-site")
+                        ) {
                           // Let the event bubble up to the panel
                           return;
                         }
@@ -2022,7 +2209,10 @@ function ItemsTab({
                       onDragLeave={handleCollectionItemDragLeave}
                       onDrop={(e) => {
                         // If dragging a site, don't handle here - let it bubble to panel
-                        if (draggedSiteId || e.dataTransfer.types.includes("application/available-site")) {
+                        if (
+                          draggedSiteId ||
+                          e.dataTransfer.types.includes("application/available-site")
+                        ) {
                           return;
                         }
                         // Handle drop - use state directly
@@ -2052,11 +2242,16 @@ function ItemsTab({
                         }
                       }}
                     >
-                      <td style={{ padding: 12, color: "#9ca3af", fontSize: 18 }}>
-                        ⋮⋮
-                      </td>
+                      <td style={{ padding: 12, color: "#9ca3af", fontSize: 18 }}>⋮⋮</td>
                       <td style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 500, fontSize: "clamp(14px, 3.5vw, 16px)", color: "#111827", marginBottom: 4 }}>
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            color: "#111827",
+                            marginBottom: 4,
+                          }}
+                        >
                           {title}
                         </div>
                       </td>
@@ -2094,7 +2289,8 @@ function ItemsTab({
                             cursor: "pointer",
                             fontSize: "clamp(12px, 3vw, 14px)",
                             fontWeight: 500,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             transition: "all 0.2s ease",
                           }}
                           onMouseEnter={(e) => {

@@ -57,8 +57,10 @@ export class PlacesService {
     // Batch query optimization: fetch all categories in one query instead of one-by-one
     if (args.category && args.category.length > 0) {
       const categoryNames = Array.isArray(args.category) ? args.category : [args.category];
-      const trimmedNames = categoryNames.map((name) => name.trim()).filter((name) => name.length > 0);
-      
+      const trimmedNames = categoryNames
+        .map((name) => name.trim())
+        .filter((name) => name.length > 0);
+
       if (trimmedNames.length > 0) {
         // First, try exact name matches (batch query)
         const exactMatchCategories = await this.prisma.category.findMany({
@@ -72,14 +74,19 @@ export class PlacesService {
               },
             },
           },
-          select: { id: true, translations: { where: { lang: site.lang }, select: { name: true } } },
+          select: {
+            id: true,
+            translations: { where: { lang: site.lang }, select: { name: true } },
+          },
         });
 
         // Map found categories by name (case-insensitive)
         const foundCategoryNames = new Set(
           exactMatchCategories.flatMap((cat) => cat.translations.map((t) => t.name.toLowerCase()))
         );
-        const missingNames = trimmedNames.filter((name) => !foundCategoryNames.has(name.toLowerCase()));
+        const missingNames = trimmedNames.filter(
+          (name) => !foundCategoryNames.has(name.toLowerCase())
+        );
 
         // Add found category IDs
         exactMatchCategories.forEach((cat) => categoryIds.push(cat.id));
@@ -116,15 +123,17 @@ export class PlacesService {
     // Batch query optimization: fetch all price bands in one query instead of one-by-one
     if (args.priceBand && args.priceBand.length > 0) {
       const priceBandParams = Array.isArray(args.priceBand) ? args.priceBand : [args.priceBand];
-      const trimmedParams = priceBandParams.map((param) => param.trim()).filter((param) => param.length > 0);
-      
+      const trimmedParams = priceBandParams
+        .map((param) => param.trim())
+        .filter((param) => param.length > 0);
+
       // Separate CUIDs (IDs) from names
       const potentialIds: string[] = [];
       const names: string[] = [];
-      
+
       trimmedParams.forEach((param) => {
         // CUIDs are typically 25 characters long and start with 'c'
-        if (param.length === 25 && param.startsWith('c')) {
+        if (param.length === 25 && param.startsWith("c")) {
           potentialIds.push(param);
         } else {
           names.push(param);
@@ -157,7 +166,10 @@ export class PlacesService {
               },
             },
           },
-          select: { id: true, translations: { where: { lang: site.lang }, select: { name: true } } },
+          select: {
+            id: true,
+            translations: { where: { lang: site.lang }, select: { name: true } },
+          },
         });
 
         // Map found price bands by name (case-insensitive)
@@ -209,10 +221,7 @@ export class PlacesService {
 
     if (categoryIds.length > 0 && priceBandIds.length > 0) {
       // OR logic: match any category OR any price band
-      where.OR = [
-        { categoryId: { in: categoryIds } },
-        { priceBandId: { in: priceBandIds } },
-      ];
+      where.OR = [{ categoryId: { in: categoryIds } }, { priceBandId: { in: priceBandIds } }];
     } else if (categoryIds.length > 0) {
       // Only categories selected
       where.categoryId = { in: categoryIds };
@@ -254,10 +263,7 @@ export class PlacesService {
     // Note: Places don't have slugs directly - slugs are stored in a separate Slug table
     const places = await this.prisma.place.findMany({
       where,
-      orderBy: [
-        { isFeatured: "desc" },
-        { updatedAt: "desc" },
-      ],
+      orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
       take: Math.min(Math.max(args.limit, 1), 200), // Enforce limit between 1-200
       skip: Math.max(args.offset, 0), // Ensure non-negative offset
       include: {
@@ -284,7 +290,7 @@ export class PlacesService {
         },
         translations: true, // Get all translations for fallback
         openingHours: {
-          orderBy: { dayOfWeek: 'asc' },
+          orderBy: { dayOfWeek: "asc" },
         },
         galleries: {
           where: { isActive: true },
@@ -295,7 +301,7 @@ export class PlacesService {
     // Step 5: Load canonical place slugs in a single database round-trip
     // This is more efficient than fetching slugs one-by-one
     const placeIds = places.map((p) => p.id);
-    
+
     // First try to get slugs in the requested language
     const placeSlugs = await this.prisma.slug.findMany({
       where: {
@@ -308,10 +314,10 @@ export class PlacesService {
       },
       select: { entityId: true, slug: true, lang: true },
     });
-    
+
     // Create a map for O(1) lookup: placeId -> slug
     const placeSlugById = new Map(placeSlugs.map((s) => [s.entityId, s.slug]));
-    
+
     // If requested language is not Hungarian, fetch Hungarian slugs as fallback for missing ones
     if (site.lang !== Lang.hu) {
       const missingPlaceIds = placeIds.filter((id) => !placeSlugById.has(id));
@@ -338,7 +344,9 @@ export class PlacesService {
 
     // Step 6: Load canonical town slugs (if needed for the list response)
     const townIds = Array.from(
-      new Set(places.map((p) => p.town?.id).filter((id): id is string => id !== null && id !== undefined))
+      new Set(
+        places.map((p) => p.town?.id).filter((id): id is string => id !== null && id !== undefined)
+      )
     );
     const townSlugs = townIds.length
       ? await this.prisma.slug.findMany({
@@ -354,7 +362,7 @@ export class PlacesService {
         })
       : [];
     const townSlugById = new Map(townSlugs.map((s) => [s.entityId, s.slug]));
-    
+
     // Fallback to Hungarian for missing town slugs
     if (site.lang !== Lang.hu && townIds.length > 0) {
       const missingTownIds = townIds.filter((id) => !townSlugById.has(id));
@@ -379,7 +387,10 @@ export class PlacesService {
     }
 
     // Helper function to get translation with fallback to Hungarian
-    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+    const getTranslation = (
+      translations: Array<{ lang: Lang; [key: string]: any }>,
+      field: string
+    ) => {
       const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
@@ -389,7 +400,7 @@ export class PlacesService {
     // Map places to response format with slugs attached
     return places.map((p) => {
       const canonicalPlaceSlug = placeSlugById.get(p.id) ?? null;
-      const canonicalTownSlug = p.town?.id ? townSlugById.get(p.town.id) ?? null : null;
+      const canonicalTownSlug = p.town?.id ? (townSlugById.get(p.town.id) ?? null) : null;
 
       // Extract category name with fallback to Hungarian
       const categoryName = p.category?.translations
@@ -412,21 +423,20 @@ export class PlacesService {
         .filter((name: string | null): name is string => name !== null);
 
       // Get place translation with fallback to Hungarian
-      const placeTranslation = p.translations.find((t) => t.lang === site.lang) ||
+      const placeTranslation =
+        p.translations.find((t) => t.lang === site.lang) ||
         p.translations.find((t) => t.lang === "hu");
 
       // Extract all images from galleries and combine into a single array
-      const galleryImages = (p.galleries || [])
-        .flatMap((gallery: any) => {
-          try {
-            const images = typeof gallery.images === 'string' 
-              ? JSON.parse(gallery.images) 
-              : gallery.images;
-            return Array.isArray(images) ? images : [];
-          } catch {
-            return [];
-          }
-        });
+      const galleryImages = (p.galleries || []).flatMap((gallery: any) => {
+        try {
+          const images =
+            typeof gallery.images === "string" ? JSON.parse(gallery.images) : gallery.images;
+          return Array.isArray(images) ? images : [];
+        } catch {
+          return [];
+        }
+      });
 
       return {
         id: p.id,
@@ -533,7 +543,7 @@ export class PlacesService {
         },
         translations: true, // Get all translations for fallback
         openingHours: {
-          orderBy: { dayOfWeek: 'asc' },
+          orderBy: { dayOfWeek: "asc" },
         },
         galleries: true,
       },
@@ -559,25 +569,27 @@ export class PlacesService {
     const canonicalSlug = canonicalSlugRecord?.slug ?? args.placeId;
 
     // Step 4: Get town public slug (if place belongs to a town)
-    const townSlug =
-      place.town?.id
-        ? (
-            await this.prisma.slug.findFirst({
-              where: {
-                siteId: site.siteId,
-                lang: site.lang,
-                entityType: SlugEntityType.town,
-                entityId: place.town.id,
-                isPrimary: true,
-                isActive: true,
-              },
-              select: { slug: true },
-            })
-          )?.slug ?? null
-        : null;
+    const townSlug = place.town?.id
+      ? ((
+          await this.prisma.slug.findFirst({
+            where: {
+              siteId: site.siteId,
+              lang: site.lang,
+              entityType: SlugEntityType.town,
+              entityId: place.town.id,
+              isPrimary: true,
+              isActive: true,
+            },
+            select: { slug: true },
+          })
+        )?.slug ?? null)
+      : null;
 
     // Helper function to get translation with fallback to Hungarian
-    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+    const getTranslation = (
+      translations: Array<{ lang: Lang; [key: string]: any }>,
+      field: string
+    ) => {
       const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
@@ -585,7 +597,8 @@ export class PlacesService {
     };
 
     // Get place translation with fallback to Hungarian
-    const placeTranslation = place.translations.find((t) => t.lang === site.lang) ||
+    const placeTranslation =
+      place.translations.find((t) => t.lang === site.lang) ||
       place.translations.find((t) => t.lang === "hu");
 
     // Extract category name with fallback to Hungarian
@@ -627,12 +640,13 @@ export class PlacesService {
         website: placeTranslation?.website ?? null,
         address: placeTranslation?.address ?? null,
       },
-      openingHours: place.openingHours?.map((oh) => ({
-        dayOfWeek: oh.dayOfWeek,
-        isClosed: oh.isClosed,
-        openTime: oh.openTime,
-        closeTime: oh.closeTime,
-      })) ?? null,
+      openingHours:
+        place.openingHours?.map((oh) => ({
+          dayOfWeek: oh.dayOfWeek,
+          isClosed: oh.isClosed,
+          openTime: oh.openTime,
+          closeTime: oh.closeTime,
+        })) ?? null,
       accessibility: placeTranslation?.accessibility ?? null,
       priceBand: priceBandName,
       tags: tagNames,
@@ -640,8 +654,11 @@ export class PlacesService {
       rating: { avg: place.ratingAvg ?? null, count: place.ratingCount ?? null },
       seo: {
         title: placeTranslation?.seoTitle ?? null,
-        description: placeTranslation?.seoDescription 
-          ? placeTranslation.seoDescription.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+        description: placeTranslation?.seoDescription
+          ? placeTranslation.seoDescription
+              .replace(/<[^>]*>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim()
           : null,
         image: placeTranslation?.seoImage ?? null,
         keywords: placeTranslation?.seoKeywords ?? [],

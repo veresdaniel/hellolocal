@@ -4,7 +4,7 @@ import { ROLES_KEY } from "../guards/roles.guard";
 
 /**
  * Decorator to specify required roles for an endpoint.
- * 
+ *
  * @example
  * @Roles(UserRole.admin)
  * @Get('admin-only')
@@ -13,4 +13,3 @@ import { ROLES_KEY } from "../guards/roles.guard";
 export const Roles = (...roles: UserRole[]) => {
   return SetMetadata(ROLES_KEY, roles);
 };
-

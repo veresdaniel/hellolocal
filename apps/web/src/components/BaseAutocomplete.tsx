@@ -1,5 +1,13 @@
 // src/components/BaseAutocomplete.tsx
-import { useState, useRef, useEffect, isValidElement, type ReactNode, type ChangeEvent, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  isValidElement,
+  type ReactNode,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 export interface AutocompleteItem {
@@ -19,7 +27,11 @@ interface BaseAutocompleteProps<T extends AutocompleteItem> {
   required?: boolean;
   error?: string;
   multiple?: boolean;
-  renderSingleSelect?: (selectedItem: T | null, onToggle: () => void, onClear: () => void) => ReactNode;
+  renderSingleSelect?: (
+    selectedItem: T | null,
+    onToggle: () => void,
+    onClear: () => void
+  ) => ReactNode;
   renderChip?: (item: T, onRemove: () => void) => ReactNode;
   chipColor?: string;
   zIndex?: number;
@@ -50,7 +62,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
 
   // Ensure selectedItemIds is always an array
   const safeSelectedItemIds = Array.isArray(selectedItemIds) ? selectedItemIds : [];
-  
+
   const selectedItems = items.filter((item) => safeSelectedItemIds.includes(item.id));
   const availableItems = items.filter((item) => !safeSelectedItemIds.includes(item.id));
 
@@ -102,7 +114,12 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     if (e.key === "Enter" && filteredItems.length > 0) {
       e.preventDefault();
       handleItemSelect(filteredItems[0].id);
-    } else if (e.key === "Backspace" && inputValue === "" && safeSelectedItemIds.length > 0 && multiple) {
+    } else if (
+      e.key === "Backspace" &&
+      inputValue === "" &&
+      safeSelectedItemIds.length > 0 &&
+      multiple
+    ) {
       handleItemRemove(safeSelectedItemIds[safeSelectedItemIds.length - 1]);
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
@@ -138,7 +155,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           marginLeft: 4,
           fontSize: 16,
           lineHeight: 1,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         ×
@@ -154,7 +172,14 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
       return (
         <div ref={containerRef} style={{ position: "relative" }}>
           {label && (
-            <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {label} {required && "*"}
             </label>
           )}
@@ -167,87 +192,93 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             () => handleItemRemove(selectedItem?.id || "")
           )}
           {error && (
-            <div style={{ 
-          color: "#dc3545", 
-          fontSize: "clamp(13px, 3vw, 15px)", 
-          marginTop: 4,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+            <div
+              style={{
+                color: "#dc3545",
+                fontSize: "clamp(13px, 3vw, 15px)",
+                marginTop: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {error}
             </div>
           )}
-        {showSuggestions && (
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
-              background: "white",
-              border: "1px solid #ddd",
-              borderRadius: 4,
-              marginTop: 4,
-              maxHeight: 200,
-              overflowY: "auto",
-              zIndex,
-              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            {!inputValue && selectedItem && (
-              <div
-                key={selectedItem.id}
-                style={{
-                  padding: "8px 12px",
-                  cursor: "default",
-                  borderBottom: "1px solid #f0f0f0",
-                  background: "#e7f3ff",
-                  color: "#007bff",
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                }}
-              >
-                {getItemName(selectedItem)} ✓
-              </div>
-            )}
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
+          {showSuggestions && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "white",
+                border: "1px solid #ddd",
+                borderRadius: 4,
+                marginTop: 4,
+                maxHeight: 200,
+                overflowY: "auto",
+                zIndex,
+                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              {!inputValue && selectedItem && (
                 <div
-                  key={item.id}
-                  onClick={() => handleItemSelect(item.id)}
+                  key={selectedItem.id}
                   style={{
                     padding: "8px 12px",
-                    cursor: "pointer",
+                    cursor: "default",
                     borderBottom: "1px solid #f0f0f0",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    background: "#e7f3ff",
+                    color: "#007bff",
+                    fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: "clamp(15px, 3.5vw, 16px)",
-                    color: "#333",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#f0f0f0";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "white";
                   }}
                 >
-                  {getItemName(item)}
+                  {getItemName(selectedItem)} ✓
                 </div>
-              ))
-            ) : (
-              <div
-                style={{
-                  padding: "8px 12px",
-                  color: "#999",
-                  fontStyle: "italic",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                }}
-              >
-                {t("admin.table.noData")}
-              </div>
-            )}
-          </div>
-        )}
+              )}
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleItemSelect(item.id)}
+                    style={{
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #f0f0f0",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      color: "#333",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "#f0f0f0";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "white";
+                    }}
+                  >
+                    {getItemName(item)}
+                  </div>
+                ))
+              ) : (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    color: "#999",
+                    fontStyle: "italic",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                  }}
+                >
+                  {t("admin.table.noData")}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -256,14 +287,17 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     return (
       <div ref={containerRef} style={{ position: "relative" }}>
         {label && (
-          <label style={{ 
-            display: "block", 
-            marginBottom: 8,
-            color: error ? "#dc2626" : "#667eea",
-            fontWeight: 600,
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: 8,
+              color: error ? "#dc2626" : "#667eea",
+              fontWeight: 600,
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {label} {required && "*"}
           </label>
         )}
@@ -290,7 +324,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 alignItems: "center",
                 justifyContent: "space-between",
                 fontSize: "clamp(15px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               <span>{getItemName(selectedItem)}</span>
@@ -318,11 +353,16 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 >
                   ×
                 </button>
-                <span style={{ 
-                  color: "#999", 
-                  fontSize: "clamp(13px, 3vw, 15px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>▼</span>
+                <span
+                  style={{
+                    color: "#999",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  ▼
+                </span>
               </div>
             </div>
           )}
@@ -348,7 +388,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 }
               }}
               onKeyDown={handleKeyDown}
-              placeholder={selectedItem ? "" : (placeholder || defaultPlaceholder)}
+              placeholder={selectedItem ? "" : placeholder || defaultPlaceholder}
               autoFocus={showSuggestions}
               style={{
                 width: "100%",
@@ -357,7 +397,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 border: "none",
                 outline: "none",
                 borderRadius: 8,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 background: "transparent",
                 boxSizing: "border-box",
                 color: "#333",
@@ -366,13 +407,16 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           )}
         </div>
         {error && (
-          <div style={{ 
-            color: "#dc2626", 
-            fontSize: "clamp(14px, 3.5vw, 16px)", 
-            marginTop: 6, 
-            fontWeight: 500,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <div
+            style={{
+              color: "#dc2626",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              marginTop: 6,
+              fontWeight: 500,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {error}
           </div>
         )}
@@ -403,7 +447,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   background: "#e7f3ff",
                   color: "#007bff",
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 {getItemName(selectedItem)} ✓
@@ -417,7 +462,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   padding: "8px 12px",
                   cursor: "pointer",
                   borderBottom: "1px solid #f0f0f0",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   color: "#333",
                 }}
@@ -437,7 +483,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                   padding: "8px 12px",
                   color: "#999",
                   fontStyle: "italic",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                 }}
               >
@@ -456,14 +503,17 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       {label && (
-        <label style={{ 
-          display: "block", 
-          marginBottom: 8,
-          color: error ? "#dc2626" : "#667eea",
-          fontWeight: 600,
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            color: error ? "#dc2626" : "#667eea",
+            fontWeight: 600,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {label} {required && "*"}
         </label>
       )}
@@ -485,9 +535,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           const chip = chipRenderer(item, () => handleItemRemove(item.id));
           // If chip is already a React element with key, return it directly
           // Otherwise wrap it in a div with key
-          return isValidElement(chip) && chip.key ? chip : (
-            <div key={item.id}>{chip}</div>
-          );
+          return isValidElement(chip) && chip.key ? chip : <div key={item.id}>{chip}</div>;
         })}
         <input
           ref={inputRef}
@@ -496,7 +544,7 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          placeholder={safeSelectedItemIds.length === 0 ? (placeholder || defaultPlaceholder) : ""}
+          placeholder={safeSelectedItemIds.length === 0 ? placeholder || defaultPlaceholder : ""}
           style={{
             flex: 1,
             border: "none",
@@ -504,19 +552,23 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
             padding: "2px 4px",
             fontSize: "clamp(15px, 3.5vw, 16px)",
             minWidth: 120,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             color: "#333",
           }}
         />
       </div>
       {error && (
-        <div style={{ 
-          color: "#dc2626", 
-          fontSize: "clamp(14px, 3.5vw, 16px)", 
-          marginTop: 6, 
-          fontWeight: 500,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <div
+          style={{
+            color: "#dc2626",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            marginTop: 6,
+            fontWeight: 500,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {error}
         </div>
       )}
@@ -545,7 +597,8 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
                 padding: "8px 12px",
                 cursor: "pointer",
                 borderBottom: "1px solid #f0f0f0",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontSize: "clamp(15px, 3.5vw, 16px)",
                 color: "#333",
               }}
@@ -564,4 +617,3 @@ export function BaseAutocomplete<T extends AutocompleteItem>({
     </div>
   );
 }
-

@@ -20,10 +20,7 @@ export class SubscriptionService {
       where: {
         siteId,
         status: { in: ["ACTIVE", "CANCELLED"] },
-        OR: [
-          { validUntil: null },
-          { validUntil: { gt: new Date() } },
-        ],
+        OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }],
       },
     });
   }
@@ -33,10 +30,7 @@ export class SubscriptionService {
       where: {
         placeId,
         status: { in: ["ACTIVE", "CANCELLED"] },
-        OR: [
-          { validUntil: null },
-          { validUntil: { gt: new Date() } },
-        ],
+        OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }],
       },
     });
   }
@@ -45,9 +39,10 @@ export class SubscriptionService {
      CANCEL (user action)
      ========================= */
   async cancel(subscriptionId: string, scope: "site" | "place") {
-    const subscription = scope === "site"
-      ? await this.prisma.siteSubscription.findUnique({ where: { id: subscriptionId } })
-      : await this.prisma.placeSubscription.findUnique({ where: { id: subscriptionId } });
+    const subscription =
+      scope === "site"
+        ? await this.prisma.siteSubscription.findUnique({ where: { id: subscriptionId } })
+        : await this.prisma.placeSubscription.findUnique({ where: { id: subscriptionId } });
 
     if (!subscription) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SUBSCRIPTION);
@@ -63,23 +58,24 @@ export class SubscriptionService {
 
     const oldStatus = subscription.status;
     const oldValidUntil = subscription.validUntil;
-    const updated = scope === "site"
-      ? await this.prisma.siteSubscription.update({
-          where: { id: subscriptionId },
-          data: {
-            status: "CANCELLED",
-            statusChangedAt: new Date(),
-            validUntil: endOfCurrentMonth, // Set to end of current month
-          },
-        })
-      : await this.prisma.placeSubscription.update({
-          where: { id: subscriptionId },
-          data: {
-            status: "CANCELLED",
-            statusChangedAt: new Date(),
-            validUntil: endOfCurrentMonth, // Set to end of current month
-          },
-        });
+    const updated =
+      scope === "site"
+        ? await this.prisma.siteSubscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: "CANCELLED",
+              statusChangedAt: new Date(),
+              validUntil: endOfCurrentMonth, // Set to end of current month
+            },
+          })
+        : await this.prisma.placeSubscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: "CANCELLED",
+              statusChangedAt: new Date(),
+              validUntil: endOfCurrentMonth, // Set to end of current month
+            },
+          });
 
     // Create history entry for cancellation
     try {
@@ -173,9 +169,10 @@ export class SubscriptionService {
      RESUME (user action - reactivate cancelled subscription)
      ========================= */
   async resume(subscriptionId: string, scope: "site" | "place") {
-    const subscription = scope === "site"
-      ? await this.prisma.siteSubscription.findUnique({ where: { id: subscriptionId } })
-      : await this.prisma.placeSubscription.findUnique({ where: { id: subscriptionId } });
+    const subscription =
+      scope === "site"
+        ? await this.prisma.siteSubscription.findUnique({ where: { id: subscriptionId } })
+        : await this.prisma.placeSubscription.findUnique({ where: { id: subscriptionId } });
 
     if (!subscription) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SUBSCRIPTION);
@@ -190,23 +187,24 @@ export class SubscriptionService {
     const firstDayOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const oldStatus = subscription.status;
-    const updated = scope === "site"
-      ? await this.prisma.siteSubscription.update({
-          where: { id: subscriptionId },
-          data: {
-            status: "ACTIVE",
-            statusChangedAt: new Date(),
-            validUntil: firstDayOfNextMonth, // Set to first day of next month
-          },
-        })
-      : await this.prisma.placeSubscription.update({
-          where: { id: subscriptionId },
-          data: {
-            status: "ACTIVE",
-            statusChangedAt: new Date(),
-            validUntil: firstDayOfNextMonth, // Set to first day of next month
-          },
-        });
+    const updated =
+      scope === "site"
+        ? await this.prisma.siteSubscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: "ACTIVE",
+              statusChangedAt: new Date(),
+              validUntil: firstDayOfNextMonth, // Set to first day of next month
+            },
+          })
+        : await this.prisma.placeSubscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: "ACTIVE",
+              statusChangedAt: new Date(),
+              validUntil: firstDayOfNextMonth, // Set to first day of next month
+            },
+          });
 
     // Create history entry for resumption
     try {
@@ -301,7 +299,7 @@ export class SubscriptionService {
      ========================= */
   async expireExpired() {
     const now = new Date();
-    
+
     const siteExpired = await this.prisma.siteSubscription.updateMany({
       where: {
         status: { in: ["ACTIVE", "CANCELLED"] },
@@ -333,10 +331,7 @@ export class SubscriptionService {
   /* =========================
      ENTITLEMENTS (KEY!)
      ========================= */
-  async getEntitlements(args: {
-    siteId?: string;
-    placeId?: string;
-  }) {
+  async getEntitlements(args: { siteId?: string; placeId?: string }) {
     const sub = args.placeId
       ? await this.getForPlace(args.placeId)
       : args.siteId

@@ -7,7 +7,7 @@ export const ROLES_KEY = "roles";
 /**
  * Role-based access control guard.
  * Use with @Roles() decorator to restrict access to specific roles.
- * 
+ *
  * Example:
  * @Roles(UserRole.admin, UserRole.editor)
  * @UseGuards(JwtAuthGuard, RolesGuard)
@@ -46,4 +46,3 @@ export class RolesGuard implements CanActivate {
     });
   }
 }
-

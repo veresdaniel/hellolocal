@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 
@@ -183,7 +188,10 @@ export class AdminPriceListService {
       },
     });
 
-    if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+    if (
+      siteMembership &&
+      (siteMembership.role === "siteadmin" || siteMembership.role === "editor")
+    ) {
       return true;
     }
 
@@ -197,7 +205,12 @@ export class AdminPriceListService {
       },
     });
 
-    if (placeMembership && (placeMembership.role === "owner" || placeMembership.role === "manager" || placeMembership.role === "editor")) {
+    if (
+      placeMembership &&
+      (placeMembership.role === "owner" ||
+        placeMembership.role === "manager" ||
+        placeMembership.role === "editor")
+    ) {
       return true;
     }
 

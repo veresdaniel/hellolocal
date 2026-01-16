@@ -9,8 +9,8 @@ export class AdminSiteSubscriptionController {
   @Get(":siteId/subscription")
   async get(@Param("siteId") siteId: string) {
     return (
-      (await this.prisma.siteSubscription.findUnique({ 
-        where: { siteId } 
+      (await this.prisma.siteSubscription.findUnique({
+        where: { siteId },
       })) ?? {
         plan: "BASIC",
         status: "ACTIVE",
@@ -23,10 +23,11 @@ export class AdminSiteSubscriptionController {
   @Put(":siteId/subscription")
   async update(
     @Param("siteId") siteId: string,
-    @Body() body: { 
-      plan: "BASIC" | "PRO" | "BUSINESS"; 
-      status: "ACTIVE" | "SUSPENDED" | "EXPIRED"; 
-      validUntil?: string | null; 
+    @Body()
+    body: {
+      plan: "BASIC" | "PRO" | "BUSINESS";
+      status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
+      validUntil?: string | null;
       note?: string | null;
     }
   ) {

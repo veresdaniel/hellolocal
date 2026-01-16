@@ -1,12 +1,19 @@
-import { Controller, Get, Param, BadRequestException, NotFoundException, Logger } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from "@nestjs/common";
 import { GalleryPublicService } from "./gallery-public.service";
 
 /**
  * Public controller for gallery endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/:lang/:siteKey/galleries/:id - Get a single gallery by ID
- * 
+ *
  * All endpoints use path parameters for siteKey (not query parameters).
  */
 @Controller("/api/public/:lang/:siteKey/galleries")
@@ -26,7 +33,7 @@ export class GalleryPublicController {
 
   /**
    * Gets a single gallery by ID.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -46,13 +53,13 @@ export class GalleryPublicController {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      
+
       // Log and re-throw other errors
       this.logger.error(
         `Error getting gallery: lang=${lang}, siteKey=${siteKey}, id=${id}`,
         error instanceof Error ? error.stack : String(error)
       );
-      
+
       // For unexpected errors, throw as NotFoundException to avoid exposing internal errors
       throw new NotFoundException("Gallery not found");
     }

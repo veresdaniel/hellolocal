@@ -1,6 +1,10 @@
 // src/hooks/useConfirm.ts
 import { useCallback } from "react";
-import { useConfirmation, type ButtonVariant, type ModalSize } from "../contexts/ConfirmationModalContext";
+import {
+  useConfirmation,
+  type ButtonVariant,
+  type ModalSize,
+} from "../contexts/ConfirmationModalContext";
 
 import type { ReactNode } from "react";
 
@@ -22,18 +26,18 @@ interface ConfirmOptions {
  * Hook for showing confirmation dialogs
  * Returns a function that shows a confirmation modal and returns a promise
  * that resolves when the user confirms or rejects
- * 
+ *
  * @example
  * const confirm = useConfirm();
- * 
+ *
  * // Simple confirmation
  * if (await confirm({ message: "Are you sure?" })) {
  *   // User confirmed
  * }
- * 
+ *
  * // With custom labels
- * if (await confirm({ 
- *   message: "Delete this item?", 
+ * if (await confirm({
+ *   message: "Delete this item?",
  *   confirmLabel: "Delete",
  *   cancelLabel: "Cancel",
  *   confirmVariant: "danger"
@@ -48,7 +52,7 @@ export function useConfirm() {
     async (options: ConfirmOptions): Promise<boolean> => {
       return new Promise((resolve) => {
         let resolved = false;
-        
+
         showConfirmation({
           title: options.title,
           message: options.message,

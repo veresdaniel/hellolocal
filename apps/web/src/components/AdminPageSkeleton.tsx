@@ -17,7 +17,7 @@ export function AdminPageSkeleton() {
     };
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
-    
+
     // Add shimmer animation to document head
     const styleId = "admin-page-skeleton-shimmer";
     if (!document.getElementById(styleId)) {
@@ -35,7 +35,7 @@ export function AdminPageSkeleton() {
       `;
       document.head.appendChild(style);
     }
-    
+
     return () => {
       window.removeEventListener("resize", checkScreenSize);
       // Don't remove the style as it might be used by other components
@@ -47,70 +47,86 @@ export function AdminPageSkeleton() {
   }
 
   return (
-    <div style={{
-      width: "100%",
-      maxWidth: 1400,
-      margin: "0 auto",
-    }}>
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 1400,
+        margin: "0 auto",
+      }}
+    >
       {/* Page header skeleton - matches admin page header style */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        marginBottom: "clamp(24px, 5vw, 32px)", 
-        flexWrap: "wrap", 
-        gap: 16 
-      }}>
-        <div style={{
-          height: isMobile ? "clamp(20px, 4vw, 28px)" : "clamp(20px, 4vw, 28px)",
-          width: 300,
-          background: "rgba(255, 255, 255, 0.15)",
-          borderRadius: 8,
-          animation: "shimmer 1.5s ease-in-out infinite",
-        }} />
-        <div style={{
-          height: 44,
-          width: 150,
-          background: "rgba(255, 255, 255, 0.15)",
-          borderRadius: 8,
-          animation: "shimmer 1.5s ease-in-out infinite",
-          animationDelay: "0.2s",
-        }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "clamp(24px, 5vw, 32px)",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            height: isMobile ? "clamp(20px, 4vw, 28px)" : "clamp(20px, 4vw, 28px)",
+            width: 300,
+            background: "rgba(255, 255, 255, 0.15)",
+            borderRadius: 8,
+            animation: "shimmer 1.5s ease-in-out infinite",
+          }}
+        />
+        <div
+          style={{
+            height: 44,
+            width: 150,
+            background: "rgba(255, 255, 255, 0.15)",
+            borderRadius: 8,
+            animation: "shimmer 1.5s ease-in-out infinite",
+            animationDelay: "0.2s",
+          }}
+        />
       </div>
 
       {/* Table skeleton - matches AdminResponsiveTable style */}
-      <div style={{
-        background: "white",
-        borderRadius: 12,
-        border: "1px solid #e0e0e0",
-        overflow: "hidden",
-        minHeight: 400,
-      }}>
+      <div
+        style={{
+          background: "white",
+          borderRadius: 12,
+          border: "1px solid #e0e0e0",
+          overflow: "hidden",
+          minHeight: 400,
+        }}
+      >
         {/* Search bar skeleton */}
-        <div style={{
-          padding: 20,
-          borderBottom: "1px solid #e0e0e0",
-        }}>
-          <div style={{
-            height: 40,
-            width: "100%",
-            maxWidth: 400,
-            background: "linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%)",
-            backgroundSize: "200% 100%",
-            borderRadius: 8,
-            animation: "shimmer 1.5s ease-in-out infinite",
-          }} />
+        <div
+          style={{
+            padding: 20,
+            borderBottom: "1px solid #e0e0e0",
+          }}
+        >
+          <div
+            style={{
+              height: 40,
+              width: "100%",
+              maxWidth: 400,
+              background: "linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%)",
+              backgroundSize: "200% 100%",
+              borderRadius: 8,
+              animation: "shimmer 1.5s ease-in-out infinite",
+            }}
+          />
         </div>
 
         {/* Table header skeleton */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 16,
-          padding: "16px 20px",
-          background: "#f5f5f5",
-          borderBottom: "1px solid #e0e0e0",
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 16,
+            padding: "16px 20px",
+            background: "#f5f5f5",
+            borderBottom: "1px solid #e0e0e0",
+          }}
+        >
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}

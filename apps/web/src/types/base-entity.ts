@@ -25,4 +25,3 @@ export type EntityType = "place" | "event";
 export type TypedEntity = BaseEntity & {
   type: EntityType;
 };
-

@@ -19,7 +19,7 @@ export class ExpiredFeaturedCleanupTask {
 
     try {
       const now = new Date();
-      
+
       const result = await this.prisma.place.updateMany({
         where: {
           isFeatured: true,

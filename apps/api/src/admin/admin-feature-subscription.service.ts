@@ -1,7 +1,12 @@
 // admin-feature-subscription.service.ts
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { FeatureSubscriptionScope, FeatureSubscriptionStatus, FeatureKey, BillingPeriod } from "@prisma/client";
+import {
+  FeatureSubscriptionScope,
+  FeatureSubscriptionStatus,
+  FeatureKey,
+  BillingPeriod,
+} from "@prisma/client";
 
 export interface CreateFeatureSubscriptionDto {
   siteId: string;
@@ -45,7 +50,7 @@ export class AdminFeatureSubscriptionService {
    */
   async getFloorplanEntitlement(placeId: string, siteId: string): Promise<FloorplanEntitlement> {
     const now = new Date();
-    
+
     // Get active or cancelled subscriptions that haven't expired yet (place scope takes precedence over site scope)
     // Cancelled subscriptions remain active until currentPeriodEnd
     const placeSub = await this.prisma.featureSubscription.findFirst({
@@ -191,13 +196,21 @@ export class AdminFeatureSubscriptionService {
       if (dto.scope === FeatureSubscriptionScope.place && !dto.placeId) {
         throw new BadRequestException("placeId is required when scope is 'place'");
       }
-      if (dto.scope === FeatureSubscriptionScope.site && dto.placeId !== null && dto.placeId !== undefined) {
+      if (
+        dto.scope === FeatureSubscriptionScope.site &&
+        dto.placeId !== null &&
+        dto.placeId !== undefined
+      ) {
         throw new BadRequestException("placeId must be null when scope is 'site'");
       }
     }
 
     // Validate floorplanLimit for FP_CUSTOM
-    if (dto.planKey === "FP_CUSTOM" && dto.floorplanLimit === undefined && !existing.floorplanLimit) {
+    if (
+      dto.planKey === "FP_CUSTOM" &&
+      dto.floorplanLimit === undefined &&
+      !existing.floorplanLimit
+    ) {
       throw new BadRequestException("floorplanLimit is required for FP_CUSTOM plan");
     }
 
@@ -210,7 +223,9 @@ export class AdminFeatureSubscriptionService {
         ...(dto.status && { status: dto.status }),
         ...(dto.scope !== undefined && { scope: dto.scope }),
         ...(dto.scope !== undefined && dto.placeId !== undefined && { placeId: dto.placeId }),
-        ...(dto.stripeSubscriptionId !== undefined && { stripeSubscriptionId: dto.stripeSubscriptionId }),
+        ...(dto.stripeSubscriptionId !== undefined && {
+          stripeSubscriptionId: dto.stripeSubscriptionId,
+        }),
         ...(dto.currentPeriodEnd && { currentPeriodEnd: dto.currentPeriodEnd }),
       },
     });

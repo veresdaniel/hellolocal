@@ -92,7 +92,9 @@ export class EmailService {
       this.logger.log(`[EMAIL] To: ${to}`);
       this.logger.log(`[EMAIL] Subject: ${subject}`);
       this.logger.log(`[EMAIL] HTML: ${html.substring(0, 200)}...`);
-      this.logger.warn("Email not actually sent in development mode. Configure email provider for production.");
+      this.logger.warn(
+        "Email not actually sent in development mode. Configure email provider for production."
+      );
       return;
     }
 
@@ -110,4 +112,3 @@ export class EmailService {
     this.logger.log(`Email sent to ${to}: ${subject}`);
   }
 }
-

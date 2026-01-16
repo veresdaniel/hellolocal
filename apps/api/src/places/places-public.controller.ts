@@ -1,16 +1,23 @@
-import { Controller, Get, Param, Query, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import { PlacesService } from "./places.service";
 import { PlacesPriceListService } from "./places-price-list.service";
 import { AdminFloorplanService } from "../admin/admin-floorplan.service";
 
 /**
  * Public controller for place-related endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/:lang/:siteKey/places - List places with optional filtering
  * - GET /api/public/:lang/:siteKey/places/:slug - Get a single place by slug
  * - GET /api/public/:lang/:siteKey/places/by-id/:placeId - Get a single place by ID (stable)
- * 
+ *
  * All endpoints use path parameters for siteKey (not query parameters).
  */
 @Controller("/api/public/:lang/:siteKey/places")
@@ -32,7 +39,7 @@ export class PlacesPublicController {
 
   /**
    * Lists places with optional filtering.
-   * 
+   *
    * Query parameters:
    * - category: Filter by place category (winery, accommodation, etc.)
    * - priceBand: Filter by price band name
@@ -70,7 +77,7 @@ export class PlacesPublicController {
 
   /**
    * Gets a single place by its public slug.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -95,10 +102,10 @@ export class PlacesPublicController {
 
   /**
    * Gets a single place by its entity ID (stable, future-proof).
-   * 
+   *
    * This endpoint should be used after slug resolution to fetch place data by ID.
    * The slug is only used for UI/SEO purposes, but data loading always uses stable IDs.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -123,7 +130,7 @@ export class PlacesPublicController {
 
   /**
    * Gets price list for a place (public)
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -143,7 +150,7 @@ export class PlacesPublicController {
 
   /**
    * Gets all floorplans for a place (public, read-only)
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -157,7 +164,7 @@ export class PlacesPublicController {
   ) {
     this.validateLang(lang);
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
-    
+
     // Verify place belongs to site
     const place = await this.placesService.detailById({ lang, siteKey, placeId });
     if (!place) {
@@ -170,7 +177,7 @@ export class PlacesPublicController {
 
   /**
    * Gets a floorplan with pins for a place (public, read-only)
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -186,7 +193,7 @@ export class PlacesPublicController {
   ) {
     this.validateLang(lang);
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
-    
+
     // Verify place belongs to site
     const place = await this.placesService.detailById({ lang, siteKey, placeId });
     if (!place) {
@@ -195,12 +202,12 @@ export class PlacesPublicController {
 
     // Get floorplan (public read-only, no auth required)
     const floorplan = await this.floorplanService.findOne(floorplanId, "public-read");
-    
+
     // Verify floorplan belongs to the place
     if (floorplan.placeId !== placeId) {
       throw new NotFoundException("Floorplan not found for this place");
     }
-    
+
     return floorplan;
   }
 }

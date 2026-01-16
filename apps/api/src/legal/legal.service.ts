@@ -27,7 +27,7 @@ export class LegalService {
 
   /**
    * Gets a legal page by key (imprint, terms, or privacy).
-   * 
+   *
    * @param args - Page retrieval arguments
    * @param args.lang - Language code
    * @param args.page - Page key (imprint, terms, or privacy)
@@ -53,7 +53,8 @@ export class LegalService {
     if (!legal || !legal.isActive) throw new NotFoundException("Legal page not found");
 
     // Get translation with fallback to Hungarian
-    const t = legal.translations.find((trans) => trans.lang === site.lang) ||
+    const t =
+      legal.translations.find((trans) => trans.lang === site.lang) ||
       legal.translations.find((trans) => trans.lang === "hu");
 
     if (!t) throw new NotFoundException("Legal page translation not found");
@@ -71,7 +72,10 @@ export class LegalService {
     const getFirstSentences = (html: string | null | undefined, count: number = 2): string => {
       if (!html) return "";
       // Remove HTML tags
-      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      const text = html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       // Split by sentence endings (. ! ?)
       const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
       return sentences.slice(0, count).join(" ").trim();
@@ -80,9 +84,7 @@ export class LegalService {
     // Fallback description: first 2 sentences from content
     const fallbackDescription = getFirstSentences(t.content, 2) || "";
     // Strip HTML from seoDescription if present
-    const seoDescription = t.seoDescription 
-      ? stripHtml(t.seoDescription) 
-      : fallbackDescription;
+    const seoDescription = t.seoDescription ? stripHtml(t.seoDescription) : fallbackDescription;
 
     return {
       key,

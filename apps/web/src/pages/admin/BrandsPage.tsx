@@ -3,9 +3,21 @@ import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getBrands, createBrand, updateBrand, deleteBrand, type Brand, type CreateBrandDto, type UpdateBrandDto } from "../../api/admin.api";
+import {
+  getBrands,
+  createBrand,
+  updateBrand,
+  deleteBrand,
+  type Brand,
+  type CreateBrandDto,
+  type UpdateBrandDto,
+} from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { isValidImageUrl } from "../../utils/urlValidation";
 
@@ -54,7 +66,7 @@ export function BrandsPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!formData.name.trim()) errors.name = t("admin.validation.nameRequired");
-    
+
     // Validate image URLs
     if (formData.logoUrl && !isValidImageUrl(formData.logoUrl)) {
       errors.logoUrl = t("admin.validation.invalidImageUrl");
@@ -62,13 +74,22 @@ export function BrandsPage() {
     if (formData.faviconUrl && !isValidImageUrl(formData.faviconUrl)) {
       errors.faviconUrl = t("admin.validation.invalidImageUrl");
     }
-    if (formData.defaultPlaceholderCardImage && !isValidImageUrl(formData.defaultPlaceholderCardImage)) {
+    if (
+      formData.defaultPlaceholderCardImage &&
+      !isValidImageUrl(formData.defaultPlaceholderCardImage)
+    ) {
       errors.defaultPlaceholderCardImage = t("admin.validation.invalidImageUrl");
     }
-    if (formData.defaultPlaceholderDetailHeroImage && !isValidImageUrl(formData.defaultPlaceholderDetailHeroImage)) {
+    if (
+      formData.defaultPlaceholderDetailHeroImage &&
+      !isValidImageUrl(formData.defaultPlaceholderDetailHeroImage)
+    ) {
       errors.defaultPlaceholderDetailHeroImage = t("admin.validation.invalidImageUrl");
     }
-    if (formData.defaultEventPlaceholderCardImage && !isValidImageUrl(formData.defaultEventPlaceholderCardImage)) {
+    if (
+      formData.defaultEventPlaceholderCardImage &&
+      !isValidImageUrl(formData.defaultEventPlaceholderCardImage)
+    ) {
       errors.defaultEventPlaceholderCardImage = t("admin.validation.invalidImageUrl");
     }
     if (formData.brandBadgeIcon && !isValidImageUrl(formData.brandBadgeIcon)) {
@@ -100,8 +121,10 @@ export function BrandsPage() {
         faviconUrl: formData.faviconUrl.trim() || null,
         placeholders: {
           defaultPlaceholderCardImage: formData.defaultPlaceholderCardImage.trim() || null,
-          defaultPlaceholderDetailHeroImage: formData.defaultPlaceholderDetailHeroImage.trim() || null,
-          defaultEventPlaceholderCardImage: formData.defaultEventPlaceholderCardImage.trim() || null,
+          defaultPlaceholderDetailHeroImage:
+            formData.defaultPlaceholderDetailHeroImage.trim() || null,
+          defaultEventPlaceholderCardImage:
+            formData.defaultEventPlaceholderCardImage.trim() || null,
           brandBadgeIcon: formData.brandBadgeIcon.trim() || null,
         },
         mapDefaults: {
@@ -130,8 +153,10 @@ export function BrandsPage() {
         faviconUrl: formData.faviconUrl.trim() || null,
         placeholders: {
           defaultPlaceholderCardImage: formData.defaultPlaceholderCardImage.trim() || null,
-          defaultPlaceholderDetailHeroImage: formData.defaultPlaceholderDetailHeroImage.trim() || null,
-          defaultEventPlaceholderCardImage: formData.defaultEventPlaceholderCardImage.trim() || null,
+          defaultPlaceholderDetailHeroImage:
+            formData.defaultPlaceholderDetailHeroImage.trim() || null,
+          defaultEventPlaceholderCardImage:
+            formData.defaultEventPlaceholderCardImage.trim() || null,
           brandBadgeIcon: formData.brandBadgeIcon.trim() || null,
         },
         mapDefaults: {
@@ -185,7 +210,8 @@ export function BrandsPage() {
       logoUrl: brand.logoUrl || "",
       faviconUrl: brand.faviconUrl || "",
       defaultPlaceholderCardImage: brand.placeholders?.defaultPlaceholderCardImage || "",
-      defaultPlaceholderDetailHeroImage: brand.placeholders?.defaultPlaceholderDetailHeroImage || "",
+      defaultPlaceholderDetailHeroImage:
+        brand.placeholders?.defaultPlaceholderDetailHeroImage || "",
       defaultEventPlaceholderCardImage: brand.placeholders?.defaultEventPlaceholderCardImage || "",
       brandBadgeIcon: brand.placeholders?.brandBadgeIcon || "",
       mapDefaultTownId: brand.mapDefaults?.townId || "",
@@ -225,7 +251,7 @@ export function BrandsPage() {
         onNewClick={() => setIsCreating(true)}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -236,31 +262,37 @@ export function BrandsPage() {
       />
 
       {error && (
-        <div style={{ 
-          padding: 16, 
-          background: "#f8d7da", 
-          color: "#721c24", 
-          borderRadius: 8, 
-          marginBottom: 24 
-        }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
-            fontWeight: 700,
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(20px, 5vw, 24px)",
+              fontWeight: 700,
+            }}
+          >
             {editingId ? t("admin.forms.editBrand") : t("admin.forms.newBrand")}
           </h2>
 
@@ -277,19 +309,25 @@ export function BrandsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.name ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               />
               {formErrors.name && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.name}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.name}
+                </p>
               )}
             </div>
 
@@ -306,19 +344,25 @@ export function BrandsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.logoUrl ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               />
               {formErrors.logoUrl && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.logoUrl}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.logoUrl}
+                </p>
               )}
             </div>
 
@@ -335,33 +379,42 @@ export function BrandsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.faviconUrl ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               />
               {formErrors.faviconUrl && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.faviconUrl}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.faviconUrl}
+                </p>
               )}
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ 
-                marginBottom: 16, 
-                color: "#667eea", 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 600,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <h3
+                style={{
+                  marginBottom: 16,
+                  color: "#667eea",
+                  fontSize: "clamp(16px, 3.5vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.placeholderImages")}
               </h3>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
@@ -370,25 +423,35 @@ export function BrandsPage() {
                   <input
                     type="text"
                     value={formData.defaultPlaceholderCardImage}
-                    onChange={(e) => setFormData({ ...formData, defaultPlaceholderCardImage: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, defaultPlaceholderCardImage: e.target.value })
+                    }
                     placeholder="https://example.com/placeholder-card.jpg"
                     style={{
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultPlaceholderCardImage ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      border: formErrors.defaultPlaceholderCardImage
+                        ? "2px solid #dc3545"
+                        : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.defaultPlaceholderCardImage && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.defaultPlaceholderCardImage}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.defaultPlaceholderCardImage}
+                    </p>
                   )}
                 </div>
 
@@ -399,25 +462,38 @@ export function BrandsPage() {
                   <input
                     type="text"
                     value={formData.defaultPlaceholderDetailHeroImage}
-                    onChange={(e) => setFormData({ ...formData, defaultPlaceholderDetailHeroImage: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        defaultPlaceholderDetailHeroImage: e.target.value,
+                      })
+                    }
                     placeholder="https://example.com/placeholder-hero.jpg"
                     style={{
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultPlaceholderDetailHeroImage ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      border: formErrors.defaultPlaceholderDetailHeroImage
+                        ? "2px solid #dc3545"
+                        : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.defaultPlaceholderDetailHeroImage && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.defaultPlaceholderDetailHeroImage}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.defaultPlaceholderDetailHeroImage}
+                    </p>
                   )}
                 </div>
 
@@ -428,25 +504,35 @@ export function BrandsPage() {
                   <input
                     type="text"
                     value={formData.defaultEventPlaceholderCardImage}
-                    onChange={(e) => setFormData({ ...formData, defaultEventPlaceholderCardImage: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, defaultEventPlaceholderCardImage: e.target.value })
+                    }
                     placeholder="https://example.com/placeholder-event.jpg"
                     style={{
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultEventPlaceholderCardImage ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      border: formErrors.defaultEventPlaceholderCardImage
+                        ? "2px solid #dc3545"
+                        : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.defaultEventPlaceholderCardImage && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.defaultEventPlaceholderCardImage}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.defaultEventPlaceholderCardImage}
+                    </p>
                   )}
                 </div>
 
@@ -463,36 +549,51 @@ export function BrandsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.brandBadgeIcon ? "2px solid #dc3545" : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.brandBadgeIcon && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.brandBadgeIcon}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.brandBadgeIcon}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ 
-                marginBottom: 16, 
-                color: "#667eea", 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 600,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <h3
+                style={{
+                  marginBottom: 16,
+                  color: "#667eea",
+                  fontSize: "clamp(16px, 3.5vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.mapDefaults")}
               </h3>
-              
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 16,
+                }}
+              >
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
                     {t("admin.mapDefaultTownId")}
@@ -505,7 +606,8 @@ export function BrandsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
@@ -526,19 +628,25 @@ export function BrandsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.mapDefaultLat ? "2px solid #dc3545" : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.mapDefaultLat && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.mapDefaultLat}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.mapDefaultLat}
+                    </p>
                   )}
                 </div>
 
@@ -555,19 +663,25 @@ export function BrandsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.mapDefaultLng ? "2px solid #dc3545" : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.mapDefaultLng && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.mapDefaultLng}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.mapDefaultLng}
+                    </p>
                   )}
                 </div>
 
@@ -584,19 +698,25 @@ export function BrandsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.mapDefaultZoom ? "2px solid #dc3545" : "2px solid #e0e7ff",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
                   />
                   {formErrors.mapDefaultZoom && (
-                    <p style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>{formErrors.mapDefaultZoom}</p>
+                    <p
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {formErrors.mapDefaultZoom}
+                    </p>
                   )}
                 </div>
               </div>
@@ -613,9 +733,7 @@ export function BrandsPage() {
           searchPlaceholder={t("admin.searchPlaceholders.brands")}
           onSearchChange={setSearchQuery}
           isLoading={isLoading}
-          filterFn={(brand, query) => 
-            brand.name.toLowerCase().includes(query.toLowerCase())
-          }
+          filterFn={(brand, query) => brand.name.toLowerCase().includes(query.toLowerCase())}
           columns={columns}
           cardTitle={(brand) => brand.name}
           cardFields={cardFields}

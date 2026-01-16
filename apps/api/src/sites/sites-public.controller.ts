@@ -3,11 +3,11 @@ import { SitesService } from "./sites.service";
 
 /**
  * Public controller for site-related endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/:lang/:siteKey/sites - List active sites with optional filtering
  * - GET /api/public/:lang/:siteKey/sites/:slug - Get a single site by slug
- * 
+ *
  * All endpoints use path parameters for siteKey (not query parameters).
  */
 @Controller("/api/public/:lang/:siteKey/sites")
@@ -25,7 +25,7 @@ export class SitesPublicController {
 
   /**
    * Lists active sites with optional filtering.
-   * 
+   *
    * Query parameters:
    * - q: Search query (searches in site names)
    * - limit: Maximum number of results (default: 50, max: 200)
@@ -51,7 +51,7 @@ export class SitesPublicController {
 
   /**
    * Gets a single site by its slug.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path

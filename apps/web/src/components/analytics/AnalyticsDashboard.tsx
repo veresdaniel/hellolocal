@@ -95,7 +95,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div
         style={{
-          background: "linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)",
           backdropFilter: "blur(10px)",
           border: "none",
           borderRadius: "12px",
@@ -127,7 +128,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export function AnalyticsDashboard(props: Props) {
   const { t } = useTranslation();
   const [range, setRange] = useState<7 | 30 | 90>(7);
-  const { loading, error, site, place, event, fetchSite, fetchPlace, fetchEvent } = useAnalyticsStore();
+  const { loading, error, site, place, event, fetchSite, fetchPlace, fetchEvent } =
+    useAnalyticsStore();
   const params = useParams<{ lang?: string }>();
   const lang = params.lang || "hu";
   const [isMobile, setIsMobile] = useState(() => {
@@ -136,7 +138,10 @@ export function AnalyticsDashboard(props: Props) {
   });
   const [isTablet, setIsTablet] = useState(() => {
     if (typeof window === "undefined") return false;
-    return window.innerWidth >= VIEWPORT_BREAKPOINTS.tablet && window.innerWidth < VIEWPORT_BREAKPOINTS.desktop;
+    return (
+      window.innerWidth >= VIEWPORT_BREAKPOINTS.tablet &&
+      window.innerWidth < VIEWPORT_BREAKPOINTS.desktop
+    );
   });
 
   useEffect(() => {
@@ -165,7 +170,16 @@ export function AnalyticsDashboard(props: Props) {
   const kpis = useMemo(() => {
     if (!data) return [];
     if (props.scope === "site") {
-      const siteData = data as { summary: { pageViews: number; placeViews: number; ctaPhone: number; ctaEmail: number; ctaWebsite: number; ctaMaps: number } };
+      const siteData = data as {
+        summary: {
+          pageViews: number;
+          placeViews: number;
+          ctaPhone: number;
+          ctaEmail: number;
+          ctaWebsite: number;
+          ctaMaps: number;
+        };
+      };
       return [
         {
           label: "Page Views",
@@ -184,10 +198,10 @@ export function AnalyticsDashboard(props: Props) {
         {
           label: "CTA Clicks",
           value:
-            (siteData.summary.ctaPhone +
+            siteData.summary.ctaPhone +
               siteData.summary.ctaEmail +
               siteData.summary.ctaWebsite +
-              siteData.summary.ctaMaps) || 0,
+              siteData.summary.ctaMaps || 0,
           icon: "🖱️",
           color: APP_COLORS.info,
           gradient: GRADIENT_COLORS[2],
@@ -202,7 +216,10 @@ export function AnalyticsDashboard(props: Props) {
       ];
     }
     if (props.scope === "place") {
-      const placeData = data as { summary: { placeViews: number; ctaTotal: number; conversionPct: number }; days: number };
+      const placeData = data as {
+        summary: { placeViews: number; ctaTotal: number; conversionPct: number };
+        days: number;
+      };
       return [
         {
           label: "Place Views",
@@ -235,7 +252,10 @@ export function AnalyticsDashboard(props: Props) {
       ];
     }
     // Event scope
-    const eventData = data as { summary: { eventViews: number; ctaTotal: number; conversionPct: number }; days: number };
+    const eventData = data as {
+      summary: { eventViews: number; ctaTotal: number; conversionPct: number };
+      days: number;
+    };
     return [
       {
         label: "Event Views",
@@ -274,9 +294,17 @@ export function AnalyticsDashboard(props: Props) {
     return [
       { name: t("admin.analytics.ctaPhone"), value: s.ctaPhone ?? 0, color: APP_COLORS.success },
       { name: t("admin.analytics.ctaEmail"), value: s.ctaEmail ?? 0, color: APP_COLORS.info },
-      { name: t("admin.analytics.ctaWebsite"), value: s.ctaWebsite ?? 0, color: APP_COLORS.primary },
+      {
+        name: t("admin.analytics.ctaWebsite"),
+        value: s.ctaWebsite ?? 0,
+        color: APP_COLORS.primary,
+      },
       { name: t("admin.analytics.ctaMaps"), value: s.ctaMaps ?? 0, color: APP_COLORS.warning },
-      { name: t("admin.analytics.ctaFloorplan") || "Floorplan", value: s.ctaFloorplan ?? 0, color: APP_COLORS.secondary },
+      {
+        name: t("admin.analytics.ctaFloorplan") || "Floorplan",
+        value: s.ctaFloorplan ?? 0,
+        color: APP_COLORS.secondary,
+      },
     ];
   }, [data, t]);
 
@@ -292,7 +320,14 @@ export function AnalyticsDashboard(props: Props) {
   }, [ctaBars, data]);
 
   return (
-    <div style={{ padding: "clamp(16px, 4vw, 24px)", display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div
+      style={{
+        padding: "clamp(16px, 4vw, 24px)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+      }}
+    >
       {/* Range selector */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -323,7 +358,8 @@ export function AnalyticsDashboard(props: Props) {
             borderRadius: "16px",
             border: "2px solid #fca5a5",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 500,
             boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
             display: "flex",
@@ -358,11 +394,7 @@ export function AnalyticsDashboard(props: Props) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: isMobile
-            ? "1fr"
-            : isTablet
-            ? "repeat(2, 1fr)"
-            : "repeat(4, 1fr)",
+          gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
           gap: "16px",
         }}
       >
@@ -446,7 +478,7 @@ export function AnalyticsDashboard(props: Props) {
           <h3 style={{ fontSize: "18px", fontWeight: 600, margin: "0 0 20px 0", color: "#1f2937" }}>
             📈 {t("admin.analytics.trafficTrend")}
           </h3>
-          {(!data?.timeseries || data.timeseries.length === 0) ? (
+          {!data?.timeseries || data.timeseries.length === 0 ? (
             <div
               style={{
                 height: "320px",
@@ -463,94 +495,94 @@ export function AnalyticsDashboard(props: Props) {
             <div style={{ height: "320px" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.timeseries}>
-                <defs>
-                  <linearGradient id="colorPageViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={APP_COLORS.primary} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={APP_COLORS.primary} stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient id="colorPlaceViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={APP_COLORS.success} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={APP_COLORS.success} stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                <XAxis
-                  dataKey="day"
-                  stroke="#9ca3af"
-                  style={{ fontSize: "12px" }}
-                  tick={{ fill: "#6b7280" }}
-                />
-                <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} tick={{ fill: "#6b7280" }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  wrapperStyle={{ paddingTop: "20px" }}
-                  iconType="circle"
-                  formatter={(value) => <span style={{ color: "#374151" }}>{value}</span>}
-                />
-                {props.scope === "site" ? (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="pageViews"
-                      stroke={APP_COLORS.primary}
-                      strokeWidth={3}
-                      fill="url(#colorPageViews)"
-                      name={t("admin.analytics.pageViews")}
-                      animationDuration={1000}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="placeViews"
-                      stroke={APP_COLORS.success}
-                      strokeWidth={3}
-                      fill="url(#colorPlaceViews)"
-                      name={t("admin.analytics.placeViews")}
-                      animationDuration={1000}
-                    />
-                  </>
-                ) : props.scope === "place" ? (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="placeViews"
-                      stroke={APP_COLORS.primary}
-                      strokeWidth={3}
-                      fill="url(#colorPageViews)"
-                      name={t("admin.analytics.placeViews")}
-                      animationDuration={1000}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="ctaTotal"
-                      stroke={APP_COLORS.success}
-                      strokeWidth={3}
-                      fill="url(#colorPlaceViews)"
-                      name={t("admin.analytics.ctaClicks")}
-                      animationDuration={1000}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="eventViews"
-                      stroke={APP_COLORS.primary}
-                      strokeWidth={3}
-                      fill="url(#colorPageViews)"
-                      name={t("admin.analytics.eventViews") || "Event Views"}
-                      animationDuration={1000}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="ctaTotal"
-                      stroke={APP_COLORS.success}
-                      strokeWidth={3}
-                      fill="url(#colorPlaceViews)"
-                      name={t("admin.analytics.ctaClicks")}
-                      animationDuration={1000}
-                    />
-                  </>
-                )}
+                  <defs>
+                    <linearGradient id="colorPageViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={APP_COLORS.primary} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={APP_COLORS.primary} stopOpacity={0.1} />
+                    </linearGradient>
+                    <linearGradient id="colorPlaceViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={APP_COLORS.success} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={APP_COLORS.success} stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                  <XAxis
+                    dataKey="day"
+                    stroke="#9ca3af"
+                    style={{ fontSize: "12px" }}
+                    tick={{ fill: "#6b7280" }}
+                  />
+                  <YAxis stroke="#9ca3af" style={{ fontSize: "12px" }} tick={{ fill: "#6b7280" }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "20px" }}
+                    iconType="circle"
+                    formatter={(value) => <span style={{ color: "#374151" }}>{value}</span>}
+                  />
+                  {props.scope === "site" ? (
+                    <>
+                      <Area
+                        type="monotone"
+                        dataKey="pageViews"
+                        stroke={APP_COLORS.primary}
+                        strokeWidth={3}
+                        fill="url(#colorPageViews)"
+                        name={t("admin.analytics.pageViews")}
+                        animationDuration={1000}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="placeViews"
+                        stroke={APP_COLORS.success}
+                        strokeWidth={3}
+                        fill="url(#colorPlaceViews)"
+                        name={t("admin.analytics.placeViews")}
+                        animationDuration={1000}
+                      />
+                    </>
+                  ) : props.scope === "place" ? (
+                    <>
+                      <Area
+                        type="monotone"
+                        dataKey="placeViews"
+                        stroke={APP_COLORS.primary}
+                        strokeWidth={3}
+                        fill="url(#colorPageViews)"
+                        name={t("admin.analytics.placeViews")}
+                        animationDuration={1000}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="ctaTotal"
+                        stroke={APP_COLORS.success}
+                        strokeWidth={3}
+                        fill="url(#colorPlaceViews)"
+                        name={t("admin.analytics.ctaClicks")}
+                        animationDuration={1000}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Area
+                        type="monotone"
+                        dataKey="eventViews"
+                        stroke={APP_COLORS.primary}
+                        strokeWidth={3}
+                        fill="url(#colorPageViews)"
+                        name={t("admin.analytics.eventViews") || "Event Views"}
+                        animationDuration={1000}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="ctaTotal"
+                        stroke={APP_COLORS.success}
+                        strokeWidth={3}
+                        fill="url(#colorPlaceViews)"
+                        name={t("admin.analytics.ctaClicks")}
+                        animationDuration={1000}
+                      />
+                    </>
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -659,25 +691,21 @@ export function AnalyticsDashboard(props: Props) {
             <div style={{ height: "280px" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ctaBars} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                <XAxis type="number" stroke="#9ca3af" style={{ fontSize: "12px" }} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke="#9ca3af"
-                  style={{ fontSize: "12px" }}
-                  width={80}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="value"
-                  radius={[0, 12, 12, 0]}
-                  animationDuration={1000}
-                >
-                  {ctaBars.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+                  <XAxis type="number" stroke="#9ca3af" style={{ fontSize: "12px" }} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    stroke="#9ca3af"
+                    style={{ fontSize: "12px" }}
+                    width={80}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="value" radius={[0, 12, 12, 0]} animationDuration={1000}>
+                    {ctaBars.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -752,12 +780,16 @@ export function AnalyticsDashboard(props: Props) {
                       >
                         {p.name}
                       </div>
-                      <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#6b7280" }}>
+                      <div
+                        style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#6b7280" }}
+                      >
                         <span>
-                          👁️ <strong>{p.placeViews}</strong> {t("admin.analytics.placeViews").toLowerCase()}
+                          👁️ <strong>{p.placeViews}</strong>{" "}
+                          {t("admin.analytics.placeViews").toLowerCase()}
                         </span>
                         <span>
-                          🖱️ <strong>{p.ctaTotal}</strong> {t("admin.analytics.ctaClicks").toLowerCase()}
+                          🖱️ <strong>{p.ctaTotal}</strong>{" "}
+                          {t("admin.analytics.ctaClicks").toLowerCase()}
                         </span>
                       </div>
                     </motion.a>
@@ -787,11 +819,7 @@ export function AnalyticsDashboard(props: Props) {
   );
 }
 
-function RangeButton(props: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function RangeButton(props: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <motion.button
       onClick={props.onClick}

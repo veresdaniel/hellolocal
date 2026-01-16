@@ -8,27 +8,27 @@ export const COLORS = {
   // Primary gradient colors (main brand)
   primary: "#667eea",
   primaryDark: "#764ba2",
-  
+
   // Secondary colors
   secondary: "#764ba2",
-  
+
   // Status colors
   success: "#10b981",
   warning: "#f59e0b",
   danger: "#ef4444",
   info: "#3b82f6",
-  
+
   // Additional colors
   purple: "#8b5cf6",
   pink: "#ec4899",
-  
+
   // Neutral colors
   gray: {
     light: "#f5f5f5",
     medium: "#666",
     dark: "#333",
   },
-  
+
   // Background colors
   background: {
     white: "rgba(255, 255, 255, 0.98)",
@@ -36,14 +36,14 @@ export const COLORS = {
     whiteSemi: "rgba(255, 255, 255, 0.8)",
     light: "#f5f5f5",
   },
-  
+
   // Border colors
   border: {
     light: "rgba(0, 0, 0, 0.06)",
     medium: "rgba(0, 0, 0, 0.08)",
     dark: "#e0e0e0",
   },
-  
+
   // Text colors
   text: {
     primary: "#333",
@@ -101,10 +101,10 @@ export function getRgba(color: string, opacity: number = 1): string {
     }
     return color;
   }
-  
+
   if (color.startsWith("#")) {
     return hexToRgba(color, opacity);
   }
-  
+
   return color;
 }

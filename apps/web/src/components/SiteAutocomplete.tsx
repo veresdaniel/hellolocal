@@ -9,23 +9,27 @@ interface SiteAutocompleteProps {
   allSites: Site[]; // Pass all available sites as a prop
 }
 
-export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }: SiteAutocompleteProps) {
+export function SiteAutocomplete({
+  selectedSiteIds,
+  onSiteIdsChange,
+  allSites,
+}: SiteAutocompleteProps) {
   const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<Site[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const availableSites = useMemo(() => 
-    allSites.filter((site) => !selectedSiteIds.includes(site.id)),
+  const availableSites = useMemo(
+    () => allSites.filter((site) => !selectedSiteIds.includes(site.id)),
     [allSites, selectedSiteIds]
   );
 
   useEffect(() => {
     if (inputValue.length > 0) {
-      const filtered = availableSites.filter((site) =>
-        site.translations.some((t) =>
-          t.name.toLowerCase().includes(inputValue.toLowerCase())
-        ) || site.slug.toLowerCase().includes(inputValue.toLowerCase())
+      const filtered = availableSites.filter(
+        (site) =>
+          site.translations.some((t) => t.name.toLowerCase().includes(inputValue.toLowerCase())) ||
+          site.slug.toLowerCase().includes(inputValue.toLowerCase())
       );
       setSuggestions(filtered);
     } else {
@@ -60,7 +64,16 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
 
   return (
     <div style={{ position: "relative", marginBottom: 16 }}>
-      <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.sites")}</label>
+      <label
+        style={{
+          display: "block",
+          marginBottom: 4,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}
+      >
+        {t("admin.sites")}
+      </label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         {selectedSiteIds.map((siteId) => (
           <span
@@ -73,7 +86,8 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
               display: "flex",
               alignItems: "center",
               gap: 4,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {getSiteName(siteId)}
@@ -86,7 +100,8 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
                 color: "white",
                 cursor: "pointer",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               ×
@@ -151,4 +166,3 @@ export function SiteAutocomplete({ selectedSiteIds, onSiteIdsChange, allSites }:
     </div>
   );
 }
-

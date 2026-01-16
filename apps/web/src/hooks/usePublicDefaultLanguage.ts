@@ -27,4 +27,3 @@ export function usePublicDefaultLanguage(): Lang {
 
   return data || DEFAULT_LANG;
 }
-

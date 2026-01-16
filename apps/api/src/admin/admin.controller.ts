@@ -18,31 +18,78 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { UserRole, Lang, FeatureSubscriptionScope } from "@prisma/client";
-import { AdminCategoryService, CreateCategoryDto, UpdateCategoryDto } from "./admin-category.service";
+import {
+  AdminCategoryService,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "./admin-category.service";
 import { AdminTagService, CreateTagDto, UpdateTagDto } from "./admin-tag.service";
-import { AdminPriceBandService, CreatePriceBandDto, UpdatePriceBandDto } from "./admin-priceband.service";
-import { AdminUsersService, UpdateUserRoleDto, UpdateUserDto, CreateUserDto } from "./admin-users.service";
+import {
+  AdminPriceBandService,
+  CreatePriceBandDto,
+  UpdatePriceBandDto,
+} from "./admin-priceband.service";
+import {
+  AdminUsersService,
+  UpdateUserRoleDto,
+  UpdateUserDto,
+  CreateUserDto,
+} from "./admin-users.service";
 import { AdminTownService, CreateTownDto, UpdateTownDto } from "./admin-town.service";
 import { AdminPlaceService, CreatePlaceDto, UpdatePlaceDto } from "./admin-place.service";
 import { PlaceUpsellService } from "../entitlements/place-upsell.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { AdminLegalService, CreateLegalPageDto, UpdateLegalPageDto } from "./admin-legal.service";
-import { AdminStaticPageService, CreateStaticPageDto, UpdateStaticPageDto } from "./admin-static-page.service";
+import {
+  AdminStaticPageService,
+  CreateStaticPageDto,
+  UpdateStaticPageDto,
+} from "./admin-static-page.service";
 import { AdminSiteService, CreateSiteDto, UpdateSiteDto } from "./admin-site.service";
 import { AdminAppSettingsService, AppSettingDto } from "./admin-app-settings.service";
 import { AdminEventService, CreateEventDto, UpdateEventDto } from "./admin-event.service";
 import { AdminEventLogService, EventLogFilterDto } from "../event-log/admin-eventlog.service";
 import { AdminBrandService, CreateBrandDto, UpdateBrandDto } from "./admin-brand.service";
-import { AdminSiteInstanceService, CreateSiteInstanceDto, UpdateSiteInstanceDto } from "./admin-site-instance.service";
-import { AdminSiteMembershipService, CreateSiteMembershipDto, UpdateSiteMembershipDto } from "./admin-site-membership.service";
-import { AdminPlaceMembershipService, CreatePlaceMembershipDto, UpdatePlaceMembershipDto } from "./admin-place-membership.service";
+import {
+  AdminSiteInstanceService,
+  CreateSiteInstanceDto,
+  UpdateSiteInstanceDto,
+} from "./admin-site-instance.service";
+import {
+  AdminSiteMembershipService,
+  CreateSiteMembershipDto,
+  UpdateSiteMembershipDto,
+} from "./admin-site-membership.service";
+import {
+  AdminPlaceMembershipService,
+  CreatePlaceMembershipDto,
+  UpdatePlaceMembershipDto,
+} from "./admin-place-membership.service";
 import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
 import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
 import { AdminPriceListService, UpdatePriceListDto } from "./admin-price-list.service";
-import { AdminCollectionService, CreateCollectionDto, UpdateCollectionDto, CreateCollectionItemDto, UpdateCollectionItemDto } from "./admin-collection.service";
-import { AdminFeatureSubscriptionService, CreateFeatureSubscriptionDto, UpdateFeatureSubscriptionDto } from "./admin-feature-subscription.service";
-import { AdminFloorplanService, CreateFloorplanDto, UpdateFloorplanDto } from "./admin-floorplan.service";
-import { AdminFloorplanPinService, CreateFloorplanPinDto, UpdateFloorplanPinDto } from "./admin-floorplan-pin.service";
+import {
+  AdminCollectionService,
+  CreateCollectionDto,
+  UpdateCollectionDto,
+  CreateCollectionItemDto,
+  UpdateCollectionItemDto,
+} from "./admin-collection.service";
+import {
+  AdminFeatureSubscriptionService,
+  CreateFeatureSubscriptionDto,
+  UpdateFeatureSubscriptionDto,
+} from "./admin-feature-subscription.service";
+import {
+  AdminFloorplanService,
+  CreateFloorplanDto,
+  UpdateFloorplanDto,
+} from "./admin-floorplan.service";
+import {
+  AdminFloorplanPinService,
+  CreateFloorplanPinDto,
+  UpdateFloorplanPinDto,
+} from "./admin-floorplan-pin.service";
 import { RbacService } from "../auth/rbac.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -56,7 +103,7 @@ import {
 /**
  * Admin controller for CRUD operations on all entities.
  * All endpoints require JWT authentication and appropriate role.
- * 
+ *
  * Currently, all endpoints are accessible to admin and editor roles.
  * In the future, more granular permissions can be added.
  */
@@ -142,22 +189,22 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.categoryService.create(dto);
-    
+
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "category",
-      result.translations,
-      { isActive: result.isActive }
-    );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "category",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log create category:", err));
-    
+    const description = generateCreateDescription("category", result.translations, {
+      isActive: result.isActive,
+    });
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "category",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log create category:", err));
+
     return result;
   }
 
@@ -179,7 +226,7 @@ export class AdminController {
     // Get old data for comparison
     const oldCategory = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "category",
@@ -197,15 +244,17 @@ export class AdminController {
         order: result.order,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "category",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log update category:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "category",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log update category:", err));
+
     return result;
   }
 
@@ -226,28 +275,31 @@ export class AdminController {
     // Get category data before deletion for logging
     const category = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.remove(id, siteId);
-    
+
     // Log the action with detailed description
-    const description = generateDeleteDescription(
-      "category",
-      category.translations
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "category",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log delete category:", err));
-    
+    const description = generateDeleteDescription("category", category.translations);
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "category",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log delete category:", err));
+
     return result;
   }
 
   @Put("/categories/reorder")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async reorderCategories(
-    @Body() body: { siteId: string; updates: Array<{ id: string; parentId: string | null; order: number }> },
+    @Body()
+    body: {
+      siteId: string;
+      updates: Array<{ id: string; parentId: string | null; order: number }>;
+    },
     @CurrentUser() user: { siteIds: string[] }
   ) {
     const siteId = body.siteId || user.siteIds[0];
@@ -303,22 +355,22 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.tagService.create(dto);
-    
+
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "tag",
-      result.translations,
-      { isActive: result.isActive }
-    );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "tag",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log create tag:", err));
-    
+    const description = generateCreateDescription("tag", result.translations, {
+      isActive: result.isActive,
+    });
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "tag",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log create tag:", err));
+
     return result;
   }
 
@@ -340,7 +392,7 @@ export class AdminController {
     // Get old data for comparison
     const oldTag = await this.tagService.findOne(id, siteId);
     const result = await this.tagService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "tag",
@@ -354,15 +406,17 @@ export class AdminController {
         isActive: result.isActive,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "tag",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log update tag:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "tag",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log update tag:", err));
+
     return result;
   }
 
@@ -383,21 +437,20 @@ export class AdminController {
     // Get tag data before deletion for logging
     const tag = await this.tagService.findOne(id, siteId);
     const result = await this.tagService.remove(id, siteId);
-    
+
     // Log the action with detailed description
-    const description = generateDeleteDescription(
-      "tag",
-      tag.translations
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "tag",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log delete tag:", err));
-    
+    const description = generateDeleteDescription("tag", tag.translations);
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "tag",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log delete tag:", err));
+
     return result;
   }
 
@@ -444,22 +497,22 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.priceBandService.create(dto);
-    
+
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "price band",
-      result.translations,
-      { isActive: result.isActive }
-    );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "priceBand",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateCreateDescription("price band", result.translations, {
+      isActive: result.isActive,
+    });
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "priceBand",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -481,7 +534,7 @@ export class AdminController {
     // Get old data for comparison
     const oldPriceBand = await this.priceBandService.findOne(id, siteId);
     const result = await this.priceBandService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "price band",
@@ -495,15 +548,17 @@ export class AdminController {
         isActive: result.isActive,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "priceBand",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "priceBand",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -524,21 +579,20 @@ export class AdminController {
     // Get price band data before deletion for logging
     const priceBand = await this.priceBandService.findOne(id, siteId);
     const result = await this.priceBandService.remove(id, siteId);
-    
+
     // Log the action with detailed description
-    const description = generateDeleteDescription(
-      "price band",
-      priceBand.translations
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "priceBand",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateDeleteDescription("price band", priceBand.translations);
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "priceBand",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -592,21 +646,20 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.townService.create(dto);
-    
+
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "town",
-      result.translations
-    );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "town",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateCreateDescription("town", result.translations);
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "town",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -628,7 +681,7 @@ export class AdminController {
     // Get old data for comparison
     const oldTown = await this.townService.findOne(id, siteId);
     const result = await this.townService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "town",
@@ -640,15 +693,17 @@ export class AdminController {
         translations: result.translations,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "town",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "town",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -669,21 +724,20 @@ export class AdminController {
     // Get town data before deletion for logging
     const town = await this.townService.findOne(id, siteId);
     const result = await this.townService.remove(id, siteId);
-    
+
     // Log the action with detailed description
-    const description = generateDeleteDescription(
-      "town",
-      town.translations
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "town",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateDeleteDescription("town", town.translations);
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "town",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -737,22 +791,20 @@ export class AdminController {
     if (!user.siteIds.includes(siteId)) {
       throw new Error("User does not have access to this site");
     }
-    
+
     const place = await this.placeService.findOne(id, siteId);
     // Extract all images from galleries and count them
-    const galleryImages = (place.galleries || [])
-      .flatMap((gallery: any) => {
-        try {
-          const images = typeof gallery.images === 'string' 
-            ? JSON.parse(gallery.images) 
-            : gallery.images;
-          return Array.isArray(images) ? images : [];
-        } catch {
-          return [];
-        }
-      });
+    const galleryImages = (place.galleries || []).flatMap((gallery: any) => {
+      try {
+        const images =
+          typeof gallery.images === "string" ? JSON.parse(gallery.images) : gallery.images;
+        return Array.isArray(images) ? images : [];
+      } catch {
+        return [];
+      }
+    });
     const currentImageCount = galleryImages.length + (place.heroImage ? 1 : 0);
-    
+
     return this.placeUpsellService.getPlaceUpsellState(
       siteId,
       id,
@@ -776,22 +828,24 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.placeService.create(dto);
-    
+
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "place",
-      result.translations,
-      { isActive: result.isActive, plan: result.plan, isFeatured: result.isFeatured }
-    );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "place",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateCreateDescription("place", result.translations, {
+      isActive: result.isActive,
+      plan: result.plan,
+      isFeatured: result.isFeatured,
+    });
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "place",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -813,7 +867,7 @@ export class AdminController {
     // Get old data for comparison
     const oldPlace = await this.placeService.findOne(id, siteId);
     const result = await this.placeService.update(id, siteId, dto, user.id);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "place",
@@ -837,15 +891,17 @@ export class AdminController {
         priceBandId: result.priceBandId,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "place",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "place",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -866,21 +922,20 @@ export class AdminController {
     // Get place data before deletion for logging
     const place = await this.placeService.findOne(id, siteId);
     const result = await this.placeService.remove(id, siteId, user.id);
-    
+
     // Log the action with detailed description
-    const description = generateDeleteDescription(
-      "place",
-      place.translations
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "place",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateDeleteDescription("place", place.translations);
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "place",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -919,16 +974,18 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.priceListService.upsertPriceList(placeId, siteId, dto, user.id);
-    
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "placePriceList",
-      entityId: placeId,
-      description: `Updated price list for place`,
-    }).catch(err => console.error("Failed to log:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "placePriceList",
+        entityId: placeId,
+        description: `Updated price list for place`,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -998,22 +1055,24 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.legalService.create(dto);
-    
+
     // Log the action with detailed description
     const description = generateCreateDescription(
       "legal page",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       { pageKey: result.key }
     );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "legalPage",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "legalPage",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1035,27 +1094,29 @@ export class AdminController {
     // Get old data for comparison
     const oldLegalPage = await this.legalService.findOne(id, siteId);
     const result = await this.legalService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "legal page",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldLegalPage.translations.map(t => ({ lang: t.lang, name: t.title })),
+        translations: oldLegalPage.translations.map((t) => ({ lang: t.lang, name: t.title })),
       },
       {
         translations: result.translations,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "legalPage",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "legalPage",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1076,21 +1137,23 @@ export class AdminController {
     // Get legal page data before deletion for logging
     const legalPage = await this.legalService.findOne(id, siteId);
     const result = await this.legalService.remove(id, siteId);
-    
+
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "legal page",
-      legalPage.translations.map(t => ({ lang: t.lang, name: t.title }))
+      legalPage.translations.map((t) => ({ lang: t.lang, name: t.title }))
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "legalPage",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "legalPage",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1145,22 +1208,24 @@ export class AdminController {
       throw new Error("User does not have access to this site");
     }
     const result = await this.staticPageService.create(dto);
-    
+
     // Log the action with detailed description
     const description = generateCreateDescription(
       "static page",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       { category: result.category, isActive: result.isActive }
     );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "staticPage",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "staticPage",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1182,31 +1247,33 @@ export class AdminController {
     // Get old data for comparison
     const oldStaticPage = await this.staticPageService.findOne(id, siteId);
     const result = await this.staticPageService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "static page",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldStaticPage.translations.map(t => ({ lang: t.lang, name: t.title })),
+        translations: oldStaticPage.translations.map((t) => ({ lang: t.lang, name: t.title })),
         category: oldStaticPage.category,
         isActive: oldStaticPage.isActive,
       },
       {
-        translations: result.translations.map(t => ({ lang: t.lang, name: t.title })),
+        translations: result.translations.map((t) => ({ lang: t.lang, name: t.title })),
         category: result.category,
         isActive: result.isActive,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "staticPage",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "staticPage",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1227,21 +1294,23 @@ export class AdminController {
     // Get static page data before deletion for logging
     const staticPage = await this.staticPageService.findOne(id, siteId);
     const result = await this.staticPageService.remove(id, siteId);
-    
+
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "static page",
-      staticPage.translations.map(t => ({ lang: t.lang, name: t.title }))
+      staticPage.translations.map((t) => ({ lang: t.lang, name: t.title }))
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "staticPage",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "staticPage",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1254,7 +1323,10 @@ export class AdminController {
     @CurrentUser() user?: { role: UserRole; siteIds: string[] }
   ) {
     // Superadmin and admin can see all users, others only see users from their sites
-    const filterSiteId = (user?.role === UserRole.superadmin || user?.role === UserRole.admin) ? siteId : user?.siteIds[0];
+    const filterSiteId =
+      user?.role === UserRole.superadmin || user?.role === UserRole.admin
+        ? siteId
+        : user?.siteIds[0];
     return this.usersService.findAll(filterSiteId);
   }
 
@@ -1286,32 +1358,30 @@ export class AdminController {
     @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     const result = await this.usersService.create(dto, user.role);
-    
+
     // Log to first site of the created user
     const siteId = dto.siteIds?.[0] || user.siteIds[0];
     if (siteId) {
       // Log the action with detailed description
-      const description = generateCreateDescription(
-        "user",
-        null,
-        {
-          username: result.username,
-          email: result.email,
-          firstName: result.firstName,
-          lastName: result.lastName,
-          role: result.role,
-        }
-      );
-      await this.eventLogService.create({
-        siteId,
-        userId: user.id,
-        action: "create",
-        entityType: "user",
-        entityId: result.id,
-        description,
-      }).catch(err => console.error("Failed to log:", err));
+      const description = generateCreateDescription("user", null, {
+        username: result.username,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        role: result.role,
+      });
+      await this.eventLogService
+        .create({
+          siteId,
+          userId: user.id,
+          action: "create",
+          entityType: "user",
+          entityId: result.id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
     }
-    
+
     return result;
   }
 
@@ -1328,7 +1398,7 @@ export class AdminController {
     // Get old data for comparison
     const oldUser = await this.usersService.findOne(id);
     const result = await this.usersService.updateUserWithSites(id, dto, user.role);
-    
+
     const siteId = user.siteIds[0];
     if (siteId) {
       // Log the action with detailed description
@@ -1352,16 +1422,18 @@ export class AdminController {
           isActive: result.isActive,
         }
       );
-      await this.eventLogService.create({
-        siteId,
-        userId: user.id,
-        action: "update",
-        entityType: "user",
-        entityId: id,
-        description,
-      }).catch(err => console.error("Failed to log:", err));
+      await this.eventLogService
+        .create({
+          siteId,
+          userId: user.id,
+          action: "update",
+          entityType: "user",
+          entityId: id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
     }
-    
+
     return result;
   }
 
@@ -1374,30 +1446,28 @@ export class AdminController {
     // Get user data before deletion for logging
     const userToDelete = await this.usersService.findOne(id);
     const result = await this.usersService.remove(id, user.role);
-    
+
     const siteId = user.siteIds[0];
     if (siteId) {
       // Log the action with detailed description
-      const description = generateDeleteDescription(
-        "user",
-        null,
-        {
-          username: userToDelete.username,
-          email: userToDelete.email,
-          firstName: userToDelete.firstName,
-          lastName: userToDelete.lastName,
-        }
-      );
-      await this.eventLogService.create({
-        siteId,
-        userId: user.id,
-        action: "delete",
-        entityType: "user",
-        entityId: id,
-        description,
-      }).catch(err => console.error("Failed to log:", err));
+      const description = generateDeleteDescription("user", null, {
+        username: userToDelete.username,
+        email: userToDelete.email,
+        firstName: userToDelete.firstName,
+        lastName: userToDelete.lastName,
+      });
+      await this.eventLogService
+        .create({
+          siteId,
+          userId: user.id,
+          action: "delete",
+          entityType: "user",
+          entityId: id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
     }
-    
+
     return result;
   }
 
@@ -1434,29 +1504,30 @@ export class AdminController {
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     const result = await this.siteService.create(dto);
-    
+
     // TypeScript null check - create() should never return null, but we check for safety
     if (!result) {
       throw new Error("Site creation failed: result is null");
     }
-    
+
     // Log to the first available site (or the newly created one)
     const siteId = result.id;
     // Log the action with detailed description
-    const description = generateCreateDescription(
-      "site",
-      result.translations,
-      { isActive: result.isActive, plan: result.plan }
-    );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "site",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    const description = generateCreateDescription("site", result.translations, {
+      isActive: result.isActive,
+      plan: result.plan,
+    });
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "site",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1470,7 +1541,7 @@ export class AdminController {
     // Get old data for comparison
     const oldSite = await this.siteService.findOne(id);
     const result = await this.siteService.update(id, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "site",
@@ -1486,15 +1557,17 @@ export class AdminController {
         plan: result.plan,
       }
     );
-    await this.eventLogService.create({
-      siteId: id,
-      userId: user.id,
-      action: "update",
-      entityType: "site",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: id,
+        userId: user.id,
+        action: "update",
+        entityType: "site",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1507,25 +1580,24 @@ export class AdminController {
     // Get site data before deletion for logging
     const siteToDelete = await this.siteService.findOne(id);
     const result = await this.siteService.remove(id);
-    
+
     // Log to first available site since we're deleting one
     const siteId = user.siteIds[0];
     if (siteId) {
       // Log the action with detailed description
-      const description = generateDeleteDescription(
-        "site",
-        siteToDelete.translations
-      );
-      await this.eventLogService.create({
-        siteId,
-        userId: user.id,
-        action: "delete",
-        entityType: "site",
-        entityId: id,
-        description,
-      }).catch(err => console.error("Failed to log:", err));
+      const description = generateDeleteDescription("site", siteToDelete.translations);
+      await this.eventLogService
+        .create({
+          siteId,
+          userId: user.id,
+          action: "delete",
+          entityType: "site",
+          entityId: id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
     }
-    
+
     return result;
   }
 
@@ -1572,31 +1644,29 @@ export class AdminController {
     }
 
     // RBAC: Check if user can create event for this place
-    await this.rbacService.assertCanCreateEventForPlace(
-      user.id,
-      dto.siteId,
-      dto.placeId || null
-    );
+    await this.rbacService.assertCanCreateEventForPlace(user.id, dto.siteId, dto.placeId || null);
 
     // Set createdByUserId for audit trail
     dto.createdByUserId = user.id;
     const result = await this.eventService.create(dto);
-    
+
     // Log the action with detailed description
     const description = generateCreateDescription(
       "event",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       { isActive: result.isActive }
     );
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "event",
-      entityId: result.id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "event",
+        entityId: result.id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1618,35 +1688,37 @@ export class AdminController {
     // Get old data for comparison
     const oldEvent = await this.eventService.findOne(id, siteId);
     const result = await this.eventService.update(id, siteId, dto);
-    
+
     // Log the action with detailed description
     const description = generateUpdateDescription(
       "event",
-      result.translations.map(t => ({ lang: t.lang, name: t.title })),
+      result.translations.map((t) => ({ lang: t.lang, name: t.title })),
       {
-        translations: oldEvent.translations.map(t => ({ lang: t.lang, name: t.title })),
+        translations: oldEvent.translations.map((t) => ({ lang: t.lang, name: t.title })),
         isActive: oldEvent.isActive,
         placeId: oldEvent.placeId,
         startDate: oldEvent.startDate,
         endDate: oldEvent.endDate,
       },
       {
-        translations: result.translations.map(t => ({ lang: t.lang, name: t.title })),
+        translations: result.translations.map((t) => ({ lang: t.lang, name: t.title })),
         isActive: result.isActive,
         placeId: result.placeId,
         startDate: result.startDate,
         endDate: result.endDate,
       }
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "event",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "event",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1667,21 +1739,23 @@ export class AdminController {
     // Get event data before deletion for logging
     const event = await this.eventService.findOne(id, siteId);
     const result = await this.eventService.remove(id, siteId, user.id);
-    
+
     // Log the action with detailed description
     const description = generateDeleteDescription(
       "event",
-      event.translations.map(t => ({ lang: t.lang, name: t.title }))
+      event.translations.map((t) => ({ lang: t.lang, name: t.title }))
     );
-    await this.eventLogService.create({
-      siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "event",
-      entityId: id,
-      description,
-    }).catch(err => console.error("Failed to log:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "event",
+        entityId: id,
+        description,
+      })
+      .catch((err) => console.error("Failed to log:", err));
+
     return result;
   }
 
@@ -1758,15 +1832,25 @@ export class AdminController {
     // Convert string query params to numbers
     const normalizedFilters: EventLogFilterDto = {
       ...filters,
-      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
-      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+      page: filters.page
+        ? typeof filters.page === "string"
+          ? parseInt(filters.page, 10)
+          : filters.page
+        : undefined,
+      limit: filters.limit
+        ? typeof filters.limit === "string"
+          ? parseInt(filters.limit, 10)
+          : filters.limit
+        : undefined,
     };
     return this.eventLogService.findAll(user.role, user.siteIds, normalizedFilters);
   }
 
   @Get("/event-logs/filter-options")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async getEventLogFilterOptions(@CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }) {
+  async getEventLogFilterOptions(
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
+  ) {
     return this.eventLogService.getFilterOptions(user.role, user.siteIds);
   }
 
@@ -1780,14 +1864,22 @@ export class AdminController {
     // Convert string query params to numbers
     const normalizedFilters: EventLogFilterDto = {
       ...filters,
-      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
-      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+      page: filters.page
+        ? typeof filters.page === "string"
+          ? parseInt(filters.page, 10)
+          : filters.page
+        : undefined,
+      limit: filters.limit
+        ? typeof filters.limit === "string"
+          ? parseInt(filters.limit, 10)
+          : filters.limit
+        : undefined,
     };
     const csv = await this.eventLogService.exportToCsv(user.role, user.siteIds, normalizedFilters);
-    
-    const filename = `event-logs-${new Date().toISOString().split('T')[0]}.csv`;
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const filename = `event-logs-${new Date().toISOString().split("T")[0]}.csv`;
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(csv);
   }
 
@@ -1800,15 +1892,26 @@ export class AdminController {
     // Convert string query params to numbers
     const normalizedFilters: EventLogFilterDto = {
       ...filters,
-      page: filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined,
-      limit: filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : undefined,
+      page: filters.page
+        ? typeof filters.page === "string"
+          ? parseInt(filters.page, 10)
+          : filters.page
+        : undefined,
+      limit: filters.limit
+        ? typeof filters.limit === "string"
+          ? parseInt(filters.limit, 10)
+          : filters.limit
+        : undefined,
     };
     return this.eventLogService.delete(user.role, user.siteIds, normalizedFilters);
   }
 
   @Post("/maintenance/generate-missing-slugs")
   @Roles(UserRole.superadmin)
-  async generateMissingSlugs(@Query("siteId") siteIdParam: string | undefined, @CurrentUser() user: { siteIds: string[] }) {
+  async generateMissingSlugs(
+    @Query("siteId") siteIdParam: string | undefined,
+    @CurrentUser() user: { siteIds: string[] }
+  ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
       throw new ForbiddenException("User has no associated site");
@@ -1882,7 +1985,7 @@ export class AdminController {
     @CurrentUser() user?: { siteIds: string[] }
   ) {
     // If siteId not provided and user has siteIds, use first site
-    const resolvedSiteId = siteId || (user?.siteIds?.[0]);
+    const resolvedSiteId = siteId || user?.siteIds?.[0];
     return this.siteInstanceService.findAll(resolvedSiteId);
   }
 
@@ -1914,10 +2017,7 @@ export class AdminController {
 
   @Get("/site-memberships")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async getSiteMemberships(
-    @Query("siteId") siteId?: string,
-    @Query("userId") userId?: string
-  ) {
+  async getSiteMemberships(@Query("siteId") siteId?: string, @Query("userId") userId?: string) {
     return this.siteMembershipService.findAll(siteId, userId);
   }
 
@@ -1998,10 +2098,7 @@ export class AdminController {
 
   @Delete("/place-memberships/:id")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async deletePlaceMembership(
-    @Param("id") id: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async deletePlaceMembership(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.placeMembershipService.delete(id, user.id);
   }
 
@@ -2232,12 +2329,7 @@ export class AdminController {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const [
-      recentPlaces,
-      recentEvents,
-      recentUsers,
-      recentEventLogs,
-    ] = await Promise.all([
+    const [recentPlaces, recentEvents, recentUsers, recentEventLogs] = await Promise.all([
       this.prisma.place.count({
         where: { createdAt: { gte: sevenDaysAgo } },
       }),
@@ -2319,14 +2411,16 @@ export class AdminController {
 
     // Log the cache invalidation action (use first site if available, otherwise skip)
     if (user.siteIds && user.siteIds.length > 0) {
-      await this.eventLogService.create({
-        siteId: user.siteIds[0], // Use first site for global actions
-        userId: user.id,
-        action: "cache_invalidate",
-        entityType: "system",
-        entityId: cacheType,
-        description: `Cache invalidated: ${cacheType}`,
-      }).catch((err) => console.error("Failed to log cache invalidation:", err));
+      await this.eventLogService
+        .create({
+          siteId: user.siteIds[0], // Use first site for global actions
+          userId: user.id,
+          action: "cache_invalidate",
+          entityType: "system",
+          entityId: cacheType,
+          description: `Cache invalidated: ${cacheType}`,
+        })
+        .catch((err) => console.error("Failed to log cache invalidation:", err));
     }
 
     return {
@@ -2362,22 +2456,21 @@ export class AdminController {
 
   @Post("/collections")
   @Roles(UserRole.superadmin)
-  async createCollection(
-    @Body() dto: CreateCollectionDto,
-    @CurrentUser() user: { id: string }
-  ) {
+  async createCollection(@Body() dto: CreateCollectionDto, @CurrentUser() user: { id: string }) {
     const result = await this.collectionService.create(dto);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "", // Use first site if available
-      userId: user.id,
-      action: "create",
-      entityType: "collection",
-      entityId: result.id,
-      description: `Collection created: ${result.slug}`,
-    }).catch(err => console.error("Failed to log create collection:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "", // Use first site if available
+        userId: user.id,
+        action: "create",
+        entityType: "collection",
+        entityId: result.id,
+        description: `Collection created: ${result.slug}`,
+      })
+      .catch((err) => console.error("Failed to log create collection:", err));
+
     return result;
   }
 
@@ -2390,39 +2483,40 @@ export class AdminController {
   ) {
     const oldCollection = await this.collectionService.findOne(id);
     const result = await this.collectionService.update(id, dto);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "update",
-      entityType: "collection",
-      entityId: id,
-      description: `Collection updated: ${result.slug}`,
-    }).catch(err => console.error("Failed to log update collection:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "update",
+        entityType: "collection",
+        entityId: id,
+        description: `Collection updated: ${result.slug}`,
+      })
+      .catch((err) => console.error("Failed to log update collection:", err));
+
     return result;
   }
 
   @Delete("/collections/:id")
   @Roles(UserRole.superadmin)
-  async deleteCollection(
-    @Param("id") id: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async deleteCollection(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     const collection = await this.collectionService.findOne(id);
     await this.collectionService.delete(id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "delete",
-      entityType: "collection",
-      entityId: id,
-      description: `Collection deleted: ${collection.slug}`,
-    }).catch(err => console.error("Failed to log delete collection:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "delete",
+        entityType: "collection",
+        entityId: id,
+        description: `Collection deleted: ${collection.slug}`,
+      })
+      .catch((err) => console.error("Failed to log delete collection:", err));
+
     return { success: true };
   }
 
@@ -2439,16 +2533,18 @@ export class AdminController {
       ...dto,
       collectionId,
     });
-    
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "create",
-      entityType: "collectionItem",
-      entityId: result.id,
-      description: `Collection item added to collection ${collectionId}`,
-    }).catch(err => console.error("Failed to log add collection item:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "create",
+        entityType: "collectionItem",
+        entityId: result.id,
+        description: `Collection item added to collection ${collectionId}`,
+      })
+      .catch((err) => console.error("Failed to log add collection item:", err));
+
     return result;
   }
 
@@ -2460,36 +2556,37 @@ export class AdminController {
     @CurrentUser() user: { id: string }
   ) {
     const result = await this.collectionService.updateItem(itemId, dto);
-    
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "update",
-      entityType: "collectionItem",
-      entityId: itemId,
-      description: `Collection item updated`,
-    }).catch(err => console.error("Failed to log update collection item:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "update",
+        entityType: "collectionItem",
+        entityId: itemId,
+        description: `Collection item updated`,
+      })
+      .catch((err) => console.error("Failed to log update collection item:", err));
+
     return result;
   }
 
   @Delete("/collections/items/:itemId")
   @Roles(UserRole.superadmin)
-  async deleteCollectionItem(
-    @Param("itemId") itemId: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async deleteCollectionItem(@Param("itemId") itemId: string, @CurrentUser() user: { id: string }) {
     await this.collectionService.deleteItem(itemId);
-    
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "delete",
-      entityType: "collectionItem",
-      entityId: itemId,
-      description: `Collection item deleted`,
-    }).catch(err => console.error("Failed to log delete collection item:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "delete",
+        entityType: "collectionItem",
+        entityId: itemId,
+        description: `Collection item deleted`,
+      })
+      .catch((err) => console.error("Failed to log delete collection item:", err));
+
     return { success: true };
   }
 
@@ -2501,16 +2598,18 @@ export class AdminController {
     @CurrentUser() user: { id: string }
   ) {
     const result = await this.collectionService.reorderItems(collectionId, body.itemIds);
-    
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "update",
-      entityType: "collection",
-      entityId: collectionId,
-      description: `Collection items reordered`,
-    }).catch(err => console.error("Failed to log reorder collection items:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "update",
+        entityType: "collection",
+        entityId: collectionId,
+        description: `Collection items reordered`,
+      })
+      .catch((err) => console.error("Failed to log reorder collection items:", err));
+
     return result;
   }
 
@@ -2518,40 +2617,45 @@ export class AdminController {
   @Roles(UserRole.superadmin)
   async updateCollectionItems(
     @Param("collectionId") collectionId: string,
-    @Body() body: { items: Array<{
-      id?: string;
-      siteId: string;
-      order: number;
-      isHighlighted?: boolean;
-      translations?: Array<{
-        lang: string;
-        titleOverride?: string | null;
-        descriptionOverride?: string | null;
-        imageOverride?: string | null;
+    @Body()
+    body: {
+      items: Array<{
+        id?: string;
+        siteId: string;
+        order: number;
+        isHighlighted?: boolean;
+        translations?: Array<{
+          lang: string;
+          titleOverride?: string | null;
+          descriptionOverride?: string | null;
+          imageOverride?: string | null;
+        }>;
       }>;
-    }> },
+    },
     @CurrentUser() user: { id: string }
   ) {
     // Convert lang strings to Lang enum
-    const itemsWithLangEnum = body.items.map(item => ({
+    const itemsWithLangEnum = body.items.map((item) => ({
       ...item,
-      translations: item.translations?.map(t => ({
+      translations: item.translations?.map((t) => ({
         ...t,
         lang: t.lang as Lang, // Lang enum from Prisma
       })),
     }));
-    
+
     const result = await this.collectionService.updateItems(collectionId, itemsWithLangEnum);
-    
-    await this.eventLogService.create({
-      siteId: (user as any).siteIds?.[0] || "",
-      userId: user.id,
-      action: "update",
-      entityType: "collection",
-      entityId: collectionId,
-      description: `Collection items updated (${body.items.length} items)`,
-    }).catch(err => console.error("Failed to log update collection items:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: (user as any).siteIds?.[0] || "",
+        userId: user.id,
+        action: "update",
+        entityType: "collection",
+        entityId: collectionId,
+        description: `Collection items updated (${body.items.length} items)`,
+      })
+      .catch((err) => console.error("Failed to log update collection items:", err));
+
     return result;
   }
 
@@ -2581,22 +2685,24 @@ export class AdminController {
     // This prevents the API call from being made in the first place.
 
     const result = await this.featureSubscriptionService.create(dto);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: dto.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "featureSubscription",
-      entityId: result.id,
-      description: generateCreateDescription("featureSubscription", null, { 
-        featureKey: dto.featureKey, 
-        planKey: dto.planKey,
-        scope: dto.scope,
-        billingPeriod: dto.billingPeriod,
-      }),
-    }).catch(err => console.error("Failed to log create feature subscription:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: dto.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "featureSubscription",
+        entityId: result.id,
+        description: generateCreateDescription("featureSubscription", null, {
+          featureKey: dto.featureKey,
+          planKey: dto.planKey,
+          scope: dto.scope,
+          billingPeriod: dto.billingPeriod,
+        }),
+      })
+      .catch((err) => console.error("Failed to log create feature subscription:", err));
+
     return result;
   }
 
@@ -2611,7 +2717,7 @@ export class AdminController {
     const existingSub = await this.prisma.featureSubscription.findUnique({
       where: { id },
     });
-    
+
     if (!existingSub) {
       throw new NotFoundException(`Feature subscription with id ${id} not found`);
     }
@@ -2619,9 +2725,9 @@ export class AdminController {
     if (!user.siteIds?.includes(existingSub.siteId)) {
       throw new ForbiddenException("You don't have access to this site");
     }
-    
+
     const result = await this.featureSubscriptionService.update(id, dto);
-    
+
     // Log the action - include scope change if applicable
     const changes: any = {};
     if (dto.planKey && dto.planKey !== existingSub.planKey) {
@@ -2636,16 +2742,24 @@ export class AdminController {
     if (dto.scope && dto.scope !== existingSub.scope) {
       changes.scope = { from: existingSub.scope, to: dto.scope };
     }
-    
-    await this.eventLogService.create({
-      siteId: existingSub.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "featureSubscription",
-      entityId: id,
-      description: generateUpdateDescription("featureSubscription", null, existingSub, result, changes),
-    }).catch(err => console.error("Failed to log update feature subscription:", err));
-    
+
+    await this.eventLogService
+      .create({
+        siteId: existingSub.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "featureSubscription",
+        entityId: id,
+        description: generateUpdateDescription(
+          "featureSubscription",
+          null,
+          existingSub,
+          result,
+          changes
+        ),
+      })
+      .catch((err) => console.error("Failed to log update feature subscription:", err));
+
     return result;
   }
 
@@ -2658,7 +2772,7 @@ export class AdminController {
     const existingSub = await this.prisma.featureSubscription.findUnique({
       where: { id },
     });
-    
+
     if (!existingSub) {
       throw new NotFoundException(`Feature subscription with id ${id} not found`);
     }
@@ -2668,17 +2782,19 @@ export class AdminController {
     }
 
     const result = await this.featureSubscriptionService.cancel(id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existingSub.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "featureSubscription",
-      entityId: id,
-      description: `Feature subscription cancelled (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
-    }).catch(err => console.error("Failed to log cancel feature subscription:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existingSub.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "featureSubscription",
+        entityId: id,
+        description: `Feature subscription cancelled (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+      })
+      .catch((err) => console.error("Failed to log cancel feature subscription:", err));
+
     return result;
   }
 
@@ -2691,7 +2807,7 @@ export class AdminController {
     const existingSub = await this.prisma.featureSubscription.findUnique({
       where: { id },
     });
-    
+
     if (!existingSub) {
       throw new NotFoundException(`Feature subscription with id ${id} not found`);
     }
@@ -2701,17 +2817,19 @@ export class AdminController {
     }
 
     const result = await this.featureSubscriptionService.suspend(id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existingSub.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "featureSubscription",
-      entityId: id,
-      description: `Feature subscription suspended (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
-    }).catch(err => console.error("Failed to log suspend feature subscription:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existingSub.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "featureSubscription",
+        entityId: id,
+        description: `Feature subscription suspended (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+      })
+      .catch((err) => console.error("Failed to log suspend feature subscription:", err));
+
     return result;
   }
 
@@ -2724,7 +2842,7 @@ export class AdminController {
     const existingSub = await this.prisma.featureSubscription.findUnique({
       where: { id },
     });
-    
+
     if (!existingSub) {
       throw new NotFoundException(`Feature subscription with id ${id} not found`);
     }
@@ -2734,17 +2852,19 @@ export class AdminController {
     }
 
     const result = await this.featureSubscriptionService.resume(id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existingSub.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "featureSubscription",
-      entityId: id,
-      description: `Feature subscription resumed (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
-    }).catch(err => console.error("Failed to log resume feature subscription:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existingSub.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "featureSubscription",
+        entityId: id,
+        description: `Feature subscription resumed (scope: ${existingSub.scope}, feature: ${existingSub.featureKey}, plan: ${existingSub.planKey})`,
+      })
+      .catch((err) => console.error("Failed to log resume feature subscription:", err));
+
     return result;
   }
 
@@ -2778,7 +2898,7 @@ export class AdminController {
     @Query("placeId") placeId?: string,
     @Query("q") q?: string,
     @Query("take") take?: string,
-    @Query("skip") skip?: string,
+    @Query("skip") skip?: string
   ) {
     // If siteId is provided, check access
     if (siteId && !user.siteIds?.includes(siteId)) {
@@ -2807,42 +2927,38 @@ export class AdminController {
     const existing = await this.prisma.featureSubscription.findUnique({
       where: { id },
     });
-    
+
     const result = await this.featureSubscriptionService.delete(id);
-    
+
     // Log the action
     if (existing) {
-      await this.eventLogService.create({
-        siteId: existing.siteId,
-        userId: user.id,
-        action: "delete",
-        entityType: "featureSubscription",
-        entityId: id,
-        description: generateDeleteDescription("featureSubscription", null, { 
-          featureKey: existing.featureKey,
-          planKey: existing.planKey,
-        }),
-      }).catch(err => console.error("Failed to log delete feature subscription:", err));
+      await this.eventLogService
+        .create({
+          siteId: existing.siteId,
+          userId: user.id,
+          action: "delete",
+          entityType: "featureSubscription",
+          entityId: id,
+          description: generateDeleteDescription("featureSubscription", null, {
+            featureKey: existing.featureKey,
+            planKey: existing.planKey,
+          }),
+        })
+        .catch((err) => console.error("Failed to log delete feature subscription:", err));
     }
-    
+
     return result;
   }
 
   // ==================== Floorplans ====================
 
   @Get("/places/:placeId/floorplans")
-  async getFloorplans(
-    @Param("placeId") placeId: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async getFloorplans(@Param("placeId") placeId: string, @CurrentUser() user: { id: string }) {
     return this.floorplanService.findAll(placeId, user.id);
   }
 
   @Get("/floorplans/:id")
-  async getFloorplan(
-    @Param("id") id: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async getFloorplan(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.floorplanService.findOne(id, user.id);
   }
 
@@ -2857,19 +2973,21 @@ export class AdminController {
       where: { id: dto.placeId },
       select: { siteId: true },
     });
-    
+
     const result = await this.floorplanService.create(dto, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: place?.siteId || user.siteIds[0] || "",
-      userId: user.id,
-      action: "create",
-      entityType: "floorplan",
-      entityId: result.id,
-      description: generateCreateDescription("floorplan", null, { title: result.title }),
-    }).catch(err => console.error("Failed to log create floorplan:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: place?.siteId || user.siteIds[0] || "",
+        userId: user.id,
+        action: "create",
+        entityType: "floorplan",
+        entityId: result.id,
+        description: generateCreateDescription("floorplan", null, { title: result.title }),
+      })
+      .catch((err) => console.error("Failed to log create floorplan:", err));
+
     return result;
   }
 
@@ -2883,17 +3001,19 @@ export class AdminController {
     // Get existing floorplan for event log
     const existing = await this.floorplanService.findOne(id, user.id);
     const result = await this.floorplanService.update(id, dto, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existing.place.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "floorplan",
-      entityId: id,
-      description: generateUpdateDescription("floorplan", null, existing, result),
-    }).catch(err => console.error("Failed to log update floorplan:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existing.place.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "floorplan",
+        entityId: id,
+        description: generateUpdateDescription("floorplan", null, existing, result),
+      })
+      .catch((err) => console.error("Failed to log update floorplan:", err));
+
     return result;
   }
 
@@ -2906,17 +3026,19 @@ export class AdminController {
     // Get existing floorplan for event log before deletion
     const existing = await this.floorplanService.findOne(id, user.id);
     const result = await this.floorplanService.delete(id, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existing.place.siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "floorplan",
-      entityId: id,
-      description: generateDeleteDescription("floorplan", null, { title: existing.title }),
-    }).catch(err => console.error("Failed to log delete floorplan:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existing.place.siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "floorplan",
+        entityId: id,
+        description: generateDeleteDescription("floorplan", null, { title: existing.title }),
+      })
+      .catch((err) => console.error("Failed to log delete floorplan:", err));
+
     return result;
   }
 
@@ -2931,10 +3053,7 @@ export class AdminController {
   }
 
   @Get("/floorplan-pins/:id")
-  async getFloorplanPin(
-    @Param("id") id: string,
-    @CurrentUser() user: { id: string }
-  ) {
+  async getFloorplanPin(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.floorplanPinService.findOne(id, user.id);
   }
 
@@ -2947,17 +3066,22 @@ export class AdminController {
     // Get floorplan to get siteId for event log
     const floorplan = await this.floorplanService.findOne(dto.floorplanId, user.id);
     const result = await this.floorplanPinService.create(dto, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: floorplan.place.siteId,
-      userId: user.id,
-      action: "create",
-      entityType: "floorplanPin",
-      entityId: result.id,
-      description: generateCreateDescription("floorplanPin", null, { label: result.label, floorplanId: dto.floorplanId }),
-    }).catch(err => console.error("Failed to log create floorplan pin:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: floorplan.place.siteId,
+        userId: user.id,
+        action: "create",
+        entityType: "floorplanPin",
+        entityId: result.id,
+        description: generateCreateDescription("floorplanPin", null, {
+          label: result.label,
+          floorplanId: dto.floorplanId,
+        }),
+      })
+      .catch((err) => console.error("Failed to log create floorplan pin:", err));
+
     return result;
   }
 
@@ -2971,17 +3095,19 @@ export class AdminController {
     // Get existing pin for event log
     const existing = await this.floorplanPinService.findOne(id, user.id);
     const result = await this.floorplanPinService.update(id, dto, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existing.floorplan.place.siteId,
-      userId: user.id,
-      action: "update",
-      entityType: "floorplanPin",
-      entityId: id,
-      description: generateUpdateDescription("floorplanPin", null, existing, result),
-    }).catch(err => console.error("Failed to log update floorplan pin:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existing.floorplan.place.siteId,
+        userId: user.id,
+        action: "update",
+        entityType: "floorplanPin",
+        entityId: id,
+        description: generateUpdateDescription("floorplanPin", null, existing, result),
+      })
+      .catch((err) => console.error("Failed to log update floorplan pin:", err));
+
     return result;
   }
 
@@ -2994,18 +3120,19 @@ export class AdminController {
     // Get existing pin for event log before deletion
     const existing = await this.floorplanPinService.findOne(id, user.id);
     const result = await this.floorplanPinService.delete(id, user.id);
-    
+
     // Log the action
-    await this.eventLogService.create({
-      siteId: existing.floorplan.place.siteId,
-      userId: user.id,
-      action: "delete",
-      entityType: "floorplanPin",
-      entityId: id,
-      description: generateDeleteDescription("floorplanPin", null, { label: existing.label }),
-    }).catch(err => console.error("Failed to log delete floorplan pin:", err));
-    
+    await this.eventLogService
+      .create({
+        siteId: existing.floorplan.place.siteId,
+        userId: user.id,
+        action: "delete",
+        entityType: "floorplanPin",
+        entityId: id,
+        description: generateDeleteDescription("floorplanPin", null, { label: existing.label }),
+      })
+      .catch((err) => console.error("Failed to log delete floorplan pin:", err));
+
     return result;
   }
 }
-

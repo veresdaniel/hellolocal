@@ -13,22 +13,21 @@ export class EntitlementsService {
   ) {}
 
   async getForRequest(args: { lang: Lang; siteKey?: string }): Promise<Entitlements> {
-    const resolved = await this.siteResolver.resolve({ 
-      lang: args.lang, 
-      siteKey: args.siteKey 
+    const resolved = await this.siteResolver.resolve({
+      lang: args.lang,
+      siteKey: args.siteKey,
     });
 
     const siteId = resolved.siteId;
 
     // 1) subscription betöltés (ha nincs: BASIC/ACTIVE)
-    const sub =
-      (await this.prisma.siteSubscription.findUnique({
-        where: { siteId },
-      })) ?? {
-        plan: "BASIC" as const,
-        status: "ACTIVE" as const,
-        validUntil: null,
-      };
+    const sub = (await this.prisma.siteSubscription.findUnique({
+      where: { siteId },
+    })) ?? {
+      plan: "BASIC" as const,
+      status: "ACTIVE" as const,
+      validUntil: null,
+    };
 
     // 2) status normalizálás (lejárt -> EXPIRED)
     const now = new Date();
@@ -36,16 +35,16 @@ export class EntitlementsService {
     const status = isExpired ? "EXPIRED" : sub.status;
 
     const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
-    
+
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({
       orderBy: { createdAt: "asc" },
       select: { planOverrides: true },
     });
-    
+
     const planOverrides = (brand?.planOverrides as any) || null;
     const planOverride = planOverrides?.[plan];
-    
+
     // Merge default plan def with override
     const baseDef = PLAN_DEFS[plan];
     const def = planOverride ? this.deepMergePlanDef(baseDef, planOverride) : baseDef;
@@ -60,30 +59,27 @@ export class EntitlementsService {
       languagesCount,
       galleriesCount,
     ] = await Promise.all([
-      this.prisma.place.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.place.count({
+        where: { siteId, isActive: true },
       }),
-      this.prisma.place.count({ 
-        where: { 
-          siteId, 
-          isActive: true, 
+      this.prisma.place.count({
+        where: {
+          siteId,
+          isActive: true,
           isFeatured: true,
-          OR: [
-            { featuredUntil: null },
-            { featuredUntil: { gt: now } },
-          ],
-        } 
+          OR: [{ featuredUntil: null }, { featuredUntil: { gt: now } }],
+        },
       }),
-      this.prisma.siteMembership.count({ 
-        where: { siteId } 
+      this.prisma.siteMembership.count({
+        where: { siteId },
       }),
       this.countEventsThisMonth(siteId),
-      this.prisma.siteDomain.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.siteDomain.count({
+        where: { siteId, isActive: true },
       }),
       this.countLanguages(siteId),
-      this.prisma.gallery.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.gallery.count({
+        where: { siteId, isActive: true },
       }),
     ]);
 
@@ -112,14 +108,13 @@ export class EntitlementsService {
    */
   async getBySiteId(siteId: string): Promise<Entitlements> {
     // 1) subscription betöltés (ha nincs: BASIC/ACTIVE)
-    const sub =
-      (await this.prisma.siteSubscription.findUnique({
-        where: { siteId },
-      })) ?? {
-        plan: "BASIC" as const,
-        status: "ACTIVE" as const,
-        validUntil: null,
-      };
+    const sub = (await this.prisma.siteSubscription.findUnique({
+      where: { siteId },
+    })) ?? {
+      plan: "BASIC" as const,
+      status: "ACTIVE" as const,
+      validUntil: null,
+    };
 
     // 2) status normalizálás (lejárt -> EXPIRED)
     const now = new Date();
@@ -127,16 +122,16 @@ export class EntitlementsService {
     const status = isExpired ? "EXPIRED" : sub.status;
 
     const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
-    
+
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({
       orderBy: { createdAt: "asc" },
       select: { planOverrides: true },
     });
-    
+
     const planOverrides = (brand?.planOverrides as any) || null;
     const planOverride = planOverrides?.[plan];
-    
+
     // Merge default plan def with override
     const baseDef = PLAN_DEFS[plan];
     const def = planOverride ? this.deepMergePlanDef(baseDef, planOverride) : baseDef;
@@ -151,30 +146,27 @@ export class EntitlementsService {
       languagesCount,
       galleriesCount,
     ] = await Promise.all([
-      this.prisma.place.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.place.count({
+        where: { siteId, isActive: true },
       }),
-      this.prisma.place.count({ 
-        where: { 
-          siteId, 
-          isActive: true, 
+      this.prisma.place.count({
+        where: {
+          siteId,
+          isActive: true,
           isFeatured: true,
-          OR: [
-            { featuredUntil: null },
-            { featuredUntil: { gt: now } },
-          ],
-        } 
+          OR: [{ featuredUntil: null }, { featuredUntil: { gt: now } }],
+        },
       }),
-      this.prisma.siteMembership.count({ 
-        where: { siteId } 
+      this.prisma.siteMembership.count({
+        where: { siteId },
       }),
       this.countEventsThisMonth(siteId),
-      this.prisma.siteDomain.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.siteDomain.count({
+        where: { siteId, isActive: true },
       }),
       this.countLanguages(siteId),
-      this.prisma.gallery.count({ 
-        where: { siteId, isActive: true } 
+      this.prisma.gallery.count({
+        where: { siteId, isActive: true },
       }),
     ]);
 
@@ -203,17 +195,17 @@ export class EntitlementsService {
    */
   private deepMergePlanDef(base: any, override: any): any {
     const result = { ...base };
-    
+
     // Merge limits
     if (override.limits) {
       result.limits = { ...base.limits, ...override.limits };
     }
-    
+
     // Merge features
     if (override.features) {
       result.features = { ...base.features, ...override.features };
     }
-    
+
     return result;
   }
 
@@ -222,10 +214,10 @@ export class EntitlementsService {
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     return this.prisma.event.count({
-      where: { 
-        siteId, 
-        isActive: true, 
-        startDate: { gte: start, lt: end } 
+      where: {
+        siteId,
+        isActive: true,
+        startDate: { gte: start, lt: end },
       },
     });
   }

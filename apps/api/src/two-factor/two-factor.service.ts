@@ -50,7 +50,9 @@ export class TwoFactorService {
    * Generates a TOTP secret for a user and returns QR code data URL.
    * The secret is stored in the database but 2FA is not enabled until verified.
    */
-  async setupTwoFactor(userId: string): Promise<{ secret: string; qrCodeUrl: string; manualEntryKey: string }> {
+  async setupTwoFactor(
+    userId: string
+  ): Promise<{ secret: string; qrCodeUrl: string; manualEntryKey: string }> {
     await this.ensureDependencies();
 
     if (!userId) {
@@ -97,7 +99,10 @@ export class TwoFactorService {
   /**
    * Verifies a TOTP code and enables 2FA if verification succeeds.
    */
-  async verifyAndEnableTwoFactor(userId: string, token: string): Promise<{ verified: boolean; message: string }> {
+  async verifyAndEnableTwoFactor(
+    userId: string,
+    token: string
+  ): Promise<{ verified: boolean; message: string }> {
     await this.ensureDependencies();
 
     const user = await this.prisma.user.findUnique({
@@ -235,4 +240,3 @@ export class TwoFactorService {
     }
   }
 }
-

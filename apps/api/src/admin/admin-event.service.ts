@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -86,7 +91,12 @@ export class AdminEventService {
    * Create slugs for an event in all languages
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForEvent(eventId: string, siteId: string, translations: Array<{ lang: Lang; title: string; slug?: string | null }>, throwOnConflict: boolean = false) {
+  private async createSlugsForEvent(
+    eventId: string,
+    siteId: string,
+    translations: Array<{ lang: Lang; title: string; slug?: string | null }>,
+    throwOnConflict: boolean = false
+  ) {
     for (const translation of translations) {
       // If custom slug is provided, use it (normalized), otherwise generate from title
       let baseSlug: string;
@@ -97,7 +107,7 @@ export class AdminEventService {
         // Generate slug from title
         baseSlug = generateSlug(translation.title);
       }
-      
+
       if (!baseSlug || baseSlug.trim() === "") {
         // If slug is empty, use event ID as fallback
         baseSlug = `event-${eventId}`;
@@ -120,7 +130,12 @@ export class AdminEventService {
 
       // If conflict detected and throwOnConflict is true, throw error
       if (existing && throwOnConflict) {
-        const langName = translation.lang === Lang.hu ? "magyar" : translation.lang === Lang.en ? "angol" : "német";
+        const langName =
+          translation.lang === Lang.hu
+            ? "magyar"
+            : translation.lang === Lang.en
+              ? "angol"
+              : "német";
         throw new BadRequestException(
           `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik címet vagy módosítsa a meglévő eseményt.`
         );
@@ -172,7 +187,7 @@ export class AdminEventService {
             isPrimary: false,
           },
         });
-        
+
         // Update the existing slug
         await this.prisma.slug.update({
           where: { id: existingSlugForEvent.id },
@@ -221,7 +236,7 @@ export class AdminEventService {
         // Generate slug from title
         baseSlug = generateSlug(translation.title);
       }
-      
+
       if (!baseSlug || baseSlug.trim() === "") {
         // If slug is empty, use event ID as fallback
         baseSlug = `event-${eventId}`;
@@ -248,7 +263,12 @@ export class AdminEventService {
 
       // If conflict detected and throwOnConflict is true, throw error
       if (existing && throwOnConflict) {
-        const langName = translation.lang === Lang.hu ? "magyar" : translation.lang === Lang.en ? "angol" : "német";
+        const langName =
+          translation.lang === Lang.hu
+            ? "magyar"
+            : translation.lang === Lang.en
+              ? "angol"
+              : "német";
         throw new BadRequestException(
           `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik címet vagy módosítsa a meglévő eseményt.`
         );
@@ -399,12 +419,12 @@ export class AdminEventService {
       // Default pagination values
       const pageNum = page ? parseInt(String(page)) : 1;
       const limitNum = limit ? parseInt(String(limit)) : 10;
-      
+
       const where = { siteId };
-      
+
       // Get total count
       const total = await this.prisma.event.count({ where });
-      
+
       // Get paginated results
       const events = await this.prisma.event.findMany({
         where,
@@ -430,14 +450,11 @@ export class AdminEventService {
           },
           translations: true,
         },
-        orderBy: [
-          { isPinned: "desc" },
-          { startDate: "asc" },
-        ],
+        orderBy: [{ isPinned: "desc" }, { startDate: "asc" }],
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
       });
-      
+
       // Always return paginated response
       return {
         events,
@@ -543,7 +560,11 @@ export class AdminEventService {
         ...eventData,
         ...(dto.createdByUserId ? { createdByUserId: dto.createdByUserId } : {}),
         startDate: typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate,
-        endDate: dto.endDate ? (typeof dto.endDate === "string" ? new Date(dto.endDate) : dto.endDate) : null,
+        endDate: dto.endDate
+          ? typeof dto.endDate === "string"
+            ? new Date(dto.endDate)
+            : dto.endDate
+          : null,
         isActive: dto.isActive ?? true,
         isPinned: dto.isPinned ?? false,
         isRainSafe: dto.isRainSafe ?? false,
@@ -724,10 +745,15 @@ export class AdminEventService {
     // Update event data
     const updateData: any = { ...eventData };
     if (dto.startDate !== undefined) {
-      updateData.startDate = typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate;
+      updateData.startDate =
+        typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate;
     }
     if (dto.endDate !== undefined) {
-      updateData.endDate = dto.endDate ? (typeof dto.endDate === "string" ? new Date(dto.endDate) : dto.endDate) : null;
+      updateData.endDate = dto.endDate
+        ? typeof dto.endDate === "string"
+          ? new Date(dto.endDate)
+          : dto.endDate
+        : null;
     }
     // Gallery is now managed via Gallery entities and shortcodes, not event.gallery array
     if (dto.isRainSafe !== undefined) {
@@ -772,7 +798,7 @@ export class AdminEventService {
     const event = await this.findOne(id, siteId);
 
     // RBAC: Only owner or manager can delete event (editor cannot)
-    if (userId && event.placeId && !await this.canDeleteEvent(userId, event.placeId, siteId)) {
+    if (userId && event.placeId && !(await this.canDeleteEvent(userId, event.placeId, siteId))) {
       throw new ForbiddenException("Editor cannot delete events");
     }
 
@@ -826,4 +852,3 @@ export class AdminEventService {
     return placeMembership.role === PlaceRole.owner || placeMembership.role === PlaceRole.manager;
   }
 }
-

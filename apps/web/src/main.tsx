@@ -22,7 +22,7 @@ if (typeof window !== "undefined" && typeof console !== "undefined") {
     const message = String(args.join(" "));
     return message.includes("tabReply") || message.includes("tabReply will be removed");
   };
-  
+
   const methods = ["warn", "error", "log", "info"] as const;
   methods.forEach((method) => {
     if (console[method]) {
@@ -32,7 +32,7 @@ if (typeof window !== "undefined" && typeof console !== "undefined") {
           return; // Suppress tabReply warnings
         }
         current.apply(console, args);
-      } as typeof console[typeof method];
+      } as (typeof console)[typeof method];
     }
   });
 }

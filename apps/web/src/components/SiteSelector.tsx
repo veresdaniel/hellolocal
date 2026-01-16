@@ -9,33 +9,43 @@ import { getHuTranslation } from "../utils/langHelpers";
 export function SiteSelector() {
   const { t } = useTranslation();
   const context = useContext(AdminSiteContext);
-  
+
   // Responsive: show only icon on small screens
   // IMPORTANT: All hooks must be called before any conditional returns
   const [isSmallScreen, setIsSmallScreen] = useState(false);
-  
+
   useEffect(() => {
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth < 768);
     };
-    
+
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
-  
+
   // If context is not available, don't render anything (or render a placeholder)
   if (!context) {
     return null;
   }
-  
+
   const { selectedSiteId, sites, setSelectedSiteId, isLoading } = context;
 
   if (isLoading) {
     return (
       <>
         <LoadingSpinner isLoading={isLoading} delay={0} />
-        <div style={{ padding: "8px 16px", background: "#f5f5f5", borderRadius: 4, color: "#666", visibility: "hidden", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+        <div
+          style={{
+            padding: "8px 16px",
+            background: "#f5f5f5",
+            borderRadius: 4,
+            color: "#666",
+            visibility: "hidden",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("common.loading")}...
         </div>
       </>
@@ -44,22 +54,25 @@ export function SiteSelector() {
 
   if (sites.length === 0) {
     return (
-      <div style={{ 
-        padding: "8px 16px", 
-        background: "#fee", 
-        borderRadius: 4, 
-        color: "#c00", 
-        fontSize: "clamp(14px, 3.5vw, 16px)",
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        fontWeight: 400,
-      }}>
+      <div
+        style={{
+          padding: "8px 16px",
+          background: "#fee",
+          borderRadius: 4,
+          color: "#c00",
+          fontSize: "clamp(14px, 3.5vw, 16px)",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontWeight: 400,
+        }}
+      >
         {t("admin.noSites")}
       </div>
     );
   }
 
   // Helper function to get site name in Hungarian (or first available)
-  const getSiteName = (site: typeof sites[0]) => {
+  const getSiteName = (site: (typeof sites)[0]) => {
     const huTranslation = getHuTranslation(site.translations);
     return huTranslation?.name || site.translations[0]?.name || site.slug;
   };
@@ -73,7 +86,7 @@ export function SiteSelector() {
     const publicPath = buildUrl({
       siteKey: currentSite.slug,
       lang: "hu", // Default to Hungarian
-      path: "" 
+      path: "",
     });
     // Navigate in same tab
     window.location.href = publicPath;
@@ -82,13 +95,16 @@ export function SiteSelector() {
   if (sites.length === 1) {
     return (
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <div style={{ 
-          padding: "8px 16px", 
-          background: "#f5f5f5", 
-          borderRadius: 4,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 400,
-        }}>
+        <div
+          style={{
+            padding: "8px 16px",
+            background: "#f5f5f5",
+            borderRadius: 4,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
+          }}
+        >
           {getSiteName(sites[0])}
         </div>
         <button
@@ -96,7 +112,8 @@ export function SiteSelector() {
           style={{
             padding: "8px 16px",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             borderRadius: 4,
             border: "1px solid #7c3aed",
             background: "#7c3aed",
@@ -129,7 +146,8 @@ export function SiteSelector() {
           border: "1px solid #ddd",
           background: "white",
           cursor: "pointer",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 400,
         }}
       >
@@ -145,7 +163,8 @@ export function SiteSelector() {
         style={{
           padding: "8px 16px",
           fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           borderRadius: 4,
           border: "1px solid #7c3aed",
           background: currentSite ? "#7c3aed" : "#ccc",
@@ -165,4 +184,3 @@ export function SiteSelector() {
     </div>
   );
 }
-

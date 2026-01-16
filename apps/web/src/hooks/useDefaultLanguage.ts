@@ -56,4 +56,3 @@ export function useDefaultLanguage() {
 
   return { isLoading };
 }
-

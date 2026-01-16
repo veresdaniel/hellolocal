@@ -5,22 +5,22 @@ interface FiltersState {
   // Category and price band filters
   selectedCategories: string[];
   selectedPriceBands: string[];
-  
+
   // Context-based filters
   isOpenNow: boolean;
   hasEventToday: boolean;
   within30Minutes: boolean;
   rainSafe: boolean;
-  
+
   // User location for distance-based filters
   userLocation: { lat: number; lng: number } | null;
-  
+
   // Show user location toggle
   showUserLocation: boolean;
-  
+
   // Hydration state
   _hasHydrated: boolean;
-  
+
   // Actions
   setSelectedCategories: (categories: string[]) => void;
   setSelectedPriceBands: (priceBands: string[]) => void;
@@ -50,7 +50,7 @@ export const useFiltersStore = create<FiltersState>()(
   persist(
     (set) => ({
       ...initialState,
-      
+
       setSelectedCategories: (categories) => set({ selectedCategories: categories }),
       setSelectedPriceBands: (priceBands) => set({ selectedPriceBands: priceBands }),
       setIsOpenNow: (value) => set({ isOpenNow: value }),
@@ -60,7 +60,7 @@ export const useFiltersStore = create<FiltersState>()(
       setUserLocation: (location) => set({ userLocation: location }),
       setShowUserLocation: (show) => set({ showUserLocation: show }),
       setHasHydrated: (hasHydrated) => set({ _hasHydrated: hasHydrated }),
-      
+
       resetFilters: () => set(initialState),
     }),
     {
@@ -90,4 +90,3 @@ export const useFiltersStore = create<FiltersState>()(
     }
   )
 );
-

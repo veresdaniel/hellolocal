@@ -8,10 +8,7 @@ export class EntitlementsController {
   constructor(private readonly entitlementsService: EntitlementsService) {}
 
   @Get()
-  async get(
-    @Param("lang") lang: string,
-    @Query("siteKey") siteKey?: string
-  ) {
+  async get(@Param("lang") lang: string, @Query("siteKey") siteKey?: string) {
     return this.entitlementsService.getForRequest({
       lang: lang as Lang,
       siteKey,

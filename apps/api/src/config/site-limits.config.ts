@@ -73,10 +73,7 @@ export function canAddPlace(plan: SitePlanType, currentPlaceCount: number): bool
 /**
  * Check if a site can add more featured places
  */
-export function canAddFeaturedPlace(
-  plan: SitePlanType,
-  currentFeaturedCount: number
-): boolean {
+export function canAddFeaturedPlace(plan: SitePlanType, currentFeaturedCount: number): boolean {
   const limit = SITE_LIMITS[plan].featuredSlots;
   return limit === Infinity || currentFeaturedCount < limit;
 }

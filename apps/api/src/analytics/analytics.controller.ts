@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, BadRequestException } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+  BadRequestException,
+} from "@nestjs/common";
 import { AnalyticsService } from "./analytics.service";
 import { TrackDto } from "./dto/track.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -51,11 +61,11 @@ export class AnalyticsController {
     if (!user?.id) {
       throw new BadRequestException("User not found");
     }
-    return this.analytics.getSiteDashboard({ 
-      lang, 
-      siteKey, 
+    return this.analytics.getSiteDashboard({
+      lang,
+      siteKey,
       rangeDays: Number(range),
-      userId: user.id
+      userId: user.id,
     });
   }
 
@@ -75,12 +85,12 @@ export class AnalyticsController {
     if (!placeId) {
       throw new BadRequestException("placeId is required");
     }
-    return this.analytics.getPlaceDashboard({ 
-      lang, 
-      siteKey, 
-      placeId, 
+    return this.analytics.getPlaceDashboard({
+      lang,
+      siteKey,
+      placeId,
       rangeDays: Number(range),
-      userId: user.id
+      userId: user.id,
     });
   }
 
@@ -100,12 +110,12 @@ export class AnalyticsController {
     if (!eventId) {
       throw new BadRequestException("eventId is required");
     }
-    return this.analytics.getEventDashboard({ 
-      lang, 
-      siteKey, 
-      eventId, 
+    return this.analytics.getEventDashboard({
+      lang,
+      siteKey,
+      eventId,
       rangeDays: Number(range),
-      userId: user.id
+      userId: user.id,
     });
   }
 }

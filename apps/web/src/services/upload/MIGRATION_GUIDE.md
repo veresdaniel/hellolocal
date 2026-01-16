@@ -7,6 +7,7 @@ A jelenlegi `TipTapEditor` komponens csak URL-alapú képbeszúrást támogat (p
 ## Új funkciók
 
 Az új `TipTapEditorWithUpload` komponens:
+
 - ✅ Képfeltöltés CDN-re (Cloudinary)
 - ✅ Videófeltöltés (opcionális)
 - ✅ Upload progress mutatása
@@ -29,6 +30,7 @@ VITE_CLOUDINARY_UPLOAD_PRESET=your_preset_name
 ### 2. Komponens cseréje
 
 **Régi:**
+
 ```tsx
 import { TipTapEditor } from "../../components/TipTapEditor";
 
@@ -37,10 +39,11 @@ import { TipTapEditor } from "../../components/TipTapEditor";
   onChange={(value) => setFormData({ ...formData, descriptionHu: value })}
   placeholder="Description"
   height={200}
-/>
+/>;
 ```
 
 **Új:**
+
 ```tsx
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 
@@ -51,7 +54,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
   height={200}
   uploadFolder="editor/places" // Opcionális: mappába rendezi a fájlokat
   enableVideo={false} // Opcionális: videófeltöltés engedélyezése
-/>
+/>;
 ```
 
 ### 3. Fájlok, amiket módosítani kell
@@ -79,6 +82,7 @@ A komponensek automatikusan az új szolgáltatót fogják használni!
 ## Biztonsági megjegyzés
 
 A jelenlegi implementáció közvetlenül a frontend-ről tölt fel. Éles környezetben ajánlott:
+
 - Backend API endpoint a feltöltéshez
 - API Secret csak backend-en
 - Fájl validáció és méretkorlátok

@@ -35,10 +35,7 @@ export class AnalyticsService {
 
   private clampRangeByPlan(plan: string | null | undefined, requestedDays: number): number {
     const days = Number.isFinite(requestedDays) ? requestedDays : 7;
-    const max =
-      plan === "BUSINESS" ? 90 :
-      plan === "PRO" ? 90 :
-      plan === "BASIC" ? 30 : 7; // FREE/default
+    const max = plan === "BUSINESS" ? 90 : plan === "PRO" ? 90 : plan === "BASIC" ? 30 : 7; // FREE/default
     return Math.min(Math.max(days, 1), max);
   }
 
@@ -102,9 +99,9 @@ export class AnalyticsService {
     return { ok: true };
   }
 
-  async getSiteDashboard(args: { 
-    lang: string; 
-    siteKey?: string; 
+  async getSiteDashboard(args: {
+    lang: string;
+    siteKey?: string;
     rangeDays: number;
     userId: string;
   }) {
@@ -132,15 +129,15 @@ export class AnalyticsService {
     const rows = await this.prisma.analyticsDaily.findMany({
       where: { siteId: site.siteId, placeId: null, day: { gte: fromDay } },
       orderBy: { day: "asc" },
-      select: { 
-        day: true, 
-        pageViews: true, 
-        placeViews: true, 
-        ctaPhone: true, 
-        ctaEmail: true, 
-        ctaWebsite: true, 
+      select: {
+        day: true,
+        pageViews: true,
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
         ctaMaps: true,
-        ctaFloorplan: true
+        ctaFloorplan: true,
       },
     });
 
@@ -155,39 +152,46 @@ export class AnalyticsService {
         acc.ctaFloorplan += r.ctaFloorplan;
         return acc;
       },
-      { pageViews: 0, placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
+      {
+        pageViews: 0,
+        placeViews: 0,
+        ctaPhone: 0,
+        ctaEmail: 0,
+        ctaWebsite: 0,
+        ctaMaps: 0,
+        ctaFloorplan: 0,
+      }
     );
 
     // Top places (placeId != null) — last N days
     const top = await this.prisma.analyticsDaily.groupBy({
       by: ["placeId"],
       where: { siteId: site.siteId, placeId: { not: null }, day: { gte: fromDay } },
-      _sum: { 
-        placeViews: true, 
-        ctaPhone: true, 
-        ctaEmail: true, 
-        ctaWebsite: true, 
+      _sum: {
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
         ctaMaps: true,
-        ctaFloorplan: true
+        ctaFloorplan: true,
       },
       orderBy: { _sum: { placeViews: "desc" } },
       take: 10,
     });
 
     // place neveket is betöltjük
-    const placeIds = top.map(t => t.placeId!).filter(Boolean);
+    const placeIds = top.map((t) => t.placeId!).filter(Boolean);
     const nameById = new Map<string, string>();
-    
+
     if (placeIds.length > 0) {
       const placeNames = await this.prisma.place.findMany({
         where: { id: { in: placeIds } },
         select: { id: true, translations: { select: { lang: true, name: true } } },
       });
-      
-      placeNames.forEach(p => {
-        const name = p.translations.find(t => t.lang === args.lang)?.name 
-          ?? p.translations[0]?.name 
-          ?? p.id;
+
+      placeNames.forEach((p) => {
+        const name =
+          p.translations.find((t) => t.lang === args.lang)?.name ?? p.translations[0]?.name ?? p.id;
         nameById.set(p.id, name);
       });
     }
@@ -196,26 +200,31 @@ export class AnalyticsService {
       scope: "site",
       days,
       summary,
-      timeseries: rows.map(r => ({
+      timeseries: rows.map((r) => ({
         day: r.day.toISOString().slice(0, 10),
         pageViews: r.pageViews,
         placeViews: r.placeViews,
         ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
       })),
       ctaBreakdown: summary,
-      topPlaces: top.map(t => ({
+      topPlaces: top.map((t) => ({
         placeId: t.placeId,
         name: nameById.get(t.placeId!) ?? t.placeId,
         placeViews: t._sum.placeViews ?? 0,
-        ctaTotal: (t._sum.ctaPhone ?? 0) + (t._sum.ctaEmail ?? 0) + (t._sum.ctaWebsite ?? 0) + (t._sum.ctaMaps ?? 0) + (t._sum.ctaFloorplan ?? 0),
+        ctaTotal:
+          (t._sum.ctaPhone ?? 0) +
+          (t._sum.ctaEmail ?? 0) +
+          (t._sum.ctaWebsite ?? 0) +
+          (t._sum.ctaMaps ?? 0) +
+          (t._sum.ctaFloorplan ?? 0),
       })),
     };
   }
 
-  async getPlaceDashboard(args: { 
-    lang: string; 
-    siteKey?: string; 
-    placeId: string; 
+  async getPlaceDashboard(args: {
+    lang: string;
+    siteKey?: string;
+    placeId: string;
     rangeDays: number;
     userId: string;
   }) {
@@ -246,14 +255,14 @@ export class AnalyticsService {
     const rows = await this.prisma.analyticsDaily.findMany({
       where: { siteId: site.siteId, placeId: args.placeId, day: { gte: fromDay } },
       orderBy: { day: "asc" },
-      select: { 
-        day: true, 
-        placeViews: true, 
-        ctaPhone: true, 
-        ctaEmail: true, 
-        ctaWebsite: true, 
+      select: {
+        day: true,
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
         ctaMaps: true,
-        ctaFloorplan: true
+        ctaFloorplan: true,
       },
     });
 
@@ -270,15 +279,21 @@ export class AnalyticsService {
       { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
     );
 
-    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps + summary.ctaFloorplan;
-    const conversion = summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
+    const ctaTotal =
+      summary.ctaPhone +
+      summary.ctaEmail +
+      summary.ctaWebsite +
+      summary.ctaMaps +
+      summary.ctaFloorplan;
+    const conversion =
+      summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
 
     return {
       scope: "place",
       placeId: args.placeId,
       days,
       summary: { ...summary, ctaTotal, conversionPct: conversion },
-      timeseries: rows.map(r => ({
+      timeseries: rows.map((r) => ({
         day: r.day.toISOString().slice(0, 10),
         placeViews: r.placeViews,
         ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
@@ -287,10 +302,10 @@ export class AnalyticsService {
     };
   }
 
-  async getEventDashboard(args: { 
-    lang: string; 
-    siteKey?: string; 
-    eventId: string; 
+  async getEventDashboard(args: {
+    lang: string;
+    siteKey?: string;
+    eventId: string;
     rangeDays: number;
     userId: string;
   }) {
@@ -347,24 +362,30 @@ export class AnalyticsService {
       { placeViews: 0, ctaPhone: 0, ctaEmail: 0, ctaWebsite: 0, ctaMaps: 0, ctaFloorplan: 0 }
     );
 
-    const ctaTotal = summary.ctaPhone + summary.ctaEmail + summary.ctaWebsite + summary.ctaMaps + summary.ctaFloorplan;
-    const conversion = summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
+    const ctaTotal =
+      summary.ctaPhone +
+      summary.ctaEmail +
+      summary.ctaWebsite +
+      summary.ctaMaps +
+      summary.ctaFloorplan;
+    const conversion =
+      summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
 
     return {
       scope: "event",
       eventId: args.eventId,
       days,
-      summary: { 
+      summary: {
         eventViews: summary.placeViews, // Using placeViews as eventViews for now
         ctaPhone: summary.ctaPhone,
         ctaEmail: summary.ctaEmail,
         ctaWebsite: summary.ctaWebsite,
         ctaMaps: summary.ctaMaps,
         ctaFloorplan: summary.ctaFloorplan,
-        ctaTotal, 
-        conversionPct: conversion 
+        ctaTotal,
+        conversionPct: conversion,
       },
-      timeseries: rows.map(r => ({
+      timeseries: rows.map((r) => ({
         day: r.day.toISOString().slice(0, 10),
         eventViews: r.placeViews, // Using placeViews as eventViews for now
         ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,

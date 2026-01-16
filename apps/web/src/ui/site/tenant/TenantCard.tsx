@@ -25,7 +25,10 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
   });
 
   // Determine which image to use: tenant image or default placeholder
-  const imageUrl = sanitizeImageUrl(tenant.heroImage) || sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) || null;
+  const imageUrl =
+    sanitizeImageUrl(tenant.heroImage) ||
+    sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) ||
+    null;
 
   // Default gradient colors for tenant cards
   const gradients = [

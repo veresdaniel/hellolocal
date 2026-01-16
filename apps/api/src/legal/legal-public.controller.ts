@@ -3,10 +3,10 @@ import { LegalService } from "./legal.service";
 
 /**
  * Public controller for legal page endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/:lang/:siteKey/legal/:page - Get a legal page (imprint, terms, or privacy)
- * 
+ *
  * All endpoints use path parameters for siteKey (not query parameters).
  */
 @Controller("/api/public/:lang/:siteKey/legal")
@@ -24,7 +24,7 @@ export class LegalPublicController {
 
   /**
    * Gets a legal page by key.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path
@@ -42,10 +42,10 @@ export class LegalPublicController {
 
   /**
    * Gets a legal page by entity ID (stable, future-proof).
-   * 
+   *
    * For legal pages, the entityId is the page key (imprint, terms, privacy).
    * This endpoint follows the by-id pattern for consistency.
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - siteKey: Site key from URL path

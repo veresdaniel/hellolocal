@@ -25,7 +25,11 @@ export function ResetPasswordPage() {
   const { t, i18n } = useTranslation();
 
   // Get language from URL or use current i18n language or default
-  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
+  const lang: Lang = isLang(langParam)
+    ? langParam
+    : isLang(i18n.language)
+      ? i18n.language
+      : DEFAULT_LANG;
 
   // Sync i18n language with URL parameter
   useEffect(() => {
@@ -102,8 +106,8 @@ export function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div 
-        style={{ 
+      <div
+        style={{
           minHeight: "100vh",
           minWidth: "100vw",
           display: "flex",
@@ -115,9 +119,9 @@ export function ResetPasswordPage() {
           boxSizing: "border-box",
         }}
       >
-        <div 
-          style={{ 
-            maxWidth: 440, 
+        <div
+          style={{
+            maxWidth: 440,
             width: "100%",
             background: "white",
             borderRadius: 16,
@@ -127,13 +131,14 @@ export function ResetPasswordPage() {
           }}
         >
           <div style={{ fontSize: 64, marginBottom: 16 }}>✓</div>
-          <h1 
-            style={{ 
+          <h1
+            style={{
               marginBottom: 16,
               color: "#667eea",
               fontSize: "clamp(24px, 6vw, 32px)",
               fontWeight: 700,
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("admin.passwordResetSuccess")}
@@ -148,19 +153,21 @@ export function ResetPasswordPage() {
               border: "1px solid #6ee7b7",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("admin.passwordResetSuccessMessage")}
           </div>
-          <Link 
-            to={`/${lang}/admin/login`} 
-            style={{ 
+          <Link
+            to={`/${lang}/admin/login`}
+            style={{
               display: "inline-block",
               padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
               fontSize: "clamp(15px, 3.5vw, 16px)",
               fontWeight: 600,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               color: "white",
               textDecoration: "none",
@@ -185,8 +192,8 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div 
-      style={{ 
+    <div
+      style={{
         minHeight: "100vh",
         minWidth: "100vw",
         display: "flex",
@@ -198,9 +205,9 @@ export function ResetPasswordPage() {
         boxSizing: "border-box",
       }}
     >
-      <div 
-        style={{ 
-          maxWidth: 440, 
+      <div
+        style={{
+          maxWidth: 440,
           width: "100%",
           background: "white",
           borderRadius: 16,
@@ -208,14 +215,15 @@ export function ResetPasswordPage() {
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
         }}
       >
-        <h1 
-          style={{ 
+        <h1
+          style={{
             marginBottom: 8,
             textAlign: "center",
             color: "#667eea",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {t("admin.resetPassword")}
@@ -226,7 +234,8 @@ export function ResetPasswordPage() {
             color: "#666",
             marginBottom: "clamp(20px, 4vw, 32px)",
             fontSize: "clamp(13px, 3vw, 14px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 400,
           }}
         >
@@ -244,7 +253,8 @@ export function ResetPasswordPage() {
               border: "1px solid #fca5a5",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {error}
@@ -262,27 +272,32 @@ export function ResetPasswordPage() {
               border: "1px solid #fcd34d",
               fontSize: "clamp(13px, 3vw, 14px)",
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("admin.noResetToken")}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+        >
           <div>
-            <label 
-              style={{ 
-                display: "block", 
+            <label
+              style={{
+                display: "block",
                 marginBottom: 8,
                 color: passwordError ? "#dc2626" : "#667eea",
-              fontWeight: 600,
-              fontSize: "clamp(13px, 3vw, 14px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            {t("admin.newPassword")}
-          </label>
+                fontWeight: 600,
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.newPassword")}
+            </label>
             <input
               type="password"
               value={newPassword}
@@ -290,18 +305,19 @@ export function ResetPasswordPage() {
               required
               minLength={6}
               autoComplete="new-password"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
                 border: `2px solid ${passwordError ? "#fca5a5" : "#e0e7ff"}`,
                 borderRadius: 8,
                 outline: "none",
-              transition: "all 0.3s ease",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              boxSizing: "border-box",
-              backgroundColor: passwordError ? "#fef2f2" : "white",
-            }}
+                transition: "all 0.3s ease",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                boxSizing: "border-box",
+                backgroundColor: passwordError ? "#fef2f2" : "white",
+              }}
               onFocus={(e) => {
                 if (!passwordError) {
                   e.currentTarget.style.borderColor = "#667eea";
@@ -316,25 +332,35 @@ export function ResetPasswordPage() {
               }}
             />
             {passwordError && (
-            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-              {passwordError}
-            </p>
+              <p
+                style={{
+                  marginTop: 6,
+                  fontSize: "clamp(11px, 2.5vw, 12px)",
+                  color: "#dc2626",
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {passwordError}
+              </p>
             )}
           </div>
 
           <div>
-            <label 
-              style={{ 
-                display: "block", 
+            <label
+              style={{
+                display: "block",
                 marginBottom: 8,
                 color: confirmError ? "#dc2626" : "#667eea",
-              fontWeight: 600,
-              fontSize: "clamp(13px, 3vw, 14px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            {t("admin.confirmPassword")}
-          </label>
+                fontWeight: 600,
+                fontSize: "clamp(13px, 3vw, 14px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.confirmPassword")}
+            </label>
             <input
               type="password"
               value={confirmPassword}
@@ -342,15 +368,16 @@ export function ResetPasswordPage() {
               required
               minLength={6}
               autoComplete="new-password"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
                 border: `2px solid ${confirmError ? "#fca5a5" : "#e0e7ff"}`,
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 boxSizing: "border-box",
                 backgroundColor: confirmError ? "#fef2f2" : "white",
               }}
@@ -368,9 +395,18 @@ export function ResetPasswordPage() {
               }}
             />
             {confirmError && (
-            <p style={{ marginTop: 6, fontSize: "clamp(11px, 2.5vw, 12px)", color: "#dc2626", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-              {confirmError}
-            </p>
+              <p
+                style={{
+                  marginTop: 6,
+                  fontSize: "clamp(11px, 2.5vw, 12px)",
+                  color: "#dc2626",
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {confirmError}
+              </p>
             )}
           </div>
 
@@ -380,18 +416,22 @@ export function ResetPasswordPage() {
             style={{
               width: "100%",
               padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
-            fontSize: "clamp(15px, 3.5vw, 16px)",
-            fontWeight: 600,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            background: isLoading || !token ? "#a5b4fc" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: isLoading || !token ? "not-allowed" : "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: isLoading || !token ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
-            boxSizing: "border-box",
-          }}
+              fontSize: "clamp(15px, 3.5vw, 16px)",
+              fontWeight: 600,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              background:
+                isLoading || !token
+                  ? "#a5b4fc"
+                  : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: 8,
+              cursor: isLoading || !token ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+              boxShadow: isLoading || !token ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+              boxSizing: "border-box",
+            }}
             onMouseEnter={(e) => {
               if (!isLoading && token) {
                 e.currentTarget.style.transform = "translateY(-2px)";
@@ -410,12 +450,13 @@ export function ResetPasswordPage() {
         </form>
 
         <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center" }}>
-          <Link 
-            to={`/${lang}/admin/login`} 
-            style={{ 
+          <Link
+            to={`/${lang}/admin/login`}
+            style={{
               color: "#667eea",
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               textDecoration: "none",
               fontSize: "clamp(13px, 3vw, 14px)",
             }}

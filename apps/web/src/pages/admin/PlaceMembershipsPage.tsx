@@ -5,20 +5,24 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { 
-  getPlaceMemberships, 
-  createPlaceMembership, 
-  updatePlaceMembership, 
+import {
+  getPlaceMemberships,
+  createPlaceMembership,
+  updatePlaceMembership,
   deletePlaceMembership,
   getPlaces,
   getUsers,
   type PlaceMembership,
   type CreatePlaceMembershipDto,
   type UpdatePlaceMembershipDto,
-  type User
+  type User,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import type { Place } from "../../types/place";
 
@@ -37,7 +41,9 @@ export function PlaceMembershipsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [currentUserPlaceRole, setCurrentUserPlaceRole] = useState<"owner" | "manager" | "editor" | null>(null);
+  const [currentUserPlaceRole, setCurrentUserPlaceRole] = useState<
+    "owner" | "manager" | "editor" | null
+  >(null);
   const [formData, setFormData] = useState({
     placeId: "",
     userId: "",
@@ -70,7 +76,7 @@ export function PlaceMembershipsPage() {
     try {
       const data = await getPlaces(selectedSiteId);
       // Handle both array and paginated response
-      const placesArray = Array.isArray(data) ? data : (data?.places || []);
+      const placesArray = Array.isArray(data) ? data : data?.places || [];
       setPlaces(placesArray);
     } catch (err) {
       console.error("Failed to load places", err);
@@ -104,8 +110,8 @@ export function PlaceMembershipsPage() {
     if (!currentUser?.id) return;
     try {
       const data = await getPlaceMemberships(placeId, currentUser.id);
-      const membership = data.find(m => m.placeId === placeId && m.userId === currentUser.id);
-      setCurrentUserPlaceRole(membership?.role as "owner" | "manager" | "editor" | null || null);
+      const membership = data.find((m) => m.placeId === placeId && m.userId === currentUser.id);
+      setCurrentUserPlaceRole((membership?.role as "owner" | "manager" | "editor" | null) || null);
     } catch (err) {
       console.error("Failed to check place role", err);
       setCurrentUserPlaceRole(null);
@@ -117,12 +123,17 @@ export function PlaceMembershipsPage() {
     if (!formData.placeId.trim()) errors.placeId = t("admin.validation.placeRequired");
     if (!formData.userId.trim()) errors.userId = t("admin.validation.userRequired");
     if (!formData.role) errors.role = t("admin.validation.roleRequired");
-    
+
     // RBAC: Manager cannot assign owner role
-    if (formData.role === "owner" && currentUserPlaceRole === "manager" && !isSuperadmin && currentUser?.role !== "admin") {
+    if (
+      formData.role === "owner" &&
+      currentUserPlaceRole === "manager" &&
+      !isSuperadmin &&
+      currentUser?.role !== "admin"
+    ) {
       errors.role = t("admin.errors.managerCannotAssignOwner");
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -196,7 +207,9 @@ export function PlaceMembershipsPage() {
 
   const filteredMemberships = memberships.filter((membership) => {
     const placeName = membership.place?.translations?.[0]?.name || "";
-    const userName = membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : "";
+    const userName = membership.user
+      ? `${membership.user.firstName} ${membership.user.lastName}`
+      : "";
     const userEmail = membership.user?.email || "";
     return (
       placeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -215,9 +228,10 @@ export function PlaceMembershipsPage() {
     {
       key: "user",
       label: t("admin.user"),
-      render: (membership) => membership.user 
-        ? `${membership.user.firstName} ${membership.user.lastName} (${membership.user.email})`
-        : membership.userId,
+      render: (membership) =>
+        membership.user
+          ? `${membership.user.firstName} ${membership.user.lastName} (${membership.user.email})`
+          : membership.userId,
     },
     {
       key: "role",
@@ -251,9 +265,9 @@ export function PlaceMembershipsPage() {
 
   const cardFields: CardField<PlaceMembership>[] = [
     { key: "place", render: (m) => m.place?.translations?.[0]?.name || m.placeId },
-    { key: "user", render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
-    { 
-      key: "role", 
+    { key: "user", render: (m) => (m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId) },
+    {
+      key: "role",
       render: (m) => {
         const roleLabel = t(`admin.roles.${m.role}`);
         const isManager = m.role === "manager";
@@ -277,7 +291,7 @@ export function PlaceMembershipsPage() {
             )}
           </div>
         );
-      }
+      },
     },
   ];
 
@@ -295,7 +309,7 @@ export function PlaceMembershipsPage() {
         onNewClick={() => setIsCreating(true)}
         showNewButton={!isCreating && !editingId && !!selectedSiteId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -306,43 +320,51 @@ export function PlaceMembershipsPage() {
       />
 
       {!selectedSiteId && (
-        <div style={{ 
-          padding: 16, 
-          background: "#fff3cd", 
-          color: "#856404", 
-          borderRadius: 8, 
-          marginBottom: 24 
-        }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#fff3cd",
+            color: "#856404",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {t("admin.selectSiteFirst")}
         </div>
       )}
 
       {error && (
-        <div style={{ 
-          padding: 16, 
-          background: "#f8d7da", 
-          color: "#721c24", 
-          borderRadius: 8, 
-          marginBottom: 24 
-        }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
-            fontWeight: 700,
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(20px, 5vw, 24px)",
+              fontWeight: 700,
+            }}
+          >
             {editingId ? t("admin.forms.editPlaceMembership") : t("admin.forms.newPlaceMembership")}
           </h2>
 
@@ -359,26 +381,33 @@ export function PlaceMembershipsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.placeId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
               >
                 <option value="">{t("admin.selectPlace")}</option>
-                {Array.isArray(places) && places.map((place) => (
-                  <option key={place.id} value={place.id}>
-                    {place.name || place.id}
-                  </option>
-                ))}
+                {Array.isArray(places) &&
+                  places.map((place) => (
+                    <option key={place.id} value={place.id}>
+                      {place.name || place.id}
+                    </option>
+                  ))}
               </select>
               {formErrors.placeId && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.placeId}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.placeId}
+                </p>
               )}
             </div>
 
@@ -394,7 +423,8 @@ export function PlaceMembershipsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -408,12 +438,17 @@ export function PlaceMembershipsPage() {
                 ))}
               </select>
               {formErrors.userId && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.userId}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.userId}
+                </p>
               )}
             </div>
 
@@ -426,7 +461,12 @@ export function PlaceMembershipsPage() {
                 onChange={(e) => {
                   const newRole = e.target.value as "owner" | "manager" | "editor";
                   // Prevent manager from selecting owner
-                  if (newRole === "owner" && currentUserPlaceRole === "manager" && !isSuperadmin && currentUser?.role !== "admin") {
+                  if (
+                    newRole === "owner" &&
+                    currentUserPlaceRole === "manager" &&
+                    !isSuperadmin &&
+                    currentUser?.role !== "admin"
+                  ) {
                     return;
                   }
                   setFormData({ ...formData, role: newRole });
@@ -435,7 +475,8 @@ export function PlaceMembershipsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -444,29 +485,39 @@ export function PlaceMembershipsPage() {
                 <option value="editor">{t("admin.roles.editor")}</option>
                 <option value="manager">{t("admin.roles.manager")}</option>
                 {/* Owner option only visible to superadmin, siteadmin, or current owner */}
-                {(isSuperadmin || currentUser?.role === "admin" || currentUserPlaceRole === "owner") && (
+                {(isSuperadmin ||
+                  currentUser?.role === "admin" ||
+                  currentUserPlaceRole === "owner") && (
                   <option value="owner">{t("admin.roles.owner")}</option>
                 )}
               </select>
               {/* Help text */}
-              <div style={{ 
-                marginTop: 8, 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                color: "#666", 
-                lineHeight: 1.5,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  color: "#666",
+                  lineHeight: 1.5,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 <div>{t("admin.roleDescriptions.owner")}</div>
                 <div>{t("admin.roleDescriptions.manager")}</div>
                 <div>{t("admin.roleDescriptions.editor")}</div>
               </div>
               {formErrors.role && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.role}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.role}
+                </p>
               )}
             </div>
           </div>
@@ -484,7 +535,9 @@ export function PlaceMembershipsPage() {
           filterFn={(membership, query) => {
             const lowerQuery = query.toLowerCase();
             const placeName = membership.place?.translations?.[0]?.name || "";
-            const userName = membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : "";
+            const userName = membership.user
+              ? `${membership.user.firstName} ${membership.user.lastName}`
+              : "";
             const userEmail = membership.user?.email || "";
             return (
               placeName.toLowerCase().includes(lowerQuery) ||
@@ -494,7 +547,9 @@ export function PlaceMembershipsPage() {
             );
           }}
           columns={columns}
-          cardTitle={(membership) => `${membership.place?.translations?.[0]?.name || membership.placeId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`}
+          cardTitle={(membership) =>
+            `${membership.place?.translations?.[0]?.name || membership.placeId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`
+          }
           cardFields={cardFields}
           onEdit={startEdit}
           onDelete={(membership) => handleDelete(membership.id)}

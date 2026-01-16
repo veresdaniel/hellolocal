@@ -11,4 +11,3 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
   controllers: [SeoController],
 })
 export class SeoModule {}
-

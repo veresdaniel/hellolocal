@@ -2,7 +2,17 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPlace, getPlaceById, getPlatformSettings, getGallery, getPlacePriceList, getPlaceFloorplans, type PublicGallery, type PublicPriceList, type PublicFloorplan } from "../api/places.api";
+import {
+  getPlace,
+  getPlaceById,
+  getPlatformSettings,
+  getGallery,
+  getPlacePriceList,
+  getPlaceFloorplans,
+  type PublicGallery,
+  type PublicPriceList,
+  type PublicFloorplan,
+} from "../api/places.api";
 import { GalleryViewer } from "../components/GalleryViewer";
 import { FloorplanViewer } from "../components/FloorplanViewer";
 import { FloorplanFullscreenModal } from "../components/FloorplanFullscreenModal";
@@ -56,9 +66,15 @@ export function PlaceDetailPage() {
 
   // Load place by entityId after slug resolution (stable, future-proof)
   // Only load if slug is resolved, not redirecting, and entity type is place
-  const shouldLoadPlace = resolveQ.data && !resolveQ.data.needsRedirect && resolveQ.data.entityType === "place";
+  const shouldLoadPlace =
+    resolveQ.data && !resolveQ.data.needsRedirect && resolveQ.data.entityType === "place";
 
-  const { data: place, isLoading, isError, error } = useQuery({
+  const {
+    data: place,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["place", resolveQ.data?.entityId, lang, siteKey],
     queryFn: () => {
       if (!resolveQ.data || !siteKey) throw new Error("Missing resolve data or siteKey");
@@ -91,7 +107,8 @@ export function PlaceDetailPage() {
   const { data: priceList, isLoading: isLoadingPriceList } = useQuery({
     queryKey: ["priceList", resolveQ.data?.entityId, lang, siteKey],
     queryFn: () => {
-      if (!resolveQ.data?.entityId || !lang || !siteKey) throw new Error("Missing place ID, lang, or siteKey");
+      if (!resolveQ.data?.entityId || !lang || !siteKey)
+        throw new Error("Missing place ID, lang, or siteKey");
       return getPlacePriceList(lang, siteKey, resolveQ.data.entityId);
     },
     enabled: shouldLoadPlace && place?.hasPriceList === true && !!siteKey && !!lang,
@@ -100,10 +117,15 @@ export function PlaceDetailPage() {
 
   // Load floorplans for the place
   // Only returns floorplans if there's an active subscription (checked on backend)
-  const { data: floorplans, isLoading: isLoadingFloorplans, error: floorplansError } = useQuery({
+  const {
+    data: floorplans,
+    isLoading: isLoadingFloorplans,
+    error: floorplansError,
+  } = useQuery({
     queryKey: ["floorplans", resolveQ.data?.entityId, lang, siteKey],
     queryFn: () => {
-      if (!resolveQ.data?.entityId || !lang || !siteKey) throw new Error("Missing place ID, lang, or siteKey");
+      if (!resolveQ.data?.entityId || !lang || !siteKey)
+        throw new Error("Missing place ID, lang, or siteKey");
       return getPlaceFloorplans(lang, siteKey, resolveQ.data.entityId);
     },
     enabled: shouldLoadPlace && !!siteKey && !!lang,
@@ -117,7 +139,15 @@ export function PlaceDetailPage() {
         console.error("PlaceDetailPage - Floorplans error:", floorplansError);
       }
     }
-  }, [floorplans, isLoadingFloorplans, floorplansError, resolveQ.data?.entityId, shouldLoadPlace, siteKey, lang]);
+  }, [
+    floorplans,
+    isLoadingFloorplans,
+    floorplansError,
+    resolveQ.data?.entityId,
+    shouldLoadPlace,
+    siteKey,
+    lang,
+  ]);
 
   // Extract gallery IDs from description
   const galleryIds = useMemo(() => {
@@ -166,7 +196,7 @@ export function PlaceDetailPage() {
   // Check if user can edit this place
   const [canEditPlace, setCanEditPlace] = useState(false);
   const [placeSiteId, setPlaceSiteId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (place?.siteId) {
       setPlaceSiteId(place.siteId);
@@ -191,8 +221,13 @@ export function PlaceDetailPage() {
         // Check site-level role
         try {
           const siteMemberships = await getSiteMemberships(placeSiteId, user.id);
-          const siteMembership = siteMemberships.find(m => m.siteId === placeSiteId && m.userId === user.id);
-          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+          const siteMembership = siteMemberships.find(
+            (m) => m.siteId === placeSiteId && m.userId === user.id
+          );
+          if (
+            siteMembership &&
+            (siteMembership.role === "siteadmin" || siteMembership.role === "editor")
+          ) {
             setCanEditPlace(true);
             return;
           }
@@ -203,8 +238,15 @@ export function PlaceDetailPage() {
         // Check place-level role (owner, manager, editor can edit)
         try {
           const placeMemberships = await getPlaceMemberships(resolveQ.data.entityId, user.id);
-          const placeMembership = placeMemberships.find(m => m.placeId === resolveQ.data.entityId && m.userId === user.id);
-          if (placeMembership && (placeMembership.role === "owner" || placeMembership.role === "manager" || placeMembership.role === "editor")) {
+          const placeMembership = placeMemberships.find(
+            (m) => m.placeId === resolveQ.data.entityId && m.userId === user.id
+          );
+          if (
+            placeMembership &&
+            (placeMembership.role === "owner" ||
+              placeMembership.role === "manager" ||
+              placeMembership.role === "editor")
+          ) {
             setCanEditPlace(true);
             return;
           }
@@ -287,7 +329,7 @@ export function PlaceDetailPage() {
   useEffect(() => {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
-      
+
       // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
@@ -304,7 +346,7 @@ export function PlaceDetailPage() {
         img.style.opacity = "0";
         img.style.transition = "opacity 0.3s ease-in-out";
         img.style.boxSizing = "border-box";
-        
+
         if (!img.hasAttribute("loading")) {
           img.setAttribute("loading", "lazy");
         }
@@ -317,7 +359,7 @@ export function PlaceDetailPage() {
         wrapper.style.maxWidth = "100%";
         wrapper.style.margin = "16px auto";
         wrapper.style.boxSizing = "border-box";
-        
+
         // Create skeleton
         const skeleton = document.createElement("div");
         skeleton.className = "image-skeleton";
@@ -328,29 +370,33 @@ export function PlaceDetailPage() {
         skeleton.style.backgroundSize = "200% 100%";
         skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
         skeleton.style.borderRadius = "4px";
-        
+
         // Insert wrapper before image
         img.parentNode?.insertBefore(wrapper, img);
         wrapper.appendChild(skeleton);
         wrapper.appendChild(img);
-        
+
         // Handle image load
         const handleLoad = () => {
           img.style.opacity = "1";
           skeleton.style.display = "none";
         };
-        
+
         if (img.complete) {
           handleLoad();
         } else {
           img.addEventListener("load", handleLoad, { once: true });
-          img.addEventListener("error", () => {
-            skeleton.style.display = "none";
-            img.style.opacity = "1";
-          }, { once: true });
+          img.addEventListener(
+            "error",
+            () => {
+              skeleton.style.display = "none";
+              img.style.opacity = "1";
+            },
+            { once: true }
+          );
         }
       });
-      
+
       // Make all videos responsive
       const videos = container.querySelectorAll("video");
       videos.forEach((video) => {
@@ -359,7 +405,7 @@ export function PlaceDetailPage() {
         video.style.display = "block";
         video.style.margin = "16px auto";
       });
-      
+
       // Make iframes responsive (for embedded videos)
       const iframes = container.querySelectorAll("iframe");
       iframes.forEach((iframe) => {
@@ -387,7 +433,7 @@ export function PlaceDetailPage() {
     makeMediaResponsive(descriptionRef.current);
     makeMediaResponsive(addressRef.current);
     makeMediaResponsive(accessibilityRef.current);
-    
+
     // Add skeleton animation CSS if not already added
     if (!document.getElementById("skeleton-animation-style")) {
       const style = document.createElement("style");
@@ -431,11 +477,11 @@ export function PlaceDetailPage() {
       />
     );
   }
-  
+
   if (resolveQ.isLoading) {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
-  
+
   if (resolveQ.isError) {
     return (
       <ErrorState
@@ -445,7 +491,7 @@ export function PlaceDetailPage() {
       />
     );
   }
-  
+
   // Check if resolved entity type is place
   if (resolveQ.data && resolveQ.data.entityType !== "place") {
     return (
@@ -456,12 +502,12 @@ export function PlaceDetailPage() {
       />
     );
   }
-  
+
   // Show loading spinner while loading place
   if (isLoading) {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
-  
+
   if (isError) {
     return (
       <ErrorState
@@ -471,7 +517,7 @@ export function PlaceDetailPage() {
       />
     );
   }
-  
+
   if (!place) {
     return (
       <ErrorState
@@ -483,9 +529,10 @@ export function PlaceDetailPage() {
   }
 
   // Build edit URL if user can edit
-  const editUrl = canEditPlace && resolveQ.data?.entityId 
-    ? `/${lang}/admin/places?edit=${resolveQ.data.entityId}`
-    : undefined;
+  const editUrl =
+    canEditPlace && resolveQ.data?.entityId
+      ? `/${lang}/admin/places?edit=${resolveQ.data.entityId}`
+      : undefined;
 
   return (
     <>
@@ -507,7 +554,8 @@ export function PlaceDetailPage() {
           }}
         >
           {/* Hero Image with Category Badges - use default placeholder if no image */}
-          {(sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage)) && (
+          {(sanitizeImageUrl(place.heroImage) ||
+            sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage)) && (
             <div
               style={{
                 width: "calc(100% - 32px)",
@@ -522,7 +570,11 @@ export function PlaceDetailPage() {
               }}
             >
               <ImageWithSkeleton
-                src={sanitizeImageUrl(place.heroImage) || sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage) || ""}
+                src={
+                  sanitizeImageUrl(place.heroImage) ||
+                  sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage) ||
+                  ""
+                }
                 alt={place.name}
                 style={{
                   width: "100%",
@@ -535,7 +587,7 @@ export function PlaceDetailPage() {
                   borderRadius: 16,
                 }}
               />
-              
+
               {/* Edit button - top right */}
               {canEditPlace && editUrl && (
                 <Link
@@ -584,18 +636,20 @@ export function PlaceDetailPage() {
                   </svg>
                 </Link>
               )}
-              
+
               {/* Category badges overlaid on image - top left */}
               {place.category && (
-                <div style={{ 
-                  position: "absolute", 
-                  top: 12,
-                  left: 12,
-                  display: "flex", 
-                  gap: 8, 
-                  flexWrap: "wrap",
-                  justifyContent: "flex-start",
-                }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-start",
+                  }}
+                >
                   <Badge
                     variant="category"
                     color="#667eea"
@@ -627,15 +681,17 @@ export function PlaceDetailPage() {
 
               {/* Tags overlaid on image - bottom right */}
               {place.tags && place.tags.length > 0 && (
-                <div style={{ 
-                  position: "absolute", 
-                  bottom: 12,
-                  right: 12,
-                  display: "flex", 
-                  gap: 8, 
-                  flexWrap: "wrap",
-                  justifyContent: "flex-end",
-                }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 12,
+                    right: 12,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   {place.tags.map((tag) => (
                     <Badge
                       key={tag}
@@ -662,7 +718,8 @@ export function PlaceDetailPage() {
                 margin: 0,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 color: "#1a1a1a",
                 lineHeight: 1.2,
                 letterSpacing: "-0.02em",
@@ -678,10 +735,10 @@ export function PlaceDetailPage() {
           <div style={{ margin: "0 16px 24px" }}>
             {isAuthenticated ? (
               /* Interactive rating (if authenticated) with share icons */
-              <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
@@ -691,12 +748,27 @@ export function PlaceDetailPage() {
                   flexWrap: "wrap",
                 }}
               >
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: "200px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    flex: 1,
+                    minWidth: "200px",
+                  }}
+                >
                   <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
-                    {!myRating 
-                      ? (lang === "hu" ? "Értékeld a helyet:" : lang === "en" ? "Rate this place:" : "Bewerten Sie diesen Ort:")
-                      : (lang === "hu" ? "Módosítsd az értékelésed:" : lang === "en" ? "Update your rating:" : "Aktualisieren Sie Ihre Bewertung:")
-                    }
+                    {!myRating
+                      ? lang === "hu"
+                        ? "Értékeld a helyet:"
+                        : lang === "en"
+                          ? "Rate this place:"
+                          : "Bewerten Sie diesen Ort:"
+                      : lang === "hu"
+                        ? "Módosítsd az értékelésed:"
+                        : lang === "en"
+                          ? "Update your rating:"
+                          : "Aktualisieren Sie Ihre Bewertung:"}
                   </span>
                   <StarRating
                     avg={place.rating?.avg ?? null}
@@ -719,10 +791,10 @@ export function PlaceDetailPage() {
               </div>
             ) : (
               /* Read-only rating display (if not authenticated) with share icons */
-              <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
@@ -755,36 +827,36 @@ export function PlaceDetailPage() {
           {/* Contact and Opening Hours side by side */}
           {(() => {
             // Check if contact has any actual data (not just null/undefined fields)
-            const hasContact = place.contact && (
-              place.contact.address ||
-              place.contact.phone ||
-              place.contact.email ||
-              place.contact.website ||
-              place.contact.facebook ||
-              place.contact.whatsapp
-            );
+            const hasContact =
+              place.contact &&
+              (place.contact.address ||
+                place.contact.phone ||
+                place.contact.email ||
+                place.contact.website ||
+                place.contact.facebook ||
+                place.contact.whatsapp);
             const hasOpeningHours = place.openingHours && place.openingHours.length > 0;
             const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
-            
+
             // Show grid if we have contact, opening hours, or gallery
             if (!hasContact && !hasOpeningHours && !hasGallery) {
               return null;
             }
-            
+
             // Always two columns on desktop if we have gallery or both contact and opening hours
             const shouldShowTwoColumns = (hasContact && hasOpeningHours) || hasGallery;
-            
+
             return (
-              <div 
+              <div
                 className="contact-opening-hours-grid"
-                style={{ 
+                style={{
                   margin: "0 16px 24px",
                   display: "grid",
                   gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
                   gap: 12,
                 }}
               >
-              <style>{`
+                <style>{`
                 @media (max-width: 767px) {
                   .contact-opening-hours-grid {
                     gridTemplateColumns: 1fr !important;
@@ -794,436 +866,565 @@ export function PlaceDetailPage() {
                   }
                 }
               `}</style>
-            {/* Contact Information - Left */}
-            {(() => {
-              const hasContact = place.contact && (
-                place.contact.address ||
-                place.contact.phone ||
-                place.contact.email ||
-                place.contact.website ||
-                place.contact.facebook ||
-                place.contact.whatsapp
-              );
-              
-              // Use compact mode if gallery is shown on the right (no opening hours)
-              const isCompact = hasGallery && !hasOpeningHours;
-              
-              return hasContact ? (
-              <div
-                style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  padding: isCompact ? "12px" : "16px",
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)",
-                  color: "white",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: "clamp(18px, 3vw, 24px)",
-                    fontWeight: 600,
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "white",
-                    marginBottom: isCompact ? "8px" : "clamp(12px, 2vw, 20px)",
-                    marginTop: 0,
-                  }}
-                >
-                  {t("public.contact")}
-                </h3>
-                <div style={{ 
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}>
-                {place.contact.address && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📍</span>
-                      {t("public.address")}
-                    </strong>
+                {/* Contact Information - Left */}
+                {(() => {
+                  const hasContact =
+                    place.contact &&
+                    (place.contact.address ||
+                      place.contact.phone ||
+                      place.contact.email ||
+                      place.contact.website ||
+                      place.contact.facebook ||
+                      place.contact.whatsapp);
+
+                  // Use compact mode if gallery is shown on the right (no opening hours)
+                  const isCompact = hasGallery && !hasOpeningHours;
+
+                  return hasContact ? (
                     <div
-                      ref={addressRef}
-                      style={{ color: "white", fontSize: "clamp(14px, 3.5vw, 16px)", lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}
-                    >
-                      <ShortcodeRenderer
-                        content={place.contact.address}
-                        lang={lang!}
-                        siteKey={siteKey!}
-                        style={{ color: "white" }}
-                      />
-                    </div>
-                  </div>
-                )}
-                {place.contact.phone && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📱</span>
-                      {t("public.phone")}
-                    </strong>
-                    <a
-                      href={`tel:${place.contact.phone.replace(/\s/g, '')}`}
                       style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        padding: isCompact ? "12px" : "16px",
+                        borderRadius: 12,
+                        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)",
                         color: "white",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 500,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
+                        display: "flex",
+                        flexDirection: "column",
                       }}
                     >
-                      {place.contact.phone}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>→</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.email && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>✉️</span>
-                      {t("public.email")}
-                    </strong>
-                    <a
-                      href={`mailto:${place.contact.email}`}
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 400,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        wordBreak: "break-word",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.email}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>→</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.website && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>🌐</span>
-                      {t("public.website")}
-                    </strong>
-                    <a
-                      href={place.contact.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 400,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        wordBreak: "break-all",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.website.replace(/^https?:\/\//i, '')}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>↗</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.facebook && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📘</span>
-                      Facebook
-                    </strong>
-                    <a
-                      href={place.contact.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 400,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        wordBreak: "break-all",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.facebook.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '')}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>↗</span>
-                    </a>
-                  </div>
-                )}
-                {place.contact.whatsapp && (
-                  <div
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                    }}
-                  >
-                    <strong style={{ color: "rgba(255, 255, 255, 0.9)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>💬</span>
-                      WhatsApp
-                    </strong>
-                    <a
-                      href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 500,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {place.contact.whatsapp}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>→</span>
-                    </a>
-                  </div>
-                )}
-                </div>
-              </div>
-              ) : null;
-            })()}
-
-            {/* Opening Hours - Right, or Gallery if no opening hours but has address */}
-            {place.openingHours && place.openingHours.length > 0 ? (
-              <div
-                style={{
-                  background: "white",
-                  padding: "16px",
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                  border: "1px solid rgba(102, 126, 234, 0.1)",
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#1a1a1a",
-                    marginBottom: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>🕐</span>
-                  {t("public.openingHours")}
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  {place.openingHours.map((oh, index) => {
-                    const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
-                    const isToday = (() => {
-                      const now = new Date();
-                      const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
-                      return oh.dayOfWeek === currentDayOfWeek;
-                    })();
-
-                    return (
-                      <div
-                        key={index}
+                      <h3
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "6px 10px",
-                          background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
-                          borderRadius: 6,
-                          border: isToday ? "1px solid rgba(102, 126, 234, 0.2)" : "1px solid transparent",
+                          fontSize: "clamp(18px, 3vw, 24px)",
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "white",
+                          marginBottom: isCompact ? "8px" : "clamp(12px, 2vw, 20px)",
+                          marginTop: 0,
                         }}
                       >
-                        <span
-                          style={{
-                            fontWeight: isToday ? 500 : 400,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            color: isToday ? "#667eea" : "#333",
-                            fontSize: "clamp(14px, 3.5vw, 16px)",
-                          }}
-                        >
-                          {dayName}
-                          {isToday && (
-                            <span
+                        {t("public.contact")}
+                      </h3>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 10,
+                        }}
+                      >
+                        {place.contact.address && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
                               style={{
-                                marginLeft: 6,
-                                fontSize: 10,
-                                color: "#667eea",
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
                                 fontWeight: 500,
-                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              (Ma)
-                            </span>
-                          )}
-                        </span>
-                        <span
-                          style={{
-                            color: oh.isClosed ? "#999" : "#333",
-                            fontSize: "clamp(14px, 3.5vw, 16px)",
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {oh.isClosed ? (
-                            <span style={{ fontStyle: "italic" }}>
-                              {t("common.closed")}
-                            </span>
-                          ) : oh.openTime && oh.closeTime ? (
-                            `${oh.openTime} - ${oh.closeTime}`
-                          ) : (
-                            "-"
-                          )}
-                        </span>
+                              <span>📍</span>
+                              {t("public.address")}
+                            </strong>
+                            <div
+                              ref={addressRef}
+                              style={{
+                                color: "white",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                lineHeight: 1.5,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                              }}
+                            >
+                              <ShortcodeRenderer
+                                content={place.contact.address}
+                                lang={lang!}
+                                siteKey={siteKey!}
+                                style={{ color: "white" }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {place.contact.phone && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                fontWeight: 500,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <span>📱</span>
+                              {t("public.phone")}
+                            </strong>
+                            <a
+                              href={`tel:${place.contact.phone.replace(/\s/g, "")}`}
+                              style={{
+                                color: "white",
+                                textDecoration: "none",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 500,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = "underline";
+                                e.currentTarget.style.transform = "translateX(4px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = "none";
+                                e.currentTarget.style.transform = "translateX(0)";
+                              }}
+                            >
+                              {place.contact.phone}
+                              <span
+                                style={{
+                                  fontSize: "clamp(13px, 3vw, 15px)",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                →
+                              </span>
+                            </a>
+                          </div>
+                        )}
+                        {place.contact.email && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                fontWeight: 500,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <span>✉️</span>
+                              {t("public.email")}
+                            </strong>
+                            <a
+                              href={`mailto:${place.contact.email}`}
+                              style={{
+                                color: "white",
+                                textDecoration: "none",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                wordBreak: "break-word",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = "underline";
+                                e.currentTarget.style.transform = "translateX(4px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = "none";
+                                e.currentTarget.style.transform = "translateX(0)";
+                              }}
+                            >
+                              {place.contact.email}
+                              <span
+                                style={{
+                                  fontSize: "clamp(13px, 3vw, 15px)",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                →
+                              </span>
+                            </a>
+                          </div>
+                        )}
+                        {place.contact.website && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                fontWeight: 500,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <span>🌐</span>
+                              {t("public.website")}
+                            </strong>
+                            <a
+                              href={place.contact.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: "white",
+                                textDecoration: "none",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                wordBreak: "break-all",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = "underline";
+                                e.currentTarget.style.transform = "translateX(4px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = "none";
+                                e.currentTarget.style.transform = "translateX(0)";
+                              }}
+                            >
+                              {place.contact.website.replace(/^https?:\/\//i, "")}
+                              <span
+                                style={{
+                                  fontSize: "clamp(13px, 3vw, 15px)",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                ↗
+                              </span>
+                            </a>
+                          </div>
+                        )}
+                        {place.contact.facebook && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                fontWeight: 500,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <span>📘</span>
+                              Facebook
+                            </strong>
+                            <a
+                              href={place.contact.facebook}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: "white",
+                                textDecoration: "none",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                wordBreak: "break-all",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = "underline";
+                                e.currentTarget.style.transform = "translateX(4px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = "none";
+                                e.currentTarget.style.transform = "translateX(0)";
+                              }}
+                            >
+                              {place.contact.facebook.replace(
+                                /^https?:\/\/(www\.)?facebook\.com\//i,
+                                ""
+                              )}
+                              <span
+                                style={{
+                                  fontSize: "clamp(13px, 3vw, 15px)",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                ↗
+                              </span>
+                            </a>
+                          </div>
+                        )}
+                        {place.contact.whatsapp && (
+                          <div
+                            style={{
+                              background: "rgba(255, 255, 255, 0.15)",
+                              backdropFilter: "blur(10px)",
+                              padding: "10px 12px",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
+                            }}
+                          >
+                            <strong
+                              style={{
+                                color: "rgba(255, 255, 255, 0.9)",
+                                fontSize: 11,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                fontWeight: 500,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <span>💬</span>
+                              WhatsApp
+                            </strong>
+                            <a
+                              href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: "white",
+                                textDecoration: "none",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 500,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = "underline";
+                                e.currentTarget.style.transform = "translateX(4px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = "none";
+                                e.currentTarget.style.transform = "translateX(0)";
+                              }}
+                            >
+                              {place.contact.whatsapp}
+                              <span
+                                style={{
+                                  fontSize: "clamp(13px, 3vw, 15px)",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                →
+                              </span>
+                            </a>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              // Gallery in opening hours position if no opening hours (or empty space if no gallery)
-              hasGallery ? (
-                <div
-                  style={{
-                    background: "white",
-                    padding: "12px",
-                    borderRadius: 12,
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                    border: "1px solid rgba(102, 126, 234, 0.1)",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  className="gallery-compact"
-                >
-                  {galleryIds.map((galleryId) => {
-                    const gallery = galleries[galleryId];
-                    if (!gallery || !gallery.images || gallery.images.length === 0) return null;
-                    return (
-                      <GalleryViewer
-                        key={galleryId}
-                        images={gallery.images}
-                        name={gallery.name}
-                        layout={gallery.layout}
-                        aspect={gallery.aspect}
-                        compact={true}
-                      />
-                    );
-                  })}
-                </div>
-              ) : null
-            )}
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Opening Hours - Right, or Gallery if no opening hours but has address */}
+                {place.openingHours && place.openingHours.length > 0 ? (
+                  <div
+                    style={{
+                      background: "white",
+                      padding: "16px",
+                      borderRadius: 12,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                      border: "1px solid rgba(102, 126, 234, 0.1)",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#1a1a1a",
+                        marginBottom: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>🕐</span>
+                      {t("public.openingHours")}
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {place.openingHours.map((oh, index) => {
+                        const dayName = t(`common.dayOfWeek.${oh.dayOfWeek}`);
+                        const isToday = (() => {
+                          const now = new Date();
+                          const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
+                          return oh.dayOfWeek === currentDayOfWeek;
+                        })();
+
+                        return (
+                          <div
+                            key={index}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "6px 10px",
+                              background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
+                              borderRadius: 6,
+                              border: isToday
+                                ? "1px solid rgba(102, 126, 234, 0.2)"
+                                : "1px solid transparent",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: isToday ? 500 : 400,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                color: isToday ? "#667eea" : "#333",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                              }}
+                            >
+                              {dayName}
+                              {isToday && (
+                                <span
+                                  style={{
+                                    marginLeft: 6,
+                                    fontSize: 10,
+                                    color: "#667eea",
+                                    fontWeight: 500,
+                                    fontFamily:
+                                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  }}
+                                >
+                                  (Ma)
+                                </span>
+                              )}
+                            </span>
+                            <span
+                              style={{
+                                color: oh.isClosed ? "#999" : "#333",
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                              }}
+                            >
+                              {oh.isClosed ? (
+                                <span style={{ fontStyle: "italic" }}>{t("common.closed")}</span>
+                              ) : oh.openTime && oh.closeTime ? (
+                                `${oh.openTime} - ${oh.closeTime}`
+                              ) : (
+                                "-"
+                              )}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : // Gallery in opening hours position if no opening hours (or empty space if no gallery)
+                hasGallery ? (
+                  <div
+                    style={{
+                      background: "white",
+                      padding: "12px",
+                      borderRadius: 12,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                      border: "1px solid rgba(102, 126, 234, 0.1)",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                    className="gallery-compact"
+                  >
+                    {galleryIds.map((galleryId) => {
+                      const gallery = galleries[galleryId];
+                      if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                      return (
+                        <GalleryViewer
+                          key={galleryId}
+                          images={gallery.images}
+                          name={gallery.name}
+                          layout={gallery.layout}
+                          aspect={gallery.aspect}
+                          compact={true}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             );
           })()}
@@ -1326,469 +1527,497 @@ export function PlaceDetailPage() {
                     siteKey={siteKey!}
                     hideGalleries={
                       // Hide galleries in description if they're shown in opening hours position
-                      !place.openingHours?.length && 
-                      galleryIds.length > 0 && 
+                      !place.openingHours?.length &&
+                      galleryIds.length > 0 &&
                       Object.keys(galleries).length > 0
                     }
                   />
                 </div>
               </div>
-              
+
               {/* Floorplan - Full width, below description */}
-              {floorplans && Array.isArray(floorplans) && floorplans.length > 0 && !isLoadingFloorplans && (
-                <div
-                  style={{
-                    margin: "0 16px 32px",
-                    background: "white",
-                    padding: "clamp(16px, 4vw, 32px)",
-                    borderRadius: 16,
-                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                    width: "calc(100% - 32px)",
-                    maxWidth: "100%",
-                    boxSizing: "border-box",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    justifyContent: "space-between",
-                    marginBottom: 16,
-                    position: "relative",
-                  }}>
-                    <h3
-                      style={{
-                        fontSize: "clamp(20px, 5vw, 24px)",
-                        fontWeight: 600,
-                        fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        color: "#1a1a1a",
-                        margin: 0,
-                      }}
-                    >
-                      {t("admin.floorplans") || "Alaprajzok"}
-                    </h3>
-                    {/* Premium circle icon */}
+              {floorplans &&
+                Array.isArray(floorplans) &&
+                floorplans.length > 0 &&
+                !isLoadingFloorplans && (
+                  <div
+                    style={{
+                      margin: "0 16px 32px",
+                      background: "white",
+                      padding: "clamp(16px, 4vw, 32px)",
+                      borderRadius: 16,
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                      width: "calc(100% - 32px)",
+                      maxWidth: "100%",
+                      boxSizing: "border-box",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
                     <div
                       style={{
-                        position: "relative",
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        background: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
-                        cursor: "help",
-                        flexShrink: 0,
-                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                        overflow: "hidden",
-                      }}
-                      onMouseEnter={(e) => {
-                        setShowPremiumTooltip(true);
-                        e.currentTarget.style.transform = "scale(1.1)";
-                        e.currentTarget.style.boxShadow = "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        setShowPremiumTooltip(false);
-                        e.currentTarget.style.transform = "scale(1)";
-                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                        justifyContent: "space-between",
+                        marginBottom: 16,
+                        position: "relative",
                       }}
                     >
-                      {/* Shine effect */}
-                      <div
+                      <h3
                         style={{
-                          position: "absolute",
-                          top: "-50%",
-                          left: "-50%",
-                          width: "200%",
-                          height: "200%",
-                          background: "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
-                          transform: "rotate(45deg)",
-                          pointerEvents: "none",
-                        }}
-                      />
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#78350f"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{
-                          position: "relative",
-                          zIndex: 1,
-                          filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+                          fontSize: "clamp(20px, 5vw, 24px)",
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "#1a1a1a",
+                          margin: 0,
                         }}
                       >
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                        <path d="M4 22h16" />
-                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                      </svg>
-                      {/* Tooltip */}
-                      {showPremiumTooltip && (
+                        {t("admin.floorplans") || "Alaprajzok"}
+                      </h3>
+                      {/* Premium circle icon */}
+                      <div
+                        style={{
+                          position: "relative",
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          background:
+                            "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow:
+                            "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+                          cursor: "help",
+                          flexShrink: 0,
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                          overflow: "hidden",
+                        }}
+                        onMouseEnter={(e) => {
+                          setShowPremiumTooltip(true);
+                          e.currentTarget.style.transform = "scale(1.1)";
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          setShowPremiumTooltip(false);
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                        }}
+                      >
+                        {/* Shine effect */}
                         <div
                           style={{
                             position: "absolute",
-                            bottom: "calc(100% + 12px)",
-                            right: 0,
-                            background: "#1a1a1a",
-                            color: "white",
-                            padding: "8px 14px",
-                            borderRadius: 8,
-                            fontSize: 13,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            fontWeight: 500,
-                            whiteSpace: "nowrap",
-                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
-                            zIndex: 1000,
+                            top: "-50%",
+                            left: "-50%",
+                            width: "200%",
+                            height: "200%",
+                            background:
+                              "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
+                            transform: "rotate(45deg)",
                             pointerEvents: "none",
                           }}
+                        />
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#78350f"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{
+                            position: "relative",
+                            zIndex: 1,
+                            filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+                          }}
                         >
-                          {t("common.premiumFeature") || "Prémium funkció"}
+                          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                          <path d="M4 22h16" />
+                          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                        </svg>
+                        {/* Tooltip */}
+                        {showPremiumTooltip && (
                           <div
                             style={{
                               position: "absolute",
-                              top: "100%",
-                              right: 14,
-                              width: 0,
-                              height: 0,
-                              borderLeft: "6px solid transparent",
-                              borderRight: "6px solid transparent",
-                              borderTop: "6px solid #1a1a1a",
+                              bottom: "calc(100% + 12px)",
+                              right: 0,
+                              background: "#1a1a1a",
+                              color: "white",
+                              padding: "8px 14px",
+                              borderRadius: 8,
+                              fontSize: 13,
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontWeight: 500,
+                              whiteSpace: "nowrap",
+                              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+                              zIndex: 1000,
+                              pointerEvents: "none",
                             }}
-                          />
-                        </div>
-                      )}
+                          >
+                            {t("common.premiumFeature") || "Prémium funkció"}
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "100%",
+                                right: 14,
+                                width: 0,
+                                height: 0,
+                                borderLeft: "6px solid transparent",
+                                borderRight: "6px solid transparent",
+                                borderTop: "6px solid #1a1a1a",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    {/* Floorplan preview - container size */}
+                    {floorplans.length > 0 && (
+                      <div style={{ marginBottom: 16 }}>
+                        {floorplans.map((floorplan) => {
+                          const pins: FloorplanPin[] =
+                            floorplan.pins?.map((pin) => ({
+                              id: pin.id,
+                              x: pin.x,
+                              y: pin.y,
+                              label: pin.label,
+                            })) || [];
+
+                          return (
+                            <FloorplanImageViewer
+                              key={floorplan.id}
+                              imageUrl={floorplan.imageUrl}
+                              imageAlt={floorplan.title}
+                              pins={pins}
+                              showZoomSlider={true}
+                              pinCursor="pointer"
+                              enableMousePan={true}
+                              fitMode="contain"
+                              containerStyle={{
+                                width: "100%",
+                                minHeight: isMobile ? "300px" : "400px",
+                                height: isMobile ? "300px" : "400px",
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (place?.id) {
+                          track({
+                            type: "cta_click",
+                            placeId: place.id,
+                            ctaType: "floorplan",
+                          }).catch(() => {
+                            // Silently fail - analytics should not break the app
+                          });
+                        }
+                        setIsFloorplanModalOpen(true);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "16px 24px",
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        border: "none",
+                        borderRadius: 12,
+                        color: "white",
+                        fontSize: "clamp(16px, 3vw, 18px)",
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        cursor: "pointer",
+                        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                      }}
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      </svg>
+                      {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
+                    </button>
+                    <FloorplanFullscreenModal
+                      floorplans={floorplans}
+                      isOpen={isFloorplanModalOpen}
+                      onClose={() => setIsFloorplanModalOpen(false)}
+                    />
                   </div>
-                  {/* Floorplan preview - container size */}
-                  {floorplans.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                      {floorplans.map((floorplan) => {
-                        const pins: FloorplanPin[] = floorplan.pins?.map((pin) => ({
+                )}
+            </>
+          )}
+
+          {/* Floorplan only (if no description but has floorplan) */}
+          {(!place.description || !place.description.trim()) &&
+            floorplans &&
+            Array.isArray(floorplans) &&
+            floorplans.length > 0 &&
+            !isLoadingFloorplans && (
+              <div
+                style={{
+                  margin: "0 16px 32px",
+                  background: "white",
+                  padding: "clamp(16px, 4vw, 32px)",
+                  borderRadius: 16,
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                  width: "calc(100% - 32px)",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 16,
+                    position: "relative",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "clamp(20px, 5vw, 24px)",
+                      fontWeight: 600,
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#1a1a1a",
+                      margin: 0,
+                    }}
+                  >
+                    {t("admin.floorplans") || "Alaprajzok"}
+                  </h3>
+                  {/* Premium circle icon */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow:
+                        "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+                      cursor: "help",
+                      flexShrink: 0,
+                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      overflow: "hidden",
+                    }}
+                    onMouseEnter={(e) => {
+                      setShowPremiumTooltip(true);
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.boxShadow =
+                        "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      setShowPremiumTooltip(false);
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                    }}
+                  >
+                    {/* Shine effect */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-50%",
+                        left: "-50%",
+                        width: "200%",
+                        height: "200%",
+                        background:
+                          "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
+                        transform: "rotate(45deg)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#78350f"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        position: "relative",
+                        zIndex: 1,
+                        filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+                      }}
+                    >
+                      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                      <path d="M4 22h16" />
+                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                    </svg>
+                    {/* Tooltip */}
+                    {showPremiumTooltip && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "calc(100% + 12px)",
+                          right: 0,
+                          background: "#1a1a1a",
+                          color: "white",
+                          padding: "8px 14px",
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+                          zIndex: 1000,
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {t("common.premiumFeature") || "Prémium funkció"}
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            right: 14,
+                            width: 0,
+                            height: 0,
+                            borderLeft: "6px solid transparent",
+                            borderRight: "6px solid transparent",
+                            borderTop: "6px solid #1a1a1a",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Floorplan preview - container size */}
+                {floorplans.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    {floorplans.map((floorplan) => {
+                      const pins: FloorplanPin[] =
+                        floorplan.pins?.map((pin) => ({
                           id: pin.id,
                           x: pin.x,
                           y: pin.y,
                           label: pin.label,
                         })) || [];
-                        
-                        return (
-                          <FloorplanImageViewer
-                            key={floorplan.id}
-                            imageUrl={floorplan.imageUrl}
-                            imageAlt={floorplan.title}
-                            pins={pins}
-                            showZoomSlider={true}
-                            pinCursor="pointer"
-                            enableMousePan={true}
-                            fitMode="contain"
-                            containerStyle={{
-                              width: "100%",
-                              minHeight: isMobile ? "300px" : "400px",
-                              height: isMobile ? "300px" : "400px",
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => {
-                      if (place?.id) {
-                        track({
-                          type: "cta_click",
-                          placeId: place.id,
-                          ctaType: "floorplan",
-                        }).catch(() => {
-                          // Silently fail - analytics should not break the app
-                        });
-                      }
-                      setIsFloorplanModalOpen(true);
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "16px 24px",
-                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      border: "none",
-                      borderRadius: 12,
-                      color: "white",
-                      fontSize: "clamp(16px, 3vw, 18px)",
-                      fontWeight: 600,
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-                      transition: "all 0.2s",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                    }}
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                    </svg>
-                    {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
-                  </button>
-                  <FloorplanFullscreenModal
-                    floorplans={floorplans}
-                    isOpen={isFloorplanModalOpen}
-                    onClose={() => setIsFloorplanModalOpen(false)}
-                  />
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* Floorplan only (if no description but has floorplan) */}
-          {(!place.description || !place.description.trim()) && floorplans && Array.isArray(floorplans) && floorplans.length > 0 && !isLoadingFloorplans && (
-            <div
-              style={{
-                margin: "0 16px 32px",
-                background: "white",
-                padding: "clamp(16px, 4vw, 32px)",
-                borderRadius: 16,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                width: "calc(100% - 32px)",
-                maxWidth: "100%",
-                boxSizing: "border-box",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "space-between",
-                marginBottom: 16,
-                position: "relative",
-              }}>
-                <h3
-                  style={{
-                    fontSize: "clamp(20px, 5vw, 24px)",
-                    fontWeight: 600,
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    color: "#1a1a1a",
-                    margin: 0,
+
+                      return (
+                        <FloorplanImageViewer
+                          key={floorplan.id}
+                          imageUrl={floorplan.imageUrl}
+                          imageAlt={floorplan.title}
+                          pins={pins}
+                          showZoomSlider={true}
+                          pinCursor="pointer"
+                          enableMousePan={true}
+                          fitMode="contain"
+                          containerStyle={{
+                            width: "100%",
+                            minHeight: isMobile ? "300px" : "400px",
+                            height: isMobile ? "300px" : "400px",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    if (place?.id) {
+                      track({
+                        type: "cta_click",
+                        placeId: place.id,
+                        ctaType: "floorplan",
+                      }).catch(() => {
+                        // Silently fail - analytics should not break the app
+                      });
+                    }
+                    setIsFloorplanModalOpen(true);
                   }}
-                >
-                  {t("admin.floorplans") || "Alaprajzok"}
-                </h3>
-                {/* Premium circle icon */}
-                <div
                   style={{
-                    position: "relative",
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%)",
+                    width: "100%",
+                    padding: "16px 24px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    border: "none",
+                    borderRadius: 12,
+                    color: "white",
+                    fontSize: "clamp(16px, 3vw, 18px)",
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                    transition: "all 0.2s",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
-                    cursor: "help",
-                    flexShrink: 0,
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    overflow: "hidden",
+                    gap: 8,
                   }}
                   onMouseEnter={(e) => {
-                    setShowPremiumTooltip(true);
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow = "0 6px 24px rgba(251, 191, 36, 0.5), 0 0 0 1px rgba(217, 119, 6, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    setShowPremiumTooltip(false);
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(251, 191, 36, 0.4), 0 0 0 1px rgba(217, 119, 6, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                   }}
                 >
-                  {/* Shine effect */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-50%",
-                      left: "-50%",
-                      width: "200%",
-                      height: "200%",
-                      background: "linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
-                      transform: "rotate(45deg)",
-                      pointerEvents: "none",
-                    }}
-                  />
                   <svg
-                    width="22"
-                    height="22"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#78350f"
-                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
-                    }}
                   >
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                    <path d="M4 22h16" />
-                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                   </svg>
-                  {/* Tooltip */}
-                  {showPremiumTooltip && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "calc(100% + 12px)",
-                        right: 0,
-                        background: "#1a1a1a",
-                        color: "white",
-                        padding: "8px 14px",
-                        borderRadius: 8,
-                        fontSize: 13,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
-                        zIndex: 1000,
-                        pointerEvents: "none",
-                      }}
-                    >
-                      {t("common.premiumFeature") || "Prémium funkció"}
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "100%",
-                          right: 14,
-                          width: 0,
-                          height: 0,
-                          borderLeft: "6px solid transparent",
-                          borderRight: "6px solid transparent",
-                          borderTop: "6px solid #1a1a1a",
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+                  {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
+                </button>
+                <FloorplanFullscreenModal
+                  floorplans={floorplans}
+                  isOpen={isFloorplanModalOpen}
+                  onClose={() => setIsFloorplanModalOpen(false)}
+                />
               </div>
-              {/* Floorplan preview - container size */}
-              {floorplans.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  {floorplans.map((floorplan) => {
-                    const pins: FloorplanPin[] = floorplan.pins?.map((pin) => ({
-                      id: pin.id,
-                      x: pin.x,
-                      y: pin.y,
-                      label: pin.label,
-                    })) || [];
-                    
-                    return (
-                      <FloorplanImageViewer
-                        key={floorplan.id}
-                        imageUrl={floorplan.imageUrl}
-                        imageAlt={floorplan.title}
-                        pins={pins}
-                        showZoomSlider={true}
-                        pinCursor="pointer"
-                        enableMousePan={true}
-                        fitMode="contain"
-                        containerStyle={{
-                          width: "100%",
-                          minHeight: isMobile ? "300px" : "400px",
-                          height: isMobile ? "300px" : "400px",
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  if (place?.id) {
-                    track({
-                      type: "cta_click",
-                      placeId: place.id,
-                      ctaType: "floorplan",
-                    }).catch(() => {
-                      // Silently fail - analytics should not break the app
-                    });
-                  }
-                  setIsFloorplanModalOpen(true);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "16px 24px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  border: "none",
-                  borderRadius: 12,
-                  color: "white",
-                  fontSize: "clamp(16px, 3vw, 18px)",
-                  fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
-                }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                </svg>
-                {t("public.floorplan.openFullscreen") || "Megnyitás teljes képernyőn"}
-              </button>
-              <FloorplanFullscreenModal
-                floorplans={floorplans}
-                isOpen={isFloorplanModalOpen}
-                onClose={() => setIsFloorplanModalOpen(false)}
-              />
-            </div>
-          )}
+            )}
 
           {/* Price List */}
           {place.hasPriceList && priceList && !isLoadingPriceList && (
@@ -1806,7 +2035,8 @@ export function PlaceDetailPage() {
                 style={{
                   fontSize: "clamp(20px, 5vw, 24px)",
                   fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#1a1a1a",
                   marginBottom: 24,
                   display: "flex",
@@ -1878,7 +2108,10 @@ export function PlaceDetailPage() {
                             >
                               {formatMoney(item.price, {
                                 locale: platformSettings?.platform?.locale || "hu-HU",
-                                currency: priceList.currency || platformSettings?.platform?.currency || "HUF",
+                                currency:
+                                  priceList.currency ||
+                                  platformSettings?.platform?.currency ||
+                                  "HUF",
                               })}
                             </span>
                           ) : (
@@ -1940,7 +2173,8 @@ export function PlaceDetailPage() {
                 style={{
                   fontSize: 20,
                   fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color: "#1a1a1a",
                   marginBottom: 16,
                   display: "flex",
@@ -2025,15 +2259,8 @@ export function PlaceDetailPage() {
                   color: #4b5563;
                 }
               `}</style>
-              <div
-                ref={accessibilityRef}
-                className="accessibility-content"
-              >
-                <ShortcodeRenderer
-                  content={place.accessibility}
-                  lang={lang!}
-                  siteKey={siteKey!}
-                />
+              <div ref={accessibilityRef} className="accessibility-content">
+                <ShortcodeRenderer content={place.accessibility} lang={lang!} siteKey={siteKey!} />
               </div>
             </div>
           )}
@@ -2050,7 +2277,8 @@ export function PlaceDetailPage() {
                 textDecoration: "none",
                 fontSize: 16,
                 fontWeight: 400,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "color 0.2s",
               }}
               onMouseEnter={(e) => {

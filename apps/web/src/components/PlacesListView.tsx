@@ -52,7 +52,7 @@ export function PlacesListView({
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
   const queryClient = useQueryClient();
-  
+
   // Use Zustand store as default, props override if provided
   const storeFilters = useFiltersStore();
   const selectedCategories = propSelectedCategories ?? storeFilters.selectedCategories;
@@ -88,7 +88,7 @@ export function PlacesListView({
       // Note: getPlaces now accepts arrays for OR logic filtering
       const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
       const priceBandParam = selectedPriceBands.length > 0 ? selectedPriceBands : undefined;
-      
+
       const places = await getPlaces(
         lang,
         siteKey,
@@ -101,7 +101,8 @@ export function PlacesListView({
 
       return {
         places,
-        nextOffset: places.length === ITEMS_PER_PAGE ? (pageParam as number) + ITEMS_PER_PAGE : undefined,
+        nextOffset:
+          places.length === ITEMS_PER_PAGE ? (pageParam as number) + ITEMS_PER_PAGE : undefined,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextOffset,
@@ -128,7 +129,7 @@ export function PlacesListView({
   useEffect(() => {
     const handlePlatformSettingsChanged = () => {
       // Invalidate and refetch platform settings to update placeholder images
-      console.debug('[PlacesListView] Platform settings changed, invalidating cache');
+      console.debug("[PlacesListView] Platform settings changed, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
       queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
     };
@@ -165,12 +166,14 @@ export function PlacesListView({
   // Helper function to calculate distance in km using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
@@ -178,18 +181,18 @@ export function PlacesListView({
   // Helper function to check if place is open now
   const isPlaceOpenNow = (place: Place): boolean => {
     if (!place.openingHours || place.openingHours.length === 0) return false;
-    
+
     const now = new Date();
     const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
     // Find today's opening hours
     const todayHours = place.openingHours.find((oh) => oh.dayOfWeek === currentDayOfWeek);
-    
+
     if (!todayHours) return false;
     if (todayHours.isClosed) return false;
     if (!todayHours.openTime || !todayHours.closeTime) return false;
-    
+
     // Check if current time is between open and close time
     return currentTime >= todayHours.openTime && currentTime <= todayHours.closeTime;
   };
@@ -226,17 +229,17 @@ export function PlacesListView({
   // A place is rain-safe if it has at least one event today that is rain-safe
   const isRainSafe = (place: Place): boolean => {
     if (!rainSafe || !eventsData || !place.id) return false;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     // Check if place has a rain-safe event today
     return eventsData.some((event) => {
       if (event.placeId !== place.id) return false;
       if (!event.isRainSafe) return false;
-      
+
       const eventStart = new Date(event.startDate);
       const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
       return eventStart < tomorrow && eventEnd >= today;
@@ -263,21 +266,21 @@ export function PlacesListView({
       }
       return new Date(event.startDate) >= now;
     });
-    
+
     // Deduplicate events by ID and slug (in case backend returns duplicates with/without slugs)
     // Prefer events with valid slugs (slug !== id) over those without
     const seenById = new Map<string, Event>();
     const seenBySlug = new Map<string, Event>(); // Also track by slug to catch duplicates with different IDs
-    
+
     filtered.forEach((event) => {
       const hasValidSlug = event.slug && event.slug !== event.id;
-      
+
       // Check for duplicate by ID
       const existingById = seenById.get(event.id);
       if (existingById) {
         // Duplicate ID found - prefer the one with a valid slug
         const existingHasValidSlug = existingById.slug && existingById.slug !== existingById.id;
-        
+
         if (hasValidSlug && !existingHasValidSlug) {
           // Current event has valid slug, existing doesn't - replace
           seenById.set(event.id, event);
@@ -288,13 +291,14 @@ export function PlacesListView({
         // Otherwise keep existing (do nothing)
         return; // Skip this duplicate
       }
-      
+
       // Check for duplicate by slug (if valid slug)
       if (hasValidSlug) {
         const existingBySlug = seenBySlug.get(event.slug);
         if (existingBySlug) {
           // Same slug but different ID - prefer the one with valid slug over ID fallback
-          const existingHasValidSlug = existingBySlug.slug && existingBySlug.slug !== existingBySlug.id;
+          const existingHasValidSlug =
+            existingBySlug.slug && existingBySlug.slug !== existingBySlug.id;
           if (hasValidSlug && !existingHasValidSlug) {
             // Current has valid slug, existing doesn't - replace
             seenById.delete(existingBySlug.id);
@@ -305,14 +309,14 @@ export function PlacesListView({
           return; // Skip this duplicate
         }
       }
-      
+
       // New event - add it
       seenById.set(event.id, event);
       if (hasValidSlug) {
         seenBySlug.set(event.slug, event);
       }
     });
-    
+
     return Array.from(seenById.values());
   }, [eventsData]);
 
@@ -327,13 +331,13 @@ export function PlacesListView({
       eventIds.add(event.id);
       return true;
     });
-    
+
     const pinnedEvents = uniqueEvents.filter((e) => e.isPinned);
     const regularEvents = uniqueEvents.filter((e) => !e.isPinned);
-    
+
     // Use a fixed date for places (far in the past) so events are sorted by date and appear first
     const placesDefaultDate = new Date(2000, 0, 1);
-    
+
     // Create a combined array with type information
     const items: Array<{ type: "place" | "event"; data: Place | Event; sortDate: Date }> = [
       ...places.map((place) => ({
@@ -445,7 +449,8 @@ export function PlacesListView({
               marginBottom: 24,
               fontSize: "clamp(24px, 5vw, 36px)",
               fontWeight: 700,
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#1a1a1a",
               letterSpacing: "-0.02em",
               wordWrap: "break-word",
@@ -467,7 +472,8 @@ export function PlacesListView({
                 maxWidth: "100%",
                 padding: "14px 20px",
                 fontSize: 16,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
                 border: "2px solid #e0e0e0",
                 borderRadius: 12,
@@ -487,7 +493,7 @@ export function PlacesListView({
             />
           </div>
         </div>
-        
+
         {/* Filters and Places Grid - Same width as searchbar */}
         <div
           style={{
@@ -522,302 +528,373 @@ export function PlacesListView({
               {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
             </div>
           ) : !isLoading && combinedItems.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "64px 0", color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "64px 0",
+                color: "#666",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("public.noPlacesFound") || "Nincs találat"}
             </div>
           ) : isLoading && places.length === 0 ? null : (
             <>
               <div className="places-grid">
-              {combinedItems.map((item, index) => {
-                if (item.type === "place") {
-                  const place = item.data as Place;
-                  return <PlaceCard key={place.slug || place.id} place={place} index={index} />;
-                } else {
-                  const event = item.data as Event;
-                  // Only render link if event has a valid slug (not just the ID fallback)
-                  // Backend returns event.id as slug fallback, so check if slug equals id
-                  const hasValidSlug = event.slug && event.slug !== event.id;
-                  if (!hasValidSlug) {
-                    return (
-                      <div
-                        key={event.id}
-                        style={{
-                          background: "white",
-                          borderRadius: 12,
-                          overflow: "hidden",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                          borderBottom: event.category ? `3px solid #667eea` : "none",
-                          opacity: 0.7,
-                        }}
-                      >
-                        {(() => {
-                          const eventImage = event.heroImage?.trim() || null;
-                          const placeholderImage = platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
-                          const imageUrl = eventImage || placeholderImage;
-                          const hasImage = !!imageUrl && imageUrl.length > 0;
-                          
-                          return hasImage ? (
-                            <div
-                              style={{
-                                width: "100%",
-                                height: 200,
-                                backgroundImage: `url(${imageUrl})`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                                position: "relative",
-                              }}
-                            >
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: 12,
-                                left: 12,
-                                zIndex: 10,
-                              }}
-                            >
-                              <Badge
-                                variant="custom"
-                                backgroundColor="rgba(102, 126, 234, 0.95)"
-                                textColor="white"
-                                size="small"
-                                uppercase={true}
+                {combinedItems.map((item, index) => {
+                  if (item.type === "place") {
+                    const place = item.data as Place;
+                    return <PlaceCard key={place.slug || place.id} place={place} index={index} />;
+                  } else {
+                    const event = item.data as Event;
+                    // Only render link if event has a valid slug (not just the ID fallback)
+                    // Backend returns event.id as slug fallback, so check if slug equals id
+                    const hasValidSlug = event.slug && event.slug !== event.id;
+                    if (!hasValidSlug) {
+                      return (
+                        <div
+                          key={event.id}
+                          style={{
+                            background: "white",
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                            borderBottom: event.category ? `3px solid #667eea` : "none",
+                            opacity: 0.7,
+                          }}
+                        >
+                          {(() => {
+                            const eventImage = event.heroImage?.trim() || null;
+                            const placeholderImage =
+                              platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                            const imageUrl = eventImage || placeholderImage;
+                            const hasImage = !!imageUrl && imageUrl.length > 0;
+
+                            return hasImage ? (
+                              <div
                                 style={{
-                                  backdropFilter: "blur(8px)",
-                                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                                  width: "100%",
+                                  height: 200,
+                                  backgroundImage: `url(${imageUrl})`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  position: "relative",
                                 }}
                               >
-                                {t("public.events") || "Esemény"}
-                              </Badge>
-                            </div>
-                          </div>
-                          ) : null;
-                        })()}
-                        <div style={{ padding: 20 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
-                            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>
-                              {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
-                              {event.name}
-                            </h3>
-                            {!event.heroImage && (
-                              <Badge
-                                variant="custom"
-                                backgroundColor="rgba(102, 126, 234, 0.95)"
-                                textColor="white"
-                                size="small"
-                                uppercase={true}
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: 12,
+                                    left: 12,
+                                    zIndex: 10,
+                                  }}
+                                >
+                                  <Badge
+                                    variant="custom"
+                                    backgroundColor="rgba(102, 126, 234, 0.95)"
+                                    textColor="white"
+                                    size="small"
+                                    uppercase={true}
+                                    style={{
+                                      backdropFilter: "blur(8px)",
+                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                                    }}
+                                  >
+                                    {t("public.events") || "Esemény"}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
+                          <div style={{ padding: 20 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                marginBottom: 8,
+                                gap: 12,
+                              }}
+                            >
+                              <h3
+                                style={{
+                                  margin: 0,
+                                  fontSize: 20,
+                                  fontWeight: 600,
+                                  fontFamily:
+                                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  color: "#1a1a1a",
+                                  flex: 1,
+                                }}
                               >
-                                {t("public.events") || "Esemény"}
-                              </Badge>
-                            )}
-                          </div>
-                          <div style={{ 
-                            fontSize: "clamp(14px, 3.5vw, 16px)", 
-                            color: "#666", 
-                            marginBottom: 8, 
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                            fontWeight: 400,
-                          }}>
-                            {new Date(event.startDate).toLocaleDateString(
-                              lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </div>
-                          {event.shortDescription && (
-                            <p style={{ 
-                              fontSize: "clamp(14px, 3.5vw, 16px)", 
-                              color: "#666", 
-                              margin: "8px 0", 
-                              lineHeight: 1.6, 
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                              fontWeight: 400,
-                            }}>
-                              {event.shortDescription}
-                            </p>
-                          )}
-                          {event.placeName && (
-                            <div style={{ 
-                              fontSize: "clamp(14px, 3.5vw, 16px)", 
-                              color: "#667eea", 
-                              marginTop: 8, 
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                              fontWeight: 400,
-                            }}>
-                              📍 {event.placeName}
+                                {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
+                                {event.name}
+                              </h3>
+                              {!event.heroImage && (
+                                <Badge
+                                  variant="custom"
+                                  backgroundColor="rgba(102, 126, 234, 0.95)"
+                                  textColor="white"
+                                  size="small"
+                                  uppercase={true}
+                                >
+                                  {t("public.events") || "Esemény"}
+                                </Badge>
+                              )}
                             </div>
-                          )}
-                          <div style={{ 
-                            marginTop: 12, 
-                            fontSize: "clamp(14px, 3.5vw, 16px)", 
-                            color: "#999", 
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                            fontWeight: 400,
-                          }}>
-                            {t("public.placeSlugMissing") || "Részletek hamarosan..."}
+                            <div
+                              style={{
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                color: "#666",
+                                marginBottom: 8,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                              }}
+                            >
+                              {new Date(event.startDate).toLocaleDateString(
+                                lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </div>
+                            {event.shortDescription && (
+                              <p
+                                style={{
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  color: "#666",
+                                  margin: "8px 0",
+                                  lineHeight: 1.6,
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  fontWeight: 400,
+                                }}
+                              >
+                                {event.shortDescription}
+                              </p>
+                            )}
+                            {event.placeName && (
+                              <div
+                                style={{
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  color: "#667eea",
+                                  marginTop: 8,
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  fontWeight: 400,
+                                }}
+                              >
+                                📍 {event.placeName}
+                              </div>
+                            )}
+                            <div
+                              style={{
+                                marginTop: 12,
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                color: "#999",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                              }}
+                            >
+                              {t("public.placeSlugMissing") || "Részletek hamarosan..."}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={event.id}
+                        to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
+                        <div
+                          style={{
+                            background: "white",
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                            borderBottom: event.category ? `3px solid #667eea` : "none",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = "translateY(-4px)";
+                            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+                          }}
+                        >
+                          {(() => {
+                            const eventImage = event.heroImage?.trim() || null;
+                            const placeholderImage =
+                              platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
+                            const imageUrl = eventImage || placeholderImage;
+                            const hasImage = !!imageUrl && imageUrl.length > 0;
+
+                            return hasImage ? (
+                              <div
+                                style={{
+                                  width: "100%",
+                                  height: 200,
+                                  backgroundImage: `url(${imageUrl})`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  position: "relative",
+                                }}
+                              >
+                                {/* Event badge overlay */}
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: 12,
+                                    left: 12,
+                                    zIndex: 10,
+                                  }}
+                                >
+                                  <Badge
+                                    variant="custom"
+                                    backgroundColor="rgba(102, 126, 234, 0.95)"
+                                    textColor="white"
+                                    size="small"
+                                    uppercase={true}
+                                    style={{
+                                      backdropFilter: "blur(8px)",
+                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                                    }}
+                                  >
+                                    {t("public.events") || "Esemény"}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
+                          <div style={{ padding: 20 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                marginBottom: 8,
+                                gap: 12,
+                              }}
+                            >
+                              <h3
+                                style={{
+                                  margin: 0,
+                                  fontSize: 20,
+                                  fontWeight: 600,
+                                  fontFamily:
+                                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  color: "#1a1a1a",
+                                  flex: 1,
+                                }}
+                              >
+                                {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
+                                {event.name}
+                              </h3>
+                              {!event.heroImage && (
+                                <Badge
+                                  variant="custom"
+                                  backgroundColor="rgba(102, 126, 234, 0.95)"
+                                  textColor="white"
+                                  size="small"
+                                  uppercase={true}
+                                >
+                                  {t("public.events") || "Esemény"}
+                                </Badge>
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "clamp(14px, 3.5vw, 16px)",
+                                color: "#666",
+                                marginBottom: 8,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontWeight: 400,
+                              }}
+                            >
+                              {new Date(event.startDate).toLocaleDateString(
+                                lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </div>
+                            {event.shortDescription && (
+                              <p
+                                style={{
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  color: "#666",
+                                  margin: "8px 0",
+                                  lineHeight: 1.6,
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  fontWeight: 400,
+                                }}
+                              >
+                                {event.shortDescription}
+                              </p>
+                            )}
+                            {event.placeName && (
+                              <div
+                                style={{
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  color: "#667eea",
+                                  marginTop: 8,
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  fontWeight: 400,
+                                }}
+                              >
+                                📍 {event.placeName}
+                              </div>
+                            )}
+                            <div
+                              style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                                  fontWeight: 500,
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  color: "#667eea",
+                                }}
+                              >
+                                {t("public.readMore")} →
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
                     );
                   }
-                  return (
-                    <Link
-                      key={event.id}
-                      to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      <div
-                        style={{
-                          background: "white",
-                          borderRadius: 12,
-                          overflow: "hidden",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                          transition: "all 0.3s ease",
-                          cursor: "pointer",
-                          borderBottom: event.category ? `3px solid #667eea` : "none",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-4px)";
-                          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
-                        }}
-                      >
-                        {(() => {
-                          const eventImage = event.heroImage?.trim() || null;
-                          const placeholderImage = platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
-                          const imageUrl = eventImage || placeholderImage;
-                          const hasImage = !!imageUrl && imageUrl.length > 0;
-                          
-                          return hasImage ? (
-                            <div
-                              style={{
-                                width: "100%",
-                                height: 200,
-                                backgroundImage: `url(${imageUrl})`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                                position: "relative",
-                              }}
-                            >
-                            {/* Event badge overlay */}
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: 12,
-                                left: 12,
-                                zIndex: 10,
-                              }}
-                            >
-                              <Badge
-                                variant="custom"
-                                backgroundColor="rgba(102, 126, 234, 0.95)"
-                                textColor="white"
-                                size="small"
-                                uppercase={true}
-                                style={{
-                                  backdropFilter: "blur(8px)",
-                                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-                                }}
-                              >
-                                {t("public.events") || "Esemény"}
-                              </Badge>
-                            </div>
-                          </div>
-                          ) : null;
-                        })()}
-                        <div style={{ padding: 20 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 12 }}>
-                            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1a1a1a", flex: 1 }}>
-                              {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
-                              {event.name}
-                            </h3>
-                            {!event.heroImage && (
-                              <Badge
-                                variant="custom"
-                                backgroundColor="rgba(102, 126, 234, 0.95)"
-                                textColor="white"
-                                size="small"
-                                uppercase={true}
-                              >
-                                {t("public.events") || "Esemény"}
-                              </Badge>
-                            )}
-                          </div>
-                          <div style={{ 
-                            fontSize: "clamp(14px, 3.5vw, 16px)", 
-                            color: "#666", 
-                            marginBottom: 8, 
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                            fontWeight: 400,
-                          }}>
-                            {new Date(event.startDate).toLocaleDateString(
-                              lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </div>
-                          {event.shortDescription && (
-                            <p style={{ 
-                              fontSize: "clamp(14px, 3.5vw, 16px)", 
-                              color: "#666", 
-                              margin: "8px 0", 
-                              lineHeight: 1.6, 
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                              fontWeight: 400,
-                            }}>
-                              {event.shortDescription}
-                            </p>
-                          )}
-                          {event.placeName && (
-                            <div style={{ 
-                              fontSize: "clamp(14px, 3.5vw, 16px)", 
-                              color: "#667eea", 
-                              marginTop: 8, 
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                              fontWeight: 400,
-                            }}>
-                              📍 {event.placeName}
-                            </div>
-                          )}
-                          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-                            <span style={{ 
-                              fontSize: "clamp(14px, 3.5vw, 16px)", 
-                              fontWeight: 500, 
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                              color: "#667eea",
-                            }}>
-                              {t("public.readMore")} →
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                }
-              })}
-            </div>
+                })}
+              </div>
 
-            {/* Infinite scroll trigger */}
-            <div ref={observerTarget} style={{ height: 20, marginBottom: 32 }}>
-              <LoadingSpinner isLoading={isFetchingNextPage} />
-            </div>
-          </>
-        )}
+              {/* Infinite scroll trigger */}
+              <div ref={observerTarget} style={{ height: 20, marginBottom: 32 }}>
+                <LoadingSpinner isLoading={isFetchingNextPage} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
   );
 }
-

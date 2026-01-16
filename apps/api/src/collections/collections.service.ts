@@ -65,13 +65,13 @@ export class CollectionsService {
 
   /**
    * Gets a collection with language-specific view model.
-   * 
+   *
    * Input: collectionId, lang
-   * 
+   *
    * Collection content:
    * - Uses CollectionTranslation[lang] if available
    * - Fallback: hu (or defaultLang)
-   * 
+   *
    * Items list:
    * For each item:
    * 1. itemTranslation = CollectionItemTranslation[lang] if exists
@@ -105,13 +105,11 @@ export class CollectionsService {
         item.site.translations.find((t) => t.lang === Lang.hu);
 
       // Build display fields
-      const title = itemTranslation?.titleOverride ?? siteTranslation?.name ?? `Site ${item.site.id}`;
+      const title =
+        itemTranslation?.titleOverride ?? siteTranslation?.name ?? `Site ${item.site.id}`;
       const description =
         itemTranslation?.descriptionOverride ?? siteTranslation?.shortDescription ?? null;
-      const image =
-        itemTranslation?.imageOverride ??
-        siteTranslation?.heroImage ??
-        null; // TODO: Add site.default/brand placeholder if needed
+      const image = itemTranslation?.imageOverride ?? siteTranslation?.heroImage ?? null; // TODO: Add site.default/brand placeholder if needed
 
       return {
         id: item.id,

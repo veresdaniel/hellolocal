@@ -38,7 +38,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
               style={{
                 height: 20,
                 width: "70%",
-                background: "linear-gradient(90deg, rgba(168, 179, 255, 0.2) 0%, rgba(168, 179, 255, 0.1) 50%, rgba(168, 179, 255, 0.2) 100%)",
+                background:
+                  "linear-gradient(90deg, rgba(168, 179, 255, 0.2) 0%, rgba(168, 179, 255, 0.1) 50%, rgba(168, 179, 255, 0.2) 100%)",
                 borderRadius: 4,
                 marginBottom: 12,
                 animation: "shimmer 1.5s ease-in-out infinite",
@@ -49,7 +50,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
               style={{
                 height: 16,
                 width: "50%",
-                background: "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%)",
+                background:
+                  "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%)",
                 borderRadius: 4,
                 marginBottom: 16,
                 animation: "shimmer 1.5s ease-in-out infinite",
@@ -64,7 +66,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
                   style={{
                     height: 14,
                     width: j === 0 ? "60%" : "40%",
-                    background: "linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0.08) 100%)",
+                    background:
+                      "linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0.08) 100%)",
                     borderRadius: 4,
                     animation: "shimmer 1.5s ease-in-out infinite",
                     animationDelay: `${0.3 + j * 0.1}s`,
@@ -99,7 +102,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
           height: 40,
           width: "100%",
           maxWidth: 400,
-          background: "linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 50%, rgba(102, 126, 234, 0.1) 100%)",
+          background:
+            "linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 50%, rgba(102, 126, 234, 0.1) 100%)",
           borderRadius: 8,
           marginBottom: 24,
           animation: "shimmer 1.5s ease-in-out infinite",
@@ -132,7 +136,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
               style={{
                 height: 18,
                 width: i === 0 ? "80%" : i === columns - 1 ? "60%" : "100%",
-                background: "linear-gradient(90deg, rgba(168, 179, 255, 0.3) 0%, rgba(168, 179, 255, 0.15) 50%, rgba(168, 179, 255, 0.3) 100%)",
+                background:
+                  "linear-gradient(90deg, rgba(168, 179, 255, 0.3) 0%, rgba(168, 179, 255, 0.15) 50%, rgba(168, 179, 255, 0.3) 100%)",
                 borderRadius: 4,
                 animation: "shimmer 1.5s ease-in-out infinite",
                 animationDelay: `${i * 0.1}s`,
@@ -160,7 +165,8 @@ export function TableSkeleton({ rows = 5, columns = 4, isMobile = false }: Table
                   style={{
                     height: 16,
                     width: j === 0 ? "70%" : j === columns - 1 ? "50%" : "85%",
-                    background: "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%)",
+                    background:
+                      "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.1) 100%)",
                     borderRadius: 4,
                     animation: "shimmer 1.5s ease-in-out infinite",
                     animationDelay: `${(i * columns + j) * 0.05}s`,

@@ -29,7 +29,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Handle NestJS HttpExceptions (BadRequestException, UnauthorizedException, etc.)
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === "string") {
         message = exceptionResponse;
         error = exception.constructor.name.replace("Exception", "");
@@ -45,29 +45,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       // Handle generic JavaScript errors
       status = HttpStatus.INTERNAL_SERVER_ERROR;
-      
+
       // Special handling for OAuth errors (TokenError from passport-oauth2)
       if (exception.name === "TokenError" || exception.message?.includes("Bad Request")) {
         status = HttpStatus.BAD_REQUEST;
-        message = "Google OAuth authentication failed. Please check your Google OAuth configuration (callback URL, client ID, and secret).";
+        message =
+          "Google OAuth authentication failed. Please check your Google OAuth configuration (callback URL, client ID, and secret).";
         error = "OAuthError";
-        this.logger.error(
-          `OAuth error: ${exception.message}`,
-          exception.stack
-        );
-        
+        this.logger.error(`OAuth error: ${exception.message}`, exception.stack);
+
         // For OAuth errors, redirect to frontend login page instead of returning JSON
         if (request.url?.includes("/google/callback")) {
           const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
           const lang = request.headers.referer?.match(/\/(hu|en|de)(\/|$)/)?.[1] || "hu";
-          return response.redirect(`${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(message)}`);
+          return response.redirect(
+            `${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(message)}`
+          );
         }
       } else {
-        message = process.env.NODE_ENV === "production" 
-          ? "Internal server error" 
-          : exception.message || "An unexpected error occurred";
+        message =
+          process.env.NODE_ENV === "production"
+            ? "Internal server error"
+            : exception.message || "An unexpected error occurred";
         error = "Internal Server Error";
-        
+
         // Log the full error in development
         if (process.env.NODE_ENV !== "production") {
           details = {
@@ -98,13 +99,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Log server errors as errors
       this.logger.error(
         `${request.method} ${request.url} - ${status} - ${message}`,
-        exception instanceof Error ? exception.stack : JSON.stringify(exception),
+        exception instanceof Error ? exception.stack : JSON.stringify(exception)
       );
     } else {
       // Log client errors as warnings
-      this.logger.warn(
-        `${request.method} ${request.url} - ${status} - ${message}`,
-      );
+      this.logger.warn(`${request.method} ${request.url} - ${status} - ${message}`);
     }
 
     // Return consistent error response
@@ -118,4 +117,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 }
-

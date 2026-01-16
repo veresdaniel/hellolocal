@@ -44,12 +44,12 @@ export class AdminTownService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.town.count({ where });
-    
+
     // Get paginated results
     const towns = await this.prisma.town.findMany({
       where,
@@ -60,7 +60,7 @@ export class AdminTownService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       towns,
@@ -190,4 +190,3 @@ export class AdminTownService {
     return { message: "Town deleted successfully" };
   }
 }
-

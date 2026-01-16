@@ -29,17 +29,13 @@ interface CategoryAutocompletePropsSingle extends CategoryAutocompletePropsBase 
   onChange: (categoryId: string) => void;
 }
 
-type CategoryAutocompleteProps = CategoryAutocompletePropsMultiple | CategoryAutocompletePropsSingle;
+type CategoryAutocompleteProps =
+  | CategoryAutocompletePropsMultiple
+  | CategoryAutocompletePropsSingle;
 
 export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
   const { t, i18n } = useTranslation();
-  const {
-    categories,
-    placeholder,
-    label,
-    required = false,
-    error,
-  } = props;
+  const { categories, placeholder, label, required = false, error } = props;
   const defaultPlaceholder = placeholder || t("admin.selectCategoryPlaceholder");
 
   // Determine if multiple mode: if multiple prop is explicitly true, or if selectedCategoryIds exists
@@ -48,16 +44,18 @@ export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
   const currentLang = i18n.language;
 
   // Handle both single and multiple modes
-  const selectedCategoryIds: string[] = multiple 
-    ? ((props as CategoryAutocompletePropsMultiple).selectedCategoryIds || [])
-    : ((props as CategoryAutocompletePropsSingle).selectedCategoryId && (props as CategoryAutocompletePropsSingle).selectedCategoryId !== "" 
-        ? [(props as CategoryAutocompletePropsSingle).selectedCategoryId] 
-        : []);
+  const selectedCategoryIds: string[] = multiple
+    ? (props as CategoryAutocompletePropsMultiple).selectedCategoryIds || []
+    : (props as CategoryAutocompletePropsSingle).selectedCategoryId &&
+        (props as CategoryAutocompletePropsSingle).selectedCategoryId !== ""
+      ? [(props as CategoryAutocompletePropsSingle).selectedCategoryId]
+      : [];
 
   const getCategoryName = (category: Category) => {
     const currentLangCode = currentLang.split("-")[0] as Lang;
-    const translation = getTranslation(category.translations, currentLangCode, true) || 
-                       getHuTranslation(category.translations);
+    const translation =
+      getTranslation(category.translations, currentLangCode, true) ||
+      getHuTranslation(category.translations);
     return translation?.name || category.id;
   };
 
@@ -71,7 +69,9 @@ export function CategoryAutocomplete(props: CategoryAutocompleteProps) {
 
   const handleRemove = (categoryId: string) => {
     if (multiple) {
-      (props as CategoryAutocompletePropsMultiple).onChange(selectedCategoryIds.filter((id) => id !== categoryId));
+      (props as CategoryAutocompletePropsMultiple).onChange(
+        selectedCategoryIds.filter((id) => id !== categoryId)
+      );
     } else {
       (props as CategoryAutocompletePropsSingle).onChange("");
     }

@@ -109,10 +109,7 @@ export function TipTapEditorWithUpload({
     onChange(newSourceCode);
   };
 
-  const handleFileSelect = async (
-    file: File,
-    isVideo: boolean = false
-  ) => {
+  const handleFileSelect = async (file: File, isVideo: boolean = false) => {
     if (!file) return;
 
     setIsUploading(true);
@@ -120,22 +117,22 @@ export function TipTapEditorWithUpload({
 
     try {
       let url: string;
-      
+
       if (isVideo) {
         url = await uploadService.uploadVideo(file, {
           folder: uploadFolder,
           onProgress: setUploadProgress,
         });
-        
+
         // Insert video as HTML (TipTap doesn't have native video extension)
-        const videoHtml = `<video controls style="max-width: 100%; height: auto; display: block; margin: 16px auto;"><source src="${url}" type="video/${file.type.split('/')[1] || 'mp4'}"></video>`;
+        const videoHtml = `<video controls style="max-width: 100%; height: auto; display: block; margin: 16px auto;"><source src="${url}" type="video/${file.type.split("/")[1] || "mp4"}"></video>`;
         editor?.commands.insertContent(videoHtml);
       } else {
         url = await uploadService.uploadImage(file, {
           folder: uploadFolder,
           onProgress: setUploadProgress,
         });
-        
+
         editor?.chain().focus().setImage({ src: url, alt: file.name }).run();
       }
     } catch (error) {
@@ -144,7 +141,7 @@ export function TipTapEditorWithUpload({
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
-      
+
       // Reset file inputs
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (videoInputRef.current) videoInputRef.current.value = "";
@@ -167,7 +164,11 @@ export function TipTapEditorWithUpload({
       if (selectedText) {
         editor!.chain().focus().extendMarkRange("link").setLink({ href: linkUrl }).run();
       } else {
-        editor!.chain().focus().insertContent(`<a href="${linkUrl}">${linkText || linkUrl}</a>`).run();
+        editor!
+          .chain()
+          .focus()
+          .insertContent(`<a href="${linkUrl}">${linkText || linkUrl}</a>`)
+          .run();
       }
       setShowLinkInput(false);
       setLinkUrl("");
@@ -207,11 +208,16 @@ export function TipTapEditorWithUpload({
             alignItems: "center",
           }}
         >
-          <span style={{ 
-            fontSize: "clamp(13px, 3vw, 15px)", 
-            fontWeight: 600,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>HTML Source</span>
+          <span
+            style={{
+              fontSize: "clamp(13px, 3vw, 15px)",
+              fontWeight: 600,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            HTML Source
+          </span>
           <button
             type="button"
             onClick={handleToggleSourceCode}
@@ -223,7 +229,8 @@ export function TipTapEditorWithUpload({
               borderRadius: 4,
               cursor: "pointer",
               fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {showSourceCode ? "Show Editor" : "Show Source"}
@@ -237,7 +244,8 @@ export function TipTapEditorWithUpload({
             minHeight: `${height}px`,
             padding: 12,
             border: "none",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: "clamp(14px, 3.5vw, 16px)",
             resize: "vertical",
           }}
@@ -346,7 +354,8 @@ export function TipTapEditorWithUpload({
                 border: "1px solid #ddd",
                 borderRadius: 4,
                 fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 minWidth: 200,
               }}
             />
@@ -361,7 +370,8 @@ export function TipTapEditorWithUpload({
                   border: "1px solid #ddd",
                   borderRadius: 4,
                   fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   minWidth: 150,
                 }}
               />
@@ -377,7 +387,8 @@ export function TipTapEditorWithUpload({
                 borderRadius: 4,
                 cursor: "pointer",
                 fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Set Link"
             >
@@ -395,7 +406,8 @@ export function TipTapEditorWithUpload({
                   borderRadius: 4,
                   cursor: "pointer",
                   fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 title="Remove Link"
               >
@@ -417,7 +429,8 @@ export function TipTapEditorWithUpload({
                 borderRadius: 4,
                 cursor: "pointer",
                 fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Cancel"
             >
@@ -437,29 +450,19 @@ export function TipTapEditorWithUpload({
         <div style={{ width: 1, background: "#ddd", margin: "0 4px", height: 24 }} />
 
         {/* Media Upload */}
-        <ToolbarButton
-          onClick={handleImageUpload}
-          disabled={isUploading}
-          title="Upload Image"
-        >
+        <ToolbarButton onClick={handleImageUpload} disabled={isUploading} title="Upload Image">
           {isUploading ? "⏳" : "🖼️"}
         </ToolbarButton>
-        
+
         {enableVideo && (
-          <ToolbarButton
-            onClick={handleVideoUpload}
-            disabled={isUploading}
-            title="Upload Video"
-          >
+          <ToolbarButton onClick={handleVideoUpload} disabled={isUploading} title="Upload Video">
             🎥
           </ToolbarButton>
         )}
 
         {/* Upload Progress */}
         {isUploading && uploadProgress > 0 && (
-          <div style={{ fontSize: 11, color: "#666", marginLeft: 8 }}>
-            {uploadProgress}%
-          </div>
+          <div style={{ fontSize: 11, color: "#666", marginLeft: 8 }}>{uploadProgress}%</div>
         )}
 
         {/* Image Formatting */}
@@ -469,7 +472,14 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "float: left; margin: 0 16px 16px 0; max-width: 50%;" } as any).run();
+                editor
+                  .chain()
+                  .focus()
+                  .setImage({
+                    ...attrs,
+                    style: "float: left; margin: 0 16px 16px 0; max-width: 50%;",
+                  } as any)
+                  .run();
               }}
               title="Align Left"
             >
@@ -478,7 +488,14 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "display: block; margin: 0 auto; max-width: 100%;" } as any).run();
+                editor
+                  .chain()
+                  .focus()
+                  .setImage({
+                    ...attrs,
+                    style: "display: block; margin: 0 auto; max-width: 100%;",
+                  } as any)
+                  .run();
               }}
               title="Align Center"
             >
@@ -487,7 +504,14 @@ export function TipTapEditorWithUpload({
             <ToolbarButton
               onClick={() => {
                 const attrs = editor.getAttributes("image");
-                editor.chain().focus().setImage({ ...attrs, style: "float: right; margin: 0 0 16px 16px; max-width: 50%;" } as any).run();
+                editor
+                  .chain()
+                  .focus()
+                  .setImage({
+                    ...attrs,
+                    style: "float: right; margin: 0 0 16px 16px; max-width: 50%;",
+                  } as any)
+                  .run();
               }}
               title="Align Right"
             >
@@ -507,10 +531,7 @@ export function TipTapEditorWithUpload({
         <div style={{ flex: 1 }} />
 
         {/* Source Code Toggle */}
-        <ToolbarButton
-          onClick={handleToggleSourceCode}
-          title="Toggle HTML Source Code View"
-        >
+        <ToolbarButton onClick={handleToggleSourceCode} title="Toggle HTML Source Code View">
           &lt;/&gt;
         </ToolbarButton>
       </div>

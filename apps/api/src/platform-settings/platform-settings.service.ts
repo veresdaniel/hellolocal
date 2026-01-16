@@ -28,7 +28,10 @@ function deepMerge<T>(base: T, override: any): T {
 export class PlatformSettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPlatformSettings(args: { lang: string; siteKey?: string }): Promise<PlatformSettingsDto> {
+  async getPlatformSettings(args: {
+    lang: string;
+    siteKey?: string;
+  }): Promise<PlatformSettingsDto> {
     const lang = pickLang(args.lang);
     const siteKey = args.siteKey;
 
@@ -43,20 +46,22 @@ export class PlatformSettingsService {
         where: { slug: defaultSlug },
         select: { id: true, slug: true, isActive: true },
       });
-      
+
       // If default site doesn't exist or is inactive, use first active site
       if (!defaultSite || !defaultSite.isActive) {
         defaultSite = await this.prisma.site.findFirst({
           where: { isActive: true },
           select: { id: true, slug: true, isActive: true },
-          orderBy: { createdAt: 'asc' }, // Use oldest active site as fallback
+          orderBy: { createdAt: "asc" }, // Use oldest active site as fallback
         });
-        
+
         if (!defaultSite) {
-          throw new NotFoundException("No active site found. Please create at least one active site.");
+          throw new NotFoundException(
+            "No active site found. Please create at least one active site."
+          );
         }
       }
-      
+
       siteId = defaultSite.id;
       resolvedSiteKey = defaultSite.slug;
     } else {
@@ -70,8 +75,8 @@ export class PlatformSettingsService {
           isActive: true,
         },
         orderBy: [
-          { isPrimary: 'desc' }, // Primary keys first
-          { createdAt: 'asc' }, // Then by creation date (oldest first)
+          { isPrimary: "desc" }, // Primary keys first
+          { createdAt: "asc" }, // Then by creation date (oldest first)
         ],
         select: { siteId: true, slug: true, isActive: true },
       });
@@ -159,27 +164,29 @@ export class PlatformSettingsService {
     const brandMapDefaults = (site.brand?.mapDefaults ?? {}) as any;
 
     // Get SiteInstance (default or first one, or null if none exist)
-    const instance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
+    const instance =
+      site.siteInstances?.find((si) => si.isDefault) || site.siteInstances?.[0] || null;
     const instanceFeatures = (instance?.features ?? {}) as any;
     const instanceMap = (instance?.mapConfig ?? {}) as any;
 
     const mergedMap = deepMerge(deepMerge(appDefaults.map, brandMapDefaults), instanceMap);
     const mergedFeatures = deepMerge(appDefaults.features, instanceFeatures) as any;
-    
+
     // Placeholders come from Brand only (not from SiteInstance)
     // Map placeholders from brand format to DTO format
     const placeholdersDto = {
-      placeCard: brandPlaceholders.defaultPlaceholderCardImage ?? appDefaults.placeholders.placeCard,
-      placeHero: brandPlaceholders.defaultPlaceholderDetailHeroImage ?? appDefaults.placeholders.placeHero,
-      eventCard: brandPlaceholders.defaultEventPlaceholderCardImage ?? appDefaults.placeholders.eventCard,
+      placeCard:
+        brandPlaceholders.defaultPlaceholderCardImage ?? appDefaults.placeholders.placeCard,
+      placeHero:
+        brandPlaceholders.defaultPlaceholderDetailHeroImage ?? appDefaults.placeholders.placeHero,
+      eventCard:
+        brandPlaceholders.defaultEventPlaceholderCardImage ?? appDefaults.placeholders.eventCard,
       avatar: brandPlaceholders.brandBadgeIcon ?? appDefaults.placeholders.avatar,
     };
 
     // 5) indexable: instance.features.seo?.indexable felülírhatja, fallback: globális crawlability
     const globalCrawlability = await this.getGlobalCrawlability();
-    const indexable =
-      instanceFeatures?.seo?.indexable ??
-      globalCrawlability;
+    const indexable = instanceFeatures?.seo?.indexable ?? globalCrawlability;
 
     // Get feature matrix overrides from Brand (for pricing page)
     const brand = await this.prisma.brand.findFirst({
@@ -248,12 +255,13 @@ export class PlatformSettingsService {
     weekStartsOn: number;
   }> {
     // Get platform settings from AppSetting
-    const [localeSetting, currencySetting, timeFormatSetting, weekStartsOnSetting] = await Promise.all([
-      this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
-      this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
-      this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
-      this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
-    ]);
+    const [localeSetting, currencySetting, timeFormatSetting, weekStartsOnSetting] =
+      await Promise.all([
+        this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
+        this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
+        this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
+        this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
+      ]);
 
     return {
       locale: localeSetting?.value || "hu-HU",
@@ -315,12 +323,15 @@ export class PlatformSettingsService {
    * Set map settings for a site (admin)
    * Updates the default SiteInstance's mapConfig
    */
-  async setMapSettings(siteId: string, settings: {
-    townId?: string | null;
-    lat?: number | null;
-    lng?: number | null;
-    zoom?: number | null;
-  }) {
+  async setMapSettings(
+    siteId: string,
+    settings: {
+      townId?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      zoom?: number | null;
+    }
+  ) {
     // Get or create default SiteInstance
     let siteInstance = await this.prisma.siteInstance.findFirst({
       where: {
@@ -406,9 +417,13 @@ export class PlatformSettingsService {
     // Get brand assets
     const brand = site.brand;
     const placeholders = (brand.placeholders as any) || {};
-    
+
     // Initialize with defaults
-    const siteName: { hu: string; en: string; de: string } = { hu: "HelloLocal", en: "HelloLocal", de: "HelloLocal" };
+    const siteName: { hu: string; en: string; de: string } = {
+      hu: "HelloLocal",
+      en: "HelloLocal",
+      de: "HelloLocal",
+    };
     const siteDescription: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
     const seoTitle: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
     const seoDescription: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
@@ -425,7 +440,8 @@ export class PlatformSettingsService {
 
     // Get runtime features from SiteInstances (isCrawlable, enableEvents, etc.)
     // Use the default instance or first one if no default, or null if none exist
-    const defaultInstance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
+    const defaultInstance =
+      site.siteInstances?.find((si) => si.isDefault) || site.siteInstances?.[0] || null;
     let hasSiteSpecificCrawlability = false;
     if (defaultInstance?.features) {
       const features = defaultInstance.features as any;
@@ -434,7 +450,7 @@ export class PlatformSettingsService {
         hasSiteSpecificCrawlability = true;
       }
     }
-    
+
     // Fallback to global crawlability if no site-specific setting
     if (!hasSiteSpecificCrawlability) {
       const globalCrawlability = await this.getGlobalCrawlability();
@@ -459,18 +475,21 @@ export class PlatformSettingsService {
    * Set platform settings for a site (admin)
    * Updates Brand for brand assets, SiteTranslation for language-specific content, and SiteInstance for runtime features
    */
-  async setPlatformSettings(siteId: string, settings: {
-    siteName?: { hu?: string; en?: string; de?: string };
-    siteDescription?: { hu?: string; en?: string; de?: string };
-    seoTitle?: { hu?: string; en?: string; de?: string };
-    seoDescription?: { hu?: string; en?: string; de?: string };
-    isCrawlable?: boolean;
-    defaultPlaceholderCardImage?: string | null;
-    defaultPlaceholderDetailHeroImage?: string | null;
-    defaultEventPlaceholderCardImage?: string | null;
-    brandBadgeIcon?: string | null;
-    faviconUrl?: string | null;
-  }) {
+  async setPlatformSettings(
+    siteId: string,
+    settings: {
+      siteName?: { hu?: string; en?: string; de?: string };
+      siteDescription?: { hu?: string; en?: string; de?: string };
+      seoTitle?: { hu?: string; en?: string; de?: string };
+      seoDescription?: { hu?: string; en?: string; de?: string };
+      isCrawlable?: boolean;
+      defaultPlaceholderCardImage?: string | null;
+      defaultPlaceholderDetailHeroImage?: string | null;
+      defaultEventPlaceholderCardImage?: string | null;
+      brandBadgeIcon?: string | null;
+      faviconUrl?: string | null;
+    }
+  ) {
     const site = await this.prisma.site.findUnique({
       where: { id: siteId },
       include: {
@@ -493,54 +512,83 @@ export class PlatformSettingsService {
     const placeholders: any = (site.brand.placeholders as any) || {};
 
     if (settings.faviconUrl !== undefined) {
-      const sanitizedUrl = settings.faviconUrl && settings.faviconUrl.trim() !== ""
-        ? sanitizeImageUrl(settings.faviconUrl)
-        : null;
+      const sanitizedUrl =
+        settings.faviconUrl && settings.faviconUrl.trim() !== ""
+          ? sanitizeImageUrl(settings.faviconUrl)
+          : null;
       if (settings.faviconUrl && settings.faviconUrl.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid favicon URL. Only http:// and https:// URLs are allowed.");
+        throw new BadRequestException(
+          "Invalid favicon URL. Only http:// and https:// URLs are allowed."
+        );
       }
       brandUpdates.faviconUrl = sanitizedUrl;
     }
 
     if (settings.defaultPlaceholderCardImage !== undefined) {
-      const sanitizedUrl = settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== ""
-        ? sanitizeImageUrl(settings.defaultPlaceholderCardImage)
-        : null;
-      if (settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid defaultPlaceholderCardImage URL. Only http:// and https:// URLs are allowed.");
+      const sanitizedUrl =
+        settings.defaultPlaceholderCardImage && settings.defaultPlaceholderCardImage.trim() !== ""
+          ? sanitizeImageUrl(settings.defaultPlaceholderCardImage)
+          : null;
+      if (
+        settings.defaultPlaceholderCardImage &&
+        settings.defaultPlaceholderCardImage.trim() !== "" &&
+        !sanitizedUrl
+      ) {
+        throw new BadRequestException(
+          "Invalid defaultPlaceholderCardImage URL. Only http:// and https:// URLs are allowed."
+        );
       }
       placeholders.defaultPlaceholderCardImage = sanitizedUrl;
       brandUpdates.placeholders = placeholders;
     }
 
     if (settings.defaultPlaceholderDetailHeroImage !== undefined) {
-      const sanitizedUrl = settings.defaultPlaceholderDetailHeroImage && settings.defaultPlaceholderDetailHeroImage.trim() !== ""
-        ? sanitizeImageUrl(settings.defaultPlaceholderDetailHeroImage)
-        : null;
-      if (settings.defaultPlaceholderDetailHeroImage && settings.defaultPlaceholderDetailHeroImage.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid defaultPlaceholderDetailHeroImage URL. Only http:// and https:// URLs are allowed.");
+      const sanitizedUrl =
+        settings.defaultPlaceholderDetailHeroImage &&
+        settings.defaultPlaceholderDetailHeroImage.trim() !== ""
+          ? sanitizeImageUrl(settings.defaultPlaceholderDetailHeroImage)
+          : null;
+      if (
+        settings.defaultPlaceholderDetailHeroImage &&
+        settings.defaultPlaceholderDetailHeroImage.trim() !== "" &&
+        !sanitizedUrl
+      ) {
+        throw new BadRequestException(
+          "Invalid defaultPlaceholderDetailHeroImage URL. Only http:// and https:// URLs are allowed."
+        );
       }
       placeholders.defaultPlaceholderDetailHeroImage = sanitizedUrl;
       brandUpdates.placeholders = placeholders;
     }
 
     if (settings.defaultEventPlaceholderCardImage !== undefined) {
-      const sanitizedUrl = settings.defaultEventPlaceholderCardImage && settings.defaultEventPlaceholderCardImage.trim() !== ""
-        ? sanitizeImageUrl(settings.defaultEventPlaceholderCardImage)
-        : null;
-      if (settings.defaultEventPlaceholderCardImage && settings.defaultEventPlaceholderCardImage.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid defaultEventPlaceholderCardImage URL. Only http:// and https:// URLs are allowed.");
+      const sanitizedUrl =
+        settings.defaultEventPlaceholderCardImage &&
+        settings.defaultEventPlaceholderCardImage.trim() !== ""
+          ? sanitizeImageUrl(settings.defaultEventPlaceholderCardImage)
+          : null;
+      if (
+        settings.defaultEventPlaceholderCardImage &&
+        settings.defaultEventPlaceholderCardImage.trim() !== "" &&
+        !sanitizedUrl
+      ) {
+        throw new BadRequestException(
+          "Invalid defaultEventPlaceholderCardImage URL. Only http:// and https:// URLs are allowed."
+        );
       }
       placeholders.defaultEventPlaceholderCardImage = sanitizedUrl;
       brandUpdates.placeholders = placeholders;
     }
 
     if (settings.brandBadgeIcon !== undefined) {
-      const sanitizedUrl = settings.brandBadgeIcon && settings.brandBadgeIcon.trim() !== ""
-        ? sanitizeImageUrl(settings.brandBadgeIcon)
-        : null;
+      const sanitizedUrl =
+        settings.brandBadgeIcon && settings.brandBadgeIcon.trim() !== ""
+          ? sanitizeImageUrl(settings.brandBadgeIcon)
+          : null;
       if (settings.brandBadgeIcon && settings.brandBadgeIcon.trim() !== "" && !sanitizedUrl) {
-        throw new BadRequestException("Invalid brandBadgeIcon URL. Only http:// and https:// URLs are allowed.");
+        throw new BadRequestException(
+          "Invalid brandBadgeIcon URL. Only http:// and https:// URLs are allowed."
+        );
       }
       placeholders.brandBadgeIcon = sanitizedUrl;
       brandUpdates.placeholders = placeholders;
@@ -576,7 +624,10 @@ export class PlatformSettingsService {
         if (settings.siteName !== undefined && settings.siteName[lang] !== undefined) {
           updates.name = settings.siteName[lang] || "HelloLocal";
         }
-        if (settings.siteDescription !== undefined && settings.siteDescription[lang] !== undefined) {
+        if (
+          settings.siteDescription !== undefined &&
+          settings.siteDescription[lang] !== undefined
+        ) {
           updates.description = settings.siteDescription[lang] || null;
         }
         if (settings.seoTitle !== undefined && settings.seoTitle[lang] !== undefined) {
@@ -597,8 +648,9 @@ export class PlatformSettingsService {
 
     // Update SiteInstance (runtime features: isCrawlable, enableEvents, etc.)
     // Use the default instance or first one if no default, or null if none exist
-    let defaultInstance = site.siteInstances?.find(si => si.isDefault) || site.siteInstances?.[0] || null;
-    
+    let defaultInstance =
+      site.siteInstances?.find((si) => si.isDefault) || site.siteInstances?.[0] || null;
+
     if (!defaultInstance) {
       // Create default SiteInstance if it doesn't exist
       defaultInstance = await this.prisma.siteInstance.create({
@@ -614,7 +666,7 @@ export class PlatformSettingsService {
     if (settings.isCrawlable !== undefined) {
       const features: any = (defaultInstance.features as any) || {};
       features.isCrawlable = settings.isCrawlable;
-      
+
       await this.prisma.siteInstance.update({
         where: { id: defaultInstance.id },
         data: { features },

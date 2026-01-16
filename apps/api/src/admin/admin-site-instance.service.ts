@@ -77,10 +77,7 @@ export class AdminSiteInstanceService {
           },
         },
       },
-      orderBy: [
-        { siteId: "asc" },
-        { lang: "asc" },
-      ],
+      orderBy: [{ siteId: "asc" }, { lang: "asc" }],
     });
   }
 

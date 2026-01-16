@@ -43,7 +43,10 @@ export class AdminFloorplanPinService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     return this.prisma.floorplanPin.findMany({
       where: { floorplanId },
@@ -73,7 +76,10 @@ export class AdminFloorplanPinService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     return pin;
   }
@@ -101,7 +107,10 @@ export class AdminFloorplanPinService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     // Get max sortOrder
     const maxSortOrder = await this.prisma.floorplanPin.findFirst({
@@ -143,7 +152,10 @@ export class AdminFloorplanPinService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     // Validate x, y if provided
     if (dto.x !== undefined && (dto.x < 0 || dto.x > 1)) {
@@ -186,7 +198,10 @@ export class AdminFloorplanPinService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, pin.floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     return this.prisma.floorplanPin.delete({
       where: { id: pinId },

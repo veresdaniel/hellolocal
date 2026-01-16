@@ -1,5 +1,13 @@
 // src/contexts/ToastContext.tsx
-import { createContext, useContext, useState, useCallback, type ReactNode, useEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  type ReactNode,
+  useEffect,
+  useRef,
+} from "react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -31,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       processingRef.current = true;
       const nextToast = queueRef.current.shift()!;
       setCurrentToast(nextToast);
-      
+
       // Auto remove after 5 seconds for success/info, 7 seconds for error/warning
       const duration = nextToast.type === "error" || nextToast.type === "warning" ? 7000 : 5000;
       setTimeout(() => {
@@ -45,42 +53,48 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   }, [currentToast]);
 
-  const showToast = useCallback((message: string, type: ToastType = "success") => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const newToast: Toast = { id, message, type };
-    
-    if (currentToast === null && !processingRef.current) {
-      // No toast currently showing, show immediately
-      processingRef.current = true;
-      setCurrentToast(newToast);
-      const duration = type === "error" || type === "warning" ? 7000 : 5000;
-      setTimeout(() => {
+  const showToast = useCallback(
+    (message: string, type: ToastType = "success") => {
+      const id = Math.random().toString(36).substring(2, 9);
+      const newToast: Toast = { id, message, type };
+
+      if (currentToast === null && !processingRef.current) {
+        // No toast currently showing, show immediately
+        processingRef.current = true;
+        setCurrentToast(newToast);
+        const duration = type === "error" || type === "warning" ? 7000 : 5000;
+        setTimeout(() => {
+          setCurrentToast(null);
+          processingRef.current = false;
+          // Process queue after a short delay
+          setTimeout(() => {
+            processQueue();
+          }, 300);
+        }, duration);
+      } else {
+        // Toast already showing, add to queue
+        queueRef.current.push(newToast);
+      }
+    },
+    [currentToast, processQueue]
+  );
+
+  const removeToast = useCallback(
+    (id: string) => {
+      if (currentToast?.id === id) {
         setCurrentToast(null);
         processingRef.current = false;
-        // Process queue after a short delay
+        // Process next toast in queue after a short delay
         setTimeout(() => {
           processQueue();
         }, 300);
-      }, duration);
-    } else {
-      // Toast already showing, add to queue
-      queueRef.current.push(newToast);
-    }
-  }, [currentToast, processQueue]);
-
-  const removeToast = useCallback((id: string) => {
-    if (currentToast?.id === id) {
-      setCurrentToast(null);
-      processingRef.current = false;
-      // Process next toast in queue after a short delay
-      setTimeout(() => {
-        processQueue();
-      }, 300);
-    } else {
-      // Remove from queue if it's there
-      queueRef.current = queueRef.current.filter((toast) => toast.id !== id);
-    }
-  }, [currentToast, processQueue]);
+      } else {
+        // Remove from queue if it's there
+        queueRef.current = queueRef.current.filter((toast) => toast.id !== id);
+      }
+    },
+    [currentToast, processQueue]
+  );
 
   // Process queue when currentToast becomes null
   useEffect(() => {

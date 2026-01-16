@@ -85,14 +85,16 @@ export function AdminPageHeader({
   };
 
   return (
-    <div style={{ 
-      display: "flex", 
-      justifyContent: "space-between", 
-      alignItems: "center", 
-      marginBottom: 24,
-      flexWrap: "wrap", 
-      gap: 16 
-    }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 24,
+        flexWrap: "wrap",
+        gap: 16,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         {showBackButton && (
           <button
@@ -106,7 +108,8 @@ export function AdminPageHeader({
               cursor: "pointer",
               fontSize: "clamp(14px, 3.5vw, 16px)",
               fontWeight: 600,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
               display: "flex",
               alignItems: "center",
@@ -126,36 +129,42 @@ export function AdminPageHeader({
           </button>
         )}
         <div style={{ flex: 1 }}>
-          <h1 style={{
-            fontSize: "clamp(20px, 4vw, 28px)",
-            fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
-            margin: 0,
-            marginBottom: subtitle ? 8 : 0,
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-            display: typeof title === "string" ? "block" : "flex",
-            justifyContent: typeof title === "string" ? "flex-start" : "space-between",
-            alignItems: "center",
-            width: "100%",
-          }}>
+          <h1
+            style={{
+              fontSize: "clamp(20px, 4vw, 28px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              color: "white",
+              margin: 0,
+              marginBottom: subtitle ? 8 : 0,
+              textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+              display: typeof title === "string" ? "block" : "flex",
+              justifyContent: typeof title === "string" ? "flex-start" : "space-between",
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
             {title}
           </h1>
           {subtitle && (
-            <div style={{
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontWeight: 400,
-              color: "#c0c0d0",
-              margin: 0,
-              textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-            }}>
+            <div
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontWeight: 400,
+                color: "#c0c0d0",
+                margin: 0,
+                textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+              }}
+            >
               {subtitle}
             </div>
           )}
         </div>
       </div>
-      
+
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         {isCreatingOrEditing ? (
           <>
@@ -171,7 +180,8 @@ export function AdminPageHeader({
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.3s ease",
                   boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
                 }}
@@ -199,7 +209,8 @@ export function AdminPageHeader({
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.3s ease",
                   boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)",
                 }}
@@ -219,7 +230,8 @@ export function AdminPageHeader({
             )}
           </>
         ) : (
-          showNewButton && onNewClick && (
+          showNewButton &&
+          onNewClick && (
             <button
               onClick={onNewClick}
               style={{
@@ -231,7 +243,8 @@ export function AdminPageHeader({
                 cursor: "pointer",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "all 0.3s ease",
                 boxShadow: "0 2px 8px rgba(74, 144, 226, 0.3)",
               }}

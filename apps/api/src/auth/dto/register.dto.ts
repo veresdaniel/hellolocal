@@ -32,4 +32,3 @@ export class RegisterDto {
   @IsString()
   siteId?: string; // Optional: if not provided, uses default site
 }
-

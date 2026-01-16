@@ -14,18 +14,20 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const isDesktop =
+    typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  
+
   // Check if we're on map view (HomePage with showMap=true)
-  const isOnMapView = location.pathname.includes("/admin") === false && 
-                      (location.pathname === buildUrl({ lang, siteKey, path: "" }) || 
-                       location.pathname === buildUrl({ lang, siteKey, path: "" }) + "/");
-  
+  const isOnMapView =
+    location.pathname.includes("/admin") === false &&
+    (location.pathname === buildUrl({ lang, siteKey, path: "" }) ||
+      location.pathname === buildUrl({ lang, siteKey, path: "" }) + "/");
+
   // Default positions: bal fent (top left)
   const defaultPositionDesktop = { top: 16, left: 16 };
   const defaultPositionMobile = { top: 12, left: 12 };
-  
+
   // Load saved position from localStorage with lazy initializer (device-specific)
   const [position, setPosition] = useState(() => {
     if (typeof window === "undefined") return defaultPositionDesktop;
@@ -40,7 +42,7 @@ export function Header() {
     }
     return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const headerRef = useRef<HTMLElement>(null);
@@ -85,7 +87,7 @@ export function Header() {
       setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
   }, [isDesktop]);
-  
+
   // Save position to localStorage (device-specific)
   useEffect(() => {
     const deviceKey = isDesktop ? "desktop" : "mobile";
@@ -203,12 +205,14 @@ export function Header() {
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
-          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
+          e.currentTarget.style.boxShadow =
+            "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
+          e.currentTarget.style.boxShadow =
+            "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
     >
@@ -231,19 +235,27 @@ export function Header() {
             }}
           >
             {brandBadgeIcon && (
-              <img 
-                src={brandBadgeIcon} 
+              <img
+                src={brandBadgeIcon}
                 alt={siteName || ""}
-                style={{ 
-                  width: 28, 
-                  height: 28, 
+                style={{
+                  width: 28,
+                  height: 28,
                   objectFit: "contain",
                   borderRadius: 4,
                 }}
               />
             )}
             {siteName && (
-              <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <span
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {siteName}
               </span>
             )}
@@ -251,9 +263,9 @@ export function Header() {
         )}
         {/* Language selector after site name */}
         {(siteName || brandBadgeIcon) && (
-          <div 
-            style={{ 
-              paddingLeft: 4, 
+          <div
+            style={{
+              paddingLeft: 4,
               pointerEvents: isDragging ? "none" : "auto",
               position: "relative",
               zIndex: currentZIndex + 1, // Higher z-index for dropdown
@@ -262,9 +274,11 @@ export function Header() {
             onMouseDown={(e) => e.stopPropagation()} // Prevent header drag when clicking on language selector
             onTouchStart={(e) => e.stopPropagation()} // Prevent header drag when touching language selector
           >
-            <div style={{ 
-              position: "relative",
-            }}>
+            <div
+              style={{
+                position: "relative",
+              }}
+            >
               <LanguageSelector />
               <style>{`
                 /* White text and border for language selector in map view header */
@@ -315,7 +329,8 @@ export function Header() {
                 alignItems: "center",
                 justifyContent: "center",
                 boxSizing: "border-box",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 cursor: "pointer",
                 padding: "6px 12px",
                 transition: "all 0.2s",
@@ -346,4 +361,3 @@ export function Header() {
     </header>
   );
 }
-

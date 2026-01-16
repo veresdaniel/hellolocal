@@ -34,4 +34,3 @@ export class NotificationsController {
     return this.notificationsService.unsubscribe(decodedEndpoint);
   }
 }
-

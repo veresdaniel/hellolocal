@@ -34,7 +34,7 @@ export class SiteKeyResolverService {
 
   /**
    * Helper method to resolve site from request.
-   * 
+   *
    * @param request - Express request
    * @param args - Resolution arguments (lang and optional siteKey)
    * @deprecated Use SiteResolveMiddleware and req.site instead
@@ -50,10 +50,10 @@ export class SiteKeyResolverService {
    * Resolves the site ID from the request with the following priority:
    * 1. URL-based siteKey resolution (if siteKey is provided)
    * 2. Default site (if siteKey is not provided)
-   * 
+   *
    * This service supports both single-site (implicit) and multi-site (explicit) modes.
    * In multi-site mode, the siteKey is a public-facing slug that maps to an internal site.
-   * 
+   *
    * @deprecated Consider using SiteResolveMiddleware and req.site instead
    */
   async resolve(args: ResolveSiteArgs): Promise<ResolvedSite> {
@@ -86,14 +86,14 @@ export class SiteKeyResolverService {
         isActive: true,
       },
       orderBy: [
-        { isPrimary: 'desc' }, // Primary keys first
-        { createdAt: 'asc' }, // Then by creation date (oldest first)
+        { isPrimary: "desc" }, // Primary keys first
+        { createdAt: "asc" }, // Then by creation date (oldest first)
       ],
-      select: { 
-        id: true, 
-        siteId: true, 
-        slug: true, 
-        isActive: true, 
+      select: {
+        id: true,
+        siteId: true,
+        slug: true,
+        isActive: true,
         isPrimary: true, // Whether this is the primary (canonical) site key
         redirectToId: true,
         redirectTo: {
@@ -113,7 +113,7 @@ export class SiteKeyResolverService {
         where: { slug: args.siteKey },
         select: { id: true, slug: true },
       });
-      
+
       if (site) {
         // Site exists but no SiteKey entry for this language - use site as-is
         return {
@@ -124,7 +124,7 @@ export class SiteKeyResolverService {
           redirected: false,
         };
       }
-      
+
       // If site doesn't exist at all, throw error
       throw new NotFoundException("Site key not found");
     }

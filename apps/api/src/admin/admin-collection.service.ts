@@ -416,7 +416,9 @@ export class AdminCollectionService {
     const collectionItemIds = new Set(collection.items.map((item) => item.id));
     for (const itemId of itemIds) {
       if (!collectionItemIds.has(itemId)) {
-        throw new BadRequestException(`Item ${itemId} does not belong to collection ${collectionId}`);
+        throw new BadRequestException(
+          `Item ${itemId} does not belong to collection ${collectionId}`
+        );
       }
     }
 
@@ -433,18 +435,21 @@ export class AdminCollectionService {
     return this.findOne(collectionId);
   }
 
-  async updateItems(collectionId: string, items: Array<{
-    id?: string;
-    siteId: string;
-    order: number;
-    isHighlighted?: boolean;
-    translations?: Array<{
-      lang: Lang;
-      titleOverride?: string | null;
-      descriptionOverride?: string | null;
-      imageOverride?: string | null;
-    }>;
-  }>) {
+  async updateItems(
+    collectionId: string,
+    items: Array<{
+      id?: string;
+      siteId: string;
+      order: number;
+      isHighlighted?: boolean;
+      translations?: Array<{
+        lang: Lang;
+        titleOverride?: string | null;
+        descriptionOverride?: string | null;
+        imageOverride?: string | null;
+      }>;
+    }>
+  ) {
     // Verify collection exists
     const collection = await this.prisma.collection.findUnique({
       where: { id: collectionId },
@@ -455,15 +460,17 @@ export class AdminCollectionService {
     }
 
     const existingItems = collection.items;
-    const existingItemIds = new Set(existingItems.map(item => item.id));
-    const newItemIds = new Set(items.map(item => item.id).filter((id): id is string => !!id && !id.startsWith('temp-')));
+    const existingItemIds = new Set(existingItems.map((item) => item.id));
+    const newItemIds = new Set(
+      items.map((item) => item.id).filter((id): id is string => !!id && !id.startsWith("temp-"))
+    );
 
     // Delete items that are not in the new array
-    const itemsToDelete = existingItems.filter(item => !newItemIds.has(item.id));
+    const itemsToDelete = existingItems.filter((item) => !newItemIds.has(item.id));
     if (itemsToDelete.length > 0) {
       await this.prisma.collectionItem.deleteMany({
         where: {
-          id: { in: itemsToDelete.map(item => item.id) },
+          id: { in: itemsToDelete.map((item) => item.id) },
         },
       });
     }
@@ -471,8 +478,9 @@ export class AdminCollectionService {
     // Update or create items
     await Promise.all(
       items.map(async (itemData, index) => {
-        const isNewItem = !itemData.id || itemData.id.startsWith('temp-') || !existingItemIds.has(itemData.id);
-        
+        const isNewItem =
+          !itemData.id || itemData.id.startsWith("temp-") || !existingItemIds.has(itemData.id);
+
         if (isNewItem) {
           // Create new item
           await this.prisma.collectionItem.create({
@@ -499,7 +507,8 @@ export class AdminCollectionService {
             where: { id: itemData.id },
             data: {
               order: index,
-              isHighlighted: itemData.isHighlighted !== undefined ? itemData.isHighlighted : undefined,
+              isHighlighted:
+                itemData.isHighlighted !== undefined ? itemData.isHighlighted : undefined,
               translations: itemData.translations
                 ? {
                     deleteMany: {},

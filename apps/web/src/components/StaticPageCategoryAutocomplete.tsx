@@ -10,7 +10,11 @@ interface StaticPageCategoryAutocompleteProps {
   placeholder?: string;
 }
 
-export function StaticPageCategoryAutocomplete({ value, onChange, placeholder }: StaticPageCategoryAutocompleteProps) {
+export function StaticPageCategoryAutocomplete({
+  value,
+  onChange,
+  placeholder,
+}: StaticPageCategoryAutocompleteProps) {
   const { t } = useTranslation();
   const defaultPlaceholder = placeholder || t("admin.selectCategoryPlaceholder");
   const [inputValue, setInputValue] = useState("");
@@ -72,7 +76,16 @@ export function StaticPageCategoryAutocomplete({ value, onChange, placeholder }:
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
-      <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.category")} *</label>
+      <label
+        style={{
+          display: "block",
+          marginBottom: 4,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}
+      >
+        {t("admin.category")} *
+      </label>
       <div
         style={{
           position: "relative",
@@ -188,4 +201,3 @@ export function StaticPageCategoryAutocomplete({ value, onChange, placeholder }:
     </div>
   );
 }
-

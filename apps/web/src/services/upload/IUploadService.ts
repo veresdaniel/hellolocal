@@ -9,10 +9,7 @@ export interface IUploadService {
    * @param options - Optional upload options (folder, transformations, etc.)
    * @returns Promise resolving to the uploaded image URL
    */
-  uploadImage(
-    file: File,
-    options?: UploadOptions
-  ): Promise<string>;
+  uploadImage(file: File, options?: UploadOptions): Promise<string>;
 
   /**
    * Upload a video file
@@ -20,10 +17,7 @@ export interface IUploadService {
    * @param options - Optional upload options (folder, transformations, etc.)
    * @returns Promise resolving to the uploaded video URL
    */
-  uploadVideo(
-    file: File,
-    options?: UploadOptions
-  ): Promise<string>;
+  uploadVideo(file: File, options?: UploadOptions): Promise<string>;
 
   /**
    * Delete an uploaded file by URL
@@ -38,18 +32,18 @@ export interface UploadOptions {
    * Folder/path where the file should be stored
    */
   folder?: string;
-  
+
   /**
    * Public ID (filename) for the uploaded file
    * If not provided, a unique ID will be generated
    */
   publicId?: string;
-  
+
   /**
    * Additional transformation parameters (provider-specific)
    */
   transformations?: Record<string, any>;
-  
+
   /**
    * Callback for upload progress (0-100)
    */

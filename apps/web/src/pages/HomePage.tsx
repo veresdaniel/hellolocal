@@ -25,7 +25,7 @@ export function HomePage() {
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   // Use Zustand stores for state management with persistence
   const {
     selectedCategories,
@@ -45,16 +45,9 @@ export function HomePage() {
     setRainSafe,
     setUserLocation,
   } = useFiltersStore();
-  
-  const {
-    showMap,
-    mapHeight,
-    mapCenter,
-    setShowMap,
-    setMapHeight,
-    setMapCenter,
-  } = useViewStore();
-  
+
+  const { showMap, mapHeight, mapCenter, setShowMap, setMapHeight, setMapCenter } = useViewStore();
+
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile viewport
@@ -109,7 +102,11 @@ export function HomePage() {
 
   // Load map settings first to avoid flickering
   // Don't cache too aggressively - need to refresh on lang/tenant change
-  const { data: mapSettings, isLoading: isLoadingMapSettings, dataUpdatedAt } = useQuery({
+  const {
+    data: mapSettings,
+    isLoading: isLoadingMapSettings,
+    dataUpdatedAt,
+  } = useQuery({
     queryKey: ["mapSettings", lang, siteKey],
     queryFn: async () => {
       const result = await getMapSettings(lang, siteKey);
@@ -142,14 +139,20 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const { data: placesData, isLoading: isLoadingPlaces, isError: isPlacesError, error: placesError } = useQuery({
+  const {
+    data: placesData,
+    isLoading: isLoadingPlaces,
+    isError: isPlacesError,
+    error: placesError,
+  } = useQuery({
     queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands],
-    queryFn: () => getPlaces(
-      lang,
-      siteKey,
-      selectedCategories.length > 0 ? selectedCategories : undefined,
-      selectedPriceBands.length > 0 ? selectedPriceBands : undefined
-    ),
+    queryFn: () =>
+      getPlaces(
+        lang,
+        siteKey,
+        selectedCategories.length > 0 ? selectedCategories : undefined,
+        selectedPriceBands.length > 0 ? selectedPriceBands : undefined
+      ),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes (increased from 60s)
     refetchOnWindowFocus: false, // Don't refetch on window focus (reduce API calls)
     refetchOnMount: false, // Don't refetch on mount if data is fresh
@@ -164,12 +167,13 @@ export function HomePage() {
       hasEverLoadedPlaces.current = true;
     }
   }, [placesData]);
-  
 
   // Get user location - always try to get it if available, not just for filter
-  const [locationPermission, setLocationPermission] = useState<"prompt" | "granted" | "denied">("prompt");
+  const [locationPermission, setLocationPermission] = useState<"prompt" | "granted" | "denied">(
+    "prompt"
+  );
   const hasRequestedLocation = useRef(false);
-  
+
   // Wait for store to hydrate before using userLocation
   // Also manually check and set hydration flag if onRehydrateStorage didn't fire
   useEffect(() => {
@@ -191,7 +195,7 @@ export function HomePage() {
               }
             }
           }, 50); // Small delay to allow zustand to finish
-          
+
           return () => clearTimeout(timeoutId);
         }
       } catch (e) {
@@ -199,7 +203,7 @@ export function HomePage() {
       }
     }
   }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
-  
+
   // Clear userLocation when showUserLocation is disabled
   // Or restore it from localStorage when enabled
   // NOTE: watchPosition is handled entirely by MapComponent to prevent duplicate watches and infinite loops
@@ -227,18 +231,27 @@ export function HomePage() {
       }
     }
   }, [showUserLocation, setUserLocation]);
-  
+
   // Update locationPermission when userLocation changes (for UI feedback)
   // This doesn't trigger watchPosition, just updates permission state
   useEffect(() => {
-    if (userLocation && typeof userLocation.lat === "number" && typeof userLocation.lng === "number") {
+    if (
+      userLocation &&
+      typeof userLocation.lat === "number" &&
+      typeof userLocation.lng === "number"
+    ) {
       setLocationPermission("granted");
     }
   }, [userLocation]);
 
   // Also handle within30Minutes filter requirement
   useEffect(() => {
-    if (within30Minutes && !userLocation && navigator.geolocation && locationPermission === "prompt") {
+    if (
+      within30Minutes &&
+      !userLocation &&
+      navigator.geolocation &&
+      locationPermission === "prompt"
+    ) {
       // If filter is enabled but we don't have location yet, try again
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -267,70 +280,80 @@ export function HomePage() {
   const siteUrl = window.location.origin;
   const siteName = platformSettings?.siteName || t("common.siteName");
 
-  useSeo({
-    title: platformSettings?.seoTitle || t("public.home.title"),
-    description: platformSettings?.seoDescription || t("public.home.description"),
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    og: {
-      type: "website",
-      title: platformSettings?.seoTitle || siteName || t("public.home.title"),
+  useSeo(
+    {
+      title: platformSettings?.seoTitle || t("public.home.title"),
       description: platformSettings?.seoDescription || t("public.home.description"),
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-    twitter: {
-      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: platformSettings?.seoTitle || siteName || t("public.home.title"),
-      description: platformSettings?.seoDescription || t("public.home.description"),
-      image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-    schemaOrg: {
-      type: "WebSite",
-      data: {
-        name: siteName,
+      og: {
+        type: "website",
+        title: platformSettings?.seoTitle || siteName || t("public.home.title"),
         description: platformSettings?.seoDescription || t("public.home.description"),
-        url: siteUrl,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: {
-            "@type": "EntryPoint",
-            urlTemplate: `${siteUrl}/${lang}/?q={search_term_string}`,
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      twitter: {
+        card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+        title: platformSettings?.seoTitle || siteName || t("public.home.title"),
+        description: platformSettings?.seoDescription || t("public.home.description"),
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      schemaOrg: {
+        type: "WebSite",
+        data: {
+          name: siteName,
+          description: platformSettings?.seoDescription || t("public.home.description"),
+          url: siteUrl,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${siteUrl}/${lang}/?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
           },
-          "query-input": "required name=search_term_string",
         },
       },
     },
-  }, {
-    siteName: platformSettings?.siteName,
-  });
+    {
+      siteName: platformSettings?.siteName,
+    }
+  );
 
   // Helper function to calculate distance in km using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   // Helper function to check if place is open now
-  const isPlaceOpenNow = (place: typeof placesData[0]): boolean => {
-    if (!place.openingHours || !Array.isArray(place.openingHours) || place.openingHours.length === 0) return false;
-    
+  const isPlaceOpenNow = (place: (typeof placesData)[0]): boolean => {
+    if (
+      !place.openingHours ||
+      !Array.isArray(place.openingHours) ||
+      place.openingHours.length === 0
+    )
+      return false;
+
     const now = new Date();
     const currentDayOfWeek = (now.getDay() + 6) % 7; // Convert Sunday (0) to last (6), Monday (1) to 0, etc.
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
     // Find today's opening hours
     const todayHours = place.openingHours.find((oh) => oh.dayOfWeek === currentDayOfWeek);
-    
+
     if (!todayHours) return false;
     if (todayHours.isClosed) return false;
     if (!todayHours.openTime || !todayHours.closeTime) return false;
-    
+
     // Check if current time is between open and close time
     return currentTime >= todayHours.openTime && currentTime <= todayHours.closeTime;
   };
@@ -353,7 +376,7 @@ export function HomePage() {
   };
 
   // Helper function to check if place is within 10 minutes walking distance (~1 km)
-  const isWithin10MinutesWalk = (place: typeof placesData[0]): boolean => {
+  const isWithin10MinutesWalk = (place: (typeof placesData)[0]): boolean => {
     if (!within30Minutes || !userLocation || !place.location) return false;
     const distance = calculateDistance(
       userLocation.lat,
@@ -366,19 +389,19 @@ export function HomePage() {
 
   // Helper function to check if place is rain-safe
   // A place is rain-safe if it has at least one event today that is rain-safe
-  const isRainSafe = (place: typeof placesData[0]): boolean => {
+  const isRainSafe = (place: (typeof placesData)[0]): boolean => {
     if (!rainSafe || !eventsData || !place.id) return false;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     // Check if place has a rain-safe event today
     return eventsData.some((event) => {
       if (event.placeId !== place.id) return false;
       if (!event.isRainSafe) return false;
-      
+
       const eventStart = new Date(event.startDate);
       const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
       return eventStart < tomorrow && eventEnd >= today;
@@ -398,29 +421,37 @@ export function HomePage() {
     });
   }, [placesData, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
 
-  const placesWithCoordinates = filteredPlaces?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
+  const placesWithCoordinates =
+    filteredPlaces?.filter(
+      (place) => place.location && place.location.lat != null && place.location.lng != null
+    ) || [];
   const markers = placesWithCoordinates.map((place) => ({
     id: place.slug || place.id, // Use slug if available, otherwise use ID
     lat: place.location!.lat!,
     lng: place.location!.lng!,
     name: place.name,
-    onClick: place.slug ? () => {
-      const path = buildUrl({ lang, siteKey: siteKey, path: `place/${place.slug}` });
-      navigate(path);
-    } : undefined, // Only allow navigation if slug exists
+    onClick: place.slug
+      ? () => {
+          const path = buildUrl({ lang, siteKey: siteKey, path: `place/${place.slug}` });
+          navigate(path);
+        }
+      : undefined, // Only allow navigation if slug exists
   }));
 
   // Initialize map center from settings (only once, or when settings change)
   // Use original placesData (not filtered) for center calculation
-  const allPlacesWithCoordinates = placesData?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
-  
+  const allPlacesWithCoordinates =
+    placesData?.filter(
+      (place) => place.location && place.location.lat != null && place.location.lng != null
+    ) || [];
+
   // Reset initialization flags when lang or tenant changes
   useEffect(() => {
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
     hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
   }, [lang, siteKey]);
-  
+
   // Force reset and update when lang or tenant changes (ensures fresh initialization)
   useEffect(() => {
     // Reset flags when lang or tenant changes
@@ -428,13 +459,17 @@ export function HomePage() {
     initialPlacesLoaded.current = false;
     hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
   }, [lang, siteKey]);
-  
+
   // Track previous mapSettings values to detect actual changes
-  const prevMapSettingsRef = useRef<{ lat: number | null; lng: number | null; zoom: number | null } | null>(null);
+  const prevMapSettingsRef = useRef<{
+    lat: number | null;
+    lng: number | null;
+    zoom: number | null;
+  } | null>(null);
   // Initialize with null to detect initial mount
   const prevLangRef = useRef<string | null>(null);
   const prevSiteKeyRef = useRef<string | undefined>(undefined);
-  
+
   // Update map center when mapSettings loads or changes (including on lang/tenant change)
   // This is the primary effect that should always run when mapSettings is available
   useEffect(() => {
@@ -442,43 +477,65 @@ export function HomePage() {
     if (isLoadingMapSettings) {
       return;
     }
-    
+
     // Check if lang or siteKey changed (force update even if mapSettings values are the same)
     // On initial mount, prevLangRef will be null, so we want to update
     const isInitialMount = prevLangRef.current === null;
     const langChanged = !isInitialMount && prevLangRef.current !== lang;
     const siteKeyChanged = !isInitialMount && prevSiteKeyRef.current !== siteKey;
-    const mapSettingsChanged = prevMapSettingsRef.current === null || 
+    const mapSettingsChanged =
+      prevMapSettingsRef.current === null ||
       prevMapSettingsRef.current.lat !== mapSettings?.lat ||
       prevMapSettingsRef.current.lng !== mapSettings?.lng ||
       prevMapSettingsRef.current.zoom !== mapSettings?.zoom;
-    
+
     // Update refs
     if (isInitialMount || langChanged || siteKeyChanged) {
       prevLangRef.current = lang;
       prevSiteKeyRef.current = siteKey;
     }
-    
+
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
       // Always update if mapSettings is available (including on initial load and lang/tenant change)
       // Force update if lang/tenant changed, or on initial mount, or if mapSettings changed, or if not initialized yet
       // Also check if current mapCenter doesn't match mapSettings (safety check)
-      const currentCenterMatches = mapCenter && 
-        Math.abs(mapCenter.lat - mapSettings.lat) < 0.0001 && 
+      const currentCenterMatches =
+        mapCenter &&
+        Math.abs(mapCenter.lat - mapSettings.lat) < 0.0001 &&
         Math.abs(mapCenter.lng - mapSettings.lng) < 0.0001;
-      
-      if (isInitialMount || langChanged || siteKeyChanged || mapSettingsChanged || !hasInitializedCenter.current || !currentCenterMatches) {
+
+      if (
+        isInitialMount ||
+        langChanged ||
+        siteKeyChanged ||
+        mapSettingsChanged ||
+        !hasInitializedCenter.current ||
+        !currentCenterMatches
+      ) {
         setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
         hasInitializedCenter.current = true;
-        prevMapSettingsRef.current = { lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? null };
+        prevMapSettingsRef.current = {
+          lat: mapSettings.lat,
+          lng: mapSettings.lng,
+          zoom: mapSettings.zoom ?? null,
+        };
         return; // Exit early if we have map settings
       }
     }
-    
+
     // Fallback: only use places center if we don't have map settings and haven't initialized yet
-    if (!hasInitializedCenter.current && !initialPlacesLoaded.current && allPlacesWithCoordinates.length > 0 && !isLoadingPlaces) {
-      const avgLat = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / allPlacesWithCoordinates.length;
-      const avgLng = allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / allPlacesWithCoordinates.length;
+    if (
+      !hasInitializedCenter.current &&
+      !initialPlacesLoaded.current &&
+      allPlacesWithCoordinates.length > 0 &&
+      !isLoadingPlaces
+    ) {
+      const avgLat =
+        allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) /
+        allPlacesWithCoordinates.length;
+      const avgLng =
+        allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) /
+        allPlacesWithCoordinates.length;
       setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
       hasInitializedCenter.current = true;
       initialPlacesLoaded.current = true;
@@ -488,12 +545,22 @@ export function HomePage() {
       setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
       hasInitializedCenter.current = true;
     }
-    
+
     // Mark places as loaded once we've checked them
     if (!isLoadingPlaces) {
       initialPlacesLoaded.current = true;
     }
-  }, [mapSettings, isLoadingPlaces, isLoadingMapSettings, allPlacesWithCoordinates.length, lang, siteKey, setMapCenter, dataUpdatedAt, mapCenter]);
+  }, [
+    mapSettings,
+    isLoadingPlaces,
+    isLoadingMapSettings,
+    allPlacesWithCoordinates.length,
+    lang,
+    siteKey,
+    setMapCenter,
+    dataUpdatedAt,
+    mapCenter,
+  ]);
 
   // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
   useEffect(() => {
@@ -515,8 +582,8 @@ export function HomePage() {
     }
 
     // Calculate bounding box of all markers
-    const lats = markers.map(m => m.lat);
-    const lngs = markers.map(m => m.lng);
+    const lats = markers.map((m) => m.lat);
+    const lngs = markers.map((m) => m.lng);
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs);
@@ -561,7 +628,7 @@ export function HomePage() {
         defaultZoom: mapCenter.zoom,
       };
     }
-    
+
     // Fallback to mapSettings if available
     if (mapSettings?.lat != null && mapSettings?.lng != null) {
       return {
@@ -583,8 +650,17 @@ export function HomePage() {
   // This can happen when lang changes and mapSettings loads but mapCenter update is pending
   // Use useEffect to set mapCenter immediately when mapSettings loads
   useEffect(() => {
-    if (!isLoadingMapSettings && mapSettings && mapSettings.lat != null && mapSettings.lng != null) {
-      if (!mapCenter || Math.abs(mapCenter.lat - mapSettings.lat) > 0.0001 || Math.abs(mapCenter.lng - mapSettings.lng) > 0.0001) {
+    if (
+      !isLoadingMapSettings &&
+      mapSettings &&
+      mapSettings.lat != null &&
+      mapSettings.lng != null
+    ) {
+      if (
+        !mapCenter ||
+        Math.abs(mapCenter.lat - mapSettings.lat) > 0.0001 ||
+        Math.abs(mapCenter.lng - mapSettings.lng) > 0.0001
+      ) {
         setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
         hasInitializedCenter.current = true;
       }
@@ -597,12 +673,13 @@ export function HomePage() {
   // 1. Map settings are loading
   // 2. Places are loading AND we've never loaded places data before (initial load only)
   // Don't show spinner when filters change - we have cached data and background refetch happens silently
-  const isCriticalDataLoading = isLoadingMapSettings || (isLoadingPlaces && !hasEverLoadedPlaces.current);
-  
+  const isCriticalDataLoading =
+    isLoadingMapSettings || (isLoadingPlaces && !hasEverLoadedPlaces.current);
+
   if (isCriticalDataLoading) {
     return <LoadingSpinner isLoading={true} delay={200} />;
   }
-  
+
   // If we have an error loading places, show error state
   if (isPlacesError && !placesData) {
     return (
@@ -630,10 +707,10 @@ export function HomePage() {
       {showMap ? (
         <>
           {/* Map container - fills viewport on mobile, flex on desktop */}
-          <div 
-            style={{ 
-              ...(isMobile 
-                ? { 
+          <div
+            style={{
+              ...(isMobile
+                ? {
                     height: "100vh",
                     position: "relative",
                     overflow: "hidden",
@@ -645,9 +722,8 @@ export function HomePage() {
                     flex: 1,
                     minHeight: 0,
                     position: "relative",
-                    overflow: "hidden"
-                  }
-              )
+                    overflow: "hidden",
+                  }),
             }}
           >
             <Header />

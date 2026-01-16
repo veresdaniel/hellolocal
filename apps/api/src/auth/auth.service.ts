@@ -72,10 +72,13 @@ export class AuthService {
     return randomBytes(32).toString("hex");
   }
 
-  private async generateTokens(payload: JwtPayload): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(
+    payload: JwtPayload
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const accessTokenExpiresIn = this.configService.get<string>("JWT_ACCESS_EXPIRES_IN") ?? "15m";
-      const refreshTokenExpiresIn = this.configService.get<string>("JWT_REFRESH_EXPIRES_IN") ?? "7d";
+      const refreshTokenExpiresIn =
+        this.configService.get<string>("JWT_REFRESH_EXPIRES_IN") ?? "7d";
 
       const accessToken = this.jwtService.sign(payload, {
         expiresIn: accessTokenExpiresIn,
@@ -123,7 +126,11 @@ export class AuthService {
    * (determined by domain or URL-based site resolution).
    * Falls back to default site if no site context is available.
    */
-  async register(dto: RegisterDto, requestSiteId?: string, referer?: string): Promise<AuthResponse> {
+  async register(
+    dto: RegisterDto,
+    requestSiteId?: string,
+    referer?: string
+  ): Promise<AuthResponse> {
     // Check if user already exists
     const existingUser = await this.prisma.user.findFirst({
       where: {
@@ -161,7 +168,7 @@ export class AuthService {
       if (refererMatch) {
         const lang = refererMatch[1];
         const siteKey = refererMatch[2];
-        
+
         // Skip if siteKey is "admin" (admin routes don't have siteKey)
         if (siteKey !== "admin") {
           try {
@@ -172,13 +179,10 @@ export class AuthService {
                 slug: siteKey,
                 isActive: true,
               },
-              orderBy: [
-                { isPrimary: 'desc' },
-                { createdAt: 'asc' },
-              ],
+              orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
               select: { siteId: true },
             });
-            
+
             if (siteKeyRecord) {
               const site = await this.prisma.site.findUnique({
                 where: { id: siteKeyRecord.siteId },
@@ -193,7 +197,7 @@ export class AuthService {
         }
       }
     }
-    
+
     // Fallback to default site if still not resolved
     if (!siteId) {
       const defaultSite = await this.prisma.site.findUnique({
@@ -208,10 +212,10 @@ export class AuthService {
     // Check if public registration is allowed for this site
     const site = await this.prisma.site.findUnique({
       where: { id: siteId },
-      select: { 
-        id: true, 
-        plan: true, 
-        allowPublicRegistration: true 
+      select: {
+        id: true,
+        plan: true,
+        allowPublicRegistration: true,
       },
     });
 
@@ -222,7 +226,9 @@ export class AuthService {
     // For pro/business plans, check if public registration is enabled
     // Basic plan always allows public registration
     if ((site.plan === "pro" || site.plan === "business") && !site.allowPublicRegistration) {
-      throw new BadRequestException("Public registration is disabled for this site. Please contact the site administrator.");
+      throw new BadRequestException(
+        "Public registration is disabled for this site. Please contact the site administrator."
+      );
     }
 
     // Hash password
@@ -325,13 +331,16 @@ export class AuthService {
           console.error("2FA is enabled for user but TwoFactorService is not available");
           throw new UnauthorizedException("2FA service is not available");
         }
-        
+
         if (!dto.twoFactorToken) {
           throw new BadRequestException("2FA verification required. Please provide a 2FA token.");
         }
 
         try {
-          const isValid = await this.twoFactorService.verifyTwoFactorCode(user.id, dto.twoFactorToken);
+          const isValid = await this.twoFactorService.verifyTwoFactorCode(
+            user.id,
+            dto.twoFactorToken
+          );
           if (!isValid) {
             throw new UnauthorizedException("Invalid 2FA token");
           }
@@ -374,7 +383,7 @@ export class AuthService {
             where: {
               siteId: siteIds[0],
               userId: user.id,
-              action: 'login',
+              action: "login",
               createdAt: {
                 gte: new Date(Date.now() - 2000), // Last 2 seconds
               },
@@ -671,7 +680,7 @@ export class AuthService {
       // Generate username from email (first part before @)
       const emailPrefix = googleUser.email.split("@")[0];
       const baseUsername = emailPrefix.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-      
+
       // Ensure unique username
       let username = baseUsername;
       let counter = 1;
@@ -734,4 +743,3 @@ export class AuthService {
     };
   }
 }
-

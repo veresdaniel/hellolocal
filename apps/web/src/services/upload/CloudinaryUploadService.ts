@@ -1,7 +1,7 @@
 /**
  * Cloudinary upload service implementation
  * Free tier: 25GB storage + 25GB bandwidth/month
- * 
+ *
  * Setup:
  * 1. Sign up at https://cloudinary.com
  * 2. Get your Cloud Name, API Key, and API Secret from dashboard
@@ -9,7 +9,7 @@
  *    VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
  *    VITE_CLOUDINARY_API_KEY=your_api_key
  *    VITE_CLOUDINARY_API_SECRET=your_api_secret (only needed for server-side)
- * 
+ *
  * Note: For security, uploads should go through your backend API
  * This is a client-side implementation for demo purposes
  */
@@ -35,16 +35,11 @@ export class CloudinaryUploadService implements IUploadService {
     this.apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY;
 
     if (!this.cloudName) {
-      console.warn(
-        "Cloudinary cloud name not configured. Set VITE_CLOUDINARY_CLOUD_NAME in .env"
-      );
+      console.warn("Cloudinary cloud name not configured. Set VITE_CLOUDINARY_CLOUD_NAME in .env");
     }
   }
 
-  async uploadImage(
-    file: File,
-    options?: UploadOptions
-  ): Promise<string> {
+  async uploadImage(file: File, options?: UploadOptions): Promise<string> {
     if (!this.cloudName) {
       throw new Error("Cloudinary not configured");
     }
@@ -52,11 +47,11 @@ export class CloudinaryUploadService implements IUploadService {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", this.uploadPreset || "unsigned");
-    
+
     if (options?.folder) {
       formData.append("folder", options.folder);
     }
-    
+
     if (options?.publicId) {
       formData.append("public_id", options.publicId);
     }
@@ -90,10 +85,7 @@ export class CloudinaryUploadService implements IUploadService {
     }
   }
 
-  async uploadVideo(
-    file: File,
-    options?: UploadOptions
-  ): Promise<string> {
+  async uploadVideo(file: File, options?: UploadOptions): Promise<string> {
     if (!this.cloudName) {
       throw new Error("Cloudinary not configured");
     }
@@ -102,11 +94,11 @@ export class CloudinaryUploadService implements IUploadService {
     formData.append("file", file);
     formData.append("upload_preset", this.uploadPreset || "unsigned");
     formData.append("resource_type", "video");
-    
+
     if (options?.folder) {
       formData.append("folder", options.folder);
     }
-    
+
     if (options?.publicId) {
       formData.append("public_id", options.publicId);
     }
@@ -153,9 +145,6 @@ export class CloudinaryUploadService implements IUploadService {
 
     // Note: Deletion requires API secret, so this should be done server-side
     // For now, we'll just log a warning
-    console.warn(
-      "File deletion should be handled server-side for security. Public ID:",
-      publicId
-    );
+    console.warn("File deletion should be handled server-side for security. Public ID:", publicId);
   }
 }

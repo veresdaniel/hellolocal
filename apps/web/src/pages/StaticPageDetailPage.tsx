@@ -27,7 +27,11 @@ export function StaticPageDetailPage() {
   // Get siteKey for API call (only if multi-site mode)
   const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
 
-  const { data: staticPage, isLoading, error } = useQuery({
+  const {
+    data: staticPage,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["staticPage", safeLang, id, effectiveSiteKey],
     queryFn: () => getStaticPage(safeLang, id!, effectiveSiteKey),
     enabled: !!id,
@@ -43,68 +47,73 @@ export function StaticPageDetailPage() {
   // Helper to strip HTML
   const stripHtml = (html: string | null | undefined): string => {
     if (!html) return "";
-    return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    return html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   };
 
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   // Use SEO from data if available, otherwise use fallback
-  const seo = staticPage?.seo ? {
-    ...staticPage.seo,
-    keywords: staticPage.seo.keywords || [],
-    og: {
-      type: "article" as const,
-      title: staticPage.seo.og?.title || staticPage.seo.title,
-      description: staticPage.seo.og?.description || staticPage.seo.description,
-      image: staticPage.seo.og?.image || staticPage.seo.image,
-    },
-    twitter: {
-      card: staticPage.seo.image ? "summary_large_image" as const : "summary" as const,
-      title: staticPage.seo.twitter?.title || staticPage.seo.title,
-      description: staticPage.seo.twitter?.description || staticPage.seo.description,
-      image: staticPage.seo.twitter?.image || staticPage.seo.image,
-    },
-    schemaOrg: {
-      type: "WebPage" as const,
-      data: {
-        name: staticPage.seo.title || staticPage.title,
-        description: stripHtml(staticPage.seo.description),
-        url: pageUrl,
-        inLanguage: safeLang,
-        isPartOf: platformSettings?.siteName
-          ? {
-              name: platformSettings.siteName,
-              url: siteUrl,
-            }
-          : undefined,
-      },
-    },
-  } : {
-    title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-    description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
-    keywords: [],
-    og: {
-      type: "article" as const,
-      title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-      description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
-    },
-    schemaOrg: {
-      type: "WebPage" as const,
-      data: {
-        name: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-        description: stripHtml(platformSettings?.seoDescription || staticPage?.content),
-        url: pageUrl,
-        inLanguage: safeLang,
-        isPartOf: platformSettings?.siteName
-          ? {
-              name: platformSettings.siteName,
-              url: siteUrl,
-            }
-          : undefined,
-      },
-    },
-  };
+  const seo = staticPage?.seo
+    ? {
+        ...staticPage.seo,
+        keywords: staticPage.seo.keywords || [],
+        og: {
+          type: "article" as const,
+          title: staticPage.seo.og?.title || staticPage.seo.title,
+          description: staticPage.seo.og?.description || staticPage.seo.description,
+          image: staticPage.seo.og?.image || staticPage.seo.image,
+        },
+        twitter: {
+          card: staticPage.seo.image ? ("summary_large_image" as const) : ("summary" as const),
+          title: staticPage.seo.twitter?.title || staticPage.seo.title,
+          description: staticPage.seo.twitter?.description || staticPage.seo.description,
+          image: staticPage.seo.twitter?.image || staticPage.seo.image,
+        },
+        schemaOrg: {
+          type: "WebPage" as const,
+          data: {
+            name: staticPage.seo.title || staticPage.title,
+            description: stripHtml(staticPage.seo.description),
+            url: pageUrl,
+            inLanguage: safeLang,
+            isPartOf: platformSettings?.siteName
+              ? {
+                  name: platformSettings.siteName,
+                  url: siteUrl,
+                }
+              : undefined,
+          },
+        },
+      }
+    : {
+        title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+        description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
+        keywords: [],
+        og: {
+          type: "article" as const,
+          title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+          description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
+        },
+        schemaOrg: {
+          type: "WebPage" as const,
+          data: {
+            name: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
+            description: stripHtml(platformSettings?.seoDescription || staticPage?.content),
+            url: pageUrl,
+            inLanguage: safeLang,
+            isPartOf: platformSettings?.siteName
+              ? {
+                  name: platformSettings.siteName,
+                  url: siteUrl,
+                }
+              : undefined,
+          },
+        },
+      };
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
@@ -117,7 +126,7 @@ export function StaticPageDetailPage() {
   useEffect(() => {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
-      
+
       // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
@@ -132,7 +141,7 @@ export function StaticPageDetailPage() {
         img.style.margin = "16px auto";
         img.style.opacity = "0";
         img.style.transition = "opacity 0.3s ease-in-out";
-        
+
         if (!img.hasAttribute("loading")) {
           img.setAttribute("loading", "lazy");
         }
@@ -143,7 +152,7 @@ export function StaticPageDetailPage() {
         wrapper.style.position = "relative";
         wrapper.style.width = "100%";
         wrapper.style.margin = "16px auto";
-        
+
         // Create skeleton
         const skeleton = document.createElement("div");
         skeleton.className = "image-skeleton";
@@ -154,29 +163,33 @@ export function StaticPageDetailPage() {
         skeleton.style.backgroundSize = "200% 100%";
         skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
         skeleton.style.borderRadius = "4px";
-        
+
         // Insert wrapper before image
         img.parentNode?.insertBefore(wrapper, img);
         wrapper.appendChild(skeleton);
         wrapper.appendChild(img);
-        
+
         // Handle image load
         const handleLoad = () => {
           img.style.opacity = "1";
           skeleton.style.display = "none";
         };
-        
+
         if (img.complete) {
           handleLoad();
         } else {
           img.addEventListener("load", handleLoad, { once: true });
-          img.addEventListener("error", () => {
-            skeleton.style.display = "none";
-            img.style.opacity = "1";
-          }, { once: true });
+          img.addEventListener(
+            "error",
+            () => {
+              skeleton.style.display = "none";
+              img.style.opacity = "1";
+            },
+            { once: true }
+          );
         }
       });
-      
+
       // Make all videos responsive
       const videos = container.querySelectorAll("video");
       videos.forEach((video) => {
@@ -185,7 +198,7 @@ export function StaticPageDetailPage() {
         video.style.display = "block";
         video.style.margin = "16px auto";
       });
-      
+
       // Make iframes responsive (for embedded videos)
       const iframes = container.querySelectorAll("iframe");
       iframes.forEach((iframe) => {
@@ -211,7 +224,7 @@ export function StaticPageDetailPage() {
     };
 
     makeMediaResponsive(contentRef.current);
-    
+
     // Add skeleton animation CSS if not already added
     if (!document.getElementById("skeleton-animation-style")) {
       const style = document.createElement("style");
@@ -233,7 +246,7 @@ export function StaticPageDetailPage() {
   // Check if user can edit this static page (site admin permissions)
   const [canEditStaticPage, setCanEditStaticPage] = useState(false);
   const [staticPageSiteId, setStaticPageSiteId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (staticPage?.siteId) {
       setStaticPageSiteId(staticPage.siteId);
@@ -258,8 +271,13 @@ export function StaticPageDetailPage() {
         // Check site-level role
         try {
           const siteMemberships = await getSiteMemberships(staticPageSiteId, user.id);
-          const siteMembership = siteMemberships.find(m => m.siteId === staticPageSiteId && m.userId === user.id);
-          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+          const siteMembership = siteMemberships.find(
+            (m) => m.siteId === staticPageSiteId && m.userId === user.id
+          );
+          if (
+            siteMembership &&
+            (siteMembership.role === "siteadmin" || siteMembership.role === "editor")
+          ) {
             setCanEditStaticPage(true);
             return;
           }
@@ -292,9 +310,7 @@ export function StaticPageDetailPage() {
   }
 
   // Build edit URL if user can edit
-  const editUrl = canEditStaticPage && id 
-    ? `/${lang}/admin/static-pages?edit=${id}`
-    : undefined;
+  const editUrl = canEditStaticPage && id ? `/${lang}/admin/static-pages?edit=${id}` : undefined;
 
   return (
     <>

@@ -5,7 +5,13 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { useToast } from "../../contexts/ToastContext";
-import { getDefaultLanguage, setDefaultLanguage, getFeatureMatrix, setFeatureMatrix, type FeatureMatrix } from "../../api/admin.api";
+import {
+  getDefaultLanguage,
+  setDefaultLanguage,
+  getFeatureMatrix,
+  setFeatureMatrix,
+  type FeatureMatrix,
+} from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
@@ -21,12 +27,12 @@ export function AppSettingsPage() {
   const [defaultLang, setDefaultLangState] = useState<"hu" | "en" | "de">("hu");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Collapse state for sections
   const [languageOpen, setLanguageOpen] = useState(false);
   const [featureMatrixOpen, setFeatureMatrixOpen] = useState(false);
   const [placeFeatureMatrixOpen, setPlaceFeatureMatrixOpen] = useState(false);
-  
+
   // Feature matrix state
   const [featureMatrix, setFeatureMatrixState] = useState<FeatureMatrix | null>(null);
   const [isLoadingFeatureMatrix, setIsLoadingFeatureMatrix] = useState(false);
@@ -34,15 +40,18 @@ export function AppSettingsPage() {
 
   useEffect(() => {
     const loadDefaultLanguage = async () => {
-    try {
-      setIsLoading(true);
-      const data = await getDefaultLanguage();
-      setDefaultLangState(data.defaultLanguage);
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.loadDefaultLanguageFailed"), "error");
-    } finally {
-      setIsLoading(false);
-    }
+      try {
+        setIsLoading(true);
+        const data = await getDefaultLanguage();
+        setDefaultLangState(data.defaultLanguage);
+      } catch (err) {
+        showToast(
+          err instanceof Error ? err.message : t("admin.errors.loadDefaultLanguageFailed"),
+          "error"
+        );
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadDefaultLanguage();
   }, [t]);
@@ -57,7 +66,10 @@ export function AppSettingsPage() {
         window.location.reload();
       }, 1000);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.updateDefaultLanguageFailed"), "error");
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.updateDefaultLanguageFailed"),
+        "error"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -88,7 +100,7 @@ export function AppSettingsPage() {
   const handleSaveFeatureMatrix = async () => {
     try {
       setIsSavingFeatureMatrix(true);
-      await setFeatureMatrix({ 
+      await setFeatureMatrix({
         planOverrides: featureMatrix?.planOverrides || null,
         placePlanOverrides: featureMatrix?.placePlanOverrides || null,
       });
@@ -109,13 +121,41 @@ export function AppSettingsPage() {
   if (!selectedSiteId && HAS_MULTIPLE_SITES) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-        <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>{t("admin.appSettings")}</h1>
-        <div style={{ padding: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0" }}>
-          <p style={{ color: "#666", fontSize: 16, margin: 0, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.table.pleaseSelectSite")}</p>
+        <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>
+          {t("admin.appSettings")}
+        </h1>
+        <div
+          style={{
+            padding: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          <p
+            style={{
+              color: "#666",
+              fontSize: 16,
+              margin: 0,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.table.pleaseSelectSite")}
+          </p>
         </div>
-        
+
         {/* Language Settings Section - available without tenant */}
-        <div style={{ marginTop: 24, marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+        <div
+          style={{
+            marginTop: 24,
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
           <button
             onClick={() => setLanguageOpen(!languageOpen)}
             style={{
@@ -132,24 +172,56 @@ export function AppSettingsPage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 24 }}>🌍</span>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}</h2>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.defaultLanguage")}
+              </h2>
             </div>
-            <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+            <span
+              style={{
+                fontSize: 20,
+                color: "#666",
+                transition: "transform 0.2s",
+                transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {languageOpen && (
             <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-              <p style={{ 
-                color: "#666", 
-                marginBottom: 24, 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <p
+                style={{
+                  color: "#666",
+                  marginBottom: 24,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.defaultLanguageDescription")}
               </p>
 
               {!isLoading && (
                 <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-                  <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
+                  <label
+                    style={{
+                      display: "block",
+                      minWidth: 150,
+                      fontWeight: 500,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.defaultLanguage")}:
+                  </label>
                   <select
                     value={defaultLang}
                     onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
@@ -157,7 +229,8 @@ export function AppSettingsPage() {
                     style={{
                       padding: "10px 16px",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
                       background: "white",
@@ -177,7 +250,8 @@ export function AppSettingsPage() {
                       style={{
                         padding: "10px 24px",
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 500,
                         background: isSaving ? "#999" : "#007bff",
                         color: "white",
@@ -193,14 +267,23 @@ export function AppSettingsPage() {
               )}
 
               {!isAdmin && (
-                <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <div
+                  style={{
+                    padding: 12,
+                    background: "#fff3cd",
+                    color: "#856404",
+                    borderRadius: 6,
+                    marginTop: 16,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.onlyAdminCanEdit")}
                 </div>
               )}
             </div>
           )}
         </div>
-
       </div>
     );
   }
@@ -208,31 +291,45 @@ export function AppSettingsPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <h1 style={{ 
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "white",
-          margin: 0,
-          marginBottom: 8,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
+        <h1
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            margin: 0,
+            marginBottom: 8,
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          }}
+        >
           {t("admin.appSettings")}
         </h1>
-        <p style={{ 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 400,
-          color: "#c0c0d0",
-          margin: 0,
-          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-        }}>
+        <p
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
+            color: "#c0c0d0",
+            margin: 0,
+            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+          }}
+        >
           {t("admin.appSettingsDesc")}
         </p>
       </div>
 
       {/* Language Settings Section */}
-      <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+      <div
+        style={{
+          marginBottom: 24,
+          background: "white",
+          borderRadius: 12,
+          border: "1px solid #e0e0e0",
+          overflow: "hidden",
+        }}
+      >
         <button
           onClick={() => setLanguageOpen(!languageOpen)}
           style={{
@@ -249,19 +346,56 @@ export function AppSettingsPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 24 }}>🌍</span>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}</h2>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 600,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.defaultLanguage")}
+            </h2>
           </div>
-          <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          <span
+            style={{
+              fontSize: 20,
+              color: "#666",
+              transition: "transform 0.2s",
+              transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▼
+          </span>
         </button>
         {languageOpen && (
           <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-            <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <p
+              style={{
+                color: "#666",
+                marginBottom: 24,
+                fontSize: 15,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.defaultLanguageDescription")}
             </p>
 
             {!isLoading && (
               <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-                <label style={{ display: "block", minWidth: 150, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.defaultLanguage")}:</label>
+                <label
+                  style={{
+                    display: "block",
+                    minWidth: 150,
+                    fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.defaultLanguage")}:
+                </label>
                 <select
                   value={defaultLang}
                   onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
@@ -291,7 +425,8 @@ export function AppSettingsPage() {
                     style={{
                       padding: "10px 24px",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       fontWeight: 500,
                       background: isSaving ? "#999" : "#007bff",
                       color: "white",
@@ -307,7 +442,15 @@ export function AppSettingsPage() {
             )}
 
             {!isAdmin && (
-              <div style={{ padding: 12, background: "#fff3cd", color: "#856404", borderRadius: 6, marginTop: 16 }}>
+              <div
+                style={{
+                  padding: 12,
+                  background: "#fff3cd",
+                  color: "#856404",
+                  borderRadius: 6,
+                  marginTop: 16,
+                }}
+              >
                 {t("admin.onlyAdminCanEdit")}
               </div>
             )}
@@ -317,7 +460,15 @@ export function AppSettingsPage() {
 
       {/* Feature Matrix Configuration Section - Superadmin only */}
       {userIsSuperadmin && (
-        <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
           <button
             onClick={() => setFeatureMatrixOpen(!featureMatrixOpen)}
             style={{
@@ -334,16 +485,42 @@ export function AppSettingsPage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 24 }}>⚙️</span>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.featureMatrix") || "Feature Matrix Configuration"}
               </h2>
             </div>
-            <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: featureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+            <span
+              style={{
+                fontSize: 20,
+                color: "#666",
+                transition: "transform 0.2s",
+                transform: featureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {featureMatrixOpen && (
             <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-              <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                {t("admin.featureMatrixDescription") || "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values."}
+              <p
+                style={{
+                  color: "#666",
+                  marginBottom: 24,
+                  fontSize: 15,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.featureMatrixDescription") ||
+                  "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values."}
               </p>
 
               {!isLoadingFeatureMatrix && featureMatrix && (
@@ -362,7 +539,8 @@ export function AppSettingsPage() {
                   style={{
                     padding: "10px 24px",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 500,
                     background: isSavingFeatureMatrix ? "#999" : "#007bff",
                     color: "white",
@@ -377,7 +555,7 @@ export function AppSettingsPage() {
                   type="button"
                   onClick={() => {
                     // Reset to defaults
-                    setFeatureMatrixState({ 
+                    setFeatureMatrixState({
                       planOverrides: null,
                       placePlanOverrides: null,
                     });
@@ -385,7 +563,8 @@ export function AppSettingsPage() {
                   style={{
                     padding: "10px 24px",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 500,
                     background: "#6c757d",
                     color: "white",
@@ -404,7 +583,15 @@ export function AppSettingsPage() {
 
       {/* Place Feature Matrix Configuration Section - Superadmin only */}
       {userIsSuperadmin && (
-        <div style={{ marginBottom: 24, background: "white", borderRadius: 12, border: "1px solid #e0e0e0", overflow: "hidden" }}>
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
           <button
             onClick={() => setPlaceFeatureMatrixOpen(!placeFeatureMatrixOpen)}
             style={{
@@ -421,16 +608,42 @@ export function AppSettingsPage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 24 }}>📍</span>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.placeFeatureMatrix") || "Place Subscription Matrix Configuration"}
               </h2>
             </div>
-            <span style={{ fontSize: 20, color: "#666", transition: "transform 0.2s", transform: placeFeatureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+            <span
+              style={{
+                fontSize: 20,
+                color: "#666",
+                transition: "transform 0.2s",
+                transform: placeFeatureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {placeFeatureMatrixOpen && (
             <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
-              <p style={{ color: "#666", marginBottom: 24, fontSize: 15, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                {t("admin.placeFeatureMatrixDescription") || "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values."}
+              <p
+                style={{
+                  color: "#666",
+                  marginBottom: 24,
+                  fontSize: 15,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.placeFeatureMatrixDescription") ||
+                  "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values."}
               </p>
 
               {!isLoadingFeatureMatrix && featureMatrix && (
@@ -449,7 +662,8 @@ export function AppSettingsPage() {
                   style={{
                     padding: "10px 24px",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 500,
                     background: isSavingFeatureMatrix ? "#999" : "#007bff",
                     color: "white",
@@ -464,7 +678,7 @@ export function AppSettingsPage() {
                   type="button"
                   onClick={() => {
                     // Reset to defaults
-                    setFeatureMatrixState({ 
+                    setFeatureMatrixState({
                       planOverrides: featureMatrix?.planOverrides || null,
                       placePlanOverrides: null,
                     });
@@ -472,7 +686,8 @@ export function AppSettingsPage() {
                   style={{
                     padding: "10px 24px",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 500,
                     background: "#6c757d",
                     color: "white",
@@ -504,7 +719,7 @@ function FeatureMatrixEditor({
 }) {
   const plans = ["BASIC", "PRO", "BUSINESS"] as const;
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -513,7 +728,7 @@ function FeatureMatrixEditor({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  
+
   // Get default values from PLAN_DEFS (imported from backend config)
   // Since we can't import from backend in frontend, we'll use the same structure
   const defaultDefs = {
@@ -608,7 +823,7 @@ function FeatureMatrixEditor({
     if (!newOverrides[plan]) {
       newOverrides[plan] = { limits: {}, features: {} };
     }
-    
+
     let current: any = newOverrides[plan];
     for (let i = 0; i < path.length - 1; i++) {
       if (!current[path[i]]) {
@@ -617,14 +832,14 @@ function FeatureMatrixEditor({
       current = current[path[i]];
     }
     current[path[path.length - 1]] = value === "" ? undefined : value;
-    
+
     setFeatureMatrix({ planOverrides: newOverrides });
   };
 
   const getValue = (plan: "BASIC" | "PRO" | "BUSINESS", path: string[]): any => {
     const override = featureMatrix.planOverrides?.[plan];
     if (!override) return undefined;
-    
+
     let current: any = override;
     for (const key of path) {
       if (current === undefined || current === null) return undefined;
@@ -636,7 +851,7 @@ function FeatureMatrixEditor({
   const getDisplayValue = (plan: "BASIC" | "PRO" | "BUSINESS", path: string[]): any => {
     const override = getValue(plan, path);
     if (override !== undefined) return override;
-    
+
     // Get from default
     let current: any = defaultDefs[plan];
     for (const key of path) {
@@ -648,68 +863,187 @@ function FeatureMatrixEditor({
 
   const features = [
     // Places category
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.placesCount"), path: ["limits", "placesMax"], type: "number" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.imagesPerPlace"), path: ["limits", "galleryImagesPerPlaceMax"], type: "number" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.heroImage"), path: ["features", "heroImage"], type: "boolean" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.contacts"), path: ["features", "contacts"], type: "boolean" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.extraFields"), path: ["features", "extrasEnabled"], type: "boolean" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.galleriesMax"), path: ["limits", "galleriesMax"], type: "number" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.imagesPerGalleryMax"), path: ["limits", "imagesPerGalleryMax"], type: "number" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.galleriesPerPlaceMax"), path: ["limits", "galleriesPerPlaceMax"], type: "number" },
-    { category: t("public.pricing.categories.places"), name: t("public.pricing.features.galleriesPerEventMax"), path: ["limits", "galleriesPerEventMax"], type: "number" },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.placesCount"),
+      path: ["limits", "placesMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.imagesPerPlace"),
+      path: ["limits", "galleryImagesPerPlaceMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.heroImage"),
+      path: ["features", "heroImage"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.contacts"),
+      path: ["features", "contacts"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.extraFields"),
+      path: ["features", "extrasEnabled"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesMax"),
+      path: ["limits", "galleriesMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.imagesPerGalleryMax"),
+      path: ["limits", "imagesPerGalleryMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesPerPlaceMax"),
+      path: ["limits", "galleriesPerPlaceMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.places"),
+      name: t("public.pricing.features.galleriesPerEventMax"),
+      path: ["limits", "galleriesPerEventMax"],
+      type: "number",
+    },
     // Visibility
-    { category: t("public.pricing.categories.visibility"), name: t("public.pricing.features.featuredPlaces"), path: ["limits", "featuredPlacesMax"], type: "number" },
-    { category: t("public.pricing.categories.visibility"), name: t("public.pricing.features.featuredBoost"), path: ["features", "featuredBoost"], type: "boolean" },
+    {
+      category: t("public.pricing.categories.visibility"),
+      name: t("public.pricing.features.featuredPlaces"),
+      path: ["limits", "featuredPlacesMax"],
+      type: "number",
+    },
+    {
+      category: t("public.pricing.categories.visibility"),
+      name: t("public.pricing.features.featuredBoost"),
+      path: ["features", "featuredBoost"],
+      type: "boolean",
+    },
     // Events
-    { category: t("public.pricing.categories.events"), name: t("public.pricing.features.eventsEnabled"), path: ["features", "eventsEnabled"], type: "boolean" },
-    { category: t("public.pricing.categories.events"), name: t("public.pricing.features.eventsPerMonth"), path: ["limits", "eventsPerMonthMax"], type: "number" },
+    {
+      category: t("public.pricing.categories.events"),
+      name: t("public.pricing.features.eventsEnabled"),
+      path: ["features", "eventsEnabled"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.events"),
+      name: t("public.pricing.features.eventsPerMonth"),
+      path: ["limits", "eventsPerMonthMax"],
+      type: "number",
+    },
     // SEO
-    { category: t("public.pricing.categories.seo"), name: t("public.pricing.features.siteSeo"), path: ["features", "siteSeo"], type: "boolean" },
-    { category: t("public.pricing.categories.seo"), name: t("public.pricing.features.placeSeo"), path: ["features", "placeSeoEnabled"], type: "boolean" },
-    { category: t("public.pricing.categories.seo"), name: t("public.pricing.features.canonicalSupport"), path: ["features", "canonicalSupport"], type: "boolean" },
+    {
+      category: t("public.pricing.categories.seo"),
+      name: t("public.pricing.features.siteSeo"),
+      path: ["features", "siteSeo"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.seo"),
+      name: t("public.pricing.features.placeSeo"),
+      path: ["features", "placeSeoEnabled"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.seo"),
+      name: t("public.pricing.features.canonicalSupport"),
+      path: ["features", "canonicalSupport"],
+      type: "boolean",
+    },
     // Domain
-    { category: t("public.pricing.categories.domain"), name: t("public.pricing.features.customDomain"), path: ["features", "customDomainEnabled"], type: "boolean" },
-    { category: t("public.pricing.categories.domain"), name: t("public.pricing.features.multipleDomainAliases"), path: ["features", "multipleDomainAliases"], type: "boolean" },
+    {
+      category: t("public.pricing.categories.domain"),
+      name: t("public.pricing.features.customDomain"),
+      path: ["features", "customDomainEnabled"],
+      type: "boolean",
+    },
+    {
+      category: t("public.pricing.categories.domain"),
+      name: t("public.pricing.features.multipleDomainAliases"),
+      path: ["features", "multipleDomainAliases"],
+      type: "boolean",
+    },
     // Languages
-    { category: t("public.pricing.categories.languages"), name: t("public.pricing.features.additionalLanguages"), path: ["limits", "languagesMax"], type: "number" },
+    {
+      category: t("public.pricing.categories.languages"),
+      name: t("public.pricing.features.additionalLanguages"),
+      path: ["limits", "languagesMax"],
+      type: "number",
+    },
     // Permissions
-    { category: t("public.pricing.categories.permissions"), name: t("public.pricing.features.siteMembers"), path: ["limits", "siteMembersMax"], type: "number" },
+    {
+      category: t("public.pricing.categories.permissions"),
+      name: t("public.pricing.features.siteMembers"),
+      path: ["limits", "siteMembersMax"],
+      type: "number",
+    },
     // Admin
-    { category: t("public.pricing.categories.admin"), name: t("public.pricing.features.eventLog"), path: ["features", "eventLogEnabled"], type: "boolean" },
+    {
+      category: t("public.pricing.categories.admin"),
+      name: t("public.pricing.features.eventLog"),
+      path: ["features", "eventLogEnabled"],
+      type: "boolean",
+    },
     // Push
-    { category: t("public.pricing.categories.push"), name: t("public.pricing.features.pushSubscription"), path: ["features", "pushSubscription"], type: "string" },
+    {
+      category: t("public.pricing.categories.push"),
+      name: t("public.pricing.features.pushSubscription"),
+      path: ["features", "pushSubscription"],
+      type: "string",
+    },
   ];
 
   return (
-    <div style={{ 
-      overflowX: "auto",
-      WebkitOverflowScrolling: "touch",
-      borderRadius: 8,
-      border: "1px solid #e0e0e0",
-      background: "white",
-    }}>
-      <table style={{ 
-        width: "100%", 
-        borderCollapse: "collapse", 
-        minWidth: isMobile ? 600 : 800,
-      }}>
+    <div
+      style={{
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        borderRadius: 8,
+        border: "1px solid #e0e0e0",
+        background: "white",
+      }}
+    >
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          minWidth: isMobile ? 600 : 800,
+        }}
+      >
         <thead>
-          <tr style={{ 
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            borderBottom: "2px solid #dee2e6",
-          }}>
-            <th style={{ 
-              padding: isMobile ? "10px 8px" : "16px 12px", 
-              textAlign: "left", 
-              fontSize: isMobile ? 12 : 14, 
-              fontWeight: 600, 
-              color: "white",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              position: "sticky",
-              left: 0,
+          <tr
+            style={{
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              zIndex: 10,
-            }}>
+              borderBottom: "2px solid #dee2e6",
+            }}
+          >
+            <th
+              style={{
+                padding: isMobile ? "10px 8px" : "16px 12px",
+                textAlign: "left",
+                fontSize: isMobile ? 12 : 14,
+                fontWeight: 600,
+                color: "white",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                position: "sticky",
+                left: 0,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                zIndex: 10,
+              }}
+            >
               {t("public.pricing.featureMatrix.feature") || "Feature"}
             </th>
             {plans.map((plan) => {
@@ -719,14 +1053,18 @@ function FeatureMatrixEditor({
                 BUSINESS: t("admin.planBusiness") || "Business",
               };
               return (
-                <th key={plan} style={{ 
-                  padding: isMobile ? "10px 8px" : "16px 12px", 
-                  textAlign: "center", 
-                  fontSize: isMobile ? 12 : 14, 
-                  fontWeight: 600,
-                  color: "white",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <th
+                  key={plan}
+                  style={{
+                    padding: isMobile ? "10px 8px" : "16px 12px",
+                    textAlign: "center",
+                    fontSize: isMobile ? 12 : 14,
+                    fontWeight: 600,
+                    color: "white",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {planLabels[plan]}
                 </th>
               );
@@ -737,11 +1075,11 @@ function FeatureMatrixEditor({
           {features.map((feature, idx) => {
             const prevCategory = idx > 0 ? features[idx - 1].category : null;
             const showCategory = feature.category !== prevCategory;
-            
+
             return (
-              <tr 
-                key={`${feature.category}-${feature.name}`} 
-                style={{ 
+              <tr
+                key={`${feature.category}-${feature.name}`}
+                style={{
                   borderBottom: "1px solid #e9ecef",
                   transition: "background 0.2s",
                 }}
@@ -752,30 +1090,37 @@ function FeatureMatrixEditor({
                   e.currentTarget.style.background = "transparent";
                 }}
               >
-                <td style={{ 
-                  padding: isMobile ? "10px 8px" : "14px 12px", 
-                  fontSize: isMobile ? 12 : 14, 
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  position: "sticky",
-                  left: 0,
-                  background: "white",
-                  zIndex: 5,
-                  boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
-                }}>
+                <td
+                  style={{
+                    padding: isMobile ? "10px 8px" : "14px 12px",
+                    fontSize: isMobile ? 12 : 14,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    position: "sticky",
+                    left: 0,
+                    background: "white",
+                    zIndex: 5,
+                    boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
+                  }}
+                >
                   {showCategory && (
-                    <div style={{ 
-                      fontWeight: 600, 
-                      color: "#495057", 
-                      marginBottom: 4,
-                      fontSize: isMobile ? 11 : 13,
-                    }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: "#495057",
+                        marginBottom: 4,
+                        fontSize: isMobile ? 11 : 13,
+                      }}
+                    >
                       {feature.category}
                     </div>
                   )}
-                  <div style={{ 
-                    paddingLeft: showCategory ? 0 : (isMobile ? 12 : 20),
-                    fontSize: isMobile ? 12 : 14,
-                  }}>
+                  <div
+                    style={{
+                      paddingLeft: showCategory ? 0 : isMobile ? 12 : 20,
+                      fontSize: isMobile ? 12 : 14,
+                    }}
+                  >
                     {feature.name}
                   </div>
                 </td>
@@ -783,15 +1128,23 @@ function FeatureMatrixEditor({
                   const value = getDisplayValue(plan, feature.path);
                   const override = getValue(plan, feature.path);
                   const isOverridden = override !== undefined;
-                  
+
                   // Get default value for placeholder
                   const placeholderValue = (() => {
-                    if (feature.path[0] === "limits" && feature.path[1] && feature.type === "number") {
+                    if (
+                      feature.path[0] === "limits" &&
+                      feature.path[1] &&
+                      feature.type === "number"
+                    ) {
                       const key = feature.path[1];
                       const limits = defaultDefs[plan].limits as Record<string, any>;
                       return limits[key]?.toString() || "";
                     }
-                    if (feature.path[0] === "features" && feature.path[1] && feature.type === "string") {
+                    if (
+                      feature.path[0] === "features" &&
+                      feature.path[1] &&
+                      feature.type === "string"
+                    ) {
                       const key = feature.path[1];
                       const features = defaultDefs[plan].features as Record<string, any>;
                       const defaultValue = features[key];
@@ -799,19 +1152,24 @@ function FeatureMatrixEditor({
                     }
                     return "";
                   })();
-                  
+
                   return (
-                    <td key={plan} style={{ 
-                      padding: isMobile ? "10px 6px" : "14px 12px", 
-                      textAlign: "center",
-                      verticalAlign: "middle",
-                    }}>
-                      <div style={{ 
-                        display: "flex", 
-                        flexDirection: "column", 
-                        alignItems: "center",
-                        gap: 4,
-                      }}>
+                    <td
+                      key={plan}
+                      style={{
+                        padding: isMobile ? "10px 6px" : "14px 12px",
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
                         {feature.type === "boolean" ? (
                           <input
                             type="checkbox"
@@ -831,7 +1189,11 @@ function FeatureMatrixEditor({
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === "∞" || val === "") {
-                                updatePlanValue(plan, feature.path, val === "∞" ? Infinity : undefined);
+                                updatePlanValue(
+                                  plan,
+                                  feature.path,
+                                  val === "∞" ? Infinity : undefined
+                                );
                               } else {
                                 const num = parseInt(val, 10);
                                 if (!isNaN(num)) {
@@ -847,13 +1209,15 @@ function FeatureMatrixEditor({
                               border: `2px solid ${isOverridden ? "#667eea" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               transition: "all 0.2s",
                               outline: "none",
                             }}
                             onFocus={(e) => {
                               e.currentTarget.style.borderColor = "#667eea";
-                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                              e.currentTarget.style.boxShadow =
+                                "0 0 0 3px rgba(102, 126, 234, 0.1)";
                             }}
                             onBlur={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -872,13 +1236,15 @@ function FeatureMatrixEditor({
                               border: `2px solid ${isOverridden ? "#667eea" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               transition: "all 0.2s",
                               outline: "none",
                             }}
                             onFocus={(e) => {
                               e.currentTarget.style.borderColor = "#667eea";
-                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                              e.currentTarget.style.boxShadow =
+                                "0 0 0 3px rgba(102, 126, 234, 0.1)";
                             }}
                             onBlur={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -886,12 +1252,14 @@ function FeatureMatrixEditor({
                           />
                         )}
                         {isOverridden && (
-                          <div style={{ 
-                            fontSize: isMobile ? 9 : 10, 
-                            color: "#667eea", 
-                            marginTop: 2,
-                            fontWeight: 500,
-                          }}>
+                          <div
+                            style={{
+                              fontSize: isMobile ? 9 : 10,
+                              color: "#667eea",
+                              marginTop: 2,
+                              fontWeight: 500,
+                            }}
+                          >
                             {t("admin.overridden") || "Overridden"}
                           </div>
                         )}
@@ -920,7 +1288,7 @@ function PlaceFeatureMatrixEditor({
 }) {
   const plans = ["free", "basic", "pro"] as const;
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -954,13 +1322,13 @@ function PlaceFeatureMatrixEditor({
     if (!newOverrides[plan]) {
       newOverrides[plan] = {};
     }
-    
+
     newOverrides[plan] = {
       ...newOverrides[plan],
       [field]: value === "" ? undefined : value,
     };
-    
-    setFeatureMatrix({ 
+
+    setFeatureMatrix({
       ...featureMatrix,
       placePlanOverrides: newOverrides,
     });
@@ -975,45 +1343,66 @@ function PlaceFeatureMatrixEditor({
   const getDisplayValue = (plan: "free" | "basic" | "pro", field: string): any => {
     const override = getValue(plan, field);
     if (override !== undefined) return override;
-    return defaultDefs[plan][field as keyof typeof defaultDefs[typeof plan]];
+    return defaultDefs[plan][field as keyof (typeof defaultDefs)[typeof plan]];
   };
 
   const features = [
-    { name: t("public.pricing.features.placeImages") || "Képek száma", field: "images", type: "number" },
-    { name: t("public.pricing.features.eventsPerPlace") || "Események száma", field: "events", type: "number" },
-    { name: t("public.pricing.features.featuredPlacement") || "Kiemelt megjelenés", field: "featured", type: "boolean" },
+    {
+      name: t("public.pricing.features.placeImages") || "Képek száma",
+      field: "images",
+      type: "number",
+    },
+    {
+      name: t("public.pricing.features.eventsPerPlace") || "Események száma",
+      field: "events",
+      type: "number",
+    },
+    {
+      name: t("public.pricing.features.featuredPlacement") || "Kiemelt megjelenés",
+      field: "featured",
+      type: "boolean",
+    },
   ];
 
   return (
-    <div style={{ 
-      overflowX: "auto",
-      WebkitOverflowScrolling: "touch",
-      borderRadius: 8,
-      border: "1px solid #e0e0e0",
-      background: "white",
-    }}>
-      <table style={{ 
-        width: "100%", 
-        borderCollapse: "collapse", 
-        minWidth: isMobile ? 500 : 600,
-      }}>
+    <div
+      style={{
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        borderRadius: 8,
+        border: "1px solid #e0e0e0",
+        background: "white",
+      }}
+    >
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          minWidth: isMobile ? 500 : 600,
+        }}
+      >
         <thead>
-          <tr style={{ 
-            background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            borderBottom: "2px solid #dee2e6",
-          }}>
-            <th style={{ 
-              padding: isMobile ? "10px 8px" : "16px 12px", 
-              textAlign: "left", 
-              fontSize: isMobile ? 12 : 14, 
-              fontWeight: 600, 
-              color: "white",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              position: "sticky",
-              left: 0,
+          <tr
+            style={{
               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-              zIndex: 10,
-            }}>
+              borderBottom: "2px solid #dee2e6",
+            }}
+          >
+            <th
+              style={{
+                padding: isMobile ? "10px 8px" : "16px 12px",
+                textAlign: "left",
+                fontSize: isMobile ? 12 : 14,
+                fontWeight: 600,
+                color: "white",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                position: "sticky",
+                left: 0,
+                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                zIndex: 10,
+              }}
+            >
               {t("public.pricing.featureMatrix.feature") || "Feature"}
             </th>
             {plans.map((plan) => {
@@ -1023,14 +1412,18 @@ function PlaceFeatureMatrixEditor({
                 pro: t("admin.planPro") || "Pro",
               };
               return (
-                <th key={plan} style={{ 
-                  padding: isMobile ? "10px 8px" : "16px 12px", 
-                  textAlign: "center", 
-                  fontSize: isMobile ? 12 : 14, 
-                  fontWeight: 600,
-                  color: "white",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <th
+                  key={plan}
+                  style={{
+                    padding: isMobile ? "10px 8px" : "16px 12px",
+                    textAlign: "center",
+                    fontSize: isMobile ? 12 : 14,
+                    fontWeight: 600,
+                    color: "white",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {planLabels[plan]}
                 </th>
               );
@@ -1040,9 +1433,9 @@ function PlaceFeatureMatrixEditor({
         <tbody>
           {features.map((feature) => {
             return (
-              <tr 
+              <tr
                 key={feature.field}
-                style={{ 
+                style={{
                   borderBottom: "1px solid #e9ecef",
                   transition: "background 0.2s",
                 }}
@@ -1053,37 +1446,48 @@ function PlaceFeatureMatrixEditor({
                   e.currentTarget.style.background = "transparent";
                 }}
               >
-                <td style={{ 
-                  padding: isMobile ? "10px 8px" : "14px 12px", 
-                  fontSize: isMobile ? 12 : 14, 
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  position: "sticky",
-                  left: 0,
-                  background: "white",
-                  zIndex: 5,
-                  boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
-                }}>
+                <td
+                  style={{
+                    padding: isMobile ? "10px 8px" : "14px 12px",
+                    fontSize: isMobile ? 12 : 14,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    position: "sticky",
+                    left: 0,
+                    background: "white",
+                    zIndex: 5,
+                    boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
+                  }}
+                >
                   {feature.name}
                 </td>
                 {plans.map((plan) => {
                   const value = getDisplayValue(plan, feature.field);
                   const override = getValue(plan, feature.field);
                   const isOverridden = override !== undefined;
-                  
-                  const placeholderValue = defaultDefs[plan][feature.field as keyof typeof defaultDefs[typeof plan]]?.toString() || "";
-                  
+
+                  const placeholderValue =
+                    defaultDefs[plan][
+                      feature.field as keyof (typeof defaultDefs)[typeof plan]
+                    ]?.toString() || "";
+
                   return (
-                    <td key={plan} style={{ 
-                      padding: isMobile ? "10px 6px" : "14px 12px", 
-                      textAlign: "center",
-                      verticalAlign: "middle",
-                    }}>
-                      <div style={{ 
-                        display: "flex", 
-                        flexDirection: "column", 
-                        alignItems: "center",
-                        gap: 4,
-                      }}>
+                    <td
+                      key={plan}
+                      style={{
+                        padding: isMobile ? "10px 6px" : "14px 12px",
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
                         {feature.type === "boolean" ? (
                           <input
                             type="checkbox"
@@ -1103,7 +1507,11 @@ function PlaceFeatureMatrixEditor({
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === "∞" || val === "") {
-                                updatePlanValue(plan, feature.field, val === "∞" ? Infinity : undefined);
+                                updatePlanValue(
+                                  plan,
+                                  feature.field,
+                                  val === "∞" ? Infinity : undefined
+                                );
                               } else {
                                 const num = parseInt(val, 10);
                                 if (!isNaN(num)) {
@@ -1119,7 +1527,8 @@ function PlaceFeatureMatrixEditor({
                               border: `2px solid ${isOverridden ? "#f5576c" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               transition: "all 0.2s",
                               outline: "none",
                             }}
@@ -1133,12 +1542,14 @@ function PlaceFeatureMatrixEditor({
                           />
                         )}
                         {isOverridden && (
-                          <div style={{ 
-                            fontSize: isMobile ? 9 : 10, 
-                            color: "#f5576c", 
-                            marginTop: 2,
-                            fontWeight: 500,
-                          }}>
+                          <div
+                            style={{
+                              fontSize: isMobile ? 9 : 10,
+                              color: "#f5576c",
+                              marginTop: 2,
+                              fontWeight: 500,
+                            }}
+                          >
                             {t("admin.overridden") || "Overridden"}
                           </div>
                         )}
@@ -1154,4 +1565,3 @@ function PlaceFeatureMatrixEditor({
     </div>
   );
 }
-

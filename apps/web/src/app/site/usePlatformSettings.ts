@@ -6,7 +6,11 @@ import { apiGetPublic } from "../../api/client";
 
 type Args = { lang: Lang; siteKey: string; tenantKey?: string }; // Support both for backward compatibility
 
-async function fetchPlatformSettings({ lang, siteKey, tenantKey }: Args): Promise<PlatformSettings> {
+async function fetchPlatformSettings({
+  lang,
+  siteKey,
+  tenantKey,
+}: Args): Promise<PlatformSettings> {
   // Backend expects path parameters: /api/public/:lang/:siteKey/platform
   const key = siteKey || tenantKey || "";
   const apiPath = `/public/${lang}/${key}/platform`;
@@ -20,7 +24,7 @@ async function fetchPlatformSettings({ lang, siteKey, tenantKey }: Args): Promis
       apiPath,
       error: error.message,
       status: error.status,
-      apiUrl: import.meta.env.VITE_API_URL || 'not set',
+      apiUrl: import.meta.env.VITE_API_URL || "not set",
     });
     throw error;
   }

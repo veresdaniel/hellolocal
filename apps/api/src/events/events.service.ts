@@ -45,10 +45,7 @@ export class EventsService {
       // Only show events that haven't ended yet
       // If event has endDate, it must be in the future
       // If no endDate, check startDate (must be in the future)
-      OR: [
-        { endDate: { gte: now } },
-        { AND: [{ endDate: null }, { startDate: { gte: now } }] },
-      ],
+      OR: [{ endDate: { gte: now } }, { AND: [{ endDate: null }, { startDate: { gte: now } }] }],
     };
 
     if (args.category) {
@@ -108,16 +105,16 @@ export class EventsService {
         },
         translations: true,
       },
-      orderBy: [
-        { isPinned: "desc" },
-        { startDate: "asc" },
-      ],
+      orderBy: [{ isPinned: "desc" }, { startDate: "asc" }],
       take: args.limit,
       skip: args.offset,
     });
 
     // Helper function to get translation with fallback
-    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+    const getTranslation = (
+      translations: Array<{ lang: Lang; [key: string]: any }>,
+      field: string
+    ) => {
       const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
@@ -141,7 +138,7 @@ export class EventsService {
           select: { slug: true },
           orderBy: { createdAt: "desc" }, // Get the most recent one if duplicates exist
         });
-        
+
         // Fallback to Hungarian if not found and requested language is not Hungarian
         if (!slug && site.lang !== Lang.hu) {
           slug = await this.prisma.slug.findFirst({
@@ -158,7 +155,8 @@ export class EventsService {
           });
         }
 
-        const eventTranslation = event.translations.find((t) => t.lang === site.lang) ||
+        const eventTranslation =
+          event.translations.find((t) => t.lang === site.lang) ||
           event.translations.find((t) => t.lang === "hu");
 
         const categoryName = event.category?.translations
@@ -187,7 +185,7 @@ export class EventsService {
             },
             select: { slug: true },
           });
-          
+
           // Fallback to Hungarian if not found
           if (!placeSlugRecord && site.lang !== Lang.hu) {
             placeSlugRecord = await this.prisma.slug.findFirst({
@@ -202,10 +200,11 @@ export class EventsService {
               select: { slug: true },
             });
           }
-          
+
           placeSlug = placeSlugRecord?.slug ?? null;
 
-          const placeTranslation = event.place?.translations.find((t) => t.lang === site.lang) ||
+          const placeTranslation =
+            event.place?.translations.find((t) => t.lang === site.lang) ||
             event.place?.translations.find((t) => t.lang === "hu");
           placeName = placeTranslation?.name ?? null;
         }
@@ -343,14 +342,18 @@ export class EventsService {
     const canonicalSlug = canonicalSlugRecord?.slug ?? args.eventId;
 
     // Helper function to get translation with fallback
-    const getTranslation = (translations: Array<{ lang: Lang; [key: string]: any }>, field: string) => {
+    const getTranslation = (
+      translations: Array<{ lang: Lang; [key: string]: any }>,
+      field: string
+    ) => {
       const requested = translations.find((t) => t.lang === site.lang);
       const hungarian = translations.find((t) => t.lang === "hu");
       const translation = requested || hungarian;
       return translation?.[field] ?? null;
     };
 
-    const eventTranslation = event.translations.find((t) => t.lang === site.lang) ||
+    const eventTranslation =
+      event.translations.find((t) => t.lang === site.lang) ||
       event.translations.find((t) => t.lang === "hu");
 
     const categoryName = event.category?.translations
@@ -381,7 +384,8 @@ export class EventsService {
       });
       placeSlug = placeSlugRecord?.slug ?? null;
 
-      const placeTranslation = event.place?.translations.find((t) => t.lang === site.lang) ||
+      const placeTranslation =
+        event.place?.translations.find((t) => t.lang === site.lang) ||
         event.place?.translations.find((t) => t.lang === "hu");
       placeName = placeTranslation?.name ?? null;
     }
@@ -416,4 +420,3 @@ export class EventsService {
     };
   }
 }
-

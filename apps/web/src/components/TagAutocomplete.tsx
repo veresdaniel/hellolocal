@@ -15,7 +15,12 @@ interface TagAutocompleteProps {
   placeholder?: string;
 }
 
-export function TagAutocomplete({ tags, selectedTagIds, onChange, placeholder = "Add tags..." }: TagAutocompleteProps) {
+export function TagAutocomplete({
+  tags,
+  selectedTagIds,
+  onChange,
+  placeholder = "Add tags...",
+}: TagAutocompleteProps) {
   const { t } = useTranslation();
 
   const getTagName = (tag: Tag) => {

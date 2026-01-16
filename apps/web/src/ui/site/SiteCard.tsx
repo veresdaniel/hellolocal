@@ -25,7 +25,10 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
   });
 
   // Determine which image to use: site image or default placeholder
-  const imageUrl = sanitizeImageUrl(site.heroImage) || sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) || null;
+  const imageUrl =
+    sanitizeImageUrl(site.heroImage) ||
+    sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) ||
+    null;
 
   // Default gradient colors for site cards
   const gradients = [
@@ -259,4 +262,3 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
     </div>
   );
 }
-

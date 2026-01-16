@@ -58,7 +58,7 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
 
           const now = Date.now();
           const elapsed = now - lastUpdateTimeRef.current;
-          
+
           // Update every second when tab is visible
           if (elapsed >= TIMING.UI_UPDATE_INTERVAL_MS) {
             lastUpdateTimeRef.current = now;
@@ -93,7 +93,7 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
     intervalRef.current = window.setInterval(() => {
       const now = Date.now();
       const elapsed = now - lastUpdateTimeRef.current;
-      
+
       // Update every second
       if (elapsed >= 1000) {
         lastUpdateTimeRef.current = now;
@@ -123,7 +123,7 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
       const data = await refreshToken({ refreshToken: refreshTokenValue });
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      
+
       onExtend();
     } catch (error) {
       console.error("[SessionExpirationModal] Failed to extend session", error);
@@ -138,9 +138,9 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    
+
     if (minutes > 0) {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+      return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
     }
     return `${remainingSeconds}s`;
   };
@@ -190,7 +190,7 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
           }
         }
       `}</style>
-      
+
       <div
         style={{
           background: "white",
@@ -207,53 +207,64 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: "flex", alignItems: "flex-start", gap: "clamp(12px, 3vw, 16px)" }}>
-          <div style={{ 
-            fontSize: "clamp(32px, 8vw, 40px)",
-            lineHeight: 1,
-            flexShrink: 0,
-          }}>
+          <div
+            style={{
+              fontSize: "clamp(32px, 8vw, 40px)",
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
             ⏰
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ 
-              margin: 0,
-              marginBottom: "clamp(8px, 2vw, 12px)",
-              fontSize: "clamp(18px, 4.5vw, 24px)",
-              fontWeight: 700,
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "#1a1a1a",
-              lineHeight: 1.3,
-            }}>
+            <h2
+              style={{
+                margin: 0,
+                marginBottom: "clamp(8px, 2vw, 12px)",
+                fontSize: "clamp(18px, 4.5vw, 24px)",
+                fontWeight: 700,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                color: "#1a1a1a",
+                lineHeight: 1.3,
+              }}
+            >
               {t("admin.sessionExpiringSoon")}
             </h2>
-            <p style={{ 
-              margin: 0,
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              color: "#666",
-              lineHeight: 1.5,
-              marginBottom: "clamp(12px, 3vw, 16px)",
-            }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                color: "#666",
+                lineHeight: 1.5,
+                marginBottom: "clamp(12px, 3vw, 16px)",
+              }}
+            >
               {t("admin.sessionExpiringWarning")}
             </p>
             {timeRemaining !== null && (
-              <div style={{ 
-                fontSize: "clamp(16px, 4vw, 20px)",
-                fontWeight: 600,
-                color: "#d97706",
-                marginTop: "clamp(8px, 2vw, 12px)",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(16px, 4vw, 20px)",
+                  fontWeight: 600,
+                  color: "#d97706",
+                  marginTop: "clamp(8px, 2vw, 12px)",
+                }}
+              >
                 {t("admin.sessionTimeRemaining", { time: formatTime(timeRemaining) })}
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ 
-          display: "flex", 
-          gap: "clamp(12px, 3vw, 16px)",
-          flexWrap: "wrap",
-          marginTop: "clamp(8px, 2vw, 12px)",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "clamp(12px, 3vw, 16px)",
+            flexWrap: "wrap",
+            marginTop: "clamp(8px, 2vw, 12px)",
+          }}
+        >
           <button
             onClick={handleExtend}
             disabled={isExtending}
@@ -261,22 +272,19 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
               flex: 1,
               minWidth: "clamp(140px, 35vw, 200px)",
               padding: "clamp(12px, 3vw, 16px) clamp(20px, 5vw, 24px)",
-              background: isExtending 
-                ? "#e5e7eb" 
+              background: isExtending
+                ? "#e5e7eb"
                 : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: isExtending 
-                ? "#9ca3af" 
-                : "white",
+              color: isExtending ? "#9ca3af" : "white",
               border: "none",
               borderRadius: "clamp(8px, 2vw, 12px)",
               fontSize: "clamp(14px, 3.5vw, 16px)",
               fontWeight: 600,
               cursor: isExtending ? "not-allowed" : "pointer",
               transition: "all 0.2s ease",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              boxShadow: isExtending 
-                ? "none" 
-                : "0 4px 12px rgba(102, 126, 234, 0.4)",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              boxShadow: isExtending ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
             }}
             onMouseEnter={(e) => {
               if (!isExtending) {

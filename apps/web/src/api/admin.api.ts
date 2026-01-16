@@ -94,7 +94,10 @@ export function getCategories(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<{ categories: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/categories${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{
+    categories: any[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>(`/admin/categories${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getCategory(id: string) {
@@ -115,7 +118,10 @@ export function deleteCategory(id: string, siteId?: string) {
   return apiDelete<{ message: string }>(`/admin/categories/${id}${params}`);
 }
 
-export function reorderCategories(siteId: string, updates: Array<{ id: string; parentId: string | null; order: number }>) {
+export function reorderCategories(
+  siteId: string,
+  updates: Array<{ id: string; parentId: string | null; order: number }>
+) {
   return apiPut<{ message: string }>("/admin/categories/reorder", { siteId, updates });
 }
 
@@ -126,7 +132,13 @@ export function getTags(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<any[] | { tags: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/tags${queryString ? `?${queryString}` : ""}`);
+  return apiGet<
+    | any[]
+    | {
+        tags: any[];
+        pagination: { page: number; limit: number; total: number; totalPages: number };
+      }
+  >(`/admin/tags${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getTag(id: string) {
@@ -154,7 +166,13 @@ export function getPriceBands(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<any[] | { priceBands: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/price-bands${queryString ? `?${queryString}` : ""}`);
+  return apiGet<
+    | any[]
+    | {
+        priceBands: any[];
+        pagination: { page: number; limit: number; total: number; totalPages: number };
+      }
+  >(`/admin/price-bands${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getPriceBand(id: string) {
@@ -182,7 +200,13 @@ export function getTowns(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<any[] | { towns: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/towns${queryString ? `?${queryString}` : ""}`);
+  return apiGet<
+    | any[]
+    | {
+        towns: any[];
+        pagination: { page: number; limit: number; total: number; totalPages: number };
+      }
+  >(`/admin/towns${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getTown(id: string, tenantId?: string) {
@@ -211,7 +235,13 @@ export function getPlaces(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<any[] | { places: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/places${queryString ? `?${queryString}` : ""}`);
+  return apiGet<
+    | any[]
+    | {
+        places: any[];
+        pagination: { page: number; limit: number; total: number; totalPages: number };
+      }
+  >(`/admin/places${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getPlace(id: string, siteId?: string) {
@@ -282,7 +312,10 @@ export function getLegalPages(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<{ legalPages: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/legal-pages${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{
+    legalPages: any[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>(`/admin/legal-pages${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getLegalPage(id: string, tenantId?: string) {
@@ -310,14 +343,22 @@ export function deleteLegalPage(id: string, siteId?: string) {
 }
 
 // Static Pages
-export function getStaticPages(tenantId?: string, category?: string, page?: number, limit?: number) {
+export function getStaticPages(
+  tenantId?: string,
+  category?: string,
+  page?: number,
+  limit?: number
+) {
   const params = new URLSearchParams();
   if (tenantId) params.append("tenantId", tenantId);
   if (category) params.append("category", category);
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<{ staticPages: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/static-pages${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{
+    staticPages: any[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>(`/admin/static-pages${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getStaticPage(id: string, siteId?: string) {
@@ -382,7 +423,9 @@ export function getDefaultLanguage() {
 }
 
 export function setDefaultLanguage(language: "hu" | "en" | "de") {
-  return apiPut<{ defaultLanguage: "hu" | "en" | "de" }>("/admin/app-settings/default-language", { language });
+  return apiPut<{ defaultLanguage: "hu" | "en" | "de" }>("/admin/app-settings/default-language", {
+    language,
+  });
 }
 
 export function getGlobalCrawlability() {
@@ -390,7 +433,9 @@ export function getGlobalCrawlability() {
 }
 
 export function setGlobalCrawlability(isCrawlable: boolean) {
-  return apiPut<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability", { isCrawlable });
+  return apiPut<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability", {
+    isCrawlable,
+  });
 }
 
 // Brands (admin only)
@@ -804,7 +849,9 @@ export function getPlaceMemberships(placeId?: string, userId?: string) {
   if (placeId) params.append("placeId", placeId);
   if (userId) params.append("userId", userId);
   const queryString = params.toString();
-  return apiGet<PlaceMembership[]>(`/admin/place-memberships${queryString ? `?${queryString}` : ""}`);
+  return apiGet<PlaceMembership[]>(
+    `/admin/place-memberships${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getMyPlaces(siteId?: string) {
@@ -1060,7 +1107,7 @@ export function getFeatureMatrix() {
   return apiGet<FeatureMatrix>("/admin/platform-settings/feature-matrix");
 }
 
-export function setFeatureMatrix(data: { 
+export function setFeatureMatrix(data: {
   planOverrides?: FeatureMatrix["planOverrides"];
   placePlanOverrides?: FeatureMatrix["placePlanOverrides"];
 }) {
@@ -1177,7 +1224,10 @@ export function getEvents(siteId?: string, page?: number, limit?: number) {
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<{ events: Event[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/events${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{
+    events: Event[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>(`/admin/events${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getEvent(id: string) {
@@ -1260,16 +1310,16 @@ export function getEventLogs(filters: EventLogFilterDto) {
   if (filters.endDate) params.append("endDate", filters.endDate);
   if (filters.page) params.append("page", filters.page.toString());
   if (filters.limit) params.append("limit", filters.limit.toString());
-  
+
   // Add cache-busting timestamp to ensure fresh data
   // Always use current timestamp for maximum freshness
   params.append("_t", Date.now().toString());
-  
+
   // Also add _refresh if present (for post-delete refresh)
   if ((filters as any)._refresh) {
     params.append("_refresh", (filters as any)._refresh.toString());
   }
-  
+
   const queryString = params.toString();
   return apiGet<EventLogResponse>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
 }
@@ -1286,14 +1336,17 @@ export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
   if (filters.entityType) params.append("entityType", filters.entityType);
   if (filters.startDate) params.append("startDate", filters.startDate);
   if (filters.endDate) params.append("endDate", filters.endDate);
-  
+
   const queryString = params.toString();
-  return fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/event-logs/export${queryString ? `?${queryString}` : ""}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-    },
-  }).then((res) => {
+  return fetch(
+    `${import.meta.env.VITE_API_URL || ""}/api/admin/event-logs/export${queryString ? `?${queryString}` : ""}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    }
+  ).then((res) => {
     if (!res.ok) throw new Error("Export failed");
     return res.blob();
   });
@@ -1311,7 +1364,9 @@ export function deleteEventLogs(filters: EventLogFilterDto) {
   // Explicitly exclude page and limit - we want to delete ALL matching records
 
   const queryString = params.toString();
-  return apiDelete<{ message: string; count: number }>(`/admin/event-logs${queryString ? `?${queryString}` : ""}`);
+  return apiDelete<{ message: string; count: number }>(
+    `/admin/event-logs${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 // ==================== Billing ====================
@@ -1389,7 +1444,10 @@ export function getPlaceSubscription(placeId: string) {
   return apiGet<PlaceSubscription>(`/admin/billing/places/${placeId}/subscription`);
 }
 
-export function updatePlaceSubscription(placeId: string, data: Partial<Omit<PlaceSubscription, "placeId">>) {
+export function updatePlaceSubscription(
+  placeId: string,
+  data: Partial<Omit<PlaceSubscription, "placeId">>
+) {
   return apiPut<PlaceSubscription>(`/admin/billing/places/${placeId}/subscription`, data);
 }
 
@@ -1400,7 +1458,12 @@ export function getPlaceEntitlements(placeId: string) {
 export type FeatureGate =
   | { state: "enabled" }
   | { state: "locked"; reason: string; upgradeCta: "viewPlans" | "contactAdmin" }
-  | { state: "limit_reached"; reason: string; upgradeCta: "upgradePlan"; alternativeCta?: "manageExisting" };
+  | {
+      state: "limit_reached";
+      reason: string;
+      upgradeCta: "upgradePlan";
+      alternativeCta?: "manageExisting";
+    };
 
 export type PlaceUpsellState = {
   featured: FeatureGate;
@@ -1418,7 +1481,10 @@ export function getSiteSubscription(siteId: string) {
   return apiGet<SiteSubscription>(`/admin/billing/sites/${siteId}/subscription`);
 }
 
-export function updateSiteSubscription(siteId: string, data: Partial<Omit<SiteSubscription, "siteId">>) {
+export function updateSiteSubscription(
+  siteId: string,
+  data: Partial<Omit<SiteSubscription, "siteId">>
+) {
   return apiPut<SiteSubscription>(`/admin/billing/sites/${siteId}/subscription`, data);
 }
 
@@ -1484,11 +1550,14 @@ export function getSubscriptions(params?: {
   if (params?.status) queryParams.append("status", params.status);
   if (params?.plan) queryParams.append("plan", params.plan);
   if (params?.q) queryParams.append("q", params.q);
-  if (params?.expiresWithinDays !== undefined) queryParams.append("expiresWithinDays", String(params.expiresWithinDays));
+  if (params?.expiresWithinDays !== undefined)
+    queryParams.append("expiresWithinDays", String(params.expiresWithinDays));
   if (params?.take !== undefined) queryParams.append("take", String(params.take));
   if (params?.skip !== undefined) queryParams.append("skip", String(params.skip));
   const queryString = queryParams.toString();
-  return apiGet<{ items: SubscriptionListItem[]; total: number }>(`/admin/subscriptions${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{ items: SubscriptionListItem[]; total: number }>(
+    `/admin/subscriptions${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getExpiringSubscriptions(params?: {
@@ -1499,7 +1568,9 @@ export function getExpiringSubscriptions(params?: {
   if (params?.scope) queryParams.append("scope", params.scope);
   if (params?.withinDays !== undefined) queryParams.append("withinDays", String(params.withinDays));
   const queryString = queryParams.toString();
-  return apiGet<SubscriptionListItem[]>(`/admin/subscriptions/expiring${queryString ? `?${queryString}` : ""}`);
+  return apiGet<SubscriptionListItem[]>(
+    `/admin/subscriptions/expiring${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getSubscriptionSummary(params?: {
@@ -1510,7 +1581,9 @@ export function getSubscriptionSummary(params?: {
   if (params?.scope) queryParams.append("scope", params.scope);
   if (params?.rangeDays !== undefined) queryParams.append("rangeDays", String(params.rangeDays));
   const queryString = queryParams.toString();
-  return apiGet<SubscriptionSummary>(`/admin/subscriptions/summary${queryString ? `?${queryString}` : ""}`);
+  return apiGet<SubscriptionSummary>(
+    `/admin/subscriptions/summary${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getSubscriptionTrends(params?: {
@@ -1521,10 +1594,16 @@ export function getSubscriptionTrends(params?: {
   if (params?.scope) queryParams.append("scope", params.scope);
   if (params?.weeks !== undefined) queryParams.append("weeks", String(params.weeks));
   const queryString = queryParams.toString();
-  return apiGet<{ points: TrendPoint[] }>(`/admin/subscriptions/trends${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{ points: TrendPoint[] }>(
+    `/admin/subscriptions/trends${queryString ? `?${queryString}` : ""}`
+  );
 }
 
-export function updateSubscription(scope: "site" | "place", id: string, data: UpdateSubscriptionDto) {
+export function updateSubscription(
+  scope: "site" | "place",
+  id: string,
+  data: UpdateSubscriptionDto
+) {
   return apiPut<any>(`/admin/subscriptions/${scope}/${id}`, data);
 }
 
@@ -1532,7 +1611,11 @@ export function extendSubscription(scope: "site" | "place", id: string) {
   return apiPost<any>(`/admin/subscriptions/${scope}/${id}/extend`, {});
 }
 
-export function cancelSubscription(scope: "site" | "place", subscriptionId: string, entityId: string) {
+export function cancelSubscription(
+  scope: "site" | "place",
+  subscriptionId: string,
+  entityId: string
+) {
   // Get language from localStorage or default to "hu"
   const lang = (() => {
     const stored = localStorage.getItem("i18nextLng");
@@ -1541,15 +1624,22 @@ export function cancelSubscription(scope: "site" | "place", subscriptionId: stri
     }
     return "hu";
   })();
-  
+
   if (scope === "site") {
     return apiPost<any>(`/api/${lang}/sites/${entityId}/subscription/${subscriptionId}/cancel`, {});
   } else {
-    return apiPost<any>(`/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/cancel`, {});
+    return apiPost<any>(
+      `/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/cancel`,
+      {}
+    );
   }
 }
 
-export function resumeSubscription(scope: "site" | "place", subscriptionId: string, entityId: string) {
+export function resumeSubscription(
+  scope: "site" | "place",
+  subscriptionId: string,
+  entityId: string
+) {
   // Get language from localStorage or default to "hu"
   const lang = (() => {
     const stored = localStorage.getItem("i18nextLng");
@@ -1558,11 +1648,14 @@ export function resumeSubscription(scope: "site" | "place", subscriptionId: stri
     }
     return "hu";
   })();
-  
+
   if (scope === "site") {
     return apiPost<any>(`/api/${lang}/sites/${entityId}/subscription/${subscriptionId}/resume`, {});
   } else {
-    return apiPost<any>(`/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/resume`, {});
+    return apiPost<any>(
+      `/api/${lang}/sites/places/${entityId}/subscription/${subscriptionId}/resume`,
+      {}
+    );
   }
 }
 
@@ -1586,9 +1679,9 @@ export interface SubscriptionHistoryItem {
 }
 
 export function getSubscriptionHistory(
-  scope: "site" | "place", 
-  id: string, 
-  skip?: number, 
+  scope: "site" | "place",
+  id: string,
+  skip?: number,
   take?: number
 ) {
   const params = new URLSearchParams();
@@ -1649,7 +1742,13 @@ export interface UpdateGalleryDto {
   isActive?: boolean;
 }
 
-export function getGalleries(siteId?: string, placeId?: string, eventId?: string, page?: number, limit?: number) {
+export function getGalleries(
+  siteId?: string,
+  placeId?: string,
+  eventId?: string,
+  page?: number,
+  limit?: number
+) {
   const params = new URLSearchParams();
   if (siteId) params.append("siteId", siteId);
   if (placeId) params.append("placeId", placeId);
@@ -1657,7 +1756,10 @@ export function getGalleries(siteId?: string, placeId?: string, eventId?: string
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
-  return apiGet<{ galleries: Gallery[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/galleries${queryString ? `?${queryString}` : ""}`);
+  return apiGet<{
+    galleries: Gallery[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>(`/admin/galleries${queryString ? `?${queryString}` : ""}`);
 }
 
 export function getGallery(id: string, siteId?: string) {
@@ -1877,7 +1979,10 @@ export function deleteCollection(id: string) {
   return apiDelete<{ success: boolean }>(`/admin/collections/${id}`);
 }
 
-export function addCollectionItem(collectionId: string, data: Omit<CreateCollectionItemDto, "collectionId">) {
+export function addCollectionItem(
+  collectionId: string,
+  data: Omit<CreateCollectionItemDto, "collectionId">
+) {
   return apiPost<Collection["items"][0]>(`/admin/collections/${collectionId}/items`, data);
 }
 
@@ -1949,7 +2054,9 @@ export interface UpdateFeatureSubscriptionDto {
 }
 
 export function getFloorplanEntitlement(placeId: string, siteId: string) {
-  return apiGet<FloorplanEntitlement>(`/admin/places/${placeId}/floorplan-entitlement?siteId=${siteId}`);
+  return apiGet<FloorplanEntitlement>(
+    `/admin/places/${placeId}/floorplan-entitlement?siteId=${siteId}`
+  );
 }
 
 export function createFeatureSubscription(data: CreateFeatureSubscriptionDto) {
@@ -2003,7 +2110,7 @@ export function getAllFeatureSubscriptions(params?: {
   if (params?.q) queryParams.append("q", params.q);
   if (params?.take) queryParams.append("take", params.take.toString());
   if (params?.skip) queryParams.append("skip", params.skip.toString());
-  
+
   const query = queryParams.toString();
   return apiGet<{ items: FeatureSubscription[]; total: number }>(
     `/admin/feature-subscriptions${query ? `?${query}` : ""}`

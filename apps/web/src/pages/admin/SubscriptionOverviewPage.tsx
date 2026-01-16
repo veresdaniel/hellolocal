@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { getSites, getSiteSubscription, getSiteEntitlements, type Site, type SiteEntitlements } from "../../api/admin.api";
+import {
+  getSites,
+  getSiteSubscription,
+  getSiteEntitlements,
+  type Site,
+  type SiteEntitlements,
+} from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { useToast } from "../../contexts/ToastContext";
@@ -38,7 +44,7 @@ export function SubscriptionOverviewPage() {
     setError(null);
     try {
       const sitesData = await getSites();
-      
+
       // Load subscription and entitlements for each site
       const sitesWithData = await Promise.all(
         sitesData.map(async (site) => {
@@ -105,11 +111,21 @@ export function SubscriptionOverviewPage() {
     <div style={{ padding: "clamp(24px, 5vw, 32px)" }}>
       <AdminPageHeader
         title={t("admin.subscriptionOverview") || "Előfizetések áttekintése"}
-        subtitle={t("admin.subscriptionOverviewSubtitle") || "Site-ok előfizetései és használati adatai"}
+        subtitle={
+          t("admin.subscriptionOverviewSubtitle") || "Site-ok előfizetései és használati adatai"
+        }
       />
 
       {error && (
-        <div style={{ padding: 16, background: "#fef2f2", color: "#dc2626", borderRadius: 8, marginBottom: 24 }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#fef2f2",
+            color: "#dc2626",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {error}
         </div>
       )}
@@ -132,23 +148,38 @@ export function SubscriptionOverviewPage() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: 16,
+                }}
+              >
                 <div>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: "clamp(16px, 3.5vw, 18px)", 
-                    fontWeight: 600, 
-                    color: "#333",
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: "clamp(16px, 3.5vw, 18px)",
+                      fontWeight: 600,
+                      color: "#333",
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {translation?.name || site.slug}
                   </h3>
-                  <div style={{ 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    color: "#666", 
-                    marginTop: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>{site.slug}</div>
+                  <div
+                    style={{
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      color: "#666",
+                      marginTop: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {site.slug}
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -160,7 +191,8 @@ export function SubscriptionOverviewPage() {
                     border: "none",
                     borderRadius: 6,
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
@@ -169,16 +201,25 @@ export function SubscriptionOverviewPage() {
                 </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 16,
+                }}
+              >
                 {/* Plan */}
                 {site.subscription && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.plan") || "Csomag"}
                     </div>
                     <div
@@ -189,7 +230,8 @@ export function SubscriptionOverviewPage() {
                         color: "white",
                         borderRadius: 4,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                       }}
                     >
@@ -201,12 +243,15 @@ export function SubscriptionOverviewPage() {
                 {/* Status */}
                 {site.subscription && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.status") || "Státusz"}
                     </div>
                     <div
@@ -217,7 +262,8 @@ export function SubscriptionOverviewPage() {
                         color: "white",
                         borderRadius: 4,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                       }}
                     >
@@ -229,19 +275,25 @@ export function SubscriptionOverviewPage() {
                 {/* Valid Until */}
                 {site.subscription?.validUntil && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.validUntil") || "Érvényes"}
                     </div>
-                    <div style={{ 
-                      fontSize: "clamp(14px, 3.5vw, 16px)", 
-                      color: "#333",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "#333",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {new Date(site.subscription.validUntil).toLocaleDateString()}
                     </div>
                   </div>
@@ -250,20 +302,29 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Places */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.places") || "Helyek"}
                     </div>
-                    <div style={{ 
-                      fontSize: "clamp(14px, 3.5vw, 16px)", 
-                      color: "#333",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {site.entitlements.currentUsage.places} / {site.entitlements.limits.places === Infinity ? "∞" : site.entitlements.limits.places}
+                    <div
+                      style={{
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "#333",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {site.entitlements.currentUsage.places} /{" "}
+                      {site.entitlements.limits.places === Infinity
+                        ? "∞"
+                        : site.entitlements.limits.places}
                     </div>
                   </div>
                 )}
@@ -271,20 +332,29 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Featured */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.featured") || "Kiemelt"}
                     </div>
-                    <div style={{ 
-                      fontSize: "clamp(14px, 3.5vw, 16px)", 
-                      color: "#333",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {site.entitlements.currentUsage.featuredPlaces} / {site.entitlements.limits.featuredSlots === Infinity ? "∞" : site.entitlements.limits.featuredSlots}
+                    <div
+                      style={{
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "#333",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {site.entitlements.currentUsage.featuredPlaces} /{" "}
+                      {site.entitlements.limits.featuredSlots === Infinity
+                        ? "∞"
+                        : site.entitlements.limits.featuredSlots}
                     </div>
                   </div>
                 )}
@@ -292,35 +362,47 @@ export function SubscriptionOverviewPage() {
                 {/* Usage: Events */}
                 {site.entitlements && (
                   <div>
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginBottom: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.events") || "Események"}
                     </div>
-                    <div style={{ 
-                      fontSize: "clamp(14px, 3.5vw, 16px)", 
-                      color: "#333",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {site.entitlements.currentUsage.events} / {site.entitlements.limits.events === Infinity ? "∞" : site.entitlements.limits.events}
+                    <div
+                      style={{
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        color: "#333",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {site.entitlements.currentUsage.events} /{" "}
+                      {site.entitlements.limits.events === Infinity
+                        ? "∞"
+                        : site.entitlements.limits.events}
                     </div>
                   </div>
                 )}
               </div>
 
               {site.subscription?.note && (
-                <div style={{ 
-                  marginTop: 12, 
-                  padding: 8, 
-                  background: "#f8f9fa", 
-                  borderRadius: 6, 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  color: "#666",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: 8,
+                    background: "#f8f9fa",
+                    borderRadius: 6,
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   <strong>{t("admin.note") || "Megjegyzés"}:</strong> {site.subscription.note}
                 </div>
               )}

@@ -9,7 +9,7 @@ export function isValidImageUrl(url: string | null | undefined): boolean {
 
   try {
     const parsedUrl = new URL(url);
-    
+
     // Only allow http and https protocols
     const allowedProtocols = ["http:", "https:"];
     if (!allowedProtocols.includes(parsedUrl.protocol)) {
@@ -38,4 +38,3 @@ export function sanitizeImageUrl(url: string | null | undefined): string | null 
 
   return url.trim();
 }
-

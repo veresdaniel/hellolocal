@@ -24,14 +24,17 @@ export class NotificationsService {
   /**
    * Subscribe a user to push notifications
    */
-  async subscribe(siteId: string, subscription: {
-    endpoint: string;
-    keys: {
-      p256dh: string;
-      auth: string;
-    };
-    userAgent?: string;
-  }) {
+  async subscribe(
+    siteId: string,
+    subscription: {
+      endpoint: string;
+      keys: {
+        p256dh: string;
+        auth: string;
+      };
+      userAgent?: string;
+    }
+  ) {
     try {
       // Upsert subscription (update if exists, create if not)
       return await this.prisma.pushSubscription.upsert({
@@ -66,7 +69,7 @@ export class NotificationsService {
       const subscription = await this.prisma.pushSubscription.findFirst({
         where: { endpoint, isActive: true },
       });
-      
+
       if (subscription) {
         await this.prisma.pushSubscription.update({
           where: { id: subscription.id },
@@ -82,12 +85,15 @@ export class NotificationsService {
   /**
    * Send notification to all subscribers of a site
    */
-  async sendToSite(siteId: string, notification: {
-    title: string;
-    body: string;
-    icon?: string;
-    data?: any;
-  }) {
+  async sendToSite(
+    siteId: string,
+    notification: {
+      title: string;
+      body: string;
+      icon?: string;
+      data?: any;
+    }
+  ) {
     try {
       const subscriptions = await this.prisma.pushSubscription.findMany({
         where: {
@@ -187,7 +193,9 @@ export class NotificationsService {
     try {
       const now = new Date();
       const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-      const twoHoursAndFifteenFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000 + 15 * 60 * 1000);
+      const twoHoursAndFifteenFromNow = new Date(
+        now.getTime() + 2 * 60 * 60 * 1000 + 15 * 60 * 1000
+      );
 
       // Find events starting in 2 hours (within a 15-minute window)
       const upcomingEvents = await this.prisma.event.findMany({
@@ -207,7 +215,8 @@ export class NotificationsService {
 
       for (const event of upcomingEvents) {
         // Use Hungarian translation by default, or first available
-        const translation = event.translations.find((t) => t.lang === "hu") || event.translations[0];
+        const translation =
+          event.translations.find((t) => t.lang === "hu") || event.translations[0];
         if (!translation) {
           this.logger.warn(`No translation found for event ${event.id}`);
           continue;
@@ -230,4 +239,3 @@ export class NotificationsService {
     }
   }
 }
-

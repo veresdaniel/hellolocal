@@ -15,7 +15,7 @@ export function LanguageSelector() {
   const handleLanguageChange = (lang: "hu" | "en" | "de") => {
     i18n.changeLanguage(lang);
     localStorage.setItem("i18nextLng", lang);
-    
+
     // If we're on a public page (has lang in URL), navigate to new language URL
     if (!isAdminPage && currentLang) {
       const currentPath = location.pathname;
@@ -29,7 +29,7 @@ export function LanguageSelector() {
         navigate(basePath + location.search, { replace: true });
       }
     }
-    
+
     // Admin pages: replace language in URL
     if (isAdminPage && currentLang) {
       const currentPath = location.pathname;
@@ -79,4 +79,3 @@ export function LanguageSelector() {
     </select>
   );
 }
-

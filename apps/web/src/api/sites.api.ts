@@ -7,6 +7,9 @@ export interface ActivateFreeSiteResponse {
   message: string;
 }
 
-export function activateFreeSite(lang: string, siteKey?: string): Promise<ActivateFreeSiteResponse> {
+export function activateFreeSite(
+  lang: string,
+  siteKey?: string
+): Promise<ActivateFreeSiteResponse> {
   return apiPost<ActivateFreeSiteResponse>(`/${lang}/sites/activate-free`, { siteKey });
 }

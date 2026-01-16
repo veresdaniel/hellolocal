@@ -52,15 +52,18 @@ export function ConfirmationModalProvider({ children }: { children: ReactNode })
     }
   }, [resolver]);
 
-  const handleButtonClick = useCallback(async (button: ConfirmationButton) => {
-    try {
-      await button.onClick();
-      handleClose();
-    } catch (error) {
-      // If button onClick throws, don't close modal
-      console.error("Error in confirmation button action:", error);
-    }
-  }, [handleClose]);
+  const handleButtonClick = useCallback(
+    async (button: ConfirmationButton) => {
+      try {
+        await button.onClick();
+        handleClose();
+      } catch (error) {
+        // If button onClick throws, don't close modal
+        console.error("Error in confirmation button action:", error);
+      }
+    },
+    [handleClose]
+  );
 
   return (
     <ConfirmationModalContext.Provider value={{ showConfirmation }}>

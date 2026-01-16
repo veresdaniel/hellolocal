@@ -108,13 +108,18 @@ export function FloorplanImageViewer({
         const containerHeight = container.clientHeight;
         const imgNaturalWidth = img.naturalWidth;
         const imgNaturalHeight = img.naturalHeight;
-        
-        if (containerWidth > 0 && containerHeight > 0 && imgNaturalWidth > 0 && imgNaturalHeight > 0) {
+
+        if (
+          containerWidth > 0 &&
+          containerHeight > 0 &&
+          imgNaturalWidth > 0 &&
+          imgNaturalHeight > 0
+        ) {
           // Calculate scale to fit container (cover mode - minimum fills container)
           const scaleX = containerWidth / imgNaturalWidth;
           const scaleY = containerHeight / imgNaturalHeight;
           const initialScale = Math.max(scaleX, scaleY);
-          
+
           // Set minimum scale to fit container width (at least fill width)
           setMinScale(scaleX);
           setScale(initialScale);
@@ -150,7 +155,7 @@ export function FloorplanImageViewer({
         width: "100%",
         minHeight: isMobile ? "300px" : "400px",
         height: isMobile ? "300px" : "400px",
-        cursor: isPanning ? "grabbing" : (scale > minScale && isSpacePressed ? "grab" : "default"),
+        cursor: isPanning ? "grabbing" : scale > minScale && isSpacePressed ? "grab" : "default",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -161,12 +166,18 @@ export function FloorplanImageViewer({
       onMouseDown={(e) => {
         // Don't allow panning if clicking on the zoom slider area
         const target = e.target as HTMLElement;
-        const isSliderArea = target.closest('input[type="range"]') || 
-                             target.closest('button') ||
-                             target.closest('[style*="position: absolute"][style*="bottom"]');
-        
+        const isSliderArea =
+          target.closest('input[type="range"]') ||
+          target.closest("button") ||
+          target.closest('[style*="position: absolute"][style*="bottom"]');
+
         // Only allow panning when zoomed in (scale > minScale), space is pressed, and not on slider area
-        if (scale > minScale && isSpacePressed && (e.button === 0 || e.button === 1) && !isSliderArea) {
+        if (
+          scale > minScale &&
+          isSpacePressed &&
+          (e.button === 0 || e.button === 1) &&
+          !isSliderArea
+        ) {
           e.preventDefault();
           setIsPanning(true);
           setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -180,33 +191,33 @@ export function FloorplanImageViewer({
         }
         if (isPanning && scale > minScale && isSpacePressed) {
           e.preventDefault();
-          
+
           // Calculate new pan position
           let newPanX = e.clientX - panStart.x;
           let newPanY = e.clientY - panStart.y;
-          
+
           // Constrain pan to keep image within container bounds
           if (imageRef.current && containerRef.current) {
             const rect = imageRef.current.getBoundingClientRect();
             const containerWidth = containerRef.current.clientWidth;
             const containerHeight = containerRef.current.clientHeight;
-            
+
             // Calculate scaled image dimensions
             const scaledWidth = rect.width * scale;
             const scaledHeight = rect.height * scale;
-            
+
             // Calculate how much the image extends beyond container
             // When zoomed in, scaledWidth > containerWidth, so this is positive
             const overflowX = (scaledWidth - containerWidth) / 2;
             const overflowY = (scaledHeight - containerHeight) / 2;
-            
+
             // Constrain pan: can pan from -overflow to +overflow
             // Positive pan.x moves image right (shows left edge)
             // Negative pan.x moves image left (shows right edge)
             newPanX = Math.max(-overflowX, Math.min(overflowX, newPanX));
             newPanY = Math.max(-overflowY, Math.min(overflowY, newPanY));
           }
-          
+
           setPan({
             x: newPanX,
             y: newPanY,
@@ -275,10 +286,11 @@ export function FloorplanImageViewer({
         />
         {pins.map((pin) => {
           // Use dragged position if available for smooth dragging
-          const displayPin = isDragging && editingPin?.id === pin.id && draggedPinPosition 
-            ? { ...pin, x: draggedPinPosition.x, y: draggedPinPosition.y }
-            : pin;
-          
+          const displayPin =
+            isDragging && editingPin?.id === pin.id && draggedPinPosition
+              ? { ...pin, x: draggedPinPosition.x, y: draggedPinPosition.y }
+              : pin;
+
           return (
             <div
               key={pin.id}
@@ -294,10 +306,14 @@ export function FloorplanImageViewer({
                 pointerEvents: onPinClick || onPinDragStart ? "auto" : "auto",
               }}
               onMouseDown={onPinDragStart ? (e) => onPinDragStart(pin, e) : undefined}
-              onClick={onPinClick ? (e) => {
-                e.stopPropagation();
-                onPinClick(pin, e);
-              } : undefined}
+              onClick={
+                onPinClick
+                  ? (e) => {
+                      e.stopPropagation();
+                      onPinClick(pin, e);
+                    }
+                  : undefined
+              }
               title={pin.label || undefined}
             >
               <div
@@ -310,12 +326,20 @@ export function FloorplanImageViewer({
                   boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
                   transition: pinCursor === "pointer" ? "transform 0.2s" : "none",
                 }}
-                onMouseEnter={pinCursor === "pointer" ? (e) => {
-                  e.currentTarget.style.transform = "scale(1.5)";
-                } : undefined}
-                onMouseLeave={pinCursor === "pointer" ? (e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                } : undefined}
+                onMouseEnter={
+                  pinCursor === "pointer"
+                    ? (e) => {
+                        e.currentTarget.style.transform = "scale(1.5)";
+                      }
+                    : undefined
+                }
+                onMouseLeave={
+                  pinCursor === "pointer"
+                    ? (e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }
+                    : undefined
+                }
               />
               {pin.label && (
                 <div
@@ -331,7 +355,8 @@ export function FloorplanImageViewer({
                     whiteSpace: "nowrap",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                     pointerEvents: "none",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 400,
                   }}
                 >
@@ -342,7 +367,7 @@ export function FloorplanImageViewer({
           );
         })}
       </div>
-      
+
       {/* Zoom slider */}
       {showZoomSlider && !isMobile && (
         <div
@@ -388,13 +413,16 @@ export function FloorplanImageViewer({
             }}
             title={t("admin.floorplan.zoom") || "Nagyítás"}
           />
-          <span style={{
-            fontSize: 12,
-            color: "#666",
-            minWidth: 40,
-            textAlign: "center",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <span
+            style={{
+              fontSize: 12,
+              color: "#666",
+              minWidth: 40,
+              textAlign: "center",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {Math.round(Math.max(minScale * 100, scale * 100))}%
           </span>
         </div>

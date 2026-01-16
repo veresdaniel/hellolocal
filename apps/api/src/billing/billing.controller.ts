@@ -1,13 +1,5 @@
 // apps/api/src/billing/billing.controller.ts
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Body,
-  UseGuards,
-  ForbiddenException,
-} from "@nestjs/common";
+import { Controller, Get, Put, Param, Body, UseGuards, ForbiddenException } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -39,11 +31,7 @@ export class BillingController {
     // Superadmin and admin have access to all places
     if (user.role !== UserRole.superadmin && user.role !== UserRole.admin) {
       // Check if user has place permission (editor level is enough to view)
-      const hasPermission = await this.rbacService.hasPlacePermission(
-        user.id,
-        placeId,
-        "editor"
-      );
+      const hasPermission = await this.rbacService.hasPlacePermission(user.id, placeId, "editor");
       if (!hasPermission) {
         throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_PLACE_SUBSCRIPTION);
       }
@@ -80,11 +68,7 @@ export class BillingController {
     // Superadmin and admin have access to all places
     if (user.role !== UserRole.superadmin && user.role !== UserRole.admin) {
       // Check if user has place permission (editor level is enough to view)
-      const hasPermission = await this.rbacService.hasPlacePermission(
-        user.id,
-        placeId,
-        "editor"
-      );
+      const hasPermission = await this.rbacService.hasPlacePermission(user.id, placeId, "editor");
       if (!hasPermission) {
         throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_VIEW_PLACE_ENTITLEMENTS);
       }

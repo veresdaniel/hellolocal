@@ -73,7 +73,7 @@ export function formatEntityNameWithLanguages(
 
   const parts: string[] = [];
   const langPriority = [Lang.hu, Lang.en, Lang.de];
-  
+
   for (const lang of langPriority) {
     const translation = translations.find((t) => t.lang === lang);
     if (translation?.name) {
@@ -111,9 +111,9 @@ export function generateCreateDescription(
   } else {
     name = additionalInfo?.name || "Unknown";
   }
-  
+
   const parts = [`Created ${entityType} ${name}`];
-  
+
   if (additionalInfo) {
     const infoParts: string[] = [];
     if (additionalInfo.isActive !== undefined && entityType !== "user") {
@@ -180,7 +180,7 @@ export function generateUpdateDescription(
   } else {
     name = (newData || oldData)?.name || "Unknown";
   }
-  
+
   const changes: string[] = [];
 
   // Compare translations/names

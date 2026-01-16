@@ -6,21 +6,20 @@ import { DEFAULT_LANG, APP_LANGS, DEFAULT_BACKEND_URL, type Lang } from "../app/
  * Get API base URL from environment variable or use relative path for development
  * In production, set VITE_API_URL environment variable to the backend URL
  * Example: VITE_API_URL=https://hellolocal.onrender.com
- * 
+ *
  * IMPORTANT: On Render.com, this must be set as an environment variable
  * in the frontend service settings BEFORE building.
  */
 function getApiBaseUrl(): string {
   // In production, use environment variable if set
   const apiUrl = import.meta.env.VITE_API_URL;
-  
-  
+
   if (apiUrl) {
     // Remove trailing slash if present
     // Also remove /api suffix if present (apiPost will add it)
     return apiUrl.replace(/\/$/, "").replace(/\/api$/, "");
   }
-  
+
   // In development, use relative path (Vite proxy will handle it)
   // In production without VITE_API_URL, this will cause issues
   return "";
@@ -58,28 +57,28 @@ function getLanguageCode(): Lang {
 function redirectToLogin() {
   const currentPath = window.location.pathname;
   const lang = getLanguageCode();
-  
+
   // Only redirect if we're in admin area
-  const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
-  
+  const isInAdminArea = currentPath.includes("/admin") && !currentPath.includes("/admin/login");
+
   if (!isInAdminArea) {
     // Not in admin area, don't redirect to login
     return;
   }
-  
+
   if (currentPath.startsWith(`/${lang}/admin/login`)) {
     // Already on login page
     return;
   }
-  
+
   // Clear tokens and user data
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
-  
+
   // Set session expired flag
   sessionStorage.setItem("sessionExpired", "true");
-  
+
   // Redirect to login page
   window.location.href = `/${lang}/admin/login`;
 }
@@ -91,18 +90,21 @@ function redirectToLogin() {
 function isSessionLikelyExpired(): boolean {
   const accessToken = localStorage.getItem("accessToken");
   const refreshTokenValue = localStorage.getItem("refreshToken");
-  
+
   // If no tokens, session is expired
   if (!accessToken && !refreshTokenValue) {
     return true;
   }
-  
+
   // If both tokens are expired, session is expired
-  if (accessToken && isTokenExpired(accessToken) && 
-      (!refreshTokenValue || isTokenExpired(refreshTokenValue))) {
+  if (
+    accessToken &&
+    isTokenExpired(accessToken) &&
+    (!refreshTokenValue || isTokenExpired(refreshTokenValue))
+  ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -112,13 +114,13 @@ function isSessionLikelyExpired(): boolean {
  */
 function checkAndRedirectIfSessionExpired(): boolean {
   const currentPath = window.location.pathname;
-  const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
-  
+  const isInAdminArea = currentPath.includes("/admin") && !currentPath.includes("/admin/login");
+
   if (isInAdminArea && isSessionLikelyExpired()) {
     redirectToLogin();
     return true;
   }
-  
+
   return false;
 }
 
@@ -152,7 +154,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
-  
+
   // Add cache-busting headers and options for GET requests
   let res: Response;
   try {
@@ -163,8 +165,8 @@ export async function apiGet<T>(path: string): Promise<T> {
         Accept: "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (err) {
@@ -196,8 +198,8 @@ export async function apiGet<T>(path: string): Promise<T> {
                 Accept: "application/json",
                 Authorization: `Bearer ${data.accessToken}`,
                 "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
+                Pragma: "no-cache",
+                Expires: "0",
               },
             });
           } catch (err) {
@@ -238,7 +240,7 @@ export async function apiGet<T>(path: string): Promise<T> {
     }
     let errorMessage = `Request failed: ${res.status}`;
     const contentType = res.headers.get("content-type");
-    
+
     if (contentType && contentType.includes("application/json")) {
       try {
         const json = await res.json();
@@ -264,10 +266,10 @@ export async function apiGet<T>(path: string): Promise<T> {
         errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
     }
-    
+
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
-    
+
     throw new Error(errorMessage);
   }
 
@@ -302,10 +304,10 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
       path,
       fullUrl,
       error: err.message,
-      apiBaseUrl: apiBaseUrl || 'empty',
-      viteApiUrl: import.meta.env.VITE_API_URL || 'not set',
+      apiBaseUrl: apiBaseUrl || "empty",
+      viteApiUrl: import.meta.env.VITE_API_URL || "not set",
     });
-    
+
     const isDev = import.meta.env.DEV;
     const backendUrl = apiBaseUrl || DEFAULT_BACKEND_URL;
     const errorMessage = isDev
@@ -323,7 +325,7 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
       const text = await res.text().catch(() => "");
       errorMessage = text || errorMessage;
     }
-    
+
     console.error(`[apiGetPublic] Request failed:`, {
       path,
       fullUrl,
@@ -332,7 +334,7 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
       errorMessage,
       headers: Object.fromEntries(res.headers.entries()),
     });
-    
+
     const error = new Error(errorMessage) as Error & { status: number; response: Response };
     error.status = res.status;
     error.response = res;
@@ -371,7 +373,7 @@ export async function apiPostPublic<T>(path: string, data: unknown): Promise<T> 
   if (!res.ok) {
     let errorMessage = `Request failed: ${res.status}`;
     try {
-      const errorData = await res.json() as { message?: string; error?: string };
+      const errorData = (await res.json()) as { message?: string; error?: string };
       errorMessage = errorData.message || errorData.error || errorMessage;
     } catch {
       const text = await res.text().catch(() => "");
@@ -472,7 +474,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
     let errorMessage = `Request failed: ${res.status}`;
     let errorResponse: { message?: string } | null = null;
     const contentType = res.headers.get("content-type");
-    
+
     if (contentType && contentType.includes("application/json")) {
       try {
         const json = await res.json();
@@ -499,7 +501,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
         errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
     }
-    
+
     // For 500 errors in admin area, check if session might be expired
     // Sometimes backend returns 500 instead of 401 for session issues
     if (res.status === 500) {
@@ -507,11 +509,14 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
         throw new Error("Session expired. Please log in again.");
       }
     }
-    
+
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
-    
-    const error = new Error(errorMessage) as Error & { status?: number; response?: { message?: string } | null };
+
+    const error = new Error(errorMessage) as Error & {
+      status?: number;
+      response?: { message?: string } | null;
+    };
     error.status = res.status;
     error.response = errorResponse;
     throw error;
@@ -603,7 +608,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
         throw new Error("Session expired. Please log in again.");
       }
     }
-    
+
     // For 500 errors in admin area, check if session might be expired
     // Sometimes backend returns 500 instead of 401 for session issues
     if (res.status === 500) {
@@ -611,15 +616,15 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
         throw new Error("Session expired. Please log in again.");
       }
     }
-    
+
     let errorMessage = `Request failed: ${res.status}`;
-    
+
     // Handle 404 specifically - endpoint not found
     if (res.status === 404) {
       errorMessage = `Endpoint not found (404). Path: ${path}. Check if backend is running on port 3002 and route /api${path} exists.`;
     } else {
       const contentType = res.headers.get("content-type");
-      
+
       if (contentType && contentType.includes("application/json")) {
         try {
           const json = await res.json();
@@ -646,10 +651,10 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
         }
       }
     }
-    
+
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
-    
+
     throw new Error(errorMessage);
   }
 
@@ -669,7 +674,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   recordApiInteraction(); // Record API interaction
   const token = localStorage.getItem("accessToken");
   const apiBaseUrl = getApiBaseUrl();
-  
+
   let res: Response;
   try {
     res = await fetch(`${apiBaseUrl}/api${path}`, {
@@ -680,8 +685,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
         ...(token && { Authorization: `Bearer ${token}` }),
         // Add cache-busting headers
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (err) {
@@ -713,8 +718,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
                 Accept: "application/json",
                 Authorization: `Bearer ${refreshData.accessToken}`,
                 "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
+                Pragma: "no-cache",
+                Expires: "0",
               },
             });
           } catch (err) {
@@ -738,7 +743,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
             const text = await retryRes.text().catch(() => "");
             throw new Error(text || `Request failed: ${retryRes.status}`);
           }
-          const data = await retryRes.json() as T;
+          const data = (await retryRes.json()) as T;
           return data;
         } catch {
           // Refresh failed, clear tokens and redirect to login
@@ -756,7 +761,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
     }
     let errorMessage = `Request failed: ${res.status}`;
     const contentType = res.headers.get("content-type");
-    
+
     if (contentType && contentType.includes("application/json")) {
       try {
         const json = await res.json();
@@ -782,7 +787,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
         errorMessage = res.statusText || `Request failed: ${res.status}`;
       }
     }
-    
+
     // For 500 errors in admin area, check if session might be expired
     // Sometimes backend returns 500 instead of 401 for session issues
     if (res.status === 500) {
@@ -790,7 +795,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
         throw new Error("Session expired. Please log in again.");
       }
     }
-    
+
     // Only redirect to login for 401 errors, not for 500 or other errors
     // 500 errors should be displayed to the user, not cause a redirect
 
@@ -799,7 +804,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   }
 
   try {
-    const data = await res.json() as T;
+    const data = (await res.json()) as T;
     return data;
   } catch (err) {
     // If response is empty or not JSON, return empty object or throw

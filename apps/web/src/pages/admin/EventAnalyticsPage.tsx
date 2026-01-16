@@ -15,7 +15,7 @@ export function EventAnalyticsPage() {
   const navigate = useNavigate();
   const [eventName, setEventName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  
+
   usePageTitle("admin.analyticsLabel");
 
   useEffect(() => {
@@ -23,7 +23,8 @@ export function EventAnalyticsPage() {
       getEvent(eventId)
         .then((event) => {
           const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-          const translation = findTranslation(event.translations, currentLang) || event.translations[0];
+          const translation =
+            findTranslation(event.translations, currentLang) || event.translations[0];
           setEventName(translation?.title || eventId);
           setIsLoading(false);
         })
@@ -45,7 +46,9 @@ export function EventAnalyticsPage() {
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
         title={`${eventName} ${t("admin.analyticsLabel") || "analitikája"}`}
-        subtitle={t("admin.dashboardCards.analyticsDesc") || "View event analytics, views, and CTA clicks"}
+        subtitle={
+          t("admin.dashboardCards.analyticsDesc") || "View event analytics, views, and CTA clicks"
+        }
         showNewButton={false}
         backTo={`/${lang || i18n.language || "hu"}/admin/events`}
       />

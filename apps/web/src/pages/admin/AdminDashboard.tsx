@@ -5,7 +5,13 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useMemo } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../../app/config";
+import {
+  APP_LANGS,
+  DEFAULT_LANG,
+  HAS_MULTIPLE_SITES,
+  DEFAULT_SITE_SLUG,
+  type Lang,
+} from "../../app/config";
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { getSiteMemberships } from "../../api/admin.api";
@@ -29,7 +35,7 @@ export function AdminDashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
-  
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
@@ -40,7 +46,7 @@ export function AdminDashboard() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
+
   // Check site-level role (siteadmin)
   useEffect(() => {
     const checkSiteAdminRole = async () => {
@@ -50,7 +56,9 @@ export function AdminDashboard() {
       }
       try {
         const memberships = await getSiteMemberships(selectedSiteId, user.id);
-        const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === user.id);
+        const membership = memberships.find(
+          (m) => m.siteId === selectedSiteId && m.userId === user.id
+        );
         setIsSiteAdmin(membership?.role === "siteadmin" || false);
       } catch (err) {
         console.error("Failed to check site admin role", err);
@@ -59,19 +67,19 @@ export function AdminDashboard() {
     };
     checkSiteAdminRole();
   }, [selectedSiteId, user?.id]);
-  
+
   // Get language from URL or use default
   const currentLang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
-  
+
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${currentLang}/admin${subPath}`;
-  
+
   // Determine permissions: consider both global role and tenant-level role
   const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
   const userIsGlobalAdmin = user?.role === ROLE_ADMIN;
   const userIsGlobalEditor = user?.role === ROLE_EDITOR;
   const userIsGlobalViewer = user?.role === ROLE_VIEWER;
-  
+
   // Effective admin permissions: superadmin OR global admin OR siteadmin
   const hasAdminPermissions = userIsSuperadmin || userIsGlobalAdmin || isSiteAdmin;
 
@@ -111,42 +119,46 @@ export function AdminDashboard() {
   return (
     <div>
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <h1 style={{ 
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "white",
-          margin: 0,
-          marginBottom: 8,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
+        <h1
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            margin: 0,
+            marginBottom: 8,
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          }}
+        >
           {t("admin.dashboard")}
         </h1>
-        <p style={{ 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 400,
-          color: "#c0c0d0",
-          margin: 0,
-          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-        }}>
+        <p
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
+            color: "#c0c0d0",
+            margin: 0,
+            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+          }}
+        >
           {t("admin.dashboardWelcome")}
         </p>
       </div>
 
       {/* Quick Actions - Only show for editor, admin, superadmin (not viewer) */}
       {!isMobile && user && user.role !== "viewer" && (
-        <div style={{
-          display: "flex",
-          gap: "12px",
-          marginBottom: "clamp(24px, 5vw, 32px)",
-          flexWrap: "wrap",
-        }}>
-          <QuickActionButton
-            icon="➕"
-            label={t("admin.forms.newPlace")}
-            onClick={handleNewPlace}
-          />
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginBottom: "clamp(24px, 5vw, 32px)",
+            flexWrap: "wrap",
+          }}
+        >
+          <QuickActionButton icon="➕" label={t("admin.forms.newPlace")} onClick={handleNewPlace} />
           <QuickActionButton
             icon="➕"
             label={t("admin.forms.newEvent")}
@@ -165,18 +177,20 @@ export function AdminDashboard() {
       {/* Content Creation Block */}
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <SectionTitle label={t("admin.dashboardSections.contentCreation")} />
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: isMobile 
-            ? "repeat(auto-fit, minmax(85px, 1fr))" 
-            : isTablet
-            ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile
+              ? "repeat(auto-fit, minmax(85px, 1fr))"
+              : isTablet
+                ? "repeat(auto-fit, minmax(180px, 1fr))"
+                : "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           <DashboardCard
             title={t("admin.dashboardCards.places")}
             description={t("admin.dashboardCards.placesDesc")}
@@ -232,21 +246,26 @@ export function AdminDashboard() {
       {!userIsGlobalViewer && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
           <SectionTitle label={t("admin.dashboardSections.analytics") || "Analytics & Insights"} />
-          <div style={{ 
-            display: "grid",
-            gridTemplateColumns: isMobile 
-              ? "repeat(auto-fit, minmax(85px, 1fr))" 
-              : isTablet
-              ? "repeat(auto-fit, minmax(180px, 1fr))"
-              : "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile
+                ? "repeat(auto-fit, minmax(85px, 1fr))"
+                : isTablet
+                  ? "repeat(auto-fit, minmax(180px, 1fr))"
+                  : "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+            }}
+          >
             <DashboardCard
               title={t("admin.dashboardCards.analytics") || "Analytics"}
-              description={t("admin.dashboardCards.analyticsDesc") || "View site and place analytics, page views, and CTA clicks"}
+              description={
+                t("admin.dashboardCards.analyticsDesc") ||
+                "View site and place analytics, page views, and CTA clicks"
+              }
               link={adminPath("/analytics")}
               icon="📊"
               isMobile={isMobile}
@@ -259,18 +278,20 @@ export function AdminDashboard() {
       {/* Public Appearance Block */}
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <SectionTitle label={t("admin.dashboardSections.publicAppearance")} />
-        <div style={{ 
-          display: "grid",
-          gridTemplateColumns: isMobile 
-            ? "repeat(auto-fit, minmax(85px, 1fr))" 
-            : isTablet
-            ? "repeat(auto-fit, minmax(180px, 1fr))"
-            : "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile
+              ? "repeat(auto-fit, minmax(85px, 1fr))"
+              : isTablet
+                ? "repeat(auto-fit, minmax(180px, 1fr))"
+                : "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+            width: "100%",
+            maxWidth: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           <DashboardCard
             title={t("admin.dashboardCards.staticPages")}
             description={t("admin.dashboardCards.staticPagesDesc")}
@@ -322,18 +343,20 @@ export function AdminDashboard() {
       {permissionsCardsCount > 0 && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
           <SectionTitle label={t("admin.dashboardSections.permissions")} />
-          <div style={{ 
-            display: "grid",
-            gridTemplateColumns: isMobile 
-              ? "repeat(auto-fit, minmax(85px, 1fr))" 
-              : isTablet
-              ? "repeat(auto-fit, minmax(180px, 1fr))"
-              : "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile
+                ? "repeat(auto-fit, minmax(85px, 1fr))"
+                : isTablet
+                  ? "repeat(auto-fit, minmax(180px, 1fr))"
+                  : "repeat(auto-fill, minmax(240px, 1fr))",
+              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+            }}
+          >
             {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.users")}
@@ -372,18 +395,20 @@ export function AdminDashboard() {
       {systemCardsCount > 0 && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
           <SectionTitle label={t("admin.dashboardSections.system")} />
-          <div style={{ 
-            display: "grid",
-            gridTemplateColumns: isMobile 
-              ? "repeat(auto-fit, minmax(85px, 1fr))" 
-              : isTablet
-              ? "repeat(auto-fit, minmax(180px, 1fr))"
-              : "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isMobile
+                ? "repeat(auto-fit, minmax(85px, 1fr))"
+                : isTablet
+                  ? "repeat(auto-fit, minmax(180px, 1fr))"
+                  : "repeat(auto-fill, minmax(240px, 1fr))",
+              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+            }}
+          >
             {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.appSettings")}
@@ -437,7 +462,10 @@ export function AdminDashboard() {
             {user?.role === ROLE_SUPERADMIN && (
               <DashboardCard
                 title={t("admin.siteStatus.title") || "Site Status"}
-                description={t("admin.dashboardCards.siteStatusDesc") || "View site statistics and manage cache"}
+                description={
+                  t("admin.dashboardCards.siteStatusDesc") ||
+                  "View site statistics and manage cache"
+                }
                 link={adminPath("/site-status")}
                 icon="📊"
                 isMobile={isMobile}
@@ -447,22 +475,24 @@ export function AdminDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
 
 function SectionTitle({ label }: { label: string }) {
   return (
-    <h2 style={{
-      fontSize: "clamp(14px, 3vw, 16px)",
-      fontWeight: 600,
-      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      color: "#a8b3ff",
-      margin: "0 0 12px 0",
-      textTransform: "uppercase",
-      letterSpacing: "0.5px",
-    }}>
+    <h2
+      style={{
+        fontSize: "clamp(14px, 3vw, 16px)",
+        fontWeight: 600,
+        fontFamily:
+          "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: "#a8b3ff",
+        margin: "0 0 12px 0",
+        textTransform: "uppercase",
+        letterSpacing: "0.5px",
+      }}
+    >
       {label}
     </h2>
   );
@@ -486,10 +516,10 @@ function QuickActionButton({
   const normalBgHover = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
   const highlightBg = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
   const highlightBgHover = "linear-gradient(135deg, #6a6584 0%, #5d5a78 100%)";
-  
+
   const background = highlight ? highlightBg : normalBg;
   const backgroundHover = highlight ? highlightBgHover : normalBgHover;
-  
+
   return (
     <button
       onClick={onClick}
@@ -499,8 +529,8 @@ function QuickActionButton({
         gap: "8px",
         padding: "10px 16px",
         background,
-        border: highlight 
-          ? "1px solid rgba(102, 126, 234, 0.6)" 
+        border: highlight
+          ? "1px solid rgba(102, 126, 234, 0.6)"
           : "1px solid rgba(102, 126, 234, 0.4)",
         borderRadius: 8,
         color: "white",
@@ -509,22 +539,22 @@ function QuickActionButton({
         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         cursor: "pointer",
         transition: "all 0.2s ease",
-        boxShadow: highlight 
-          ? "0 2px 8px rgba(102, 126, 234, 0.3)" 
+        boxShadow: highlight
+          ? "0 2px 8px rgba(102, 126, 234, 0.3)"
           : "0 2px 8px rgba(0, 0, 0, 0.2)",
         position: "relative",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = highlight 
-          ? "0 4px 12px rgba(102, 126, 234, 0.4)" 
+        e.currentTarget.style.boxShadow = highlight
+          ? "0 4px 12px rgba(102, 126, 234, 0.4)"
           : "0 4px 12px rgba(0, 0, 0, 0.3)";
         e.currentTarget.style.background = backgroundHover;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = highlight 
-          ? "0 2px 8px rgba(102, 126, 234, 0.3)" 
+        e.currentTarget.style.boxShadow = highlight
+          ? "0 2px 8px rgba(102, 126, 234, 0.3)"
           : "0 2px 8px rgba(0, 0, 0, 0.2)";
         e.currentTarget.style.background = background;
       }}
@@ -532,20 +562,30 @@ function QuickActionButton({
       <span style={{ fontSize: "16px" }}>{icon}</span>
       <span>{label}</span>
       {highlight && (
-        <span style={{ 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-          marginLeft: "2px",
-          filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))",
-        }}>
+        <span
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            marginLeft: "2px",
+            filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))",
+          }}
+        >
           ✨
         </span>
       )}
-      {isExternal && <span style={{ 
-        fontSize: "clamp(13px, 3vw, 15px)", 
-        opacity: 0.7,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}>↗</span>}
+      {isExternal && (
+        <span
+          style={{
+            fontSize: "clamp(13px, 3vw, 15px)",
+            opacity: 0.7,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          ↗
+        </span>
+      )}
     </button>
   );
 }
@@ -570,7 +610,7 @@ function DashboardCard({
   const contentBgHover = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
   const adminBg = "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)";
   const adminBgHover = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
-  
+
   const background = variant === "content" ? contentBg : adminBg;
   const backgroundHover = variant === "content" ? contentBgHover : adminBgHover;
 
@@ -603,37 +643,43 @@ function DashboardCard({
         }}
         onTouchEnd={(e) => {
           e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
+          e.currentTarget.style.boxShadow =
+            "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
         }}
       >
-        <div style={{ 
-          fontSize: "32px",
-          width: "32px",
-          height: "32px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            fontSize: "32px",
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
+            flexShrink: 0,
+          }}
+        >
           {icon}
         </div>
-        <div style={{
-          fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 600,
-          color: "#a8b3ff",
-          textAlign: "center",
-          lineHeight: 1.2,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          width: "100%",
-          wordBreak: "break-word",
-          hyphens: "auto",
-        }}>
+        <div
+          style={{
+            fontSize: "clamp(13px, 3vw, 15px)",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 600,
+            color: "#a8b3ff",
+            textAlign: "center",
+            lineHeight: 1.2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            width: "100%",
+            wordBreak: "break-word",
+            hyphens: "auto",
+          }}
+        >
           {title}
         </div>
       </Link>
@@ -667,47 +713,55 @@ function DashboardCard({
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0) scale(1)";
-        e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
+        e.currentTarget.style.boxShadow =
+          "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
         e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
         e.currentTarget.style.background = background;
       }}
     >
-      <div style={{ 
-        fontSize: "clamp(30px, 5vw, 34px)", 
-        filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
-        flexShrink: 0,
-      }}>
+      <div
+        style={{
+          fontSize: "clamp(30px, 5vw, 34px)",
+          filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
+          flexShrink: 0,
+        }}
+      >
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h3 style={{ 
-          margin: "0 0 3px 0",
-          fontSize: "clamp(15px, 3.5vw, 16px)",
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 700,
-          color: "#a8b3ff",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}>
+        <h3
+          style={{
+            margin: "0 0 3px 0",
+            fontSize: "clamp(15px, 3.5vw, 16px)",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 700,
+            color: "#a8b3ff",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {title}
         </h3>
-        <p style={{ 
-          margin: 0, 
-          color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          lineHeight: 1.3,
-          fontWeight: 400,
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}>
+        <p
+          style={{
+            margin: 0,
+            color: "rgba(255, 255, 255, 0.75)",
+            fontSize: "clamp(13px, 3vw, 15px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            lineHeight: 1.3,
+            fontWeight: 400,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {description}
         </p>
       </div>
     </Link>
   );
 }
-

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
@@ -280,4 +285,3 @@ export class AdminUsersService {
     return this.updateUser(userId, updateData);
   }
 }
-

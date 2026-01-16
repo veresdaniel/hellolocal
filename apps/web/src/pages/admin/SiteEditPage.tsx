@@ -11,11 +11,35 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { MapComponent } from "../../components/MapComponent";
-import { getSite, updateSite, getBrands, getSiteInstances, createSiteInstance, updateSiteInstance, getTowns, type Site, type Brand, type SiteInstance } from "../../api/admin.api";
-import { getSiteSubscription, getSiteEntitlements, cancelSubscription, type SiteSubscription, type SiteEntitlements } from "../../api/admin.api";
+import {
+  getSite,
+  updateSite,
+  getBrands,
+  getSiteInstances,
+  createSiteInstance,
+  updateSiteInstance,
+  getTowns,
+  type Site,
+  type Brand,
+  type SiteInstance,
+} from "../../api/admin.api";
+import {
+  getSiteSubscription,
+  getSiteEntitlements,
+  cancelSubscription,
+  type SiteSubscription,
+  type SiteEntitlements,
+} from "../../api/admin.api";
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 
-type TabId = "overview" | "domain" | "appearance" | "map" | "features" | "subscription" | "analytics";
+type TabId =
+  | "overview"
+  | "domain"
+  | "appearance"
+  | "map"
+  | "features"
+  | "subscription"
+  | "analytics";
 
 export function SiteEditPage() {
   const { t, i18n } = useTranslation();
@@ -33,11 +57,14 @@ export function SiteEditPage() {
   const [towns, setTowns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Initialize activeTab from URL query param or default to "overview"
   const tabFromUrl = searchParams.get("tab") as TabId | null;
   const [activeTab, setActiveTab] = useState<TabId>(
-    tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(tabFromUrl)
+    tabFromUrl &&
+      ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(
+        tabFromUrl
+      )
       ? tabFromUrl
       : "overview"
   );
@@ -45,7 +72,12 @@ export function SiteEditPage() {
   // Update tab when URL changes
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab") as TabId | null;
-    if (tabFromUrl && ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(tabFromUrl)) {
+    if (
+      tabFromUrl &&
+      ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(
+        tabFromUrl
+      )
+    ) {
       setActiveTab(tabFromUrl);
     }
   }, [searchParams]);
@@ -93,16 +125,18 @@ export function SiteEditPage() {
     try {
       const data = await getSite(id);
       setSite(data);
-      
+
       // Use SiteInstances from getSite API if available (fallback)
       if (data.siteInstances && data.siteInstances.length > 0) {
         setSiteInstances(data.siteInstances);
       } else if (data.translations && data.translations.length > 0) {
         // If no SiteInstances but translations exist, try to create them automatically
-        console.warn(`[SiteEditPage] No SiteInstances found, but ${data.translations.length} translations exist. Attempting to create SiteInstances...`);
+        console.warn(
+          `[SiteEditPage] No SiteInstances found, but ${data.translations.length} translations exist. Attempting to create SiteInstances...`
+        );
         const createdInstances: SiteInstance[] = [];
         let isFirst = true;
-        
+
         for (const translation of data.translations) {
           try {
             const newInstance = await createSiteInstance({
@@ -119,17 +153,24 @@ export function SiteEditPage() {
             createdInstances.push(newInstance);
             isFirst = false;
           } catch (err: any) {
-            console.error(`[SiteEditPage] Failed to create SiteInstance for lang ${translation.lang}:`, err);
+            console.error(
+              `[SiteEditPage] Failed to create SiteInstance for lang ${translation.lang}:`,
+              err
+            );
             // Continue with other languages even if one fails
           }
         }
-        
+
         if (createdInstances.length > 0) {
           setSiteInstances(createdInstances);
-          showToast(t("admin.siteEdit.siteInstancesCreated") || `${createdInstances.length} SiteInstance létrehozva`, "success");
+          showToast(
+            t("admin.siteEdit.siteInstancesCreated") ||
+              `${createdInstances.length} SiteInstance létrehozva`,
+            "success"
+          );
         }
       }
-      
+
       // Populate form data
       const translationHu = data.translations.find((t) => t.lang === "hu");
       const translationEn = data.translations.find((t) => t.lang === "en");
@@ -152,7 +193,9 @@ export function SiteEditPage() {
         brandId: data.brandId,
         plan: data.plan || "basic",
         planStatus: data.planStatus || "active",
-        planValidUntil: data.planValidUntil ? new Date(data.planValidUntil).toISOString().split("T")[0] : "",
+        planValidUntil: data.planValidUntil
+          ? new Date(data.planValidUntil).toISOString().split("T")[0]
+          : "",
         allowPublicRegistration: data.allowPublicRegistration ?? true,
         showAdvanced: false,
       });
@@ -241,14 +284,17 @@ export function SiteEditPage() {
         translations,
         plan: formData.plan,
         planStatus: formData.planStatus,
-        planValidUntil: formData.planValidUntil ? new Date(formData.planValidUntil).toISOString() : null,
+        planValidUntil: formData.planValidUntil
+          ? new Date(formData.planValidUntil).toISOString()
+          : null,
       };
 
       await updateSite(id, updateData);
       showToast(t("admin.siteUpdated"), "success");
       await loadSite();
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err?.message || t("admin.errors.updateSiteFailed");
+      const errorMessage =
+        err?.response?.data?.message || err?.message || t("admin.errors.updateSiteFailed");
       showToast(errorMessage, "error");
       if (err?.response?.data?.errors) {
         setFormErrors(err.response.data.errors);
@@ -267,7 +313,8 @@ export function SiteEditPage() {
   }
 
   const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-  const currentTranslation = site.translations.find((t) => t.lang === currentLang) || site.translations[0];
+  const currentTranslation =
+    site.translations.find((t) => t.lang === currentLang) || site.translations[0];
 
   const tabs: Array<{ id: TabId; label: string }> = [
     { id: "overview", label: t("admin.siteEdit.tabs.overview") || "Áttekintés" },
@@ -301,7 +348,8 @@ export function SiteEditPage() {
             background: site.isActive ? "#10b981" : "#6b7280",
             color: "white",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
           }}
         >
@@ -314,7 +362,8 @@ export function SiteEditPage() {
             background: "#3b82f6",
             color: "white",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
           }}
         >
@@ -328,7 +377,8 @@ export function SiteEditPage() {
               background: "#8b5cf6",
               color: "white",
               fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 600,
             }}
           >
@@ -338,20 +388,24 @@ export function SiteEditPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ 
-        background: "white", 
-        borderRadius: 16, 
-        marginBottom: 24,
-        boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        border: "1px solid rgba(102, 126, 234, 0.1)",
-        overflow: "hidden"
-      }}>
-        <div style={{ 
-          display: "flex", 
-          gap: 0, 
-          overflowX: "auto",
-          borderBottom: "1px solid #e5e7eb"
-        }}>
+      <div
+        style={{
+          background: "white",
+          borderRadius: 16,
+          marginBottom: 24,
+          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          border: "1px solid rgba(102, 126, 234, 0.1)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            gap: 0,
+            overflowX: "auto",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -366,7 +420,8 @@ export function SiteEditPage() {
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
@@ -388,73 +443,70 @@ export function SiteEditPage() {
         </div>
 
         {/* Tab content */}
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)",
-          minHeight: 400 
-        }}>
-        {activeTab === "overview" && (
-          <OverviewTab
-            site={site}
-            formData={formData}
-            setFormData={setFormData}
-            brands={brands}
-            formErrors={formErrors}
-          />
-        )}
-        {activeTab === "domain" && (
-          <DomainTab 
-            site={site} 
-            onUpdate={loadSite}
-            showToast={showToast}
-            t={t}
-          />
-        )}
-        {activeTab === "appearance" && (
-          <AppearanceTab 
-            site={site}
-            siteInstances={siteInstances}
-            brands={brands}
-            onUpdate={loadSiteInstances}
-            showToast={showToast}
-            t={t}
-          />
-        )}
-        {activeTab === "map" && (
-          <MapTab 
-            site={site}
-            siteInstances={siteInstances}
-            towns={towns}
-            onUpdate={loadSiteInstances}
-            showToast={showToast}
-            t={t}
-          />
-        )}
-        {activeTab === "features" && (
-          <FeaturesTab 
-            site={site}
-            siteInstances={siteInstances}
-            onUpdate={loadSiteInstances}
-            showToast={showToast}
-            t={t}
-          />
-        )}
-        {activeTab === "subscription" && (
-          <SubscriptionTab
-            site={site}
-            formData={formData}
-            setFormData={setFormData}
-            formErrors={formErrors}
-            currentUser={currentUser}
-            onUpdate={loadSite}
-            showToast={showToast}
-            t={t}
-          />
-        )}
-        {activeTab === "analytics" && (
-          <div>
-            <SiteAnalyticsPage />
-          </div>
-        )}
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            minHeight: 400,
+          }}
+        >
+          {activeTab === "overview" && (
+            <OverviewTab
+              site={site}
+              formData={formData}
+              setFormData={setFormData}
+              brands={brands}
+              formErrors={formErrors}
+            />
+          )}
+          {activeTab === "domain" && (
+            <DomainTab site={site} onUpdate={loadSite} showToast={showToast} t={t} />
+          )}
+          {activeTab === "appearance" && (
+            <AppearanceTab
+              site={site}
+              siteInstances={siteInstances}
+              brands={brands}
+              onUpdate={loadSiteInstances}
+              showToast={showToast}
+              t={t}
+            />
+          )}
+          {activeTab === "map" && (
+            <MapTab
+              site={site}
+              siteInstances={siteInstances}
+              towns={towns}
+              onUpdate={loadSiteInstances}
+              showToast={showToast}
+              t={t}
+            />
+          )}
+          {activeTab === "features" && (
+            <FeaturesTab
+              site={site}
+              siteInstances={siteInstances}
+              onUpdate={loadSiteInstances}
+              showToast={showToast}
+              t={t}
+            />
+          )}
+          {activeTab === "subscription" && (
+            <SubscriptionTab
+              site={site}
+              formData={formData}
+              setFormData={setFormData}
+              formErrors={formErrors}
+              currentUser={currentUser}
+              onUpdate={loadSite}
+              showToast={showToast}
+              t={t}
+            />
+          )}
+          {activeTab === "analytics" && (
+            <div>
+              <SiteAnalyticsPage />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -479,24 +531,30 @@ function OverviewTab({
 
   return (
     <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
+      <h3
+        style={{
+          marginBottom: 24,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
         {t("admin.siteEdit.overview.title") || "Alap adatok"}
       </h3>
-      
+
       <div style={{ marginBottom: 24 }}>
-        <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.brand")}
         </label>
         <select
@@ -509,7 +567,8 @@ function OverviewTab({
             border: "1px solid #d1d5db",
             borderRadius: 6,
             fontSize: 14,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <option value="">{t("admin.selectBrand")}</option>
@@ -525,13 +584,16 @@ function OverviewTab({
         {(selectedLang) => (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("common.name")} ({selectedLang.toUpperCase()}) *
               </label>
               <input
@@ -540,12 +602,13 @@ function OverviewTab({
                   selectedLang === "hu"
                     ? formData.nameHu
                     : selectedLang === "en"
-                    ? formData.nameEn
-                    : formData.nameDe
+                      ? formData.nameEn
+                      : formData.nameDe
                 }
                 onChange={(e) => {
                   if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                  else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, nameEn: e.target.value });
                   else setFormData({ ...formData, nameDe: e.target.value });
                 }}
                 style={{
@@ -554,19 +617,23 @@ function OverviewTab({
                   border: "1px solid #d1d5db",
                   borderRadius: 6,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               />
             </div>
 
             <div>
-              <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.shortDescription")} ({selectedLang.toUpperCase()})
               </label>
               <TipTapEditorWithUpload
@@ -574,25 +641,30 @@ function OverviewTab({
                   selectedLang === "hu"
                     ? formData.shortDescriptionHu
                     : selectedLang === "en"
-                    ? formData.shortDescriptionEn
-                    : formData.shortDescriptionDe
+                      ? formData.shortDescriptionEn
+                      : formData.shortDescriptionDe
                 }
                 onChange={(value) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
-                  else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
+                  if (selectedLang === "hu")
+                    setFormData({ ...formData, shortDescriptionHu: value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, shortDescriptionEn: value });
                   else setFormData({ ...formData, shortDescriptionDe: value });
                 }}
               />
             </div>
 
             <div>
-              <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.description")} ({selectedLang.toUpperCase()})
               </label>
               <TipTapEditorWithUpload
@@ -600,25 +672,29 @@ function OverviewTab({
                   selectedLang === "hu"
                     ? formData.descriptionHu
                     : selectedLang === "en"
-                    ? formData.descriptionEn
-                    : formData.descriptionDe
+                      ? formData.descriptionEn
+                      : formData.descriptionDe
                 }
                 onChange={(value) => {
                   if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                  else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, descriptionEn: value });
                   else setFormData({ ...formData, descriptionDe: value });
                 }}
               />
             </div>
 
             <div>
-              <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.heroImage")} ({selectedLang.toUpperCase()})
               </label>
               <input
@@ -627,12 +703,14 @@ function OverviewTab({
                   selectedLang === "hu"
                     ? formData.heroImageHu
                     : selectedLang === "en"
-                    ? formData.heroImageEn
-                    : formData.heroImageDe
+                      ? formData.heroImageEn
+                      : formData.heroImageDe
                 }
                 onChange={(e) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, heroImageHu: e.target.value });
-                  else if (selectedLang === "en") setFormData({ ...formData, heroImageEn: e.target.value });
+                  if (selectedLang === "hu")
+                    setFormData({ ...formData, heroImageHu: e.target.value });
+                  else if (selectedLang === "en")
+                    setFormData({ ...formData, heroImageEn: e.target.value });
                   else setFormData({ ...formData, heroImageDe: e.target.value });
                 }}
                 placeholder="https://..."
@@ -642,12 +720,23 @@ function OverviewTab({
                   border: "1px solid #d1d5db",
                   borderRadius: 6,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               />
-              {(selectedLang === "hu" ? formData.heroImageHu : selectedLang === "en" ? formData.heroImageEn : formData.heroImageDe) && (
+              {(selectedLang === "hu"
+                ? formData.heroImageHu
+                : selectedLang === "en"
+                  ? formData.heroImageEn
+                  : formData.heroImageDe) && (
                 <img
-                  src={selectedLang === "hu" ? formData.heroImageHu : selectedLang === "en" ? formData.heroImageEn : formData.heroImageDe}
+                  src={
+                    selectedLang === "hu"
+                      ? formData.heroImageHu
+                      : selectedLang === "en"
+                        ? formData.heroImageEn
+                        : formData.heroImageDe
+                  }
                   alt="Hero"
                   style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6 }}
                 />
@@ -665,29 +754,39 @@ function OverviewTab({
             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
             style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
           />
-          <span style={{ 
-            fontSize: "clamp(14px, 3.5vw, 16px)", 
-            fontWeight: 500,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>{t("common.active")}</span>
+          <span
+            style={{
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontWeight: 500,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("common.active")}
+          </span>
         </label>
       </div>
 
       {/* Quick actions */}
-      <div style={{ 
-        marginTop: 32, 
-        padding: 20, 
-        background: "#f9fafb", 
-        borderRadius: 12,
-        border: "1px solid #e5e7eb"
-      }}>
-        <h4 style={{ 
-          marginBottom: 16, 
-          fontSize: 18,
-          fontWeight: 600,
-          color: "#374151",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+      <div
+        style={{
+          marginTop: 32,
+          padding: 20,
+          background: "#f9fafb",
+          borderRadius: 12,
+          border: "1px solid #e5e7eb",
+        }}
+      >
+        <h4
+          style={{
+            marginBottom: 16,
+            fontSize: 18,
+            fontWeight: 600,
+            color: "#374151",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.siteEdit.quickActions") || "Gyors műveletek"}
         </h4>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -702,7 +801,8 @@ function OverviewTab({
               cursor: "pointer",
               fontSize: 14,
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
@@ -723,19 +823,23 @@ function OverviewTab({
 }
 
 // Domain Tab Component
-function DomainTab({ 
-  site, 
-  onUpdate, 
-  showToast, 
-  t 
-}: { 
-  site: Site; 
+function DomainTab({
+  site,
+  onUpdate,
+  showToast,
+  t,
+}: {
+  site: Site;
   onUpdate: () => void;
   showToast: (message: string, type: "success" | "error") => void;
   t: (key: string) => string;
 }) {
   const [editingDomainId, setEditingDomainId] = useState<string | null>(null);
-  const [newDomain, setNewDomain] = useState({ domain: "", defaultLang: "hu" as "hu" | "en" | "de", isPrimary: false });
+  const [newDomain, setNewDomain] = useState({
+    domain: "",
+    defaultLang: "hu" as "hu" | "en" | "de",
+    isPrimary: false,
+  });
 
   const handleAddDomain = async () => {
     if (!newDomain.domain.trim()) {
@@ -750,25 +854,31 @@ function DomainTab({
 
   return (
     <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
+      <h3
+        style={{
+          marginBottom: 24,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
         {t("admin.siteEdit.domain.title") || "Domain & URL"}
       </h3>
 
       {/* Domains list */}
       <div style={{ marginBottom: 32 }}>
-        <h4 style={{ 
-          marginBottom: 16, 
-          fontSize: "clamp(16px, 3.5vw, 18px)", 
-          fontWeight: 600, 
-          color: "#374151",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <h4
+          style={{
+            marginBottom: 16,
+            fontSize: "clamp(16px, 3.5vw, 18px)",
+            fontWeight: 600,
+            color: "#374151",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.siteEdit.domain.domains") || "Domain-ek"}
         </h4>
         {site.siteDomains && site.siteDomains.length > 0 ? (
@@ -787,20 +897,27 @@ function DomainTab({
                 }}
               >
                 <div>
-                  <div style={{ 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)", 
-                    marginBottom: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {domain.domain}
                   </div>
-                  <div style={{ 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    color: "#6b7280",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {t("admin.siteEdit.domain.defaultLang") || "Alapértelmezett nyelv"}: {domain.defaultLang.toUpperCase()}
+                  <div
+                    style={{
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      color: "#6b7280",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.siteEdit.domain.defaultLang") || "Alapértelmezett nyelv"}:{" "}
+                    {domain.defaultLang.toUpperCase()}
                     {domain.isPrimary && (
                       <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>
                         ({t("admin.siteEdit.domain.primary") || "Primary"})
@@ -813,7 +930,10 @@ function DomainTab({
                     <button
                       onClick={() => {
                         // TODO: Set as primary
-                        showToast(t("admin.siteEdit.domain.setAsPrimary") || "Primary domain beállítva", "success");
+                        showToast(
+                          t("admin.siteEdit.domain.setAsPrimary") || "Primary domain beállítva",
+                          "success"
+                        );
                         onUpdate();
                       }}
                       style={{
@@ -834,36 +954,52 @@ function DomainTab({
             ))}
           </div>
         ) : (
-          <p style={{ 
-            color: "#6b7280", 
-            fontSize: 14,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <p
+            style={{
+              color: "#6b7280",
+              fontSize: 14,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.siteEdit.domain.noDomains") || "Nincs domain hozzáadva"}
           </p>
         )}
       </div>
 
       {/* Add new domain */}
-      <div style={{ padding: 20, background: "#f9fafb", borderRadius: 12, border: "1px solid #e5e7eb" }}>
-        <h4 style={{ 
-          marginBottom: 16, 
-          fontSize: "clamp(16px, 3.5vw, 18px)", 
-          fontWeight: 600, 
-          color: "#374151",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+      <div
+        style={{
+          padding: 20,
+          background: "#f9fafb",
+          borderRadius: 12,
+          border: "1px solid #e5e7eb",
+        }}
+      >
+        <h4
+          style={{
+            marginBottom: 16,
+            fontSize: "clamp(16px, 3.5vw, 18px)",
+            fontWeight: 600,
+            color: "#374151",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.siteEdit.domain.addDomain") || "Új domain hozzáadása"}
         </h4>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontWeight: 500,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.siteEdit.domain.domain") || "Domain"}
             </label>
             <input
@@ -878,23 +1014,29 @@ function DomainTab({
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             />
           </div>
           <div>
-            <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontWeight: 500,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.siteEdit.domain.defaultLang") || "Alapértelmezett nyelv"}
             </label>
             <select
               value={newDomain.defaultLang}
-              onChange={(e) => setNewDomain({ ...newDomain, defaultLang: e.target.value as "hu" | "en" | "de" })}
+              onChange={(e) =>
+                setNewDomain({ ...newDomain, defaultLang: e.target.value as "hu" | "en" | "de" })
+              }
               style={{
                 width: "100%",
                 maxWidth: 400,
@@ -902,7 +1044,8 @@ function DomainTab({
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               <option value="hu">Magyar</option>
@@ -918,10 +1061,15 @@ function DomainTab({
                 onChange={(e) => setNewDomain({ ...newDomain, isPrimary: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.siteEdit.domain.setAsPrimary") || "Beállítás primary domain-ként"}</span>
+              <span
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.domain.setAsPrimary") || "Beállítás primary domain-ként"}
+              </span>
             </label>
           </div>
           <button
@@ -935,7 +1083,8 @@ function DomainTab({
               cursor: "pointer",
               fontSize: 14,
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               maxWidth: 200,
             }}
           >
@@ -946,13 +1095,16 @@ function DomainTab({
 
       {/* SiteKeys */}
       <div style={{ marginTop: 32 }}>
-        <h4 style={{ 
-          marginBottom: 16, 
-          fontSize: "clamp(16px, 3.5vw, 18px)", 
-          fontWeight: 600, 
-          color: "#374151",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <h4
+          style={{
+            marginBottom: 16,
+            fontSize: "clamp(16px, 3.5vw, 18px)",
+            fontWeight: 600,
+            color: "#374151",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.siteEdit.domain.siteKeys") || "SiteKey-ek"}
         </h4>
         {site.siteKeys && site.siteKeys.length > 0 ? (
@@ -974,23 +1126,29 @@ function DomainTab({
                     border: "1px solid #e5e7eb",
                   }}
                 >
-                  <div style={{ 
-                    fontWeight: 600, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)", 
-                    marginBottom: 12, 
-                    textTransform: "uppercase",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      marginBottom: 12,
+                      textTransform: "uppercase",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {lang}
                   </div>
                   {primaryKey && (
                     <div style={{ marginBottom: 8 }}>
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)", 
-                        color: "#6b7280", 
-                        marginRight: 8,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>
+                      <span
+                        style={{
+                          fontSize: "clamp(13px, 3vw, 15px)",
+                          color: "#6b7280",
+                          marginRight: 8,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
                         {t("admin.siteEdit.domain.primary") || "Primary"}:
                       </span>
                       <span style={{ fontWeight: 600 }}>{primaryKey.slug}</span>
@@ -998,12 +1156,15 @@ function DomainTab({
                   )}
                   {aliases.length > 0 && (
                     <div>
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)", 
-                        color: "#6b7280", 
-                        marginRight: 8,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>
+                      <span
+                        style={{
+                          fontSize: "clamp(13px, 3vw, 15px)",
+                          color: "#6b7280",
+                          marginRight: 8,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
                         {t("admin.siteEdit.domain.aliases") || "Aliasok"}:
                       </span>
                       {aliases.map((alias) => (
@@ -1018,11 +1179,14 @@ function DomainTab({
             })}
           </div>
         ) : (
-          <p style={{ 
-            color: "#6b7280", 
-            fontSize: 14,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+          <p
+            style={{
+              color: "#6b7280",
+              fontSize: 14,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.siteEdit.domain.noSiteKeys") || "Nincs SiteKey"}
           </p>
         )}
@@ -1071,7 +1235,10 @@ function AppearanceTab({
 
   const handleSave = async () => {
     if (!instance) {
-      showToast(t("admin.siteEdit.appearance.instanceNotFound") || "SiteInstance nem található", "error");
+      showToast(
+        t("admin.siteEdit.appearance.instanceNotFound") || "SiteInstance nem található",
+        "error"
+      );
       return;
     }
 
@@ -1094,24 +1261,30 @@ function AppearanceTab({
 
   return (
     <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
+      <h3
+        style={{
+          marginBottom: 24,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
         {t("admin.siteEdit.appearance.title") || "Megjelenés"}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.language")}
         </label>
         <select
@@ -1133,8 +1306,17 @@ function AppearanceTab({
       </div>
 
       {!instance && (
-        <div style={{ padding: 16, background: "#fef3c7", borderRadius: 8, marginBottom: 24, color: "#92400e" }}>
-          {t("admin.siteEdit.appearance.createInstanceFirst") || "Először hozz létre egy SiteInstance-t ezen a nyelven"}
+        <div
+          style={{
+            padding: 16,
+            background: "#fef3c7",
+            borderRadius: 8,
+            marginBottom: 24,
+            color: "#92400e",
+          }}
+        >
+          {t("admin.siteEdit.appearance.createInstanceFirst") ||
+            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
         </div>
       )}
 
@@ -1143,35 +1325,51 @@ function AppearanceTab({
           {/* Brand info */}
           {brand && (
             <div style={{ marginBottom: 24, padding: 16, background: "#f9fafb", borderRadius: 8 }}>
-              <h4 style={{ 
-                marginBottom: 12, 
-                fontSize: 16, 
-                fontWeight: 600,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <h4
+                style={{
+                  marginBottom: 12,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.appearance.brandDefaults") || "Brand alapértelmezések"}
               </h4>
-              <div style={{ 
-                fontSize: "clamp(14px, 3.5vw, 16px)", 
-                color: "#6b7280",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
-                <div>Logo: {brand.logoUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}</div>
-                <div>Favicon: {brand.faviconUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}</div>
+              <div
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  color: "#6b7280",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                <div>
+                  Logo:{" "}
+                  {brand.logoUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}
+                </div>
+                <div>
+                  Favicon:{" "}
+                  {brand.faviconUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}
+                </div>
               </div>
             </div>
           )}
 
           {/* Logo override */}
           <div style={{ marginBottom: 24 }}>
-            <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
-              {t("admin.siteEdit.appearance.logoUrl") || "Logo URL"} ({t("admin.siteEdit.appearance.override") || "override"})
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontWeight: 500,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.siteEdit.appearance.logoUrl") || "Logo URL"} (
+              {t("admin.siteEdit.appearance.override") || "override"})
             </label>
             <input
               type="text"
@@ -1185,7 +1383,8 @@ function AppearanceTab({
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             />
             {formData.logoUrl && (
@@ -1202,14 +1401,18 @@ function AppearanceTab({
 
           {/* Favicon override */}
           <div style={{ marginBottom: 24 }}>
-            <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
-              {t("admin.siteEdit.appearance.faviconUrl") || "Favicon URL"} ({t("admin.siteEdit.appearance.override") || "override"})
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontWeight: 500,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.siteEdit.appearance.faviconUrl") || "Favicon URL"} (
+              {t("admin.siteEdit.appearance.override") || "override"})
             </label>
             <input
               type="text"
@@ -1223,31 +1426,38 @@ function AppearanceTab({
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             />
           </div>
 
           {/* Placeholder images */}
           <div style={{ marginTop: 32 }}>
-            <h4 style={{ 
-              marginBottom: 16, 
-              fontSize: 18, 
-              fontWeight: 600, 
-              color: "#374151",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <h4
+              style={{
+                marginBottom: 16,
+                fontSize: 18,
+                fontWeight: 600,
+                color: "#374151",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.siteEdit.appearance.placeholders") || "Placeholder képek"}
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.siteEdit.appearance.placeholderCard") || "Card placeholder"}
                 </label>
                 <input
@@ -1262,18 +1472,22 @@ function AppearanceTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
               </div>
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.siteEdit.appearance.placeholderHero") || "Hero placeholder"}
                 </label>
                 <input
@@ -1288,24 +1502,30 @@ function AppearanceTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
               </div>
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.siteEdit.appearance.placeholderEventCard") || "Event card placeholder"}
                 </label>
                 <input
                   type="text"
                   value={formData.placeholderEventCard}
-                  onChange={(e) => setFormData({ ...formData, placeholderEventCard: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, placeholderEventCard: e.target.value })
+                  }
                   placeholder="https://..."
                   style={{
                     width: "100%",
@@ -1314,7 +1534,8 @@ function AppearanceTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
               </div>
@@ -1402,24 +1623,30 @@ function MapTab({
 
   return (
     <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
+      <h3
+        style={{
+          marginBottom: 24,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
         {t("admin.siteEdit.map.title") || "Térkép"}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.language")}
         </label>
         <select
@@ -1441,26 +1668,47 @@ function MapTab({
       </div>
 
       {!instance && (
-        <div style={{ padding: 16, background: "#fef3c7", borderRadius: 8, marginBottom: 24, color: "#92400e" }}>
-          {t("admin.siteEdit.map.createInstanceFirst") || "Először hozz létre egy SiteInstance-t ezen a nyelven"}
+        <div
+          style={{
+            padding: 16,
+            background: "#fef3c7",
+            borderRadius: 8,
+            marginBottom: 24,
+            color: "#92400e",
+          }}
+        >
+          {t("admin.siteEdit.map.createInstanceFirst") ||
+            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
         </div>
       )}
 
       {instance && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}
+          >
             {/* Map */}
             <div>
-              <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.map.map") || "Térkép"}
               </label>
-              <div style={{ height: 400, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+              <div
+                style={{
+                  height: 400,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
                 <MapComponent
                   latitude={formData.lat ? parseFloat(formData.lat) : null}
                   longitude={formData.lng ? parseFloat(formData.lng) : null}
@@ -1481,13 +1729,16 @@ function MapTab({
             {/* Form fields */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.siteEdit.map.defaultTown") || "Alapértelmezett település"}
                 </label>
                 <select
@@ -1499,12 +1750,15 @@ function MapTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   <option value="">{t("admin.siteEdit.map.noTown") || "Nincs település"}</option>
                   {towns.map((town) => {
-                    const translation = town.translations?.find((t: any) => t.lang === selectedLang) || town.translations?.[0];
+                    const translation =
+                      town.translations?.find((t: any) => t.lang === selectedLang) ||
+                      town.translations?.[0];
                     return (
                       <option key={town.id} value={town.id}>
                         {translation?.name || town.id}
@@ -1515,13 +1769,16 @@ function MapTab({
               </div>
 
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.latitude")}
                 </label>
                 <input
@@ -1535,19 +1792,23 @@ function MapTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.longitude")}
                 </label>
                 <input
@@ -1561,19 +1822,23 @@ function MapTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 500,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.mapZoom") || "Nagyítás"}
                 </label>
                 <input
@@ -1589,15 +1854,19 @@ function MapTab({
                     border: "1px solid #d1d5db",
                     borderRadius: 6,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 />
-                <div style={{ 
-                  fontSize: 12, 
-                  color: "#6b7280", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.mapZoomHint") || "1 = legkisebb, 20 = legnagyobb. Ajánlott: 10-15."}
                 </div>
               </div>
@@ -1660,7 +1929,10 @@ function FeaturesTab({
 
   const handleSave = async () => {
     if (!instance) {
-      showToast(t("admin.siteEdit.features.instanceNotFound") || "SiteInstance nem található", "error");
+      showToast(
+        t("admin.siteEdit.features.instanceNotFound") || "SiteInstance nem található",
+        "error"
+      );
       return;
     }
 
@@ -1682,24 +1954,30 @@ function FeaturesTab({
 
   return (
     <div>
-      <h3 style={{ 
-        marginBottom: 24, 
-        fontSize: "clamp(20px, 5vw, 24px)",
-        fontWeight: 700,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#667eea"
-      }}>
+      <h3
+        style={{
+          marginBottom: 24,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
         {t("admin.siteEdit.features.title") || "Funkciók"}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.language")}
         </label>
         <select
@@ -1721,8 +1999,17 @@ function FeaturesTab({
       </div>
 
       {!instance && (
-        <div style={{ padding: 16, background: "#fef3c7", borderRadius: 8, marginBottom: 24, color: "#92400e" }}>
-          {t("admin.siteEdit.features.createInstanceFirst") || "Először hozz létre egy SiteInstance-t ezen a nyelven"}
+        <div
+          style={{
+            padding: 16,
+            background: "#fef3c7",
+            borderRadius: 8,
+            marginBottom: 24,
+            color: "#92400e",
+          }}
+        >
+          {t("admin.siteEdit.features.createInstanceFirst") ||
+            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
         </div>
       )}
 
@@ -1736,11 +2023,14 @@ function FeaturesTab({
                 onChange={(e) => setFormData({ ...formData, enableEvents: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ 
-                fontSize: 14, 
-                fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.features.enableEvents") || "Események engedélyezése"}
               </span>
             </label>
@@ -1752,11 +2042,14 @@ function FeaturesTab({
                 onChange={(e) => setFormData({ ...formData, enableBlog: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ 
-                fontSize: 14, 
-                fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.features.enableBlog") || "Blog / Statikus oldalak engedélyezése"}
               </span>
             </label>
@@ -1768,11 +2061,14 @@ function FeaturesTab({
                 onChange={(e) => setFormData({ ...formData, enableStaticPages: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ 
-                fontSize: 14, 
-                fontWeight: 500,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.features.enableStaticPages") || "Statikus oldalak engedélyezése"}
               </span>
             </label>
@@ -1785,21 +2081,28 @@ function FeaturesTab({
                   onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
                   style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                 />
-                <span style={{ 
-                  fontSize: 14, 
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.siteEdit.features.isCrawlable") || "Indexelhető (SEO)"}
                 </span>
               </label>
-              <div style={{ 
-                fontSize: 12, 
-                color: "#666", 
-                marginLeft: 28,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
-                {t("admin.isCrawlableDescription") || "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#666",
+                  marginLeft: 28,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.isCrawlableDescription") ||
+                  "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
               </div>
             </div>
           </div>
@@ -1875,7 +2178,7 @@ function SubscriptionTab({
         getSiteEntitlements(site.id),
         // Also fetch from subscription service to get the subscription ID
         fetch(`/api/${i18n.language.split("-")[0] || "hu"}/sites/${site.id}/subscription`)
-          .then(res => res.ok ? res.json() : null)
+          .then((res) => (res.ok ? res.json() : null))
           .catch(() => null),
       ]);
       // Merge subscription data (id and status from subscription service)
@@ -1890,12 +2193,18 @@ function SubscriptionTab({
         ...prev,
         plan: subData.plan,
         planStatus: subData.planStatus || "active",
-        planValidUntil: subData.planValidUntil ? new Date(subData.planValidUntil).toISOString().split("T")[0] : "",
-        allowPublicRegistration: subData.allowPublicRegistration ?? site.allowPublicRegistration ?? true,
+        planValidUntil: subData.planValidUntil
+          ? new Date(subData.planValidUntil).toISOString().split("T")[0]
+          : "",
+        allowPublicRegistration:
+          subData.allowPublicRegistration ?? site.allowPublicRegistration ?? true,
       }));
     } catch (error) {
       console.error("Failed to load subscription data:", error);
-      showToast(t("admin.errorLoadingBilling") || "Failed to load subscription information", "error");
+      showToast(
+        t("admin.errorLoadingBilling") || "Failed to load subscription information",
+        "error"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -1919,12 +2228,36 @@ function SubscriptionTab({
   // Status badge colors
   const getStatusBadge = (status: string | null) => {
     const statusMap: Record<string, { color: string; bg: string; label: string }> = {
-      active: { color: "#10b981", bg: "#d1fae5", label: t("admin.siteEdit.subscription.statusActive") || "Aktív" },
-      trial: { color: "#f59e0b", bg: "#fef3c7", label: t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak" },
-      past_due: { color: "#ef4444", bg: "#fee2e2", label: t("admin.siteEdit.subscription.statusPastDue") || "Lejárt" },
-      canceled: { color: "#6b7280", bg: "#f3f4f6", label: t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva" },
-      suspended: { color: "#ef4444", bg: "#fee2e2", label: t("admin.siteEdit.subscription.statusSuspended") || "Felfüggesztve" },
-      expired: { color: "#6b7280", bg: "#f3f4f6", label: t("admin.siteEdit.subscription.statusExpired") || "Lejárt" },
+      active: {
+        color: "#10b981",
+        bg: "#d1fae5",
+        label: t("admin.siteEdit.subscription.statusActive") || "Aktív",
+      },
+      trial: {
+        color: "#f59e0b",
+        bg: "#fef3c7",
+        label: t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak",
+      },
+      past_due: {
+        color: "#ef4444",
+        bg: "#fee2e2",
+        label: t("admin.siteEdit.subscription.statusPastDue") || "Lejárt",
+      },
+      canceled: {
+        color: "#6b7280",
+        bg: "#f3f4f6",
+        label: t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva",
+      },
+      suspended: {
+        color: "#ef4444",
+        bg: "#fee2e2",
+        label: t("admin.siteEdit.subscription.statusSuspended") || "Felfüggesztve",
+      },
+      expired: {
+        color: "#6b7280",
+        bg: "#f3f4f6",
+        label: t("admin.siteEdit.subscription.statusExpired") || "Lejárt",
+      },
     };
     const statusInfo = statusMap[status || "active"] || statusMap.active;
     return (
@@ -1935,7 +2268,8 @@ function SubscriptionTab({
           background: statusInfo.bg,
           color: statusInfo.color,
           fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 600,
         }}
       >
@@ -1959,7 +2293,9 @@ function SubscriptionTab({
 
   // Plan descriptions
   const planDescriptions: Record<string, string> = {
-    basic: t("admin.planBasicDescription") || "Korlátlan hely (default), nincs: domain, seo, események, push, kiemelt",
+    basic:
+      t("admin.planBasicDescription") ||
+      "Korlátlan hely (default), nincs: domain, seo, események, push, kiemelt",
     pro: t("admin.planProDescription") || "Korlátlan hely, kiemelések, események",
     business: t("admin.planBusinessDescription") || "Minden funkció, egyedi domain, prioritás",
   };
@@ -1972,7 +2308,11 @@ function SubscriptionTab({
 
   const handlePlanChange = async (newPlan: "basic" | "pro" | "business") => {
     if (!canEditPlan) {
-      showToast(t("admin.siteEdit.subscription.contactToUpgrade") || "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.", "error");
+      showToast(
+        t("admin.siteEdit.subscription.contactToUpgrade") ||
+          "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.",
+        "error"
+      );
       return;
     }
 
@@ -1996,7 +2336,9 @@ function SubscriptionTab({
     try {
       await updateSite(site.id, {
         planStatus: formData.planStatus,
-        planValidUntil: formData.planValidUntil ? new Date(formData.planValidUntil).toISOString() : null,
+        planValidUntil: formData.planValidUntil
+          ? new Date(formData.planValidUntil).toISOString()
+          : null,
         allowPublicRegistration: formData.allowPublicRegistration,
       });
       await loadSubscriptionData();
@@ -2045,19 +2387,38 @@ function SubscriptionTab({
           boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
-        <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <h4 style={{ 
-            margin: 0, 
-            fontSize: "clamp(16px, 3.5vw, 20px)", 
-            fontWeight: 600, 
-            color: "#667eea",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <h4
+            style={{
+              margin: 0,
+              fontSize: "clamp(16px, 3.5vw, 20px)",
+              fontWeight: 600,
+              color: "#667eea",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.siteEdit.subscription.currentPlan") || "Jelenlegi csomag"}
           </h4>
           {getStatusBadge(subscription.planStatus)}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -2093,7 +2454,8 @@ function SubscriptionTab({
                       borderRadius: 8,
                       color: planColors[currentPlan],
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       fontWeight: 600,
                       cursor: isSaving ? "not-allowed" : "pointer",
                       transition: "all 0.2s",
@@ -2120,12 +2482,15 @@ function SubscriptionTab({
               </div>
             </div>
             {subscription.planValidUntil && (
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                color: "#666", 
-                marginBottom: 6,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  color: "#666",
+                  marginBottom: 6,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.siteEdit.subscription.validUntil") || "Érvényes"}:{" "}
                 {new Date(subscription.planValidUntil).toLocaleDateString("hu-HU", {
                   year: "numeric",
@@ -2138,12 +2503,14 @@ function SubscriptionTab({
           {/* Cancel/Resume subscription button */}
           {subscription && subscription.id && (
             <div style={{ marginTop: 12 }}>
-              {(subscription.status === "ACTIVE" || subscription.planStatus === "active") ? (
+              {subscription.status === "ACTIVE" || subscription.planStatus === "active" ? (
                 <button
                   onClick={async () => {
                     const confirmed = await confirm({
                       title: t("admin.subscription.cancel") || "Előfizetés lemondása",
-                      message: t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
+                      message:
+                        t("admin.subscription.cancelConfirm") ||
+                        "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
                       confirmLabel: t("admin.subscription.cancelButton") || "Lemondom",
                       cancelLabel: t("common.cancel") || "Mégse",
                       confirmVariant: "danger",
@@ -2151,12 +2518,18 @@ function SubscriptionTab({
                     if (confirmed) {
                       try {
                         await cancelSubscription("site", subscription.id, site.id);
-                        showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
+                        showToast(
+                          t("admin.subscription.cancelled") || "Előfizetés lemondva",
+                          "success"
+                        );
                         await loadSubscriptionData();
                         onUpdate();
                       } catch (error) {
                         console.error("Failed to cancel subscription:", error);
-                        showToast(t("admin.errors.updateFailed") || "Hiba a lemondás során", "error");
+                        showToast(
+                          t("admin.errors.updateFailed") || "Hiba a lemondás során",
+                          "error"
+                        );
                       }
                     }
                   }}
@@ -2168,7 +2541,8 @@ function SubscriptionTab({
                     borderRadius: 8,
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
@@ -2183,17 +2557,23 @@ function SubscriptionTab({
                 >
                   {t("admin.subscription.cancelButton") || "Lemondom"}
                 </button>
-              ) : (subscription.status === "CANCELLED" || subscription.planStatus === "canceled") ? (
+              ) : subscription.status === "CANCELLED" || subscription.planStatus === "canceled" ? (
                 <button
                   onClick={async () => {
                     try {
                       await resumeSubscription("site", subscription.id, site.id);
-                      showToast(t("admin.subscription.resumed") || "Előfizetés folytatva", "success");
+                      showToast(
+                        t("admin.subscription.resumed") || "Előfizetés folytatva",
+                        "success"
+                      );
                       await loadSubscriptionData();
                       onUpdate();
                     } catch (error) {
                       console.error("Failed to resume subscription:", error);
-                      showToast(t("admin.errors.updateFailed") || "Hiba a folytatás során", "error");
+                      showToast(
+                        t("admin.errors.updateFailed") || "Hiba a folytatás során",
+                        "error"
+                      );
                     }
                   }}
                   style={{
@@ -2204,7 +2584,8 @@ function SubscriptionTab({
                     borderRadius: 8,
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
@@ -2227,64 +2608,75 @@ function SubscriptionTab({
 
       {/* D. Plan Switcher - Only for superadmin, közvetlenül a hero blokk alatt */}
       {canEditPlan && showPlanSwitcher && (
-        <div style={{ 
-          padding: 32, 
-          background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
-          borderRadius: 16, 
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-          position: "relative",
-          overflow: "hidden",
-        }}>
+        <div
+          style={{
+            padding: 32,
+            background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+            borderRadius: 16,
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
           {/* Decorative background element */}
-          <div style={{
-            position: "absolute",
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
-            background: `radial-gradient(circle, ${planColors[currentPlan]}10 0%, transparent 70%)`,
-            borderRadius: "50%",
-            pointerEvents: "none",
-          }} />
-          
+          <div
+            style={{
+              position: "absolute",
+              top: -50,
+              right: -50,
+              width: 200,
+              height: 200,
+              background: `radial-gradient(circle, ${planColors[currentPlan]}10 0%, transparent 70%)`,
+              borderRadius: "50%",
+              pointerEvents: "none",
+            }}
+          />
+
           <div style={{ position: "relative", zIndex: 1 }}>
-            <h4 style={{ 
-              marginBottom: 24, 
-              fontSize: 20, 
-              fontWeight: 700, 
-              color: "#1e293b",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <h4
+              style={{
+                marginBottom: 24,
+                fontSize: 20,
+                fontWeight: 700,
+                color: "#1e293b",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               <span style={{ fontSize: 24 }}>✨</span>
               {t("admin.siteEdit.subscription.availablePlans") || "Elérhető csomagok"}
             </h4>
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", 
-              gap: 20, 
-              marginBottom: 24 
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 20,
+                marginBottom: 24,
+              }}
+            >
               {(["basic", "pro", "business"] as const).map((plan) => (
                 <div
                   key={plan}
                   onClick={() => !isSaving && handlePlanChange(plan)}
                   style={{
                     padding: 24,
-                    background: currentPlan === plan 
-                      ? `linear-gradient(135deg, ${planColors[plan]}15 0%, ${planColors[plan]}08 100%)` 
-                      : "white",
+                    background:
+                      currentPlan === plan
+                        ? `linear-gradient(135deg, ${planColors[plan]}15 0%, ${planColors[plan]}08 100%)`
+                        : "white",
                     border: `2px solid ${currentPlan === plan ? planColors[plan] : "#e2e8f0"}`,
                     borderRadius: 16,
                     cursor: isSaving ? "not-allowed" : "pointer",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     opacity: isSaving ? 0.6 : 1,
-                    boxShadow: currentPlan === plan 
-                      ? `0 8px 20px ${planColors[plan]}25` 
-                      : "0 2px 8px rgba(0,0,0,0.04)",
+                    boxShadow:
+                      currentPlan === plan
+                        ? `0 8px 20px ${planColors[plan]}25`
+                        : "0 2px 8px rgba(0,0,0,0.04)",
                     transform: currentPlan === plan ? "translateY(-2px)" : "translateY(0)",
                     position: "relative",
                     overflow: "hidden",
@@ -2311,45 +2703,52 @@ function SubscriptionTab({
                 >
                   {/* Current badge */}
                   {currentPlan === plan && (
-                    <div style={{
-                      position: "absolute",
-                      top: 12,
-                      right: 12,
-                      padding: "4px 10px",
-                      background: planColors[plan],
-                      color: "white",
-                      borderRadius: 12,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      boxShadow: `0 2px 8px ${planColors[plan]}40`,
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        padding: "4px 10px",
+                        background: planColors[plan],
+                        color: "white",
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        boxShadow: `0 2px 8px ${planColors[plan]}40`,
+                      }}
+                    >
                       {t("admin.current") || "Jelenlegi"}
                     </div>
                   )}
-                  
-                  <div style={{ 
-                    fontSize: 28, 
-                    fontWeight: 800, 
-                    color: planColors[plan], 
-                    marginBottom: 12,
-                    letterSpacing: "-0.5px",
-                  }}>
+
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 800,
+                      color: planColors[plan],
+                      marginBottom: 12,
+                      letterSpacing: "-0.5px",
+                    }}
+                  >
                     {planLabels[plan] || plan.toUpperCase()}
                   </div>
-                  <div style={{ 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                    color: "#64748b", 
-                    lineHeight: 1.6,
-                    minHeight: 40,
-                    marginBottom: 16,
-                    flex: 1,
-                  }}>
+                  <div
+                    style={{
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#64748b",
+                      lineHeight: 1.6,
+                      minHeight: 40,
+                      marginBottom: 16,
+                      flex: 1,
+                    }}
+                  >
                     {planDescriptions[plan] || ""}
                   </div>
-                  
+
                   {/* Select button - always visible */}
                   {currentPlan !== plan && (
                     <button
@@ -2365,7 +2764,8 @@ function SubscriptionTab({
                         border: "none",
                         borderRadius: 8,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                         cursor: isSaving ? "not-allowed" : "pointer",
                         transition: "all 0.2s",
@@ -2390,33 +2790,38 @@ function SubscriptionTab({
                       {t("admin.selectPlan") || "Kiválasztás"}
                     </button>
                   )}
-                  
+
                   {currentPlan === plan && (
-                    <div style={{
-                      width: "100%",
-                      padding: "10px 16px",
-                      background: `${planColors[plan]}15`,
-                      color: planColors[plan],
-                      border: `1px solid ${planColors[plan]}40`,
-                      borderRadius: 8,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontWeight: 600,
-                      textAlign: "center",
-                      marginTop: "auto",
-                    }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        padding: "10px 16px",
+                        background: `${planColors[plan]}15`,
+                        color: planColors[plan],
+                        border: `1px solid ${planColors[plan]}40`,
+                        borderRadius: 8,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontWeight: 600,
+                        textAlign: "center",
+                        marginTop: "auto",
+                      }}
+                    >
                       {t("admin.current") || "Jelenlegi"}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "flex-end",
-              paddingTop: 16,
-              borderTop: "1px solid #e2e8f0",
-            }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                paddingTop: 16,
+                borderTop: "1px solid #e2e8f0",
+              }}
+            >
               <button
                 onClick={() => setShowPlanSwitcher(false)}
                 style={{
@@ -2427,7 +2832,8 @@ function SubscriptionTab({
                   color: "#475569",
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 500,
                   transition: "all 0.2s",
                 }}
@@ -2448,228 +2854,319 @@ function SubscriptionTab({
       )}
 
       {/* B. Feature Matrix + C. Usage - Két oszlop desktopon, egy mobilon */}
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", 
-        gap: 24,
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gap: 24,
+        }}
+      >
         {/* B. Feature Matrix - Read-only */}
-        <div style={{ 
-          padding: 32, 
-          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-          borderRadius: 16, 
-          border: "2px solid #e2e8f0",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 400,
-        }}>
-          <h4 style={{ 
-            marginBottom: 24, 
-            fontSize: 20, 
-            fontWeight: 700, 
-            color: "#1e293b",
+        <div
+          style={{
+            padding: 32,
+            background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+            borderRadius: 16,
+            border: "2px solid #e2e8f0",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+            flexDirection: "column",
+            minHeight: 400,
+          }}
+        >
+          <h4
+            style={{
+              marginBottom: 24,
+              fontSize: 20,
+              fontWeight: 700,
+              color: "#1e293b",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             <span style={{ fontSize: 24 }}>📦</span>
             {t("admin.siteEdit.subscription.planContents") || "Csomag tartalma"}
           </h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.placesCount") || "Helyek száma"}</span>
-              <span style={{ 
-                fontSize: 18, 
-                fontWeight: 700, 
-                color: limits.places === Infinity ? "#10b981" : "#1e293b",
-                padding: "4px 12px",
-                background: limits.places === Infinity ? "#d1fae5" : "#f1f5f9",
-                borderRadius: 8,
-              }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.placesCount") || "Helyek száma"}
+              </span>
+              <span
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: limits.places === Infinity ? "#10b981" : "#1e293b",
+                  padding: "4px 12px",
+                  background: limits.places === Infinity ? "#d1fae5" : "#f1f5f9",
+                  borderRadius: 8,
+                }}
+              >
                 {limits.places === Infinity ? "∞" : limits.places}
               </span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.featuredPlacesCount") || "Kiemelt helyek"}</span>
-              <span style={{ 
-                fontSize: 18, 
-                fontWeight: 700, 
-                color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
-                padding: "4px 12px",
-                background: limits.featuredSlots > 0 ? "#d1fae5" : "#fee2e2",
-                borderRadius: 8,
-              }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.featuredPlacesCount") || "Kiemelt helyek"}
+              </span>
+              <span
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
+                  padding: "4px 12px",
+                  background: limits.featuredSlots > 0 ? "#d1fae5" : "#fee2e2",
+                  borderRadius: 8,
+                }}
+              >
                 {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
               </span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.events")}</span>
-              <span style={{ 
-                fontSize: 24, 
-                color: limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
-                fontWeight: 700,
-              }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.events")}
+              </span>
+              <span
+                style={{
+                  fontSize: 24,
+                  color: limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
+                  fontWeight: 700,
+                }}
+              >
                 {limits.events === Infinity ? "✓" : limits.events > 0 ? "✓" : "✗"}
               </span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.multiLanguage") || "Több nyelv"}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.multiLanguage") || "Több nyelv"}
+              </span>
               <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.customDomain") || "Egyedi domain"}</span>
-              <span style={{ fontSize: 24, color: limits.customDomain ? "#10b981" : "#dc2626", fontWeight: 700 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.customDomain") || "Egyedi domain"}
+              </span>
+              <span
+                style={{
+                  fontSize: 24,
+                  color: limits.customDomain ? "#10b981" : "#dc2626",
+                  fontWeight: 700,
+                }}
+              >
                 {limits.customDomain ? "✓" : "✗"}
               </span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.seoSettings") || "SEO beállítások"}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.seoSettings") || "SEO beállítások"}
+              </span>
               <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
             </div>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}>
-              <span style={{ 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                fontWeight: 500, 
-                color: "#334155",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{t("admin.pushNotifications") || "Push értesítés"}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 16px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                  color: "#334155",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.pushNotifications") || "Push értesítés"}
+              </span>
               <span style={{ fontSize: 24, color: "#dc2626", fontWeight: 700 }}>✗</span>
             </div>
           </div>
         </div>
 
         {/* C. Usage / Quota */}
-        <div style={{ 
-          padding: 32, 
-          background: "linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)",
-          borderRadius: 16, 
-          border: "2px solid #e2e8f0",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 400,
-        }}>
-          <h4 style={{ 
-            marginBottom: 24, 
-            fontSize: 20, 
-            fontWeight: 700, 
-            color: "#1e293b",
+        <div
+          style={{
+            padding: 32,
+            background: "linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)",
+            borderRadius: 16,
+            border: "2px solid #e2e8f0",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+            flexDirection: "column",
+            minHeight: 400,
+          }}
+        >
+          <h4
+            style={{
+              marginBottom: 24,
+              fontSize: 20,
+              fontWeight: 700,
+              color: "#1e293b",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             <span style={{ fontSize: 24 }}>📊</span>
             {t("admin.siteEdit.subscription.usage") || "Használat"}
           </h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
             {/* Places */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <span style={{ 
-                  fontSize: "clamp(15px, 3.5vw, 16px)", 
-                  fontWeight: 600, 
-                  color: "#334155",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{t("admin.places")}</span>
-                <span 
-                  style={{ 
-                    fontSize: 18, 
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontWeight: 600,
+                    color: "#334155",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.places")}
+                </span>
+                <span
+                  style={{
+                    fontSize: 18,
                     fontWeight: 700,
                     animation: animatedValues.has("places") ? "valueUpdate 0.6s ease-out" : "none",
                     transform: animatedValues.has("places") ? "scale(1.1)" : "scale(1)",
                     transition: "transform 0.3s ease-out",
-                    color: usage.places >= (limits.places === Infinity ? 0 : limits.places) ? "#ef4444" : "#1e293b",
+                    color:
+                      usage.places >= (limits.places === Infinity ? 0 : limits.places)
+                        ? "#ef4444"
+                        : "#1e293b",
                     padding: "6px 14px",
-                    background: usage.places >= (limits.places === Infinity ? 0 : limits.places) ? "#fee2e2" : "#f1f5f9",
+                    background:
+                      usage.places >= (limits.places === Infinity ? 0 : limits.places)
+                        ? "#fee2e2"
+                        : "#f1f5f9",
                     borderRadius: 10,
                   }}
                 >
@@ -2680,14 +3177,24 @@ function SubscriptionTab({
                 </span>
               </div>
               {limits.places !== Infinity && (
-                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 12,
+                    background: "#e5e7eb",
+                    borderRadius: 6,
+                    overflow: "hidden",
+                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
                   <div
                     style={{
                       width: `${getProgress(usage.places, limits.places)}%`,
                       height: "100%",
-                      background: usage.places >= limits.places 
-                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
-                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      background:
+                        usage.places >= limits.places
+                          ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
+                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                     }}
@@ -2698,86 +3205,145 @@ function SubscriptionTab({
 
             {/* Featured slots */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <span style={{ 
-                  fontSize: "clamp(15px, 3.5vw, 16px)", 
-                  fontWeight: 600, 
-                  color: "#334155",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{t("admin.featuredPlaces") || "Kiemelések"}</span>
-                <span 
-                  style={{ 
-                    fontSize: 18, 
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontWeight: 600,
+                    color: "#334155",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.featuredPlaces") || "Kiemelések"}
+                </span>
+                <span
+                  style={{
+                    fontSize: 18,
                     fontWeight: 700,
-                    animation: animatedValues.has("featuredSlots") ? "valueUpdate 0.6s ease-out" : "none",
+                    animation: animatedValues.has("featuredSlots")
+                      ? "valueUpdate 0.6s ease-out"
+                      : "none",
                     transform: animatedValues.has("featuredSlots") ? "scale(1.1)" : "scale(1)",
                     transition: "transform 0.3s ease-out",
-                    color: limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots ? "#ef4444" : "#1e293b",
+                    color:
+                      limits.featuredSlots !== Infinity &&
+                      usage.featuredPlaces >= limits.featuredSlots
+                        ? "#ef4444"
+                        : "#1e293b",
                     padding: "6px 14px",
-                    background: limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots ? "#fee2e2" : "#f1f5f9",
+                    background:
+                      limits.featuredSlots !== Infinity &&
+                      usage.featuredPlaces >= limits.featuredSlots
+                        ? "#fee2e2"
+                        : "#f1f5f9",
                     borderRadius: 10,
                   }}
                 >
-                  {usage.featuredPlaces} / {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
-                  {limits.featuredSlots !== Infinity && usage.featuredPlaces >= limits.featuredSlots && (
-                    <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 16 }}>⚠️</span>
-                  )}
+                  {usage.featuredPlaces} /{" "}
+                  {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
+                  {limits.featuredSlots !== Infinity &&
+                    usage.featuredPlaces >= limits.featuredSlots && (
+                      <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 16 }}>⚠️</span>
+                    )}
                 </span>
               </div>
               {limits.featuredSlots === 0 ? (
-                <div style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 10, 
-                  color: "#6b7280", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  padding: 12, 
-                  background: "#f3f4f6", 
-                  borderRadius: 10, 
-                  border: "1px solid #e5e7eb",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    color: "#6b7280",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    padding: 12,
+                    background: "#f3f4f6",
+                    borderRadius: 10,
+                    border: "1px solid #e5e7eb",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   <span style={{ fontSize: 20 }}>🔒</span>
-                  <span>{t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}</span>
+                  <span>
+                    {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
+                  </span>
                 </div>
               ) : limits.featuredSlots !== Infinity ? (
-                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 12,
+                    background: "#e5e7eb",
+                    borderRadius: 6,
+                    overflow: "hidden",
+                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
                   <div
                     style={{
                       width: `${getProgress(usage.featuredPlaces, limits.featuredSlots)}%`,
                       height: "100%",
-                      background: usage.featuredPlaces >= limits.featuredSlots 
-                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
-                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      background:
+                        usage.featuredPlaces >= limits.featuredSlots
+                          ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
+                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                     }}
                   />
                 </div>
               ) : (
-                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>∞</div>
+                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>
+                  ∞
+                </div>
               )}
             </div>
 
             {/* Events */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <span style={{ 
-                  fontSize: "clamp(15px, 3.5vw, 16px)", 
-                  fontWeight: 600, 
-                  color: "#334155",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{t("admin.events")}</span>
-                <span 
-                  style={{ 
-                    fontSize: 18, 
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "clamp(15px, 3.5vw, 16px)",
+                    fontWeight: 600,
+                    color: "#334155",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.events")}
+                </span>
+                <span
+                  style={{
+                    fontSize: 18,
                     fontWeight: 700,
                     animation: animatedValues.has("events") ? "valueUpdate 0.6s ease-out" : "none",
                     transform: animatedValues.has("events") ? "scale(1.1)" : "scale(1)",
                     transition: "transform 0.3s ease-out",
-                    color: limits.events !== Infinity && usage.events >= limits.events ? "#ef4444" : "#1e293b",
+                    color:
+                      limits.events !== Infinity && usage.events >= limits.events
+                        ? "#ef4444"
+                        : "#1e293b",
                     padding: "6px 14px",
-                    background: limits.events !== Infinity && usage.events >= limits.events ? "#fee2e2" : "#f1f5f9",
+                    background:
+                      limits.events !== Infinity && usage.events >= limits.events
+                        ? "#fee2e2"
+                        : "#f1f5f9",
                     borderRadius: 10,
                   }}
                 >
@@ -2785,37 +3351,54 @@ function SubscriptionTab({
                 </span>
               </div>
               {limits.events === 0 ? (
-                <div style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: 10, 
-                  color: "#6b7280", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  padding: 12, 
-                  background: "#f3f4f6", 
-                  borderRadius: 10, 
-                  border: "1px solid #e5e7eb",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    color: "#6b7280",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    padding: 12,
+                    background: "#f3f4f6",
+                    borderRadius: 10,
+                    border: "1px solid #e5e7eb",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   <span style={{ fontSize: 20 }}>🔒</span>
-                  <span>{t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}</span>
+                  <span>
+                    {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
+                  </span>
                 </div>
               ) : limits.events !== Infinity ? (
-                <div style={{ width: "100%", height: 12, background: "#e5e7eb", borderRadius: 6, overflow: "hidden", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 12,
+                    background: "#e5e7eb",
+                    borderRadius: 6,
+                    overflow: "hidden",
+                    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.06)",
+                  }}
+                >
                   <div
                     style={{
                       width: `${getProgress(usage.events, limits.events)}%`,
                       height: "100%",
-                      background: usage.events >= limits.events 
-                        ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" 
-                        : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                      background:
+                        usage.events >= limits.events
+                          ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
+                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                     }}
                   />
                 </div>
               ) : (
-                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>∞</div>
+                <div style={{ fontSize: 16, color: "#6b7280", fontWeight: 600, padding: "8px 0" }}>
+                  ∞
+                </div>
               )}
             </div>
           </div>
@@ -2824,13 +3407,24 @@ function SubscriptionTab({
 
       {/* Non-superadmin message */}
       {!canEditPlan && (
-        <div style={{ padding: 16, background: "#fef3c7", borderRadius: 8, border: "1px solid #fbbf24" }}>
-          <div style={{ 
-            fontSize: "clamp(14px, 3.5vw, 16px)", 
-            color: "#92400e",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
-            {t("admin.siteEdit.subscription.contactToUpgrade") || "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel."}
+        <div
+          style={{
+            padding: 16,
+            background: "#fef3c7",
+            borderRadius: 8,
+            border: "1px solid #fbbf24",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              color: "#92400e",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.siteEdit.subscription.contactToUpgrade") ||
+              "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel."}
           </div>
         </div>
       )}
@@ -2850,26 +3444,39 @@ function SubscriptionTab({
               fontSize: 14,
             }}
           >
-            {showAdvanced ? "▼" : "▶"} {t("admin.siteEdit.subscription.advancedSettings") || "Haladó beállítások"}
+            {showAdvanced ? "▼" : "▶"}{" "}
+            {t("admin.siteEdit.subscription.advancedSettings") || "Haladó beállítások"}
           </button>
 
           {showAdvanced && (
-            <div style={{ 
-              marginTop: 16, 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
-              gap: 24,
-            }}>
+            <div
+              style={{
+                marginTop: 16,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: 24,
+              }}
+            >
               {/* Dropdown mezők bal oldalon */}
-              <div style={{ padding: 20, background: "#f9fafb", borderRadius: 12, border: "1px solid #e5e7eb" }}>
+              <div
+                style={{
+                  padding: 20,
+                  background: "#f9fafb",
+                  borderRadius: 12,
+                  border: "1px solid #e5e7eb",
+                }}
+              >
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("admin.planStatus")}
                   </label>
                   <select
@@ -2881,25 +3488,37 @@ function SubscriptionTab({
                       border: "1px solid #d1d5db",
                       borderRadius: 8,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       background: "white",
                     }}
                   >
-                    <option value="trial">{t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak"}</option>
-                    <option value="active">{t("admin.siteEdit.subscription.statusActive") || "Aktív"}</option>
-                    <option value="past_due">{t("admin.siteEdit.subscription.statusPastDue") || "Lejárt"}</option>
-                    <option value="canceled">{t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva"}</option>
+                    <option value="trial">
+                      {t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak"}
+                    </option>
+                    <option value="active">
+                      {t("admin.siteEdit.subscription.statusActive") || "Aktív"}
+                    </option>
+                    <option value="past_due">
+                      {t("admin.siteEdit.subscription.statusPastDue") || "Lejárt"}
+                    </option>
+                    <option value="canceled">
+                      {t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva"}
+                    </option>
                   </select>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ 
-          display: "block", 
-          marginBottom: 8, 
-          fontWeight: 500, 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("admin.planValidUntil")}
                   </label>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -2913,21 +3532,22 @@ function SubscriptionTab({
                         border: "1px solid #d1d5db",
                         borderRadius: 8,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background: "white",
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => {
-                        const currentDate = formData.planValidUntil 
-                          ? new Date(formData.planValidUntil) 
+                        const currentDate = formData.planValidUntil
+                          ? new Date(formData.planValidUntil)
                           : new Date();
                         const newDate = new Date(currentDate);
                         newDate.setDate(newDate.getDate() + 30);
-                        setFormData({ 
-                          ...formData, 
-                          planValidUntil: newDate.toISOString().split('T')[0] 
+                        setFormData({
+                          ...formData,
+                          planValidUntil: newDate.toISOString().split("T")[0],
                         });
                       }}
                       style={{
@@ -2937,7 +3557,8 @@ function SubscriptionTab({
                         background: "#10b981",
                         color: "white",
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontWeight: 600,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
@@ -2960,30 +3581,33 @@ function SubscriptionTab({
                 {/* Public Registration Toggle - Only for pro/business plans */}
                 {(formData.plan === "pro" || formData.plan === "business") && (
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      gap: 12,
-                      cursor: "pointer",
-                      padding: "12px 16px",
-                      background: "white",
-                      borderRadius: 8,
-                      border: "1px solid #d1d5db",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#667eea";
-                      e.currentTarget.style.background = "#f8fafc";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                      e.currentTarget.style.background = "white";
-                    }}
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        cursor: "pointer",
+                        padding: "12px 16px",
+                        background: "white",
+                        borderRadius: 8,
+                        border: "1px solid #d1d5db",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#667eea";
+                        e.currentTarget.style.background = "#f8fafc";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#d1d5db";
+                        e.currentTarget.style.background = "white";
+                      }}
                     >
                       <input
                         type="checkbox"
                         checked={formData.allowPublicRegistration}
-                        onChange={(e) => setFormData({ ...formData, allowPublicRegistration: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, allowPublicRegistration: e.target.checked })
+                        }
                         style={{
                           width: 20,
                           height: 20,
@@ -2992,21 +3616,29 @@ function SubscriptionTab({
                         }}
                       />
                       <div style={{ flex: 1 }}>
-                        <div style={{ 
-                          fontWeight: 500, 
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          color: "#334155",
-                          marginBottom: 4,
-                        }}>
-                          {t("admin.siteEdit.subscription.allowPublicRegistration") || "Publikus regisztráció engedélyezése"}
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            color: "#334155",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {t("admin.siteEdit.subscription.allowPublicRegistration") ||
+                            "Publikus regisztráció engedélyezése"}
                         </div>
-                        <div style={{ 
-                          fontSize: "clamp(12px, 2.5vw, 13px)",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          color: "#6b7280",
-                        }}>
-                          {t("admin.siteEdit.subscription.allowPublicRegistrationDescription") || "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket."}
+                        <div
+                          style={{
+                            fontSize: "clamp(12px, 2.5vw, 13px)",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            color: "#6b7280",
+                          }}
+                        >
+                          {t("admin.siteEdit.subscription.allowPublicRegistrationDescription") ||
+                            "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket."}
                         </div>
                       </div>
                     </label>
@@ -3025,7 +3657,8 @@ function SubscriptionTab({
                     color: "white",
                     cursor: isSaving ? "not-allowed" : "pointer",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     opacity: isSaving ? 0.6 : 1,
                     transition: "all 0.2s",
@@ -3046,119 +3679,142 @@ function SubscriptionTab({
               </div>
 
               {/* Korlátok jobb oldalon desktopon */}
-              <div style={{ 
-                padding: 24, 
-                background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-                borderRadius: 16, 
-                border: "2px solid #e2e8f0",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-              }}>
-                <h4 style={{ 
-                  marginBottom: 24, 
-                  fontSize: 20, 
-                  fontWeight: 700, 
-                  color: "#1e293b",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}>
+              <div
+                style={{
+                  padding: 24,
+                  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+                  borderRadius: 16,
+                  border: "2px solid #e2e8f0",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h4
+                  style={{
+                    marginBottom: 24,
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "#1e293b",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
                   <span style={{ fontSize: 24 }}>📊</span>
                   {t("admin.limits") || "Korlátok"}
                 </h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "center",
-                    padding: "18px 22px",
-                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
-                    borderRadius: 12,
-                    border: "2px solid #e2e8f0",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                  }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "18px 22px",
+                      background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                      borderRadius: 12,
+                      border: "2px solid #e2e8f0",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    }}
+                  >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
                       {t("admin.places") || "Helyek"}
                     </span>
-                    <span style={{ 
-                      fontSize: 36, 
-                      fontWeight: 900, 
-                      color: limits.places === Infinity ? "#10b981" : "#1e293b",
-                      padding: "12px 20px",
-                      background: limits.places === Infinity 
-                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
-                        : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
-                      borderRadius: 12,
-                      minWidth: 100,
-                      textAlign: "center",
-                      boxShadow: limits.places === Infinity 
-                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
-                        : "0 2px 8px rgba(0,0,0,0.1)",
-                      letterSpacing: "-1px",
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 36,
+                        fontWeight: 900,
+                        color: limits.places === Infinity ? "#10b981" : "#1e293b",
+                        padding: "12px 20px",
+                        background:
+                          limits.places === Infinity
+                            ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)"
+                            : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
+                        borderRadius: 12,
+                        minWidth: 100,
+                        textAlign: "center",
+                        boxShadow:
+                          limits.places === Infinity
+                            ? "0 4px 12px rgba(16, 185, 129, 0.2)"
+                            : "0 2px 8px rgba(0,0,0,0.1)",
+                        letterSpacing: "-1px",
+                      }}
+                    >
                       {limits.places === Infinity ? "∞" : limits.places}
                     </span>
                   </div>
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "center",
-                    padding: "18px 22px",
-                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
-                    borderRadius: 12,
-                    border: "2px solid #e2e8f0",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                  }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "18px 22px",
+                      background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                      borderRadius: 12,
+                      border: "2px solid #e2e8f0",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    }}
+                  >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
                       {t("admin.featuredPlaces") || "Kiemelt helyek"}
                     </span>
-                    <span style={{ 
-                      fontSize: 36, 
-                      fontWeight: 900, 
-                      color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
-                      padding: "12px 20px",
-                      background: limits.featuredSlots > 0 
-                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
-                        : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-                      borderRadius: 12,
-                      minWidth: 100,
-                      textAlign: "center",
-                      boxShadow: limits.featuredSlots > 0 
-                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
-                        : "0 4px 12px rgba(220, 38, 38, 0.2)",
-                      letterSpacing: "-1px",
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 36,
+                        fontWeight: 900,
+                        color: limits.featuredSlots > 0 ? "#10b981" : "#dc2626",
+                        padding: "12px 20px",
+                        background:
+                          limits.featuredSlots > 0
+                            ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)"
+                            : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                        borderRadius: 12,
+                        minWidth: 100,
+                        textAlign: "center",
+                        boxShadow:
+                          limits.featuredSlots > 0
+                            ? "0 4px 12px rgba(16, 185, 129, 0.2)"
+                            : "0 4px 12px rgba(220, 38, 38, 0.2)",
+                        letterSpacing: "-1px",
+                      }}
+                    >
                       {limits.featuredSlots === Infinity ? "∞" : limits.featuredSlots}
                     </span>
                   </div>
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "center",
-                    padding: "18px 22px",
-                    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
-                    borderRadius: 12,
-                    border: "2px solid #e2e8f0",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                  }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "18px 22px",
+                      background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+                      borderRadius: 12,
+                      border: "2px solid #e2e8f0",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    }}
+                  >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
                       {t("admin.events") || "Események"}
                     </span>
-                    <span style={{ 
-                      fontSize: 36, 
-                      fontWeight: 900, 
-                      color: limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
-                      padding: "12px 20px",
-                      background: limits.events === Infinity || limits.events > 0 
-                        ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)" 
-                        : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-                      borderRadius: 12,
-                      minWidth: 100,
-                      textAlign: "center",
-                      boxShadow: limits.events === Infinity || limits.events > 0 
-                        ? "0 4px 12px rgba(16, 185, 129, 0.2)" 
-                        : "0 4px 12px rgba(220, 38, 38, 0.2)",
-                      letterSpacing: "-1px",
-                    }}>
+                    <span
+                      style={{
+                        fontSize: 36,
+                        fontWeight: 900,
+                        color:
+                          limits.events === Infinity || limits.events > 0 ? "#10b981" : "#dc2626",
+                        padding: "12px 20px",
+                        background:
+                          limits.events === Infinity || limits.events > 0
+                            ? "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)"
+                            : "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+                        borderRadius: 12,
+                        minWidth: 100,
+                        textAlign: "center",
+                        boxShadow:
+                          limits.events === Infinity || limits.events > 0
+                            ? "0 4px 12px rgba(16, 185, 129, 0.2)"
+                            : "0 4px 12px rgba(220, 38, 38, 0.2)",
+                        letterSpacing: "-1px",
+                      }}
+                    >
                       {limits.events === Infinity ? "∞" : limits.events}
                     </span>
                   </div>

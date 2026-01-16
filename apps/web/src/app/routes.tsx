@@ -32,36 +32,100 @@ import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 import { AdminLayout } from "../components/AdminLayout";
 
 // Admin pages - lazy loaded (only needed when user is logged in)
-const AdminDashboardWrapper = lazy(() => import("../pages/admin/AdminDashboardWrapper").then(m => ({ default: m.AdminDashboardWrapper })));
-const UserProfilePage = lazy(() => import("../pages/admin/UserProfilePage").then(m => ({ default: m.UserProfilePage })));
-const UsersPage = lazy(() => import("../pages/admin/UsersPage").then(m => ({ default: m.UsersPage })));
-const CategoriesPage = lazy(() => import("../pages/admin/CategoriesPage").then(m => ({ default: m.CategoriesPage })));
-const TagsPage = lazy(() => import("../pages/admin/TagsPage").then(m => ({ default: m.TagsPage })));
-const PriceBandsPage = lazy(() => import("../pages/admin/PriceBandsPage").then(m => ({ default: m.PriceBandsPage })));
-const TownsPage = lazy(() => import("../pages/admin/TownsPage").then(m => ({ default: m.TownsPage })));
-const LegalPagesPage = lazy(() => import("../pages/admin/LegalPagesPage").then(m => ({ default: m.LegalPagesPage })));
-const StaticPagesPage = lazy(() => import("../pages/admin/StaticPagesPage").then(m => ({ default: m.StaticPagesPage })));
-const GalleriesPage = lazy(() => import("../pages/admin/GalleriesPage").then(m => ({ default: m.GalleriesPage })));
-const SitesPage = lazy(() => import("../pages/admin/SitesPage").then(m => ({ default: m.SitesPage })));
-const SiteEditPage = lazy(() => import("../pages/admin/SiteEditPage").then(m => ({ default: m.SiteEditPage })));
-const SubscriptionOverviewPage = lazy(() => import("../pages/admin/SubscriptionOverviewPage").then(m => ({ default: m.SubscriptionOverviewPage })));
-const SubscriptionsDashboardPage = lazy(() => import("../pages/admin/SubscriptionsDashboardPage").then(m => ({ default: m.SubscriptionsDashboardPage })));
-const BrandsPage = lazy(() => import("../pages/admin/BrandsPage").then(m => ({ default: m.BrandsPage })));
-const SiteInstancesPage = lazy(() => import("../pages/admin/SiteInstancesPage").then(m => ({ default: m.SiteInstancesPage })));
-const SiteMembershipsPage = lazy(() => import("../pages/admin/SiteMembershipsPage").then(m => ({ default: m.SiteMembershipsPage })));
-const PlaceMembershipsPage = lazy(() => import("../pages/admin/PlaceMembershipsPage").then(m => ({ default: m.PlaceMembershipsPage })));
-const PlacesPage = lazy(() => import("../pages/admin/PlacesPage").then(m => ({ default: m.PlacesPage })));
-const PlacePriceListPage = lazy(() => import("../pages/admin/PlacePriceListPage").then(m => ({ default: m.PlacePriceListPage })));
-const EventsPage = lazy(() => import("../pages/admin/EventsPage").then(m => ({ default: m.EventsPage })));
-const AppSettingsPage = lazy(() => import("../pages/admin/AppSettingsPage").then(m => ({ default: m.AppSettingsPage })));
-const EventLogPage = lazy(() => import("../pages/admin/EventLogPage").then(m => ({ default: m.EventLogPage })));
-const SiteAnalyticsPage = lazy(() => import("../pages/admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
-const PlaceAnalyticsPage = lazy(() => import("../pages/admin/PlaceAnalyticsPage").then(m => ({ default: m.PlaceAnalyticsPage })));
-const EventAnalyticsPage = lazy(() => import("../pages/admin/EventAnalyticsPage").then(m => ({ default: m.EventAnalyticsPage })));
-const SiteStatusPage = lazy(() => import("../pages/admin/SiteStatusPage").then(m => ({ default: m.SiteStatusPage })));
-const CollectionsPage = lazy(() => import("../pages/admin/CollectionsPage").then(m => ({ default: m.CollectionsPage })));
-const CollectionEditPage = lazy(() => import("../pages/admin/CollectionEditPage").then(m => ({ default: m.CollectionEditPage })));
-const CollectionDetailPage = lazy(() => import("../pages/CollectionDetailPage").then(m => ({ default: m.CollectionDetailPage })));
+const AdminDashboardWrapper = lazy(() =>
+  import("../pages/admin/AdminDashboardWrapper").then((m) => ({ default: m.AdminDashboardWrapper }))
+);
+const UserProfilePage = lazy(() =>
+  import("../pages/admin/UserProfilePage").then((m) => ({ default: m.UserProfilePage }))
+);
+const UsersPage = lazy(() =>
+  import("../pages/admin/UsersPage").then((m) => ({ default: m.UsersPage }))
+);
+const CategoriesPage = lazy(() =>
+  import("../pages/admin/CategoriesPage").then((m) => ({ default: m.CategoriesPage }))
+);
+const TagsPage = lazy(() =>
+  import("../pages/admin/TagsPage").then((m) => ({ default: m.TagsPage }))
+);
+const PriceBandsPage = lazy(() =>
+  import("../pages/admin/PriceBandsPage").then((m) => ({ default: m.PriceBandsPage }))
+);
+const TownsPage = lazy(() =>
+  import("../pages/admin/TownsPage").then((m) => ({ default: m.TownsPage }))
+);
+const LegalPagesPage = lazy(() =>
+  import("../pages/admin/LegalPagesPage").then((m) => ({ default: m.LegalPagesPage }))
+);
+const StaticPagesPage = lazy(() =>
+  import("../pages/admin/StaticPagesPage").then((m) => ({ default: m.StaticPagesPage }))
+);
+const GalleriesPage = lazy(() =>
+  import("../pages/admin/GalleriesPage").then((m) => ({ default: m.GalleriesPage }))
+);
+const SitesPage = lazy(() =>
+  import("../pages/admin/SitesPage").then((m) => ({ default: m.SitesPage }))
+);
+const SiteEditPage = lazy(() =>
+  import("../pages/admin/SiteEditPage").then((m) => ({ default: m.SiteEditPage }))
+);
+const SubscriptionOverviewPage = lazy(() =>
+  import("../pages/admin/SubscriptionOverviewPage").then((m) => ({
+    default: m.SubscriptionOverviewPage,
+  }))
+);
+const SubscriptionsDashboardPage = lazy(() =>
+  import("../pages/admin/SubscriptionsDashboardPage").then((m) => ({
+    default: m.SubscriptionsDashboardPage,
+  }))
+);
+const BrandsPage = lazy(() =>
+  import("../pages/admin/BrandsPage").then((m) => ({ default: m.BrandsPage }))
+);
+const SiteInstancesPage = lazy(() =>
+  import("../pages/admin/SiteInstancesPage").then((m) => ({ default: m.SiteInstancesPage }))
+);
+const SiteMembershipsPage = lazy(() =>
+  import("../pages/admin/SiteMembershipsPage").then((m) => ({ default: m.SiteMembershipsPage }))
+);
+const PlaceMembershipsPage = lazy(() =>
+  import("../pages/admin/PlaceMembershipsPage").then((m) => ({ default: m.PlaceMembershipsPage }))
+);
+const PlacesPage = lazy(() =>
+  import("../pages/admin/PlacesPage").then((m) => ({ default: m.PlacesPage }))
+);
+const PlacePriceListPage = lazy(() =>
+  import("../pages/admin/PlacePriceListPage").then((m) => ({ default: m.PlacePriceListPage }))
+);
+const EventsPage = lazy(() =>
+  import("../pages/admin/EventsPage").then((m) => ({ default: m.EventsPage }))
+);
+const AppSettingsPage = lazy(() =>
+  import("../pages/admin/AppSettingsPage").then((m) => ({ default: m.AppSettingsPage }))
+);
+const EventLogPage = lazy(() =>
+  import("../pages/admin/EventLogPage").then((m) => ({ default: m.EventLogPage }))
+);
+const SiteAnalyticsPage = lazy(() =>
+  import("../pages/admin/SiteAnalyticsPage").then((m) => ({ default: m.SiteAnalyticsPage }))
+);
+const PlaceAnalyticsPage = lazy(() =>
+  import("../pages/admin/PlaceAnalyticsPage").then((m) => ({ default: m.PlaceAnalyticsPage }))
+);
+const EventAnalyticsPage = lazy(() =>
+  import("../pages/admin/EventAnalyticsPage").then((m) => ({ default: m.EventAnalyticsPage }))
+);
+const SiteStatusPage = lazy(() =>
+  import("../pages/admin/SiteStatusPage").then((m) => ({ default: m.SiteStatusPage }))
+);
+const CollectionsPage = lazy(() =>
+  import("../pages/admin/CollectionsPage").then((m) => ({ default: m.CollectionsPage }))
+);
+const CollectionEditPage = lazy(() =>
+  import("../pages/admin/CollectionEditPage").then((m) => ({ default: m.CollectionEditPage }))
+);
+const CollectionDetailPage = lazy(() =>
+  import("../pages/CollectionDetailPage").then((m) => ({ default: m.CollectionDetailPage }))
+);
 
 // If multi-site is enabled, we need two separate routes
 // Redirect component for old-style URLs (without siteKey) to default site
@@ -94,7 +158,7 @@ const createPublicRoutes = () => {
   ];
 
   if (HAS_MULTIPLE_SITES) {
-    // Multi-site mode: 
+    // Multi-site mode:
     // - /:lang route shows SitesListPage (site selection)
     // - /:lang/:siteKey route uses TenantLayout (specific site)
     // Backward compatibility: also support :tenantKey
@@ -113,12 +177,10 @@ const createPublicRoutes = () => {
           { path: "place/:slug", element: <RedirectToSiteRoute entityType="place" /> },
           { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
           // Collections route without siteKey - uses SiteLayout for header/footer
-          { 
-            path: "collections/:slug", 
+          {
+            path: "collections/:slug",
             element: <SiteLayout />,
-            children: [
-              { path: "", element: <CollectionDetailPage /> }
-            ]
+            children: [{ path: "", element: <CollectionDetailPage /> }],
           },
         ],
       },
@@ -146,10 +208,10 @@ const createPublicRoutes = () => {
 export const router = createBrowserRouter([
   // root -> default nyelv (dynamically loaded from app settings)
   { path: "/", element: <RootRedirect /> },
-  
+
   // Offline page - accessible without language prefix for service worker redirects
   { path: "/offline", element: <OfflinePage /> },
-  
+
   // Legacy admin routes redirect to language-specific routes
   // IMPORTANT: These MUST be defined BEFORE any other routes that could match /admin/*
   { path: "/admin", element: <RootRedirect /> },
@@ -555,4 +617,3 @@ export const router = createBrowserRouter([
 
   { path: "*", element: <NotFoundPage /> },
 ]);
-

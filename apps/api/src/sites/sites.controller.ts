@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Param, Query, Body, BadRequestException, UseGuards, NotFoundException, ConflictException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  BadRequestException,
+  UseGuards,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
 import { SitesService } from "./sites.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -9,11 +20,11 @@ import { AdminEventLogService } from "../event-log/admin-eventlog.service";
 
 /**
  * Controller for site-related public endpoints.
- * 
+ *
  * Routes:
  * - GET /api/:lang/sites - List active sites with optional filtering
  * - GET /api/:lang/sites/:slug - Get a single site by slug
- * 
+ *
  * All endpoints support multi-site mode via the optional siteKey query parameter.
  */
 @Controller("/api/:lang/sites")
@@ -37,7 +48,7 @@ export class SitesController {
 
   /**
    * Lists active sites with optional filtering.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support (not used for filtering, just for consistency)
    * - q: Search query (searches in site names)
@@ -64,10 +75,10 @@ export class SitesController {
 
   /**
    * Gets a single site by its slug.
-   * 
+   *
    * Query parameters:
    * - siteKey: Optional site key for multi-site support (not used, just for consistency)
-   * 
+   *
    * Path parameters:
    * - lang: Language code (hu, en, de)
    * - slug: Site slug
@@ -85,11 +96,11 @@ export class SitesController {
   /**
    * Activates a free site plan for a visitor user.
    * This endpoint allows visitors (users with activeSiteId === null) to activate their free site.
-   * 
+   *
    * Requirements:
    * - User must be authenticated
    * - User must be a visitor (activeSiteId === null)
-   * 
+   *
    * Actions:
    * - If siteKey is provided, uses that site (the one the user is currently viewing)
    * - Otherwise, uses the first assigned site or default site
@@ -155,7 +166,8 @@ export class SitesController {
         targetSiteSlug = userSites[0].site.slug;
       } else {
         // User has no sites, use default site
-        const defaultSiteSlug = this.configService.get<string>("DEFAULT_SITE_SLUG") ?? "etyek-budai";
+        const defaultSiteSlug =
+          this.configService.get<string>("DEFAULT_SITE_SLUG") ?? "etyek-budai";
         let defaultSite = await this.prisma.site.findUnique({
           where: { slug: defaultSiteSlug },
           select: { id: true, slug: true, isActive: true },
@@ -166,11 +178,13 @@ export class SitesController {
           defaultSite = await this.prisma.site.findFirst({
             where: { isActive: true },
             select: { id: true, slug: true, isActive: true },
-            orderBy: { createdAt: 'asc' }, // Use oldest active site as fallback
+            orderBy: { createdAt: "asc" }, // Use oldest active site as fallback
           });
 
           if (!defaultSite) {
-            throw new NotFoundException("No active site found. Please create at least one active site.");
+            throw new NotFoundException(
+              "No active site found. Please create at least one active site."
+            );
           }
         }
 

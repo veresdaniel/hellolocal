@@ -88,8 +88,8 @@ export class AdminSiteService {
       // P2021: Table does not exist
       // P2022: Column does not exist
       if (
-        error?.message?.includes("does not exist") || 
-        error?.code === "P2021" || 
+        error?.message?.includes("does not exist") ||
+        error?.code === "P2021" ||
         error?.code === "P2022" ||
         error?.meta?.driverAdapterError?.name === "ColumnNotFound"
       ) {
@@ -137,10 +137,7 @@ export class AdminSiteService {
         where: {
           siteId: id,
           isFeatured: true,
-          OR: [
-            { featuredUntil: null },
-            { featuredUntil: { gt: new Date() } },
-          ],
+          OR: [{ featuredUntil: null }, { featuredUntil: { gt: new Date() } }],
         },
       }),
       this.prisma.event.count({
@@ -222,7 +219,7 @@ export class AdminSiteService {
     // The middleware will fallback to Site.slug if SiteKey is not found, but it's better to have all SiteKeys
     const allLanguages: Lang[] = ["hu", "en", "de"];
     const createdSiteKeys: string[] = [];
-    
+
     for (const lang of allLanguages) {
       try {
         // Check if SiteKey already exists (shouldn't happen, but just in case)
@@ -258,10 +255,16 @@ export class AdminSiteService {
         }
       } catch (error: any) {
         // Log error but don't fail site creation - SiteKey creation is important but not critical
-        console.error(`❌ Failed to create SiteKey for site ${site.id}, lang ${lang}, slug ${normalizedSlug}:`, error.message);
+        console.error(
+          `❌ Failed to create SiteKey for site ${site.id}, lang ${lang}, slug ${normalizedSlug}:`,
+          error.message
+        );
         console.error(`   Error details:`, error);
         // Re-throw only if it's a critical error (not a duplicate key error)
-        if (!error.message?.includes("Unique constraint") && !error.message?.includes("duplicate")) {
+        if (
+          !error.message?.includes("Unique constraint") &&
+          !error.message?.includes("duplicate")
+        ) {
           throw error;
         }
       }
@@ -270,9 +273,13 @@ export class AdminSiteService {
     // Verify that SiteKeys were created
     if (createdSiteKeys.length === 0) {
       console.warn(`⚠️  WARNING: No SiteKeys were created for site ${site.id} (${normalizedSlug})`);
-      console.warn(`   This will cause "Site not found" errors. Please run: pnpm db:ensure-site-keys`);
+      console.warn(
+        `   This will cause "Site not found" errors. Please run: pnpm db:ensure-site-keys`
+      );
     } else if (createdSiteKeys.length < allLanguages.length) {
-      console.warn(`⚠️  WARNING: Only ${createdSiteKeys.length}/${allLanguages.length} SiteKeys were created for site ${site.id}`);
+      console.warn(
+        `⚠️  WARNING: Only ${createdSiteKeys.length}/${allLanguages.length} SiteKeys were created for site ${site.id}`
+      );
       console.warn(`   Created: ${createdSiteKeys.join(", ")}`);
       console.warn(`   Please run: pnpm db:ensure-site-keys to fix missing SiteKeys`);
     } else {
@@ -285,7 +292,7 @@ export class AdminSiteService {
 
     for (const translation of site.translations) {
       const lang = translation.lang;
-      
+
       // Check if SiteInstance already exists (shouldn't happen, but just in case)
       const existingInstance = await this.prisma.siteInstance.findUnique({
         where: {
@@ -314,7 +321,10 @@ export class AdminSiteService {
           createdInstances.push(lang);
           isFirstInstance = false;
         } catch (error: any) {
-          console.error(`❌ Failed to create SiteInstance for site ${site.id}, lang ${lang}:`, error.message);
+          console.error(
+            `❌ Failed to create SiteInstance for site ${site.id}, lang ${lang}:`,
+            error.message
+          );
           // Don't fail site creation if SiteInstance creation fails
         }
       } else {
@@ -323,7 +333,9 @@ export class AdminSiteService {
     }
 
     if (createdInstances.length === 0 && site.translations.length > 0) {
-      console.warn(`⚠️  WARNING: No SiteInstances were created for site ${site.id} (${normalizedSlug})`);
+      console.warn(
+        `⚠️  WARNING: No SiteInstances were created for site ${site.id} (${normalizedSlug})`
+      );
       console.warn(`   This will cause "SiteInstance not found" errors in the admin interface.`);
     } else if (createdInstances.length > 0) {
     }
@@ -392,13 +404,15 @@ export class AdminSiteService {
     if (dto.brandId !== undefined) updateData.brandId = dto.brandId;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.primaryDomain !== undefined) updateData.primaryDomain = dto.primaryDomain;
-    
+
     // Billing/subscription fields
     if (dto.plan !== undefined) updateData.plan = dto.plan;
     if (dto.planStatus !== undefined) updateData.planStatus = dto.planStatus;
     if (dto.planValidUntil !== undefined) {
-      updateData.planValidUntil = dto.planValidUntil 
-        ? (typeof dto.planValidUntil === "string" ? new Date(dto.planValidUntil) : dto.planValidUntil)
+      updateData.planValidUntil = dto.planValidUntil
+        ? typeof dto.planValidUntil === "string"
+          ? new Date(dto.planValidUntil)
+          : dto.planValidUntil
         : null;
     }
     if (dto.planLimits !== undefined) updateData.planLimits = dto.planLimits;
@@ -408,7 +422,9 @@ export class AdminSiteService {
       // Basic plan always allows public registration
       const currentPlan = dto.plan || site.plan;
       if (currentPlan === "basic" && dto.allowPublicRegistration === false) {
-        throw new BadRequestException("Public registration cannot be disabled for basic plan. Upgrade to pro or business plan to use this feature.");
+        throw new BadRequestException(
+          "Public registration cannot be disabled for basic plan. Upgrade to pro or business plan to use this feature."
+        );
       }
       updateData.allowPublicRegistration = dto.allowPublicRegistration;
     }
@@ -476,7 +492,7 @@ export class AdminSiteService {
               slug: siteSlug,
             },
           });
-          
+
           if (!existingKey) {
             await this.prisma.siteKey.create({
               data: {
@@ -490,7 +506,7 @@ export class AdminSiteService {
           }
         }
       }
-      
+
       // After processing translations, ensure SiteKey exists for ALL languages
       // This ensures the site is accessible via any language route
       const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
@@ -503,7 +519,7 @@ export class AdminSiteService {
             slug: siteSlug,
           },
         });
-        
+
         if (!existingKey) {
           await this.prisma.siteKey.create({
             data: {
@@ -557,4 +573,3 @@ export class AdminSiteService {
     return { message: "Site deleted successfully" };
   }
 }
-

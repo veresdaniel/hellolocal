@@ -5,10 +5,10 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { 
-  getSiteMemberships, 
-  createSiteMembership, 
-  updateSiteMembership, 
+import {
+  getSiteMemberships,
+  createSiteMembership,
+  updateSiteMembership,
   deleteSiteMembership,
   getSites,
   getUsers,
@@ -16,10 +16,14 @@ import {
   type CreateSiteMembershipDto,
   type UpdateSiteMembershipDto,
   type Site,
-  type User
+  type User,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { isSuperadmin } from "../../utils/roleHelpers";
 
@@ -52,7 +56,7 @@ export function SiteMembershipsPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      setFormData(prev => ({ ...prev, siteId: selectedSiteId }));
+      setFormData((prev) => ({ ...prev, siteId: selectedSiteId }));
     }
     loadMemberships();
   }, [selectedSiteId]);
@@ -111,17 +115,21 @@ export function SiteMembershipsPage() {
       resetForm();
       await loadMemberships();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t("admin.errors.createTenantMembershipFailed");
-      
+      const errorMessage =
+        err instanceof Error ? err.message : t("admin.errors.createTenantMembershipFailed");
+
       // Check if membership already exists - if so, find it and switch to edit mode
-      if (errorMessage.includes("already exists") || errorMessage.includes("SiteMembership already exists")) {
+      if (
+        errorMessage.includes("already exists") ||
+        errorMessage.includes("SiteMembership already exists")
+      ) {
         try {
           // Try to find the existing membership
           const existingMemberships = await getSiteMemberships(formData.siteId);
           const existing = existingMemberships.find(
             (m) => m.siteId === formData.siteId && m.userId === formData.userId
           );
-          
+
           if (existing) {
             // Switch to edit mode with the existing membership
             setEditingId(existing.id);
@@ -131,7 +139,10 @@ export function SiteMembershipsPage() {
               role: existing.role,
             });
             setIsCreating(false);
-            setError(t("admin.errors.membershipAlreadyExistsEdit") || "This membership already exists. You can edit it below.");
+            setError(
+              t("admin.errors.membershipAlreadyExistsEdit") ||
+                "This membership already exists. You can edit it below."
+            );
           } else {
             setError(errorMessage);
           }
@@ -192,7 +203,9 @@ export function SiteMembershipsPage() {
 
   const filteredMemberships = memberships.filter((membership) => {
     const siteName = membership.site?.slug || "";
-    const userName = membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : "";
+    const userName = membership.user
+      ? `${membership.user.firstName} ${membership.user.lastName}`
+      : "";
     const userEmail = membership.user?.email || "";
     return (
       siteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -211,9 +224,10 @@ export function SiteMembershipsPage() {
     {
       key: "user",
       label: t("admin.user"),
-      render: (membership) => membership.user 
-        ? `${membership.user.firstName} ${membership.user.lastName} (${membership.user.email})`
-        : membership.userId,
+      render: (membership) =>
+        membership.user
+          ? `${membership.user.firstName} ${membership.user.lastName} (${membership.user.email})`
+          : membership.userId,
     },
     {
       key: "role",
@@ -224,7 +238,7 @@ export function SiteMembershipsPage() {
 
   const cardFields: CardField<SiteMembership>[] = [
     { key: "site", render: (m) => m.site?.slug || m.siteId },
-    { key: "user", render: (m) => m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId },
+    { key: "user", render: (m) => (m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId) },
     { key: "role", render: (m) => t(`admin.roles.${m.role}`) },
   ];
 
@@ -242,7 +256,7 @@ export function SiteMembershipsPage() {
         onNewClick={() => setIsCreating(true)}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -253,32 +267,40 @@ export function SiteMembershipsPage() {
       />
 
       {error && (
-        <div style={{ 
-          padding: 16, 
-          background: "#f8d7da", 
-          color: "#721c24", 
-          borderRadius: 8, 
-          marginBottom: 24 
-        }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(20px, 5vw, 24px)",
-            fontWeight: 700,
-          }}>
-            {editingId ? t("admin.forms.editTenantMembership") : t("admin.forms.newTenantMembership")}
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(20px, 5vw, 24px)",
+              fontWeight: 700,
+            }}
+          >
+            {editingId
+              ? t("admin.forms.editTenantMembership")
+              : t("admin.forms.newTenantMembership")}
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -294,7 +316,8 @@ export function SiteMembershipsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.siteId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -303,17 +326,22 @@ export function SiteMembershipsPage() {
                 <option value="">{t("admin.selectSite")}</option>
                 {sites.map((site) => (
                   <option key={site.id} value={site.id}>
-                    {site.translations.find(t => t.lang === "hu")?.name || site.slug}
+                    {site.translations.find((t) => t.lang === "hu")?.name || site.slug}
                   </option>
                 ))}
               </select>
               {formErrors.siteId && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.siteId}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.siteId}
+                </p>
               )}
             </div>
 
@@ -329,7 +357,8 @@ export function SiteMembershipsPage() {
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -343,12 +372,17 @@ export function SiteMembershipsPage() {
                 ))}
               </select>
               {formErrors.userId && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.userId}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.userId}
+                </p>
               )}
             </div>
 
@@ -358,12 +392,18 @@ export function SiteMembershipsPage() {
               </label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as "siteadmin" | "editor" | "viewer" })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    role: e.target.value as "siteadmin" | "editor" | "viewer",
+                  })
+                }
                 style={{
                   width: "100%",
                   padding: "12px 16px",
                   fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
                   borderRadius: 8,
                   boxSizing: "border-box",
@@ -374,12 +414,17 @@ export function SiteMembershipsPage() {
                 <option value="viewer">{t("admin.roles.viewer")}</option>
               </select>
               {formErrors.role && (
-                <p style={{ 
-                  color: "#dc3545", 
-                  fontSize: "clamp(13px, 3vw, 15px)", 
-                  marginTop: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.role}</p>
+                <p
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.role}
+                </p>
               )}
             </div>
           </div>
@@ -397,7 +442,9 @@ export function SiteMembershipsPage() {
           filterFn={(membership, query) => {
             const lowerQuery = query.toLowerCase();
             const siteName = membership.site?.slug || "";
-            const userName = membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : "";
+            const userName = membership.user
+              ? `${membership.user.firstName} ${membership.user.lastName}`
+              : "";
             const userEmail = membership.user?.email || "";
             return (
               siteName.toLowerCase().includes(lowerQuery) ||
@@ -407,7 +454,9 @@ export function SiteMembershipsPage() {
             );
           }}
           columns={columns}
-          cardTitle={(membership) => `${membership.site?.slug || membership.siteId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`}
+          cardTitle={(membership) =>
+            `${membership.site?.slug || membership.siteId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`
+          }
           cardFields={cardFields}
           onEdit={startEdit}
           onDelete={(membership) => handleDelete(membership.id)}
@@ -416,4 +465,3 @@ export function SiteMembershipsPage() {
     </div>
   );
 }
-

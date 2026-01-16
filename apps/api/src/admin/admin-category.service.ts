@@ -36,12 +36,12 @@ export class AdminCategoryService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.category.count({ where });
-    
+
     // Get paginated results
     const categories = await this.prisma.category.findMany({
       where,
@@ -61,7 +61,7 @@ export class AdminCategoryService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       categories,
@@ -249,7 +249,10 @@ export class AdminCategoryService {
     return { message: "Category deleted successfully" };
   }
 
-  async reorder(siteId: string, updates: Array<{ id: string; parentId: string | null; order: number }>) {
+  async reorder(
+    siteId: string,
+    updates: Array<{ id: string; parentId: string | null; order: number }>
+  ) {
     // Validate all categories belong to the tenant
     const categoryIds = updates.map((u) => u.id);
     const categories = await this.prisma.category.findMany({
@@ -269,7 +272,9 @@ export class AdminCategoryService {
         select: { id: true },
       });
       if (parents.length !== parentIds.length) {
-        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PARENT_CATEGORIES_NOT_FOUND_OR_NOT_BELONG);
+        throw new BadRequestException(
+          ERROR_MESSAGES.BAD_REQUEST_PARENT_CATEGORIES_NOT_FOUND_OR_NOT_BELONG
+        );
       }
     }
 
@@ -309,4 +314,3 @@ export class AdminCategoryService {
     return { message: "Categories reordered successfully" };
   }
 }
-

@@ -24,7 +24,7 @@ export class EventRatingController {
   /**
    * Creates or updates a rating for an event.
    * Requires authentication.
-   * 
+   *
    * Body: { value: 1..5 }
    * Returns: { eventId, userId, value, ratingAvg, ratingCount }
    */
@@ -46,7 +46,7 @@ export class EventRatingController {
   /**
    * Gets the current user's rating for an event.
    * Requires authentication.
-   * 
+   *
    * Returns: { value, createdAt, updatedAt } or null if not rated yet
    */
   @Get("/me")

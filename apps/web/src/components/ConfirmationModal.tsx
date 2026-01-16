@@ -200,7 +200,8 @@ export function ConfirmationModal({
                     margin: 0,
                     fontSize: "clamp(18px, 4vw, 22px)",
                     fontWeight: 700,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     color: headerColor ? "inherit" : "white",
                   }}
                 >
@@ -228,11 +229,15 @@ export function ConfirmationModal({
                     lineHeight: 1,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = headerColor ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.3)";
+                    e.currentTarget.style.background = headerColor
+                      ? "rgba(0, 0, 0, 0.2)"
+                      : "rgba(255, 255, 255, 0.3)";
                     e.currentTarget.style.transform = "scale(1.1)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = headerColor ? "rgba(0, 0, 0, 0.1)" : "rgba(255, 255, 255, 0.2)";
+                    e.currentTarget.style.background = headerColor
+                      ? "rgba(0, 0, 0, 0.1)"
+                      : "rgba(255, 255, 255, 0.2)";
                     e.currentTarget.style.transform = "scale(1)";
                   }}
                   aria-label="Close"
@@ -252,7 +257,8 @@ export function ConfirmationModal({
               fontSize: "clamp(14px, 3.5vw, 16px)",
               lineHeight: 1.6,
               color: "#374151",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {typeof message === "string" ? (
@@ -291,7 +297,8 @@ export function ConfirmationModal({
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = getButtonStyles(button.variant).boxShadow || "none";
+                  e.currentTarget.style.boxShadow =
+                    getButtonStyles(button.variant).boxShadow || "none";
                 }}
               >
                 {button.isLoading ? "..." : button.label}

@@ -11,4 +11,3 @@ import { TwoFactorController } from "./two-factor.controller";
   exports: [TwoFactorService],
 })
 export class TwoFactorModule {}
-

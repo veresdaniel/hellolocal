@@ -10,10 +10,7 @@ export class SiteController {
   ) {}
 
   @Get("site")
-  async site(
-    @Param("lang") lang: string,
-    @Param("siteKey") siteKey: string
-  ) {
+  async site(@Param("lang") lang: string, @Param("siteKey") siteKey: string) {
     if (lang !== "hu" && lang !== "en" && lang !== "de") {
       throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
     }

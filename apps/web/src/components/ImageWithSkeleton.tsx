@@ -67,7 +67,7 @@ export function ImageWithSkeleton({
           }}
         />
       )}
-      
+
       {/* Image */}
       <img
         src={src}
@@ -86,7 +86,7 @@ export function ImageWithSkeleton({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       />
-      
+
       {/* Error State */}
       {hasError && !isLoading && (
         <div
@@ -102,13 +102,14 @@ export function ImageWithSkeleton({
             justifyContent: "center",
             color: "#999",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           Image not available
         </div>
       )}
-      
+
       <style>{`
         @keyframes skeleton-loading {
           0% {

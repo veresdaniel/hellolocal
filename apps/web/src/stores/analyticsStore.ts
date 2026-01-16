@@ -124,7 +124,9 @@ export const useAnalyticsStore = create<State>((set) => ({
   fetchPlace: async (placeId, range, lang = "hu") => {
     set({ loading: true, error: undefined });
     try {
-      const data = await apiGet<PlaceDashboard>(`/${lang}/analytics/place/${placeId}?range=${range}`);
+      const data = await apiGet<PlaceDashboard>(
+        `/${lang}/analytics/place/${placeId}?range=${range}`
+      );
       set({ place: data, loading: false });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";
@@ -135,7 +137,9 @@ export const useAnalyticsStore = create<State>((set) => ({
   fetchEvent: async (eventId, range, lang = "hu") => {
     set({ loading: true, error: undefined });
     try {
-      const data = await apiGet<EventDashboard>(`/${lang}/analytics/event/${eventId}?range=${range}`);
+      const data = await apiGet<EventDashboard>(
+        `/${lang}/analytics/event/${eventId}?range=${range}`
+      );
       set({ event: data, loading: false });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";

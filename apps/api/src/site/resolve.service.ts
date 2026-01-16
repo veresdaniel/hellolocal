@@ -20,11 +20,11 @@ export type ResolveResult = {
 
 /**
  * General resolver service that handles both site and slug resolution.
- * 
+ *
  * This service provides a unified interface for resolving:
  * - SiteKey -> siteId (with redirect support)
  * - Slug -> entity (with redirect and primary slug support)
- * 
+ *
  * Returns canonical URL information for proper redirect handling.
  */
 @Injectable()
@@ -37,7 +37,7 @@ export class ResolveService {
 
   /**
    * Resolves a site key and slug to entity information.
-   * 
+   *
    * @param args - Resolution arguments
    * @param args.lang - Language code
    * @param args.siteKey - Site key from URL
@@ -106,7 +106,7 @@ export class ResolveService {
           },
         },
       });
-      
+
       if (normalizedSlugRecord && normalizedSlugRecord.isActive) {
         // Found normalized version - use it and mark for redirect
         slugRecord = normalizedSlugRecord;

@@ -168,7 +168,8 @@ export function NotFoundPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
               display: "inline-block",
@@ -195,7 +196,8 @@ export function NotFoundPage() {
               borderRadius: "12px",
               fontWeight: 600,
               fontSize: 16,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               cursor: "pointer",
               transition: "all 0.3s ease",
               backdropFilter: "blur(10px)",

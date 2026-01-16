@@ -56,21 +56,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       const currentPath = window.location.pathname;
       const lang = getLanguageCode();
-      
+
       // Store current path as return URL if we're on a public page
-      const isInAdminArea = currentPath.includes('/admin') && !currentPath.includes('/admin/login');
+      const isInAdminArea = currentPath.includes("/admin") && !currentPath.includes("/admin/login");
       if (!isInAdminArea) {
         // We're on a public page, store it for return after login
         sessionStorage.setItem("authReturnUrl", currentPath);
       }
-      
+
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
       localStorage.removeItem("adminSelectedTenantId");
       setUser(null);
       setShowSessionModal(false); // Hide modal on logout
-      
+
       // Skip redirect if already on the target page
       if (isManualLogout) {
         // Manual logout: if in admin area, redirect to admin login
@@ -79,8 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const logoutLang = localStorage.getItem("logoutRedirectLang") || lang;
           localStorage.removeItem("logoutRedirectLang");
           sessionStorage.setItem("wasManualLogout", "true");
-          
-          if (currentPath === `/${logoutLang}/admin/login` || currentPath === `/${logoutLang}/admin/login/`) {
+
+          if (
+            currentPath === `/${logoutLang}/admin/login` ||
+            currentPath === `/${logoutLang}/admin/login/`
+          ) {
             return;
           }
           // Use setTimeout to delay redirect slightly, allowing React to properly unmount
@@ -97,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Not in admin area, don't redirect - just clear auth state
           return;
         }
-        
+
         if (currentPath.startsWith(`/${lang}/admin/login`)) {
           return;
         }
@@ -114,14 +117,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check token expiration periodically and handle logout event
   useEffect(() => {
     let hasInitialCheckRun = false; // Track if initial check has run
-    
+
     const checkTokenExpiration = () => {
       const accessToken = localStorage.getItem("accessToken");
       const refreshTokenValue = localStorage.getItem("refreshToken");
 
       // Skip check if we're on a public page (login, register, etc.)
       const currentPath = window.location.pathname;
-      const isPublicPage = 
+      const isPublicPage =
         currentPath.startsWith("/admin/login") ||
         currentPath.startsWith("/admin/register") ||
         currentPath.startsWith("/admin/forgot-password") ||
@@ -162,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           handleLogout(false); // Automatic logout
         }
       }
-      
+
       hasInitialCheckRun = true;
     };
 
@@ -188,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkSessionExpiring = () => {
       const currentPath = window.location.pathname;
-      const isPublicPage = 
+      const isPublicPage =
         currentPath.startsWith("/admin/login") ||
         currentPath.startsWith("/admin/register") ||
         currentPath.startsWith("/admin/forgot-password") ||
@@ -240,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshSessionOnActivity = async () => {
       const currentPath = window.location.pathname;
-      const isPublicPage = 
+      const isPublicPage =
         currentPath.startsWith("/admin/login") ||
         currentPath.startsWith("/admin/register") ||
         currentPath.startsWith("/admin/forgot-password") ||
@@ -261,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if token is close to expiration (within 5 minutes)
       // This allows proactive refresh before expiration
       try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        const payload = JSON.parse(atob(accessToken.split(".")[1]));
         const expiresAt = payload.exp * 1000; // Convert to milliseconds
         const now = Date.now();
         const timeUntilExpiry = expiresAt - now;
@@ -298,13 +301,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // Listen to user interactions
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(event => {
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((event) => {
       window.addEventListener(event, handleActivity, { passive: true });
     });
 
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });
     };
@@ -328,7 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // This ensures the UI updates immediately even before API call completes
         // Always update to ensure React re-renders when user data changes
         setUser(parsedUser);
-        
+
         // Refresh user data from API to ensure it's up to date (especially role)
         if (storedToken) {
           // Get API base URL from environment variable or use relative path for development
@@ -359,24 +362,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const role = (freshUser.role || "").toLowerCase() as User["role"];
               // Backend now returns siteIds directly, but also has sites array
               // Use siteIds if available, otherwise extract from sites array
-              const siteIds = freshUser.siteIds || 
-                (Array.isArray((freshUser as { sites?: Array<{ siteId: string }> }).sites) 
+              const siteIds =
+                freshUser.siteIds ||
+                (Array.isArray((freshUser as { sites?: Array<{ siteId: string }> }).sites)
                   ? (freshUser as { sites: Array<{ siteId: string }> }).sites.map((s) => s.siteId)
-                  : []) || [];
+                  : []) ||
+                [];
               const userData = {
                 ...freshUser,
                 role,
                 siteIds,
               };
               localStorage.setItem("user", JSON.stringify(userData));
-              
+
               // Only update user state if data actually changed (prevent unnecessary re-renders)
               setUser((prevUser) => {
-                if (!prevUser || 
-                    prevUser.id !== userData.id || 
-                    prevUser.role !== userData.role ||
-                    prevUser.activeSiteId !== userData.activeSiteId ||
-                    JSON.stringify(prevUser.siteIds) !== JSON.stringify(userData.siteIds)) {
+                if (
+                  !prevUser ||
+                  prevUser.id !== userData.id ||
+                  prevUser.role !== userData.role ||
+                  prevUser.activeSiteId !== userData.activeSiteId ||
+                  JSON.stringify(prevUser.siteIds) !== JSON.stringify(userData.siteIds)
+                ) {
                   return userData;
                 }
                 // Data is the same, return previous reference to prevent re-render
@@ -386,8 +393,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .catch((err) => {
               // Only log error if it's not a network error (backend not running)
               const errorMessage = err instanceof Error ? err.message : String(err);
-              const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
-              
+              const isNetworkError =
+                errorMessage.includes("Failed to connect") ||
+                errorMessage.includes("Failed to fetch");
+
               if (!isNetworkError) {
                 console.error("Failed to refresh user data", err);
               } else {
@@ -395,14 +404,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // Keep the stored user data if available
                 console.debug("[AuthContext] Backend not available, using stored user data");
               }
-              
+
               // If 401, we already cleared tokens and set user to null
               // For other errors, keep the stored user if it exists and role is valid
               if (err.message !== "Unauthorized - session expired" && parsedUser?.role) {
                 parsedUser.role = parsedUser.role.toLowerCase();
                 // Only update if user actually changed
                 setUser((prevUser) => {
-                  if (!prevUser || prevUser.id !== parsedUser.id || prevUser.role !== parsedUser.role) {
+                  if (
+                    !prevUser ||
+                    prevUser.id !== parsedUser.id ||
+                    prevUser.role !== parsedUser.role
+                  ) {
                     return parsedUser;
                   }
                   return prevUser;
@@ -476,38 +489,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadUserFromStorage]);
 
-  const handleLogin = useCallback(async (email: string, password: string, twoFactorToken?: string) => {
-    const response = await login({ email, password, twoFactorToken });
-    localStorage.setItem("accessToken", response.accessToken);
-    localStorage.setItem("refreshToken", response.refreshToken);
-    // Ensure role is correctly stored (convert to lowercase if needed)
-    const userData = {
-      ...response.user,
-      role: response.user.role.toLowerCase() as User["role"],
-    };
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  }, []);
+  const handleLogin = useCallback(
+    async (email: string, password: string, twoFactorToken?: string) => {
+      const response = await login({ email, password, twoFactorToken });
+      localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("refreshToken", response.refreshToken);
+      // Ensure role is correctly stored (convert to lowercase if needed)
+      const userData = {
+        ...response.user,
+        role: response.user.role.toLowerCase() as User["role"],
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    },
+    []
+  );
 
-  const handleRegister = useCallback(async (data: {
-    username: string;
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    bio?: string;
-  }) => {
-    const response = await register(data);
-    localStorage.setItem("accessToken", response.accessToken);
-    localStorage.setItem("refreshToken", response.refreshToken);
-    // Ensure role is correctly stored
-    const userData = {
-      ...response.user,
-      role: response.user.role.toLowerCase() as User["role"],
-    };
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  }, []);
+  const handleRegister = useCallback(
+    async (data: {
+      username: string;
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      bio?: string;
+    }) => {
+      const response = await register(data);
+      localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("refreshToken", response.refreshToken);
+      // Ensure role is correctly stored
+      const userData = {
+        ...response.user,
+        role: response.user.role.toLowerCase() as User["role"],
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    },
+    []
+  );
 
   // Refresh user function that can be called externally
   const handleRefreshUser = useCallback(async () => {
@@ -558,4 +577,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -14,4 +14,3 @@ export type Event = BaseEntity & {
     count: number | null; // Number of ratings
   };
 };
-

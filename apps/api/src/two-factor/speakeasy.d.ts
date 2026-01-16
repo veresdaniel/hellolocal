@@ -23,4 +23,3 @@ declare module "speakeasy" {
     export function verify(options: TotpVerifyOptions): boolean;
   }
 }
-

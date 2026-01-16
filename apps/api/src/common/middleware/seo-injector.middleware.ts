@@ -40,9 +40,9 @@ export class SeoInjectorMiddleware implements NestMiddleware {
   constructor() {
     // Path to the built frontend index.html
     // Adjust this path based on your deployment structure
-    this.indexHtmlPath = process.env.FRONTEND_BUILD_PATH || 
-      join(process.cwd(), "../web/dist/index.html");
-    
+    this.indexHtmlPath =
+      process.env.FRONTEND_BUILD_PATH || join(process.cwd(), "../web/dist/index.html");
+
     this.frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     this.apiUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3002}`;
   }
@@ -83,26 +83,28 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     });
   }
 
-  private async handleBotRequest(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  private async handleBotRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // Parse URL to extract lang, tenant, and path
       const urlPath = req.path;
       const pathParts = urlPath.split("/").filter(Boolean);
 
       // Extract language (first part, should be hu/en/de)
-      const lang = pathParts[0] && ["hu", "en", "de"].includes(pathParts[0])
-        ? pathParts[0]
-        : "hu";
+      const lang = pathParts[0] && ["hu", "en", "de"].includes(pathParts[0]) ? pathParts[0] : "hu";
 
       // Extract tenant key (second part, if exists and not a known route)
-      const knownRoutes = ["place", "event", "blog", "tudastar", "infok", "imprint", "terms", "privacy"];
-      const tenantKey = pathParts[1] && !knownRoutes.includes(pathParts[1])
-        ? pathParts[1]
-        : undefined;
+      const knownRoutes = [
+        "place",
+        "event",
+        "blog",
+        "tudastar",
+        "infok",
+        "imprint",
+        "terms",
+        "privacy",
+      ];
+      const tenantKey =
+        pathParts[1] && !knownRoutes.includes(pathParts[1]) ? pathParts[1] : undefined;
 
       // Extract route type and slug
       const routeIndex = tenantKey ? 2 : 1;
@@ -140,14 +142,14 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         const response = await fetch(seoUrl, {
           signal: controller.signal,
           headers: {
-            "Accept": "application/json",
+            Accept: "application/json",
           },
         });
 
         clearTimeout(timeoutId);
 
         if (response.ok) {
-          const jsonData = await response.json() as unknown;
+          const jsonData = (await response.json()) as unknown;
           // Type guard to validate the response structure
           if (
             jsonData &&
@@ -167,9 +169,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
           ) {
             seoData = jsonData as SeoData;
           } else {
-            this.logger.warn(
-              `Invalid SEO data structure received for ${req.path}`
-            );
+            this.logger.warn(`Invalid SEO data structure received for ${req.path}`);
           }
         } else {
           this.logger.warn(
@@ -181,9 +181,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
           this.logger.warn(`SEO fetch timeout for ${req.path}`);
         } else {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          this.logger.warn(
-            `Failed to fetch SEO data for ${req.path}: ${errorMessage}`
-          );
+          this.logger.warn(`Failed to fetch SEO data for ${req.path}: ${errorMessage}`);
         }
         // Continue with default HTML if SEO fetch fails
       }
@@ -211,9 +209,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     try {
       return readFileSync(this.indexHtmlPath, "utf-8");
     } catch (error) {
-      this.logger.warn(
-        `Could not read index.html from ${this.indexHtmlPath}, using fallback`
-      );
+      this.logger.warn(`Could not read index.html from ${this.indexHtmlPath}, using fallback`);
       // Return a minimal HTML fallback
       return `<!DOCTYPE html>
 <html lang="en">
@@ -229,15 +225,18 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     }
   }
 
-  private injectMetaTags(html: string, seoData: {
-    title: string;
-    description: string;
-    image: string;
-    url: string;
-    type: string;
-    siteName: string;
-    schemaOrg?: any; // Optional schema.org JSON-LD data
-  }): string {
+  private injectMetaTags(
+    html: string,
+    seoData: {
+      title: string;
+      description: string;
+      image: string;
+      url: string;
+      type: string;
+      siteName: string;
+      schemaOrg?: any; // Optional schema.org JSON-LD data
+    }
+  ): string {
     // Escape HTML entities
     const escapeHtml = (text: string) => {
       return text
@@ -304,10 +303,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     }
 
     // Also update existing title if present
-    html = html.replace(
-      /<title>.*?<\/title>/i,
-      `<title>${title}</title>`
-    );
+    html = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
 
     return html;
   }

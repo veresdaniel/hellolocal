@@ -182,7 +182,8 @@ export function OfflinePage() {
               borderRadius: "10px",
               fontWeight: 600,
               fontSize: 15,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               cursor: "pointer",
               transition: "all 0.3s ease",
               boxShadow: "0 3px 12px rgba(0, 0, 0, 0.15)",
@@ -210,7 +211,8 @@ export function OfflinePage() {
               borderRadius: "10px",
               fontWeight: 600,
               fontSize: 15,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
               backdropFilter: "blur(10px)",
               display: "inline-block",

@@ -98,7 +98,9 @@ export function getPlaces(
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Place[]>(`/public/${lang}/${effectiveSiteKey}/places${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Place[]>(
+    `/public/${lang}/${effectiveSiteKey}/places${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getPlace(lang: string, slug: string, siteKey: string) {
@@ -108,7 +110,7 @@ export function getPlace(lang: string, slug: string, siteKey: string) {
 /**
  * Gets a place by its entity ID (stable, future-proof).
  * This should be used after slug resolution to fetch place data by ID.
- * 
+ *
  * @param lang - Language code (hu, en, de)
  * @param siteKey - Site key from URL
  * @param placeId - Place entity ID
@@ -137,7 +139,9 @@ export interface PublicPriceList {
 }
 
 export function getPlacePriceList(lang: string, siteKey: string, placeId: string) {
-  return apiGetPublic<PublicPriceList>(`/public/${lang}/${siteKey}/places/by-id/${placeId}/pricelist`);
+  return apiGetPublic<PublicPriceList>(
+    `/public/${lang}/${siteKey}/places/by-id/${placeId}/pricelist`
+  );
 }
 
 // Floorplan API
@@ -160,7 +164,9 @@ export interface PublicFloorplan {
 }
 
 export function getPlaceFloorplans(lang: string, siteKey: string, placeId: string) {
-  return apiGetPublic<PublicFloorplan[]>(`/public/${lang}/${siteKey}/places/by-id/${placeId}/floorplans`);
+  return apiGetPublic<PublicFloorplan[]>(
+    `/public/${lang}/${siteKey}/places/by-id/${placeId}/floorplans`
+  );
 }
 
 // Gallery API
@@ -206,16 +212,27 @@ export interface PriceBand {
 // Note: These would need to be added to the backend as public endpoints
 // For now, we'll use a workaround by fetching from the places data
 // OPTIMIZED: Use cached places data if available to avoid duplicate API calls
-let cachedPlacesForExtraction: { lang: string; siteKey?: string; tenantKey?: string; places: Place[]; timestamp: number } | null = null;
+let cachedPlacesForExtraction: {
+  lang: string;
+  siteKey?: string;
+  tenantKey?: string;
+  places: Place[];
+  timestamp: number;
+} | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 
-export async function getCategories(lang: string, siteKey?: string, useCachedPlaces?: Place[]): Promise<Category[]> {
+export async function getCategories(
+  lang: string,
+  siteKey?: string,
+  useCachedPlaces?: Place[]
+): Promise<Category[]> {
   // If places are provided, use them directly (no API call needed)
   if (useCachedPlaces) {
     const categoryMap = new Map<string, Category>();
     useCachedPlaces.forEach((place) => {
       if (place.category) {
-        const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+        const categoryName =
+          typeof place.category === "string" ? place.category : String(place.category);
         const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
         if (!categoryMap.has(categoryId)) {
           categoryMap.set(categoryId, {
@@ -229,14 +246,18 @@ export async function getCategories(lang: string, siteKey?: string, useCachedPla
   }
 
   // Check cache first
-  if (cachedPlacesForExtraction && 
-      cachedPlacesForExtraction.lang === lang && 
-      (cachedPlacesForExtraction.siteKey === siteKey || cachedPlacesForExtraction.tenantKey === siteKey) &&
-      Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
+  if (
+    cachedPlacesForExtraction &&
+    cachedPlacesForExtraction.lang === lang &&
+    (cachedPlacesForExtraction.siteKey === siteKey ||
+      cachedPlacesForExtraction.tenantKey === siteKey) &&
+    Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL
+  ) {
     const categoryMap = new Map<string, Category>();
     cachedPlacesForExtraction.places.forEach((place) => {
       if (place.category) {
-        const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+        const categoryName =
+          typeof place.category === "string" ? place.category : String(place.category);
         const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
         if (!categoryMap.has(categoryId)) {
           categoryMap.set(categoryId, {
@@ -252,11 +273,12 @@ export async function getCategories(lang: string, siteKey?: string, useCachedPla
   // Fetch places and cache them
   const places = await getPlaces(lang, siteKey || "");
   cachedPlacesForExtraction = { lang, siteKey, tenantKey: siteKey, places, timestamp: Date.now() };
-  
+
   const categoryMap = new Map<string, Category>();
   places.forEach((place) => {
     if (place.category) {
-      const categoryName = typeof place.category === "string" ? place.category : String(place.category);
+      const categoryName =
+        typeof place.category === "string" ? place.category : String(place.category);
       const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
       if (!categoryMap.has(categoryId)) {
         categoryMap.set(categoryId, {
@@ -269,13 +291,18 @@ export async function getCategories(lang: string, siteKey?: string, useCachedPla
   return Array.from(categoryMap.values());
 }
 
-export async function getPriceBands(lang: string, siteKey?: string, useCachedPlaces?: Place[]): Promise<PriceBand[]> {
+export async function getPriceBands(
+  lang: string,
+  siteKey?: string,
+  useCachedPlaces?: Place[]
+): Promise<PriceBand[]> {
   // If places are provided, use them directly (no API call needed)
   if (useCachedPlaces) {
     const priceBandMap = new Map<string, PriceBand>();
     useCachedPlaces.forEach((place) => {
       if (place.priceBand) {
-        const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+        const priceBandName =
+          typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
         const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
         if (!priceBandMap.has(priceBandId)) {
           priceBandMap.set(priceBandId, {
@@ -289,14 +316,18 @@ export async function getPriceBands(lang: string, siteKey?: string, useCachedPla
   }
 
   // Check cache first
-  if (cachedPlacesForExtraction && 
-      cachedPlacesForExtraction.lang === lang && 
-      (cachedPlacesForExtraction.siteKey === siteKey || cachedPlacesForExtraction.tenantKey === siteKey) &&
-      Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL) {
+  if (
+    cachedPlacesForExtraction &&
+    cachedPlacesForExtraction.lang === lang &&
+    (cachedPlacesForExtraction.siteKey === siteKey ||
+      cachedPlacesForExtraction.tenantKey === siteKey) &&
+    Date.now() - cachedPlacesForExtraction.timestamp < CACHE_TTL
+  ) {
     const priceBandMap = new Map<string, PriceBand>();
     cachedPlacesForExtraction.places.forEach((place) => {
       if (place.priceBand) {
-        const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+        const priceBandName =
+          typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
         const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
         if (!priceBandMap.has(priceBandId)) {
           priceBandMap.set(priceBandId, {
@@ -312,11 +343,12 @@ export async function getPriceBands(lang: string, siteKey?: string, useCachedPla
   // Fetch places and cache them
   const places = await getPlaces(lang, siteKey || "");
   cachedPlacesForExtraction = { lang, siteKey, tenantKey: siteKey, places, timestamp: Date.now() };
-  
+
   const priceBandMap = new Map<string, PriceBand>();
   places.forEach((place) => {
     if (place.priceBand) {
-      const priceBandName = typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
+      const priceBandName =
+        typeof place.priceBand === "string" ? place.priceBand : String(place.priceBand);
       const priceBandId = place.priceBandId || priceBandName.toLowerCase().replace(/\s+/g, "-");
       if (!priceBandMap.has(priceBandId)) {
         priceBandMap.set(priceBandId, {
@@ -378,7 +410,9 @@ export function getEvents(
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Event[]>(`/public/${lang}/${effectiveSiteKey}/events${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Event[]>(
+    `/public/${lang}/${effectiveSiteKey}/events${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getEvent(lang: string, slug: string, siteKey: string) {
@@ -388,7 +422,7 @@ export function getEvent(lang: string, slug: string, siteKey: string) {
 /**
  * Gets an event by its entity ID (stable, future-proof).
  * This should be used after slug resolution to fetch event data by ID.
- * 
+ *
  * @param lang - Language code (hu, en, de)
  * @param siteKey - Site key from URL
  * @param eventId - Event entity ID
@@ -426,7 +460,9 @@ export function getSites(
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
-  return apiGetPublic<Site[]>(`/public/${lang}/${siteKey}/sites${queryString ? `?${queryString}` : ""}`);
+  return apiGetPublic<Site[]>(
+    `/public/${lang}/${siteKey}/sites${queryString ? `?${queryString}` : ""}`
+  );
 }
 
 export function getSite(lang: string, slug: string, siteKey: string) {
@@ -469,4 +505,3 @@ export function getCollectionBySlug(slug: string, lang?: string) {
   const langParam = lang ? `?lang=${lang}` : "";
   return apiGetPublic<CollectionView>(`/public/collections/by-slug/${slug}${langParam}`);
 }
-

@@ -42,7 +42,7 @@ export function SiteStatusPage() {
     try {
       setInvalidatingCache(cacheType);
       await invalidateCache(cacheType);
-      
+
       // Get localized cache type name
       const cacheTypeNames: Record<string, string> = {
         places: t("admin.siteStatus.cache.places") || "Places",
@@ -57,7 +57,7 @@ export function SiteStatusPage() {
         all: t("admin.siteStatus.cache.all") || "All Caches",
       };
       const cacheTypeName = cacheTypeNames[cacheType] || cacheType;
-      
+
       // Invalidate the corresponding React Query cache
       switch (cacheType) {
         case "places":
@@ -106,15 +106,13 @@ export function SiteStatusPage() {
       }
 
       showToast(
-        t("admin.siteStatus.cache.invalidated", { cacheType: cacheTypeName }) || `Cache invalidated: ${cacheTypeName}`,
+        t("admin.siteStatus.cache.invalidated", { cacheType: cacheTypeName }) ||
+          `Cache invalidated: ${cacheTypeName}`,
         "success"
       );
     } catch (error) {
       console.error("Failed to invalidate cache:", error);
-      showToast(
-        t("admin.siteStatus.cache.error") || "Failed to invalidate cache",
-        "error"
-      );
+      showToast(t("admin.siteStatus.cache.error") || "Failed to invalidate cache", "error");
     } finally {
       setInvalidatingCache(null);
     }
@@ -141,18 +139,22 @@ export function SiteStatusPage() {
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
         title={t("admin.siteStatus.title") || "Site Status"}
-        subtitle={t("admin.siteStatus.subtitle") || "Overview of site statistics and cache management"}
+        subtitle={
+          t("admin.siteStatus.subtitle") || "Overview of site statistics and cache management"
+        }
         showNewButton={false}
       />
 
       {/* Tabs */}
-      <div style={{
-        display: "flex",
-        gap: "8px",
-        borderBottom: "2px solid rgba(102, 126, 234, 0.3)",
-        marginBottom: "24px",
-        padding: "0 24px",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          borderBottom: "2px solid rgba(102, 126, 234, 0.3)",
+          marginBottom: "24px",
+          padding: "0 24px",
+        }}
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -161,9 +163,7 @@ export function SiteStatusPage() {
               padding: "12px 24px",
               background: "none",
               border: "none",
-              borderBottom: activeTab === tab.id
-                ? "3px solid #667eea"
-                : "3px solid transparent",
+              borderBottom: activeTab === tab.id ? "3px solid #667eea" : "3px solid transparent",
               color: activeTab === tab.id ? "#a8b3ff" : "rgba(255, 255, 255, 0.6)",
               fontSize: "15px",
               fontWeight: activeTab === tab.id ? 600 : 400,
@@ -198,12 +198,14 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
   return (
     <div>
       {/* Statistics Cards */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-        gap: "20px",
-        marginBottom: "32px",
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "20px",
+          marginBottom: "32px",
+        }}
+      >
         <StatCard
           title={t("admin.siteStatus.stats.sites") || "Sites"}
           icon="🌐"
@@ -242,12 +244,14 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
       </div>
 
       {/* Content Statistics */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "16px",
-        marginBottom: "32px",
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "16px",
+          marginBottom: "32px",
+        }}
+      >
         <StatCard
           title={t("admin.siteStatus.stats.categories") || "Categories"}
           icon="📁"
@@ -275,27 +279,33 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
       </div>
 
       {/* Recent Activity */}
-      <div style={{
-        background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
-        borderRadius: "12px",
-        padding: "24px",
-        marginBottom: "32px",
-        border: "1px solid rgba(102, 126, 234, 0.3)",
-      }}>
-        <h3 style={{
-          margin: "0 0 16px 0",
-          fontSize: "18px",
-          fontWeight: 600,
-          color: "#a8b3ff",
-          fontFamily: "'Poppins', system-ui, sans-serif",
-        }}>
+      <div
+        style={{
+          background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
+          borderRadius: "12px",
+          padding: "24px",
+          marginBottom: "32px",
+          border: "1px solid rgba(102, 126, 234, 0.3)",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 16px 0",
+            fontSize: "18px",
+            fontWeight: 600,
+            color: "#a8b3ff",
+            fontFamily: "'Poppins', system-ui, sans-serif",
+          }}
+        >
           {t("admin.siteStatus.recentActivity.title") || "Recent Activity (Last 7 Days)"}
         </h3>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-          gap: "16px",
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: "16px",
+          }}
+        >
           <ActivityItem
             label={t("admin.siteStatus.recentActivity.places") || "Places"}
             value={data.recentActivity.places}
@@ -317,26 +327,32 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
 
       {/* Sites by Plan */}
       {data.sitesByPlan.length > 0 && (
-        <div style={{
-          background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
-          borderRadius: "12px",
-          padding: "24px",
-          border: "1px solid rgba(102, 126, 234, 0.3)",
-        }}>
-          <h3 style={{
-            margin: "0 0 16px 0",
-            fontSize: "18px",
-            fontWeight: 600,
-            color: "#a8b3ff",
-            fontFamily: "'Poppins', system-ui, sans-serif",
-          }}>
+        <div
+          style={{
+            background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
+            borderRadius: "12px",
+            padding: "24px",
+            border: "1px solid rgba(102, 126, 234, 0.3)",
+          }}
+        >
+          <h3
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: "18px",
+              fontWeight: 600,
+              color: "#a8b3ff",
+              fontFamily: "'Poppins', system-ui, sans-serif",
+            }}
+          >
             {t("admin.siteStatus.sitesByPlan.title") || "Sites by Plan"}
           </h3>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "12px",
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "12px",
+            }}
+          >
             {data.sitesByPlan.map((item) => (
               <div
                 key={item.plan}
@@ -347,18 +363,22 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
                   border: "1px solid rgba(102, 126, 234, 0.2)",
                 }}
               >
-                <div style={{
-                  fontSize: "14px",
-                  color: "rgba(255, 255, 255, 0.7)",
-                  marginBottom: "4px",
-                }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    color: "rgba(255, 255, 255, 0.7)",
+                    marginBottom: "4px",
+                  }}
+                >
                   {item.plan}
                 </div>
-                <div style={{
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  color: "#a8b3ff",
-                }}>
+                <div
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    color: "#a8b3ff",
+                  }}
+                >
                   {item.count}
                 </div>
               </div>
@@ -381,52 +401,113 @@ function CacheManagementTab({
   const { t } = useTranslation();
 
   const cacheTypes = [
-    { id: "places", label: t("admin.siteStatus.cache.places") || "Places", description: t("admin.siteStatus.cache.placesDesc") || "Invalidate all place-related caches" },
-    { id: "events", label: t("admin.siteStatus.cache.events") || "Events", description: t("admin.siteStatus.cache.eventsDesc") || "Invalidate all event-related caches" },
-    { id: "categories", label: t("admin.siteStatus.cache.categories") || "Categories", description: t("admin.siteStatus.cache.categoriesDesc") || "Invalidate category caches and related places/events" },
-    { id: "tags", label: t("admin.siteStatus.cache.tags") || "Tags", description: t("admin.siteStatus.cache.tagsDesc") || "Invalidate tag caches and related places/events" },
-    { id: "towns", label: t("admin.siteStatus.cache.towns") || "Towns", description: t("admin.siteStatus.cache.townsDesc") || "Invalidate town caches and related places" },
-    { id: "priceBands", label: t("admin.siteStatus.cache.priceBands") || "Price Bands", description: t("admin.siteStatus.cache.priceBandsDesc") || "Invalidate price band caches and related places" },
-    { id: "platformSettings", label: t("admin.siteStatus.cache.platformSettings") || "Platform Settings", description: t("admin.siteStatus.cache.platformSettingsDesc") || "Invalidate platform settings cache" },
-    { id: "mapSettings", label: t("admin.siteStatus.cache.mapSettings") || "Map Settings", description: t("admin.siteStatus.cache.mapSettingsDesc") || "Invalidate map settings cache" },
-    { id: "staticPages", label: t("admin.siteStatus.cache.staticPages") || "Static Pages", description: t("admin.siteStatus.cache.staticPagesDesc") || "Invalidate static pages cache" },
-    { id: "collections", label: t("admin.siteStatus.cache.collections") || "Collections", description: t("admin.siteStatus.cache.collectionsDesc") || "Invalidate collections cache" },
-    { id: "all", label: t("admin.siteStatus.cache.all") || "All Caches", description: t("admin.siteStatus.cache.allDesc") || "Invalidate all caches (use with caution)" },
+    {
+      id: "places",
+      label: t("admin.siteStatus.cache.places") || "Places",
+      description: t("admin.siteStatus.cache.placesDesc") || "Invalidate all place-related caches",
+    },
+    {
+      id: "events",
+      label: t("admin.siteStatus.cache.events") || "Events",
+      description: t("admin.siteStatus.cache.eventsDesc") || "Invalidate all event-related caches",
+    },
+    {
+      id: "categories",
+      label: t("admin.siteStatus.cache.categories") || "Categories",
+      description:
+        t("admin.siteStatus.cache.categoriesDesc") ||
+        "Invalidate category caches and related places/events",
+    },
+    {
+      id: "tags",
+      label: t("admin.siteStatus.cache.tags") || "Tags",
+      description:
+        t("admin.siteStatus.cache.tagsDesc") || "Invalidate tag caches and related places/events",
+    },
+    {
+      id: "towns",
+      label: t("admin.siteStatus.cache.towns") || "Towns",
+      description:
+        t("admin.siteStatus.cache.townsDesc") || "Invalidate town caches and related places",
+    },
+    {
+      id: "priceBands",
+      label: t("admin.siteStatus.cache.priceBands") || "Price Bands",
+      description:
+        t("admin.siteStatus.cache.priceBandsDesc") ||
+        "Invalidate price band caches and related places",
+    },
+    {
+      id: "platformSettings",
+      label: t("admin.siteStatus.cache.platformSettings") || "Platform Settings",
+      description:
+        t("admin.siteStatus.cache.platformSettingsDesc") || "Invalidate platform settings cache",
+    },
+    {
+      id: "mapSettings",
+      label: t("admin.siteStatus.cache.mapSettings") || "Map Settings",
+      description: t("admin.siteStatus.cache.mapSettingsDesc") || "Invalidate map settings cache",
+    },
+    {
+      id: "staticPages",
+      label: t("admin.siteStatus.cache.staticPages") || "Static Pages",
+      description: t("admin.siteStatus.cache.staticPagesDesc") || "Invalidate static pages cache",
+    },
+    {
+      id: "collections",
+      label: t("admin.siteStatus.cache.collections") || "Collections",
+      description: t("admin.siteStatus.cache.collectionsDesc") || "Invalidate collections cache",
+    },
+    {
+      id: "all",
+      label: t("admin.siteStatus.cache.all") || "All Caches",
+      description:
+        t("admin.siteStatus.cache.allDesc") || "Invalidate all caches (use with caution)",
+    },
   ];
 
   return (
     <div>
-      <div style={{
-        background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
-        borderRadius: "12px",
-        padding: "24px",
-        marginBottom: "24px",
-        border: "1px solid rgba(102, 126, 234, 0.3)",
-      }}>
-        <h3 style={{
-          margin: "0 0 12px 0",
-          fontSize: "18px",
-          fontWeight: 600,
-          color: "#a8b3ff",
-          fontFamily: "'Poppins', system-ui, sans-serif",
-        }}>
+      <div
+        style={{
+          background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
+          borderRadius: "12px",
+          padding: "24px",
+          marginBottom: "24px",
+          border: "1px solid rgba(102, 126, 234, 0.3)",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: "18px",
+            fontWeight: 600,
+            color: "#a8b3ff",
+            fontFamily: "'Poppins', system-ui, sans-serif",
+          }}
+        >
           {t("admin.siteStatus.cache.title") || "Cache Management"}
         </h3>
-        <p style={{
-          margin: 0,
-          color: "rgba(255, 255, 255, 0.7)",
-          fontSize: "14px",
-        }}>
-          {t("admin.siteStatus.cache.description") || "Manually invalidate caches for specific content types. This will force the system to refresh data on the next request."}
+        <p
+          style={{
+            margin: 0,
+            color: "rgba(255, 255, 255, 0.7)",
+            fontSize: "14px",
+          }}
+        >
+          {t("admin.siteStatus.cache.description") ||
+            "Manually invalidate caches for specific content types. This will force the system to refresh data on the next request."}
         </p>
       </div>
 
-      <div style={{
-        background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
-        borderRadius: "12px",
-        border: "1px solid rgba(102, 126, 234, 0.3)",
-        overflow: "hidden",
-      }}>
+      <div
+        style={{
+          background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
+          borderRadius: "12px",
+          border: "1px solid rgba(102, 126, 234, 0.3)",
+          overflow: "hidden",
+        }}
+      >
         {cacheTypes.map((cacheType, index) => (
           <div
             key={cacheType.id}
@@ -435,7 +516,8 @@ function CacheManagementTab({
               alignItems: "center",
               justifyContent: "space-between",
               padding: "16px 24px",
-              borderBottom: index < cacheTypes.length - 1 ? "1px solid rgba(102, 126, 234, 0.2)" : "none",
+              borderBottom:
+                index < cacheTypes.length - 1 ? "1px solid rgba(102, 126, 234, 0.2)" : "none",
               transition: "background 0.2s ease",
             }}
             onMouseEnter={(e) => {
@@ -446,20 +528,24 @@ function CacheManagementTab({
             }}
           >
             <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: "15px",
-                fontWeight: 600,
-                color: "#a8b3ff",
-                fontFamily: "'Poppins', system-ui, sans-serif",
-                marginBottom: "4px",
-              }}>
+              <div
+                style={{
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  color: "#a8b3ff",
+                  fontFamily: "'Poppins', system-ui, sans-serif",
+                  marginBottom: "4px",
+                }}
+              >
                 {cacheType.label}
               </div>
-              <div style={{
-                fontSize: "13px",
-                color: "rgba(255, 255, 255, 0.6)",
-                lineHeight: 1.4,
-              }}>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "rgba(255, 255, 255, 0.6)",
+                  lineHeight: 1.4,
+                }}
+              >
                 {cacheType.description}
               </div>
             </div>
@@ -468,9 +554,10 @@ function CacheManagementTab({
               disabled={invalidatingCache === cacheType.id}
               style={{
                 padding: "8px 16px",
-                background: cacheType.id === "all"
-                  ? "linear-gradient(135deg, #f56565 0%, #e53e3e 100%)"
-                  : "linear-gradient(135deg, #667eea 0%, #5568d3 100%)",
+                background:
+                  cacheType.id === "all"
+                    ? "linear-gradient(135deg, #f56565 0%, #e53e3e 100%)"
+                    : "linear-gradient(135deg, #667eea 0%, #5568d3 100%)",
                 border: "none",
                 borderRadius: "6px",
                 color: "white",
@@ -495,8 +582,8 @@ function CacheManagementTab({
               }}
             >
               {invalidatingCache === cacheType.id
-                ? (t("admin.siteStatus.cache.invalidating") || "Invalidating...")
-                : (t("admin.siteStatus.cache.invalidate") || "Invalidate Cache")}
+                ? t("admin.siteStatus.cache.invalidating") || "Invalidating..."
+                : t("admin.siteStatus.cache.invalidate") || "Invalidate Cache"}
             </button>
           </div>
         ))}
@@ -520,41 +607,49 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div style={{
-      background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
-      borderRadius: "12px",
-      padding: "20px",
-      border: "1px solid rgba(102, 126, 234, 0.3)",
-      display: "flex",
-      flexDirection: "column",
-      gap: "8px",
-    }}>
+    <div
+      style={{
+        background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
+        borderRadius: "12px",
+        padding: "20px",
+        border: "1px solid rgba(102, 126, 234, 0.3)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <span style={{ fontSize: "32px" }}>{icon}</span>
         <div style={{ flex: 1 }}>
-          <div style={{
-            fontSize: "13px",
-            color: "rgba(255, 255, 255, 0.6)",
-            marginBottom: "4px",
-          }}>
+          <div
+            style={{
+              fontSize: "13px",
+              color: "rgba(255, 255, 255, 0.6)",
+              marginBottom: "4px",
+            }}
+          >
             {title}
           </div>
-          <div style={{
-            fontSize: "28px",
-            fontWeight: 700,
-            color: color,
-            fontFamily: "'Poppins', system-ui, sans-serif",
-          }}>
+          <div
+            style={{
+              fontSize: "28px",
+              fontWeight: 700,
+              color: color,
+              fontFamily: "'Poppins', system-ui, sans-serif",
+            }}
+          >
             {value.toLocaleString()}
           </div>
         </div>
       </div>
       {subtitle && (
-        <div style={{
-          fontSize: "12px",
-          color: "rgba(255, 255, 255, 0.5)",
-          marginTop: "4px",
-        }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "rgba(255, 255, 255, 0.5)",
+            marginTop: "4px",
+          }}
+        >
           {subtitle}
         </div>
       )}
@@ -565,24 +660,30 @@ function StatCard({
 // Activity Item Component
 function ActivityItem({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{
-      padding: "12px",
-      background: "rgba(102, 126, 234, 0.1)",
-      borderRadius: "8px",
-      border: "1px solid rgba(102, 126, 234, 0.2)",
-    }}>
-      <div style={{
-        fontSize: "12px",
-        color: "rgba(255, 255, 255, 0.6)",
-        marginBottom: "4px",
-      }}>
+    <div
+      style={{
+        padding: "12px",
+        background: "rgba(102, 126, 234, 0.1)",
+        borderRadius: "8px",
+        border: "1px solid rgba(102, 126, 234, 0.2)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          color: "rgba(255, 255, 255, 0.6)",
+          marginBottom: "4px",
+        }}
+      >
         {label}
       </div>
-      <div style={{
-        fontSize: "20px",
-        fontWeight: 700,
-        color: "#a8b3ff",
-      }}>
+      <div
+        style={{
+          fontSize: "20px",
+          fontWeight: 700,
+          color: "#a8b3ff",
+        }}
+      >
         {value.toLocaleString()}
       </div>
     </div>

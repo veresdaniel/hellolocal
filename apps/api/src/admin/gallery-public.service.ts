@@ -36,10 +36,10 @@ export class GalleryPublicService {
         if (gallery.images) {
           if (Array.isArray(gallery.images)) {
             images = gallery.images;
-          } else if (typeof gallery.images === 'string') {
+          } else if (typeof gallery.images === "string") {
             // Try to parse if it's a string
             images = JSON.parse(gallery.images);
-          } else if (typeof gallery.images === 'object') {
+          } else if (typeof gallery.images === "object") {
             // If it's already an object, try to convert to array
             images = Array.isArray(gallery.images) ? gallery.images : [gallery.images];
           }
@@ -53,9 +53,9 @@ export class GalleryPublicService {
       let columns: any = null;
       try {
         if (gallery.columns) {
-          if (typeof gallery.columns === 'object') {
+          if (typeof gallery.columns === "object") {
             columns = gallery.columns;
-          } else if (typeof gallery.columns === 'string') {
+          } else if (typeof gallery.columns === "string") {
             columns = JSON.parse(gallery.columns);
           }
         }

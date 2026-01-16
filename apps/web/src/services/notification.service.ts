@@ -91,10 +91,7 @@ export class NotificationService {
   /**
    * Show a local notification (for testing or immediate notifications)
    */
-  static async showNotification(
-    title: string,
-    options: NotificationOptions = {}
-  ): Promise<void> {
+  static async showNotification(title: string, options: NotificationOptions = {}): Promise<void> {
     if (!this.hasPermission()) {
       const granted = await this.requestPermission();
       if (!granted) {
@@ -150,4 +147,3 @@ export class NotificationService {
     }
   }
 }
-

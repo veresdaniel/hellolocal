@@ -15,8 +15,8 @@ styleSheet.textContent = `
     to { transform: scale(1); opacity: 1; }
   }
 `;
-if (!document.head.querySelector('style[data-gallery-animations]')) {
-  styleSheet.setAttribute('data-gallery-animations', 'true');
+if (!document.head.querySelector("style[data-gallery-animations]")) {
+  styleSheet.setAttribute("data-gallery-animations", "true");
   document.head.appendChild(styleSheet);
 }
 
@@ -38,7 +38,13 @@ interface GalleryViewerProps {
   compact?: boolean; // If true, render in compact mode (smaller size)
 }
 
-export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", compact = false }: GalleryViewerProps) {
+export function GalleryViewer({
+  images,
+  name,
+  layout = "grid",
+  aspect = "auto",
+  compact = false,
+}: GalleryViewerProps) {
   const { t, i18n } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -53,10 +59,14 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
         setSelectedIndex(null);
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev === null ? null : prev > 0 ? prev - 1 : images.length - 1));
+        setSelectedIndex((prev) =>
+          prev === null ? null : prev > 0 ? prev - 1 : images.length - 1
+        );
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev === null ? null : prev < images.length - 1 ? prev + 1 : 0));
+        setSelectedIndex((prev) =>
+          prev === null ? null : prev < images.length - 1 ? prev + 1 : 0
+        );
       }
     };
 
@@ -154,7 +164,8 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
             style={{
               fontSize: "clamp(18px, 3vw, 24px)",
               fontWeight: 600,
-              fontFamily: '"Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+              fontFamily:
+                '"Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
               marginBottom: compact ? "8px" : "clamp(12px, 2vw, 20px)",
               marginTop: 0,
               color: "#1a1a1a",
@@ -172,9 +183,11 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                   color: "#6b7280",
                 }}
               >
-                ({totalImages} {totalImages === 1 
+                ({totalImages}{" "}
+                {totalImages === 1
                   ? t("public.gallery.imageSingular", { defaultValue: "image" })
-                  : t("public.gallery.imagePlural", { defaultValue: "images" })})
+                  : t("public.gallery.imagePlural", { defaultValue: "images" })}
+                )
               </span>
             )}
           </h3>
@@ -183,15 +196,20 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
           style={{
             display: "grid",
             gridTemplateColumns: gridColumns,
-            gap: compact ? "6px" : (layout === "masonry" ? "clamp(8px, 2vw, 16px)" : "clamp(12px, 2vw, 20px)"),
+            gap: compact
+              ? "6px"
+              : layout === "masonry"
+                ? "clamp(8px, 2vw, 16px)"
+                : "clamp(12px, 2vw, 20px)",
           }}
         >
           {imagesToShow.map((image, displayIndex) => {
             const imageSrc = sanitizeImageUrl(image.src) || "";
             // Find the original index in the full images array (not shuffled)
-            const originalIndex = images.findIndex(img => 
-              (img.id && image.id && img.id === image.id) || 
-              (!img.id && !image.id && img.src === image.src)
+            const originalIndex = images.findIndex(
+              (img) =>
+                (img.id && image.id && img.id === image.id) ||
+                (!img.id && !image.id && img.src === image.src)
             );
 
             return (
@@ -201,7 +219,16 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                 style={{
                   position: "relative",
                   width: "100%",
-                  aspectRatio: aspect === "auto" ? "4/3" : aspect === "square" ? "1" : aspect === "4:3" ? "4/3" : aspect === "16:9" ? "16/9" : "4/3",
+                  aspectRatio:
+                    aspect === "auto"
+                      ? "4/3"
+                      : aspect === "square"
+                        ? "1"
+                        : aspect === "4:3"
+                          ? "4/3"
+                          : aspect === "16:9"
+                            ? "16/9"
+                            : "4/3",
                   cursor: "pointer",
                   overflow: "hidden",
                   borderRadius: "clamp(6px, 1vw, 12px)",
@@ -242,12 +269,14 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)",
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 60%, transparent 100%)",
                       padding: "clamp(8px, 2vw, 16px) clamp(12px, 2vw, 20px)",
                       color: "white",
                       fontSize: "clamp(11px, 1.5vw, 14px)",
                       lineHeight: 1.5,
-                      fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                      fontFamily:
+                        '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                       transition: "opacity 0.2s ease",
                     }}
                   >
@@ -398,7 +427,7 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
               alignItems: "center",
               justifyContent: "center",
               animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              paddingBottom: (images[selectedIndex].caption || images.length > 1) ? "80px" : "20px",
+              paddingBottom: images[selectedIndex].caption || images.length > 1 ? "80px" : "20px",
             }}
           >
             <img
@@ -436,7 +465,8 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                       fontSize: 16,
                       lineHeight: 1.6,
                       textAlign: "center",
-                      fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                      fontFamily:
+                        '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                       marginBottom: images.length > 1 ? 8 : 0,
                     }}
                   >
@@ -449,7 +479,8 @@ export function GalleryViewer({ images, name, layout = "grid", aspect = "auto", 
                       color: "rgba(255, 255, 255, 0.8)",
                       fontSize: 14,
                       textAlign: "center",
-                      fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                      fontFamily:
+                        '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                     }}
                   >
                     {selectedIndex + 1} / {images.length}

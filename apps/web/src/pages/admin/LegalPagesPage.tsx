@@ -4,12 +4,21 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { getLegalPages, createLegalPage, updateLegalPage, deleteLegalPage } from "../../api/admin.api";
+import {
+  getLegalPages,
+  createLegalPage,
+  updateLegalPage,
+  deleteLegalPage,
+} from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
 import { buildUrl } from "../../app/urls";
@@ -87,7 +96,7 @@ export function LegalPagesPage() {
   useEffect(() => {
     if (selectedSiteId) {
       // Reset to first page when site changes
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no site
       setIsLoading(false);
@@ -111,7 +120,7 @@ export function LegalPagesPage() {
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
         setLegalPages(response);
-        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+        setPagination((prev) => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setLegalPages(response.legalPages || []);
         setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
@@ -158,7 +167,9 @@ export function LegalPagesPage() {
               seoTitle: formData.seoTitleHu || null,
               seoDescription: formData.seoDescriptionHu || null,
               seoImage: formData.seoImageHu || null,
-              seoKeywords: formData.seoKeywordsHu ? formData.seoKeywordsHu.split(",").map((k) => k.trim()) : [],
+              seoKeywords: formData.seoKeywordsHu
+                ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
+                : [],
             },
           ];
           if (formData.titleEn.trim()) {
@@ -170,7 +181,9 @@ export function LegalPagesPage() {
               seoTitle: formData.seoTitleEn || null,
               seoDescription: formData.seoDescriptionEn || null,
               seoImage: formData.seoImageEn || null,
-              seoKeywords: formData.seoKeywordsEn ? formData.seoKeywordsEn.split(",").map((k) => k.trim()) : [],
+              seoKeywords: formData.seoKeywordsEn
+                ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
+                : [],
             });
           }
           if (formData.titleDe.trim()) {
@@ -182,7 +195,9 @@ export function LegalPagesPage() {
               seoTitle: formData.seoTitleDe || null,
               seoDescription: formData.seoDescriptionDe || null,
               seoImage: formData.seoImageDe || null,
-              seoKeywords: formData.seoKeywordsDe ? formData.seoKeywordsDe.split(",").map((k) => k.trim()) : [],
+              seoKeywords: formData.seoKeywordsDe
+                ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
+                : [],
             });
           }
           return translations;
@@ -225,7 +240,9 @@ export function LegalPagesPage() {
                 seoTitle: formData.seoTitleHu || null,
                 seoDescription: formData.seoDescriptionHu || null,
                 seoImage: formData.seoImageHu || null,
-                seoKeywords: formData.seoKeywordsHu ? formData.seoKeywordsHu.split(",").map((k) => k.trim()) : [],
+                seoKeywords: formData.seoKeywordsHu
+                  ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
+                  : [],
               },
             ];
             if (formData.titleEn.trim()) {
@@ -237,7 +254,9 @@ export function LegalPagesPage() {
                 seoTitle: formData.seoTitleEn || null,
                 seoDescription: formData.seoDescriptionEn || null,
                 seoImage: formData.seoImageEn || null,
-                seoKeywords: formData.seoKeywordsEn ? formData.seoKeywordsEn.split(",").map((k) => k.trim()) : [],
+                seoKeywords: formData.seoKeywordsEn
+                  ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
+                  : [],
               });
             }
             if (formData.titleDe.trim()) {
@@ -249,7 +268,9 @@ export function LegalPagesPage() {
                 seoTitle: formData.seoTitleDe || null,
                 seoDescription: formData.seoDescriptionDe || null,
                 seoImage: formData.seoImageDe || null,
-                seoKeywords: formData.seoKeywordsDe ? formData.seoKeywordsDe.split(",").map((k) => k.trim()) : [],
+                seoKeywords: formData.seoKeywordsDe
+                  ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
+                  : [],
               });
             }
             return translations;
@@ -354,22 +375,27 @@ export function LegalPagesPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       {/* Header */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "clamp(24px, 5vw, 32px)",
-        flexWrap: "wrap",
-        gap: 16,
-      }}>
-        <h1 style={{
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "white",
-          textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          margin: 0,
-        }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "clamp(24px, 5vw, 32px)",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+            margin: 0,
+          }}
+        >
           {t("admin.legalPages")}
         </h1>
         <button
@@ -387,7 +413,8 @@ export function LegalPagesPage() {
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
             boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
             transition: "all 0.3s ease",
@@ -412,23 +439,69 @@ export function LegalPagesPage() {
       </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+        <div
+          style={{
+            padding: 12,
+            marginBottom: 16,
+            background: "#fee",
+            color: "#c00",
+            borderRadius: 4,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{editingId ? t("admin.forms.editLegalPage") : t("admin.forms.newLegalPage")}</h2>
+        <div
+          style={{
+            padding: 24,
+            background: "white",
+            borderRadius: 8,
+            marginBottom: 24,
+            border: "1px solid #ddd",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 16,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {editingId ? t("admin.forms.editLegalPage") : t("admin.forms.newLegalPage")}
+          </h2>
 
           {isCreating && (
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.key")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.key")} *
+              </label>
               <select
                 value={formData.key}
-                onChange={(e) => setFormData({ ...formData, key: e.target.value as "imprint" | "terms" | "privacy" })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    key: e.target.value as "imprint" | "terms" | "privacy",
+                  })
+                }
                 disabled={!!editingId}
-                style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                style={{
+                  width: "100%",
+                  padding: 8,
+                  fontSize: 16,
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                }}
               >
                 <option value="imprint">{t("public.legal.imprint.title")}</option>
                 <option value="terms">{t("public.legal.terms.title")}</option>
@@ -438,15 +511,26 @@ export function LegalPagesPage() {
           )}
 
           {/* Active Checkbox - moved to top */}
-          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-            <label style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: 12, 
-              cursor: "pointer", 
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "16px 20px",
+              background: "#f8f8ff",
+              borderRadius: 12,
+              border: "2px solid #e0e7ff",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={formData.isActive}
@@ -461,7 +545,14 @@ export function LegalPagesPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("common.title")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -470,12 +561,14 @@ export function LegalPagesPage() {
                       selectedLang === "hu"
                         ? formData.titleHu
                         : selectedLang === "en"
-                        ? formData.titleEn
-                        : formData.titleDe
+                          ? formData.titleEn
+                          : formData.titleDe
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, titleHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, titleEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, titleHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, titleEn: e.target.value });
                       else setFormData({ ...formData, titleDe: e.target.value });
                     }}
                     style={{
@@ -492,66 +585,97 @@ export function LegalPagesPage() {
                     }}
                   />
                   {(selectedLang === "hu" && formErrors.titleHu) ||
-                    (selectedLang === "en" && formErrors.titleEn) ||
-                    (selectedLang === "de" && formErrors.titleDe) ? (
-                    <div style={{ 
-                      color: "#dc3545", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                  (selectedLang === "en" && formErrors.titleEn) ||
+                  (selectedLang === "de" && formErrors.titleDe) ? (
+                    <div
+                      style={{
+                        color: "#dc3545",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {selectedLang === "hu"
                         ? formErrors.titleHu
                         : selectedLang === "en"
-                        ? formErrors.titleEn
-                        : formErrors.titleDe}
+                          ? formErrors.titleEn
+                          : formErrors.titleDe}
                     </div>
                   ) : null}
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.shortDescription") || "Rövid leírás (lista oldal)"}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.shortDescription") || "Rövid leírás (lista oldal)"}
+                  </label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.shortDescriptionHu
                         : selectedLang === "en"
-                        ? formData.shortDescriptionEn
-                        : formData.shortDescriptionDe
+                          ? formData.shortDescriptionEn
+                          : formData.shortDescriptionDe
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, shortDescriptionHu: value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, shortDescriptionEn: value });
                       else setFormData({ ...formData, shortDescriptionDe: value });
                     }}
-                    placeholder={t("admin.shortDescriptionPlaceholder") || "Rövid leírás a lista oldali kártyához (richtext)"}
+                    placeholder={
+                      t("admin.shortDescriptionPlaceholder") ||
+                      "Rövid leírás a lista oldali kártyához (richtext)"
+                    }
                     height={150}
                     uploadFolder="editor/legal"
                   />
-                  <small style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    marginTop: 4, 
-                    display: "block",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {t("admin.shortDescriptionHint") || "Ez a mező jelenik meg a lista oldali kártyákon"}
+                  <small
+                    style={{
+                      color: "#666",
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      marginTop: 4,
+                      display: "block",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.shortDescriptionHint") ||
+                      "Ez a mező jelenik meg a lista oldali kártyákon"}
                   </small>
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.content")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.content")}
+                  </label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.contentHu
                         : selectedLang === "en"
-                        ? formData.contentEn
-                        : formData.contentDe
+                          ? formData.contentEn
+                          : formData.contentDe
                     }
                     onChange={(value) => {
                       if (selectedLang === "hu") setFormData({ ...formData, contentHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, contentEn: value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, contentEn: value });
                       else setFormData({ ...formData, contentDe: value });
                     }}
                     placeholder={t("admin.content")}
@@ -561,130 +685,220 @@ export function LegalPagesPage() {
                 </div>
 
                 {/* SEO Fields Section */}
-                <div style={{ 
-                  marginTop: 24, 
-                  padding: 16, 
-                  background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
-                  borderRadius: 8,
-                  border: "1px solid #667eea30"
-                }}>
-                  <h3 style={{ 
-                    margin: "0 0 16px 0", 
-                    fontSize: "clamp(16px, 3.5vw, 18px)", 
-                    fontWeight: 600, 
-                    color: "#667eea", 
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                <div
+                  style={{
+                    marginTop: 24,
+                    padding: 16,
+                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    borderRadius: 8,
+                    border: "1px solid #667eea30",
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 16px 0",
+                      fontSize: "clamp(16px, 3.5vw, 18px)",
+                      fontWeight: 600,
+                      color: "#667eea",
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     🔍 SEO {t("admin.settings")}
                   </h3>
-                  
+
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.title")}</label>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      SEO {t("common.title")}
+                    </label>
                     <input
                       type="text"
                       value={
                         selectedLang === "hu"
                           ? formData.seoTitleHu
                           : selectedLang === "en"
-                          ? formData.seoTitleEn
-                          : formData.seoTitleDe
+                            ? formData.seoTitleEn
+                            : formData.seoTitleDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoTitleHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, seoTitleHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, seoTitleEn: e.target.value });
                         else setFormData({ ...formData, seoTitleDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      placeholder={
+                        t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
                     />
-                    <small style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    marginTop: 4, 
-                    display: "block",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                    <small
+                      style={{
+                        color: "#666",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        display: "block",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.seoTitleHint") || "If empty, page title will be used"}
                     </small>
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.description")}</label>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      SEO {t("common.description")}
+                    </label>
                     <textarea
                       value={
                         selectedLang === "hu"
                           ? formData.seoDescriptionHu
                           : selectedLang === "en"
-                          ? formData.seoDescriptionEn
-                          : formData.seoDescriptionDe
+                            ? formData.seoDescriptionEn
+                            : formData.seoDescriptionDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, seoDescriptionHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, seoDescriptionEn: e.target.value });
                         else setFormData({ ...formData, seoDescriptionDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoDescriptionPlaceholder") || "SEO description (leave empty for auto)"}
+                      placeholder={
+                        t("admin.seoDescriptionPlaceholder") ||
+                        "SEO description (leave empty for auto)"
+                      }
                       rows={3}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
                     />
-                    <small style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    marginTop: 4, 
-                    display: "block",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                      {t("admin.seoDescriptionHint") || "If empty, first 2 sentences from content will be used"}
+                    <small
+                      style={{
+                        color: "#666",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        display: "block",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {t("admin.seoDescriptionHint") ||
+                        "If empty, first 2 sentences from content will be used"}
                     </small>
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>SEO {t("common.image")}</label>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      SEO {t("common.image")}
+                    </label>
                     <input
                       type="url"
                       value={
                         selectedLang === "hu"
                           ? formData.seoImageHu
                           : selectedLang === "en"
-                          ? formData.seoImageEn
-                          : formData.seoImageDe
+                            ? formData.seoImageEn
+                            : formData.seoImageDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoImageHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, seoImageHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, seoImageEn: e.target.value });
                         else setFormData({ ...formData, seoImageDe: e.target.value });
                       }}
                       placeholder={t("admin.seoImagePlaceholder") || "SEO image URL"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
                     />
                   </div>
 
                   <div style={{ marginBottom: 0 }}>
-                    <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.seoKeywords")}</label>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {t("admin.seoKeywords")}
+                    </label>
                     <input
                       type="text"
                       value={
                         selectedLang === "hu"
                           ? formData.seoKeywordsHu
                           : selectedLang === "en"
-                          ? formData.seoKeywordsEn
-                          : formData.seoKeywordsDe
+                            ? formData.seoKeywordsEn
+                            : formData.seoKeywordsDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoKeywordsHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, seoKeywordsHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, seoKeywordsEn: e.target.value });
                         else setFormData({ ...formData, seoKeywordsDe: e.target.value });
                       }}
-                      placeholder={t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"}
-                      style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                      placeholder={
+                        t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
                     />
-                    <small style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    marginTop: 4, 
-                    display: "block",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                    <small
+                      style={{
+                        color: "#666",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        display: "block",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
                     </small>
                   </div>
@@ -695,7 +909,7 @@ export function LegalPagesPage() {
 
           <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
+              onClick={() => (editingId ? handleUpdate(editingId) : handleCreate())}
               style={{
                 padding: "10px 20px",
                 background: "#28a745",
@@ -736,17 +950,19 @@ export function LegalPagesPage() {
           searchPlaceholder={t("admin.searchPlaceholders.legalPages")}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setPagination(prev => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           isLoading={isLoading}
           filterFn={(legalPage, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                               findTranslation(legalPage.translations, "hu" as Lang);
+            const translation =
+              legalPage.translations.find((t) => t.lang === currentLang) ||
+              findTranslation(legalPage.translations, "hu" as Lang);
             return (
               legalPage.key.toLowerCase().includes(lowerQuery) ||
-              translation?.title.toLowerCase().includes(lowerQuery) || false
+              translation?.title.toLowerCase().includes(lowerQuery) ||
+              false
             );
           }}
           columns={[
@@ -760,8 +976,9 @@ export function LegalPagesPage() {
               label: t("common.title"),
               render: (legalPage) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                                   findTranslation(legalPage.translations, "hu" as Lang);
+                const translation =
+                  legalPage.translations.find((t) => t.lang === currentLang) ||
+                  findTranslation(legalPage.translations, "hu" as Lang);
                 return translation?.title || "-";
               },
             },
@@ -778,7 +995,8 @@ export function LegalPagesPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -789,8 +1007,9 @@ export function LegalPagesPage() {
           ]}
           cardTitle={(legalPage) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = legalPage.translations.find((t) => t.lang === currentLang) || 
-                               findTranslation(legalPage.translations, "hu" as Lang);
+            const translation =
+              legalPage.translations.find((t) => t.lang === currentLang) ||
+              findTranslation(legalPage.translations, "hu" as Lang);
             return translation?.title || "-";
           }}
           cardSubtitle={(legalPage) => legalPage.key}
@@ -808,7 +1027,8 @@ export function LegalPagesPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -825,7 +1045,7 @@ export function LegalPagesPage() {
                   privacy: "adatvedelem",
                 };
                 const path = keyMap[legalPage.key] || legalPage.key;
-                const publicUrl = currentSite?.slug 
+                const publicUrl = currentSite?.slug
                   ? buildUrl({
                       lang: i18n.language || "hu",
                       siteKey: currentSite.slug,
@@ -845,7 +1065,8 @@ export function LegalPagesPage() {
                       borderRadius: 8,
                       cursor: "pointer",
                       fontSize: "clamp(13px, 3vw, 15px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       marginTop: 8,
                       transition: "all 0.3s ease",
                       display: "flex",
@@ -892,7 +1113,7 @@ export function LegalPagesPage() {
               privacy: "adatvedelem",
             };
             const path = keyMap[legalPage.key] || legalPage.key;
-            const publicUrl = currentSite?.slug 
+            const publicUrl = currentSite?.slug
               ? buildUrl({
                   lang: i18n.language || "hu",
                   siteKey: currentSite.slug,
@@ -914,12 +1135,11 @@ export function LegalPagesPage() {
             totalPages={pagination.totalPages}
             total={pagination.total}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
           />
         </div>
       )}
     </div>
   );
 }
-

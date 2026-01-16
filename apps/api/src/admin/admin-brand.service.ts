@@ -84,13 +84,13 @@ export class AdminBrandService {
 
   async create(dto: CreateBrandDto) {
     // Validate image URLs
-        if (dto.logoUrl && !sanitizeImageUrl(dto.logoUrl)) {
-          throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LOGO_URL);
-        }
+    if (dto.logoUrl && !sanitizeImageUrl(dto.logoUrl)) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LOGO_URL);
+    }
 
-        if (dto.faviconUrl && !sanitizeImageUrl(dto.faviconUrl)) {
-          throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_FAVICON_URL);
-        }
+    if (dto.faviconUrl && !sanitizeImageUrl(dto.faviconUrl)) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_FAVICON_URL);
+    }
 
     // Validate placeholder image URLs
     if (dto.placeholders) {
@@ -104,7 +104,9 @@ export class AdminBrandService {
       for (const field of placeholderFields) {
         const url = dto.placeholders[field];
         if (url && !sanitizeImageUrl(url)) {
-          throw new BadRequestException(`Invalid ${field} URL. Only http:// and https:// URLs are allowed.`);
+          throw new BadRequestException(
+            `Invalid ${field} URL. Only http:// and https:// URLs are allowed.`
+          );
         }
       }
     }
@@ -150,7 +152,9 @@ export class AdminBrandService {
       for (const field of placeholderFields) {
         const url = dto.placeholders[field];
         if (url && !sanitizeImageUrl(url)) {
-          throw new BadRequestException(`Invalid ${field} URL. Only http:// and https:// URLs are allowed.`);
+          throw new BadRequestException(
+            `Invalid ${field} URL. Only http:// and https:// URLs are allowed.`
+          );
         }
       }
     }
@@ -175,20 +179,22 @@ export class AdminBrandService {
 
     if (dto.placeholders !== undefined) {
       // Sanitize placeholder URLs
-      const sanitizedPlaceholders = dto.placeholders ? {
-        defaultPlaceholderCardImage: dto.placeholders.defaultPlaceholderCardImage
-          ? sanitizeImageUrl(dto.placeholders.defaultPlaceholderCardImage)
-          : null,
-        defaultPlaceholderDetailHeroImage: dto.placeholders.defaultPlaceholderDetailHeroImage
-          ? sanitizeImageUrl(dto.placeholders.defaultPlaceholderDetailHeroImage)
-          : null,
-        defaultEventPlaceholderCardImage: dto.placeholders.defaultEventPlaceholderCardImage
-          ? sanitizeImageUrl(dto.placeholders.defaultEventPlaceholderCardImage)
-          : null,
-        brandBadgeIcon: dto.placeholders.brandBadgeIcon
-          ? sanitizeImageUrl(dto.placeholders.brandBadgeIcon)
-          : null,
-      } : null;
+      const sanitizedPlaceholders = dto.placeholders
+        ? {
+            defaultPlaceholderCardImage: dto.placeholders.defaultPlaceholderCardImage
+              ? sanitizeImageUrl(dto.placeholders.defaultPlaceholderCardImage)
+              : null,
+            defaultPlaceholderDetailHeroImage: dto.placeholders.defaultPlaceholderDetailHeroImage
+              ? sanitizeImageUrl(dto.placeholders.defaultPlaceholderDetailHeroImage)
+              : null,
+            defaultEventPlaceholderCardImage: dto.placeholders.defaultEventPlaceholderCardImage
+              ? sanitizeImageUrl(dto.placeholders.defaultEventPlaceholderCardImage)
+              : null,
+            brandBadgeIcon: dto.placeholders.brandBadgeIcon
+              ? sanitizeImageUrl(dto.placeholders.brandBadgeIcon)
+              : null,
+          }
+        : null;
       updateData.placeholders = sanitizedPlaceholders;
     }
 

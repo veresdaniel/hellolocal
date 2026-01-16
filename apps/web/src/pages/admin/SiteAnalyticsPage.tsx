@@ -11,7 +11,10 @@ export function SiteAnalyticsPage() {
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
         title={t("admin.analyticsLabel") || "Analytics"}
-        subtitle={t("admin.dashboardCards.analyticsDesc") || "View site and place analytics, page views, and CTA clicks"}
+        subtitle={
+          t("admin.dashboardCards.analyticsDesc") ||
+          "View site and place analytics, page views, and CTA clicks"
+        }
         showNewButton={false}
       />
       <AnalyticsDashboard scope="site" />

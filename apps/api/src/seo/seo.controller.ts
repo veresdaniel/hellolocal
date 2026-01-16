@@ -1,5 +1,12 @@
 // src/seo/seo.controller.ts
-import { Controller, Get, Param, Query, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
@@ -60,7 +67,9 @@ export class SeoController {
     }
 
     // Get platform settings for the resolved site
-    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(site.siteId);
+    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(
+      site.siteId
+    );
 
     if (type === "place") {
       const place = await this.prisma.place.findUnique({
@@ -73,7 +82,7 @@ export class SeoController {
             },
           },
           openingHours: {
-            orderBy: { dayOfWeek: 'asc' },
+            orderBy: { dayOfWeek: "asc" },
           },
         },
       });
@@ -82,10 +91,12 @@ export class SeoController {
         throw new NotFoundException("Place not found");
       }
 
-      const translation = place.translations.find((t) => t.lang === site.lang) ||
+      const translation =
+        place.translations.find((t) => t.lang === site.lang) ||
         place.translations.find((t) => t.lang === "hu");
 
-      const categoryName = place.category?.translations.find((t) => t.lang === site.lang)?.name ||
+      const categoryName =
+        place.category?.translations.find((t) => t.lang === site.lang)?.name ||
         place.category?.translations.find((t) => t.lang === "hu")?.name;
 
       const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
@@ -93,7 +104,11 @@ export class SeoController {
       const rawDescription = translation?.seoDescription || translation?.description || "";
       const description = stripHtml(rawDescription);
       // Use SEO image, then hero image, then default placeholder detail hero image
-      const image = translation?.seoImage || place.heroImage || platformSettings.defaultPlaceholderDetailHeroImage || "";
+      const image =
+        translation?.seoImage ||
+        place.heroImage ||
+        platformSettings.defaultPlaceholderDetailHeroImage ||
+        "";
       const keywords = translation?.seoKeywords || [];
       const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/place/${slugResult.canonicalSlug}`;
 
@@ -138,12 +153,22 @@ export class SeoController {
 
       // Add opening hours if available
       if (place.openingHours && place.openingHours.length > 0) {
-        const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const dayNames = [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ];
         const openingHoursSpec = place.openingHours
           .filter((oh) => !oh.isClosed && oh.openTime && oh.closeTime)
           .map((oh) => ({
             "@type": "OpeningHoursSpecification",
-            dayOfWeek: dayNames[oh.dayOfWeek] || `https://schema.org/${dayNames[oh.dayOfWeek] || "DayOfWeek"}`,
+            dayOfWeek:
+              dayNames[oh.dayOfWeek] ||
+              `https://schema.org/${dayNames[oh.dayOfWeek] || "DayOfWeek"}`,
             opens: oh.openTime || undefined,
             closes: oh.closeTime || undefined,
           }));
@@ -194,15 +219,24 @@ export class SeoController {
         throw new NotFoundException("Event not found");
       }
 
-      const translation = event.translations.find((t) => t.lang === site.lang) ||
+      const translation =
+        event.translations.find((t) => t.lang === site.lang) ||
         event.translations.find((t) => t.lang === "hu");
 
       const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
       const title = translation?.seoTitle || translation?.title || event.id;
-      const rawDescription = translation?.seoDescription || translation?.shortDescription || translation?.description || "";
+      const rawDescription =
+        translation?.seoDescription ||
+        translation?.shortDescription ||
+        translation?.description ||
+        "";
       const description = stripHtml(rawDescription);
       // Use SEO image, then hero image, then default placeholder detail hero image
-      const image = translation?.seoImage || event.heroImage || platformSettings.defaultPlaceholderDetailHeroImage || "";
+      const image =
+        translation?.seoImage ||
+        event.heroImage ||
+        platformSettings.defaultPlaceholderDetailHeroImage ||
+        "";
       const keywords = translation?.seoKeywords || [];
       const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/event/${slugResult.canonicalSlug}`;
 
@@ -243,7 +277,8 @@ export class SeoController {
 
         // Add place name if event is associated with a place
         if (event.place) {
-          const placeTranslation = event.place.translations.find((t) => t.lang === site.lang) ||
+          const placeTranslation =
+            event.place.translations.find((t) => t.lang === site.lang) ||
             event.place.translations.find((t) => t.lang === "hu");
           if (placeTranslation?.name) {
             location.name = placeTranslation.name;
@@ -259,8 +294,9 @@ export class SeoController {
         schemaOrg.location = location;
       } else if (event.place) {
         // Event has a place but no coordinates - use place info
-          const placeTranslation = event.place.translations.find((t) => t.lang === site.lang) ||
-            event.place.translations.find((t) => t.lang === "hu");
+        const placeTranslation =
+          event.place.translations.find((t) => t.lang === site.lang) ||
+          event.place.translations.find((t) => t.lang === "hu");
         if (placeTranslation) {
           const location: any = {
             "@type": "Place",
@@ -306,10 +342,7 @@ export class SeoController {
    * Get SEO metadata for homepage
    */
   @Get("/:lang")
-  async getHomepageSeo(
-    @Param("lang") lang: string,
-    @Query("tenantKey") tenantKey?: string
-  ) {
+  async getHomepageSeo(@Param("lang") lang: string, @Query("tenantKey") tenantKey?: string) {
     // Validate lang
     if (lang !== "hu" && lang !== "en" && lang !== "de") {
       throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
@@ -319,10 +352,13 @@ export class SeoController {
     const site = await this.siteResolver.resolve({ lang, siteKey: tenantKey });
 
     // Get site settings for the resolved tenant
-    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(site.siteId);
+    const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(
+      site.siteId
+    );
     const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
     const seoTitle = platformSettings.seoTitle[site.lang as "hu" | "en" | "de"] || siteName;
-    const rawSeoDescription = platformSettings.seoDescription[site.lang as "hu" | "en" | "de"] || "";
+    const rawSeoDescription =
+      platformSettings.seoDescription[site.lang as "hu" | "en" | "de"] || "";
     const seoDescription = stripHtml(rawSeoDescription);
     const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}`;
 
@@ -359,4 +395,3 @@ export class SeoController {
     };
   }
 }
-

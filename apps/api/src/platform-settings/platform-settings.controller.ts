@@ -1,4 +1,14 @@
-import { Controller, Get, Put, Param, Query, Body, BadRequestException, UseGuards, ForbiddenException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Put,
+  Param,
+  Query,
+  Body,
+  BadRequestException,
+  UseGuards,
+  ForbiddenException,
+} from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { PlatformSettingsService } from "./platform-settings.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -53,7 +63,14 @@ export class AdminPlatformSettingsController {
   @Put("map-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
   async setMapSettings(
-    @Body() dto: { siteId: string; townId?: string | null; lat?: number | null; lng?: number | null; zoom?: number | null },
+    @Body()
+    dto: {
+      siteId: string;
+      townId?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      zoom?: number | null;
+    },
     @CurrentUser() user: { siteIds: string[] }
   ) {
     if (!dto.siteId) {
@@ -89,7 +106,8 @@ export class AdminPlatformSettingsController {
   @Put()
   @Roles(UserRole.superadmin, UserRole.admin)
   async setPlatformSettings(
-    @Body() dto: {
+    @Body()
+    dto: {
       siteId: string;
       siteName?: { hu?: string; en?: string; de?: string };
       siteDescription?: { hu?: string; en?: string; de?: string };
@@ -133,7 +151,8 @@ export class AdminPlatformSettingsController {
   @Put("feature-matrix")
   @Roles(UserRole.superadmin)
   async setFeatureMatrix(
-    @Body() dto: {
+    @Body()
+    dto: {
       planOverrides?: {
         BASIC?: any;
         PRO?: any;

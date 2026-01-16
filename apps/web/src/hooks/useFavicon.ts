@@ -36,9 +36,9 @@ export function useFavicon() {
     // Use timestamp to ensure fresh load - this will be different each time the effect runs
     const url = new URL(baseFaviconUrl);
     // Remove existing cache-busting param if present
-    url.searchParams.delete('v');
+    url.searchParams.delete("v");
     // Add new cache-busting param with current timestamp
-    url.searchParams.set('v', Date.now().toString());
+    url.searchParams.set("v", Date.now().toString());
     const faviconUrlWithCacheBusting = url.toString();
     // Find and remove ALL existing favicon links (including default vite.svg if it's not the one we want)
     const existingFavicons = document.querySelectorAll(
@@ -52,9 +52,9 @@ export function useFavicon() {
     link.rel = "icon";
     link.id = "dynamic-favicon";
     // Try to detect type from URL (remove query params for type detection)
-    const urlWithoutParams = baseFaviconUrl.split('?')[0];
-    const isSvg = urlWithoutParams.toLowerCase().endsWith('.svg');
-    const isIco = urlWithoutParams.toLowerCase().endsWith('.ico');
+    const urlWithoutParams = baseFaviconUrl.split("?")[0];
+    const isSvg = urlWithoutParams.toLowerCase().endsWith(".svg");
+    const isIco = urlWithoutParams.toLowerCase().endsWith(".ico");
     link.type = isSvg ? "image/svg+xml" : isIco ? "image/x-icon" : "image/png";
     link.href = faviconUrlWithCacheBusting;
     document.head.appendChild(link);
@@ -72,8 +72,7 @@ export function useFavicon() {
       console.warn("[useFavicon] Failed to load custom favicon:", faviconUrlWithCacheBusting);
       // Don't remove the link - let browser handle it
     };
-    img.onload = () => {
-    };
+    img.onload = () => {};
     img.src = faviconUrlWithCacheBusting;
 
     // Cleanup function

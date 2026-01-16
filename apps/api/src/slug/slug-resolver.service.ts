@@ -14,7 +14,7 @@ export type ResolvedSlug = {
 
 /**
  * Service for resolving public-facing URL slugs to their corresponding entities.
- * 
+ *
  * The Slug table stores public slugs that map to various entities (places, towns, pages, etc.)
  * This service handles slug resolution with support for redirects to canonical slugs.
  */
@@ -24,12 +24,12 @@ export class SlugResolverService {
 
   /**
    * Resolves a slug to its corresponding entity.
-   * 
+   *
    * Consistent redirect rules:
    * 1. If redirectToId exists and target is active → redirected=true, canonicalSlug = redirectTo.slug
    * 2. If not primary and no redirectToId → find primary slug, redirected=true, canonicalSlug = primary.slug
    * 3. If primary and no redirectToId → redirected=false, canonicalSlug = self.slug
-   * 
+   *
    * @param args - Resolution arguments
    * @param args.siteId - The site ID to scope the slug lookup
    * @param args.lang - Language for the slug
@@ -107,7 +107,14 @@ export class SlugResolverService {
     if (hit.redirectToId && hit.redirectTo?.isActive) {
       const target = await this.prisma.slug.findUnique({
         where: { id: hit.redirectToId },
-        select: { siteId: true, lang: true, slug: true, entityType: true, entityId: true, isActive: true },
+        select: {
+          siteId: true,
+          lang: true,
+          slug: true,
+          entityType: true,
+          entityId: true,
+          isActive: true,
+        },
       });
 
       if (target && target.isActive) {

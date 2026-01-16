@@ -10,7 +10,12 @@ import { ResolveService } from "./resolve.service";
 import { SiteKeyResolverService } from "./site-key-resolver.service";
 
 @Module({
-  imports: [PrismaModule, SlugModule, forwardRef(() => PlacesModule), forwardRef(() => EventsModule)],
+  imports: [
+    PrismaModule,
+    SlugModule,
+    forwardRef(() => PlacesModule),
+    forwardRef(() => EventsModule),
+  ],
   controllers: [SiteController, ResolveController],
   providers: [SiteResolverService, ResolveService, SiteKeyResolverService],
   exports: [SiteResolverService, ResolveService, SiteKeyResolverService],

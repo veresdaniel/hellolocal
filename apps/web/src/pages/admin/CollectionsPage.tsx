@@ -4,13 +4,13 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import {
-  getCollections,
-  deleteCollection,
-  type Collection,
-} from "../../api/admin.api";
+import { getCollections, deleteCollection, type Collection } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { findTranslation } from "../../utils/langHelpers";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -51,7 +51,9 @@ export function CollectionsPage() {
   const handleDelete = async (collection: Collection) => {
     const confirmed = await confirm({
       title: t("admin.confirmations.deleteCollection") || "Delete Collection",
-      message: t("admin.confirmations.deleteCollection") || "Are you sure you want to delete this collection? This action cannot be undone.",
+      message:
+        t("admin.confirmations.deleteCollection") ||
+        "Are you sure you want to delete this collection? This action cannot be undone.",
       confirmLabel: t("common.delete") || "Delete",
       cancelLabel: t("common.cancel") || "Cancel",
       confirmVariant: "danger",
@@ -144,9 +146,7 @@ export function CollectionsPage() {
     {
       key: "itemsCount",
       label: t("admin.collections.itemsCount"),
-      render: (collection) => (
-        <span>{collection.itemsCount ?? collection.items?.length ?? 0}</span>
-      ),
+      render: (collection) => <span>{collection.itemsCount ?? collection.items?.length ?? 0}</span>,
     },
   ];
 
@@ -168,9 +168,7 @@ export function CollectionsPage() {
     {
       key: "slug",
       label: t("admin.collections.slug"),
-      render: (collection) => (
-        <code style={{ fontSize: "0.9em" }}>{collection.slug}</code>
-      ),
+      render: (collection) => <code style={{ fontSize: "0.9em" }}>{collection.slug}</code>,
     },
     {
       key: "domain",
@@ -238,7 +236,8 @@ export function CollectionsPage() {
             borderRadius: 12,
             border: "1px solid #fca5a5",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 500,
           }}
         >

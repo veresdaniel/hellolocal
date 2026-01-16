@@ -12,4 +12,3 @@ import { StaticPagesService } from "./static-pages.service";
   exports: [StaticPagesService],
 })
 export class StaticPagesModule {}
-

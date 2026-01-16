@@ -21,7 +21,7 @@ export function CookieConsent() {
   useEffect(() => {
     // Check if user has already accepted cookies
     const hasConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
-    
+
     if (!hasConsent) {
       // Show with delay for smooth animation
       setTimeout(() => {
@@ -34,7 +34,7 @@ export function CookieConsent() {
   const handleAccept = () => {
     // Save consent to localStorage
     localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
-    
+
     // Animate out
     setIsAnimatingIn(false);
     setTimeout(() => setIsVisible(false), 300);
@@ -52,13 +52,15 @@ export function CookieConsent() {
         background: "rgba(0, 0, 0, 0.95)",
         color: "white",
         padding: isMobile ? 20 : 24,
-        boxShadow: isMobile 
-          ? "0 -4px 20px rgba(0, 0, 0, 0.3)" 
-          : "0 8px 32px rgba(0, 0, 0, 0.4)",
+        boxShadow: isMobile ? "0 -4px 20px rgba(0, 0, 0, 0.3)" : "0 8px 32px rgba(0, 0, 0, 0.4)",
         zIndex: 9999,
-        transform: isMobile 
-          ? (isAnimatingIn ? "translateY(0)" : "translateY(100%)")
-          : (isAnimatingIn ? "translateX(0) scale(1)" : "translateX(100%) scale(0.9)"),
+        transform: isMobile
+          ? isAnimatingIn
+            ? "translateY(0)"
+            : "translateY(100%)"
+          : isAnimatingIn
+            ? "translateX(0) scale(1)"
+            : "translateX(100%) scale(0.9)",
         transition: "all 0.3s ease-out",
         backdropFilter: "blur(10px)",
         borderRadius: isMobile ? "0" : 16,
@@ -81,7 +83,8 @@ export function CookieConsent() {
               fontSize: "clamp(14px, 3.5vw, 16px)",
               lineHeight: 1.5,
               color: "rgba(255, 255, 255, 0.95)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {t("cookieConsent.message")}
@@ -100,7 +103,8 @@ export function CookieConsent() {
               borderRadius: 8,
               cursor: "pointer",
               fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 600,
               transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(255, 255, 255, 0.2)",
@@ -129,7 +133,8 @@ export function CookieConsent() {
               borderRadius: 8,
               cursor: "pointer",
               fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 500,
               transition: "all 0.2s ease",
               whiteSpace: "nowrap",

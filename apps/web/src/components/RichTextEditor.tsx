@@ -8,7 +8,12 @@ interface RichTextEditorProps {
   height?: number;
 }
 
-export function RichTextEditor({ value, onChange, placeholder, height = 300 }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  height = 300,
+}: RichTextEditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -35,4 +40,3 @@ export function RichTextEditor({ value, onChange, placeholder, height = 300 }: R
     />
   );
 }
-

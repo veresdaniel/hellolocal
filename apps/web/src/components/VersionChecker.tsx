@@ -29,9 +29,9 @@ export function VersionChecker() {
 
     try {
       // Only add timestamp on first fetch or if version changed (cache-busting)
-      const cacheBust = !currentVersionRef.current ? `?t=${Date.now()}` : '';
+      const cacheBust = !currentVersionRef.current ? `?t=${Date.now()}` : "";
       const response = await fetch(`/version.json${cacheBust}`, {
-        cache: currentVersionRef.current ? 'default' : 'no-store',
+        cache: currentVersionRef.current ? "default" : "no-store",
       });
       if (!response.ok) {
         console.warn("[VersionChecker] Failed to fetch version.json:", response.status);
@@ -47,7 +47,7 @@ export function VersionChecker() {
 
   const checkForUpdates = async () => {
     const newVersion = await fetchVersion();
-    
+
     if (!newVersion) return;
 
     // First time - store current version
@@ -57,7 +57,7 @@ export function VersionChecker() {
     }
 
     // Check if version changed
-    const hasUpdate = 
+    const hasUpdate =
       currentVersionRef.current.buildHash !== newVersion.buildHash ||
       currentVersionRef.current.version !== newVersion.version;
 
@@ -68,11 +68,11 @@ export function VersionChecker() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    
+
     // Clear all caches
-    if ('caches' in window) {
+    if ("caches" in window) {
       const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
     }
 
     // Force reload from server (bypass cache)
@@ -85,7 +85,10 @@ export function VersionChecker() {
     if (checkIntervalRef.current) {
       window.clearInterval(checkIntervalRef.current);
     }
-    checkIntervalRef.current = window.setInterval(checkForUpdates, TIMING.VERSION_CHECK_INTERVAL_MS);
+    checkIntervalRef.current = window.setInterval(
+      checkForUpdates,
+      TIMING.VERSION_CHECK_INTERVAL_MS
+    );
   };
 
   useEffect(() => {
@@ -93,7 +96,10 @@ export function VersionChecker() {
     checkForUpdates();
 
     // Set up periodic checks
-    checkIntervalRef.current = window.setInterval(checkForUpdates, TIMING.VERSION_CHECK_INTERVAL_MS);
+    checkIntervalRef.current = window.setInterval(
+      checkForUpdates,
+      TIMING.VERSION_CHECK_INTERVAL_MS
+    );
 
     // Check on window focus (user returns to tab) - with debouncing
     let focusTimeout: number | null = null;
@@ -104,7 +110,8 @@ export function VersionChecker() {
       }
       focusTimeout = window.setTimeout(() => {
         const timeSinceLastCheck = Date.now() - lastFetchTimeRef.current;
-        if (timeSinceLastCheck > TIMING.FOCUS_CHECK_THRESHOLD_MS) { // Only if last check was > threshold ago
+        if (timeSinceLastCheck > TIMING.FOCUS_CHECK_THRESHOLD_MS) {
+          // Only if last check was > threshold ago
           checkForUpdates();
         }
       }, TIMING.FOCUS_DEBOUNCE_MS); // Wait after focus before checking
@@ -163,7 +170,8 @@ export function VersionChecker() {
           borderRadius: "50%",
           color: "white",
           fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 700,
           cursor: isRefreshing ? "not-allowed" : "pointer",
           display: "flex",
@@ -188,31 +196,38 @@ export function VersionChecker() {
       </button>
 
       <div style={{ flex: 1, minWidth: 0, paddingRight: 24 }}>
-        <div style={{ 
-          fontWeight: 700, 
-          fontSize: "clamp(13px, 3.5vw, 14px)", 
-          marginBottom: 4,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: "clamp(13px, 3.5vw, 14px)",
+            marginBottom: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
           <span>🎉</span>
           <span>{t("public.updateAvailable") || "Új verzió érhető el!"}</span>
         </div>
-        <div style={{ 
-          fontSize: "clamp(11px, 3vw, 12px)", 
-          opacity: 0.9,
-          lineHeight: 1.4,
-        }}>
-          {t("public.updateDescription") || "Frissítsd az alkalmazást a legújabb funkciók eléréséhez."}
+        <div
+          style={{
+            fontSize: "clamp(11px, 3vw, 12px)",
+            opacity: 0.9,
+            lineHeight: 1.4,
+          }}
+        >
+          {t("public.updateDescription") ||
+            "Frissítsd az alkalmazást a legújabb funkciók eléréséhez."}
         </div>
       </div>
-      <div style={{ 
-        display: "flex", 
-        gap: 8,
-        flexDirection: "row",
-        justifyContent: window.innerWidth < 640 ? "stretch" : "flex-end",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexDirection: "row",
+          justifyContent: window.innerWidth < 640 ? "stretch" : "flex-end",
+        }}
+      >
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}

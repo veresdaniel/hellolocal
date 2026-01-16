@@ -30,12 +30,12 @@ export class AdminPriceBandService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.priceBand.count({ where });
-    
+
     // Get paginated results
     const priceBands = await this.prisma.priceBand.findMany({
       where,
@@ -46,7 +46,7 @@ export class AdminPriceBandService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       priceBands,
@@ -153,4 +153,3 @@ export class AdminPriceBandService {
     return { message: "Price band deleted successfully" };
   }
 }
-

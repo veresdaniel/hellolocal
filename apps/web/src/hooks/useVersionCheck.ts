@@ -1,6 +1,11 @@
 // src/hooks/useVersionCheck.ts
 import { useEffect, useState } from "react";
-import { checkVersionChange, handleVersionUpdate, fetchVersionInfo, type VersionInfo } from "../services/version.service";
+import {
+  checkVersionChange,
+  handleVersionUpdate,
+  fetchVersionInfo,
+  type VersionInfo,
+} from "../services/version.service";
 import { useToast } from "../contexts/ToastContext";
 import { useTranslation } from "react-i18next";
 
@@ -25,10 +30,7 @@ export function useVersionCheck() {
           const serverVersion = await fetchVersionInfo(false);
           if (serverVersion) {
             setVersionInfo(serverVersion);
-            showToast(
-              t("common.newVersionAvailable"),
-              "info"
-            );
+            showToast(t("common.newVersionAvailable"), "info");
             await handleVersionUpdate(serverVersion.version);
           }
         }

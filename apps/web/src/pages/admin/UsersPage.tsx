@@ -21,7 +21,11 @@ import {
 import { SiteAutocomplete } from "../../components/SiteAutocomplete";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HAS_MULTIPLE_SITES } from "../../app/config";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { ROLE_SUPERADMIN } from "../../types/enums";
 
 export function UsersPage() {
@@ -67,13 +71,13 @@ export function UsersPage() {
   useEffect(() => {
     const currentPath = location.pathname;
     const previousPath = previousPathnameRef.current;
-    
+
     // Only reset if pathname actually changed AND we're no longer on users page
     if (currentPath !== previousPath) {
       previousPathnameRef.current = currentPath;
-      
+
       const isOnUsersPage = currentPath.includes("/admin/users");
-      
+
       // Only reset if we're NOT on the users page AND we have edit state active
       if (!isOnUsersPage && (editingId || isCreating)) {
         setEditingId(null);
@@ -100,11 +104,9 @@ export function UsersPage() {
     setError(null);
     try {
       // Superadmin can see all users, others need siteId
-      const siteIdForQuery = currentUser?.role === ROLE_SUPERADMIN ? undefined : (selectedSiteId || undefined);
-      const [usersData, sitesData] = await Promise.all([
-        getUsers(siteIdForQuery),
-        getSites(),
-      ]);
+      const siteIdForQuery =
+        currentUser?.role === ROLE_SUPERADMIN ? undefined : selectedSiteId || undefined;
+      const [usersData, sitesData] = await Promise.all([getUsers(siteIdForQuery), getSites()]);
       setUsers(usersData);
       setSites(sitesData);
     } catch (err) {
@@ -120,8 +122,10 @@ export function UsersPage() {
     if (!formData.email.trim()) errors.email = t("admin.validation.emailRequired");
     if (!formData.firstName.trim()) errors.firstName = t("admin.validation.firstNameRequired");
     if (!formData.lastName.trim()) errors.lastName = t("admin.validation.lastNameRequired");
-    if (isCreating && !formData.password.trim()) errors.password = t("admin.validation.passwordRequired");
-    if (isCreating && formData.password.length < 6) errors.password = t("admin.validation.passwordMinLength");
+    if (isCreating && !formData.password.trim())
+      errors.password = t("admin.validation.passwordRequired");
+    if (isCreating && formData.password.length < 6)
+      errors.password = t("admin.validation.passwordMinLength");
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -230,15 +234,27 @@ export function UsersPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(24px, 5vw, 32px)", flexWrap: "wrap", gap: 16 }}>
-        <h1 style={{ 
-          fontSize: "clamp(20px, 4vw, 28px)", 
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "white", 
-          margin: 0,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "clamp(24px, 5vw, 32px)",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            margin: 0,
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          }}
+        >
           {t("admin.usersManagement")}
         </h1>
         <button
@@ -256,7 +272,8 @@ export function UsersPage() {
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
             boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(0, 0, 0, 0.2)",
             transition: "all 0.3s ease",
@@ -281,18 +298,55 @@ export function UsersPage() {
       </div>
 
       {error && (
-        <div style={{ padding: 12, marginBottom: 16, background: "#fee", color: "#c00", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+        <div
+          style={{
+            padding: 12,
+            marginBottom: 16,
+            background: "#fee",
+            color: "#c00",
+            borderRadius: 4,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ padding: 24, background: "white", borderRadius: 8, marginBottom: 24, border: "1px solid #ddd" }}>
-          <h2 style={{ marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}</h2>
+        <div
+          style={{
+            padding: 24,
+            background: "white",
+            borderRadius: 8,
+            marginBottom: 24,
+            border: "1px solid #ddd",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 16,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}
+          </h2>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+          >
             <div>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.username")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.username")} *
+              </label>
               <input
                 type="text"
                 value={formData.username}
@@ -307,15 +361,31 @@ export function UsersPage() {
                   background: editingId ? "#f5f5f5" : "white",
                 }}
               />
-              {formErrors.username && <div style={{ 
-                color: "#dc3545", 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{formErrors.username}</div>}
+              {formErrors.username && (
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.username}
+                </div>
+              )}
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("public.email")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("public.email")} *
+              </label>
               <input
                 type="email"
                 value={formData.email}
@@ -330,18 +400,34 @@ export function UsersPage() {
                   background: editingId ? "#f5f5f5" : "white",
                 }}
               />
-              {formErrors.email && <div style={{ 
-                color: "#dc3545", 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{formErrors.email}</div>}
+              {formErrors.email && (
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.email}
+                </div>
+              )}
             </div>
           </div>
 
           {isCreating && (
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.password")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.password")} *
+              </label>
               <input
                 type="password"
                 value={formData.password}
@@ -355,18 +441,36 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.password && <div style={{ 
-                color: "#dc3545", 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{formErrors.password}</div>}
+              {formErrors.password && (
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.password}
+                </div>
+              )}
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+          >
             <div>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.firstName")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.firstName")} *
+              </label>
               <input
                 type="text"
                 value={formData.firstName}
@@ -379,15 +483,31 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.firstName && <div style={{ 
-                color: "#dc3545", 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{formErrors.firstName}</div>}
+              {formErrors.firstName && (
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.firstName}
+                </div>
+              )}
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.lastName")} *</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.lastName")} *
+              </label>
               <input
                 type="text"
                 value={formData.lastName}
@@ -400,12 +520,19 @@ export function UsersPage() {
                   borderRadius: 4,
                 }}
               />
-              {formErrors.lastName && <div style={{ 
-                color: "#dc3545", 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>{formErrors.lastName}</div>}
+              {formErrors.lastName && (
+                <div
+                  style={{
+                    color: "#dc3545",
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    marginTop: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {formErrors.lastName}
+                </div>
+              )}
             </div>
           </div>
 
@@ -415,18 +542,43 @@ export function UsersPage() {
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               rows={3}
-              style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 16,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+          >
             {isCreating && (
               <div>
-                <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.role")} *</label>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 4,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.role")} *
+                </label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as CreateUserDto["role"] })}
-                  style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value as CreateUserDto["role"] })
+                  }
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    fontSize: 16,
+                    border: "1px solid #ddd",
+                    borderRadius: 4,
+                  }}
                 >
                   <option value="viewer">{t("admin.roles.viewer")}</option>
                   <option value="editor">{t("admin.roles.editor")}</option>
@@ -436,15 +588,18 @@ export function UsersPage() {
               </div>
             )}
             <div>
-              <label style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: 12, 
-                marginTop: isCreating ? 0 : 24, 
-                cursor: "pointer", 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginTop: isCreating ? 0 : 24,
+                  cursor: "pointer",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={formData.isActive}
@@ -465,14 +620,35 @@ export function UsersPage() {
           )}
 
           {editingId && (
-            <div style={{ marginBottom: 16, padding: 16, background: "#f8f9fa", borderRadius: 4, border: "1px solid #ddd" }}>
-              <h3 style={{ marginBottom: 12, fontSize: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.profile.twoFactorAuthentication")}</h3>
+            <div
+              style={{
+                marginBottom: 16,
+                padding: 16,
+                background: "#f8f9fa",
+                borderRadius: 4,
+                border: "1px solid #ddd",
+              }}
+            >
+              <h3
+                style={{
+                  marginBottom: 12,
+                  fontSize: 16,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.profile.twoFactorAuthentication")}
+              </h3>
               {(() => {
                 const editingUser = users.find((u) => u.id === editingId);
                 return editingUser?.isTwoFactorEnabled ? (
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <span style={{ color: "#28a745", fontWeight: 600 }}>✓ {t("admin.twoFactor.isEnabled")}</span>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}
+                    >
+                      <span style={{ color: "#28a745", fontWeight: 600 }}>
+                        ✓ {t("admin.twoFactor.isEnabled")}
+                      </span>
                     </div>
                     <button
                       onClick={async () => {
@@ -485,13 +661,16 @@ export function UsersPage() {
                             startEdit(updatedUser);
                           }
                         } catch (err) {
-                          alert(err instanceof Error ? err.message : t("admin.errors.disable2FAFailed"));
+                          alert(
+                            err instanceof Error ? err.message : t("admin.errors.disable2FAFailed")
+                          );
                         }
                       }}
                       style={{
                         padding: "8px 16px",
                         fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background: "#dc3545",
                         color: "white",
                         border: "none",
@@ -505,7 +684,15 @@ export function UsersPage() {
                 ) : (
                   <div>
                     <span style={{ color: "#6c757d" }}>{t("admin.twoFactor.disabled")}</span>
-                    <p style={{ marginTop: 8, fontSize: 14, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                    <p
+                      style={{
+                        marginTop: 8,
+                        fontSize: 14,
+                        color: "#666",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.profile.usersCanEnable2FA")}
                     </p>
                   </div>
@@ -516,7 +703,7 @@ export function UsersPage() {
 
           <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={() => editingId ? handleUpdate(editingId) : handleCreate()}
+              onClick={() => (editingId ? handleUpdate(editingId) : handleCreate())}
               style={{
                 padding: "10px 20px",
                 background: "#28a745",
@@ -588,23 +775,29 @@ export function UsersPage() {
               render: (user) => (
                 <select
                   value={user.role}
-                  onChange={(e) => handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"])}
+                  onChange={(e) =>
+                    handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"])
+                  }
                   disabled={user.role === "superadmin" && user.id !== currentUser?.id}
                   style={{
                     padding: "4px 8px",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     borderRadius: 4,
                     border: "1px solid #ddd",
-                    cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
+                    cursor:
+                      user.role === "superadmin" && user.id !== currentUser?.id
+                        ? "not-allowed"
+                        : "pointer",
                     background:
                       user.role === "superadmin"
                         ? "#9c27b0"
                         : user.role === "admin"
-                        ? "#dc3545"
-                        : user.role === "editor"
-                        ? "#28a745"
-                        : "#6c757d",
+                          ? "#dc3545"
+                          : user.role === "editor"
+                            ? "#28a745"
+                            : "#6c757d",
                     color: "white",
                   }}
                 >
@@ -629,7 +822,9 @@ export function UsersPage() {
                       return (
                         <div key={us.id} style={{ marginBottom: 4 }}>
                           {site.slug}
-                          {us.isPrimary && <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>}
+                          {us.isPrimary && (
+                            <span style={{ marginLeft: 4, color: "#007bff" }}>★</span>
+                          )}
                         </div>
                       );
                     })}
@@ -650,7 +845,8 @@ export function UsersPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -665,12 +861,15 @@ export function UsersPage() {
             {
               key: "email",
               render: (user) => (
-                <div style={{ 
-                  color: "#666", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  marginBottom: 8,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <div
+                  style={{
+                    color: "#666",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    marginBottom: 8,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   📧 {user.email}
                 </div>
               ),
@@ -689,18 +888,22 @@ export function UsersPage() {
                     style={{
                       padding: "6px 12px",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
-                      cursor: user.role === "superadmin" && user.id !== currentUser?.id ? "not-allowed" : "pointer",
+                      cursor:
+                        user.role === "superadmin" && user.id !== currentUser?.id
+                          ? "not-allowed"
+                          : "pointer",
                       background:
                         user.role === "superadmin"
                           ? "#9c27b0"
                           : user.role === "admin"
-                          ? "#dc3545"
-                          : user.role === "editor"
-                          ? "#28a745"
-                          : "#6c757d",
+                            ? "#dc3545"
+                            : user.role === "editor"
+                              ? "#28a745"
+                              : "#6c757d",
                       color: "white",
                       fontWeight: 600,
                     }}
@@ -720,10 +923,12 @@ export function UsersPage() {
                 return userSites.length > 0 ? (
                   <div style={{ marginBottom: 8, fontSize: 13, color: "#666" }}>
                     <strong>{t("admin.sites")}:</strong>{" "}
-                    {userSites.map((us: any) => {
-                      const site = us.site || us.tenant;
-                      return site.slug + (us.isPrimary ? " ★" : "");
-                    }).join(", ")}
+                    {userSites
+                      .map((us: any) => {
+                        const site = us.site || us.tenant;
+                        return site.slug + (us.isPrimary ? " ★" : "");
+                      })
+                      .join(", ")}
                   </div>
                 ) : null;
               },
@@ -741,7 +946,8 @@ export function UsersPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >

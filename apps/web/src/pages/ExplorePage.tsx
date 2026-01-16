@@ -17,14 +17,14 @@ export function ExplorePage() {
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
   const [showMap, setShowMap] = useState(true);
-  
+
   // Get user location from store
   const { userLocation, _hasHydrated, setUserLocation, showUserLocation } = useFiltersStore();
-  
+
   // Get user location if available
   const watchIdRef = useRef<number | null>(null);
   const hasRequestedLocation = useRef(false);
-  
+
   // Wait for store to hydrate before using userLocation
   // Also manually check and set hydration flag if onRehydrateStorage didn't fire
   useEffect(() => {
@@ -46,7 +46,7 @@ export function ExplorePage() {
               }
             }
           }, 50); // Small delay to allow zustand to finish
-          
+
           return () => clearTimeout(timeoutId);
         }
       } catch (e) {
@@ -54,7 +54,7 @@ export function ExplorePage() {
       }
     }
   }, [_hasHydrated, userLocation, setUserLocation]);
-  
+
   // Clear userLocation when showUserLocation is disabled
   // Or restore it from localStorage when enabled
   useEffect(() => {
@@ -86,20 +86,24 @@ export function ExplorePage() {
       }
     }
   }, [showUserLocation, setUserLocation]);
-  
+
   // Note: Geolocation is now handled by MapComponent checkbox onChange (user gesture context)
   // This effect only watches for updates if we already have a location
   useEffect(() => {
     if (!navigator.geolocation || !showUserLocation) {
       return;
     }
-    
+
     // Only watch for updates if we already have a userLocation
     // Don't request new location here - MapComponent handles that in user gesture context
     const storeState = useFiltersStore.getState();
     const currentUserLocation = userLocation || storeState.userLocation;
-    
-    if (currentUserLocation && typeof currentUserLocation.lat === "number" && typeof currentUserLocation.lng === "number") {
+
+    if (
+      currentUserLocation &&
+      typeof currentUserLocation.lat === "number" &&
+      typeof currentUserLocation.lng === "number"
+    ) {
       // Only start watching if we're not already watching
       if (watchIdRef.current === null) {
         // Start watching for updates
@@ -121,7 +125,7 @@ export function ExplorePage() {
         );
       }
     }
-    
+
     // Cleanup watch on unmount
     return () => {
       if (watchIdRef.current !== null) {
@@ -149,93 +153,109 @@ export function ExplorePage() {
       </div>
     );
 
-  const placesWithCoordinates = data?.filter((place) => place.location && place.location.lat != null && place.location.lng != null) || [];
+  const placesWithCoordinates =
+    data?.filter(
+      (place) => place.location && place.location.lat != null && place.location.lng != null
+    ) || [];
   const markers = placesWithCoordinates.map((place) => ({
     id: place.slug || place.id, // Use slug if available, otherwise use ID
     lat: place.location!.lat!,
     lng: place.location!.lng!,
     name: place.name,
-    onClick: place.slug ? () => {
-      const path = buildUrl({ lang, siteKey, path: `place/${place.slug}` });
-      navigate(path);
-    } : undefined, // Only allow navigation if slug exists
+    onClick: place.slug
+      ? () => {
+          const path = buildUrl({ lang, siteKey, path: `place/${place.slug}` });
+          navigate(path);
+        }
+      : undefined, // Only allow navigation if slug exists
   }));
 
   // Calculate center from places or default to Budapest
-  const centerLat = placesWithCoordinates.length > 0
-    ? placesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) / placesWithCoordinates.length
-    : 47.4979;
-  const centerLng = placesWithCoordinates.length > 0
-    ? placesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) / placesWithCoordinates.length
-    : 19.0402;
+  const centerLat =
+    placesWithCoordinates.length > 0
+      ? placesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) /
+        placesWithCoordinates.length
+      : 47.4979;
+  const centerLng =
+    placesWithCoordinates.length > 0
+      ? placesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) /
+        placesWithCoordinates.length
+      : 19.0402;
 
   return (
     <>
       <LoadingSpinner isLoading={isLoading} />
       <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
-      {showMap ? (
-        <>
-          <MapComponent
-            latitude={centerLat}
-            longitude={centerLng}
-            markers={markers}
-            userLocation={userLocation || useFiltersStore.getState().userLocation}
-            showRoutes={false}
-            height={window.innerHeight}
-            interactive={true}
-            defaultZoom={placesWithCoordinates.length > 0 ? 12 : 13}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              zIndex: 1000,
-              display: "flex",
-              gap: 8,
-            }}
-          >
-            <button
-              onClick={() => setShowMap(false)}
+        {showMap ? (
+          <>
+            <MapComponent
+              latitude={centerLat}
+              longitude={centerLng}
+              markers={markers}
+              userLocation={userLocation || useFiltersStore.getState().userLocation}
+              showRoutes={false}
+              height={window.innerHeight}
+              interactive={true}
+              defaultZoom={placesWithCoordinates.length > 0 ? 12 : 13}
+            />
+            <div
               style={{
-                padding: "8px 16px",
-                background: "white",
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                cursor: "pointer",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 1000,
+                display: "flex",
+                gap: 8,
               }}
             >
-              {t("public.listView")}
-            </button>
-          </div>
-        </>
-      ) : (
-        <div style={{ padding: 24, height: "100vh", overflowY: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <h1>{t("public.explore.title")}</h1>
-            <button
-              onClick={() => setShowMap(true)}
+              <button
+                onClick={() => setShowMap(false)}
+                style={{
+                  padding: "8px 16px",
+                  background: "white",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                }}
+              >
+                {t("public.listView")}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: 24, height: "100vh", overflowY: "auto" }}>
+            <div
               style={{
-                padding: "8px 16px",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 24,
               }}
             >
-              {t("public.mapView")}
-            </button>
+              <h1>{t("public.explore.title")}</h1>
+              <button
+                onClick={() => setShowMap(true)}
+                style={{
+                  padding: "8px 16px",
+                  background: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                }}
+              >
+                {t("public.mapView")}
+              </button>
+            </div>
+            <div style={{ display: "grid", gap: 16 }}>
+              {data?.map((place) => (
+                <PlaceCard key={place.slug} place={place} />
+              ))}
+            </div>
           </div>
-          <div style={{ display: "grid", gap: 16 }}>
-            {data?.map((place) => (
-              <PlaceCard key={place.slug} place={place} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 }

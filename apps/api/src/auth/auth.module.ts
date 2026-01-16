@@ -25,16 +25,18 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>("JWT_SECRET");
-        
+
         // Productionban kötelező JWT_SECRET
         if (!jwtSecret) {
           if (process.env.NODE_ENV === "production") {
             throw new Error(
               "JWT_SECRET must be set in production! " +
-                'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+                "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
             );
           }
-          console.warn("⚠️  WARNING: JWT_SECRET not set, using weak default. Only for development!");
+          console.warn(
+            "⚠️  WARNING: JWT_SECRET not set, using weak default. Only for development!"
+          );
         }
 
         return {
@@ -52,4 +54,3 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
   exports: [AuthService, RbacService, SiteRoleGuard, PlaceRoleGuard],
 })
 export class AuthModule {}
-

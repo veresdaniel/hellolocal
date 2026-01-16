@@ -4,11 +4,11 @@ import type { Request } from "express";
 
 /**
  * Public controller for collection endpoints.
- * 
+ *
  * Routes:
  * - GET /api/public/collections/by-domain/:domain - Get collection by domain
  * - GET /api/public/collections/by-slug/:slug - Get collection by slug
- * 
+ *
  * Language is determined from:
  * 1. URL prefix (/hu, /en, /de) if present
  * 2. Query parameter ?lang=hu|en|de
@@ -30,10 +30,10 @@ export class CollectionsPublicController {
 
   /**
    * Gets a collection by domain.
-   * 
+   *
    * Path parameters:
    * - domain: Collection domain
-   * 
+   *
    * Query parameters:
    * - lang: Optional language code (hu, en, de). If not provided, uses domain default or fallback.
    */
@@ -62,10 +62,10 @@ export class CollectionsPublicController {
 
   /**
    * Gets a collection by slug.
-   * 
+   *
    * Path parameters:
    * - slug: Collection slug
-   * 
+   *
    * Query parameters:
    * - lang: Optional language code (hu, en, de). Defaults to hu.
    */

@@ -13,19 +13,30 @@ import { useSeo } from "../seo/useSeo";
 export function StaticPagesListPage() {
   const { t } = useTranslation();
   const { lang, siteKey } = useSiteContext();
-  const [selectedCategory, setSelectedCategory] = useState<"blog" | "tudastar" | "infok" | "all">("all");
+  const [selectedCategory, setSelectedCategory] = useState<"blog" | "tudastar" | "infok" | "all">(
+    "all"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
 
-  const { data: staticPages = [], isLoading, isError } = useQuery({
+  const {
+    data: staticPages = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["staticPages", lang, effectiveSiteKey, selectedCategory],
-    queryFn: () => getStaticPages(lang, effectiveSiteKey, selectedCategory === "all" ? undefined : selectedCategory),
+    queryFn: () =>
+      getStaticPages(
+        lang,
+        effectiveSiteKey,
+        selectedCategory === "all" ? undefined : selectedCategory
+      ),
   });
 
   // Filter static pages by search query
   const filteredStaticPages = useMemo(() => {
     if (!searchQuery.trim()) return staticPages;
-    
+
     const lowerQuery = searchQuery.toLowerCase();
     return staticPages.filter((page) => {
       const titleMatch = page.title.toLowerCase().includes(lowerQuery);
@@ -39,29 +50,32 @@ export function StaticPagesListPage() {
   // Load site settings for SEO
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
-    queryFn: () => import("../api/places.api").then(m => m.getPlatformSettings(lang, siteKey)),
+    queryFn: () => import("../api/places.api").then((m) => m.getPlatformSettings(lang, siteKey)),
     staleTime: 5 * 60 * 1000,
   });
 
-  useSeo({
-    title: platformSettings?.seoTitle || t("public.staticPages.title"),
-    description: platformSettings?.seoDescription || t("public.staticPages.title"),
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    og: {
-      type: "website",
-    title: platformSettings?.seoTitle || t("public.staticPages.title"),
-    description: platformSettings?.seoDescription || t("public.staticPages.title"),
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
+  useSeo(
+    {
+      title: platformSettings?.seoTitle || t("public.staticPages.title"),
+      description: platformSettings?.seoDescription || t("public.staticPages.title"),
+      image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      og: {
+        type: "website",
+        title: platformSettings?.seoTitle || t("public.staticPages.title"),
+        description: platformSettings?.seoDescription || t("public.staticPages.title"),
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      twitter: {
+        card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+        title: platformSettings?.seoTitle || t("public.staticPages.title"),
+        description: platformSettings?.seoDescription || t("public.staticPages.title"),
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
     },
-    twitter: {
-      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-    title: platformSettings?.seoTitle || t("public.staticPages.title"),
-    description: platformSettings?.seoDescription || t("public.staticPages.title"),
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-  }, {
-    siteName: platformSettings?.siteName,
-  });
+    {
+      siteName: platformSettings?.siteName,
+    }
+  );
 
   const getNoResultsMessage = () => {
     if (selectedCategory === "blog") {
@@ -155,7 +169,8 @@ export function StaticPagesListPage() {
                 maxWidth: "100%",
                 padding: "14px 20px",
                 fontSize: 16,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
                 border: "2px solid #e0e0e0",
                 borderRadius: 12,
@@ -188,10 +203,12 @@ export function StaticPagesListPage() {
                   borderRadius: 12,
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   transition: "all 0.2s",
-                  boxShadow: selectedCategory === "all" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
+                  boxShadow:
+                    selectedCategory === "all" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedCategory !== "all") {
@@ -218,10 +235,12 @@ export function StaticPagesListPage() {
                   borderRadius: 12,
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   transition: "all 0.2s",
-                  boxShadow: selectedCategory === "blog" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
+                  boxShadow:
+                    selectedCategory === "blog" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedCategory !== "blog") {
@@ -248,10 +267,12 @@ export function StaticPagesListPage() {
                   borderRadius: 12,
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   transition: "all 0.2s",
-                  boxShadow: selectedCategory === "tudastar" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
+                  boxShadow:
+                    selectedCategory === "tudastar" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedCategory !== "tudastar") {
@@ -278,10 +299,12 @@ export function StaticPagesListPage() {
                   borderRadius: 12,
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   transition: "all 0.2s",
-                  boxShadow: selectedCategory === "infok" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
+                  boxShadow:
+                    selectedCategory === "infok" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedCategory !== "infok") {
@@ -317,7 +340,7 @@ export function StaticPagesListPage() {
             </div>
           ) : !isLoading && filteredStaticPages.length === 0 ? (
             <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
-              {searchQuery ? (t("public.noResults") || "Nincs találat") : getNoResultsMessage()}
+              {searchQuery ? t("public.noResults") || "Nincs találat" : getNoResultsMessage()}
             </div>
           ) : isLoading && staticPages.length === 0 ? null : (
             <div className="static-pages-grid">
@@ -331,4 +354,3 @@ export function StaticPagesListPage() {
     </>
   );
 }
-

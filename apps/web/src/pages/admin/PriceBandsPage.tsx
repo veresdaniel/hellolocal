@@ -8,12 +8,21 @@ import { useConfirm } from "../../hooks/useConfirm";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
-import { getPriceBands, createPriceBand, updatePriceBand, deletePriceBand } from "../../api/admin.api";
+import {
+  getPriceBands,
+  createPriceBand,
+  updatePriceBand,
+  deletePriceBand,
+} from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
@@ -72,7 +81,7 @@ export function PriceBandsPage() {
   useEffect(() => {
     if (selectedTenantId) {
       // Reset to first page when site changes
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no site
       setIsLoading(false);
@@ -95,13 +104,16 @@ export function PriceBandsPage() {
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
         setPriceBands(response);
-        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+        setPagination((prev) => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setPriceBands(response.priceBands || []);
         setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.loadPriceBandsFailed"), "error");
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.loadPriceBandsFailed"),
+        "error"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -120,14 +132,24 @@ export function PriceBandsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{ lang: "hu" | "en" | "de"; name: string; description: string | null }> = [
-        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
-      ];
+      const translations: Array<{
+        lang: "hu" | "en" | "de";
+        name: string;
+        description: string | null;
+      }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({
+          lang: "en",
+          name: formData.nameEn,
+          description: formData.descriptionEn || null,
+        });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({
+          lang: "de",
+          name: formData.nameDe,
+          description: formData.descriptionDe || null,
+        });
       }
       await createPriceBand({
         tenantId: selectedTenantId,
@@ -141,7 +163,10 @@ export function PriceBandsPage() {
       notifyEntityChanged("priceBands");
       showToast(t("admin.messages.priceBandCreated"), "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"), "error");
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.createPriceBandFailed"),
+        "error"
+      );
     }
   };
 
@@ -149,14 +174,24 @@ export function PriceBandsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{ lang: "hu" | "en" | "de"; name: string; description: string | null }> = [
-        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
-      ];
+      const translations: Array<{
+        lang: "hu" | "en" | "de";
+        name: string;
+        description: string | null;
+      }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({
+          lang: "en",
+          name: formData.nameEn,
+          description: formData.descriptionEn || null,
+        });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({
+          lang: "de",
+          name: formData.nameDe,
+          description: formData.descriptionDe || null,
+        });
       }
       await updatePriceBand(
         id,
@@ -173,14 +208,19 @@ export function PriceBandsPage() {
       notifyEntityChanged("priceBands");
       showToast(t("admin.messages.priceBandUpdated"), "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"), "error");
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.updatePriceBandFailed"),
+        "error"
+      );
     }
   };
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: t("admin.confirmations.deletePriceBand") || "Delete Price Band",
-      message: t("admin.confirmations.deletePriceBand") || "Are you sure you want to delete this price band? This action cannot be undone.",
+      message:
+        t("admin.confirmations.deletePriceBand") ||
+        "Are you sure you want to delete this price band? This action cannot be undone.",
       confirmLabel: t("common.delete") || "Delete",
       cancelLabel: t("common.cancel") || "Cancel",
       confirmVariant: "danger",
@@ -196,7 +236,10 @@ export function PriceBandsPage() {
       notifyEntityChanged("priceBands");
       showToast(t("admin.messages.priceBandDeleted"), "success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"), "error");
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.deletePriceBandFailed"),
+        "error"
+      );
     }
   };
 
@@ -250,7 +293,7 @@ export function PriceBandsPage() {
         }}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -261,20 +304,48 @@ export function PriceBandsPage() {
       />
 
       {(isCreating || editingId) && (
-        <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea", 
-            fontSize: "clamp(18px, 4vw, 22px)", 
-            fontWeight: 700, 
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editPriceBand") : t("admin.forms.newPriceBand")}
           </h2>
 
           {/* Active Checkbox - moved to top */}
-          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "16px 20px",
+              background: "#f8f8ff",
+              borderRadius: 12,
+              border: "2px solid #e0e7ff",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                fontSize: 15,
+              }}
+            >
               <input
                 type="checkbox"
                 checked={formData.isActive}
@@ -289,7 +360,14 @@ export function PriceBandsPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -298,12 +376,14 @@ export function PriceBandsPage() {
                       selectedLang === "hu"
                         ? formData.nameHu
                         : selectedLang === "en"
-                        ? formData.nameEn
-                        : formData.nameDe
+                          ? formData.nameEn
+                          : formData.nameDe
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, nameHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, nameEn: e.target.value });
                       else setFormData({ ...formData, nameDe: e.target.value });
                     }}
                     style={{
@@ -320,31 +400,41 @@ export function PriceBandsPage() {
                     }}
                   />
                   {(selectedLang === "hu" && formErrors.nameHu) ||
-                    (selectedLang === "en" && formErrors.nameEn) ||
-                    (selectedLang === "de" && formErrors.nameDe) ? (
+                  (selectedLang === "en" && formErrors.nameEn) ||
+                  (selectedLang === "de" && formErrors.nameDe) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
                       {selectedLang === "hu"
                         ? formErrors.nameHu
                         : selectedLang === "en"
-                        ? formErrors.nameEn
-                        : formErrors.nameDe}
+                          ? formErrors.nameEn
+                          : formErrors.nameDe}
                     </div>
                   ) : null}
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("common.description")}
+                  </label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
                         : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
+                          ? formData.descriptionEn
+                          : formData.descriptionDe
                     }
                     onChange={(value) => {
                       if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, descriptionEn: value });
                       else setFormData({ ...formData, descriptionDe: value });
                     }}
                     placeholder={t("common.description")}
@@ -366,14 +456,15 @@ export function PriceBandsPage() {
           searchPlaceholder={t("admin.searchPlaceholders.priceBands")}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setPagination(prev => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           isLoading={isLoading}
           filterFn={(priceBand, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-            const translation = findTranslation(priceBand.translations, currentLang) || 
-                               findTranslation(priceBand.translations, "hu" as Lang);
+            const translation =
+              findTranslation(priceBand.translations, currentLang) ||
+              findTranslation(priceBand.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -382,8 +473,9 @@ export function PriceBandsPage() {
               label: t("common.name"),
               render: (priceBand) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = priceBand.translations.find((t) => t.lang === currentLang) || 
-                                   findTranslation(priceBand.translations, "hu" as Lang);
+                const translation =
+                  priceBand.translations.find((t) => t.lang === currentLang) ||
+                  findTranslation(priceBand.translations, "hu" as Lang);
                 return translation?.name || "-";
               },
             },
@@ -410,8 +502,9 @@ export function PriceBandsPage() {
           ]}
           cardTitle={(priceBand) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-            const translation = findTranslation(priceBand.translations, currentLang) || 
-                               findTranslation(priceBand.translations, "hu" as Lang);
+            const translation =
+              findTranslation(priceBand.translations, currentLang) ||
+              findTranslation(priceBand.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(priceBand) => `💰 ${priceBand.id.slice(0, 8)}`}
@@ -449,12 +542,11 @@ export function PriceBandsPage() {
             totalPages={pagination.totalPages}
             total={pagination.total}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
           />
         </div>
       )}
     </div>
   );
 }
-

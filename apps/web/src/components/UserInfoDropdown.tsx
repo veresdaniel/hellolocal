@@ -38,7 +38,8 @@ export function UserInfoDropdown() {
           padding: "4px 8px",
           borderRadius: 4,
           display: "inline-block",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         {user.firstName} {user.lastName} ({user.role})
@@ -57,84 +58,111 @@ export function UserInfoDropdown() {
             padding: "20px 24px",
             minWidth: 320,
             zIndex: 800,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          <h3 style={{ 
-            margin: "0 0 20px 0", 
-            fontSize: 18, 
-            fontWeight: 600, 
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "#333",
-          }}>
+          <h3
+            style={{
+              margin: "0 0 20px 0",
+              fontSize: 18,
+              fontWeight: 600,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              color: "#333",
+            }}
+          >
             {t("admin.userInformation")}
           </h3>
-          <div style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            gap: 16,
-          }}>
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: 6,
-            }}>
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#666", 
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#666",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 {t("admin.username")}
               </div>
-              <div style={{ 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#333",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#333",
+                }}
+              >
                 {user.username}
               </div>
             </div>
-            
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: 6,
-            }}>
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#666", 
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#666",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 {t("admin.email")}
               </div>
-              <div style={{ 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#333",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#333",
+                }}
+              >
                 {user.email}
               </div>
             </div>
-            
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: 6,
-            }}>
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#666", 
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#666",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 {t("admin.role")}
               </div>
               <div>
@@ -145,7 +173,8 @@ export function UserInfoDropdown() {
                     background: getRoleColor(user.role),
                     color: "white",
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     display: "inline-block",
                   }}
@@ -154,27 +183,35 @@ export function UserInfoDropdown() {
                 </span>
               </div>
             </div>
-            
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: 6,
-            }}>
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#666", 
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#666",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
                 {t("admin.tenants")}
               </div>
-              <div style={{ 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-                color: "#333",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  color: "#333",
+                }}
+              >
                 {user.tenantIds?.length || 0}
               </div>
             </div>
@@ -184,4 +221,3 @@ export function UserInfoDropdown() {
     </div>
   );
 }
-

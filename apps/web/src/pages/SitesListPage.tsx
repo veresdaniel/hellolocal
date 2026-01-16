@@ -7,7 +7,13 @@ import { getSites } from "../api/places.api";
 import { SiteCard } from "../ui/site/SiteCard";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { Footer } from "../ui/layout/Footer";
-import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+import {
+  HAS_MULTIPLE_SITES,
+  DEFAULT_SITE_SLUG,
+  APP_LANGS,
+  DEFAULT_LANG,
+  type Lang,
+} from "../app/config";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useSeo } from "../seo/useSeo";
 import { useQuery } from "@tanstack/react-query";
@@ -37,27 +43,27 @@ export function SitesListPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const params = useParams<{ lang?: string; siteKey?: string }>();
-  
+
   // Get lang from URL params
   const langParam = params.lang;
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
-  
+
   // Get the current path (last segment of URL)
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const currentPath = pathSegments[pathSegments.length - 1];
-  
+
   // Determine correct language based on path
   const pathLang = PATH_TO_LANG[currentPath];
-  
+
   // Use path language if available, otherwise use URL lang param
   const effectiveLang = pathLang || lang;
-  
+
   // If path language is different from URL lang, redirect to correct URL
   if (pathLang && pathLang !== lang) {
     const redirectPath = `/${pathLang}/${LANG_TO_PATH[pathLang]}`;
     return <Navigate to={redirectPath} replace />;
   }
-  
+
   // Sync i18n language with the determined language
   useEffect(() => {
     if (effectiveLang && i18n.language !== effectiveLang) {
@@ -79,53 +85,51 @@ export function SitesListPage() {
   // SEO
   const sitesTitle = t("public.sites.title");
   const sitesDescription = t("public.sites.description");
-  useSeo({
-    title: sitesTitle,
-    description: sitesDescription,
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    og: {
-      type: "website",
-      title: sitesTitle || platformSettings?.siteName || sitesTitle,
+  useSeo(
+    {
+      title: sitesTitle,
       description: sitesDescription,
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      og: {
+        type: "website",
+        title: sitesTitle || platformSettings?.siteName || sitesTitle,
+        description: sitesDescription,
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      twitter: {
+        card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+        title: sitesTitle || platformSettings?.siteName || sitesTitle,
+        description: sitesDescription,
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
     },
-    twitter: {
-      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: sitesTitle || platformSettings?.siteName || sitesTitle,
-      description: sitesDescription,
-      image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-  }, {
-    siteName: platformSettings?.siteName,
-  });
+    {
+      siteName: platformSettings?.siteName,
+    }
+  );
 
   // Fetch sites with infinite scroll
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteQuery({
-    queryKey: ["sites", effectiveLang, undefined, searchQuery],
-    queryFn: async ({ pageParam = 0 }) => {
-      const sites = await getSites(
-        effectiveLang,
-        "default", // Use "default" as siteKey for site list page
-        searchQuery || undefined,
-        ITEMS_PER_PAGE,
-        pageParam as number
-      );
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+    useInfiniteQuery({
+      queryKey: ["sites", effectiveLang, undefined, searchQuery],
+      queryFn: async ({ pageParam = 0 }) => {
+        const sites = await getSites(
+          effectiveLang,
+          "default", // Use "default" as siteKey for site list page
+          searchQuery || undefined,
+          ITEMS_PER_PAGE,
+          pageParam as number
+        );
 
-      return {
-        sites,
-        nextOffset: sites.length === ITEMS_PER_PAGE ? (pageParam as number) + ITEMS_PER_PAGE : undefined,
-      };
-    },
-    getNextPageParam: (lastPage) => lastPage.nextOffset,
-    initialPageParam: 0,
-  });
+        return {
+          sites,
+          nextOffset:
+            sites.length === ITEMS_PER_PAGE ? (pageParam as number) + ITEMS_PER_PAGE : undefined,
+        };
+      },
+      getNextPageParam: (lastPage) => lastPage.nextOffset,
+      initialPageParam: 0,
+    });
 
   const allSites = data?.pages.flatMap((page) => page.sites) ?? [];
 
@@ -371,14 +375,8 @@ export function SitesListPage() {
         <div className="tenants-list-content">
           {/* Header Section */}
           <div className="tenants-header">
-            <h1 className="tenants-title">
-              {t("public.sites.title")}
-            </h1>
-            {sitesDescription && (
-              <p className="tenants-subtitle">
-                {sitesDescription}
-              </p>
-            )}
+            <h1 className="tenants-title">{t("public.sites.title")}</h1>
+            {sitesDescription && <p className="tenants-subtitle">{sitesDescription}</p>}
           </div>
 
           {/* Search Bar */}
@@ -421,9 +419,7 @@ export function SitesListPage() {
                 <div className="tenants-empty-state-title">
                   {t("public.errorLoadingSites") || "Hiba a site-ok betöltésekor"}
                 </div>
-                <div className="tenants-empty-state-text">
-                  Kérjük, próbáld újra később.
-                </div>
+                <div className="tenants-empty-state-text">Kérjük, próbáld újra később.</div>
               </div>
             ) : allSites.length === 0 ? (
               <div className="tenants-empty-state">
@@ -458,4 +454,3 @@ export function SitesListPage() {
     </>
   );
 }
-

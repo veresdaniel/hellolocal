@@ -8,7 +8,13 @@ import { useToast } from "../../contexts/ToastContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
-import { getPlace, getPlacePriceList, updatePlacePriceList, type PriceListBlock, type PriceList } from "../../api/admin.api";
+import {
+  getPlace,
+  getPlacePriceList,
+  updatePlacePriceList,
+  type PriceListBlock,
+  type PriceList,
+} from "../../api/admin.api";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { formatMoney } from "../../utils/formatMoney";
 import { usePlatformSettings } from "../../app/site/usePlatformSettings";
@@ -49,7 +55,12 @@ export function PlacePriceListPage() {
   });
 
   // Load price list
-  const { data: priceList, isLoading: isLoadingPriceList, refetch, error: priceListError } = useQuery({
+  const {
+    data: priceList,
+    isLoading: isLoadingPriceList,
+    refetch,
+    error: priceListError,
+  } = useQuery({
     queryKey: ["priceList", placeId, selectedSiteId],
     queryFn: () => {
       if (!placeId || !selectedSiteId) throw new Error("Missing placeId or siteId");
@@ -103,9 +114,13 @@ export function PlacePriceListPage() {
       showToast(t("admin.messages.priceListUpdated"), "success");
       await refetch();
     } catch (err: any) {
-      let errorMessage = err?.response?.data?.message || err?.message || t("admin.errors.updatePriceListFailed");
+      let errorMessage =
+        err?.response?.data?.message || err?.message || t("admin.errors.updatePriceListFailed");
       // Translate common backend error messages
-      if (errorMessage === "You do not have access to this place" || errorMessage.includes("do not have access to this place")) {
+      if (
+        errorMessage === "You do not have access to this place" ||
+        errorMessage.includes("do not have access to this place")
+      ) {
         errorMessage = t("admin.errors.noAccessToPlace");
       }
       showToast(errorMessage, "error");
@@ -147,7 +162,11 @@ export function PlacePriceListPage() {
     setHasUnsavedChanges(true);
   };
 
-  const handleUpdateItem = (blockIndex: number, itemIndex: number, item: { label: string; price: number | null; note?: string }) => {
+  const handleUpdateItem = (
+    blockIndex: number,
+    itemIndex: number,
+    item: { label: string; price: number | null; note?: string }
+  ) => {
     const newBlocks = [...blocks];
     newBlocks[blockIndex].items[itemIndex] = item;
     setBlocks(newBlocks);
@@ -157,7 +176,9 @@ export function PlacePriceListPage() {
   const getPlaceName = () => {
     if (!place) return "";
     const currentLang = (lang || "hu").split("-")[0] as "hu" | "en" | "de";
-    const translation = place.translations?.find((t) => t.lang === currentLang) || place.translations?.find((t) => t.lang === "hu");
+    const translation =
+      place.translations?.find((t) => t.lang === currentLang) ||
+      place.translations?.find((t) => t.lang === "hu");
     return translation?.name || "-";
   };
 
@@ -222,33 +243,51 @@ export function PlacePriceListPage() {
         }}
       >
         {/* Header with title and saved status */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, paddingBottom: 16, borderBottom: "1px solid #e0e0e0" }}>
-          <h3 style={{ 
-            fontSize: "clamp(18px, 4vw, 22px)", 
-            fontWeight: 600, 
-            color: "#333", 
-            margin: 0,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 32,
+            paddingBottom: 16,
+            borderBottom: "1px solid #e0e0e0",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 600,
+              color: "#333",
+              margin: 0,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.priceList")} - {getPlaceName()}
           </h3>
           {!hasUnsavedChanges && priceList && (
-            <span style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              color: "#28a745", 
-              fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <span
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                color: "#28a745",
+                fontWeight: 500,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.saved")}
             </span>
           )}
           {hasUnsavedChanges && (
-            <span style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              color: "#ff9800", 
-              fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
+            <span
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                color: "#ff9800",
+                fontWeight: 500,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.unsavedChanges")}
             </span>
           )}
@@ -256,9 +295,22 @@ export function PlacePriceListPage() {
 
         {/* Settings */}
         <div style={{ marginBottom: 32, padding: "20px", background: "#f8f9fa", borderRadius: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 16,
+            }}
+          >
             <div>
-              <label style={{ display: "block", marginBottom: 8, fontSize: "clamp(14px, 3.5vw, 16px)", fontWeight: 500 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontWeight: 500,
+                }}
+              >
                 {t("admin.currency")}
               </label>
               <input
@@ -290,7 +342,10 @@ export function PlacePriceListPage() {
                 }}
                 style={{ width: 20, height: 20, cursor: "pointer" }}
               />
-              <label htmlFor="isActive" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}>
+              <label
+                htmlFor="isActive"
+                style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}
+              >
                 {t("admin.active")}
               </label>
             </div>
@@ -305,7 +360,10 @@ export function PlacePriceListPage() {
                 }}
                 style={{ width: 20, height: 20, cursor: "pointer" }}
               />
-              <label htmlFor="isEnabled" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}>
+              <label
+                htmlFor="isEnabled"
+                style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}
+              >
                 {t("admin.enabled")}
               </label>
             </div>
@@ -320,7 +378,10 @@ export function PlacePriceListPage() {
                 }}
                 style={{ width: 20, height: 20, cursor: "pointer" }}
               />
-              <label htmlFor="requireAuth" style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}>
+              <label
+                htmlFor="requireAuth"
+                style={{ fontSize: "clamp(14px, 3.5vw, 16px)", cursor: "pointer" }}
+              >
                 {t("admin.requireAuth")}
               </label>
             </div>
@@ -380,7 +441,9 @@ export function PlacePriceListPage() {
                   border: "1px solid #e0e0e0",
                 }}
               >
-                <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}>
+                <div
+                  style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "flex-start" }}
+                >
                   <input
                     type="text"
                     value={block.title}
@@ -435,7 +498,10 @@ export function PlacePriceListPage() {
                         type="text"
                         value={item.label}
                         onChange={(e) => {
-                          handleUpdateItem(blockIndex, itemIndex, { ...item, label: e.target.value });
+                          handleUpdateItem(blockIndex, itemIndex, {
+                            ...item,
+                            label: e.target.value,
+                          });
                         }}
                         placeholder={t("admin.itemLabel")}
                         style={{
@@ -468,7 +534,8 @@ export function PlacePriceListPage() {
                           style={{
                             width: "100%",
                             padding: "8px 12px",
-                            paddingRight: item.price !== null && item.price !== undefined ? "50px" : "12px",
+                            paddingRight:
+                              item.price !== null && item.price !== undefined ? "50px" : "12px",
                             border: "1px solid #ddd",
                             borderRadius: 6,
                             fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -488,9 +555,16 @@ export function PlacePriceListPage() {
                             }}
                           >
                             {(() => {
-                              const formatted = formatMoney(item.price, { locale: platformLocale, currency: currency || platformCurrency });
+                              const formatted = formatMoney(item.price, {
+                                locale: platformLocale,
+                                currency: currency || platformCurrency,
+                              });
                               // Extract currency symbol from formatted string (remove numbers, spaces, commas, dots)
-                              return formatted.replace(/[\d.,\s]/g, "").trim() || (currency || platformCurrency);
+                              return (
+                                formatted.replace(/[\d.,\s]/g, "").trim() ||
+                                currency ||
+                                platformCurrency
+                              );
                             })()}
                           </span>
                         )}
@@ -571,7 +645,15 @@ export function PlacePriceListPage() {
 
         {/* Note (Rich Text) */}
         <div style={{ marginTop: 32 }}>
-          <label style={{ display: "block", marginBottom: 12, fontSize: "clamp(16px, 4vw, 18px)", fontWeight: 600, color: "#333" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: 12,
+              fontSize: "clamp(16px, 4vw, 18px)",
+              fontWeight: 600,
+              color: "#333",
+            }}
+          >
             {t("admin.note")}
           </label>
           <div style={{ border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
@@ -588,7 +670,19 @@ export function PlacePriceListPage() {
       </div>
 
       {isSaving && (
-        <div style={{ position: "fixed", top: 20, right: 20, background: "#667eea", color: "white", padding: "12px 24px", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 1000 }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            right: 20,
+            background: "#667eea",
+            color: "white",
+            padding: "12px 24px",
+            borderRadius: 8,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            zIndex: 1000,
+          }}
+        >
           {t("admin.saving")}...
         </div>
       )}

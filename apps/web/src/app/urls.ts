@@ -24,7 +24,7 @@ export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
 
 /**
  * Builds a public URL for an entity based on its type and slug.
- * 
+ *
  * @param args - URL building arguments
  * @param args.lang - Language code
  * @param args.siteKey - Site key (required in multi-site mode)

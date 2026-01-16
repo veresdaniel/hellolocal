@@ -1,5 +1,9 @@
 :root {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   line-height: 1.6;
   font-weight: 400;
   font-size: 16px;
@@ -31,9 +35,38 @@ a:hover {
 }
 
 /* Apply Inter font to most elements, but exclude table headers and headings */
-html, body, div, span, p, a, button, input, textarea, select, label, li, ul, ol, dl, dd, dt, 
-section, article, aside, nav, header, footer, main, form, fieldset, legend {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+html,
+body,
+div,
+span,
+p,
+a,
+button,
+input,
+textarea,
+select,
+label,
+li,
+ul,
+ol,
+dl,
+dd,
+dt,
+section,
+article,
+aside,
+nav,
+header,
+footer,
+main,
+form,
+fieldset,
+legend {
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 /* Table headers use Poppins - must come after the above rules */
@@ -43,7 +76,13 @@ thead th,
 thead th *,
 .admin-layout table thead th,
 .admin-layout table thead th * {
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-family:
+    "Poppins",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
   font-weight: 600 !important;
 }
 
@@ -54,7 +93,13 @@ tbody td,
 tbody td *,
 .admin-layout table tbody td,
 .admin-layout table tbody td * {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
 }
 
 html {
@@ -72,7 +117,11 @@ body {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -82,12 +131,27 @@ body {
   max-width: 100vw;
   overflow-y: auto;
   overflow-x: hidden;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 /* Headings use Poppins - override the general rule above */
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family:
+    "Poppins",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -158,7 +222,13 @@ button {
   border: 1px solid transparent;
   font-size: 1em;
   font-weight: 500;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
@@ -175,7 +245,13 @@ button:focus-visible {
 /* Ensure buttons in rich text content have correct font */
 .shortcode-content button,
 .shortcode-content button * {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
 }
 
 input,
@@ -183,7 +259,11 @@ textarea,
 select {
   margin: 0;
   padding: 0.5em;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 15px;
   box-sizing: border-box;
 }

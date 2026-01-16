@@ -1,10 +1,32 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole, PlacePlan, SitePlan } from "@prisma/client";
+import {
+  Lang,
+  SlugEntityType,
+  UserRole,
+  SiteRole,
+  PlaceRole,
+  PlacePlan,
+  SitePlan,
+} from "@prisma/client";
 import { generateSlug } from "../slug/slug.helper";
 import { RbacService } from "../auth/rbac.service";
-import { canAddImage, canBeFeatured, type PlacePlan as PlacePlanType } from "../config/place-limits.config";
-import { canHaveFeaturedPlaces, canAddFeaturedPlace, getSiteLimits, type SitePlanType } from "../config/site-limits.config";
+import {
+  canAddImage,
+  canBeFeatured,
+  type PlacePlan as PlacePlanType,
+} from "../config/place-limits.config";
+import {
+  canHaveFeaturedPlaces,
+  canAddFeaturedPlace,
+  getSiteLimits,
+  type SitePlanType,
+} from "../config/site-limits.config";
 import { PlaceUpsellService } from "../entitlements/place-upsell.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 
@@ -102,15 +124,20 @@ export class AdminPlaceService {
    * If only Hungarian translation exists, create slugs for all languages (hu, en, de) using the Hungarian name
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving
    */
-  private async createSlugsForPlace(placeId: string, siteId: string, translations: Array<{ lang: Lang; name: string; slug?: string | null }>, throwOnConflict: boolean = false) {
+  private async createSlugsForPlace(
+    placeId: string,
+    siteId: string,
+    translations: Array<{ lang: Lang; name: string; slug?: string | null }>,
+    throwOnConflict: boolean = false
+  ) {
     // Find Hungarian translation to use as fallback for missing languages
     const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
     const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
-    
+
     // Determine which languages need slugs
     const languagesToCreate: Lang[] = [];
     const translationByLang = new Map(translations.map((t) => [t.lang, t]));
-    
+
     // Always create slugs for all supported languages (hu, en, de)
     for (const lang of [Lang.hu, Lang.en, Lang.de]) {
       languagesToCreate.push(lang);
@@ -140,7 +167,7 @@ export class AdminPlaceService {
         // Generate slug from name
         baseSlug = generateSlug(nameToUse);
       }
-      
+
       if (!baseSlug || baseSlug.trim() === "") {
         // If slug is empty, use place ID as fallback
         baseSlug = `place-${placeId}`;
@@ -194,7 +221,7 @@ export class AdminPlaceService {
         // Normalize the old slug to check if it contains accents
         const normalizedOldSlug = generateSlug(oldSlug);
         const needsNormalization = normalizedOldSlug !== oldSlug && normalizedOldSlug === slug;
-        
+
         // If the slug has changed OR the old slug contains accents (needs normalization), create a redirect from old to new
         if (oldSlug !== slug || needsNormalization) {
           // First, check if there's already a slug with the new value (shouldn't happen due to conflict check, but safety)
@@ -268,12 +295,12 @@ export class AdminPlaceService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     const where = { siteId };
-    
+
     // Get total count
     const total = await this.prisma.place.count({ where });
-    
+
     // Get paginated results
     const places = await this.prisma.place.findMany({
       where,
@@ -304,17 +331,14 @@ export class AdminPlaceService {
         },
         translations: true,
         openingHours: {
-          orderBy: { dayOfWeek: 'asc' },
+          orderBy: { dayOfWeek: "asc" },
         },
       },
-      orderBy: [
-        { isFeatured: "desc" },
-        { updatedAt: "desc" },
-      ],
+      orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       places,
@@ -357,7 +381,7 @@ export class AdminPlaceService {
         },
         translations: true,
         openingHours: {
-          orderBy: { dayOfWeek: 'asc' },
+          orderBy: { dayOfWeek: "asc" },
         },
         galleries: true,
       },
@@ -371,13 +395,20 @@ export class AdminPlaceService {
   }
 
   async create(dto: CreatePlaceDto) {
-    const { tagIds = [], translations, openingHours = [], lat: _lat, lng: _lng, ...placeData } = dto;
+    const {
+      tagIds = [],
+      translations,
+      openingHours = [],
+      lat: _lat,
+      lng: _lng,
+      ...placeData
+    } = dto;
 
     // Validate image limit based on plan (default: free)
     // Note: Gallery images are now managed via Gallery entities and shortcodes, not place.gallery array
     const plan: PlacePlanType = (dto.plan as PlacePlanType) || "free";
     const imageCount = dto.heroImage ? 1 : 0;
-    
+
     if (!canAddImage(plan, imageCount)) {
       const limit = plan === "free" ? 3 : plan === "basic" ? 15 : 30;
       throw new BadRequestException(
@@ -394,9 +425,8 @@ export class AdminPlaceService {
 
     // Validate featuredUntil date (must be in the future if isFeatured is true)
     if (dto.isFeatured === true && dto.featuredUntil) {
-      const featuredUntilDate = typeof dto.featuredUntil === "string" 
-        ? new Date(dto.featuredUntil) 
-        : dto.featuredUntil;
+      const featuredUntilDate =
+        typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil;
       if (featuredUntilDate <= new Date()) {
         throw new BadRequestException(
           "featuredUntil must be in the future when isFeatured is true"
@@ -406,16 +436,26 @@ export class AdminPlaceService {
 
     // Convert lat and lng from string to number if needed (HTTP requests send numbers as strings)
     // Handle both number and string types (DTO says number, but HTTP can send strings)
-    const lat = dto.lat === null || dto.lat === undefined
-      ? null 
-      : typeof dto.lat === "string" 
-        ? (dto.lat === "" ? null : parseFloat(dto.lat))
-        : (typeof dto.lat === "number" ? dto.lat : null);
-    const lng = dto.lng === null || dto.lng === undefined
-      ? null 
-      : typeof dto.lng === "string" 
-        ? (dto.lng === "" ? null : parseFloat(dto.lng))
-        : (typeof dto.lng === "number" ? dto.lng : null);
+    const lat =
+      dto.lat === null || dto.lat === undefined
+        ? null
+        : typeof dto.lat === "string"
+          ? dto.lat === ""
+            ? null
+            : parseFloat(dto.lat)
+          : typeof dto.lat === "number"
+            ? dto.lat
+            : null;
+    const lng =
+      dto.lng === null || dto.lng === undefined
+        ? null
+        : typeof dto.lng === "string"
+          ? dto.lng === ""
+            ? null
+            : parseFloat(dto.lng)
+          : typeof dto.lng === "number"
+            ? dto.lng
+            : null;
 
     const place = await this.prisma.place.create({
       data: {
@@ -424,8 +464,10 @@ export class AdminPlaceService {
         lng,
         plan: dto.plan || "free",
         isFeatured: dto.isFeatured ?? false,
-        featuredUntil: dto.featuredUntil 
-          ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+        featuredUntil: dto.featuredUntil
+          ? typeof dto.featuredUntil === "string"
+            ? new Date(dto.featuredUntil)
+            : dto.featuredUntil
           : null,
         isActive: dto.isActive ?? false,
         translations: {
@@ -486,7 +528,7 @@ export class AdminPlaceService {
         },
         translations: true,
         openingHours: {
-          orderBy: { dayOfWeek: 'asc' },
+          orderBy: { dayOfWeek: "asc" },
         },
       },
     });
@@ -505,14 +547,16 @@ export class AdminPlaceService {
     if (dto.isFeatured !== undefined && dto.isFeatured === true && place.isFeatured === false) {
       const ent = await this.entitlementsService.getBySiteId(siteId);
       const gate = this.placeUpsellService.getFeaturedGate(ent, false);
-      
+
       if (gate.state !== "enabled") {
         throw new BadRequestException(gate.reason);
       }
 
       // Validate featuredUntil date (must be in the future if isFeatured is true)
-      const featuredUntilDate = dto.featuredUntil 
-        ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+      const featuredUntilDate = dto.featuredUntil
+        ? typeof dto.featuredUntil === "string"
+          ? new Date(dto.featuredUntil)
+          : dto.featuredUntil
         : place.featuredUntil;
       if (featuredUntilDate && featuredUntilDate <= new Date()) {
         throw new BadRequestException(
@@ -527,7 +571,7 @@ export class AdminPlaceService {
       const plan: PlacePlanType = (dto.plan as PlacePlanType) || place.plan || "free";
       const currentHeroImage = dto.heroImage !== undefined ? dto.heroImage : place.heroImage;
       const imageCount = currentHeroImage ? 1 : 0;
-      
+
       if (!canAddImage(plan, imageCount)) {
         const limit = plan === "free" ? 3 : plan === "basic" ? 15 : 30;
         throw new BadRequestException(
@@ -539,21 +583,24 @@ export class AdminPlaceService {
     // RBAC: Check permissions for restricted fields
     if (userId) {
       // Check if user can modify isActive (publish/activate)
-      if (dto.isActive !== undefined && !await this.canModifyPlacePublish(userId, id, siteId)) {
+      if (dto.isActive !== undefined && !(await this.canModifyPlacePublish(userId, id, siteId))) {
         throw new ForbiddenException("Editor cannot modify place publish status");
       }
 
       // Check if user can modify SEO fields (slug management)
       // Name changes also affect slugs, so they need SEO permission
-      const hasSeoChanges = dto.translations?.some(t => 
-        t.name !== undefined ||
-        t.seoTitle !== undefined || 
-        t.seoDescription !== undefined || 
-        t.seoImage !== undefined || 
-        t.seoKeywords !== undefined
+      const hasSeoChanges = dto.translations?.some(
+        (t) =>
+          t.name !== undefined ||
+          t.seoTitle !== undefined ||
+          t.seoDescription !== undefined ||
+          t.seoImage !== undefined ||
+          t.seoKeywords !== undefined
       );
-      if (hasSeoChanges && !await this.canModifyPlaceSeo(userId, id, siteId)) {
-        throw new ForbiddenException("Editor cannot modify place SEO settings or name (which affects slugs)");
+      if (hasSeoChanges && !(await this.canModifyPlaceSeo(userId, id, siteId))) {
+        throw new ForbiddenException(
+          "Editor cannot modify place SEO settings or name (which affects slugs)"
+        );
       }
     }
 
@@ -562,7 +609,7 @@ export class AdminPlaceService {
 
     // Build update data object, explicitly handling all fields to ensure proper updates
     const updateData: any = {};
-    
+
     // Copy all fields from restData (categoryId, townId, priceBandId, heroImage, isActive, etc.)
     if (restData.categoryId !== undefined) updateData.categoryId = restData.categoryId;
     if (restData.townId !== undefined) updateData.townId = restData.townId;
@@ -577,29 +624,42 @@ export class AdminPlaceService {
     if (restData.plan !== undefined) updateData.plan = restData.plan;
     if (restData.isFeatured !== undefined) updateData.isFeatured = restData.isFeatured;
     if (restData.featuredUntil !== undefined) updateData.featuredUntil = restData.featuredUntil;
-    if (restData.galleryLimitOverride !== undefined) updateData.galleryLimitOverride = restData.galleryLimitOverride;
-    
+    if (restData.galleryLimitOverride !== undefined)
+      updateData.galleryLimitOverride = restData.galleryLimitOverride;
+
     // Explicitly handle lat and lng to ensure null values are properly set
     // Convert string to number if needed (HTTP requests send numbers as strings)
     // Handle both number and string types (DTO says number, but HTTP can send strings)
     if (dto.lat !== undefined) {
-      updateData.lat = dto.lat === null || dto.lat === undefined
-        ? null 
-        : typeof dto.lat === "string" 
-          ? (dto.lat === "" ? null : parseFloat(dto.lat))
-          : (typeof dto.lat === "number" ? dto.lat : null);
+      updateData.lat =
+        dto.lat === null || dto.lat === undefined
+          ? null
+          : typeof dto.lat === "string"
+            ? dto.lat === ""
+              ? null
+              : parseFloat(dto.lat)
+            : typeof dto.lat === "number"
+              ? dto.lat
+              : null;
     }
     if (dto.lng !== undefined) {
-      updateData.lng = dto.lng === null || dto.lng === undefined
-        ? null 
-        : typeof dto.lng === "string" 
-          ? (dto.lng === "" ? null : parseFloat(dto.lng))
-          : (typeof dto.lng === "number" ? dto.lng : null);
+      updateData.lng =
+        dto.lng === null || dto.lng === undefined
+          ? null
+          : typeof dto.lng === "string"
+            ? dto.lng === ""
+              ? null
+              : parseFloat(dto.lng)
+            : typeof dto.lng === "number"
+              ? dto.lng
+              : null;
     }
     // Handle featuredUntil date conversion
     if (dto.featuredUntil !== undefined) {
-      updateData.featuredUntil = dto.featuredUntil 
-        ? (typeof dto.featuredUntil === "string" ? new Date(dto.featuredUntil) : dto.featuredUntil)
+      updateData.featuredUntil = dto.featuredUntil
+        ? typeof dto.featuredUntil === "string"
+          ? new Date(dto.featuredUntil)
+          : dto.featuredUntil
         : null;
     }
 
@@ -628,7 +688,7 @@ export class AdminPlaceService {
       await this.prisma.placeOpeningHours.deleteMany({
         where: { placeId: id },
       });
-      
+
       // Create new opening hours
       if (openingHours.length > 0) {
         await this.prisma.placeOpeningHours.createMany({
@@ -688,7 +748,7 @@ export class AdminPlaceService {
 
     // Update slugs for all languages, but only if user has permission (owner/manager can, editor cannot)
     // Slugs are updated when name changes, which is part of SEO/slug management
-    if (!userId || await this.canModifyPlaceSeo(userId, id, siteId)) {
+    if (!userId || (await this.canModifyPlaceSeo(userId, id, siteId))) {
       // Fetch all current translations to ensure we have the complete set
       const allTranslations = await this.prisma.placeTranslation.findMany({
         where: { placeId: id },
@@ -731,7 +791,7 @@ export class AdminPlaceService {
     await this.findOne(id, siteId);
 
     // RBAC: Only owner or siteadmin can delete place
-    if (userId && !await this.canDeletePlace(userId, id, siteId)) {
+    if (userId && !(await this.canDeletePlace(userId, id, siteId))) {
       throw new ForbiddenException("Only owner or siteadmin can delete place");
     }
 
@@ -746,7 +806,11 @@ export class AdminPlaceService {
    * Check if user can modify place publish status (isActive)
    * Permission: owner ✅, manager ✅, editor ❌
    */
-  private async canModifyPlacePublish(userId: string, placeId: string, siteId: string): Promise<boolean> {
+  private async canModifyPlacePublish(
+    userId: string,
+    placeId: string,
+    siteId: string
+  ): Promise<boolean> {
     // Check global user role
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -789,7 +853,11 @@ export class AdminPlaceService {
    * Check if user can modify place SEO settings (slug management)
    * Permission: owner ✅, manager ✅, editor ❌
    */
-  private async canModifyPlaceSeo(userId: string, placeId: string, siteId: string): Promise<boolean> {
+  private async canModifyPlaceSeo(
+    userId: string,
+    placeId: string,
+    siteId: string
+  ): Promise<boolean> {
     // Same logic as canModifyPlacePublish
     return this.canModifyPlacePublish(userId, placeId, siteId);
   }
@@ -911,4 +979,3 @@ export class AdminPlaceService {
     };
   }
 }
-

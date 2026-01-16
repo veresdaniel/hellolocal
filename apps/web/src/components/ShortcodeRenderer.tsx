@@ -17,7 +17,14 @@ interface ShortcodeRendererProps {
  * Renders HTML content with shortcode support.
  * Currently supports: [gallery id="..."]
  */
-export function ShortcodeRenderer({ content, lang, siteKey, className, style, hideGalleries = false }: ShortcodeRendererProps) {
+export function ShortcodeRenderer({
+  content,
+  lang,
+  siteKey,
+  className,
+  style,
+  hideGalleries = false,
+}: ShortcodeRendererProps) {
   const { t } = useTranslation();
 
   // Parse gallery shortcodes from content
@@ -71,19 +78,16 @@ export function ShortcodeRenderer({ content, lang, siteKey, className, style, hi
     // Replace shortcodes with placeholders first
     let processed = content;
     const galleryPlaceholders: Array<{ id: string; index: number }> = [];
-    
-    processed = processed.replace(
-      /\[gallery\s+id="([^"]+)"\]/g,
-      (match, galleryId, offset) => {
-        const placeholder = `__GALLERY_PLACEHOLDER_${galleryPlaceholders.length}__`;
-        galleryPlaceholders.push({ id: galleryId, index: galleryPlaceholders.length });
-        return placeholder;
-      }
-    );
+
+    processed = processed.replace(/\[gallery\s+id="([^"]+)"\]/g, (match, galleryId, offset) => {
+      const placeholder = `__GALLERY_PLACEHOLDER_${galleryPlaceholders.length}__`;
+      galleryPlaceholders.push({ id: galleryId, index: galleryPlaceholders.length });
+      return placeholder;
+    });
 
     // Split by placeholders
     const parts = processed.split(/(__GALLERY_PLACEHOLDER_\d+__)/);
-    
+
     return { parts, galleryPlaceholders };
   }, [content]);
 
@@ -92,7 +96,7 @@ export function ShortcodeRenderer({ content, lang, siteKey, className, style, hi
   const { parts, galleryPlaceholders } = processedContent;
 
   // Separate text content and galleries
-  const textParts = parts.filter(part => !part.match(/^__GALLERY_PLACEHOLDER_\d+__$/));
+  const textParts = parts.filter((part) => !part.match(/^__GALLERY_PLACEHOLDER_\d+__$/));
   const textContent = textParts.join("").trim();
   const hasTextContent = textContent.length > 0;
 
@@ -100,42 +104,43 @@ export function ShortcodeRenderer({ content, lang, siteKey, className, style, hi
     <div className={className} style={style}>
       {/* Render text content without galleries */}
       {hasTextContent && (
-        <div
-          dangerouslySetInnerHTML={{ __html: textContent }}
-          className="shortcode-content"
-        />
+        <div dangerouslySetInnerHTML={{ __html: textContent }} className="shortcode-content" />
       )}
 
       {/* Render all galleries at the bottom (unless hidden) */}
-      {!hideGalleries && galleryPlaceholders.map((placeholder, index) => {
-        const galleryId = placeholder.id;
-        const gallery = galleryId ? galleries[galleryId] : null;
-        
-        // Check if gallery is loaded
-        if (galleryQueries.isLoading) {
+      {!hideGalleries &&
+        galleryPlaceholders.map((placeholder, index) => {
+          const galleryId = placeholder.id;
+          const gallery = galleryId ? galleries[galleryId] : null;
+
+          // Check if gallery is loaded
+          if (galleryQueries.isLoading) {
+            return (
+              <div
+                key={`gallery-loading-${galleryId}-${index}`}
+                style={{ margin: "24px 0", padding: "20px", textAlign: "center", color: "#666" }}
+              >
+                {t("common.loading") || "Loading..."}
+              </div>
+            );
+          }
+
+          // Gallery loaded but not found or has no images
+          if (!gallery || !gallery.images || gallery.images.length === 0) {
+            return null;
+          }
+
+          // Gallery loaded and has images - render it
           return (
-            <div key={`gallery-loading-${galleryId}-${index}`} style={{ margin: "24px 0", padding: "20px", textAlign: "center", color: "#666" }}>
-              {t("common.loading") || "Loading..."}
-            </div>
+            <GalleryViewer
+              key={`gallery-${galleryId}-${index}`}
+              images={gallery.images}
+              name={gallery.name}
+              layout={gallery.layout}
+              aspect={gallery.aspect}
+            />
           );
-        }
-
-        // Gallery loaded but not found or has no images
-        if (!gallery || !gallery.images || gallery.images.length === 0) {
-          return null;
-        }
-
-        // Gallery loaded and has images - render it
-        return (
-          <GalleryViewer
-            key={`gallery-${galleryId}-${index}`}
-            images={gallery.images}
-            name={gallery.name}
-            layout={gallery.layout}
-            aspect={gallery.aspect}
-          />
-        );
-      })}
+        })}
     </div>
   );
 }

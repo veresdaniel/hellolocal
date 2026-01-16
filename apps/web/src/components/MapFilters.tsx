@@ -55,22 +55,26 @@ export function MapFilters({
   const { activeBox, setActiveBox } = useActiveBoxStore();
   const userLocation = useFiltersStore((state) => state.userLocation);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Check if we're on map view
-  const isOnHomePage = location.pathname === buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) ||
-                       location.pathname === buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) + "/";
+  const isOnHomePage =
+    location.pathname ===
+      buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) ||
+    location.pathname ===
+      buildUrl({ lang: routeLang, siteKey: routeSiteKey || undefined, path: "" }) + "/";
   const isOnMapView = isOnHomePage && showMap;
-  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const isDesktop =
+    typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.innerWidth < BREAKPOINTS.tablet;
   });
-  
+
   // Default positions: jobb, listanézet alatt (right, below list view button)
   // List view button is at top: 16, so filters should be at top: ~80
   const defaultPositionDesktop = { top: 80, right: 16 };
   const defaultPositionMobile = { top: 70, right: 12 };
-  
+
   // Load saved position from localStorage with lazy initializer (device-specific)
   const [position, setPosition] = useState(() => {
     if (typeof window === "undefined") return defaultPositionDesktop;
@@ -99,7 +103,7 @@ export function MapFilters({
     }
     return 400;
   });
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
@@ -134,7 +138,7 @@ export function MapFilters({
       setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
   }, [isDesktop]);
-  
+
   // Save position to localStorage (device-specific)
   useEffect(() => {
     const deviceKey = isDesktop ? "desktop" : "mobile";
@@ -158,9 +162,9 @@ export function MapFilters({
   useEffect(() => {
     if (isOnMapView) {
       // On map view: always hide vertical scrollbar
-      document.body.style.overflowY = 'hidden';
+      document.body.style.overflowY = "hidden";
       return () => {
-        document.body.style.overflowY = '';
+        document.body.style.overflowY = "";
       };
     }
     // On other pages: do nothing, let scrollbar be visible
@@ -215,7 +219,9 @@ export function MapFilters({
 
     const handleMouseMove = (e: MouseEvent) => {
       // Detect if we've actually moved (dragged) - check distance from start position
-      const moved = Math.abs(e.clientX - dragStartPosRef.current.x) > 5 || Math.abs(e.clientY - dragStartPosRef.current.y) > 5;
+      const moved =
+        Math.abs(e.clientX - dragStartPosRef.current.x) > 5 ||
+        Math.abs(e.clientY - dragStartPosRef.current.y) > 5;
       if (moved) {
         setHasDragged(true);
       }
@@ -243,7 +249,9 @@ export function MapFilters({
       const touch = e.touches[0];
 
       // Detect if we've actually moved (dragged)
-      const moved = Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
+      const moved =
+        Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 ||
+        Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
       if (moved) {
         setHasDragged(true);
       }
@@ -305,13 +313,13 @@ export function MapFilters({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!filtersRef.current) return;
-      
+
       const deltaY = e.clientY - resizeStartPosRef.current.y;
       const newHeight = resizeStartPosRef.current.height + deltaY;
-      
+
       // Constrain height: min 200px, max 800px
       const constrainedHeight = Math.max(200, Math.min(newHeight, 800));
-      
+
       setHeight(constrainedHeight);
     };
 
@@ -359,7 +367,7 @@ export function MapFilters({
         // Use ID if available, otherwise use name as ID (fallback for backward compatibility)
         const priceBandId = place.priceBandId || place.priceBand;
         const priceBandName = place.priceBand;
-        
+
         // Use ID/name as key to avoid duplicates
         if (!priceBandMap.has(priceBandId)) {
           priceBandMap.set(priceBandId, { id: priceBandId, name: priceBandName });
@@ -374,8 +382,8 @@ export function MapFilters({
   const baseZIndex = 3000;
   const activeZIndex = 10000; // High z-index when actively being used (dragging, resizing, or selected)
   const isActive = activeBox === "filters";
-  const currentZIndex = (isDragging || isResizing || isActive) ? activeZIndex : baseZIndex;
-  
+  const currentZIndex = isDragging || isResizing || isActive ? activeZIndex : baseZIndex;
+
   // Set this box as active when clicked
   const handleBoxClick = () => {
     if (!isDragging && !isResizing) {
@@ -392,50 +400,59 @@ export function MapFilters({
       }}
       onTouchStart={handleTouchStart}
       onClick={handleBoxClick}
-        style={{
-          position: isOnMapView ? "absolute" : "fixed", // Fixed on list view for sticky behavior, absolute on map view
-          top: position.top,
-          right: position.right,
-          zIndex: currentZIndex, // Dynamic z-index based on active state
-          background: "rgba(255, 255, 255, 0.98)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderRadius: isMobile ? 12 : 16,
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-          WebkitBoxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-          border: "1px solid rgba(0, 0, 0, 0.06)",
-          overflow: "hidden",
-          minWidth: isMobile && !isOpen ? 44 : 280,
-          maxWidth: isMobile && !isOpen ? 44 : 320,
-          width: isMobile && !isOpen ? 44 : "auto",
-          height: isOpen ? (isMobile ? "85vh" : `${height}px`) : "auto",
-          maxHeight: isMobile && isOpen ? "85vh" : "none",
-          cursor: isDesktop ? (isDragging ? "grabbing" : isResizing ? "ns-resize" : "grab") : "default",
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          WebkitTouchCallout: "none",
-          transition: (isDragging || isResizing)
-            ? "none" 
-            : shouldAnimateUp 
+      style={{
+        position: isOnMapView ? "absolute" : "fixed", // Fixed on list view for sticky behavior, absolute on map view
+        top: position.top,
+        right: position.right,
+        zIndex: currentZIndex, // Dynamic z-index based on active state
+        background: "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderRadius: isMobile ? 12 : 16,
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+        WebkitBoxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
+        border: "1px solid rgba(0, 0, 0, 0.06)",
+        overflow: "hidden",
+        minWidth: isMobile && !isOpen ? 44 : 280,
+        maxWidth: isMobile && !isOpen ? 44 : 320,
+        width: isMobile && !isOpen ? 44 : "auto",
+        height: isOpen ? (isMobile ? "85vh" : `${height}px`) : "auto",
+        maxHeight: isMobile && isOpen ? "85vh" : "none",
+        cursor: isDesktop
+          ? isDragging
+            ? "grabbing"
+            : isResizing
+              ? "ns-resize"
+              : "grab"
+          : "default",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+        transition:
+          isDragging || isResizing
+            ? "none"
+            : shouldAnimateUp
               ? "top 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease"
               : isOpen
                 ? "box-shadow 0.2s ease, transform 0.3s ease-out"
                 : "box-shadow 0.2s ease",
-          touchAction: "none", // Prevent default touch behaviors
-          WebkitTapHighlightColor: "transparent",
-          display: "flex",
-          flexDirection: "column",
-          WebkitTransform: "translateZ(0)", // Force hardware acceleration for Safari
-          transform: "translateZ(0)",
-        }}
+        touchAction: "none", // Prevent default touch behaviors
+        WebkitTapHighlightColor: "transparent",
+        display: "flex",
+        flexDirection: "column",
+        WebkitTransform: "translateZ(0)", // Force hardware acceleration for Safari
+        transform: "translateZ(0)",
+      }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging && !isResizing) {
-          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
+          e.currentTarget.style.boxShadow =
+            "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging && !isResizing) {
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
+          e.currentTarget.style.boxShadow =
+            "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
     >
@@ -446,20 +463,20 @@ export function MapFilters({
           if (!hasDragged) {
             const wasOpen = isOpen;
             const willBeOpen = !isOpen;
-            
+
             // If opening and position is low (near bottom), animate up
             if (!wasOpen && willBeOpen) {
               const viewportHeight = window.innerHeight;
               const elementHeight = filtersRef.current?.offsetHeight || 200;
               const isNearBottom = position.top > viewportHeight - elementHeight - 100;
-              
+
               if (isNearBottom) {
                 setIsAnimating(true);
                 setShouldAnimateUp(true);
                 // Calculate optimal position (near top but not too high)
                 const optimalTop = Math.min(80, viewportHeight * 0.1);
-                setPosition(prev => ({ ...prev, top: optimalTop }));
-                
+                setPosition((prev) => ({ ...prev, top: optimalTop }));
+
                 // Reset animation flag after transition
                 setTimeout(() => {
                   setShouldAnimateUp(false);
@@ -467,7 +484,7 @@ export function MapFilters({
                 }, 500);
               }
             }
-            
+
             setIsOpen(willBeOpen);
           }
           setHasDragged(false);
@@ -493,38 +510,47 @@ export function MapFilters({
           flexShrink: 0,
         }}
       >
-        <h3 style={{
-          margin: 0,
-          color: "white",
-          fontSize: isMobile && !isOpen ? 20 : (isMobile ? 16 : "clamp(15px, 3.5vw, 16px)"),
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 700,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: isMobile && !isOpen ? "center" : "flex-start",
-          gap: isMobile && !isOpen ? 0 : 8,
-          paddingLeft: 0,
-          width: isMobile && !isOpen ? "100%" : "auto",
-          height: isMobile && !isOpen ? "100%" : "auto",
-          flexShrink: 0,
-          WebkitFontSmoothing: "antialiased",
-        }}>
-          <span style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            lineHeight: 1,
+        <h3
+          style={{
+            margin: 0,
+            color: "white",
+            fontSize: isMobile && !isOpen ? 20 : isMobile ? 16 : "clamp(15px, 3.5vw, 16px)",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isMobile && !isOpen ? "center" : "flex-start",
+            gap: isMobile && !isOpen ? 0 : 8,
+            paddingLeft: 0,
             width: isMobile && !isOpen ? "100%" : "auto",
             height: isMobile && !isOpen ? "100%" : "auto",
             flexShrink: 0,
-          }}>🔍</span>
+            WebkitFontSmoothing: "antialiased",
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
+              width: isMobile && !isOpen ? "100%" : "auto",
+              height: isMobile && !isOpen ? "100%" : "auto",
+              flexShrink: 0,
+            }}
+          >
+            🔍
+          </span>
           {(!isMobile || isOpen) && (
-            <span style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              lineHeight: 1.2,
-              whiteSpace: "nowrap",
-            }}>
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+              }}
+            >
               {t("public.filtersTitle") || "Szűrők"}
             </span>
           )}
@@ -552,8 +578,8 @@ export function MapFilters({
       </div>
 
       {isOpen && (
-        <div 
-          style={{ 
+        <div
+          style={{
             padding: isMobile ? 12 : 16,
             overflowY: "auto",
             overflowX: "hidden",
@@ -596,7 +622,8 @@ export function MapFilters({
                   marginBottom: 10,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   WebkitFontSmoothing: "antialiased",
                 }}
               >
@@ -618,7 +645,9 @@ export function MapFilters({
                         cursor: "pointer",
                         background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                         transition: "all 0.2s",
-                        border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
+                        border: isSelected
+                          ? "1px solid rgba(90, 61, 122, 0.25)"
+                          : "1px solid transparent",
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
@@ -640,7 +669,9 @@ export function MapFilters({
                           if (e.target.checked) {
                             onCategoriesChange([...selectedCategories, category.id]);
                           } else {
-                            onCategoriesChange(selectedCategories.filter((id) => id !== category.id));
+                            onCategoriesChange(
+                              selectedCategories.filter((id) => id !== category.id)
+                            );
                           }
                         }}
                         style={{
@@ -657,7 +688,8 @@ export function MapFilters({
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.4,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           WebkitFontSmoothing: "antialiased",
                           wordBreak: "break-word",
                         }}
@@ -682,7 +714,8 @@ export function MapFilters({
                   marginBottom: 10,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   WebkitFontSmoothing: "antialiased",
                 }}
               >
@@ -704,7 +737,9 @@ export function MapFilters({
                         cursor: "pointer",
                         background: isSelected ? "rgba(90, 61, 122, 0.1)" : "transparent",
                         transition: "all 0.2s",
-                        border: isSelected ? "1px solid rgba(90, 61, 122, 0.25)" : "1px solid transparent",
+                        border: isSelected
+                          ? "1px solid rgba(90, 61, 122, 0.25)"
+                          : "1px solid transparent",
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
@@ -726,7 +761,9 @@ export function MapFilters({
                           if (e.target.checked) {
                             onPriceBandsChange([...selectedPriceBands, priceBand.id]);
                           } else {
-                            onPriceBandsChange(selectedPriceBands.filter((id) => id !== priceBand.id));
+                            onPriceBandsChange(
+                              selectedPriceBands.filter((id) => id !== priceBand.id)
+                            );
                           }
                         }}
                         style={{
@@ -743,7 +780,8 @@ export function MapFilters({
                           color: isSelected ? "#3d2952" : "#5a3d7a",
                           fontWeight: isSelected ? 500 : 400,
                           lineHeight: 1.4,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           WebkitFontSmoothing: "antialiased",
                           wordBreak: "break-word",
                         }}
@@ -767,7 +805,8 @@ export function MapFilters({
                 marginBottom: 10,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 WebkitFontSmoothing: "antialiased",
               }}
             >
@@ -787,7 +826,8 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: isOpenNow ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!isOpenNow) {
@@ -814,8 +854,11 @@ export function MapFilters({
                   fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                   transition: "all 0.2s",
                   textAlign: "left",
-                  border: hasEventToday ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  border: hasEventToday
+                    ? "1px solid rgba(90, 61, 122, 0.3)"
+                    : "1px solid transparent",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!hasEventToday) {
@@ -837,14 +880,19 @@ export function MapFilters({
                     padding: "8px 12px",
                     borderRadius: 6,
                     cursor: "pointer",
-                    background: within30Minutes ? "rgba(90, 61, 122, 0.15)" : "rgba(90, 61, 122, 0.05)",
+                    background: within30Minutes
+                      ? "rgba(90, 61, 122, 0.15)"
+                      : "rgba(90, 61, 122, 0.05)",
                     color: within30Minutes ? "#3d2952" : "#5a3d7a",
                     fontWeight: within30Minutes ? 600 : 500,
                     fontSize: isMobile ? 14 : "clamp(14px, 3.5vw, 16px)",
                     transition: "all 0.2s",
                     textAlign: "left",
-                    border: within30Minutes ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    border: within30Minutes
+                      ? "1px solid rgba(90, 61, 122, 0.3)"
+                      : "1px solid transparent",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                   onMouseEnter={(e) => {
                     if (!within30Minutes) {
@@ -873,7 +921,8 @@ export function MapFilters({
                   transition: "all 0.2s",
                   textAlign: "left",
                   border: rainSafe ? "1px solid rgba(90, 61, 122, 0.3)" : "1px solid transparent",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 onMouseEnter={(e) => {
                   if (!rainSafe) {
@@ -892,7 +941,7 @@ export function MapFilters({
           </div>
         </div>
       )}
-      
+
       {/* Resize handle - only on desktop, only when open */}
       {isOpen && isDesktop && (
         <div
@@ -935,4 +984,3 @@ export function MapFilters({
     </div>
   );
 }
-

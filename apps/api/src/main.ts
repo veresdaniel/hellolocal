@@ -27,10 +27,10 @@ async function bootstrap() {
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     : process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL.trim()] // Fallback: használjuk FRONTEND_URL-t ha CORS_ORIGIN nincs beállítva
-    : process.env.NODE_ENV === "production"
-    ? [] // Productionban NINCS default, kötelező beállítani CORS_ORIGIN vagy FRONTEND_URL!
-    : ["http://localhost:5173", "http://localhost:3000"]; // Dev default
+      ? [process.env.FRONTEND_URL.trim()] // Fallback: használjuk FRONTEND_URL-t ha CORS_ORIGIN nincs beállítva
+      : process.env.NODE_ENV === "production"
+        ? [] // Productionban NINCS default, kötelező beállítani CORS_ORIGIN vagy FRONTEND_URL!
+        : ["http://localhost:5173", "http://localhost:3000"]; // Dev default
 
   // Figyelmeztetés ha production módban nincs beállítva CORS_ORIGIN
   if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
@@ -44,7 +44,10 @@ async function bootstrap() {
   }
 
   // CORS origin validation function - dinamikusan ellenőrzi az origin-eket
-  const originValidator = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  const originValidator = (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
       return callback(null, true);
@@ -65,7 +68,11 @@ async function bootstrap() {
       // Support wildcard subdomains (e.g., *.render.com)
       if (allowedOrigin.startsWith("*.")) {
         const domain = allowedOrigin.substring(2);
-        return origin.endsWith(`.${domain}`) || origin === `https://${domain}` || origin === `http://${domain}`;
+        return (
+          origin.endsWith(`.${domain}`) ||
+          origin === `https://${domain}` ||
+          origin === `http://${domain}`
+        );
       }
       return false;
     });
@@ -73,7 +80,9 @@ async function bootstrap() {
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`❌ CORS blocked: Origin "${origin}" not in allowed list: [${allowedOrigins.join(", ")}]`);
+      console.warn(
+        `❌ CORS blocked: Origin "${origin}" not in allowed list: [${allowedOrigins.join(", ")}]`
+      );
       callback(null, false);
     }
   };

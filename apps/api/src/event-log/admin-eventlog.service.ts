@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 
@@ -115,8 +120,16 @@ export class AdminEventLogService {
     }
 
     // Ensure page and limit are numbers
-    const page = filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : 1;
-    const limit = filters.limit ? (typeof filters.limit === 'string' ? parseInt(filters.limit, 10) : filters.limit) : 50;
+    const page = filters.page
+      ? typeof filters.page === "string"
+        ? parseInt(filters.page, 10)
+        : filters.page
+      : 1;
+    const limit = filters.limit
+      ? typeof filters.limit === "string"
+        ? parseInt(filters.limit, 10)
+        : filters.limit
+      : 50;
     const skip = (page - 1) * limit;
 
     const [logs, total] = await Promise.all([
@@ -160,7 +173,11 @@ export class AdminEventLogService {
   /**
    * Export event logs to CSV format
    */
-  async exportToCsv(userRole: UserRole, userSiteIds: string[], filters: EventLogFilterDto): Promise<string> {
+  async exportToCsv(
+    userRole: UserRole,
+    userSiteIds: string[],
+    filters: EventLogFilterDto
+  ): Promise<string> {
     // Only superadmin and admin can export event logs
     if (userRole !== UserRole.superadmin && userRole !== UserRole.admin) {
       throw new ForbiddenException("Only superadmin and admin can export event logs");
@@ -259,7 +276,9 @@ export class AdminEventLogService {
 
     const csv = [
       headers.join(","),
-      ...rows.map((row: any[]) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+      ...rows.map((row: any[]) =>
+        row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      ),
     ].join("\n");
 
     return csv;
@@ -285,7 +304,9 @@ export class AdminEventLogService {
       if (userSiteIds.length > 0) {
         where.siteId = { in: userSiteIds };
       } else {
-        throw new BadRequestException("Cannot delete event logs: no site specified and user has no sites");
+        throw new BadRequestException(
+          "Cannot delete event logs: no site specified and user has no sites"
+        );
       }
     }
 
@@ -317,11 +338,19 @@ export class AdminEventLogService {
 
     // Count total matching records (before applying any page/limit)
     const totalMatching = await this.prisma.eventLog.count({ where });
-    
+
     // If no filters except site, don't allow deletion (safety measure)
-    const hasSpecificFilters = !!(filters.userId || filters.action || filters.entityType || filters.startDate || filters.endDate);
+    const hasSpecificFilters = !!(
+      filters.userId ||
+      filters.action ||
+      filters.entityType ||
+      filters.startDate ||
+      filters.endDate
+    );
     if (!hasSpecificFilters && totalMatching > 100) {
-      throw new BadRequestException(`Cannot delete ${totalMatching} event logs without specific filters. Please add filters to narrow down the deletion.`);
+      throw new BadRequestException(
+        `Cannot delete ${totalMatching} event logs without specific filters. Please add filters to narrow down the deletion.`
+      );
     }
 
     // Count before deletion for verification
@@ -378,7 +407,9 @@ export class AdminEventLogService {
 
     return {
       actions: actions.map((a: any) => a.action),
-      entityTypes: entityTypes.map((e: any) => e.entityType).filter((et: any): et is string => et !== null),
+      entityTypes: entityTypes
+        .map((e: any) => e.entityType)
+        .filter((et: any): et is string => et !== null),
     };
   }
 }

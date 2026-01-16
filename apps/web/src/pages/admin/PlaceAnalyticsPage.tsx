@@ -13,7 +13,7 @@ export function PlaceAnalyticsPage() {
   const navigate = useNavigate();
   const [placeName, setPlaceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  
+
   usePageTitle("admin.analyticsLabel");
 
   useEffect(() => {
@@ -21,7 +21,8 @@ export function PlaceAnalyticsPage() {
       getPlace(placeId)
         .then((place) => {
           const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-          const translation = place.translations.find((t) => t.lang === currentLang) || place.translations[0];
+          const translation =
+            place.translations.find((t) => t.lang === currentLang) || place.translations[0];
           setPlaceName(translation?.name || placeId);
           setIsLoading(false);
         })
@@ -43,7 +44,9 @@ export function PlaceAnalyticsPage() {
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
         title={`${placeName} ${t("admin.analyticsLabel") || "analitikája"}`}
-        subtitle={t("admin.dashboardCards.analyticsDesc") || "View place analytics, views, and CTA clicks"}
+        subtitle={
+          t("admin.dashboardCards.analyticsDesc") || "View place analytics, views, and CTA clicks"
+        }
         showNewButton={false}
         backTo={`/${lang || i18n.language || "hu"}/admin/places`}
       />

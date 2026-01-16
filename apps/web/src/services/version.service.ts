@@ -37,20 +37,22 @@ const FETCH_THROTTLE = 60 * 1000; // Max 1 request per minute
  */
 export async function fetchVersionInfo(forceRefresh = false): Promise<VersionInfo | null> {
   const now = Date.now();
-  
+
   // Return cached version if we fetched recently and not forcing refresh
-  if (!forceRefresh && cachedVersion && (now - lastFetchTime < FETCH_THROTTLE)) {
+  if (!forceRefresh && cachedVersion && now - lastFetchTime < FETCH_THROTTLE) {
     return cachedVersion;
   }
 
   try {
     // Only use cache-busting on first fetch or forced refresh
-    const cacheBust = forceRefresh || !cachedVersion ? `?t=${Date.now()}` : '';
+    const cacheBust = forceRefresh || !cachedVersion ? `?t=${Date.now()}` : "";
     const response = await fetch(`${VERSION_JSON_PATH}${cacheBust}`, {
-      cache: cachedVersion ? 'default' : 'no-store',
-      headers: cachedVersion ? {} : {
-        "Cache-Control": "no-cache",
-      },
+      cache: cachedVersion ? "default" : "no-store",
+      headers: cachedVersion
+        ? {}
+        : {
+            "Cache-Control": "no-cache",
+          },
     });
     if (!response.ok) {
       console.warn("[VersionService] Failed to fetch version.json:", response.status);
@@ -62,11 +64,11 @@ export async function fetchVersionInfo(forceRefresh = false): Promise<VersionInf
       buildHash: data.buildHash || "",
       timestamp: data.timestamp || Date.now(),
     };
-    
+
     // Cache the result
     cachedVersion = versionInfo;
     lastFetchTime = now;
-    
+
     return versionInfo;
   } catch (error) {
     console.warn("[VersionService] Error fetching version info:", error);
@@ -80,7 +82,7 @@ export async function fetchVersionInfo(forceRefresh = false): Promise<VersionInf
 export async function checkVersionChange(): Promise<boolean> {
   const storedVersion = getStoredVersion();
   const serverVersionInfo = await fetchVersionInfo();
-  
+
   if (!serverVersionInfo) {
     // If we can't fetch version, assume no change
     return false;
@@ -104,7 +106,6 @@ export async function checkVersionChange(): Promise<boolean> {
  * Clear all caches (localStorage, sessionStorage, service worker, browser cache)
  */
 export async function clearAllCaches(): Promise<void> {
-
   // Clear localStorage (except version and auth-related data)
   const keysToKeep = [
     VERSION_STORAGE_KEY,
@@ -127,9 +128,7 @@ export async function clearAllCaches(): Promise<void> {
   if ("caches" in window) {
     try {
       const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames.map((cacheName) => caches.delete(cacheName))
-      );
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
     } catch (error) {
       console.warn("[VersionService] Error clearing service worker caches:", error);
     }
@@ -139,9 +138,7 @@ export async function clearAllCaches(): Promise<void> {
   if ("serviceWorker" in navigator) {
     try {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(
-        registrations.map((registration) => registration.unregister())
-      );
+      await Promise.all(registrations.map((registration) => registration.unregister()));
     } catch (error) {
       console.warn("[VersionService] Error unregistering service workers:", error);
     }
@@ -161,13 +158,12 @@ export async function clearAllCaches(): Promise<void> {
  * Handle version update - clear caches and reload
  */
 export async function handleVersionUpdate(newVersion: string): Promise<void> {
-  
   // Store new version
   storeVersion(newVersion);
-  
+
   // Clear all caches
   await clearAllCaches();
-  
+
   // Reload the page after a short delay to allow toast to be visible
   setTimeout(() => {
     window.location.reload();

@@ -3,7 +3,13 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getEvent, getEventById, getPlatformSettings, getGallery, type PublicGallery } from "../api/places.api";
+import {
+  getEvent,
+  getEventById,
+  getPlatformSettings,
+  getGallery,
+  type PublicGallery,
+} from "../api/places.api";
 import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
@@ -39,9 +45,15 @@ export function EventDetailPage() {
 
   // Load event by entityId after slug resolution (stable, future-proof)
   // Only load if slug is resolved, not redirecting, and entity type is event
-  const shouldLoadEvent = resolveQ.data && !resolveQ.data.needsRedirect && resolveQ.data.entityType === "event";
+  const shouldLoadEvent =
+    resolveQ.data && !resolveQ.data.needsRedirect && resolveQ.data.entityType === "event";
 
-  const { data: event, isLoading, isError, error } = useQuery({
+  const {
+    data: event,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["event", resolveQ.data?.entityId, lang, siteKey],
     queryFn: () => {
       if (!resolveQ.data || !siteKey) throw new Error("Missing resolve data or siteKey");
@@ -118,7 +130,7 @@ export function EventDetailPage() {
   const [canEditEvent, setCanEditEvent] = useState(false);
   const [eventPlaceId, setEventPlaceId] = useState<string | null>(null);
   const [eventSiteId, setEventSiteId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (event?.placeId) {
       setEventPlaceId(event.placeId);
@@ -146,8 +158,13 @@ export function EventDetailPage() {
         // Check site-level role
         try {
           const siteMemberships = await getSiteMemberships(eventSiteId, user.id);
-          const siteMembership = siteMemberships.find(m => m.siteId === eventSiteId && m.userId === user.id);
-          if (siteMembership && (siteMembership.role === "siteadmin" || siteMembership.role === "editor")) {
+          const siteMembership = siteMemberships.find(
+            (m) => m.siteId === eventSiteId && m.userId === user.id
+          );
+          if (
+            siteMembership &&
+            (siteMembership.role === "siteadmin" || siteMembership.role === "editor")
+          ) {
             setCanEditEvent(true);
             return;
           }
@@ -158,8 +175,15 @@ export function EventDetailPage() {
         // Check place-level role (owner, manager, editor can edit events)
         try {
           const placeMemberships = await getPlaceMemberships(eventPlaceId, user.id);
-          const placeMembership = placeMemberships.find(m => m.placeId === eventPlaceId && m.userId === user.id);
-          if (placeMembership && (placeMembership.role === "owner" || placeMembership.role === "manager" || placeMembership.role === "editor")) {
+          const placeMembership = placeMemberships.find(
+            (m) => m.placeId === eventPlaceId && m.userId === user.id
+          );
+          if (
+            placeMembership &&
+            (placeMembership.role === "owner" ||
+              placeMembership.role === "manager" ||
+              placeMembership.role === "editor")
+          ) {
             setCanEditEvent(true);
             return;
           }
@@ -240,7 +264,7 @@ export function EventDetailPage() {
   useEffect(() => {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
-      
+
       // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
@@ -255,7 +279,7 @@ export function EventDetailPage() {
         img.style.margin = "16px auto";
         img.style.opacity = "0";
         img.style.transition = "opacity 0.3s ease-in-out";
-        
+
         if (!img.hasAttribute("loading")) {
           img.setAttribute("loading", "lazy");
         }
@@ -266,7 +290,7 @@ export function EventDetailPage() {
         wrapper.style.position = "relative";
         wrapper.style.width = "100%";
         wrapper.style.margin = "16px auto";
-        
+
         // Create skeleton
         const skeleton = document.createElement("div");
         skeleton.className = "image-skeleton";
@@ -277,29 +301,33 @@ export function EventDetailPage() {
         skeleton.style.backgroundSize = "200% 100%";
         skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
         skeleton.style.borderRadius = "4px";
-        
+
         // Insert wrapper before image
         img.parentNode?.insertBefore(wrapper, img);
         wrapper.appendChild(skeleton);
         wrapper.appendChild(img);
-        
+
         // Handle image load
         const handleLoad = () => {
           img.style.opacity = "1";
           skeleton.style.display = "none";
         };
-        
+
         if (img.complete) {
           handleLoad();
         } else {
           img.addEventListener("load", handleLoad, { once: true });
-          img.addEventListener("error", () => {
-            skeleton.style.display = "none";
-            img.style.opacity = "1";
-          }, { once: true });
+          img.addEventListener(
+            "error",
+            () => {
+              skeleton.style.display = "none";
+              img.style.opacity = "1";
+            },
+            { once: true }
+          );
         }
       });
-      
+
       // Make all videos responsive
       const videos = container.querySelectorAll("video");
       videos.forEach((video) => {
@@ -308,7 +336,7 @@ export function EventDetailPage() {
         video.style.display = "block";
         video.style.margin = "16px auto";
       });
-      
+
       // Make iframes responsive (for embedded videos)
       const iframes = container.querySelectorAll("iframe");
       iframes.forEach((iframe) => {
@@ -334,7 +362,7 @@ export function EventDetailPage() {
     };
 
     makeMediaResponsive(descriptionRef.current);
-    
+
     // Add skeleton animation CSS if not already added
     if (!document.getElementById("skeleton-animation-style")) {
       const style = document.createElement("style");
@@ -360,29 +388,35 @@ export function EventDetailPage() {
         description: platformSettings?.seoDescription || t("public.event.description"),
       };
     }
-    
+
     // Helper to extract first 2 sentences from HTML/text
     const getFirstSentences = (html: string | undefined, count: number = 2): string => {
       if (!html) return "";
       // Remove HTML tags
-      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      const text = html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       // Split by sentence endings (. ! ?)
       const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
       return sentences.slice(0, count).join(" ").trim();
     };
-    
+
     const eventImage = event.seo?.image || event.heroImage;
-    const fallbackDescription = 
-      getFirstSentences(event.description, 2) || 
-      getFirstSentences(event.shortDescription, 2) || 
-      event.shortDescription || 
-      event.description || 
+    const fallbackDescription =
+      getFirstSentences(event.description, 2) ||
+      getFirstSentences(event.shortDescription, 2) ||
+      event.shortDescription ||
+      event.description ||
       "";
-    
+
     // Helper to strip HTML
     const stripHtml = (html: string | null | undefined): string => {
       if (!html) return "";
-      return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      return html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     };
 
     const eventUrl = window.location.href;
@@ -411,7 +445,9 @@ export function EventDetailPage() {
         type: "Event" as const,
         data: {
           name: event.name,
-          description: stripHtml(event.seo?.description || event.description || event.shortDescription),
+          description: stripHtml(
+            event.seo?.description || event.description || event.shortDescription
+          ),
           image: eventImage,
           url: eventUrl,
           startDate,
@@ -449,11 +485,11 @@ export function EventDetailPage() {
       />
     );
   }
-  
+
   if (resolveQ.isLoading) {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
-  
+
   if (resolveQ.isError) {
     return (
       <ErrorState
@@ -463,7 +499,7 @@ export function EventDetailPage() {
       />
     );
   }
-  
+
   // Check if resolved entity type is event
   if (resolveQ.data && resolveQ.data.entityType !== "event") {
     return (
@@ -474,12 +510,12 @@ export function EventDetailPage() {
       />
     );
   }
-  
+
   // Show loading spinner while loading event
   if (isLoading) {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
-  
+
   if (isError) {
     return (
       <ErrorState
@@ -489,21 +525,18 @@ export function EventDetailPage() {
       />
     );
   }
-  
+
   if (!event) {
     return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.noEvents")}
-        variant="minimal"
-      />
+      <ErrorState title={t("error.notFound")} message={t("public.noEvents")} variant="minimal" />
     );
   }
 
   // Build edit URL if user can edit
-  const editUrl = canEditEvent && resolveQ.data?.entityId 
-    ? `/${lang}/admin/events?edit=${resolveQ.data.entityId}`
-    : undefined;
+  const editUrl =
+    canEditEvent && resolveQ.data?.entityId
+      ? `/${lang}/admin/events?edit=${resolveQ.data.entityId}`
+      : undefined;
 
   return (
     <>
@@ -599,15 +632,17 @@ export function EventDetailPage() {
 
               {/* Tags overlaid on image - bottom right */}
               {event.tags && event.tags.length > 0 && (
-                <div style={{ 
-                  position: "absolute", 
-                  bottom: 12,
-                  right: 12,
-                  display: "flex", 
-                  gap: 8, 
-                  flexWrap: "wrap",
-                  justifyContent: "flex-end",
-                }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 12,
+                    right: 12,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   {event.tags.map((tag) => (
                     <Badge
                       key={tag}
@@ -638,7 +673,8 @@ export function EventDetailPage() {
                 color: "#667eea",
                 textDecoration: "none",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 500,
                 transition: "color 0.2s",
               }}
@@ -660,7 +696,8 @@ export function EventDetailPage() {
                 margin: 0,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 color: "#1a1a1a",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.2,
@@ -677,10 +714,10 @@ export function EventDetailPage() {
           <div style={{ margin: "0 16px 24px" }}>
             {isAuthenticated ? (
               /* Interactive rating (if authenticated) with share icons */
-              <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
@@ -690,12 +727,27 @@ export function EventDetailPage() {
                   flexWrap: "wrap",
                 }}
               >
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: "200px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    flex: 1,
+                    minWidth: "200px",
+                  }}
+                >
                   <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
-                    {!myRating 
-                      ? (lang === "hu" ? "Értékeld az eseményt:" : lang === "en" ? "Rate this event:" : "Bewerten Sie diese Veranstaltung:")
-                      : (lang === "hu" ? "Módosítsd az értékelésed:" : lang === "en" ? "Update your rating:" : "Aktualisieren Sie Ihre Bewertung:")
-                    }
+                    {!myRating
+                      ? lang === "hu"
+                        ? "Értékeld az eseményt:"
+                        : lang === "en"
+                          ? "Rate this event:"
+                          : "Bewerten Sie diese Veranstaltung:"
+                      : lang === "hu"
+                        ? "Módosítsd az értékelésed:"
+                        : lang === "en"
+                          ? "Update your rating:"
+                          : "Aktualisieren Sie Ihre Bewertung:"}
                   </span>
                   <StarRating
                     avg={event.rating?.avg ?? null}
@@ -718,10 +770,10 @@ export function EventDetailPage() {
               </div>
             ) : (
               /* Read-only rating display (if not authenticated) with share icons */
-              <div 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
@@ -755,26 +807,26 @@ export function EventDetailPage() {
           {(() => {
             const hasOpeningHours = true; // Events always have date/time
             const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
-            
+
             // Show grid if we have opening hours or gallery
             if (!hasOpeningHours && !hasGallery) {
               return null;
             }
-            
+
             // Always two columns on desktop if we have gallery
             const shouldShowTwoColumns = hasGallery;
-            
+
             return (
-              <div 
+              <div
                 className="opening-hours-gallery-grid"
-                style={{ 
+                style={{
                   margin: "0 16px 24px",
                   display: "grid",
                   gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
                   gap: 12,
                 }}
               >
-              <style>{`
+                <style>{`
                 @media (max-width: 767px) {
                   .opening-hours-gallery-grid {
                     gridTemplateColumns: 1fr !important;
@@ -784,63 +836,80 @@ export function EventDetailPage() {
                   }
                 }
               `}</style>
-            {/* Opening Hours - Left */}
-            <div
-              style={{
-                background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                padding: "16px",
-                borderRadius: 12,
-                boxShadow: "0 4px 12px rgba(251, 191, 36, 0.2)",
-                color: "#1a1a1a",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: "clamp(18px, 3vw, 24px)",
-                  fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#1a1a1a",
-                  marginBottom: "clamp(12px, 2vw, 20px)",
-                  marginTop: 0,
-                }}
-              >
-                {t("public.openingHours")}
-              </h3>
-              <div style={{ 
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-              }}>
+                {/* Opening Hours - Left */}
                 <div
                   style={{
-                    background: "rgba(255, 255, 255, 0.9)",
-                    backdropFilter: "blur(10px)",
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                    background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                    padding: "16px",
+                    borderRadius: 12,
+                    boxShadow: "0 4px 12px rgba(251, 191, 36, 0.2)",
+                    color: "#1a1a1a",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  <strong style={{ color: "rgba(0, 0, 0, 0.7)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                    <span>📅</span>
-                    {lang === "hu" ? "Dátum és idő" : lang === "en" ? "Date and time" : "Datum und Uhrzeit"}
-                  </strong>
-                  <div style={{ color: "#1a1a1a", fontSize: "clamp(14px, 3.5vw, 16px)", lineHeight: 1.5, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 400 }}>
-                    {new Date(event.startDate).toLocaleDateString(
-                      lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )}
-                    {event.endDate && (
-                      <>
-                        {" - "}
-                        {new Date(event.endDate).toLocaleDateString(
+                  <h3
+                    style={{
+                      fontSize: "clamp(18px, 3vw, 24px)",
+                      fontWeight: 600,
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      color: "#1a1a1a",
+                      marginBottom: "clamp(12px, 2vw, 20px)",
+                      marginTop: 0,
+                    }}
+                  >
+                    {t("public.openingHours")}
+                  </h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.9)",
+                        backdropFilter: "blur(10px)",
+                        padding: "10px 12px",
+                        borderRadius: 8,
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color: "rgba(0, 0, 0, 0.7)",
+                          fontSize: 11,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          marginBottom: 6,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          fontWeight: 500,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        <span>📅</span>
+                        {lang === "hu"
+                          ? "Dátum és idő"
+                          : lang === "en"
+                            ? "Date and time"
+                            : "Datum und Uhrzeit"}
+                      </strong>
+                      <div
+                        style={{
+                          color: "#1a1a1a",
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          lineHeight: 1.5,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {new Date(event.startDate).toLocaleDateString(
                           lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
                           {
                             year: "numeric",
@@ -850,101 +919,133 @@ export function EventDetailPage() {
                             minute: "2-digit",
                           }
                         )}
-                      </>
+                        {event.endDate && (
+                          <>
+                            {" - "}
+                            {new Date(event.endDate).toLocaleDateString(
+                              lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {event.placeName && (
+                      <div
+                        style={{
+                          background: "rgba(255, 255, 255, 0.9)",
+                          backdropFilter: "blur(10px)",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          border: "1px solid rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            color: "rgba(0, 0, 0, 0.7)",
+                            fontSize: 11,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            marginBottom: 6,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            fontWeight: 500,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          <span>📍</span>
+                          {lang === "hu" ? "Helyszín" : lang === "en" ? "Location" : "Ort"}
+                        </strong>
+                        <Link
+                          to={buildUrl({
+                            lang: lang as "hu" | "en" | "de",
+                            siteKey,
+                            path: `place/${event.placeSlug}`,
+                          })}
+                          style={{
+                            color: "#1a1a1a",
+                            textDecoration: "none",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontWeight: 400,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            transition: "all 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.textDecoration = "underline";
+                            e.currentTarget.style.transform = "translateX(4px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.textDecoration = "none";
+                            e.currentTarget.style.transform = "translateX(0)";
+                          }}
+                        >
+                          {event.placeName}
+                          <span
+                            style={{
+                              fontSize: "clamp(13px, 3vw, 15px)",
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            }}
+                          >
+                            →
+                          </span>
+                        </Link>
+                      </div>
                     )}
                   </div>
                 </div>
-                {event.placeName && (
+
+                {/* Gallery - Right */}
+                {hasGallery ? (
                   <div
                     style={{
-                      background: "rgba(255, 255, 255, 0.9)",
-                      backdropFilter: "blur(10px)",
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid rgba(0, 0, 0, 0.1)",
+                      background: "white",
+                      padding: "12px",
+                      borderRadius: 12,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                      border: "1px solid rgba(251, 191, 36, 0.1)",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
+                    className="gallery-compact"
                   >
-                    <strong style={{ color: "rgba(0, 0, 0, 0.7)", fontSize: 11, display: "flex", alignItems: "center", gap: 6, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                      <span>📍</span>
-                      {lang === "hu" ? "Helyszín" : lang === "en" ? "Location" : "Ort"}
-                    </strong>
-                    <Link
-                      to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: `place/${event.placeSlug}` })}
-                      style={{
-                        color: "#1a1a1a",
-                        textDecoration: "none",
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontWeight: 400,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.textDecoration = "underline";
-                        e.currentTarget.style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.textDecoration = "none";
-                        e.currentTarget.style.transform = "translateX(0)";
-                      }}
-                    >
-                      {event.placeName}
-                      <span style={{ 
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}>→</span>
-                    </Link>
+                    {galleryIds.map((galleryId) => {
+                      const gallery = galleries[galleryId];
+                      if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                      return (
+                        <GalleryViewer
+                          key={galleryId}
+                          images={gallery.images}
+                          name={gallery.name}
+                          layout={gallery.layout}
+                          aspect={gallery.aspect}
+                          compact={true}
+                        />
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Gallery - Right */}
-            {hasGallery ? (
-              <div
-                style={{
-                  background: "white",
-                  padding: "12px",
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                  border: "1px solid rgba(251, 191, 36, 0.1)",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-                className="gallery-compact"
-              >
-                {galleryIds.map((galleryId) => {
-                  const gallery = galleries[galleryId];
-                  if (!gallery || !gallery.images || gallery.images.length === 0) return null;
-                  return (
-                    <GalleryViewer
-                      key={galleryId}
-                      images={gallery.images}
-                      name={gallery.name}
-                      layout={gallery.layout}
-                      aspect={gallery.aspect}
-                      compact={true}
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
+                ) : null}
               </div>
             );
           })()}
-            
+
           {/* Event Details */}
           <div style={{ margin: "0 16px 32px" }}>
             {event.category && (
               <div style={{ marginBottom: 16 }}>
-                <Badge
-                  variant="category"
-                  color="#667eea"
-                  size="medium"
-                  opacity={0.9}
-                >
+                <Badge variant="category" color="#667eea" size="medium" opacity={0.9}>
                   {event.category}
                 </Badge>
               </div>
@@ -957,7 +1058,8 @@ export function EventDetailPage() {
               style={{
                 fontSize: 18,
                 lineHeight: 1.8,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
                 color: "#333",
                 margin: "0 16px 32px",
@@ -974,7 +1076,8 @@ export function EventDetailPage() {
               style={{
                 fontSize: 16,
                 lineHeight: 1.8,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
                 color: "#555",
                 margin: "0 16px 32px",
@@ -986,8 +1089,7 @@ export function EventDetailPage() {
                 siteKey={siteKey!}
                 hideGalleries={
                   // Hide galleries in description if they're shown in opening hours position
-                  galleryIds.length > 0 && 
-                  Object.keys(galleries).length > 0
+                  galleryIds.length > 0 && Object.keys(galleries).length > 0
                 }
               />
             </div>
@@ -996,7 +1098,16 @@ export function EventDetailPage() {
           {/* Location */}
           {event.location && (
             <div style={{ margin: "0 16px 32px" }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginBottom: 16, color: "#1a1a1a" }}>
+              <h2
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  marginBottom: 16,
+                  color: "#1a1a1a",
+                }}
+              >
                 {t("public.location")}
               </h2>
               <div
@@ -1022,4 +1133,3 @@ export function EventDetailPage() {
     </>
   );
 }
-

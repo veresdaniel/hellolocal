@@ -34,7 +34,8 @@ export function DomainInput({
   const { t } = useTranslation();
   const hasError = !!error;
 
-  const defaultPlaceholder = t("admin.domainInput.placeholder") || "example.com (opcionális egyedi domain)";
+  const defaultPlaceholder =
+    t("admin.domainInput.placeholder") || "example.com (opcionális egyedi domain)";
 
   return (
     <div>
@@ -58,7 +59,8 @@ export function DomainInput({
             fontWeight: 600,
             fontSize: "clamp(14px, 3.5vw, 16px)",
             color: "#374151",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             userSelect: "none",
           }}
         >
@@ -70,7 +72,7 @@ export function DomainInput({
         value={checked ? value : ""}
         onChange={(e) => onChange(e.target.value)}
         disabled={!checked}
-        placeholder={checked ? (placeholder || defaultPlaceholder) : defaultPlaceholder}
+        placeholder={checked ? placeholder || defaultPlaceholder : defaultPlaceholder}
         required={required && checked}
         style={{
           width: "100%",
@@ -78,7 +80,8 @@ export function DomainInput({
           border: hasError ? "1px solid #dc3545" : "1px solid #d1d5db",
           borderRadius: 6,
           fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           backgroundColor: checked ? "white" : "#f3f4f6",
           color: checked ? "#111827" : "#9ca3af",
           cursor: checked ? "text" : "not-allowed",
@@ -97,24 +100,31 @@ export function DomainInput({
         }}
       />
       {error && (
-        <div style={{ 
-          color: "#dc3545", 
-          fontSize: 12, 
-          marginTop: 6,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        }}>
+        <div
+          style={{
+            color: "#dc3545",
+            fontSize: 12,
+            marginTop: 6,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {error}
         </div>
       )}
       {!error && !checked && (
-        <div style={{ 
-          color: "#6b7280", 
-          fontSize: 12, 
-          marginTop: 4,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontStyle: "italic",
-        }}>
-          {t("admin.domainInput.disabledHint") || "Kapcsold be a checkbox-ot az egyedi domain megadásához"}
+        <div
+          style={{
+            color: "#6b7280",
+            fontSize: 12,
+            marginTop: 4,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontStyle: "italic",
+          }}
+        >
+          {t("admin.domainInput.disabledHint") ||
+            "Kapcsold be a checkbox-ot az egyedi domain megadásához"}
         </div>
       )}
     </div>

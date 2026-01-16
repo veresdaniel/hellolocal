@@ -98,8 +98,8 @@ export function FloorplanSubscriptionModal({
   const handleSubscribe = async () => {
     // Check if there's already an active subscription before submitting
     const activeSub = subscriptions.find(
-      (s) => 
-        s.status === "active" && 
+      (s) =>
+        s.status === "active" &&
         s.featureKey === "FLOORPLANS" &&
         s.planKey === planKey &&
         s.scope === scope &&
@@ -108,7 +108,11 @@ export function FloorplanSubscriptionModal({
     );
 
     if (activeSub) {
-      showToast(t("admin.subscription.alreadySubscribed") || "Erre a funkcióra már előfizetett ebben a csomagban.", "warning");
+      showToast(
+        t("admin.subscription.alreadySubscribed") ||
+          "Erre a funkcióra már előfizetett ebben a csomagban.",
+        "warning"
+      );
       return;
     }
 
@@ -240,7 +244,15 @@ export function FloorplanSubscriptionModal({
                 filter: "blur(40px)",
               }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                   <span style={{ fontSize: 32 }}>📐</span>
@@ -249,7 +261,8 @@ export function FloorplanSubscriptionModal({
                       margin: 0,
                       fontSize: isMobile ? 22 : 28,
                       fontWeight: 700,
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       color: "white",
                     }}
                   >
@@ -261,10 +274,12 @@ export function FloorplanSubscriptionModal({
                     margin: 0,
                     fontSize: isMobile ? 14 : 16,
                     opacity: 0.9,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.floorplan.subscription.subtitle") || "Válassz egy csomagot és számlázási időszakot"}
+                  {t("admin.floorplan.subscription.subtitle") ||
+                    "Válassz egy csomagot és számlázási időszakot"}
                 </p>
               </div>
               <button
@@ -304,37 +319,53 @@ export function FloorplanSubscriptionModal({
             {isLoading ? (
               <div style={{ textAlign: "center", padding: 60, color: "#666" }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-                <div style={{ fontSize: 16, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("common.loading") || "Betöltés..."}
                 </div>
               </div>
             ) : activeSubscription ? (
               // If there's an active subscription, show message
-              <div style={{ 
-                textAlign: "center", 
-                padding: 60, 
-                color: "#374151",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 16,
-              }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: 60,
+                  color: "#374151",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
                 <div style={{ fontSize: 64 }}>✅</div>
-                <div style={{ 
-                  fontSize: 20, 
-                  fontWeight: 600,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#1a1a1a",
-                }}>
-                  {t("admin.subscription.alreadySubscribed") || "Erre a funkcióra már előfizetett ebben a csomagban."}
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    color: "#1a1a1a",
+                  }}
+                >
+                  {t("admin.subscription.alreadySubscribed") ||
+                    "Erre a funkcióra már előfizetett ebben a csomagban."}
                 </div>
-                <div style={{ 
-                  fontSize: 14,
-                  color: "#6b7280",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  marginTop: 8,
-                }}>
-                  {t("admin.subscription.activeSubscriptionInfo") || "Az aktív előfizetés részletei a fenti szekcióban láthatók."}
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: "#6b7280",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    marginTop: 8,
+                  }}
+                >
+                  {t("admin.subscription.activeSubscriptionInfo") ||
+                    "Az aktív előfizetés részletei a fenti szekcióban láthatók."}
                 </div>
                 <button
                   onClick={onClose}
@@ -348,7 +379,8 @@ export function FloorplanSubscriptionModal({
                     fontSize: 15,
                     fontWeight: 600,
                     cursor: "pointer",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s",
                   }}
                   onMouseEnter={(e) => {
@@ -374,7 +406,8 @@ export function FloorplanSubscriptionModal({
                       fontSize: 16,
                       fontWeight: 600,
                       color: "#1a1a1a",
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {t("admin.floorplan.subscription.scope") || "Hatály"}
@@ -384,7 +417,10 @@ export function FloorplanSubscriptionModal({
                       onClick={() => setScope("place")}
                       style={{
                         padding: 20,
-                        background: scope === "place" ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "white",
+                        background:
+                          scope === "place"
+                            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                            : "white",
                         color: scope === "place" ? "white" : "#374151",
                         border: `2px solid ${scope === "place" ? "transparent" : "#e5e7eb"}`,
                         borderRadius: 16,
@@ -392,9 +428,13 @@ export function FloorplanSubscriptionModal({
                         fontWeight: 600,
                         cursor: "pointer",
                         textAlign: "left",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s",
-                        boxShadow: scope === "place" ? "0 8px 20px rgba(0, 0, 0, 0.15)" : "0 2px 8px rgba(0, 0, 0, 0.05)",
+                        boxShadow:
+                          scope === "place"
+                            ? "0 8px 20px rgba(0, 0, 0, 0.15)"
+                            : "0 2px 8px rgba(0, 0, 0, 0.05)",
                         display: "flex",
                         alignItems: "center",
                         gap: 16,
@@ -423,7 +463,8 @@ export function FloorplanSubscriptionModal({
                             fontSize: 18,
                             fontWeight: 700,
                             marginBottom: 4,
-                            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
                           {t("admin.floorplan.subscription.thisPlace") || "Ez a hely"}
@@ -432,10 +473,12 @@ export function FloorplanSubscriptionModal({
                           style={{
                             fontSize: 14,
                             opacity: scope === "place" ? 0.9 : 0.6,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
-                          {t("admin.floorplan.subscription.thisPlaceDesc") || "Csak erre a helyre vonatkozik"}
+                          {t("admin.floorplan.subscription.thisPlaceDesc") ||
+                            "Csak erre a helyre vonatkozik"}
                         </div>
                       </div>
                       {scope === "place" && (
@@ -459,7 +502,10 @@ export function FloorplanSubscriptionModal({
                       onClick={() => setScope("site")}
                       style={{
                         padding: 20,
-                        background: scope === "site" ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "white",
+                        background:
+                          scope === "site"
+                            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                            : "white",
                         color: scope === "site" ? "white" : "#374151",
                         border: `2px solid ${scope === "site" ? "transparent" : "#e5e7eb"}`,
                         borderRadius: 16,
@@ -467,9 +513,13 @@ export function FloorplanSubscriptionModal({
                         fontWeight: 600,
                         cursor: "pointer",
                         textAlign: "left",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s",
-                        boxShadow: scope === "site" ? "0 8px 20px rgba(0, 0, 0, 0.15)" : "0 2px 8px rgba(0, 0, 0, 0.05)",
+                        boxShadow:
+                          scope === "site"
+                            ? "0 8px 20px rgba(0, 0, 0, 0.15)"
+                            : "0 2px 8px rgba(0, 0, 0, 0.05)",
                         display: "flex",
                         alignItems: "center",
                         gap: 16,
@@ -498,7 +548,8 @@ export function FloorplanSubscriptionModal({
                             fontSize: 18,
                             fontWeight: 700,
                             marginBottom: 4,
-                            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
                           {t("admin.floorplan.subscription.allPlaces") || "Összes hely"}
@@ -507,10 +558,12 @@ export function FloorplanSubscriptionModal({
                           style={{
                             fontSize: 14,
                             opacity: scope === "site" ? 0.9 : 0.6,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
-                          {t("admin.floorplan.subscription.allPlacesDesc") || "Az összes helyre vonatkozik, beleértve a később létrehozottakat is"}
+                          {t("admin.floorplan.subscription.allPlacesDesc") ||
+                            "Az összes helyre vonatkozik, beleértve a később létrehozottakat is"}
                         </div>
                       </div>
                       {scope === "site" && (
@@ -542,7 +595,8 @@ export function FloorplanSubscriptionModal({
                       fontSize: 16,
                       fontWeight: 600,
                       color: "#1a1a1a",
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {t("admin.floorplan.subscription.billingPeriod") || "Számlázási időszak"}
@@ -553,16 +607,23 @@ export function FloorplanSubscriptionModal({
                       style={{
                         flex: 1,
                         padding: 20,
-                        background: billingPeriod === "MONTHLY" ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "#f9fafb",
+                        background:
+                          billingPeriod === "MONTHLY"
+                            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                            : "#f9fafb",
                         color: billingPeriod === "MONTHLY" ? "white" : "#374151",
                         border: `2px solid ${billingPeriod === "MONTHLY" ? "#667eea" : "#e5e7eb"}`,
                         borderRadius: 12,
                         fontSize: 15,
                         fontWeight: 600,
                         cursor: "pointer",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s",
-                        boxShadow: billingPeriod === "MONTHLY" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none",
+                        boxShadow:
+                          billingPeriod === "MONTHLY"
+                            ? "0 4px 12px rgba(102, 126, 234, 0.3)"
+                            : "none",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -589,16 +650,23 @@ export function FloorplanSubscriptionModal({
                       style={{
                         flex: 1,
                         padding: 20,
-                        background: billingPeriod === "YEARLY" ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "#f9fafb",
+                        background:
+                          billingPeriod === "YEARLY"
+                            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                            : "#f9fafb",
                         color: billingPeriod === "YEARLY" ? "white" : "#374151",
                         border: `2px solid ${billingPeriod === "YEARLY" ? "#667eea" : "#e5e7eb"}`,
                         borderRadius: 12,
                         fontSize: 15,
                         fontWeight: 600,
                         cursor: "pointer",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s",
-                        boxShadow: billingPeriod === "YEARLY" ? "0 4px 12px rgba(102, 126, 234, 0.3)" : "none",
+                        boxShadow:
+                          billingPeriod === "YEARLY"
+                            ? "0 4px 12px rgba(102, 126, 234, 0.3)"
+                            : "none",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -657,7 +725,8 @@ export function FloorplanSubscriptionModal({
                     fontSize: 18,
                     fontWeight: 700,
                     cursor: isSubmitting ? "not-allowed" : "pointer",
-                    fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s",
                     boxShadow: isSubmitting ? "none" : "0 8px 20px rgba(102, 126, 234, 0.4)",
                     display: "flex",

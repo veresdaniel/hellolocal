@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (process.env.NODE_ENV === "production") {
         throw new Error(
           "JWT_SECRET must be set in production! " +
-            'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+            "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
         );
       }
       console.warn("⚠️  WARNING: JWT_SECRET not set, using weak default. Only for development!");
@@ -38,4 +38,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return user;
   }
 }
-

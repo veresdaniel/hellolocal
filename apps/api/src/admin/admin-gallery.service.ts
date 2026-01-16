@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RbacService } from "../auth/rbac.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
@@ -44,7 +49,14 @@ export class AdminGalleryService {
     private readonly entitlementsService: EntitlementsService
   ) {}
 
-  async findAll(userId: string, siteId: string, placeId?: string, eventId?: string, page?: number, limit?: number) {
+  async findAll(
+    userId: string,
+    siteId: string,
+    placeId?: string,
+    eventId?: string,
+    page?: number,
+    limit?: number
+  ) {
     // RBAC check
     await this.rbacService.checkSiteAccessWithUser(userId, siteId, ["siteadmin", "editor"]);
 
@@ -152,7 +164,7 @@ export class AdminGalleryService {
         name: dto.name ?? null,
         images: dto.images as any,
         layout: dto.layout ?? "grid",
-        columns: dto.columns as any ?? null,
+        columns: (dto.columns as any) ?? null,
         aspect: dto.aspect ?? "auto",
         isActive: dto.isActive ?? true,
       },

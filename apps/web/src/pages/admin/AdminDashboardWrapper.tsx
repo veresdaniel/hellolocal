@@ -16,12 +16,12 @@ export function AdminDashboardWrapper() {
   useEffect(() => {
     const currentUserId = user?.id || null;
     const currentUserRole = user?.role || null;
-    
+
     // Only update if user ID or role actually changed
     if (prevUserIdRef.current !== currentUserId || prevUserRoleRef.current !== currentUserRole) {
       prevUserIdRef.current = currentUserId;
       prevUserRoleRef.current = currentUserRole;
-      
+
       if (user) {
         setRenderKey((prev) => prev + 1);
       }

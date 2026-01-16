@@ -6,17 +6,17 @@ interface DraggableBoxProps {
   defaultPositionDesktop: { top: number; right: number };
   defaultPositionMobile: { top: number; right: number };
   localStorageKey: string;
-  
+
   // Appearance
   title: string;
   icon: string;
   isOpen: boolean;
   onToggle: () => void;
   minWidth?: number;
-  
+
   // Content
   children: ReactNode;
-  
+
   // Z-index control
   baseZIndex?: number;
   activeZIndex?: number;
@@ -39,7 +39,8 @@ export function DraggableBox({
     if (typeof window === "undefined") return false;
     return window.innerWidth < BREAKPOINTS.tablet;
   });
-  const isDesktop = typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  const isDesktop =
+    typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
 
   // Load saved position from localStorage with lazy initializer (device-specific)
   const [position, setPosition] = useState(() => {
@@ -55,7 +56,7 @@ export function DraggableBox({
     }
     return isDesktop ? defaultPositionDesktop : defaultPositionMobile;
   });
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -86,7 +87,7 @@ export function DraggableBox({
       setPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
   }, [isDesktop, localStorageKey, defaultPositionDesktop, defaultPositionMobile]);
-  
+
   // Save position to localStorage (device-specific)
   useEffect(() => {
     const deviceKey = isDesktop ? "desktop" : "mobile";
@@ -146,7 +147,9 @@ export function DraggableBox({
 
     const handleMouseMove = (e: MouseEvent) => {
       // Detect if we've actually moved (dragged)
-      const moved = Math.abs(e.clientX - dragStartPosRef.current.x) > 5 || Math.abs(e.clientY - dragStartPosRef.current.y) > 5;
+      const moved =
+        Math.abs(e.clientX - dragStartPosRef.current.x) > 5 ||
+        Math.abs(e.clientY - dragStartPosRef.current.y) > 5;
       if (moved) {
         setHasDragged(true);
       }
@@ -174,7 +177,9 @@ export function DraggableBox({
       const touch = e.touches[0];
 
       // Detect if we've actually moved (dragged)
-      const moved = Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 || Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
+      const moved =
+        Math.abs(touch.clientX - dragStartPosRef.current.x) > 5 ||
+        Math.abs(touch.clientY - dragStartPosRef.current.y) > 5;
       if (moved) {
         setHasDragged(true);
       }
@@ -245,12 +250,14 @@ export function DraggableBox({
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
-          e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
+          e.currentTarget.style.boxShadow =
+            "0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!isDragging) {
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
+          e.currentTarget.style.boxShadow =
+            "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)";
         }
       }}
     >
@@ -278,20 +285,25 @@ export function DraggableBox({
           borderRadius: isMobile && !isOpen ? 12 : 0,
         }}
       >
-        <h3 style={{ 
-          margin: 0, 
-          color: "white", 
-          fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-          fontWeight: 700,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: isMobile && !isOpen ? 0 : 8,
-          paddingLeft: 0,
-        }}>
+        <h3
+          style={{
+            margin: 0,
+            color: "white",
+            fontSize: isMobile && !isOpen ? 20 : "clamp(15px, 3.5vw, 16px)",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: isMobile && !isOpen ? 0 : 8,
+            paddingLeft: 0,
+          }}
+        >
           <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{icon}</span>
-          {(!isMobile || isOpen) && <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{title}</span>}
+          {(!isMobile || isOpen) && (
+            <span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{title}</span>
+          )}
         </h3>
         {(!isMobile || isOpen) && (
           <div

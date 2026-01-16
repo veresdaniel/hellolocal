@@ -34,7 +34,16 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 
 @Module({
-  imports: [PrismaModule, TwoFactorModule, NotificationsModule, EventLogModule, AuthModule, PlatformSettingsModule, forwardRef(() => EntitlementsModule), SiteModule],
+  imports: [
+    PrismaModule,
+    TwoFactorModule,
+    NotificationsModule,
+    EventLogModule,
+    AuthModule,
+    PlatformSettingsModule,
+    forwardRef(() => EntitlementsModule),
+    SiteModule,
+  ],
   controllers: [AdminController, GalleryPublicController],
   providers: [
     AdminCategoryService,
@@ -89,4 +98,3 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
   ],
 })
 export class AdminModule {}
-

@@ -9,7 +9,21 @@ import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { getPlaces, createPlace, updatePlace, deletePlace, getCategories, getTowns, getPriceBands, getTags, getPlaceMemberships, getSiteMemberships, getFloorplans, getPlaceFeatureSubscriptions, getFloorplanEntitlement } from "../../api/admin.api";
+import {
+  getPlaces,
+  createPlace,
+  updatePlace,
+  deletePlace,
+  getCategories,
+  getTowns,
+  getPriceBands,
+  getTags,
+  getPlaceMemberships,
+  getSiteMemberships,
+  getFloorplans,
+  getPlaceFeatureSubscriptions,
+  getFloorplanEntitlement,
+} from "../../api/admin.api";
 import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
@@ -17,7 +31,11 @@ import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { OpeningHoursEditor, type OpeningHour } from "../../components/OpeningHoursEditor";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
 import { FloorplanEditor } from "../../components/FloorplanEditor";
@@ -65,7 +83,17 @@ interface Place {
 }
 
 // Floorplan Section Component
-function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscription }: { placeId: string; siteId: string; refreshTrigger?: number; hasActiveSubscription?: boolean }) {
+function FloorplanSection({
+  placeId,
+  siteId,
+  refreshTrigger,
+  hasActiveSubscription,
+}: {
+  placeId: string;
+  siteId: string;
+  refreshTrigger?: number;
+  hasActiveSubscription?: boolean;
+}) {
   const [entitlement, setEntitlement] = useState<any>(null);
   const [floorplans, setFloorplans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,7 +110,7 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
     try {
       // If force refresh, add a small delay to ensure backend has processed the subscription
       if (forceRefresh) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
       // Try to get both entitlement and subscriptions to have a fallback
       const [ent, floorplanData, subscriptions] = await Promise.all([
@@ -102,7 +130,10 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
       ]);
       // Check if we have an active subscription as fallback
       const activeSub = (subscriptions || []).find(
-        (s) => s.status === "active" && s.featureKey === "FLOORPLANS" && (!s.currentPeriodEnd || new Date(s.currentPeriodEnd) > new Date())
+        (s) =>
+          s.status === "active" &&
+          s.featureKey === "FLOORPLANS" &&
+          (!s.currentPeriodEnd || new Date(s.currentPeriodEnd) > new Date())
       );
       // If entitlement API failed but we have active subscription, create a fallback entitlement
       if (!ent && activeSub) {
@@ -117,7 +148,7 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
       } else {
         setEntitlement(ent);
       }
-      
+
       setFloorplans(floorplanData || []);
     } catch (error) {
       console.error("Failed to load floorplan data:", error);
@@ -137,11 +168,11 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
   if (!entitlement && !hasActiveSubscription) {
     return null;
   }
-  
+
   if (entitlement && !entitlement.entitled && !hasActiveSubscription) {
     return null;
   }
-  
+
   // If we have active subscription but entitlement API failed, still show the editor
   if (hasActiveSubscription && (!entitlement || !entitlement.entitled)) {
   } else {
@@ -188,7 +219,9 @@ export function PlacesPage() {
     const params = new URLSearchParams(window.location.search);
     return params.get("new") === "true";
   });
-  const [currentPlaceRole, setCurrentPlaceRole] = useState<"owner" | "manager" | "editor" | null>(null);
+  const [currentPlaceRole, setCurrentPlaceRole] = useState<"owner" | "manager" | "editor" | null>(
+    null
+  );
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [formData, setFormData] = useState({
     categoryId: "",
@@ -251,7 +284,7 @@ export function PlacesPage() {
   useEffect(() => {
     if (selectedSiteId) {
       // Reset to first page when site changes
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
       loadData();
       checkSiteAdminRole();
     } else {
@@ -264,12 +297,14 @@ export function PlacesPage() {
     if (!selectedSiteId || !currentUser) return;
     try {
       const memberships = await getSiteMemberships(selectedSiteId, currentUser.id);
-      const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === currentUser.id);
+      const membership = memberships.find(
+        (m) => m.siteId === selectedSiteId && m.userId === currentUser.id
+      );
       setIsSiteAdmin(
-        membership?.role === "siteadmin" || 
-        isSuperadmin(currentUser.role) || 
-        isAdmin(currentUser.role as UserRole) || 
-        false
+        membership?.role === "siteadmin" ||
+          isSuperadmin(currentUser.role) ||
+          isAdmin(currentUser.role as UserRole) ||
+          false
       );
     } catch (err) {
       console.error("Failed to check site admin role", err);
@@ -284,8 +319,8 @@ export function PlacesPage() {
     }
     try {
       const data = await getPlaceMemberships(placeId, currentUser.id);
-      const membership = data.find(m => m.placeId === placeId && m.userId === currentUser.id);
-      setCurrentPlaceRole(membership?.role as "owner" | "manager" | "editor" | null || null);
+      const membership = data.find((m) => m.placeId === placeId && m.userId === currentUser.id);
+      setCurrentPlaceRole((membership?.role as "owner" | "manager" | "editor" | null) || null);
     } catch (err) {
       console.error("Failed to check place role", err);
       setCurrentPlaceRole(null);
@@ -331,17 +366,26 @@ export function PlacesPage() {
   const loadData = async () => {
     if (!selectedSiteId) return;
     try {
-      const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse] = await Promise.all([
-        getCategories(selectedSiteId),
-        getTowns(selectedSiteId),
-        getPriceBands(selectedSiteId),
-        getTags(selectedSiteId),
-      ]);
+      const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse] =
+        await Promise.all([
+          getCategories(selectedSiteId),
+          getTowns(selectedSiteId),
+          getPriceBands(selectedSiteId),
+          getTags(selectedSiteId),
+        ]);
       // Handle paginated responses (used in dropdowns, so we extract the array)
-      setCategories(Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.categories || []));
-      setTowns(Array.isArray(townsResponse) ? townsResponse : (townsResponse?.towns || []));
-      setPriceBands(Array.isArray(priceBandsResponse) ? priceBandsResponse : (priceBandsResponse?.priceBands || []));
-      setTags(Array.isArray(tagsResponse) ? tagsResponse : (tagsResponse?.tags || []));
+      setCategories(
+        Array.isArray(categoriesResponse)
+          ? categoriesResponse
+          : categoriesResponse?.categories || []
+      );
+      setTowns(Array.isArray(townsResponse) ? townsResponse : townsResponse?.towns || []);
+      setPriceBands(
+        Array.isArray(priceBandsResponse)
+          ? priceBandsResponse
+          : priceBandsResponse?.priceBands || []
+      );
+      setTags(Array.isArray(tagsResponse) ? tagsResponse : tagsResponse?.tags || []);
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
     }
@@ -356,7 +400,7 @@ export function PlacesPage() {
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
         setPlaces(response);
-        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+        setPagination((prev) => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setPlaces(response.places || []);
         const paginationData = response.pagination;
@@ -366,7 +410,7 @@ export function PlacesPage() {
           const limit = paginationData.limit || pagination.limit || 10;
           const calculatedTotalPages = Math.ceil(total / limit) || 1;
           const totalPages = paginationData.totalPages || calculatedTotalPages;
-          
+
           setPagination({
             page: paginationData.page || pagination.page || 1,
             limit,
@@ -378,7 +422,7 @@ export function PlacesPage() {
           const places = response.places || [];
           const total = places.length;
           const limit = pagination.limit;
-          setPagination(prev => ({
+          setPagination((prev) => ({
             ...prev,
             total,
             totalPages: Math.ceil(total / limit) || 1,
@@ -430,11 +474,11 @@ export function PlacesPage() {
           shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
           address: formData.addressHu || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityHu || null,
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
@@ -450,11 +494,11 @@ export function PlacesPage() {
           shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
           address: formData.addressEn || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityEn || null,
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
@@ -470,11 +514,11 @@ export function PlacesPage() {
           shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
           address: formData.addressDe || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        website: formData.website || null,
-        facebook: formData.facebook || null,
-        whatsapp: formData.whatsapp || null,
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
           accessibility: formData.accessibilityDe || null,
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
@@ -497,7 +541,9 @@ export function PlacesPage() {
         isActive: formData.isActive,
         plan: formData.plan,
         isFeatured: formData.isFeatured,
-        featuredUntil: formData.featuredUntil ? new Date(formData.featuredUntil).toISOString() : null,
+        featuredUntil: formData.featuredUntil
+          ? new Date(formData.featuredUntil).toISOString()
+          : null,
       });
       setIsCreating(false);
       resetForm();
@@ -505,7 +551,7 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeCreated"), "success");
-      
+
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
@@ -614,7 +660,9 @@ export function PlacesPage() {
           isActive: formData.isActive,
           plan: formData.plan,
           isFeatured: formData.isFeatured,
-          featuredUntil: formData.featuredUntil ? new Date(formData.featuredUntil).toISOString() : null,
+          featuredUntil: formData.featuredUntil
+            ? new Date(formData.featuredUntil).toISOString()
+            : null,
         },
         selectedSiteId || undefined
       );
@@ -624,7 +672,7 @@ export function PlacesPage() {
       // Notify global cache manager that places have changed
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeUpdated"), "success");
-      
+
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
@@ -639,7 +687,9 @@ export function PlacesPage() {
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: t("admin.confirmations.deletePlace") || "Delete Place",
-      message: t("admin.confirmations.deletePlace") || "Are you sure you want to delete this place? This action cannot be undone.",
+      message:
+        t("admin.confirmations.deletePlace") ||
+        "Are you sure you want to delete this place? This action cannot be undone.",
       confirmLabel: t("common.delete") || "Delete",
       cancelLabel: t("common.cancel") || "Cancel",
       confirmVariant: "danger",
@@ -712,7 +762,9 @@ export function PlacesPage() {
       isActive: place.isActive,
       plan: place.plan || "free",
       isFeatured: place.isFeatured || false,
-      featuredUntil: place.featuredUntil ? new Date(place.featuredUntil).toISOString().split('T')[0] : "",
+      featuredUntil: place.featuredUntil
+        ? new Date(place.featuredUntil).toISOString().split("T")[0]
+        : "",
     });
   };
 
@@ -774,7 +826,7 @@ export function PlacesPage() {
   useEffect(() => {
     // Check on mount and whenever searchParams change
     const shouldOpenNewForm = searchParams.get("new") === "true" && !isCreating && !editingId;
-    
+
     if (shouldOpenNewForm) {
       // Set creating state immediately, even if selectedSiteId is not yet loaded
       setIsCreating(true);
@@ -812,13 +864,13 @@ export function PlacesPage() {
   useEffect(() => {
     const currentPath = location.pathname;
     const previousPath = previousPathnameRef.current;
-    
+
     // Only reset if pathname actually changed AND we're no longer on places page
     if (currentPath !== previousPath) {
       previousPathnameRef.current = currentPath;
-      
+
       const isOnPlacesPage = currentPath.includes("/admin/places");
-      
+
       // Only reset if we're NOT on the places page AND we have edit state active
       if (!isOnPlacesPage && (editingId || isCreating)) {
         setEditingId(null);
@@ -829,15 +881,15 @@ export function PlacesPage() {
           townId: "",
           priceBandId: "",
           tagIds: [],
-    nameHu: "",
-    nameEn: "",
-    nameDe: "",
-    shortDescriptionHu: "",
-    shortDescriptionEn: "",
-    shortDescriptionDe: "",
-    descriptionHu: "",
-    descriptionEn: "",
-    descriptionDe: "",
+          nameHu: "",
+          nameEn: "",
+          nameDe: "",
+          shortDescriptionHu: "",
+          shortDescriptionEn: "",
+          shortDescriptionDe: "",
+          descriptionHu: "",
+          descriptionEn: "",
+          descriptionDe: "",
           addressHu: "",
           addressEn: "",
           addressDe: "",
@@ -906,12 +958,12 @@ export function PlacesPage() {
         }}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          
+
           // If we came from dashboard, navigate back to dashboard
           const fromParam = searchParams.get("from");
           if (fromParam === "dashboard") {
@@ -924,27 +976,38 @@ export function PlacesPage() {
       />
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-          border: "1px solid rgba(102, 126, 234, 0.1)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(18px, 4vw, 22px)",
-            fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Category, Town, PriceBand Row */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: 16,
+              }}
+            >
               <div>
                 <CategoryAutocomplete
                   categories={categories}
@@ -957,28 +1020,32 @@ export function PlacesPage() {
                 />
               </div>
               <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    color: "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.towns")}
                 </label>
                 <select
                   value={formData.townId}
                   onChange={(e) => setFormData({ ...formData, townId: e.target.value })}
-                  style={{ 
-                    width: "100%", 
+                  style={{
+                    width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
                     border: "2px solid #e0e7ff",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: "white",
                     cursor: "pointer",
                     boxSizing: "border-box",
@@ -1001,27 +1068,30 @@ export function PlacesPage() {
                 </select>
               </div>
               <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(13px, 3vw, 14px)",
-                }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    color: "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(13px, 3vw, 14px)",
+                  }}
+                >
                   {t("admin.priceBands")}
                 </label>
                 <select
                   value={formData.priceBandId}
                   onChange={(e) => setFormData({ ...formData, priceBandId: e.target.value })}
-                  style={{ 
-                    width: "100%", 
+                  style={{
+                    width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
                     border: "2px solid #e0e7ff",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     background: "white",
                     cursor: "pointer",
                     boxSizing: "border-box",
@@ -1054,666 +1124,762 @@ export function PlacesPage() {
               />
             </div>
 
-          <LanguageAwareForm>
-            {(selectedLang) => (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Name - only editable by owner/manager (affects slugs) */}
-                {canModifySeo() ? (
-                  <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: 8,
-                      color: ((selectedLang === "hu" && formErrors.nameHu) ||
-                              (selectedLang === "en" && formErrors.nameEn) ||
-                              (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#333",
-                      fontWeight: 600,
-                      fontSize: "clamp(13px, 3vw, 14px)",
-                    }}>
-                      {t("common.name")} ({selectedLang.toUpperCase()}) *
-                    </label>
-                    <input
-                      type="text"
+            <LanguageAwareForm>
+              {(selectedLang) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {/* Name - only editable by owner/manager (affects slugs) */}
+                  {canModifySeo() ? (
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: 8,
+                          color:
+                            (selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe)
+                              ? "#dc2626"
+                              : "#333",
+                          fontWeight: 600,
+                          fontSize: "clamp(13px, 3vw, 14px)",
+                        }}
+                      >
+                        {t("common.name")} ({selectedLang.toUpperCase()}) *
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          selectedLang === "hu"
+                            ? formData.nameHu
+                            : selectedLang === "en"
+                              ? formData.nameEn
+                              : formData.nameDe
+                        }
+                        onChange={(e) => {
+                          if (selectedLang === "hu")
+                            setFormData({ ...formData, nameHu: e.target.value });
+                          else if (selectedLang === "en")
+                            setFormData({ ...formData, nameEn: e.target.value });
+                          else setFormData({ ...formData, nameDe: e.target.value });
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px",
+                          fontSize: 15,
+                          border:
+                            (selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe)
+                              ? "2px solid #fca5a5"
+                              : "2px solid #e0e7ff",
+                          borderRadius: 8,
+                          outline: "none",
+                          transition: "all 0.3s ease",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          background:
+                            (selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe)
+                              ? "#fef2f2"
+                              : "white",
+                          boxSizing: "border-box",
+                        }}
+                        onFocus={(e) => {
+                          const hasError =
+                            (selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe);
+                          if (!hasError) {
+                            e.target.style.borderColor = "#667eea";
+                            e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const hasError =
+                            (selectedLang === "hu" && formErrors.nameHu) ||
+                            (selectedLang === "en" && formErrors.nameEn) ||
+                            (selectedLang === "de" && formErrors.nameDe);
+                          e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
+                          e.target.style.boxShadow = "none";
+                        }}
+                      />
+                      {((selectedLang === "hu" && formErrors.nameHu) ||
+                        (selectedLang === "en" && formErrors.nameEn) ||
+                        (selectedLang === "de" && formErrors.nameDe)) && (
+                        <div
+                          style={{
+                            color: "#dc2626",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            marginTop: 6,
+                            fontWeight: 500,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {selectedLang === "hu"
+                            ? formErrors.nameHu
+                            : selectedLang === "en"
+                              ? formErrors.nameEn
+                              : formErrors.nameDe}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: 12,
+                        background: "#f3f4f6",
+                        borderRadius: 8,
+                        color: "#6b7280",
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {t("common.name")}:{" "}
+                      {selectedLang === "hu"
+                        ? formData.nameHu
+                        : selectedLang === "en"
+                          ? formData.nameEn
+                          : formData.nameDe}
+                      <div
+                        style={{
+                          marginTop: 4,
+                          fontSize: "clamp(13px, 3vw, 15px)",
+                          fontStyle: "italic",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {t("admin.readOnlyEditor")}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Slug - right after Name */}
+                  {canModifySeo() ? (
+                    <SlugInput
                       value={
+                        selectedLang === "hu"
+                          ? formData.slugHu
+                          : selectedLang === "en"
+                            ? formData.slugEn
+                            : formData.slugDe
+                      }
+                      onChange={(value) => {
+                        if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
+                        else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
+                        else setFormData({ ...formData, slugDe: value });
+                      }}
+                      sourceName={
                         selectedLang === "hu"
                           ? formData.nameHu
                           : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe
+                            ? formData.nameEn
+                            : formData.nameDe
                       }
-                      onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
-                        else setFormData({ ...formData, nameDe: e.target.value });
+                      lang={selectedLang}
+                      label={t("admin.slug") || "Slug"}
+                      placeholder="auto-generated-from-name"
+                      error={
+                        selectedLang === "hu"
+                          ? formErrors.slugHu
+                          : selectedLang === "en"
+                            ? formErrors.slugEn
+                            : formErrors.slugDe
+                      }
+                    />
+                  ) : null}
+
+                  {/* Description - right after Slug */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>{t("common.description")}</label>
+                    <TipTapEditorWithUpload
+                      value={
+                        selectedLang === "hu"
+                          ? formData.descriptionHu
+                          : selectedLang === "en"
+                            ? formData.descriptionEn
+                            : formData.descriptionDe
+                      }
+                      onChange={(value) => {
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, descriptionHu: value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, descriptionEn: value });
+                        else setFormData({ ...formData, descriptionDe: value });
                       }}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border:
-                        ((selectedLang === "hu" && formErrors.nameHu) ||
-                        (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe))
-                          ? "2px solid #fca5a5"
-                          : "2px solid #e0e7ff",
-                      borderRadius: 8,
-                      outline: "none",
-                      transition: "all 0.3s ease",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      background: ((selectedLang === "hu" && formErrors.nameHu) ||
-                                   (selectedLang === "en" && formErrors.nameEn) ||
-                                   (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => {
-                      const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
-                                       (selectedLang === "en" && formErrors.nameEn) ||
-                                       (selectedLang === "de" && formErrors.nameDe);
-                      if (!hasError) {
-                        e.target.style.borderColor = "#667eea";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                      placeholder={t("common.description")}
+                      height={200}
+                      uploadFolder="editor/places"
+                    />
+                  </div>
+
+                  {/* Short Description - after Description */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>{t("admin.shortDescription")}</label>
+                    <TipTapEditorWithUpload
+                      value={
+                        selectedLang === "hu"
+                          ? formData.shortDescriptionHu
+                          : selectedLang === "en"
+                            ? formData.shortDescriptionEn
+                            : formData.shortDescriptionDe
                       }
-                    }}
-                    onBlur={(e) => {
-                      const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
-                                       (selectedLang === "en" && formErrors.nameEn) ||
-                                       (selectedLang === "de" && formErrors.nameDe);
-                      e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
-                      e.target.style.boxShadow = "none";
-                    }}
-                  />
-                  {((selectedLang === "hu" && formErrors.nameHu) ||
-                    (selectedLang === "en" && formErrors.nameEn) ||
-                    (selectedLang === "de" && formErrors.nameDe)) && (
-                    <div style={{ 
-                      color: "#dc2626", 
-                      fontSize: "clamp(14px, 3.5vw, 16px)", 
-                      marginTop: 6, 
-                      fontWeight: 500,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {selectedLang === "hu"
-                        ? formErrors.nameHu
-                        : selectedLang === "en"
-                        ? formErrors.nameEn
-                        : formErrors.nameDe}
+                      onChange={(value) => {
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, shortDescriptionHu: value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, shortDescriptionEn: value });
+                        else setFormData({ ...formData, shortDescriptionDe: value });
+                      }}
+                      placeholder={t("admin.shortDescriptionPlaceholder")}
+                      height={150}
+                      uploadFolder="editor/places"
+                    />
+                    <small
+                      style={{
+                        color: "#666",
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        marginTop: 4,
+                        display: "block",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {t("admin.shortDescriptionHint")}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>{t("common.openingHoursEditor")}</label>
+                    <OpeningHoursEditor
+                      value={formData.openingHours}
+                      onChange={(hours) => setFormData({ ...formData, openingHours: hours })}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>{t("public.accessibility")}</label>
+                    <TipTapEditorWithUpload
+                      value={
+                        selectedLang === "hu"
+                          ? formData.accessibilityHu
+                          : selectedLang === "en"
+                            ? formData.accessibilityEn
+                            : formData.accessibilityDe
+                      }
+                      onChange={(value) => {
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, accessibilityHu: value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, accessibilityEn: value });
+                        else setFormData({ ...formData, accessibilityDe: value });
+                      }}
+                      placeholder={t("public.accessibility")}
+                      height={150}
+                      uploadFolder="editor/places"
+                    />
+                  </div>
+
+                  {/* SEO Fields Section - only visible to owner/manager */}
+                  {canModifySeo() && (
+                    <div
+                      style={{
+                        marginTop: 24,
+                        padding: 16,
+                        background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                        borderRadius: 8,
+                        border: "1px solid #667eea30",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin: "0 0 16px 0",
+                          fontSize: "clamp(16px, 3.5vw, 18px)",
+                          fontWeight: 600,
+                          color: "#667eea",
+                          fontFamily:
+                            "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        🔍 SEO {t("admin.settings")}
+                      </h3>
+
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>SEO {t("common.title")}</label>
+                        <input
+                          type="text"
+                          value={
+                            selectedLang === "hu"
+                              ? formData.seoTitleHu
+                              : selectedLang === "en"
+                                ? formData.seoTitleEn
+                                : formData.seoTitleDe
+                          }
+                          onChange={(e) => {
+                            if (selectedLang === "hu")
+                              setFormData({ ...formData, seoTitleHu: e.target.value });
+                            else if (selectedLang === "en")
+                              setFormData({ ...formData, seoTitleEn: e.target.value });
+                            else setFormData({ ...formData, seoTitleDe: e.target.value });
+                          }}
+                          placeholder={t("admin.seoTitlePlaceholder")}
+                          style={{
+                            width: "100%",
+                            padding: 12,
+                            fontSize: "clamp(15px, 3.5vw, 16px)",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        />
+                        <small
+                          style={{
+                            color: "#666",
+                            fontSize: "clamp(13px, 3vw, 15px)",
+                            marginTop: 4,
+                            display: "block",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {t("admin.seoTitleHint")}
+                        </small>
+                      </div>
+
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>SEO {t("common.description")}</label>
+                        <textarea
+                          value={
+                            selectedLang === "hu"
+                              ? formData.seoDescriptionHu
+                              : selectedLang === "en"
+                                ? formData.seoDescriptionEn
+                                : formData.seoDescriptionDe
+                          }
+                          onChange={(e) => {
+                            if (selectedLang === "hu")
+                              setFormData({ ...formData, seoDescriptionHu: e.target.value });
+                            else if (selectedLang === "en")
+                              setFormData({ ...formData, seoDescriptionEn: e.target.value });
+                            else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                          }}
+                          placeholder={t("admin.seoDescriptionPlaceholder")}
+                          rows={3}
+                          style={{
+                            width: "100%",
+                            padding: 12,
+                            fontSize: "clamp(15px, 3.5vw, 16px)",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        />
+                        <small
+                          style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}
+                        >
+                          {t("admin.seoDescriptionHint")}
+                        </small>
+                      </div>
+
+                      <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>SEO {t("common.image")}</label>
+                        <input
+                          type="url"
+                          value={
+                            selectedLang === "hu"
+                              ? formData.seoImageHu
+                              : selectedLang === "en"
+                                ? formData.seoImageEn
+                                : formData.seoImageDe
+                          }
+                          onChange={(e) => {
+                            if (selectedLang === "hu")
+                              setFormData({ ...formData, seoImageHu: e.target.value });
+                            else if (selectedLang === "en")
+                              setFormData({ ...formData, seoImageEn: e.target.value });
+                            else setFormData({ ...formData, seoImageDe: e.target.value });
+                          }}
+                          placeholder={t("admin.seoImagePlaceholder")}
+                          style={{
+                            width: "100%",
+                            padding: 12,
+                            fontSize: "clamp(15px, 3.5vw, 16px)",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        />
+                        <small
+                          style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}
+                        >
+                          {t("admin.seoImageHint")}
+                        </small>
+                      </div>
+
+                      <div style={{ marginBottom: 0 }}>
+                        <label style={labelStyle}>{t("admin.seoKeywords")}</label>
+                        <input
+                          type="text"
+                          value={
+                            selectedLang === "hu"
+                              ? formData.seoKeywordsHu.join(", ")
+                              : selectedLang === "en"
+                                ? formData.seoKeywordsEn.join(", ")
+                                : formData.seoKeywordsDe.join(", ")
+                          }
+                          onChange={(e) => {
+                            const keywords = e.target.value
+                              .split(",")
+                              .map((k) => k.trim())
+                              .filter(Boolean);
+                            if (selectedLang === "hu")
+                              setFormData({ ...formData, seoKeywordsHu: keywords });
+                            else if (selectedLang === "en")
+                              setFormData({ ...formData, seoKeywordsEn: keywords });
+                            else setFormData({ ...formData, seoKeywordsDe: keywords });
+                          }}
+                          placeholder={t("admin.seoKeywordsPlaceholder")}
+                          style={{
+                            width: "100%",
+                            padding: 12,
+                            fontSize: "clamp(15px, 3.5vw, 16px)",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        />
+                        <small
+                          style={{
+                            color: "#666",
+                            fontSize: "clamp(13px, 3vw, 15px)",
+                            marginTop: 4,
+                            display: "block",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {t("admin.seoKeywordsHint")}
+                        </small>
+                      </div>
                     </div>
                   )}
-                  </div>
-                ) : (
-                  <div style={{ 
-                    padding: 12, 
-                    background: "#f3f4f6", 
-                    borderRadius: 8, 
-                    color: "#6b7280", 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {t("common.name")}: {selectedLang === "hu" ? formData.nameHu : selectedLang === "en" ? formData.nameEn : formData.nameDe}
-                    <div style={{ 
-                      marginTop: 4, 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      fontStyle: "italic",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {t("admin.readOnlyEditor")}
-                    </div>
-                  </div>
-                )}
+                </div>
+              )}
+            </LanguageAwareForm>
 
-                {/* Slug - right after Name */}
-                {canModifySeo() ? (
-                  <SlugInput
-                    value={
-                      selectedLang === "hu"
-                        ? formData.slugHu
-                        : selectedLang === "en"
-                        ? formData.slugEn
-                        : formData.slugDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
-                      else setFormData({ ...formData, slugDe: value });
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                gap: 16,
+                marginBottom: 16,
+              }}
+            >
+              {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>📱 {t("public.phone")}</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+36 30 123 4567"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
-                    sourceName={
-                      selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                        ? formData.nameEn
-                        : formData.nameDe
-                    }
-                    lang={selectedLang}
-                    label={t("admin.slug") || "Slug"}
-                    placeholder="auto-generated-from-name"
-                    error={
-                      selectedLang === "hu"
-                        ? formErrors.slugHu
-                        : selectedLang === "en"
-                        ? formErrors.slugEn
-                        : formErrors.slugDe
-                    }
-                  />
-                ) : null}
-
-                {/* Description - right after Slug */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("common.description")}</label>
-                  <TipTapEditorWithUpload
-                    value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
-                      else setFormData({ ...formData, descriptionDe: value });
-                    }}
-                    placeholder={t("common.description")}
-                    height={200}
-                    uploadFolder="editor/places"
                   />
                 </div>
-
-                {/* Short Description - after Description */}
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("admin.shortDescription")}</label>
-                  <TipTapEditorWithUpload
-                    value={
-                      selectedLang === "hu"
-                        ? formData.shortDescriptionHu
-                        : selectedLang === "en"
-                        ? formData.shortDescriptionEn
-                        : formData.shortDescriptionDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: value });
-                      else setFormData({ ...formData, shortDescriptionDe: value });
+                <div>
+                  <label style={labelStyle}>✉️ {t("public.email")}</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="info@example.com"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
-                    placeholder={t("admin.shortDescriptionPlaceholder")}
-                    height={150}
-                    uploadFolder="editor/places"
-                  />
-                  <small style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(13px, 3vw, 15px)", 
-                    marginTop: 4, 
-                    display: "block",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {t("admin.shortDescriptionHint")}
-                  </small>
-                </div>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("common.openingHoursEditor")}</label>
-                  <OpeningHoursEditor
-                    value={formData.openingHours}
-                    onChange={(hours) => setFormData({ ...formData, openingHours: hours })}
                   />
                 </div>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label style={labelStyle}>{t("public.accessibility")}</label>
-                  <TipTapEditorWithUpload
-                    value={
-                      selectedLang === "hu"
-                        ? formData.accessibilityHu
-                        : selectedLang === "en"
-                        ? formData.accessibilityEn
-                        : formData.accessibilityDe
-                    }
-                    onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, accessibilityHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, accessibilityEn: value });
-                      else setFormData({ ...formData, accessibilityDe: value });
+                <div>
+                  <label style={labelStyle}>🌐 {t("public.website")}</label>
+                  <input
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://example.com"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
-                    placeholder={t("public.accessibility")}
-                    height={150}
-                    uploadFolder="editor/places"
                   />
                 </div>
+                <div>
+                  <label style={labelStyle}>📘 Facebook</label>
+                  <input
+                    type="url"
+                    value={formData.facebook}
+                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                    placeholder="https://facebook.com/yourpage"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>💬 WhatsApp</label>
+                  <input
+                    type="text"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    placeholder="+36 30 123 4567"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+              </div>
 
-                {/* SEO Fields Section - only visible to owner/manager */}
-                {canModifySeo() && (
-                  <div style={{ 
-                    marginTop: 24, 
-                    padding: 16, 
-                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
-                    borderRadius: 8,
-                    border: "1px solid #667eea30"
-                  }}>
-                    <h3 style={{ 
-                      margin: "0 0 16px 0", 
-                      fontSize: "clamp(16px, 3.5vw, 18px)", 
-                      fontWeight: 600, 
-                      color: "#667eea", 
-                      fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      🔍 SEO {t("admin.settings")}
-                    </h3>
-                  
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={labelStyle}>SEO {t("common.title")}</label>
+              {/* Jobb oszlop: Térkép és koordináták */}
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 8 }}>
+                  {t("admin.location")} ({t("admin.coordinates")})
+                </label>
+                <div style={{ marginBottom: 16 }}>
+                  <MapComponent
+                    latitude={formData.lat ? parseFloat(formData.lat) : null}
+                    longitude={formData.lng ? parseFloat(formData.lng) : null}
+                    onLocationChange={(lat, lng) => {
+                      setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
+                    }}
+                    height={500}
+                    interactive={true}
+                    hideLocationButton={true}
+                  />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                      {t("admin.latitude")}
+                    </label>
                     <input
-                      type="text"
-                      value={
-                        selectedLang === "hu"
-                          ? formData.seoTitleHu
-                          : selectedLang === "en"
-                          ? formData.seoTitleEn
-                          : formData.seoTitleDe
-                      }
-                      onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoTitleHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoTitleEn: e.target.value });
-                        else setFormData({ ...formData, seoTitleDe: e.target.value });
-                      }}
-                      placeholder={t("admin.seoTitlePlaceholder")}
-                      style={{ 
-                        width: "100%", 
-                        padding: 12, 
-                        fontSize: "clamp(15px, 3.5vw, 16px)", 
-                        border: "1px solid #ddd", 
+                      type="number"
+                      step="any"
+                      value={formData.lat}
+                      onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                        border: "1px solid #ddd",
                         borderRadius: 4,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
+                      placeholder="47.4979"
                     />
-                    <small style={{ 
-                      color: "#666", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4, 
-                      display: "block",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {t("admin.seoTitleHint")}
-                    </small>
                   </div>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={labelStyle}>SEO {t("common.description")}</label>
-                    <textarea
-                      value={
-                        selectedLang === "hu"
-                          ? formData.seoDescriptionHu
-                          : selectedLang === "en"
-                          ? formData.seoDescriptionEn
-                          : formData.seoDescriptionDe
-                      }
-                      onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoDescriptionEn: e.target.value });
-                        else setFormData({ ...formData, seoDescriptionDe: e.target.value });
-                      }}
-                      placeholder={t("admin.seoDescriptionPlaceholder")}
-                      rows={3}
-                      style={{ 
-                        width: "100%", 
-                        padding: 12, 
-                        fontSize: "clamp(15px, 3.5vw, 16px)", 
-                        border: "1px solid #ddd", 
-                        borderRadius: 4,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoDescriptionHint")}
-                    </small>
-                  </div>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={labelStyle}>SEO {t("common.image")}</label>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                      {t("admin.longitude")}
+                    </label>
                     <input
-                      type="url"
-                      value={
-                        selectedLang === "hu"
-                          ? formData.seoImageHu
-                          : selectedLang === "en"
-                          ? formData.seoImageEn
-                          : formData.seoImageDe
-                      }
-                      onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, seoImageHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoImageEn: e.target.value });
-                        else setFormData({ ...formData, seoImageDe: e.target.value });
-                      }}
-                      placeholder={t("admin.seoImagePlaceholder")}
-                      style={{ 
-                        width: "100%", 
-                        padding: 12, 
-                        fontSize: "clamp(15px, 3.5vw, 16px)", 
-                        border: "1px solid #ddd", 
+                      type="number"
+                      step="any"
+                      value={formData.lng}
+                      onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                        border: "1px solid #ddd",
                         borderRadius: 4,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
+                      placeholder="19.0402"
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoImageHint")}
-                    </small>
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <div style={{ marginBottom: 0 }}>
-                    <label style={labelStyle}>{t("admin.seoKeywords")}</label>
-                    <input
-                      type="text"
-                      value={
-                        selectedLang === "hu"
-                          ? formData.seoKeywordsHu.join(", ")
-                          : selectedLang === "en"
-                          ? formData.seoKeywordsEn.join(", ")
-                          : formData.seoKeywordsDe.join(", ")
-                      }
-                      onChange={(e) => {
-                        const keywords = e.target.value.split(",").map(k => k.trim()).filter(Boolean);
-                        if (selectedLang === "hu") setFormData({ ...formData, seoKeywordsHu: keywords });
-                        else if (selectedLang === "en") setFormData({ ...formData, seoKeywordsEn: keywords });
-                        else setFormData({ ...formData, seoKeywordsDe: keywords });
-                      }}
-                      placeholder={t("admin.seoKeywordsPlaceholder")}
-                      style={{ 
-                        width: "100%", 
-                        padding: 12, 
-                        fontSize: "clamp(15px, 3.5vw, 16px)", 
-                        border: "1px solid #ddd", 
-                        borderRadius: 4,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    />
-                    <small style={{ 
-                      color: "#666", 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      marginTop: 4, 
-                      display: "block",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {t("admin.seoKeywordsHint")}
-                    </small>
+            {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
+            <div
+              style={{
+                marginBottom: 24,
+                padding: 20,
+                background: formData.isActive
+                  ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                  : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                border: "2px solid",
+                borderColor: formData.isActive ? "#10b981" : "#ef4444",
+                opacity: canModifyPublish() ? 1 : 0.7,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  cursor: canModifyPublish() ? "pointer" : "not-allowed",
+                  color: "white",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  disabled={!canModifyPublish()}
+                  onChange={(e) => {
+                    if (!canModifyPublish()) return;
+                    setFormData({ ...formData, isActive: e.target.checked });
+                  }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    cursor: canModifyPublish() ? "pointer" : "not-allowed",
+                    accentColor: "white",
+                    opacity: canModifyPublish() ? 1 : 0.6,
+                  }}
+                />
+                <div>
+                  <div
+                    style={{
+                      fontSize: "clamp(16px, 4vw, 20px)",
+                      fontWeight: 700,
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {formData.isActive ? t("admin.placeActive") : t("admin.placeInactive")}
                   </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      opacity: 0.9,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {formData.isActive
+                      ? t("admin.placeActiveDescription")
+                      : t("admin.placeInactiveDescription")}
                   </div>
-                )}
+                </div>
+              </label>
+            </div>
+
+            {/* Hero kép teljes szélességben */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>{t("admin.heroImageUrl")}</label>
+              <input
+                type="url"
+                value={formData.heroImage}
+                onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              />
+            </div>
+
+            {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
+            {editingId && (
+              <div style={{ marginBottom: 16 }}>
+                <PlaceBillingSection
+                  placeId={editingId}
+                  currentPlan={formData.plan}
+                  currentIsFeatured={formData.isFeatured}
+                  currentFeaturedUntil={formData.featuredUntil}
+                  siteId={selectedSiteId || ""}
+                  userRole={currentUser?.role || "viewer"}
+                  onPlanChange={async (newPlan) => {
+                    // Just update the form data - the PlaceBillingSection component
+                    // will handle the API call and update the subscription
+                    setFormData({ ...formData, plan: newPlan });
+                    // No need to reload the entire page or call updatePlace here
+                    // The subscription update is handled by PlaceBillingSection
+                  }}
+                  onFloorplanSubscriptionChange={() => {
+                    // Trigger refresh of FloorplanSection when subscription changes
+                    setFloorplanRefreshTrigger((prev) => prev + 1);
+                  }}
+                  onActiveFloorplanSubscriptionChange={(hasActive) => {
+                    setHasActiveFloorplanSubscription(hasActive);
+                    // Also trigger refresh when subscription status changes
+                    if (hasActive) {
+                      setFloorplanRefreshTrigger((prev) => prev + 1);
+                    }
+                  }}
+                />
               </div>
             )}
-          </LanguageAwareForm>
 
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <label style={labelStyle}>📱 {t("public.phone")}</label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+36 30 123 4567"
-                  style={{ 
-                    width: "100%", 
-                    padding: 12, 
-                    fontSize: "clamp(15px, 3.5vw, 16px)", 
-                    border: "1px solid #ddd", 
-                    borderRadius: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
+            {/* Floorplans section - separate block, only visible if entitled */}
+            {editingId && selectedSiteId && (
+              <div
+                style={{
+                  marginTop: 32,
+                  padding: "clamp(24px, 5vw, 32px)",
+                  background: "white",
+                  borderRadius: 16,
+                  boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+                  border: "1px solid rgba(102, 126, 234, 0.1)",
+                }}
+              >
+                <FloorplanSection
+                  placeId={editingId}
+                  siteId={selectedSiteId}
+                  refreshTrigger={floorplanRefreshTrigger}
+                  hasActiveSubscription={hasActiveFloorplanSubscription}
                 />
               </div>
-              <div>
-                <label style={labelStyle}>✉️ {t("public.email")}</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="info@example.com"
-                  style={{ 
-                    width: "100%", 
-                    padding: 12, 
-                    fontSize: "clamp(15px, 3.5vw, 16px)", 
-                    border: "1px solid #ddd", 
-                    borderRadius: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>🌐 {t("public.website")}</label>
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://example.com"
-                  style={{ 
-                    width: "100%", 
-                    padding: 12, 
-                    fontSize: "clamp(15px, 3.5vw, 16px)", 
-                    border: "1px solid #ddd", 
-                    borderRadius: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>📘 Facebook</label>
-                <input
-                  type="url"
-                  value={formData.facebook}
-                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                  placeholder="https://facebook.com/yourpage"
-                  style={{ 
-                    width: "100%", 
-                    padding: 12, 
-                    fontSize: "clamp(15px, 3.5vw, 16px)", 
-                    border: "1px solid #ddd", 
-                    borderRadius: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>💬 WhatsApp</label>
-                <input
-                  type="text"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                  placeholder="+36 30 123 4567"
-                  style={{ 
-                    width: "100%", 
-                    padding: 12, 
-                    fontSize: "clamp(15px, 3.5vw, 16px)", 
-                    border: "1px solid #ddd", 
-                    borderRadius: 4,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Jobb oszlop: Térkép és koordináták */}
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
-              <div style={{ marginBottom: 16 }}>
-                <MapComponent
-                  latitude={formData.lat ? parseFloat(formData.lat) : null}
-                  longitude={formData.lng ? parseFloat(formData.lng) : null}
-                  onLocationChange={(lat, lng) => {
-                    setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
-                  }}
-                  height={500}
-                  interactive={true}
-                  hideLocationButton={true}
-                />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>{t("admin.latitude")}</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={formData.lat}
-                    onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                    style={{ 
-                      width: "100%", 
-                      padding: 12, 
-                      fontSize: "clamp(15px, 3.5vw, 16px)", 
-                      border: "1px solid #ddd", 
-                      borderRadius: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                    placeholder="47.4979"
-                  />
-                </div>
-                <div>
-                  <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>{t("admin.longitude")}</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={formData.lng}
-                    onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                    style={{ 
-                      width: "100%", 
-                      padding: 12, 
-                      fontSize: "clamp(15px, 3.5vw, 16px)", 
-                      border: "1px solid #ddd", 
-                      borderRadius: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                    placeholder="19.0402"
-                  />
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-
-          {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
-          <div style={{ 
-            marginBottom: 24, 
-            padding: 20, 
-            background: formData.isActive 
-              ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
-              : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-            borderRadius: 12,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            border: "2px solid",
-            borderColor: formData.isActive ? "#10b981" : "#ef4444",
-            opacity: canModifyPublish() ? 1 : 0.7,
-          }}>
-            <label style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: 12, 
-              cursor: canModifyPublish() ? "pointer" : "not-allowed",
-              color: "white",
-            }}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                disabled={!canModifyPublish()}
-                onChange={(e) => {
-                  if (!canModifyPublish()) return;
-                  setFormData({ ...formData, isActive: e.target.checked });
-                }}
-                style={{ 
-                  width: 24, 
-                  height: 24, 
-                  cursor: canModifyPublish() ? "pointer" : "not-allowed",
-                  accentColor: "white",
-                  opacity: canModifyPublish() ? 1 : 0.6,
-                }}
-              />
-              <div>
-                <div style={{ 
-                  fontSize: "clamp(16px, 4vw, 20px)", 
-                  fontWeight: 700, 
-                  marginBottom: 4,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {formData.isActive 
-                    ? t("admin.placeActive")
-                    : t("admin.placeInactive")}
-                </div>
-                <div style={{ 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  opacity: 0.9,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {formData.isActive 
-                    ? t("admin.placeActiveDescription")
-                    : t("admin.placeInactiveDescription")}
-                </div>
-              </div>
-            </label>
-          </div>
-
-          {/* Hero kép teljes szélességben */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>{t("admin.heroImageUrl")}</label>
-            <input
-              type="url"
-              value={formData.heroImage}
-              onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-              style={{ 
-                width: "100%", 
-                padding: 12, 
-                fontSize: "clamp(15px, 3.5vw, 16px)", 
-                border: "1px solid #ddd", 
-                borderRadius: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            />
-          </div>
-
-          {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
-          {editingId && (
-            <div style={{ marginBottom: 16 }}>
-              <PlaceBillingSection
-                placeId={editingId}
-                currentPlan={formData.plan}
-                currentIsFeatured={formData.isFeatured}
-                currentFeaturedUntil={formData.featuredUntil}
-                siteId={selectedSiteId || ""}
-                userRole={currentUser?.role || "viewer"}
-                onPlanChange={async (newPlan) => {
-                  // Just update the form data - the PlaceBillingSection component
-                  // will handle the API call and update the subscription
-                  setFormData({ ...formData, plan: newPlan });
-                  // No need to reload the entire page or call updatePlace here
-                  // The subscription update is handled by PlaceBillingSection
-                }}
-                onFloorplanSubscriptionChange={() => {
-                  // Trigger refresh of FloorplanSection when subscription changes
-                  setFloorplanRefreshTrigger(prev => prev + 1);
-                }}
-                onActiveFloorplanSubscriptionChange={(hasActive) => {
-                  setHasActiveFloorplanSubscription(hasActive);
-                  // Also trigger refresh when subscription status changes
-                  if (hasActive) {
-                    setFloorplanRefreshTrigger(prev => prev + 1);
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {/* Floorplans section - separate block, only visible if entitled */}
-          {editingId && selectedSiteId && (
-            <div style={{ 
-              marginTop: 32,
-              padding: "clamp(24px, 5vw, 32px)", 
-              background: "white", 
-              borderRadius: 16, 
-              boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-              border: "1px solid rgba(102, 126, 234, 0.1)",
-            }}>
-              <FloorplanSection 
-                placeId={editingId} 
-                siteId={selectedSiteId} 
-                refreshTrigger={floorplanRefreshTrigger}
-                hasActiveSubscription={hasActiveFloorplanSubscription}
-              />
-            </div>
-          )}
-
-        </div>
         </div>
       )}
 
@@ -1725,17 +1891,20 @@ export function PlacesPage() {
           searchPlaceholder={t("admin.searchPlaceholders.places")}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setPagination(prev => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           filterFn={(place, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = place.translations.find((t) => t.lang === currentLang) || 
-                               place.translations.find((t) => t.lang === "hu");
-            const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
-                                       place.category.translations.find((t) => t.lang === "hu");
-            const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
-                                   place.town?.translations.find((t) => t.lang === "hu");
+            const translation =
+              place.translations.find((t) => t.lang === currentLang) ||
+              place.translations.find((t) => t.lang === "hu");
+            const categoryTranslation =
+              place.category.translations.find((t) => t.lang === currentLang) ||
+              place.category.translations.find((t) => t.lang === "hu");
+            const townTranslation =
+              place.town?.translations.find((t) => t.lang === currentLang) ||
+              place.town?.translations.find((t) => t.lang === "hu");
             return (
               translation?.name.toLowerCase().includes(lowerQuery) ||
               categoryTranslation?.name.toLowerCase().includes(lowerQuery) ||
@@ -1748,8 +1917,9 @@ export function PlacesPage() {
               label: t("common.name"),
               render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = place.translations.find((t) => t.lang === currentLang) || 
-                                   place.translations.find((t) => t.lang === "hu");
+                const translation =
+                  place.translations.find((t) => t.lang === currentLang) ||
+                  place.translations.find((t) => t.lang === "hu");
                 return translation?.name || "-";
               },
             },
@@ -1758,8 +1928,9 @@ export function PlacesPage() {
               label: t("admin.categories"),
               render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
-                                           place.category.translations.find((t) => t.lang === "hu");
+                const categoryTranslation =
+                  place.category.translations.find((t) => t.lang === currentLang) ||
+                  place.category.translations.find((t) => t.lang === "hu");
                 return categoryTranslation?.name || "-";
               },
             },
@@ -1768,34 +1939,40 @@ export function PlacesPage() {
               label: t("admin.towns"),
               render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
-                                       place.town?.translations.find((t) => t.lang === "hu");
+                const townTranslation =
+                  place.town?.translations.find((t) => t.lang === currentLang) ||
+                  place.town?.translations.find((t) => t.lang === "hu");
                 return townTranslation?.name || "-";
               },
             },
             // Only show status column if user has admin permissions (admin/superadmin/siteadmin)
             // Editor/viewer should not see isActive status
-            ...((currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin) ? [{
-              key: "status",
-              label: t("admin.table.status"),
-              render: (place) => (
-                <span
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 4,
-                    background: place.isActive
-                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                      : "#6c757d",
-                    color: "white",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {place.isActive ? t("common.active") : t("common.inactive")}
-                </span>
-              ),
-            }] : []),
+            ...(currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin
+              ? [
+                  {
+                    key: "status",
+                    label: t("admin.table.status"),
+                    render: (place) => (
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: 4,
+                          background: place.isActive
+                            ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                            : "#6c757d",
+                          color: "white",
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {place.isActive ? t("common.active") : t("common.inactive")}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
             {
               key: "priceList",
               label: t("admin.priceList"),
@@ -1815,7 +1992,8 @@ export function PlacesPage() {
                     cursor: "pointer",
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s ease",
                     boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
                   }}
@@ -1851,7 +2029,8 @@ export function PlacesPage() {
                     cursor: "pointer",
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s ease",
                     boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                     marginLeft: 8,
@@ -1872,14 +2051,16 @@ export function PlacesPage() {
           ]}
           cardTitle={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = place.translations.find((t) => t.lang === currentLang) || 
-                               place.translations.find((t) => t.lang === "hu");
+            const translation =
+              place.translations.find((t) => t.lang === currentLang) ||
+              place.translations.find((t) => t.lang === "hu");
             return translation?.name || "-";
           }}
           cardSubtitle={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const categoryTranslation = place.category.translations.find((t) => t.lang === currentLang) || 
-                                       place.category.translations.find((t) => t.lang === "hu");
+            const categoryTranslation =
+              place.category.translations.find((t) => t.lang === currentLang) ||
+              place.category.translations.find((t) => t.lang === "hu");
             return categoryTranslation?.name || "-";
           }}
           cardFields={[
@@ -1887,15 +2068,19 @@ export function PlacesPage() {
               key: "town",
               render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const townTranslation = place.town?.translations.find((t) => t.lang === currentLang) || 
-                                       place.town?.translations.find((t) => t.lang === "hu");
+                const townTranslation =
+                  place.town?.translations.find((t) => t.lang === currentLang) ||
+                  place.town?.translations.find((t) => t.lang === "hu");
                 return townTranslation ? (
-                  <div style={{ 
-                    color: "#666", 
-                    fontSize: "clamp(14px, 3.5vw, 16px)", 
-                    marginBottom: 8,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
+                  <div
+                    style={{
+                      color: "#666",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      marginBottom: 8,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {townTranslation.name}
                   </div>
                 ) : null;
@@ -1918,7 +2103,8 @@ export function PlacesPage() {
                     cursor: "pointer",
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     marginTop: 8,
                     boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
                     transition: "all 0.3s ease",
@@ -1940,17 +2126,19 @@ export function PlacesPage() {
               key: "view",
               render: (place) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = place.translations.find((t) => t.lang === currentLang) || 
-                                   place.translations.find((t) => t.lang === "hu");
+                const translation =
+                  place.translations.find((t) => t.lang === currentLang) ||
+                  place.translations.find((t) => t.lang === "hu");
                 const slug = translation?.slug || "";
-                const publicUrl = slug && currentSite?.slug 
-                  ? buildPublicUrl({
-                      lang: i18n.language || "hu",
-                      siteKey: currentSite.slug,
-                      entityType: "place",
-                      slug,
-                    })
-                  : null;
+                const publicUrl =
+                  slug && currentSite?.slug
+                    ? buildPublicUrl({
+                        lang: i18n.language || "hu",
+                        siteKey: currentSite.slug,
+                        entityType: "place",
+                        slug,
+                      })
+                    : null;
                 return publicUrl ? (
                   <button
                     onClick={(e) => {
@@ -1964,7 +2152,8 @@ export function PlacesPage() {
                       borderRadius: 8,
                       cursor: "pointer",
                       fontSize: "clamp(13px, 3vw, 15px)",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       marginTop: 8,
                       transition: "all 0.3s ease",
                       display: "flex",
@@ -2019,7 +2208,8 @@ export function PlacesPage() {
                     cursor: "pointer",
                     fontSize: "clamp(13px, 3vw, 15px)",
                     fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     marginTop: 8,
                     boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
                     transition: "all 0.3s ease",
@@ -2039,48 +2229,60 @@ export function PlacesPage() {
             },
             // Only show status field if user has admin permissions (admin/superadmin/siteadmin)
             // Editor/viewer should not see isActive status
-            ...((currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin) ? [{
-              key: "status",
-              render: (place) => (
-                <span
-                  style={{
-                    display: "inline-block",
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    background: place.isActive
-                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                      : "#6c757d",
-                    color: "white",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontWeight: 600,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {place.isActive ? t("common.active") : t("common.inactive")}
-                </span>
-              ),
-            }] : []),
+            ...(currentUser?.role === "superadmin" || currentUser?.role === "admin" || isSiteAdmin
+              ? [
+                  {
+                    key: "status",
+                    render: (place) => (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "6px 12px",
+                          borderRadius: 6,
+                          background: place.isActive
+                            ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                            : "#6c757d",
+                          color: "white",
+                          fontSize: "clamp(14px, 3.5vw, 16px)",
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {place.isActive ? t("common.active") : t("common.inactive")}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
           ]}
           onEdit={startEdit}
           onView={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = place.translations.find((t) => t.lang === currentLang) || 
-                               place.translations.find((t) => t.lang === "hu");
-            
+            const translation =
+              place.translations.find((t) => t.lang === currentLang) ||
+              place.translations.find((t) => t.lang === "hu");
+
             if (!translation) {
-              showToast(t("admin.errors.placeHasNoTranslation") || "A helynek nincs fordítása", "error");
+              showToast(
+                t("admin.errors.placeHasNoTranslation") || "A helynek nincs fordítása",
+                "error"
+              );
               return;
             }
-            
+
             if (!currentSite?.slug) {
-              showToast(t("admin.errors.siteNotSelected") || "Kérjük, válassz ki egy helyet először", "error");
+              showToast(
+                t("admin.errors.siteNotSelected") || "Kérjük, válassz ki egy helyet először",
+                "error"
+              );
               return;
             }
-            
+
             // Use slug if available, otherwise use place ID
             const slug = translation.slug;
             let publicUrl: string;
-            
+
             if (slug) {
               // Use slug-based URL (preferred)
               publicUrl = buildPublicUrl({
@@ -2099,7 +2301,7 @@ export function PlacesPage() {
                   .replace(/[\u0300-\u036f]/g, "")
                   .replace(/[^a-z0-9]+/g, "-")
                   .replace(/^-+|-+$/g, "");
-                
+
                 if (generatedSlug) {
                   publicUrl = buildPublicUrl({
                     lang: i18n.language || "hu",
@@ -2108,15 +2310,23 @@ export function PlacesPage() {
                     slug: generatedSlug,
                   });
                 } else {
-                  showToast(t("admin.errors.placeHasNoSlug") || "A helynek nincs slug-ja, nem lehet megnyitni", "error");
+                  showToast(
+                    t("admin.errors.placeHasNoSlug") ||
+                      "A helynek nincs slug-ja, nem lehet megnyitni",
+                    "error"
+                  );
                   return;
                 }
               } else {
-                showToast(t("admin.errors.placeHasNoSlug") || "A helynek nincs slug-ja, nem lehet megnyitni", "error");
+                showToast(
+                  t("admin.errors.placeHasNoSlug") ||
+                    "A helynek nincs slug-ja, nem lehet megnyitni",
+                  "error"
+                );
                 return;
               }
             }
-            
+
             window.open(publicUrl, "_blank");
           }}
           onDelete={(place) => {
@@ -2128,14 +2338,20 @@ export function PlacesPage() {
                 return;
               }
               // Superadmin and siteadmin can always delete
-              if (currentUser.role === "superadmin" || currentUser.role === "admin" || isSiteAdmin) {
+              if (
+                currentUser.role === "superadmin" ||
+                currentUser.role === "admin" ||
+                isSiteAdmin
+              ) {
                 handleDelete(place.id);
                 return;
               }
               // Check place role
               try {
                 const data = await getPlaceMemberships(place.id, currentUser.id);
-                const membership = data.find(m => m.placeId === place.id && m.userId === currentUser.id);
+                const membership = data.find(
+                  (m) => m.placeId === place.id && m.userId === currentUser.id
+                );
                 if (membership?.role === "owner") {
                   handleDelete(place.id);
                 } else {
@@ -2158,12 +2374,11 @@ export function PlacesPage() {
             totalPages={pagination.totalPages}
             total={pagination.total}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
           />
         </div>
       )}
     </div>
   );
 }
-

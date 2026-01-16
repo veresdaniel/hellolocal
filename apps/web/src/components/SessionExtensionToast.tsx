@@ -29,7 +29,7 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
       }
 
       try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        const payload = JSON.parse(atob(accessToken.split(".")[1]));
         const expiresAt = payload.exp * 1000;
         const now = Date.now();
         const remaining = Math.max(0, expiresAt - now);
@@ -59,7 +59,7 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
 
           const now = Date.now();
           const elapsed = now - lastUpdateTimeRef.current;
-          
+
           // Update every second when tab is visible
           if (elapsed >= TIMING.UI_UPDATE_INTERVAL_MS) {
             lastUpdateTimeRef.current = now;
@@ -94,7 +94,7 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
     intervalRef.current = window.setInterval(() => {
       const now = Date.now();
       const elapsed = now - lastUpdateTimeRef.current;
-      
+
       // Update every second
       if (elapsed >= 1000) {
         lastUpdateTimeRef.current = now;
@@ -124,7 +124,7 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
       const data = await refreshToken({ refreshToken: refreshTokenValue });
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      
+
       onExtend();
     } catch (error) {
       console.error("[SessionExtensionToast] Failed to extend session", error);
@@ -139,9 +139,9 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    
+
     if (minutes > 0) {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+      return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
     }
     return `${remainingSeconds}s`;
   };
@@ -180,43 +180,49 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
           }
         }
       `}</style>
-      
+
       <div style={{ display: "flex", alignItems: "flex-start", gap: "clamp(8px, 2vw, 12px)" }}>
-        <div style={{ 
-          fontSize: "clamp(20px, 5vw, 24px)",
-          lineHeight: 1,
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            fontSize: "clamp(20px, 5vw, 24px)",
+            lineHeight: 1,
+            flexShrink: 0,
+          }}
+        >
           ⏰
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ 
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontWeight: 600,
-            marginBottom: "clamp(4px, 1vw, 6px)",
-            lineHeight: 1.3,
-          }}>
+          <div
+            style={{
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+              fontWeight: 600,
+              marginBottom: "clamp(4px, 1vw, 6px)",
+              lineHeight: 1.3,
+            }}
+          >
             {t("admin.sessionExpiringSoon")}
           </div>
-          <div style={{ 
-            fontSize: "clamp(12px, 3vw, 14px)",
-            opacity: 0.95,
-            lineHeight: 1.4,
-          }}>
+          <div
+            style={{
+              fontSize: "clamp(12px, 3vw, 14px)",
+              opacity: 0.95,
+              lineHeight: 1.4,
+            }}
+          >
             {timeRemaining !== null && (
-              <span>
-                {t("admin.sessionTimeRemaining", { time: formatTime(timeRemaining) })}
-              </span>
+              <span>{t("admin.sessionTimeRemaining", { time: formatTime(timeRemaining) })}</span>
             )}
           </div>
         </div>
       </div>
 
-      <div style={{ 
-        display: "flex", 
-        gap: "clamp(8px, 2vw, 12px)",
-        flexWrap: "wrap",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "clamp(8px, 2vw, 12px)",
+          flexWrap: "wrap",
+        }}
+      >
         <button
           onClick={handleExtend}
           disabled={isExtending}
@@ -224,22 +230,17 @@ export function SessionExtensionToast({ onExtend, onDismiss }: SessionExtensionT
             flex: 1,
             minWidth: "clamp(120px, 30vw, 180px)",
             padding: "clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 24px)",
-            background: isExtending 
-              ? "rgba(255, 255, 255, 0.3)" 
-              : "white",
-            color: isExtending 
-              ? "rgba(255, 255, 255, 0.7)" 
-              : "#d97706",
+            background: isExtending ? "rgba(255, 255, 255, 0.3)" : "white",
+            color: isExtending ? "rgba(255, 255, 255, 0.7)" : "#d97706",
             border: "none",
             borderRadius: "clamp(6px, 1.5vw, 8px)",
             fontSize: "clamp(13px, 3.2vw, 15px)",
             fontWeight: 600,
             cursor: isExtending ? "not-allowed" : "pointer",
             transition: "all 0.2s ease",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            boxShadow: isExtending 
-              ? "none" 
-              : "0 2px 8px rgba(0, 0, 0, 0.2)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            boxShadow: isExtending ? "none" : "0 2px 8px rgba(0, 0, 0, 0.2)",
           }}
           onMouseEnter={(e) => {
             if (!isExtending) {

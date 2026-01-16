@@ -3,10 +3,10 @@ import { ResolveService } from "./resolve.service";
 
 /**
  * Controller for the general resolver endpoint.
- * 
+ *
  * This endpoint provides a unified way to resolve site keys and slugs
  * to entity information, including canonical URL information for redirects.
- * 
+ *
  * Route: GET /api/public/:lang/:siteKey/resolve/:slug
  */
 @Controller("/api/public/:lang/:siteKey/resolve")

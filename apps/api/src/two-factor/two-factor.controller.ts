@@ -1,4 +1,15 @@
-import { Body, Controller, Post, UseGuards, HttpCode, HttpStatus, Get, Query, UnauthorizedException, BadRequestException } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Get,
+  Query,
+  UnauthorizedException,
+  BadRequestException,
+} from "@nestjs/common";
 import { TwoFactorService } from "./two-factor.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -38,9 +49,10 @@ export class TwoFactorController {
   async setupTwoFactor(@CurrentUser() user: any, @Body() dto: SetupTwoFactorDto) {
     // If userId is provided and user is admin/superadmin, allow setting up for other users
     // The user object from JWT strategy contains 'id' field, not 'sub'
-    const targetUserId = dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin) 
-      ? dto.userId 
-      : user?.id || user?.sub;
+    const targetUserId =
+      dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
+        ? dto.userId
+        : user?.id || user?.sub;
 
     if (!targetUserId) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
@@ -58,9 +70,10 @@ export class TwoFactorController {
   async verifyAndEnableTwoFactor(@CurrentUser() user: any, @Body() dto: VerifyTwoFactorDto) {
     // If userId is provided and user is admin/superadmin, allow verifying for other users
     // The user object from JWT strategy contains 'id' field, not 'sub'
-    const targetUserId = dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
-      ? dto.userId
-      : user?.id || user?.sub;
+    const targetUserId =
+      dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
+        ? dto.userId
+        : user?.id || user?.sub;
 
     if (!targetUserId) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
@@ -78,14 +91,18 @@ export class TwoFactorController {
   async disableTwoFactor(@CurrentUser() user: any, @Body() dto: DisableTwoFactorDto) {
     // If userId is not provided, use current user's ID
     const targetUserId = dto.userId || user?.id || user?.sub;
-    
+
     if (!targetUserId) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
 
     // Users can only disable their own 2FA, admins can disable for any user
     const currentUserId = user?.id || user?.sub;
-    if (currentUserId !== targetUserId && user.role !== UserRole.admin && user.role !== UserRole.superadmin) {
+    if (
+      currentUserId !== targetUserId &&
+      user.role !== UserRole.admin &&
+      user.role !== UserRole.superadmin
+    ) {
       throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_DISABLE_OWN_2FA);
     }
 
@@ -103,9 +120,10 @@ export class TwoFactorController {
     try {
       // If userId is provided and user is admin/superadmin, allow checking for other users
       // The user object from JWT strategy contains 'id' field, not 'sub'
-      const targetUserId = userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
-        ? userId
-        : user?.id || user?.sub;
+      const targetUserId =
+        userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
+          ? userId
+          : user?.id || user?.sub;
 
       if (!targetUserId) {
         return { isEnabled: false };
@@ -121,4 +139,3 @@ export class TwoFactorController {
     }
   }
 }
-

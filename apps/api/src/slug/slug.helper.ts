@@ -9,4 +9,3 @@ export function generateSlug(text: string): string {
     .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
     .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 }
-

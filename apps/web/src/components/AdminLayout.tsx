@@ -14,7 +14,13 @@ import { ToastContainer } from "./Toast";
 import { VersionDisplay } from "./VersionDisplay";
 import { Link, useLocation, useParams, useNavigation, useNavigate } from "react-router-dom";
 import { buildUrl } from "../app/urls";
-import { APP_LANGS, DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
+import {
+  APP_LANGS,
+  DEFAULT_LANG,
+  HAS_MULTIPLE_SITES,
+  DEFAULT_SITE_SLUG,
+  type Lang,
+} from "../app/config";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPlatformSettings } from "../api/places.api";
 import { AdminPageSkeleton } from "./AdminPageSkeleton";
@@ -32,7 +38,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   // Track if component is unmounting to prevent hook errors during logout/navigation
   const isUnmountingRef = useRef(false);
-  
+
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -40,21 +46,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navigation = useNavigation();
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
-  
+
   // Track previous location to detect route changes
   const [previousLocation, setPreviousLocation] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  
+
   // Set unmounting flag on unmount
   useEffect(() => {
     return () => {
       isUnmountingRef.current = true;
     };
   }, []);
-  
+
   // Get language from URL or use current i18n language or default
-  const lang: Lang = isLang(langParam) ? langParam : (isLang(i18n.language) ? i18n.language : DEFAULT_LANG);
-  
+  const lang: Lang = isLang(langParam)
+    ? langParam
+    : isLang(i18n.language)
+      ? i18n.language
+      : DEFAULT_LANG;
+
   // Initialize previous location on mount (only once)
   useEffect(() => {
     if (isUnmountingRef.current) return;
@@ -62,21 +72,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       setPreviousLocation(location.pathname);
     }
   }, [location.pathname, previousLocation]);
-  
+
   // Detect route changes and show skeleton during navigation
   useEffect(() => {
     if (isUnmountingRef.current) return;
-    
+
     // Skip if previousLocation is not initialized yet
     if (previousLocation === null) {
       return;
     }
-    
+
     // Only show skeleton for admin route changes (not for initial load)
-    if (location.pathname !== previousLocation && previousLocation.includes("/admin") && location.pathname.includes("/admin")) {
+    if (
+      location.pathname !== previousLocation &&
+      previousLocation.includes("/admin") &&
+      location.pathname.includes("/admin")
+    ) {
       setIsNavigating(true);
       setPreviousLocation(location.pathname);
-      
+
       // Safety timeout: reset isNavigating after 2 seconds if it's still true
       // This prevents the skeleton from getting stuck
       const safetyTimer = setTimeout(() => {
@@ -84,7 +98,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           setIsNavigating(false);
         }
       }, 2000);
-      
+
       return () => clearTimeout(safetyTimer);
     } else if (location.pathname !== previousLocation) {
       // Update previous location even if not showing skeleton
@@ -95,10 +109,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       }
     }
   }, [location.pathname, previousLocation]);
-  
+
   // Check navigation state from React Router and reset isNavigating when navigation completes
   const isNavigationPending = navigation?.state === "loading" || navigation?.state === "submitting";
-  
+
   // Reset isNavigating when navigation completes
   useEffect(() => {
     if (isUnmountingRef.current) return;
@@ -112,31 +126,31 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       return () => clearTimeout(timer);
     }
   }, [navigation?.state, isNavigating]);
-  
+
   // Use useContext directly to avoid throwing error if AuthContext is not available
   const authContext = useContext(AuthContext);
-  
+
   // IMPORTANT: All hooks must be called before any conditional returns
   // This ensures React hooks are called in the same order every render
   // Initialize global cache management for all admin pages
   useAdminCache();
   // Version check - will check for updates and show toast if new version available
   useVersionCheck();
-  
+
   // Get selected site from AdminSiteContext
   const siteContext = useContext(AdminSiteContext);
   const selectedSiteId = siteContext?.selectedSiteId;
   const sites = siteContext?.sites ?? [];
   const siteError = siteContext?.error ?? null;
   const currentSite = sites.find((s) => s.id === selectedSiteId);
-  
+
   // Determine site slug: use current site slug if available, otherwise undefined
   // Don't use DEFAULT_SITE_SLUG in multi-site mode as it may not exist
   const siteSlug = currentSite?.slug;
-  
+
   const { showWarning, secondsRemaining } = useSessionWarning();
   const queryClient = useQueryClient();
-  
+
   // Load site name and brand badge icon from settings
   // IMPORTANT: This hook must be called before any conditional returns
   const { data: platformSettings } = useQuery({
@@ -145,11 +159,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     enabled: !!siteSlug && !siteContext?.isLoading, // Only fetch if we have a valid site slug and sites are loaded
   });
-  
+
   // Listen for site settings changes
   useEffect(() => {
     if (isUnmountingRef.current) return;
-    
+
     const handlePlatformSettingsChanged = () => {
       if (isUnmountingRef.current) return;
       queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteSlug] });
@@ -165,7 +179,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Check screen size for responsive behavior
   useEffect(() => {
     if (isUnmountingRef.current) return;
-    
+
     const checkScreenSize = () => {
       if (isUnmountingRef.current) return;
       setIsMobile(window.innerWidth < 768);
@@ -173,7 +187,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         setIsMobileMenuOpen(false);
       }
     };
-    
+
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -193,7 +207,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     if (isUnmountingRef.current) return;
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
-  
+
   // Now we can check conditions after all hooks are called
   if (!authContext) {
     // If AuthContext is not available, show error or redirect
@@ -223,17 +237,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Note: ProtectedRoute already handles authentication, so we don't need to check for user here
   if (isLoading) {
     return (
-      <div style={{ 
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }} />
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        }}
+      />
     );
   }
 
   const handleLogout = async () => {
     // Mark component as unmounting to prevent hook errors
     isUnmountingRef.current = true;
-    
+
     // Store current language before logout
     const currentLang = lang;
     localStorage.setItem("logoutRedirectLang", currentLang);
@@ -241,12 +257,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const isActive = (path: string) => location.pathname === path;
-  
+
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
-  
+
   // Build public page path based on selected site
-  const publicPagePath = currentSite 
+  const publicPagePath = currentSite
     ? buildUrl({ siteKey: currentSite.slug, lang, path: "" })
     : buildUrl({ siteKey: DEFAULT_SITE_SLUG, lang, path: "" });
 
@@ -254,7 +270,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navLinks: Array<{ path: string; label: string; icon: string; color: string }> = [];
 
   return (
-    <div className="admin-layout" style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", margin: 0, padding: 0, width: "100%", boxSizing: "border-box", overflowX: "hidden", overflowY: "auto" }}>
+    <div
+      className="admin-layout"
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        margin: 0,
+        padding: 0,
+        width: "100%",
+        boxSizing: "border-box",
+        overflowX: "hidden",
+        overflowY: "auto",
+      }}
+    >
       <style>{`
         body {
           margin: 0 !important;
@@ -285,7 +313,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           }
         }
       `}</style>
-      
+
       {/* Header */}
       <nav
         style={{
@@ -300,9 +328,24 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           pointerEvents: "auto",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", alignSelf: "stretch" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            alignSelf: "stretch",
+          }}
+        >
           {/* Left section - Logo and Nav Links (Desktop) */}
-          <div style={{ display: "flex", gap: "clamp(16px, 4vw, 32px)", alignItems: "center", flex: 1, alignSelf: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "clamp(16px, 4vw, 32px)",
+              alignItems: "center",
+              flex: 1,
+              alignSelf: "center",
+            }}
+          >
             <Link
               to={adminPath("")}
               style={{
@@ -317,42 +360,53 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 zIndex: 1002,
               }}
               title={t("admin.dashboard")}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              <span style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: "-0.02em" }}>
+              <span
+                style={{
+                  fontSize: "clamp(18px, 3vw, 22px)",
+                  fontWeight: 700,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 {t("admin.header.title") || "Adminisztrációs felület"}
               </span>
             </Link>
             {/* Note: Dynamic logo/siteName removed - always show fixed "Adminisztrációs felület" title in admin */}
             {/* Public pages (FloatingHeader, Header) still use dynamic logo from platformSettings */}
-            
+
             {/* Desktop Navigation - Tile Menu */}
             {!isMobile && (
-              <div style={{ 
-                display: "flex", 
-                gap: 8, 
-                flexWrap: "nowrap", 
-                alignItems: "center", 
-                pointerEvents: "auto", 
-                position: "relative", 
-                zIndex: 1001,
-                alignSelf: "center",
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "nowrap",
+                  alignItems: "center",
+                  pointerEvents: "auto",
+                  position: "relative",
+                  zIndex: 1001,
+                  alignSelf: "center",
+                }}
+              >
                 {navLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={adminPath(link.path)}
                     style={{
                       textDecoration: "none",
-                      color: isActive(adminPath(link.path)) ? (link.color || "#667eea") : "#666",
+                      color: isActive(adminPath(link.path)) ? link.color || "#667eea" : "#666",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       padding: "8px 14px",
                       borderRadius: 8,
-                      background: isActive(adminPath(link.path)) 
-                        ? `${link.color || "#667eea"}15` 
+                      background: isActive(adminPath(link.path))
+                        ? `${link.color || "#667eea"}15`
                         : "rgba(0, 0, 0, 0.03)",
                       border: isActive(adminPath(link.path))
                         ? `2px solid ${link.color || "#667eea"}40`
@@ -365,8 +419,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       display: "flex",
                       alignItems: "center",
                       gap: 6,
-                      boxShadow: isActive(adminPath(link.path)) 
-                        ? `0 2px 8px ${link.color || "#667eea"}20` 
+                      boxShadow: isActive(adminPath(link.path))
+                        ? `0 2px 8px ${link.color || "#667eea"}20`
                         : "none",
                     }}
                     onMouseEnter={(e) => {
@@ -393,7 +447,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           {/* Right section - Actions */}
-          <div style={{ display: "flex", gap: "clamp(8px, 2vw, 12px)", alignItems: "center", flexWrap: "nowrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "clamp(8px, 2vw, 12px)",
+              alignItems: "center",
+              flexWrap: "nowrap",
+            }}
+          >
             {/* Session Warning */}
             {showWarning && !isMobile && (
               <div
@@ -405,7 +466,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 6,
                   fontSize: 13,
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
@@ -416,7 +478,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <span>{secondsRemaining}s</span>
               </div>
             )}
-            
+
             {/* Language Selector */}
             {!isMobile && <LanguageSelector />}
 
@@ -425,7 +487,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
-            
+
             {/* Logout Button (Desktop) */}
             {!isMobile && (
               <button
@@ -439,7 +501,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 14,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   transition: "all 0.2s ease",
                   display: "flex",
                   alignItems: "center",
@@ -471,7 +534,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </svg>
               </button>
             )}
-            
+
             {/* Mobile Menu Button - only show if there are nav links */}
             {isMobile && navLinks.length > 0 && (
               <button
@@ -483,7 +546,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   border: "1px solid #667eea",
                   borderRadius: 6,
                   cursor: "pointer",
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -558,7 +622,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   borderRadius: 8,
                   fontSize: 14,
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   marginBottom: 16,
                   textAlign: "center",
                   border: "1px solid #ffc107",
@@ -567,14 +632,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 ⏱️ {t("admin.sessionExpiring")}: {secondsRemaining}s
               </div>
             )}
-            
+
             {/* Mobile Nav Links - Tile Grid */}
-            <div style={{ 
-              marginBottom: 16,
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 12,
-            }}>
+            <div
+              style={{
+                marginBottom: 16,
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 12,
+              }}
+            >
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
@@ -585,13 +652,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     alignItems: "center",
                     justifyContent: "center",
                     padding: "20px 16px",
-                    color: isActive(adminPath(link.path)) ? (link.color || "#667eea") : "#333",
+                    color: isActive(adminPath(link.path)) ? link.color || "#667eea" : "#333",
                     textDecoration: "none",
                     fontSize: 14,
                     fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: isActive(adminPath(link.path)) 
-                      ? `${link.color || "#667eea"}15` 
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    background: isActive(adminPath(link.path))
+                      ? `${link.color || "#667eea"}15`
                       : "rgba(0, 0, 0, 0.03)",
                     border: isActive(adminPath(link.path))
                       ? `2px solid ${link.color || "#667eea"}40`
@@ -599,8 +667,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     borderRadius: 12,
                     transition: "all 0.2s ease",
                     textAlign: "center",
-                    boxShadow: isActive(adminPath(link.path)) 
-                      ? `0 4px 12px ${link.color || "#667eea"}20` 
+                    boxShadow: isActive(adminPath(link.path))
+                      ? `0 4px 12px ${link.color || "#667eea"}20`
                       : "0 2px 4px rgba(0, 0, 0, 0.05)",
                   }}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -618,49 +686,82 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </Link>
               ))}
             </div>
-            
+
             <hr style={{ margin: "16px 0", border: "none", borderTop: "2px solid #f0f0f0" }} />
-            
+
             {/* Mobile Actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ 
-                padding: "10px 14px", 
-                background: "#f8f8ff", 
-                borderRadius: 8,
-                border: "1px solid #e0e0ff",
-              }}>
-                <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <div
+                style={{
+                  padding: "10px 14px",
+                  background: "#f8f8ff",
+                  borderRadius: 8,
+                  border: "1px solid #e0e0ff",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    color: "#666",
+                    marginBottom: 6,
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.language")}
                 </div>
                 <LanguageSelector />
               </div>
-              
+
               {HAS_MULTIPLE_SITES && (
-                <div style={{ 
-                  padding: "10px 14px", 
-                  background: "#f8f8ff", 
-                  borderRadius: 8,
-                  border: "1px solid #e0e0ff",
-                }}>
-                  <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "#f8f8ff",
+                    borderRadius: 8,
+                    border: "1px solid #e0e0ff",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "clamp(13px, 3vw, 15px)",
+                      color: "#666",
+                      marginBottom: 6,
+                      fontWeight: 600,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("admin.site")}
                   </div>
                   <SiteSelector />
                 </div>
               )}
-              
-              <div style={{ 
-                padding: "10px 14px", 
-                background: "#f8f8ff", 
-                borderRadius: 8,
-                border: "1px solid #e0e0ff",
-              }}>
-                <div style={{ fontSize: "clamp(13px, 3vw, 15px)", color: "#666", marginBottom: 6, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+
+              <div
+                style={{
+                  padding: "10px 14px",
+                  background: "#f8f8ff",
+                  borderRadius: 8,
+                  border: "1px solid #e0e0ff",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "clamp(13px, 3vw, 15px)",
+                    color: "#666",
+                    marginBottom: 6,
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.userInfo")}
                 </div>
                 <UserInfoDropdown />
               </div>
-              
+
               <Link
                 to={publicPagePath}
                 style={{
@@ -672,7 +773,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 16,
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   width: "100%",
                   transition: "all 0.2s ease",
                   boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
@@ -708,7 +810,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </svg>
                 {t("admin.backToPublicSite")}
               </Link>
-              
+
               <button
                 onClick={handleLogout}
                 style={{
@@ -720,7 +822,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   cursor: "pointer",
                   fontSize: 16,
                   fontWeight: 600,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   width: "100%",
                   transition: "all 0.2s ease",
                   boxShadow: "0 2px 8px rgba(220, 53, 69, 0.2)",
@@ -757,7 +860,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         )}
       </nav>
-      
+
       {/* Error Banner for Schema Errors */}
       {siteError && (
         <div
@@ -770,7 +873,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             textAlign: "center",
             fontSize: "14px",
             fontWeight: 500,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             position: "sticky",
             top: "60px",
             zIndex: 999,
@@ -781,24 +885,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {siteError}
         </div>
       )}
-      
+
       {/* Main Content */}
-      <main style={{ 
-        padding: isMobile ? "16px" : "clamp(16px, 4vw, 24px)", 
-        margin: 0,
-        maxWidth: 1400,
-        marginLeft: "auto",
-        marginRight: "auto",
-        width: "100%",
-        boxSizing: "border-box",
-        overflowX: "hidden",
-        overflowY: "auto",
-      }}>
+      <main
+        style={{
+          padding: isMobile ? "16px" : "clamp(16px, 4vw, 24px)",
+          margin: 0,
+          maxWidth: 1400,
+          marginLeft: "auto",
+          marginRight: "auto",
+          width: "100%",
+          boxSizing: "border-box",
+          overflowX: "hidden",
+          overflowY: "auto",
+        }}
+      >
         {/* Only show skeleton if we're navigating between admin routes */}
         {/* Don't rely on isNavigationPending alone as it can get stuck during lazy loading */}
         {isNavigating ? <AdminPageSkeleton /> : children}
       </main>
-      
+
       <VersionDisplay />
     </div>
   );

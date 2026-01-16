@@ -31,17 +31,19 @@ export const PLACE_LIMITS: Record<PlacePlan, PlaceLimits> = {
  */
 function deepMergePlaceLimits(base: PlaceLimits, override: any): PlaceLimits {
   const result = { ...base };
-  
+
   if (override.images !== undefined) {
-    result.images = override.images === "∞" || override.images === Infinity ? Infinity : override.images;
+    result.images =
+      override.images === "∞" || override.images === Infinity ? Infinity : override.images;
   }
   if (override.events !== undefined) {
-    result.events = override.events === "∞" || override.events === Infinity ? Infinity : override.events;
+    result.events =
+      override.events === "∞" || override.events === Infinity ? Infinity : override.events;
   }
   if (override.featured !== undefined) {
     result.featured = override.featured;
   }
-  
+
   return result;
 }
 
@@ -52,16 +54,16 @@ function deepMergePlaceLimits(base: PlaceLimits, override: any): PlaceLimits {
  */
 export function getPlaceLimits(plan: PlacePlan, overrides?: any): PlaceLimits {
   const base = PLACE_LIMITS[plan];
-  
+
   if (!overrides) {
     return base;
   }
-  
+
   const planOverride = overrides[plan];
   if (!planOverride) {
     return base;
   }
-  
+
   return deepMergePlaceLimits(base, planOverride);
 }
 

@@ -14,7 +14,11 @@ import {
   type UpdateGalleryDto,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { uploadService } from "../../services/upload/uploadService";
 
@@ -330,7 +334,14 @@ export function GalleriesPage() {
       key: "shortcode",
       label: t("admin.galleries.shortcode"),
       render: (gallery) => (
-        <code style={{ fontSize: "0.85em", background: "#f5f5f5", padding: "2px 6px", borderRadius: "3px" }}>
+        <code
+          style={{
+            fontSize: "0.85em",
+            background: "#f5f5f5",
+            padding: "2px 6px",
+            borderRadius: "3px",
+          }}
+        >
           {getShortcode(gallery.id)}
         </code>
       ),
@@ -352,7 +363,9 @@ export function GalleriesPage() {
       render: (gallery) => (
         <div>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>{t("admin.galleries.images")}</div>
-          <div>{gallery.images?.length || 0} {t("admin.galleries.imagesCount")}</div>
+          <div>
+            {gallery.images?.length || 0} {t("admin.galleries.imagesCount")}
+          </div>
         </div>
       ),
     },
@@ -395,14 +408,26 @@ export function GalleriesPage() {
       />
 
       {error && (
-        <div style={{ padding: "12px", margin: "12px 0", background: "#fee", color: "#c33", borderRadius: "4px" }}>
+        <div
+          style={{
+            padding: "12px",
+            margin: "12px 0",
+            background: "#fee",
+            color: "#c33",
+            borderRadius: "4px",
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ padding: "20px", margin: "20px 0", background: "#f9f9f9", borderRadius: "8px" }}>
-          <h3>{isCreating ? t("admin.galleries.createGallery") : t("admin.galleries.editGallery")}</h3>
+        <div
+          style={{ padding: "20px", margin: "20px 0", background: "#f9f9f9", borderRadius: "8px" }}
+        >
+          <h3>
+            {isCreating ? t("admin.galleries.createGallery") : t("admin.galleries.editGallery")}
+          </h3>
 
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
@@ -412,7 +437,12 @@ export function GalleriesPage() {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+              }}
               placeholder={t("admin.galleries.namePlaceholder")}
             />
           </div>
@@ -422,7 +452,9 @@ export function GalleriesPage() {
               {t("admin.galleries.images")} *
             </label>
             {formErrors.images && (
-              <div style={{ color: "#c33", marginBottom: "8px", fontSize: "0.9em" }}>{formErrors.images}</div>
+              <div style={{ color: "#c33", marginBottom: "8px", fontSize: "0.9em" }}>
+                {formErrors.images}
+              </div>
             )}
 
             <input
@@ -511,7 +543,12 @@ export function GalleriesPage() {
                     <img
                       src={image.src}
                       alt={image.alt || `Image ${index + 1}`}
-                      style={{ width: "100%", height: "150px", objectFit: "cover", display: "block" }}
+                      style={{
+                        width: "100%",
+                        height: "150px",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
                     />
                     <div style={{ padding: "8px" }}>
                       <textarea
@@ -559,9 +596,17 @@ export function GalleriesPage() {
             <select
               value={formData.layout}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, layout: e.target.value as "grid" | "masonry" | "carousel" }))
+                setFormData((prev) => ({
+                  ...prev,
+                  layout: e.target.value as "grid" | "masonry" | "carousel",
+                }))
               }
-              style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+              }}
             >
               <option value="grid">{t("admin.galleries.layoutGrid")}</option>
               <option value="masonry">{t("admin.galleries.layoutMasonry")}</option>
@@ -576,9 +621,17 @@ export function GalleriesPage() {
             <select
               value={formData.aspect}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, aspect: e.target.value as "auto" | "square" | "4:3" | "16:9" }))
+                setFormData((prev) => ({
+                  ...prev,
+                  aspect: e.target.value as "auto" | "square" | "4:3" | "16:9",
+                }))
               }
-              style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+              }}
             >
               <option value="auto">{t("admin.galleries.aspectAuto")}</option>
               <option value="square">{t("admin.galleries.aspectSquare")}</option>

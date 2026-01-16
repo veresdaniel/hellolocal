@@ -24,7 +24,7 @@ export class RatingController {
   /**
    * Creates or updates a rating for a place.
    * Requires authentication.
-   * 
+   *
    * Body: { value: 1..5 }
    * Returns: { placeId, userId, value, ratingAvg, ratingCount }
    */
@@ -46,7 +46,7 @@ export class RatingController {
   /**
    * Gets the current user's rating for a place.
    * Requires authentication.
-   * 
+   *
    * Returns: { value, createdAt, updatedAt } or null if not rated yet
    */
   @Get("/me")

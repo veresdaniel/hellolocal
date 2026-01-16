@@ -15,4 +15,3 @@ import { SlugModule } from "../slug/slug.module";
   exports: [EventsService, EventRatingService],
 })
 export class EventsModule {}
-

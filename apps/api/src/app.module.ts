@@ -85,13 +85,9 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply site resolve middleware first (canonical flow for /:lang/:siteKey/* routes)
     // This is the core of the Site-based architecture
-    consumer
-      .apply(SiteResolveMiddleware)
-      .forRoutes("*");
-    
+    consumer.apply(SiteResolveMiddleware).forRoutes("*");
+
     // Apply SEO injector middleware to all routes except API and admin
-    consumer
-      .apply(SeoInjectorMiddleware)
-      .forRoutes("*");
+    consumer.apply(SeoInjectorMiddleware).forRoutes("*");
   }
 }

@@ -69,24 +69,21 @@ export function SlugInput({
     if (e.key === " " || e.key === "Spacebar" || e.keyCode === 32) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       const input = e.currentTarget;
       const start = input.selectionStart || 0;
       const end = input.selectionEnd || 0;
       // Use the actual input value, not localValue state (which might be out of sync)
       const currentValue = input.value;
-      
+
       // Insert hyphen at cursor position
-      const newValue = 
-        currentValue.substring(0, start) + 
-        "-" + 
-        currentValue.substring(end);
-      
+      const newValue = currentValue.substring(0, start) + "-" + currentValue.substring(end);
+
       // Update state immediately
       setLocalValue(newValue);
       onChange(newValue);
       setIsManuallyEdited(true);
-      
+
       // Set cursor position after the inserted hyphen
       // Use requestAnimationFrame to ensure DOM is updated
       requestAnimationFrame(() => {
@@ -98,25 +95,25 @@ export function SlugInput({
   const handleBeforeInput = (e: React.FormEvent<HTMLInputElement>) => {
     // Also catch space in beforeInput event (for better browser compatibility)
     const nativeEvent = e.nativeEvent as InputEvent;
-    if (nativeEvent.data === " " || nativeEvent.inputType === "insertText" && nativeEvent.data === " ") {
+    if (
+      nativeEvent.data === " " ||
+      (nativeEvent.inputType === "insertText" && nativeEvent.data === " ")
+    ) {
       e.preventDefault();
-      
+
       const input = e.currentTarget;
       const start = input.selectionStart || 0;
       const end = input.selectionEnd || 0;
       const currentValue = input.value;
-      
+
       // Insert hyphen at cursor position
-      const newValue = 
-        currentValue.substring(0, start) + 
-        "-" + 
-        currentValue.substring(end);
-      
+      const newValue = currentValue.substring(0, start) + "-" + currentValue.substring(end);
+
       // Update state immediately
       setLocalValue(newValue);
       onChange(newValue);
       setIsManuallyEdited(true);
-      
+
       // Set cursor position after the inserted hyphen
       requestAnimationFrame(() => {
         input.setSelectionRange(start + 1, start + 1);
@@ -131,9 +128,7 @@ export function SlugInput({
     newValue = newValue.replace(/\s+/g, "-");
 
     // Remove accented characters by normalizing and removing diacritics
-    newValue = newValue
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+    newValue = newValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     // Only allow alphanumeric, hyphens, and underscores
     newValue = newValue.replace(/[^a-zA-Z0-9_-]/g, "");
@@ -187,7 +182,8 @@ export function SlugInput({
             fontWeight: hasError ? 600 : 500,
             fontSize: "clamp(14px, 3.5vw, 16px)",
             color: hasError ? "#dc2626" : "#374151",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {label} ({lang.toUpperCase()}){required && " *"}
@@ -205,11 +201,7 @@ export function SlugInput({
         disabled={disabled}
         style={baseStyle}
       />
-      {error && (
-        <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{error}</div>}
     </div>
   );
 }

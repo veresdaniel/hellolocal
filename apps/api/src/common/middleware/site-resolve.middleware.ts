@@ -1,5 +1,11 @@
 // src/common/middleware/site-resolve.middleware.ts
-import { Injectable, NestMiddleware, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NestMiddleware,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Lang } from "@prisma/client";
@@ -24,15 +30,15 @@ export interface RequestWithSite extends Request {
 
 /**
  * Site resolve middleware (canonical flow).
- * 
+ *
  * HTTP request → /:lang/:siteKey/*
- * 
+ *
  * Resolve lépések:
  * 1. siteKey + lang → SiteKey (SiteKey table lookup)
  * 2. If redirect → 301 redirect to canonical URL
  * 3. SiteKey.siteId → Site (Site table)
  * 4. Attach: req.site = { siteId, canonicalKey, redirected, lang }
- * 
+ *
  * This middleware is the core of the Site-based architecture.
  */
 @Injectable()
@@ -100,7 +106,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
             };
 
             this.logger.debug(
-              `Domain-based site resolved: ${host} → siteId=${siteDomain.siteId}, lang=${lang} (from ${langParam ? 'URL' : 'defaultLang'})`
+              `Domain-based site resolved: ${host} → siteId=${siteDomain.siteId}, lang=${lang} (from ${langParam ? "URL" : "defaultLang"})`
             );
             return next();
           } else {
@@ -141,8 +147,8 @@ export class SiteResolveMiddleware implements NestMiddleware {
           isActive: true,
         },
         orderBy: [
-          { isPrimary: 'desc' }, // Primary keys first
-          { createdAt: 'asc' }, // Then by creation date (oldest first)
+          { isPrimary: "desc" }, // Primary keys first
+          { createdAt: "asc" }, // Then by creation date (oldest first)
         ],
         select: {
           id: true,
@@ -193,10 +199,10 @@ export class SiteResolveMiddleware implements NestMiddleware {
           `Site resolution failed: lang=${lang}, siteKey=${siteKey}, path=${req.path}`
         );
         this.logger.error(
-          `  - SiteKey lookup: ${siteKeyRecord ? 'found but inactive' : 'not found'}`
+          `  - SiteKey lookup: ${siteKeyRecord ? "found but inactive" : "not found"}`
         );
         this.logger.error(
-          `  - Site.slug fallback: ${site ? (site.isActive ? 'found but inactive' : 'found but not active') : 'not found'}`
+          `  - Site.slug fallback: ${site ? (site.isActive ? "found but inactive" : "found but not active") : "not found"}`
         );
 
         throw new NotFoundException(`Site key not found: ${siteKey} for lang: ${lang}`);
@@ -207,9 +213,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
         const canonicalKey = siteKeyRecord.redirectTo.slug;
         const canonicalUrl = this.buildCanonicalUrl(req, lang, canonicalKey);
 
-        this.logger.debug(
-          `Site redirect: ${siteKey} → ${canonicalKey} (301 redirect)`
-        );
+        this.logger.debug(`Site redirect: ${siteKey} → ${canonicalKey} (301 redirect)`);
 
         // Step 2a: 301 redirect to canonical URL
         return res.redirect(301, canonicalUrl);
@@ -258,7 +262,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
           `Site verification failed: siteId=${siteKeyRecord.siteId}, siteKey=${siteKey}, lang=${lang}`
         );
         this.logger.error(
-          `  - Site exists: ${site ? 'yes' : 'no'}, isActive: ${site?.isActive ?? 'N/A'}`
+          `  - Site exists: ${site ? "yes" : "no"}, isActive: ${site?.isActive ?? "N/A"}`
         );
         throw new NotFoundException(`Site not found or inactive: siteId=${siteKeyRecord.siteId}`);
       }
@@ -308,7 +312,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
   /**
    * Build canonical URL for redirects.
    * Preserves the original path structure but replaces siteKey with canonicalKey.
-   * 
+   *
    * Handles both patterns:
    * - /api/public/:lang/:siteKey/...
    * - /:lang/:siteKey/...
@@ -325,7 +329,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
     // Replace siteKey with canonicalKey in the path
     // Handle both /:lang/:siteKey/ and /api/public/:lang/:siteKey/ patterns
     let canonicalPath = originalPath;
-    
+
     // Pattern 1: /api/public/:lang/:siteKey/...
     if (originalPath.includes(`/api/public/${lang}/${siteKeyParam}/`)) {
       canonicalPath = originalPath.replace(
@@ -342,10 +346,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
     }
     // Pattern 3: /:lang/:siteKey (end of path, no trailing slash)
     else if (originalPath.endsWith(`/${lang}/${siteKeyParam}`)) {
-      canonicalPath = originalPath.replace(
-        `/${lang}/${siteKeyParam}`,
-        `/${lang}/${canonicalKey}`
-      );
+      canonicalPath = originalPath.replace(`/${lang}/${siteKeyParam}`, `/${lang}/${canonicalKey}`);
     }
     // Pattern 4: /api/public/:lang/:siteKey (end of path, no trailing slash)
     else if (originalPath.endsWith(`/api/public/${lang}/${siteKeyParam}`)) {
@@ -368,7 +369,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
 
     // Handle array (from x-forwarded-host in some proxies)
     const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
-    
+
     // host may include port: "etyek.local:5173"
     const noComma = host.split(",")[0].trim(); // in case of proxies
     const noPort = noComma.replace(/:\d+$/, "");
@@ -377,7 +378,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
 
   /**
    * Check if domain is localhost or IP address.
-   * 
+   *
    * Best practice: Only skip resolution for actual localhost/IP.
    * Custom domains in hosts file (e.g., etyek.localo.test) should work.
    */

@@ -4,7 +4,7 @@ import { PLACE_ROLE_KEY } from "../guards/place-role.guard";
 
 /**
  * Decorator to specify required place role for an endpoint.
- * 
+ *
  * @example
  * @PlaceRole(PlaceRoleEnum.owner)
  * @UseGuards(JwtAuthGuard, PlaceRoleGuard)

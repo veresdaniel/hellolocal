@@ -105,9 +105,8 @@ export class AdminAppSettingsService {
     return this.upsert("globalCrawlability", {
       value: isCrawlable ? "true" : "false",
       type: "boolean",
-      description: "Global platform crawlability setting. If false, all pages will have noindex meta tag by default.",
+      description:
+        "Global platform crawlability setting. If false, all pages will have noindex meta tag by default.",
     });
   }
-
 }
-

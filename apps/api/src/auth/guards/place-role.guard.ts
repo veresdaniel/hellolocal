@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PlaceRole } from "@prisma/client";
 import { RbacService } from "../rbac.service";
@@ -8,11 +14,11 @@ export const PLACE_ROLE_KEY = "placeRole";
 /**
  * Place-level role-based access control guard.
  * Use with @PlaceRole() decorator to restrict access based on place membership.
- * 
+ *
  * Requires:
  * - JwtAuthGuard to be applied first (to get user from request)
  * - placeId parameter in route or query, or in request body
- * 
+ *
  * @example
  * @PlaceRole(PlaceRole.owner)
  * @UseGuards(JwtAuthGuard, PlaceRoleGuard)
@@ -51,9 +57,7 @@ export class PlaceRoleGuard implements CanActivate {
     }
 
     // Get placeId from route params, query, or body
-    const placeId = request.params?.placeId || 
-                   request.query?.placeId || 
-                   request.body?.placeId;
+    const placeId = request.params?.placeId || request.query?.placeId || request.body?.placeId;
 
     if (!placeId) {
       throw new ForbiddenException("Place ID is required for place-level authorization");

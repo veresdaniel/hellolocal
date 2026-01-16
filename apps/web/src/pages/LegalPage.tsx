@@ -37,70 +37,75 @@ export function LegalPage({ pageKey }: Props) {
   // Helper to strip HTML
   const stripHtml = (html: string | null | undefined): string => {
     if (!html) return "";
-    return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    return html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   };
 
   const pageUrl = window.location.href;
   const siteUrl = window.location.origin;
 
   // Use SEO from data if available, otherwise use i18n fallback
-  const seo = data?.seo ? {
-    title: data.seo.title,
-    description: data.seo.description,
-    image: data.seo.image,
-    keywords: data.seo.keywords || [],
-    og: {
-      type: "article",
-      title: (data.seo as any).og?.title || data.seo.title,
-      description: (data.seo as any).og?.description || data.seo.description,
-      image: (data.seo as any).og?.image || data.seo.image,
-    },
-    twitter: {
-      card: data.seo.image ? "summary_large_image" as const : "summary" as const,
-      title: (data.seo as any).twitter?.title || data.seo.title,
-      description: (data.seo as any).twitter?.description || data.seo.description,
-      image: (data.seo as any).twitter?.image || data.seo.image,
-    },
-    schemaOrg: {
-      type: "WebPage" as const,
-      data: {
-        name: data.seo.title || data.title,
-        description: stripHtml(data.seo.description),
-        url: pageUrl,
-        inLanguage: safeLang,
-        isPartOf: platformSettings?.siteName
-          ? {
-              name: platformSettings.siteName,
-              url: siteUrl,
-            }
-          : undefined,
-      },
-    },
-  } : {
-    title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-    description: platformSettings?.seoDescription || "",
-    keywords: [],
-    og: {
-      type: "article" as const,
-      title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-      description: platformSettings?.seoDescription || "",
-    },
-    schemaOrg: {
-      type: "WebPage" as const,
-      data: {
-        name: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-        description: stripHtml(platformSettings?.seoDescription),
-        url: pageUrl,
-        inLanguage: safeLang,
-        isPartOf: platformSettings?.siteName
-          ? {
-              name: platformSettings.siteName,
-              url: siteUrl,
-            }
-          : undefined,
-      },
-    },
-  };
+  const seo = data?.seo
+    ? {
+        title: data.seo.title,
+        description: data.seo.description,
+        image: data.seo.image,
+        keywords: data.seo.keywords || [],
+        og: {
+          type: "article",
+          title: (data.seo as any).og?.title || data.seo.title,
+          description: (data.seo as any).og?.description || data.seo.description,
+          image: (data.seo as any).og?.image || data.seo.image,
+        },
+        twitter: {
+          card: data.seo.image ? ("summary_large_image" as const) : ("summary" as const),
+          title: (data.seo as any).twitter?.title || data.seo.title,
+          description: (data.seo as any).twitter?.description || data.seo.description,
+          image: (data.seo as any).twitter?.image || data.seo.image,
+        },
+        schemaOrg: {
+          type: "WebPage" as const,
+          data: {
+            name: data.seo.title || data.title,
+            description: stripHtml(data.seo.description),
+            url: pageUrl,
+            inLanguage: safeLang,
+            isPartOf: platformSettings?.siteName
+              ? {
+                  name: platformSettings.siteName,
+                  url: siteUrl,
+                }
+              : undefined,
+          },
+        },
+      }
+    : {
+        title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+        description: platformSettings?.seoDescription || "",
+        keywords: [],
+        og: {
+          type: "article" as const,
+          title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+          description: platformSettings?.seoDescription || "",
+        },
+        schemaOrg: {
+          type: "WebPage" as const,
+          data: {
+            name: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
+            description: stripHtml(platformSettings?.seoDescription),
+            url: pageUrl,
+            inLanguage: safeLang,
+            isPartOf: platformSettings?.siteName
+              ? {
+                  name: platformSettings.siteName,
+                  url: siteUrl,
+                }
+              : undefined,
+          },
+        },
+      };
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
@@ -113,7 +118,7 @@ export function LegalPage({ pageKey }: Props) {
   useEffect(() => {
     const makeMediaResponsive = (container: HTMLElement | null) => {
       if (!container) return;
-      
+
       // Make all images responsive and add lazy loading with skeleton
       const images = container.querySelectorAll("img");
       images.forEach((img) => {
@@ -128,7 +133,7 @@ export function LegalPage({ pageKey }: Props) {
         img.style.margin = "16px auto";
         img.style.opacity = "0";
         img.style.transition = "opacity 0.3s ease-in-out";
-        
+
         if (!img.hasAttribute("loading")) {
           img.setAttribute("loading", "lazy");
         }
@@ -139,7 +144,7 @@ export function LegalPage({ pageKey }: Props) {
         wrapper.style.position = "relative";
         wrapper.style.width = "100%";
         wrapper.style.margin = "16px auto";
-        
+
         // Create skeleton
         const skeleton = document.createElement("div");
         skeleton.className = "image-skeleton";
@@ -150,29 +155,33 @@ export function LegalPage({ pageKey }: Props) {
         skeleton.style.backgroundSize = "200% 100%";
         skeleton.style.animation = "skeleton-loading 1.5s ease-in-out infinite";
         skeleton.style.borderRadius = "4px";
-        
+
         // Insert wrapper before image
         img.parentNode?.insertBefore(wrapper, img);
         wrapper.appendChild(skeleton);
         wrapper.appendChild(img);
-        
+
         // Handle image load
         const handleLoad = () => {
           img.style.opacity = "1";
           skeleton.style.display = "none";
         };
-        
+
         if (img.complete) {
           handleLoad();
         } else {
           img.addEventListener("load", handleLoad, { once: true });
-          img.addEventListener("error", () => {
-            skeleton.style.display = "none";
-            img.style.opacity = "1";
-          }, { once: true });
+          img.addEventListener(
+            "error",
+            () => {
+              skeleton.style.display = "none";
+              img.style.opacity = "1";
+            },
+            { once: true }
+          );
         }
       });
-      
+
       // Make all videos responsive
       const videos = container.querySelectorAll("video");
       videos.forEach((video) => {
@@ -181,7 +190,7 @@ export function LegalPage({ pageKey }: Props) {
         video.style.display = "block";
         video.style.margin = "16px auto";
       });
-      
+
       // Make iframes responsive (for embedded videos)
       const iframes = container.querySelectorAll("iframe");
       iframes.forEach((iframe) => {
@@ -207,7 +216,7 @@ export function LegalPage({ pageKey }: Props) {
     };
 
     makeMediaResponsive(contentRef.current);
-    
+
     // Add skeleton animation CSS if not already added
     if (!document.getElementById("skeleton-animation-style")) {
       const style = document.createElement("style");
@@ -230,7 +239,7 @@ export function LegalPage({ pageKey }: Props) {
   // For legal pages, we need to resolve siteKey to siteId
   // Since we're on a public page, we'll use a simplified check based on siteKey
   const [canEditLegalPage, setCanEditLegalPage] = useState(false);
-  
+
   // Check legal page permissions
   useEffect(() => {
     const checkPermissions = async () => {
@@ -272,9 +281,7 @@ export function LegalPage({ pageKey }: Props) {
 
   // Build edit URL if user can edit
   // Legal pages use keys: "imprint", "terms", "privacy"
-  const editUrl = canEditLegalPage 
-    ? `/${lang}/admin/legal-pages?edit=${pageKey}`
-    : undefined;
+  const editUrl = canEditLegalPage ? `/${lang}/admin/legal-pages?edit=${pageKey}` : undefined;
 
   return (
     <>
@@ -315,11 +322,7 @@ export function LegalPage({ pageKey }: Props) {
               color: "#333",
             }}
           >
-            <ShortcodeRenderer
-              content={data.content}
-              lang={safeLang}
-              siteKey={safeSiteKey}
-            />
+            <ShortcodeRenderer content={data.content} lang={safeLang} siteKey={safeSiteKey} />
           </div>
         </article>
       </div>

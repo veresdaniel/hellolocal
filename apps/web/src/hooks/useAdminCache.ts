@@ -98,7 +98,18 @@ export function useAdminCache() {
  * Helper function to notify that an entity has changed
  * Use this after create/update/delete operations
  */
-export function notifyEntityChanged(entityType: "places" | "events" | "categories" | "towns" | "priceBands" | "tags" | "platformSettings" | "mapSettings" | "staticPages" | "collections") {
+export function notifyEntityChanged(
+  entityType:
+    | "places"
+    | "events"
+    | "categories"
+    | "towns"
+    | "priceBands"
+    | "tags"
+    | "platformSettings"
+    | "mapSettings"
+    | "staticPages"
+    | "collections"
+) {
   window.dispatchEvent(new CustomEvent(`admin:${entityType}:changed`));
 }
-

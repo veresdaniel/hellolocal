@@ -12,7 +12,11 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { MapComponent } from "../../components/MapComponent";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
@@ -93,7 +97,7 @@ export function TownsPage() {
   useEffect(() => {
     if (selectedTenantId) {
       // Reset to first page when site changes
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no site
       setIsLoading(false);
@@ -117,7 +121,7 @@ export function TownsPage() {
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
         setTowns(response);
-        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+        setPagination((prev) => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setTowns(response.towns || []);
         setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
@@ -160,7 +164,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
           seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu ? formData.seoKeywordsHu.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsHu
+            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
+            : [],
         },
       ];
       if (formData.nameEn.trim()) {
@@ -172,7 +178,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
           seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn ? formData.seoKeywordsEn.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsEn
+            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
+            : [],
         });
       }
       if (formData.nameDe.trim()) {
@@ -184,7 +192,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
           seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe ? formData.seoKeywordsDe.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsDe
+            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
+            : [],
         });
       }
       await createTown({
@@ -226,7 +236,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
           seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu ? formData.seoKeywordsHu.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsHu
+            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
+            : [],
         },
       ];
       if (formData.nameEn.trim()) {
@@ -238,7 +250,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
           seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn ? formData.seoKeywordsEn.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsEn
+            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
+            : [],
         });
       }
       if (formData.nameDe.trim()) {
@@ -250,7 +264,9 @@ export function TownsPage() {
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
           seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe ? formData.seoKeywordsDe.split(",").map((k) => k.trim()) : [],
+          seoKeywords: formData.seoKeywordsDe
+            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
+            : [],
         });
       }
       await updateTown(
@@ -370,7 +386,7 @@ export function TownsPage() {
         }}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -381,20 +397,45 @@ export function TownsPage() {
       />
 
       {error && (
-        <div style={{ padding: "clamp(12px, 3vw, 16px)", marginBottom: 24, background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)", color: "#991b1b", borderRadius: 12, border: "1px solid #fca5a5", fontSize: "clamp(13px, 3vw, 14px)", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: 24,
+            background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+            color: "#991b1b",
+            borderRadius: 12,
+            border: "1px solid #fca5a5",
+            fontSize: "clamp(13px, 3vw, 14px)",
+            fontWeight: 500,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ padding: "clamp(24px, 5vw, 32px)", background: "white", borderRadius: 16, marginBottom: 32, boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)", border: "1px solid rgba(102, 126, 234, 0.1)" }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea", 
-            fontSize: "clamp(18px, 4vw, 22px)", 
-            fontWeight: 700, 
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
           </h2>
 
@@ -402,7 +443,14 @@ export function TownsPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -411,12 +459,14 @@ export function TownsPage() {
                       selectedLang === "hu"
                         ? formData.nameHu
                         : selectedLang === "en"
-                        ? formData.nameEn
-                        : formData.nameDe
+                          ? formData.nameEn
+                          : formData.nameDe
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, nameHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, nameEn: e.target.value });
                       else setFormData({ ...formData, nameDe: e.target.value });
                     }}
                     style={{
@@ -433,31 +483,41 @@ export function TownsPage() {
                     }}
                   />
                   {(selectedLang === "hu" && formErrors.nameHu) ||
-                    (selectedLang === "en" && formErrors.nameEn) ||
-                    (selectedLang === "de" && formErrors.nameDe) ? (
+                  (selectedLang === "en" && formErrors.nameEn) ||
+                  (selectedLang === "de" && formErrors.nameDe) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
                       {selectedLang === "hu"
                         ? formErrors.nameHu
                         : selectedLang === "en"
-                        ? formErrors.nameEn
-                        : formErrors.nameDe}
+                          ? formErrors.nameEn
+                          : formErrors.nameDe}
                     </div>
                   ) : null}
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("common.description")}
+                  </label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
                         : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
+                          ? formData.descriptionEn
+                          : formData.descriptionDe
                     }
                     onChange={(value) => {
                       if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, descriptionEn: value });
                       else setFormData({ ...formData, descriptionDe: value });
                     }}
                     placeholder={t("common.description")}
@@ -467,22 +527,39 @@ export function TownsPage() {
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.heroImage")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.heroImage")}
+                  </label>
                   <input
                     type="text"
                     value={
                       selectedLang === "hu"
                         ? formData.heroImageHu
                         : selectedLang === "en"
-                        ? formData.heroImageEn
-                        : formData.heroImageDe
+                          ? formData.heroImageEn
+                          : formData.heroImageDe
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, heroImageHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, heroImageEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, heroImageHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, heroImageEn: e.target.value });
                       else setFormData({ ...formData, heroImageDe: e.target.value });
                     }}
-                    style={{ width: "100%", padding: 8, fontSize: 16, border: "1px solid #ddd", borderRadius: 4 }}
+                    style={{
+                      width: "100%",
+                      padding: 8,
+                      fontSize: 16,
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                    }}
                     placeholder={t("admin.urlPlaceholder")}
                   />
                 </div>
@@ -491,8 +568,24 @@ export function TownsPage() {
           </LanguageAwareForm>
 
           {/* Active Checkbox - moved before location */}
-          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "16px 20px",
+              background: "#f8f8ff",
+              borderRadius: 12,
+              border: "2px solid #e0e7ff",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                fontSize: 15,
+              }}
+            >
               <input
                 type="checkbox"
                 checked={formData.isActive}
@@ -504,7 +597,9 @@ export function TownsPage() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 8 }}>{t("admin.location")} ({t("admin.coordinates")})</label>
+            <label style={{ display: "block", marginBottom: 8 }}>
+              {t("admin.location")} ({t("admin.coordinates")})
+            </label>
             <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ flex: "0 0 400px" }}>
                 <MapComponent
@@ -520,47 +615,59 @@ export function TownsPage() {
               </div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 4, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>{t("admin.latitude")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.latitude")}
+                  </label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lat}
                     onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                    style={{ 
-                      width: "100%", 
-                      padding: 12, 
-                      fontSize: "clamp(15px, 3.5vw, 16px)", 
-                      border: "1px solid #ddd", 
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
                       borderRadius: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                     placeholder="47.4979"
                   />
                 </div>
                 <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: 4, 
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>{t("admin.longitude")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.longitude")}
+                  </label>
                   <input
                     type="number"
                     step="any"
                     value={formData.lng}
                     onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                    style={{ 
-                      width: "100%", 
-                      padding: 12, 
-                      fontSize: "clamp(15px, 3.5vw, 16px)", 
-                      border: "1px solid #ddd", 
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
                       borderRadius: 4,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                     placeholder="19.0402"
                   />
@@ -579,14 +686,15 @@ export function TownsPage() {
           searchPlaceholder={t("admin.searchPlaceholders.towns")}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setPagination(prev => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           isLoading={isLoading}
           filterFn={(town, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = town.translations.find((t) => t.lang === currentLang) || 
-                               findTranslation(town.translations, "hu" as Lang);
+            const translation =
+              town.translations.find((t) => t.lang === currentLang) ||
+              findTranslation(town.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -595,8 +703,9 @@ export function TownsPage() {
               label: t("common.name"),
               render: (town) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = town.translations.find((t) => t.lang === currentLang) || 
-                                   findTranslation(town.translations, "hu" as Lang);
+                const translation =
+                  town.translations.find((t) => t.lang === currentLang) ||
+                  findTranslation(town.translations, "hu" as Lang);
                 return translation?.name || "-";
               },
             },
@@ -623,11 +732,14 @@ export function TownsPage() {
           ]}
           cardTitle={(town) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation = town.translations.find((t) => t.lang === currentLang) || 
-                               findTranslation(town.translations, "hu" as Lang);
+            const translation =
+              town.translations.find((t) => t.lang === currentLang) ||
+              findTranslation(town.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
-          cardSubtitle={(town) => town.lat && town.lng ? `📍 ${town.lat.toFixed(4)}, ${town.lng.toFixed(4)}` : ""}
+          cardSubtitle={(town) =>
+            town.lat && town.lng ? `📍 ${town.lat.toFixed(4)}, ${town.lng.toFixed(4)}` : ""
+          }
           cardFields={[
             {
               key: "status",
@@ -662,12 +774,11 @@ export function TownsPage() {
             totalPages={pagination.totalPages}
             total={pagination.total}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
           />
         </div>
       )}
     </div>
   );
 }
-

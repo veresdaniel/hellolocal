@@ -1,7 +1,14 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Seo } from "../types/seo";
-import { injectJsonLd, generateLocalBusinessSchema, generateEventSchema, generateArticleSchema, generateWebPageSchema, generateWebSiteSchema } from "./schemaOrg";
+import {
+  injectJsonLd,
+  generateLocalBusinessSchema,
+  generateEventSchema,
+  generateArticleSchema,
+  generateWebPageSchema,
+  generateWebSiteSchema,
+} from "./schemaOrg";
 
 function upsertMeta(sel: string, attrs: Record<string, string>, content?: string) {
   if (!content) return;
@@ -29,13 +36,13 @@ function upsertLink(rel: string, href?: string) {
 
 export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: string }) {
   const { t } = useTranslation();
-  
+
   useEffect(() => {
     if (!seo) return;
 
     // Get site name from i18n or use provided siteName or default
     const siteName = opts?.siteName || t("common.siteName", { defaultValue: "" });
-    
+
     // Only set document.title if title is provided and not empty
     // This allows usePageTitle hook to handle titles on admin pages
     if (seo.title) {
@@ -66,13 +73,18 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
     upsertMeta(`meta[property="og:description"]`, { property: "og:description" }, ogDesc);
     upsertMeta(`meta[property="og:type"]`, { property: "og:type" }, ogType);
     upsertMeta(`meta[property="og:url"]`, { property: "og:url" }, ogUrl);
-    if (siteName) upsertMeta(`meta[property="og:site_name"]`, { property: "og:site_name" }, siteName);
+    if (siteName)
+      upsertMeta(`meta[property="og:site_name"]`, { property: "og:site_name" }, siteName);
     if (ogImg) upsertMeta(`meta[property="og:image"]`, { property: "og:image" }, ogImg);
 
     // Twitter defaults
     const card = seo.twitter?.card ?? (ogImg ? "summary_large_image" : "summary");
     upsertMeta(`meta[name="twitter:card"]`, { name: "twitter:card" }, card);
-    upsertMeta(`meta[name="twitter:title"]`, { name: "twitter:title" }, seo.twitter?.title ?? ogTitle);
+    upsertMeta(
+      `meta[name="twitter:title"]`,
+      { name: "twitter:title" },
+      seo.twitter?.title ?? ogTitle
+    );
     upsertMeta(
       `meta[name="twitter:description"]`,
       { name: "twitter:description" },

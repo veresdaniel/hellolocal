@@ -6,7 +6,7 @@ interface ViewState {
   showMap: boolean; // true = map view, false = list view
   mapHeight: number;
   mapCenter: { lat: number; lng: number; zoom: number } | null;
-  
+
   // Actions
   setShowMap: (show: boolean) => void;
   setMapHeight: (height: number) => void;
@@ -24,11 +24,11 @@ export const useViewStore = create<ViewState>()(
   persist(
     (set) => ({
       ...initialViewState,
-      
+
       setShowMap: (show) => set({ showMap: show }),
       setMapHeight: (height) => set({ mapHeight: height }),
       setMapCenter: (center) => set({ mapCenter: center }),
-      
+
       resetView: () => set(initialViewState),
     }),
     {
@@ -41,4 +41,3 @@ export const useViewStore = create<ViewState>()(
     }
   )
 );
-

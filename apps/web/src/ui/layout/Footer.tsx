@@ -41,7 +41,7 @@ export function Footer({
   // Listen for platform settings changes from admin
   useEffect(() => {
     if (!effectiveSiteSlug) return; // Skip if no site slug
-    
+
     const handlePlatformSettingsChanged = () => {
       queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
       queryClient.refetchQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
@@ -118,14 +118,33 @@ export function Footer({
                 />
               )}
               {siteName && (
-                <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{siteName}</span>
+                <span
+                  style={{
+                    fontSize: isMobile ? 14 : 16,
+                    fontWeight: 700,
+                    fontFamily:
+                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {siteName}
+                </span>
               )}
             </div>
           )}
 
           {/* Links - Desktop only */}
           {!isMobile && (
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                flexWrap: "wrap",
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {hasStaticPages && (
                 <Link
                   to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" })}
@@ -134,7 +153,8 @@ export function Footer({
                     textDecoration: "none",
                     fontSize: 15,
                     fontWeight: 500,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     opacity: 0.9,
                     transition: "opacity 0.2s",
                   }}
@@ -155,7 +175,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -175,7 +196,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -195,7 +217,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -209,17 +232,18 @@ export function Footer({
                 {t("public.legal.privacy.title")}
               </Link>
               <Link
-                to={buildUrl({ 
-                  lang, 
-                  siteKey: effectiveSiteSlug, 
-                  path: lang === "de" ? "preise" : "pricing"
+                to={buildUrl({
+                  lang,
+                  siteKey: effectiveSiteSlug,
+                  path: lang === "de" ? "preise" : "pricing",
                 })}
                 style={{
                   color: "white",
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -236,7 +260,16 @@ export function Footer({
           )}
 
           {/* Copyright - Always on right */}
-          <div style={{ fontSize: isMobile ? 14 : 14, opacity: 0.8, textAlign: "right", fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <div
+            style={{
+              fontSize: isMobile ? 14 : 14,
+              opacity: 0.8,
+              textAlign: "right",
+              fontWeight: 500,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             © {currentYear}
           </div>
         </div>
@@ -277,7 +310,8 @@ export function Footer({
                 style={{
                   fontSize: 20,
                   fontWeight: 700,
-                  fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   marginBottom: 12,
                   display: "flex",
                   alignItems: "center",
@@ -310,7 +344,8 @@ export function Footer({
               <p
                 style={{
                   fontSize: 15,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   lineHeight: 1.6,
                   margin: 0,
@@ -328,7 +363,8 @@ export function Footer({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -345,7 +381,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -367,7 +404,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -389,7 +427,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -413,7 +452,8 @@ export function Footer({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 marginBottom: 16,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -430,7 +470,8 @@ export function Footer({
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -453,7 +494,8 @@ export function Footer({
                     textDecoration: "none",
                     fontSize: 15,
                     fontWeight: 500,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     opacity: 0.9,
                     transition: "opacity 0.2s",
                   }}
@@ -470,17 +512,18 @@ export function Footer({
                 </Link>
               )}
               <Link
-                to={buildUrl({ 
-                  lang, 
-                  siteKey: effectiveSiteSlug, 
-                  path: lang === "de" ? "preise" : "pricing"
+                to={buildUrl({
+                  lang,
+                  siteKey: effectiveSiteSlug,
+                  path: lang === "de" ? "preise" : "pricing",
                 })}
                 style={{
                   color: "white",
                   textDecoration: "none",
                   fontSize: 15,
                   fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   opacity: 0.9,
                   transition: "opacity 0.2s",
                 }}
@@ -507,11 +550,13 @@ export function Footer({
             textAlign: "center",
             fontSize: 15,
             fontWeight: 500,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             opacity: 0.8,
           }}
         >
-          © {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}. {t("public.footer.rights") || "Minden jog fenntartva."}
+          © {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}.{" "}
+          {t("public.footer.rights") || "Minden jog fenntartva."}
         </div>
       </div>
     </footer>

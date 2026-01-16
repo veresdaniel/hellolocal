@@ -1,5 +1,14 @@
 // subscription.controller.ts
-import { Controller, Get, Post, Param, Query, Body, UseGuards, BadRequestException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  BadRequestException,
+} from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { SubscriptionService } from "./subscription.service";
@@ -26,9 +35,7 @@ export class SubscriptionController {
      ========================= */
   @Post(":siteId/subscription/:id/cancel")
   @UseGuards(JwtAuthGuard)
-  async cancelSite(
-    @Param("id") id: string
-  ) {
+  async cancelSite(@Param("id") id: string) {
     return this.subscriptionService.cancel(id, "site");
   }
 
@@ -45,9 +52,7 @@ export class SubscriptionController {
      ========================= */
   @Post("places/:placeId/subscription/:id/cancel")
   @UseGuards(JwtAuthGuard)
-  async cancelPlace(
-    @Param("id") id: string
-  ) {
+  async cancelPlace(@Param("id") id: string) {
     return this.subscriptionService.cancel(id, "place");
   }
 
@@ -56,9 +61,7 @@ export class SubscriptionController {
      ========================= */
   @Post(":siteId/subscription/:id/resume")
   @UseGuards(JwtAuthGuard)
-  async resumeSite(
-    @Param("id") id: string
-  ) {
+  async resumeSite(@Param("id") id: string) {
     return this.subscriptionService.resume(id, "site");
   }
 
@@ -67,9 +70,7 @@ export class SubscriptionController {
      ========================= */
   @Post("places/:placeId/subscription/:id/resume")
   @UseGuards(JwtAuthGuard)
-  async resumePlace(
-    @Param("id") id: string
-  ) {
+  async resumePlace(@Param("id") id: string) {
     return this.subscriptionService.resume(id, "place");
   }
 
@@ -77,10 +78,7 @@ export class SubscriptionController {
      ENTITLEMENTS (frontend!)
      ========================= */
   @Get("entitlements")
-  async entitlements(
-    @Query("siteId") siteId?: string,
-    @Query("placeId") placeId?: string
-  ) {
+  async entitlements(@Query("siteId") siteId?: string, @Query("placeId") placeId?: string) {
     return this.subscriptionService.getEntitlements({ siteId, placeId });
   }
 }

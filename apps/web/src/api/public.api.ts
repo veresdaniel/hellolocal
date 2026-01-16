@@ -11,12 +11,12 @@
 function getApiBaseUrl(): string {
   // In production, use environment variable if set
   const apiUrl = import.meta.env.VITE_API_URL;
-  
+
   if (apiUrl) {
     // Remove trailing slash if present
     return apiUrl.replace(/\/$/, "");
   }
-  
+
   // In development, use relative path (Vite proxy will handle it)
   // In production without VITE_API_URL, this will cause issues
   return "";
@@ -70,4 +70,3 @@ export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {
 
   return (await res.json()) as ActiveSitesCountResponse;
 }
-

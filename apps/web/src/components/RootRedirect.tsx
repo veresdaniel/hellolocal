@@ -10,25 +10,25 @@ import type { Lang } from "../app/config";
 export function RootRedirect() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  
+
   // For admin routes without language code, redirect immediately to default language
   // This handles /admin, /admin/login, /admin/register, etc.
   if (isAdminRoute) {
     // Extract the path after /admin (e.g., "/login" from "/admin/login", or "" from "/admin")
     // Handle both "/admin" and "/admin/login" cases
     let adminPath = location.pathname.replace(/^\/admin/, "") || "";
-    
+
     // Ensure adminPath starts with / if it's not empty
     if (adminPath && !adminPath.startsWith("/")) {
       adminPath = `/${adminPath}`;
     }
-    
+
     // Use DEFAULT_LANG immediately for admin routes (no API call needed)
     const finalPath = `/${DEFAULT_LANG}/admin${adminPath}`;
-    
+
     return <Navigate to={finalPath} replace />;
   }
-  
+
   // Fetch default language from app settings (only for public routes)
   const { data: defaultLang, isLoading: isLoadingLang } = useQuery({
     queryKey: ["publicDefaultLanguage"],
@@ -61,10 +61,7 @@ export function RootRedirect() {
   const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
 
   // Redirect to default language (with or without site slug based on site count)
-  const path = shouldShowSiteSlug
-    ? `/${defaultLang}/${DEFAULT_SITE_SLUG}`
-    : `/${defaultLang}`;
-  
+  const path = shouldShowSiteSlug ? `/${defaultLang}/${DEFAULT_SITE_SLUG}` : `/${defaultLang}`;
+
   return <Navigate to={path} replace />;
 }
-

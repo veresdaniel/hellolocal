@@ -13,7 +13,11 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { findTranslation } from "../../utils/langHelpers";
 import type { Lang } from "../../types/enums";
@@ -70,7 +74,7 @@ export function TagsPage() {
   useEffect(() => {
     if (selectedSiteId) {
       // Reset to first page when site changes
-      setPagination(prev => ({ ...prev, page: 1 }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
     } else {
       // Reset loading state if no site
       setIsLoading(false);
@@ -93,7 +97,7 @@ export function TagsPage() {
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
         setTags(response);
-        setPagination(prev => ({ ...prev, total: response.length, totalPages: 1 }));
+        setPagination((prev) => ({ ...prev, total: response.length, totalPages: 1 }));
       } else {
         setTags(response.tags || []);
         setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
@@ -118,14 +122,24 @@ export function TagsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{ lang: "hu" | "en" | "de"; name: string; description: string | null }> = [
-        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
-      ];
+      const translations: Array<{
+        lang: "hu" | "en" | "de";
+        name: string;
+        description: string | null;
+      }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({
+          lang: "en",
+          name: formData.nameEn,
+          description: formData.descriptionEn || null,
+        });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({
+          lang: "de",
+          name: formData.nameDe,
+          description: formData.descriptionDe || null,
+        });
       }
       await createTag({
         tenantId: selectedSiteId,
@@ -147,14 +161,24 @@ export function TagsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{ lang: "hu" | "en" | "de"; name: string; description: string | null }> = [
-        { lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null },
-      ];
+      const translations: Array<{
+        lang: "hu" | "en" | "de";
+        name: string;
+        description: string | null;
+      }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
       if (formData.nameEn.trim()) {
-        translations.push({ lang: "en", name: formData.nameEn, description: formData.descriptionEn || null });
+        translations.push({
+          lang: "en",
+          name: formData.nameEn,
+          description: formData.descriptionEn || null,
+        });
       }
       if (formData.nameDe.trim()) {
-        translations.push({ lang: "de", name: formData.nameDe, description: formData.descriptionDe || null });
+        translations.push({
+          lang: "de",
+          name: formData.nameDe,
+          description: formData.descriptionDe || null,
+        });
       }
       await updateTag(
         id,
@@ -178,7 +202,9 @@ export function TagsPage() {
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: t("admin.confirmations.deleteTag") || "Delete Tag",
-      message: t("admin.confirmations.deleteTag") || "Are you sure you want to delete this tag? This action cannot be undone.",
+      message:
+        t("admin.confirmations.deleteTag") ||
+        "Are you sure you want to delete this tag? This action cannot be undone.",
       confirmLabel: t("common.delete") || "Delete",
       cancelLabel: t("common.cancel") || "Cancel",
       confirmVariant: "danger",
@@ -248,7 +274,7 @@ export function TagsPage() {
         }}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -259,27 +285,48 @@ export function TagsPage() {
       />
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-          border: "1px solid rgba(102, 126, 234, 0.1)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(18px, 4vw, 22px)",
-            fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editTag") : t("admin.forms.newTag")}
           </h2>
 
           {/* Active Checkbox - moved to top */}
-          <div style={{ marginBottom: 16, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: "16px 20px",
+              background: "#f8f8ff",
+              borderRadius: 12,
+              border: "2px solid #e0e7ff",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                fontSize: 15,
+              }}
+            >
               <input
                 type="checkbox"
                 checked={formData.isActive}
@@ -294,7 +341,14 @@ export function TagsPage() {
             {(selectedLang) => (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
                   <input
@@ -303,12 +357,14 @@ export function TagsPage() {
                       selectedLang === "hu"
                         ? formData.nameHu
                         : selectedLang === "en"
-                        ? formData.nameEn
-                        : formData.nameDe
+                          ? formData.nameEn
+                          : formData.nameDe
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                      if (selectedLang === "hu")
+                        setFormData({ ...formData, nameHu: e.target.value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, nameEn: e.target.value });
                       else setFormData({ ...formData, nameDe: e.target.value });
                     }}
                     style={{
@@ -325,31 +381,41 @@ export function TagsPage() {
                     }}
                   />
                   {(selectedLang === "hu" && formErrors.nameHu) ||
-                    (selectedLang === "en" && formErrors.nameEn) ||
-                    (selectedLang === "de" && formErrors.nameDe) ? (
+                  (selectedLang === "en" && formErrors.nameEn) ||
+                  (selectedLang === "de" && formErrors.nameDe) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
                       {selectedLang === "hu"
                         ? formErrors.nameHu
                         : selectedLang === "en"
-                        ? formErrors.nameEn
-                        : formErrors.nameDe}
+                          ? formErrors.nameEn
+                          : formErrors.nameDe}
                     </div>
                   ) : null}
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("common.description")}</label>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("common.description")}
+                  </label>
                   <TipTapEditorWithUpload
                     value={
                       selectedLang === "hu"
                         ? formData.descriptionHu
                         : selectedLang === "en"
-                        ? formData.descriptionEn
-                        : formData.descriptionDe
+                          ? formData.descriptionEn
+                          : formData.descriptionDe
                     }
                     onChange={(value) => {
                       if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                      else if (selectedLang === "en")
+                        setFormData({ ...formData, descriptionEn: value });
                       else setFormData({ ...formData, descriptionDe: value });
                     }}
                     placeholder={t("common.description")}
@@ -371,14 +437,15 @@ export function TagsPage() {
           searchPlaceholder={t("admin.searchPlaceholders.tags")}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setPagination(prev => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           isLoading={isLoading}
           filterFn={(tag, query) => {
             const lowerQuery = query.toLowerCase();
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-            const translation = findTranslation(tag.translations, currentLang) || 
-                               findTranslation(tag.translations, "hu" as Lang);
+            const translation =
+              findTranslation(tag.translations, currentLang) ||
+              findTranslation(tag.translations, "hu" as Lang);
             return translation?.name.toLowerCase().includes(lowerQuery);
           }}
           columns={[
@@ -387,8 +454,9 @@ export function TagsPage() {
               label: t("common.name"),
               render: (tag) => {
                 const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation = tag.translations.find((t) => t.lang === currentLang) || 
-                                   tag.translations.find((t) => t.lang === "hu");
+                const translation =
+                  tag.translations.find((t) => t.lang === currentLang) ||
+                  tag.translations.find((t) => t.lang === "hu");
                 return translation?.name || "-";
               },
             },
@@ -415,8 +483,9 @@ export function TagsPage() {
           ]}
           cardTitle={(tag) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-            const translation = findTranslation(tag.translations, currentLang) || 
-                               findTranslation(tag.translations, "hu" as Lang);
+            const translation =
+              findTranslation(tag.translations, currentLang) ||
+              findTranslation(tag.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(tag) => `#${tag.id.slice(0, 8)}`}
@@ -454,12 +523,11 @@ export function TagsPage() {
             totalPages={pagination.totalPages}
             total={pagination.total}
             limit={pagination.limit}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination(prev => ({ ...prev, limit, page: 1 }))}
+            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
           />
         </div>
       )}
     </div>
   );
 }
-

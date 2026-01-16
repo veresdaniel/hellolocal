@@ -5,11 +5,23 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { getSites, createSite, updateSite, deleteSite, getBrands, type Site, type Brand } from "../../api/admin.api";
+import {
+  getSites,
+  createSite,
+  updateSite,
+  deleteSite,
+  getBrands,
+  type Site,
+  type Brand,
+} from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
@@ -129,7 +141,7 @@ export function SitesPage() {
         brandId: formData.brandId,
         translations,
         isActive: formData.isActive,
-        primaryDomain: formData.primaryDomainEnabled ? (formData.primaryDomain || null) : null,
+        primaryDomain: formData.primaryDomainEnabled ? formData.primaryDomain || null : null,
       });
       setIsCreating(false);
       resetForm();
@@ -182,7 +194,7 @@ export function SitesPage() {
         brandId: formData.brandId,
         translations,
         isActive: formData.isActive,
-        primaryDomain: formData.primaryDomainEnabled ? (formData.primaryDomain || null) : null,
+        primaryDomain: formData.primaryDomainEnabled ? formData.primaryDomain || null : null,
       });
       setEditingId(null);
       resetForm();
@@ -280,7 +292,7 @@ export function SitesPage() {
         }}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -291,37 +303,45 @@ export function SitesPage() {
       />
 
       {error && (
-        <div style={{ 
-          padding: "clamp(12px, 3vw, 16px)",
-          marginBottom: 24,
-          background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-          color: "#991b1b",
-          borderRadius: 12,
-          border: "1px solid #fca5a5",
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 500,
-        }}>
+        <div
+          style={{
+            padding: "clamp(12px, 3vw, 16px)",
+            marginBottom: 24,
+            background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
+            color: "#991b1b",
+            borderRadius: 12,
+            border: "1px solid #fca5a5",
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 500,
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-          border: "1px solid rgba(102, 126, 234, 0.1)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(18px, 4vw, 22px)",
-            fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            border: "1px solid rgba(102, 126, 234, 0.1)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editSite") : t("admin.forms.newSite")}
           </h2>
 
@@ -332,16 +352,22 @@ export function SitesPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {/* Name - FIRST */}
                   <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: 8,
-                      color: ((selectedLang === "hu" && formErrors.nameHu) ||
-                              (selectedLang === "en" && formErrors.nameEn) ||
-                              (selectedLang === "de" && formErrors.nameDe)) ? "#dc2626" : "#667eea",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 8,
+                        color:
+                          (selectedLang === "hu" && formErrors.nameHu) ||
+                          (selectedLang === "en" && formErrors.nameEn) ||
+                          (selectedLang === "de" && formErrors.nameDe)
+                            ? "#dc2626"
+                            : "#667eea",
+                        fontWeight: 600,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("common.name")} ({selectedLang.toUpperCase()}) *
                     </label>
                     <input
@@ -350,46 +376,54 @@ export function SitesPage() {
                         selectedLang === "hu"
                           ? formData.nameHu
                           : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe
+                            ? formData.nameEn
+                            : formData.nameDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, nameEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, nameHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, nameEn: e.target.value });
                         else setFormData({ ...formData, nameDe: e.target.value });
                       }}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border:
-                          ((selectedLang === "hu" && formErrors.nameHu) ||
+                          (selectedLang === "hu" && formErrors.nameHu) ||
                           (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe))
+                          (selectedLang === "de" && formErrors.nameDe)
                             ? "2px solid #fca5a5"
                             : "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
-                        background: ((selectedLang === "hu" && formErrors.nameHu) ||
-                                     (selectedLang === "en" && formErrors.nameEn) ||
-                                     (selectedLang === "de" && formErrors.nameDe)) ? "#fef2f2" : "white",
+                        background:
+                          (selectedLang === "hu" && formErrors.nameHu) ||
+                          (selectedLang === "en" && formErrors.nameEn) ||
+                          (selectedLang === "de" && formErrors.nameDe)
+                            ? "#fef2f2"
+                            : "white",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
-                                         (selectedLang === "en" && formErrors.nameEn) ||
-                                         (selectedLang === "de" && formErrors.nameDe);
+                        const hasError =
+                          (selectedLang === "hu" && formErrors.nameHu) ||
+                          (selectedLang === "en" && formErrors.nameEn) ||
+                          (selectedLang === "de" && formErrors.nameDe);
                         if (!hasError) {
                           e.target.style.borderColor = "#667eea";
                           e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                         }
                       }}
                       onBlur={(e) => {
-                        const hasError = (selectedLang === "hu" && formErrors.nameHu) ||
-                                         (selectedLang === "en" && formErrors.nameEn) ||
-                                         (selectedLang === "de" && formErrors.nameDe);
+                        const hasError =
+                          (selectedLang === "hu" && formErrors.nameHu) ||
+                          (selectedLang === "en" && formErrors.nameEn) ||
+                          (selectedLang === "de" && formErrors.nameDe);
                         e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
                         e.target.style.boxShadow = "none";
                       }}
@@ -397,26 +431,31 @@ export function SitesPage() {
                     {((selectedLang === "hu" && formErrors.nameHu) ||
                       (selectedLang === "en" && formErrors.nameEn) ||
                       (selectedLang === "de" && formErrors.nameDe)) && (
-                      <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+                      <div
+                        style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}
+                      >
                         {selectedLang === "hu"
                           ? formErrors.nameHu
                           : selectedLang === "en"
-                          ? formErrors.nameEn
-                          : formErrors.nameDe}
+                            ? formErrors.nameEn
+                            : formErrors.nameDe}
                       </div>
                     )}
                   </div>
 
                   {/* Short Description */}
                   <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: 8,
-                      color: "#667eea",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 8,
+                        color: "#667eea",
+                        fontWeight: 600,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.shortDescription")} ({selectedLang.toUpperCase()})
                     </label>
                     <input
@@ -425,19 +464,22 @@ export function SitesPage() {
                         selectedLang === "hu"
                           ? formData.shortDescriptionHu
                           : selectedLang === "en"
-                          ? formData.shortDescriptionEn
-                          : formData.shortDescriptionDe
+                            ? formData.shortDescriptionEn
+                            : formData.shortDescriptionDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, shortDescriptionHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, shortDescriptionEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, shortDescriptionHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, shortDescriptionEn: e.target.value });
                         else setFormData({ ...formData, shortDescriptionDe: e.target.value });
                       }}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
@@ -457,14 +499,17 @@ export function SitesPage() {
 
                   {/* Description (TipTap Editor) */}
                   <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: 8,
-                      color: "#667eea",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 8,
+                        color: "#667eea",
+                        fontWeight: 600,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("common.description")} ({selectedLang.toUpperCase()})
                     </label>
                     <TipTapEditorWithUpload
@@ -472,12 +517,14 @@ export function SitesPage() {
                         selectedLang === "hu"
                           ? formData.descriptionHu
                           : selectedLang === "en"
-                          ? formData.descriptionEn
-                          : formData.descriptionDe
+                            ? formData.descriptionEn
+                            : formData.descriptionDe
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                        else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, descriptionHu: value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, descriptionEn: value });
                         else setFormData({ ...formData, descriptionDe: value });
                       }}
                       placeholder={t("common.description")}
@@ -488,14 +535,17 @@ export function SitesPage() {
 
                   {/* Hero Image */}
                   <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: 8,
-                      color: "#667eea",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <label
+                      style={{
+                        display: "block",
+                        marginBottom: 8,
+                        color: "#667eea",
+                        fontWeight: 600,
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.heroImage")} ({selectedLang.toUpperCase()})
                     </label>
                     <input
@@ -504,12 +554,14 @@ export function SitesPage() {
                         selectedLang === "hu"
                           ? formData.heroImageHu
                           : selectedLang === "en"
-                          ? formData.heroImageEn
-                          : formData.heroImageDe
+                            ? formData.heroImageEn
+                            : formData.heroImageDe
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, heroImageHu: e.target.value });
-                        else if (selectedLang === "en") setFormData({ ...formData, heroImageEn: e.target.value });
+                        if (selectedLang === "hu")
+                          setFormData({ ...formData, heroImageHu: e.target.value });
+                        else if (selectedLang === "en")
+                          setFormData({ ...formData, heroImageEn: e.target.value });
                         else setFormData({ ...formData, heroImageDe: e.target.value });
                       }}
                       placeholder="https://example.com/image.jpg"
@@ -517,7 +569,8 @@ export function SitesPage() {
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: "clamp(15px, 3.5vw, 16px)",
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border: "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
@@ -533,12 +586,15 @@ export function SitesPage() {
                         e.target.style.boxShadow = "none";
                       }}
                     />
-                    <div style={{ 
-                      fontSize: "clamp(13px, 3vw, 15px)", 
-                      color: "#666", 
-                      marginTop: 6,
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
+                    <div
+                      style={{
+                        fontSize: "clamp(13px, 3vw, 15px)",
+                        color: "#666",
+                        marginTop: 6,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {t("admin.heroImageDescription")}
                     </div>
                   </div>
@@ -547,16 +603,25 @@ export function SitesPage() {
             </LanguageAwareForm>
 
             {/* Other fields - Brand, Domain, Active - after Name, Slug, Description */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: 16,
+              }}
+            >
               <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: 8,
-                  color: formErrors.brandId ? "#dc2626" : "#667eea",
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    color: formErrors.brandId ? "#dc2626" : "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.brand")} *
                 </label>
                 <select
@@ -566,7 +631,8 @@ export function SitesPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     border: `2px solid ${formErrors.brandId ? "#fca5a5" : "#e0e7ff"}`,
                     borderRadius: 8,
                     outline: "none",
@@ -592,35 +658,57 @@ export function SitesPage() {
                     </option>
                   ))}
                 </select>
-                {formErrors.brandId && <div style={{ 
-                  color: "#dc2626", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  marginTop: 6, 
-                  fontWeight: 500,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>{formErrors.brandId}</div>}
+                {formErrors.brandId && (
+                  <div
+                    style={{
+                      color: "#dc2626",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      marginTop: 6,
+                      fontWeight: 500,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {formErrors.brandId}
+                  </div>
+                )}
               </div>
               <div>
                 <DomainInput
                   value={formData.primaryDomain}
                   onChange={(value) => setFormData({ ...formData, primaryDomain: value })}
                   checked={formData.primaryDomainEnabled}
-                  onCheckedChange={(checked) => setFormData({ ...formData, primaryDomainEnabled: checked })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, primaryDomainEnabled: checked })
+                  }
                   label={t("admin.primaryDomain")}
                 />
               </div>
             </div>
 
             {/* Active Checkbox */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 20px", background: "#f8f8ff", borderRadius: 12, border: "2px solid #e0e7ff" }}>
-              <label style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: 10, 
-                cursor: "pointer", 
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                padding: "16px 20px",
+                background: "#f8f8ff",
+                borderRadius: 12,
+                border: "2px solid #e0e7ff",
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  cursor: "pointer",
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={formData.isActive}
@@ -679,7 +767,8 @@ export function SitesPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -689,10 +778,10 @@ export function SitesPage() {
             },
           ]}
           cardTitle={(site) => {
-          const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-          const translation =
-            findTranslation(site.translations, currentLang) ||
-            findTranslation(site.translations, "hu" as Lang);
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+            const translation =
+              findTranslation(site.translations, currentLang) ||
+              findTranslation(site.translations, "hu" as Lang);
             return translation?.name || "-";
           }}
           cardSubtitle={(site) => site.slug}
@@ -710,7 +799,8 @@ export function SitesPage() {
                       : "#6c757d",
                     color: "white",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                   }}
                 >
@@ -727,4 +817,3 @@ export function SitesPage() {
     </div>
   );
 }
-

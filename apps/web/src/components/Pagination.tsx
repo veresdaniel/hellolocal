@@ -37,18 +37,23 @@ export function Pagination({
       }}
     >
       {/* Megjelenítés info + limit selector */}
-      <div style={{ 
-        display: "flex", 
-        alignItems: "center", 
-        gap: 8,
-        flexWrap: "wrap",
-      }}>
-        <span style={{ 
-          color: "#666", 
-          fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          whiteSpace: "nowrap",
-        }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            color: "#666",
+            fontSize: "clamp(13px, 3vw, 15px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            whiteSpace: "nowrap",
+          }}
+        >
           {t("admin.pagination.showing", { start: startItem, end: endItem, total })}
         </span>
         <select
@@ -57,7 +62,8 @@ export function Pagination({
           style={{
             padding: "6px 10px",
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             border: "1px solid #ddd",
             borderRadius: 6,
             cursor: "pointer",
@@ -78,15 +84,15 @@ export function Pagination({
           disabled={currentPage === 1}
           style={{
             padding: "8px 16px",
-            background: currentPage === 1 
-              ? "#e5e7eb" 
-              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background:
+              currentPage === 1 ? "#e5e7eb" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: currentPage === 1 ? "#9ca3af" : "white",
             border: "none",
             borderRadius: 6,
             cursor: currentPage === 1 ? "not-allowed" : "pointer",
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
             transition: "all 0.2s ease",
             boxShadow: currentPage === 1 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
@@ -95,14 +101,17 @@ export function Pagination({
           {t("admin.pagination.previous")}
         </button>
 
-        <span style={{ 
-          fontSize: "clamp(13px, 3vw, 15px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-          color: "#666", 
-          minWidth: "clamp(80px, 20vw, 100px)", 
-          textAlign: "center",
-          fontWeight: 600,
-        }}>
+        <span
+          style={{
+            fontSize: "clamp(13px, 3vw, 15px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "#666",
+            minWidth: "clamp(80px, 20vw, 100px)",
+            textAlign: "center",
+            fontWeight: 600,
+          }}
+        >
           {t("admin.pagination.pageInfo", { current: currentPage, total: totalPages })}
         </span>
 
@@ -111,18 +120,23 @@ export function Pagination({
           disabled={currentPage === totalPages || totalPages === 0}
           style={{
             padding: "8px 16px",
-            background: currentPage === totalPages || totalPages === 0 
-              ? "#e5e7eb" 
-              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background:
+              currentPage === totalPages || totalPages === 0
+                ? "#e5e7eb"
+                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: currentPage === totalPages || totalPages === 0 ? "#9ca3af" : "white",
             border: "none",
             borderRadius: 6,
             cursor: currentPage === totalPages || totalPages === 0 ? "not-allowed" : "pointer",
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
             transition: "all 0.2s ease",
-            boxShadow: currentPage === totalPages || totalPages === 0 ? "none" : "0 2px 8px rgba(102, 126, 234, 0.3)",
+            boxShadow:
+              currentPage === totalPages || totalPages === 0
+                ? "none"
+                : "0 2px 8px rgba(102, 126, 234, 0.3)",
           }}
         >
           {t("admin.pagination.next")}

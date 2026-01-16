@@ -58,7 +58,8 @@ export function LanguageAwareInput({
             fontWeight: hasError ? 600 : 500,
             fontSize: "clamp(14px, 3.5vw, 16px)",
             color: hasError ? "#dc2626" : "#374151",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {label} ({lang.toUpperCase()}){required && " *"}
@@ -83,11 +84,7 @@ export function LanguageAwareInput({
           style={baseStyle}
         />
       )}
-      {error && (
-        <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{error}</div>}
     </div>
   );
 }

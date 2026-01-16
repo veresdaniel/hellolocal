@@ -23,8 +23,8 @@ export class SiteResolverService {
         isActive: true,
       },
       orderBy: [
-        { isPrimary: 'desc' }, // Primary keys first
-        { createdAt: 'asc' }, // Then by creation date (oldest first)
+        { isPrimary: "desc" }, // Primary keys first
+        { createdAt: "asc" }, // Then by creation date (oldest first)
       ],
       select: { siteId: true, slug: true, isActive: true },
     });

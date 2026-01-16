@@ -14,4 +14,3 @@ export function useActiveSitesCount() {
     retry: 1,
   });
 }
-

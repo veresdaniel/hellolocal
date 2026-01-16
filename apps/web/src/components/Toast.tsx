@@ -91,14 +91,28 @@ function ToastItem({ toast }: { toast: ToastType }) {
   return (
     <div style={getToastStyles()}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-        <span style={{ fontSize: "20px", fontWeight: 700, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{getIcon()}</span>
-        <span style={{ 
-          fontSize: "clamp(14px, 3.5vw, 16px)", 
-          lineHeight: "1.5", 
-          flex: 1, 
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", 
-          fontWeight: 400,
-        }}>{toast.message}</span>
+        <span
+          style={{
+            fontSize: "20px",
+            fontWeight: 700,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {getIcon()}
+        </span>
+        <span
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            lineHeight: "1.5",
+            flex: 1,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
+          }}
+        >
+          {toast.message}
+        </span>
       </div>
       <button
         onClick={handleClose}
@@ -115,7 +129,8 @@ function ToastItem({ toast }: { toast: ToastType }) {
           transition: "opacity 0.2s",
           fontSize: "18px",
           lineHeight: 1,
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           fontWeight: 500,
         }}
         onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}

@@ -45,7 +45,9 @@ export class AdminStaticPageService {
     const where: any = { siteId };
     if (category) {
       if (!ALLOWED_CATEGORIES.has(category)) {
-        throw new BadRequestException(`Invalid category: ${category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+        throw new BadRequestException(
+          `Invalid category: ${category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`
+        );
       }
       where.category = category;
     }
@@ -53,10 +55,10 @@ export class AdminStaticPageService {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    
+
     // Get total count
     const total = await this.prisma.staticPage.count({ where });
-    
+
     // Get paginated results
     const staticPages = await this.prisma.staticPage.findMany({
       where,
@@ -67,7 +69,7 @@ export class AdminStaticPageService {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
     });
-    
+
     // Always return paginated response
     return {
       staticPages,
@@ -97,7 +99,9 @@ export class AdminStaticPageService {
 
   async create(dto: CreateStaticPageDto) {
     if (!ALLOWED_CATEGORIES.has(dto.category)) {
-      throw new BadRequestException(`Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+      throw new BadRequestException(
+        `Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`
+      );
     }
 
     return this.prisma.staticPage.create({
@@ -130,7 +134,9 @@ export class AdminStaticPageService {
     const updateData: any = {};
     if (dto.category !== undefined) {
       if (!ALLOWED_CATEGORIES.has(dto.category)) {
-        throw new BadRequestException(`Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`);
+        throw new BadRequestException(
+          `Invalid category: ${dto.category}. Must be one of: ${Array.from(ALLOWED_CATEGORIES).join(", ")}`
+        );
       }
       updateData.category = dto.category;
     }
@@ -189,4 +195,3 @@ export class AdminStaticPageService {
     return { message: "Static page deleted successfully" };
   }
 }
-

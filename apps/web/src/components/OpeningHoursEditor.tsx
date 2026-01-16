@@ -43,7 +43,11 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
     return dayNames[dayOfWeek] || `Day ${dayOfWeek}`;
   };
 
-  const handleDayChange = (dayIndex: number, field: "isClosed" | "openTime" | "closeTime", newValue: boolean | string) => {
+  const handleDayChange = (
+    dayIndex: number,
+    field: "isClosed" | "openTime" | "closeTime",
+    newValue: boolean | string
+  ) => {
     const newHours = [...hours];
     if (field === "isClosed") {
       newHours[dayIndex].isClosed = newValue as boolean;
@@ -105,12 +109,13 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
           fontSize: "clamp(14px, 3.5vw, 16px)",
           color: "#666",
           marginBottom: "8px",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         {t("common.openingHoursHint")}
       </div>
-      
+
       {hours.map((hour, index) => (
         <div
           key={hour.dayOfWeek}
@@ -122,10 +127,8 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
             flexWrap: "wrap",
           }}
         >
-          <label style={labelStyle}>
-            {getDayName(hour.dayOfWeek)}:
-          </label>
-          
+          <label style={labelStyle}>{getDayName(hour.dayOfWeek)}:</label>
+
           <div
             style={{
               display: "flex",
@@ -155,15 +158,15 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
               />
               {t("common.closed")}
             </label>
-            
+
             {!hour.isClosed && (
               <>
                 <input
                   type="time"
                   value={hour.openTime}
                   onChange={(e) => handleDayChange(index, "openTime", e.target.value)}
-                  style={{ 
-                    ...inputStyle, 
+                  style={{
+                    ...inputStyle,
                     maxWidth: "120px",
                   }}
                   onFocus={(e) => {
@@ -176,18 +179,23 @@ export function OpeningHoursEditor({ value, onChange }: OpeningHoursEditorProps)
                   }}
                   placeholder={t("common.openTime")}
                 />
-                <span style={{ 
-                  color: "#666", 
-                  fontSize: "clamp(14px, 3.5vw, 16px)", 
-                  fontWeight: 600, 
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>-</span>
+                <span
+                  style={{
+                    color: "#666",
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                    fontWeight: 600,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  -
+                </span>
                 <input
                   type="time"
                   value={hour.closeTime}
                   onChange={(e) => handleDayChange(index, "closeTime", e.target.value)}
-                  style={{ 
-                    ...inputStyle, 
+                  style={{
+                    ...inputStyle,
                     maxWidth: "120px",
                   }}
                   onFocus={(e) => {

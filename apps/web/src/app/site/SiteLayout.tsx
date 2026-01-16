@@ -35,7 +35,22 @@ export function SiteLayout() {
   const isCollectionsRoute = location.pathname.includes("/collections/");
 
   // Reserved paths that should not be treated as siteKey
-  const RESERVED_PATHS = ["sites", "teruletek", "regions", "regionen", "admin", "static-pages", "static-page", "impresszum", "aszf", "adatvedelem", "pricing", "tarife", "preise", "collections"];
+  const RESERVED_PATHS = [
+    "sites",
+    "teruletek",
+    "regions",
+    "regionen",
+    "admin",
+    "static-pages",
+    "static-page",
+    "impresszum",
+    "aszf",
+    "adatvedelem",
+    "pricing",
+    "tarife",
+    "preise",
+    "collections",
+  ];
 
   // multi-site módban siteKey elvárt, single-site módban fix
   // Ha a siteKeyParam egy foglalt path, akkor redirectálunk a sites listára
@@ -46,7 +61,11 @@ export function SiteLayout() {
   // Determine siteKey - use DEFAULT_SITE_SLUG if siteKeyParam is a reserved path
   // For collections route, always use DEFAULT_SITE_SLUG (no siteKey in URL)
   const siteKey = HAS_MULTIPLE_SITES
-    ? (isCollectionsRoute ? DEFAULT_SITE_SLUG : (RESERVED_PATHS.includes(siteKeyParam || "") ? DEFAULT_SITE_SLUG : (siteKeyParam ?? DEFAULT_SITE_SLUG)))
+    ? isCollectionsRoute
+      ? DEFAULT_SITE_SLUG
+      : RESERVED_PATHS.includes(siteKeyParam || "")
+        ? DEFAULT_SITE_SLUG
+        : (siteKeyParam ?? DEFAULT_SITE_SLUG)
     : DEFAULT_SITE_SLUG;
 
   // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
@@ -55,7 +74,11 @@ export function SiteLayout() {
 
   // rossz lang -> redirect a javított langra (megtartva a többit)
   if (langParam !== lang) {
-    const prefix = isCollectionsRoute ? `/${lang}` : (HAS_MULTIPLE_SITES ? `/${lang}/${siteKey}` : `/${lang}`);
+    const prefix = isCollectionsRoute
+      ? `/${lang}`
+      : HAS_MULTIPLE_SITES
+        ? `/${lang}/${siteKey}`
+        : `/${lang}`;
     return <Navigate to={prefix} replace />;
   }
 

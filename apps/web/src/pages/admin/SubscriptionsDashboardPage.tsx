@@ -2,7 +2,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import {
   getSubscriptions,
@@ -127,7 +136,10 @@ export function SubscriptionsDashboardPage() {
         getSubscriptions({
           scope,
           status: statusFilter !== "all" ? (statusFilter as any) : undefined,
-          plan: planFilter !== "all" ? (planFilter as "FREE" | "BASIC" | "PRO" | "BUSINESS") : undefined,
+          plan:
+            planFilter !== "all"
+              ? (planFilter as "FREE" | "BASIC" | "PRO" | "BUSINESS")
+              : undefined,
           q: debouncedSearchQuery || undefined,
           expiresWithinDays,
           take: pageSize,
@@ -135,7 +147,14 @@ export function SubscriptionsDashboardPage() {
         }),
         getAllFeatureSubscriptions({
           scope: scope === "all" ? "all" : scope,
-          status: statusFilter !== "all" ? (statusFilter === "ACTIVE" ? "active" : statusFilter === "EXPIRED" ? "canceled" : "all" as any) : "all",
+          status:
+            statusFilter !== "all"
+              ? statusFilter === "ACTIVE"
+                ? "active"
+                : statusFilter === "EXPIRED"
+                  ? "canceled"
+                  : ("all" as any)
+              : "all",
           featureKey: "all",
           q: debouncedSearchQuery || undefined,
           take: pageSize,
@@ -143,7 +162,13 @@ export function SubscriptionsDashboardPage() {
         }),
       ]);
 
-      const [summaryResult, expiringResult, trendsResult, subscriptionsResult, featureSubscriptionsResult] = results;
+      const [
+        summaryResult,
+        expiringResult,
+        trendsResult,
+        subscriptionsResult,
+        featureSubscriptionsResult,
+      ] = results;
       const errors: string[] = [];
 
       // Process summary
@@ -175,7 +200,9 @@ export function SubscriptionsDashboardPage() {
         setSubscriptions(subscriptionsResult.value.items);
         setTotal(subscriptionsResult.value.total);
       } else {
-        errors.push(t("admin.errors.loadSubscriptionsFailed") || "Előfizetések betöltése sikertelen");
+        errors.push(
+          t("admin.errors.loadSubscriptionsFailed") || "Előfizetések betöltése sikertelen"
+        );
         console.error("Failed to load subscriptions:", subscriptionsResult.reason);
       }
 
@@ -184,20 +211,24 @@ export function SubscriptionsDashboardPage() {
         setFeatureSubscriptions(featureSubscriptionsResult.value.items);
         setFeatureSubscriptionsTotal(featureSubscriptionsResult.value.total);
       } else {
-        errors.push(t("admin.errors.loadFeatureSubscriptionsFailed") || "Funkció előfizetések betöltése sikertelen");
+        errors.push(
+          t("admin.errors.loadFeatureSubscriptionsFailed") ||
+            "Funkció előfizetések betöltése sikertelen"
+        );
         console.error("Failed to load feature subscriptions:", featureSubscriptionsResult.reason);
       }
 
       // Show error toast only if there are errors
       // Only show once per page load to avoid duplicate toasts
       if (errors.length > 0 && !hasShownErrorRef.current) {
-        const errorMessage = errors.length === 1 
-          ? errors[0]
-          : `${errors.length} ${t("admin.errors.loadFailed")}: ${errors.join(", ")}`;
+        const errorMessage =
+          errors.length === 1
+            ? errors[0]
+            : `${errors.length} ${t("admin.errors.loadFailed")}: ${errors.join(", ")}`;
         showToast(errorMessage, "error");
         hasShownErrorRef.current = true;
       }
-      
+
       // Reset error flag if all data loaded successfully
       if (errors.length === 0) {
         hasShownErrorRef.current = false;
@@ -281,7 +312,12 @@ export function SubscriptionsDashboardPage() {
     setHistoryPage(page);
     setIsLoadingHistory(true);
     try {
-      const historyData = await getSubscriptionHistory(item.scope, item.id, page * historyPageSize, historyPageSize);
+      const historyData = await getSubscriptionHistory(
+        item.scope,
+        item.id,
+        page * historyPageSize,
+        historyPageSize
+      );
       setHistory(historyData.items);
       setHistoryTotal(historyData.total);
     } catch (err) {
@@ -347,16 +383,19 @@ export function SubscriptionsDashboardPage() {
   const TrendChart = ({ data, isMobileChart }: { data: TrendPoint[]; isMobileChart: boolean }) => {
     if (data.length === 0) {
       return (
-        <div style={{ 
-          height: isMobileChart ? 200 : 300, 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center", 
-          padding: 48,
-          textAlign: "center",
-          color: "#999",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-        }}>
+        <div
+          style={{
+            height: isMobileChart ? 200 : 300,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 48,
+            textAlign: "center",
+            color: "#999",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
           {t("admin.noData") || "Nincs adat"}
         </div>
       );
@@ -364,7 +403,10 @@ export function SubscriptionsDashboardPage() {
 
     // Format data for recharts - format weekStart to readable date
     const chartData = data.map((point) => ({
-      week: new Date(point.weekStart).toLocaleDateString("hu-HU", { month: "short", day: "numeric" }),
+      week: new Date(point.weekStart).toLocaleDateString("hu-HU", {
+        month: "short",
+        day: "numeric",
+      }),
       active: point.active,
       new: point.new,
       churn: point.churn,
@@ -373,22 +415,10 @@ export function SubscriptionsDashboardPage() {
     return (
       <div style={{ width: "100%", height: isMobileChart ? 250 : 350 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
+          <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis
-              dataKey="week"
-              stroke="#666"
-              style={{ fontSize: 12 }}
-              tick={{ fill: "#666" }}
-            />
-            <YAxis
-              stroke="#666"
-              style={{ fontSize: 12 }}
-              tick={{ fill: "#666" }}
-            />
+            <XAxis dataKey="week" stroke="#666" style={{ fontSize: 12 }} tick={{ fill: "#666" }} />
+            <YAxis stroke="#666" style={{ fontSize: 12 }} tick={{ fill: "#666" }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "white",
@@ -398,11 +428,7 @@ export function SubscriptionsDashboardPage() {
               }}
               labelStyle={{ color: "#333", fontWeight: 600, marginBottom: 4 }}
             />
-            <Legend
-              wrapperStyle={{ paddingTop: 20 }}
-              iconType="line"
-              iconSize={16}
-            />
+            <Legend wrapperStyle={{ paddingTop: 20 }} iconType="line" iconSize={16} />
             <Line
               type="monotone"
               dataKey="active"
@@ -475,10 +501,15 @@ export function SubscriptionsDashboardPage() {
                 cursor: "pointer",
                 fontSize: isMobile ? 12 : 14,
                 fontWeight: scope === s ? 600 : 400,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {s === "all" ? t("admin.all") || "Mind" : s === "site" ? t("admin.sites") || "Site" : t("admin.places") || "Place"}
+              {s === "all"
+                ? t("admin.all") || "Mind"
+                : s === "site"
+                  ? t("admin.sites") || "Site"
+                  : t("admin.places") || "Place"}
             </button>
           ))}
         </div>
@@ -499,18 +530,19 @@ export function SubscriptionsDashboardPage() {
                 cursor: "pointer",
                 fontSize: isMobile ? 12 : 14,
                 fontWeight: statusFilter === s ? 600 : 400,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               {s === "all"
                 ? t("admin.all") || "Mind"
                 : s === "ACTIVE"
-                ? t("admin.statusActive") || "Aktív"
-                : s === "EXPIRING"
-                ? t("admin.expiring") || "Lejáró"
-                : s === "EXPIRED"
-                ? t("admin.statusExpired") || "Lejárt"
-                : t("admin.statusSuspended") || "Felfüggesztve"}
+                  ? t("admin.statusActive") || "Aktív"
+                  : s === "EXPIRING"
+                    ? t("admin.expiring") || "Lejáró"
+                    : s === "EXPIRED"
+                      ? t("admin.statusExpired") || "Lejárt"
+                      : t("admin.statusSuspended") || "Felfüggesztve"}
             </button>
           ))}
         </div>
@@ -521,8 +553,8 @@ export function SubscriptionsDashboardPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: isMobile 
-              ? "repeat(2, 1fr)" 
+            gridTemplateColumns: isMobile
+              ? "repeat(2, 1fr)"
               : "repeat(auto-fit, minmax(150px, 1fr))",
             gap: isMobile ? 12 : 16,
             marginBottom: 24,
@@ -536,10 +568,28 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.activeCount") || "Aktív"}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "#333", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{summary.activeCount}</div>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#333",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {summary.activeCount}
+            </div>
           </div>
           <div
             style={{
@@ -549,10 +599,26 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.mrr") || "MRR"}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "#333", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#333",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {formatCurrency(summary.mrrCents)}
             </div>
           </div>
@@ -564,10 +630,28 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.new7d") || "Új (7 nap)"}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "#22c55e", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{summary.newCount}</div>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#22c55e",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {summary.newCount}
+            </div>
           </div>
           <div
             style={{
@@ -577,10 +661,28 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.churn7d") || "Churn (7 nap)"}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "#dc2626", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{summary.churnCount}</div>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#dc2626",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {summary.churnCount}
+            </div>
           </div>
           <div
             style={{
@@ -590,7 +692,15 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.netChange") || "Nettó változás"}
             </div>
             <div
@@ -598,7 +708,8 @@ export function SubscriptionsDashboardPage() {
                 fontSize: 24,
                 fontWeight: 600,
                 color: summary.netChange >= 0 ? "#22c55e" : "#dc2626",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
               {summary.netChange >= 0 ? "+" : ""}
@@ -613,10 +724,28 @@ export function SubscriptionsDashboardPage() {
               border: "1px solid #e5e7eb",
             }}
           >
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#666",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
               {t("admin.subscriptions.expiring7d") || "Lejár 7 napon belül"}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 600, color: "#f59e0b", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{summary.expiringCount}</div>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#f59e0b",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {summary.expiringCount}
+            </div>
           </div>
         </div>
       )}
@@ -639,17 +768,28 @@ export function SubscriptionsDashboardPage() {
             border: "1px solid #e5e7eb",
           }}
         >
-          <h3 style={{ margin: "0 0 16px 0", fontSize: isMobile ? 16 : 18, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <h3
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: 600,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.subscriptions.expiring7d") || "Lejár 7 napon belül"}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {expiring.length === 0 ? (
-              <div style={{ 
-                padding: 48, 
-                textAlign: "center", 
-                color: "#999",
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-              }}>
+              <div
+                style={{
+                  padding: 48,
+                  textAlign: "center",
+                  color: "#999",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.noData") || "Nincs adat"}
               </div>
             ) : (
@@ -663,13 +803,46 @@ export function SubscriptionsDashboardPage() {
                     border: "1px solid #e5e7eb",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, marginBottom: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.entityName}</div>
-                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        {item.scope === "site" ? t("admin.site") || "Site" : t("admin.place") || "Place"} • {item.plan} • {formatDate(item.validUntil)}
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          marginBottom: 4,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.entityName}
                       </div>
-                      <div style={{ fontSize: 12, color: "#666", marginTop: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#666",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.scope === "site"
+                          ? t("admin.site") || "Site"
+                          : t("admin.place") || "Place"}{" "}
+                        • {item.plan} • {formatDate(item.validUntil)}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#666",
+                          marginTop: 4,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
                         {item.owner.email}
                       </div>
                     </div>
@@ -683,7 +856,8 @@ export function SubscriptionsDashboardPage() {
                           borderRadius: 4,
                           fontSize: 12,
                           textDecoration: "none",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {t("admin.email") || "Email"}
@@ -698,7 +872,8 @@ export function SubscriptionsDashboardPage() {
                           borderRadius: 4,
                           fontSize: 12,
                           cursor: "pointer",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {t("admin.open") || "Megnyit"}
@@ -721,7 +896,15 @@ export function SubscriptionsDashboardPage() {
             minHeight: isMobile ? 300 : 400,
           }}
         >
-          <h3 style={{ margin: "0 0 16px 0", fontSize: isMobile ? 16 : 18, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <h3
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: 600,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.subscriptions.trends") || "Tendencia (12 hét)"}
           </h3>
           <TrendChart data={trends} isMobileChart={isMobile} />
@@ -754,7 +937,8 @@ export function SubscriptionsDashboardPage() {
             flex: isMobile ? "none" : 1,
             width: isMobile ? "100%" : "auto",
             minWidth: isMobile ? "auto" : 200,
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         />
         <select
@@ -769,7 +953,8 @@ export function SubscriptionsDashboardPage() {
             borderRadius: 6,
             fontSize: isMobile ? 16 : 14,
             width: isMobile ? "100%" : "auto",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <option value="all">{t("admin.allPlans") || "Minden csomag"}</option>
@@ -789,7 +974,8 @@ export function SubscriptionsDashboardPage() {
             borderRadius: 6,
             fontSize: isMobile ? 16 : 14,
             width: isMobile ? "100%" : "auto",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           <option value="">{t("admin.allExpiry") || "Minden lejárat"}</option>
@@ -810,25 +996,87 @@ export function SubscriptionsDashboardPage() {
         }}
       >
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: isMobile ? 600 : "auto" }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", minWidth: isMobile ? 600 : "auto" }}
+          >
             <thead>
               <tr style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.entity") || "Entitás"}
                 </th>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.plan") || "Csomag"}
                 </th>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.status") || "Státusz"}
                 </th>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.validUntil") || "Érvényes"}
                 </th>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.owner") || "Tulajdonos"}
                 </th>
-                <th style={{ padding: isMobile ? 8 : 12, textAlign: "left", fontSize: isMobile ? 11 : 12, fontWeight: 600, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
                   {t("admin.actions") || "Akciók"}
                 </th>
               </tr>
@@ -836,224 +1084,342 @@ export function SubscriptionsDashboardPage() {
             <tbody>
               {subscriptions.length === 0 && featureSubscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  <td
+                    colSpan={6}
+                    style={{
+                      padding: 48,
+                      textAlign: "center",
+                      color: "#999",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
                     {t("admin.noData") || "Nincs adat"}
                   </td>
                 </tr>
               ) : (
                 subscriptions.map((item) => (
-                <tr key={item.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                  <td style={{ padding: isMobile ? 8 : 12 }}>
-                    <div>
-                      <div style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.entityName}</div>
-                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        {item.scope === "site" ? t("admin.site") || "Site" : t("admin.place") || "Place"}
+                  <tr key={item.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div>
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.entityName}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.scope === "site"
+                            ? t("admin.site") || "Site"
+                            : t("admin.place") || "Place"}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: isMobile ? 8 : 12 }}>
-                    <span
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          background: getPlanColor(item.plan),
+                          color: "white",
+                          borderRadius: 4,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.plan}
+                      </span>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <span
+                        style={{
+                          padding: "4px 8px",
+                          background: getStatusColor(item.status),
+                          color: "white",
+                          borderRadius: 4,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td
                       style={{
-                        padding: "4px 8px",
-                        background: getPlanColor(item.plan),
-                        color: "white",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        padding: 12,
+                        fontSize: 14,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {item.plan}
-                    </span>
-                  </td>
-                  <td style={{ padding: isMobile ? 8 : 12 }}>
-                    <span
-                      style={{
-                        padding: "4px 8px",
-                        background: getStatusColor(item.status),
-                        color: "white",
-                        borderRadius: 4,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{formatDate(item.validUntil)}</td>
-                  <td style={{ padding: isMobile ? 8 : 12 }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.owner.name}</div>
-                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.owner.email}</div>
-                    </div>
-                  </td>
-                  <td style={{ padding: isMobile ? 8 : 12 }}>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {isEditing === item.id ? (
-                        <>
-                          <select
-                            value={editData.plan || item.plan}
-                            onChange={(e) => setEditData({ ...editData, plan: e.target.value as "FREE" | "BASIC" | "PRO" | "BUSINESS" })}
-                            style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
-                          >
-                            <option value="BASIC">BASIC</option>
-                            <option value="PRO">PRO</option>
-                            <option value="BUSINESS">BUSINESS</option>
-                          </select>
-                          <select
-                            value={editData.status || item.status}
-                            onChange={(e) => setEditData({ ...editData, status: e.target.value as "ACTIVE" | "SUSPENDED" | "EXPIRED" })}
-                            style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
-                          >
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="SUSPENDED">SUSPENDED</option>
-                            <option value="EXPIRED">EXPIRED</option>
-                          </select>
-                          <input
-                            type="date"
-                            value={editData.validUntil ? new Date(editData.validUntil).toISOString().split("T")[0] : ""}
-                            onChange={(e) =>
-                              setEditData({ ...editData, validUntil: e.target.value ? e.target.value : null })
-                            }
-                            style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
-                          />
-                          <button
-                            onClick={() => handleSave(item)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#22c55e",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.save")}
-                          </button>
-                          <button
-                            onClick={() => setIsEditing(null)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#6b7280",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.cancel")}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => handleEdit(item)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#667eea",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.edit") || "Szerkesztés"}
-                          </button>
-                          <button
-                            onClick={() => handleExtend(item)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#3b82f6",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.extend30d") || "+30 nap"}
-                          </button>
-                          {item.status === "ACTIVE" && (
-                            <button
-                              onClick={() => handleSuspend(item)}
+                      {formatDate(item.validUntil)}
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: 14,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.owner.name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.owner.email}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12 }}>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {isEditing === item.id ? (
+                          <>
+                            <select
+                              value={editData.plan || item.plan}
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  plan: e.target.value as "FREE" | "BASIC" | "PRO" | "BUSINESS",
+                                })
+                              }
                               style={{
                                 padding: "4px 8px",
-                                background: "#f59e0b",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <option value="BASIC">BASIC</option>
+                              <option value="PRO">PRO</option>
+                              <option value="BUSINESS">BUSINESS</option>
+                            </select>
+                            <select
+                              value={editData.status || item.status}
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  status: e.target.value as "ACTIVE" | "SUSPENDED" | "EXPIRED",
+                                })
+                              }
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              <option value="ACTIVE">ACTIVE</option>
+                              <option value="SUSPENDED">SUSPENDED</option>
+                              <option value="EXPIRED">EXPIRED</option>
+                            </select>
+                            <input
+                              type="date"
+                              value={
+                                editData.validUntil
+                                  ? new Date(editData.validUntil).toISOString().split("T")[0]
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  validUntil: e.target.value ? e.target.value : null,
+                                })
+                              }
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            />
+                            <button
+                              onClick={() => handleSave(item)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#22c55e",
                                 color: "white",
                                 border: "none",
                                 borderRadius: 4,
                                 fontSize: 12,
                                 cursor: "pointer",
-                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.suspend") || "Felfüggeszt"}
+                              {t("admin.save")}
                             </button>
-                          )}
-                          <button
-                            onClick={() => handleViewHistory(item)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#8b5cf6",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.history") || "Előzmények"}
-                          </button>
-                          <button
-                            onClick={() => navigate(`/${lang}${item.adminUrl}`)}
-                            style={{
-                              padding: "4px 8px",
-                              background: "#6b7280",
-                              color: "white",
-                              border: "none",
-                              borderRadius: 4,
-                              fontSize: 12,
-                              cursor: "pointer",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {t("admin.open") || "Megnyit"}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+                            <button
+                              onClick={() => setIsEditing(null)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#6b7280",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.cancel")}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleEdit(item)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#667eea",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.edit") || "Szerkesztés"}
+                            </button>
+                            <button
+                              onClick={() => handleExtend(item)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#3b82f6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.extend30d") || "+30 nap"}
+                            </button>
+                            {item.status === "ACTIVE" && (
+                              <button
+                                onClick={() => handleSuspend(item)}
+                                style={{
+                                  padding: "4px 8px",
+                                  background: "#f59e0b",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: 4,
+                                  fontSize: 12,
+                                  cursor: "pointer",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                }}
+                              >
+                                {t("admin.suspend") || "Felfüggeszt"}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleViewHistory(item)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#8b5cf6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.history") || "Előzmények"}
+                            </button>
+                            <button
+                              onClick={() => navigate(`/${lang}${item.adminUrl}`)}
+                              style={{
+                                padding: "4px 8px",
+                                background: "#6b7280",
+                                color: "white",
+                                border: "none",
+                                borderRadius: 4,
+                                fontSize: 12,
+                                cursor: "pointer",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {t("admin.open") || "Megnyit"}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
               {/* Feature Subscriptions */}
               {featureSubscriptions.map((item) => {
-                const entityName = item.placeId 
-                  ? (item.place?.translations?.[0]?.name || item.placeId)
-                  : (item.site?.translations?.[0]?.name || item.siteId);
-                const isExpired = item.currentPeriodEnd ? new Date(item.currentPeriodEnd) < new Date() : false;
+                const entityName = item.placeId
+                  ? item.place?.translations?.[0]?.name || item.placeId
+                  : item.site?.translations?.[0]?.name || item.siteId;
+                const isExpired = item.currentPeriodEnd
+                  ? new Date(item.currentPeriodEnd) < new Date()
+                  : false;
                 const status = isExpired ? "canceled" : item.status;
-                
+
                 return (
-                  <tr key={`feature-${item.id}`} style={{ borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}>
+                  <tr
+                    key={`feature-${item.id}`}
+                    style={{ borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}
+                  >
                     <td style={{ padding: isMobile ? 8 : 12 }}>
                       <div>
-                        <div style={{ fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                        <div
+                          style={{
+                            fontWeight: 500,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
                           {entityName}
                         </div>
-                        <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                          {item.scope === "place" 
-                            ? (t("admin.floorplan.subscription.thisPlace") || "Ez a hely")
-                            : (t("admin.floorplan.subscription.allPlaces") || "Összes hely")} • {item.featureKey}
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.scope === "place"
+                            ? t("admin.floorplan.subscription.thisPlace") || "Ez a hely"
+                            : t("admin.floorplan.subscription.allPlaces") || "Összes hely"}{" "}
+                          • {item.featureKey}
                         </div>
                       </div>
                     </td>
@@ -1066,38 +1432,73 @@ export function SubscriptionsDashboardPage() {
                           borderRadius: 4,
                           fontSize: 12,
                           fontWeight: 600,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {item.planKey === "FP_1" ? (t("admin.floorplan.subscription.plan1") || "1 alaprajz") : item.planKey} ({item.billingPeriod === "MONTHLY" ? (t("admin.monthly") || "Havi") : (t("admin.yearly") || "Éves")})
+                        {item.planKey === "FP_1"
+                          ? t("admin.floorplan.subscription.plan1") || "1 alaprajz"
+                          : item.planKey}{" "}
+                        (
+                        {item.billingPeriod === "MONTHLY"
+                          ? t("admin.monthly") || "Havi"
+                          : t("admin.yearly") || "Éves"}
+                        )
                       </span>
                     </td>
                     <td style={{ padding: isMobile ? 8 : 12 }}>
                       <span
                         style={{
                           padding: "4px 8px",
-                          background: status === "active" ? "#22c55e" : status === "past_due" ? "#f59e0b" : status === "suspended" ? "#f59e0b" : "#dc2626",
+                          background:
+                            status === "active"
+                              ? "#22c55e"
+                              : status === "past_due"
+                                ? "#f59e0b"
+                                : status === "suspended"
+                                  ? "#f59e0b"
+                                  : "#dc2626",
                           color: "white",
                           borderRadius: 4,
                           fontSize: 12,
                           fontWeight: 600,
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {status === "active" ? (t("admin.statusActive") || "Aktív") :
-                         status === "past_due" ? (t("admin.statusPastDue") || "Lejárt") :
-                         status === "suspended" ? (t("admin.statusSuspended") || "Felfüggesztve") :
-                         status === "canceled" ? (t("admin.statusCanceled") || "Megszakítva") : status}
+                        {status === "active"
+                          ? t("admin.statusActive") || "Aktív"
+                          : status === "past_due"
+                            ? t("admin.statusPastDue") || "Lejárt"
+                            : status === "suspended"
+                              ? t("admin.statusSuspended") || "Felfüggesztve"
+                              : status === "canceled"
+                                ? t("admin.statusCanceled") || "Megszakítva"
+                                : status}
                       </span>
                     </td>
-                    <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                    <td
+                      style={{
+                        padding: 12,
+                        fontSize: 14,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
                       {item.currentPeriodEnd ? formatDate(item.currentPeriodEnd) : "-"}
                     </td>
                     <td style={{ padding: isMobile ? 8 : 12 }}>
-                      <div style={{ fontSize: 12, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        {item.scope === "place" 
-                          ? (t("admin.floorplan.subscription.thisPlace") || "Ez a hely")
-                          : (t("admin.floorplan.subscription.allPlaces") || "Összes hely")}
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#666",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
+                        {item.scope === "place"
+                          ? t("admin.floorplan.subscription.thisPlace") || "Ez a hely"
+                          : t("admin.floorplan.subscription.allPlaces") || "Összes hely"}
                       </div>
                     </td>
                     <td style={{ padding: isMobile ? 8 : 12 }}>
@@ -1106,16 +1507,50 @@ export function SubscriptionsDashboardPage() {
                           <>
                             <select
                               value={editFeatureData.scope || item.scope}
-                              onChange={(e) => setEditFeatureData({ ...editFeatureData, scope: e.target.value as "place" | "site", placeId: e.target.value === "place" ? item.placeId || undefined : null })}
-                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                              onChange={(e) =>
+                                setEditFeatureData({
+                                  ...editFeatureData,
+                                  scope: e.target.value as "place" | "site",
+                                  placeId:
+                                    e.target.value === "place" ? item.placeId || undefined : null,
+                                })
+                              }
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
                             >
-                              <option value="place">{t("admin.floorplan.subscription.thisPlace") || "Ez a hely"}</option>
-                              <option value="site">{t("admin.floorplan.subscription.allPlaces") || "Összes hely"}</option>
+                              <option value="place">
+                                {t("admin.floorplan.subscription.thisPlace") || "Ez a hely"}
+                              </option>
+                              <option value="site">
+                                {t("admin.floorplan.subscription.allPlaces") || "Összes hely"}
+                              </option>
                             </select>
                             <select
                               value={editFeatureData.status || item.status}
-                              onChange={(e) => setEditFeatureData({ ...editFeatureData, status: e.target.value as "active" | "past_due" | "canceled" | "suspended" })}
-                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                              onChange={(e) =>
+                                setEditFeatureData({
+                                  ...editFeatureData,
+                                  status: e.target.value as
+                                    | "active"
+                                    | "past_due"
+                                    | "canceled"
+                                    | "suspended",
+                                })
+                              }
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
                             >
                               <option value="active">active</option>
                               <option value="past_due">past_due</option>
@@ -1124,11 +1559,27 @@ export function SubscriptionsDashboardPage() {
                             </select>
                             <input
                               type="date"
-                              value={editFeatureData.currentPeriodEnd ? new Date(editFeatureData.currentPeriodEnd).toISOString().split("T")[0] : ""}
-                              onChange={(e) =>
-                                setEditFeatureData({ ...editFeatureData, currentPeriodEnd: e.target.value ? e.target.value : undefined })
+                              value={
+                                editFeatureData.currentPeriodEnd
+                                  ? new Date(editFeatureData.currentPeriodEnd)
+                                      .toISOString()
+                                      .split("T")[0]
+                                  : ""
                               }
-                              style={{ padding: "4px 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 4, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+                              onChange={(e) =>
+                                setEditFeatureData({
+                                  ...editFeatureData,
+                                  currentPeriodEnd: e.target.value ? e.target.value : undefined,
+                                })
+                              }
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 4,
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
                             />
                             <button
                               onClick={async () => {
@@ -1149,7 +1600,8 @@ export function SubscriptionsDashboardPage() {
                                 borderRadius: 4,
                                 fontSize: 12,
                                 cursor: "pointer",
-                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
                               {t("admin.save")}
@@ -1164,7 +1616,8 @@ export function SubscriptionsDashboardPage() {
                                 borderRadius: 4,
                                 fontSize: 12,
                                 cursor: "pointer",
-                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
                               {t("admin.cancel")}
@@ -1190,7 +1643,8 @@ export function SubscriptionsDashboardPage() {
                                 borderRadius: 4,
                                 fontSize: 12,
                                 cursor: "pointer",
-                                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
                               {t("admin.edit") || "Szerkesztés"}
@@ -1199,10 +1653,19 @@ export function SubscriptionsDashboardPage() {
                               <>
                                 <button
                                   onClick={async () => {
-                                    if (confirm(t("admin.subscription.suspendConfirm") || "Biztosan felfüggeszted az előfizetést?")) {
+                                    if (
+                                      confirm(
+                                        t("admin.subscription.suspendConfirm") ||
+                                          "Biztosan felfüggeszted az előfizetést?"
+                                      )
+                                    ) {
                                       try {
                                         await suspendFeatureSubscription(item.id);
-                                        showToast(t("admin.subscription.suspended") || "Előfizetés felfüggesztve", "success");
+                                        showToast(
+                                          t("admin.subscription.suspended") ||
+                                            "Előfizetés felfüggesztve",
+                                          "success"
+                                        );
                                         loadData();
                                       } catch (err) {
                                         showToast(t("admin.errors.updateFailed"), "error");
@@ -1217,17 +1680,27 @@ export function SubscriptionsDashboardPage() {
                                     borderRadius: 4,
                                     fontSize: 12,
                                     cursor: "pointer",
-                                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                    fontFamily:
+                                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                   }}
                                 >
                                   {t("admin.suspend") || "Felfüggeszt"}
                                 </button>
                                 <button
                                   onClick={async () => {
-                                    if (confirm(t("admin.subscription.cancelConfirm") || "Biztosan le szeretnéd mondani az előfizetést?")) {
+                                    if (
+                                      confirm(
+                                        t("admin.subscription.cancelConfirm") ||
+                                          "Biztosan le szeretnéd mondani az előfizetést?"
+                                      )
+                                    ) {
                                       try {
                                         await cancelFeatureSubscription(item.id);
-                                        showToast(t("admin.subscription.cancelled") || "Előfizetés lemondva", "success");
+                                        showToast(
+                                          t("admin.subscription.cancelled") ||
+                                            "Előfizetés lemondva",
+                                          "success"
+                                        );
                                         loadData();
                                       } catch (err) {
                                         showToast(t("admin.errors.updateFailed"), "error");
@@ -1242,7 +1715,8 @@ export function SubscriptionsDashboardPage() {
                                     borderRadius: 4,
                                     fontSize: 12,
                                     cursor: "pointer",
-                                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                    fontFamily:
+                                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                   }}
                                 >
                                   {t("admin.subscription.cancelButton") || "Lemondom"}
@@ -1254,7 +1728,10 @@ export function SubscriptionsDashboardPage() {
                                 onClick={async () => {
                                   try {
                                     await resumeFeatureSubscription(item.id);
-                                    showToast(t("admin.subscription.resumed") || "Előfizetés folytatva", "success");
+                                    showToast(
+                                      t("admin.subscription.resumed") || "Előfizetés folytatva",
+                                      "success"
+                                    );
                                     loadData();
                                   } catch (err) {
                                     showToast(t("admin.errors.updateFailed"), "error");
@@ -1268,7 +1745,8 @@ export function SubscriptionsDashboardPage() {
                                   borderRadius: 4,
                                   fontSize: 12,
                                   cursor: "pointer",
-                                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                                  fontFamily:
+                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                 }}
                               >
                                 {t("admin.subscription.resume") || "Folytatás"}
@@ -1284,24 +1762,33 @@ export function SubscriptionsDashboardPage() {
             </tbody>
           </table>
         </div>
-        {(total + featureSubscriptionsTotal) > pageSize && (
-          <div style={{ 
-            padding: isMobile ? 12 : 16, 
-            display: "flex", 
-            flexDirection: isMobile ? "column" : "row",
-            justifyContent: "space-between", 
-            alignItems: isMobile ? "stretch" : "center",
-            gap: isMobile ? 12 : 0,
-          }}>
-            <div style={{ 
-              fontSize: isMobile ? 12 : 14, 
-              color: "#666", 
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              textAlign: isMobile ? "center" : "left",
-            }}>
-              {t("admin.showing") || "Megjelenítve"} {page * pageSize + 1}-{Math.min((page + 1) * pageSize, total + featureSubscriptionsTotal)} {t("admin.of") || "összesen"} {total + featureSubscriptionsTotal}
+        {total + featureSubscriptionsTotal > pageSize && (
+          <div
+            style={{
+              padding: isMobile ? 12 : 16,
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              justifyContent: "space-between",
+              alignItems: isMobile ? "stretch" : "center",
+              gap: isMobile ? 12 : 0,
+            }}
+          >
+            <div
+              style={{
+                fontSize: isMobile ? 12 : 14,
+                color: "#666",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                textAlign: isMobile ? "center" : "left",
+              }}
+            >
+              {t("admin.showing") || "Megjelenítve"} {page * pageSize + 1}-
+              {Math.min((page + 1) * pageSize, total + featureSubscriptionsTotal)}{" "}
+              {t("admin.of") || "összesen"} {total + featureSubscriptionsTotal}
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: isMobile ? "center" : "flex-end" }}>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: isMobile ? "center" : "flex-end" }}
+            >
               <button
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
@@ -1313,7 +1800,8 @@ export function SubscriptionsDashboardPage() {
                   borderRadius: 6,
                   cursor: page === 0 ? "not-allowed" : "pointer",
                   fontSize: isMobile ? 14 : 14,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 {t("admin.previous") || "Előző"}
@@ -1329,7 +1817,8 @@ export function SubscriptionsDashboardPage() {
                   borderRadius: 6,
                   cursor: (page + 1) * pageSize >= total ? "not-allowed" : "pointer",
                   fontSize: isMobile ? 14 : 14,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 {t("admin.next") || "Következő"}
@@ -1370,20 +1859,36 @@ export function SubscriptionsDashboardPage() {
               maxHeight: "90vh",
               overflow: "auto",
               width: "100%",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: isMobile ? 18 : 24, fontWeight: 600, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: isMobile ? 18 : 24,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.subscriptionHistory") || "Előfizetés előzmények"}
               </h2>
               <button
                 onClick={() => {
-            setHistoryModalOpen(null);
-            setHistoryPage(0);
-            setCurrentHistoryItem(null);
-          }}
+                  setHistoryModalOpen(null);
+                  setHistoryPage(0);
+                  setCurrentHistoryItem(null);
+                }}
                 style={{
                   background: "none",
                   border: "none",
@@ -1403,107 +1908,185 @@ export function SubscriptionsDashboardPage() {
             </div>
 
             {isLoadingHistory ? null : history.length === 0 ? (
-              <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <div
+                style={{
+                  padding: 48,
+                  textAlign: "center",
+                  color: "#999",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.noHistory") || "Nincs előzmény"}
               </div>
             ) : (
               <>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {history.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      padding: 16,
-                      background: "#f9fafb",
-                      borderRadius: 8,
-                      border: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                      <div>
-                        <div style={{ fontWeight: 600, marginBottom: 4, fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-                          {item.changeType === "PLAN_CHANGE" && (t("admin.planChange") || "Csomagváltás")}
-                          {item.changeType === "STATUS_CHANGE" && (t("admin.statusChange") || "Státusz változás")}
-                          {item.changeType === "PAYMENT" && (t("admin.payment") || "Fizetés")}
-                          {item.changeType === "EXTENSION" && (t("admin.extension") || "Hosszabbítás")}
-                          {item.changeType === "CREATED" && (t("admin.created") || "Létrehozva")}
-                          {item.changeType === "UPDATE" && (t("admin.update") || "Frissítve")}
-                        </div>
-                        <div style={{ fontSize: 12, color: "#666", fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-                          {new Date(item.createdAt).toLocaleString("hu-HU")}
+                    <div
+                      key={item.id}
+                      style={{
+                        padding: 16,
+                        background: "#f9fafb",
+                        borderRadius: 8,
+                        border: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: 8,
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              marginBottom: 4,
+                              fontFamily:
+                                '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                            }}
+                          >
+                            {item.changeType === "PLAN_CHANGE" &&
+                              (t("admin.planChange") || "Csomagváltás")}
+                            {item.changeType === "STATUS_CHANGE" &&
+                              (t("admin.statusChange") || "Státusz változás")}
+                            {item.changeType === "PAYMENT" && (t("admin.payment") || "Fizetés")}
+                            {item.changeType === "EXTENSION" &&
+                              (t("admin.extension") || "Hosszabbítás")}
+                            {item.changeType === "CREATED" && (t("admin.created") || "Létrehozva")}
+                            {item.changeType === "UPDATE" && (t("admin.update") || "Frissítve")}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: "#666",
+                              fontFamily:
+                                '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                            }}
+                          >
+                            {new Date(item.createdAt).toLocaleString("hu-HU")}
+                          </div>
                         </div>
                       </div>
+
+                      {item.changeType === "PLAN_CHANGE" && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          <div style={{ fontSize: 14, marginBottom: 4 }}>
+                            <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                            <span style={{ fontWeight: 600 }}>{item.oldPlan || "N/A"}</span>
+                            <span style={{ margin: "0 8px", color: "#999" }}>→</span>
+                            <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                            <span style={{ fontWeight: 600 }}>{item.newPlan || "N/A"}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {item.changeType === "STATUS_CHANGE" && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          <div style={{ fontSize: 14, marginBottom: 4 }}>
+                            <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                            <span style={{ fontWeight: 600 }}>{item.oldStatus || "N/A"}</span>
+                            <span style={{ margin: "0 8px", color: "#999" }}>→</span>
+                            <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                            <span style={{ fontWeight: 600 }}>{item.newStatus || "N/A"}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {item.paymentDueDate && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            fontSize: 14,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          <span style={{ color: "#666" }}>
+                            {t("admin.paymentDue") || "Fizetési határidő"}:{" "}
+                          </span>
+                          <span style={{ fontWeight: 600, color: "#f59e0b" }}>
+                            {new Date(item.paymentDueDate).toLocaleDateString("hu-HU")}
+                          </span>
+                        </div>
+                      )}
+
+                      {item.amountCents && (
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 14,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          <span style={{ color: "#666" }}>{t("admin.amount") || "Összeg"}: </span>
+                          <span style={{ fontWeight: 600 }}>
+                            {formatCurrency(item.amountCents)} {item.currency || "HUF"}
+                          </span>
+                        </div>
+                      )}
+
+                      {item.note && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 8,
+                            background: "white",
+                            borderRadius: 4,
+                            fontSize: 13,
+                            color: "#666",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {item.note}
+                        </div>
+                      )}
                     </div>
-
-                    {item.changeType === "PLAN_CHANGE" && (
-                      <div style={{ marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        <div style={{ fontSize: 14, marginBottom: 4 }}>
-                          <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
-                          <span style={{ fontWeight: 600 }}>{item.oldPlan || "N/A"}</span>
-                          <span style={{ margin: "0 8px", color: "#999" }}>→</span>
-                          <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
-                          <span style={{ fontWeight: 600 }}>{item.newPlan || "N/A"}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {item.changeType === "STATUS_CHANGE" && (
-                      <div style={{ marginTop: 8, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        <div style={{ fontSize: 14, marginBottom: 4 }}>
-                          <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
-                          <span style={{ fontWeight: 600 }}>{item.oldStatus || "N/A"}</span>
-                          <span style={{ margin: "0 8px", color: "#999" }}>→</span>
-                          <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
-                          <span style={{ fontWeight: 600 }}>{item.newStatus || "N/A"}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {item.paymentDueDate && (
-                      <div style={{ marginTop: 8, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        <span style={{ color: "#666" }}>{t("admin.paymentDue") || "Fizetési határidő"}: </span>
-                        <span style={{ fontWeight: 600, color: "#f59e0b" }}>
-                          {new Date(item.paymentDueDate).toLocaleDateString("hu-HU")}
-                        </span>
-                      </div>
-                    )}
-
-                    {item.amountCents && (
-                      <div style={{ marginTop: 4, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        <span style={{ color: "#666" }}>{t("admin.amount") || "Összeg"}: </span>
-                        <span style={{ fontWeight: 600 }}>
-                          {formatCurrency(item.amountCents)} {item.currency || "HUF"}
-                        </span>
-                      </div>
-                    )}
-
-                    {item.note && (
-                      <div style={{ marginTop: 8, padding: 8, background: "white", borderRadius: 4, fontSize: 13, color: "#666", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                        {item.note}
-                      </div>
-                    )}
-                  </div>
                   ))}
                 </div>
-                
+
                 {/* Pagination for history */}
                 {historyTotal > historyPageSize && (
-                  <div style={{ 
-                    marginTop: 20,
-                    paddingTop: 20,
-                    borderTop: "1px solid #e5e7eb",
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: 12,
-                  }}>
-                    <div style={{ 
-                      fontSize: 14, 
-                      color: "#666",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}>
-                      {t("admin.showing") || "Showing"} {historyPage * historyPageSize + 1}-{Math.min((historyPage + 1) * historyPageSize, historyTotal)} {t("admin.of") || "of"} {historyTotal}
+                  <div
+                    style={{
+                      marginTop: 20,
+                      paddingTop: 20,
+                      borderTop: "1px solid #e5e7eb",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 14,
+                        color: "#666",
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {t("admin.showing") || "Showing"} {historyPage * historyPageSize + 1}-
+                      {Math.min((historyPage + 1) * historyPageSize, historyTotal)}{" "}
+                      {t("admin.of") || "of"} {historyTotal}
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
@@ -1521,27 +2104,39 @@ export function SubscriptionsDashboardPage() {
                           borderRadius: 6,
                           fontSize: 14,
                           cursor: historyPage === 0 ? "not-allowed" : "pointer",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {t("admin.previous") || "Előző"}
                       </button>
                       <button
                         onClick={() => {
-                          if (currentHistoryItem && (historyPage + 1) * historyPageSize < historyTotal) {
+                          if (
+                            currentHistoryItem &&
+                            (historyPage + 1) * historyPageSize < historyTotal
+                          ) {
                             handleViewHistory(currentHistoryItem, historyPage + 1);
                           }
                         }}
                         disabled={(historyPage + 1) * historyPageSize >= historyTotal}
                         style={{
                           padding: "8px 16px",
-                          background: (historyPage + 1) * historyPageSize >= historyTotal ? "#e5e7eb" : "#667eea",
-                          color: (historyPage + 1) * historyPageSize >= historyTotal ? "#999" : "white",
+                          background:
+                            (historyPage + 1) * historyPageSize >= historyTotal
+                              ? "#e5e7eb"
+                              : "#667eea",
+                          color:
+                            (historyPage + 1) * historyPageSize >= historyTotal ? "#999" : "white",
                           border: "none",
                           borderRadius: 6,
                           fontSize: 14,
-                          cursor: (historyPage + 1) * historyPageSize >= historyTotal ? "not-allowed" : "pointer",
-                          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          cursor:
+                            (historyPage + 1) * historyPageSize >= historyTotal
+                              ? "not-allowed"
+                              : "pointer",
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
                         {t("admin.next") || "Következő"}
@@ -1556,20 +2151,39 @@ export function SubscriptionsDashboardPage() {
       )}
 
       {/* Event Log Section */}
-      <div style={{ marginTop: 48, padding: isMobile ? 16 : 24, background: "white", borderRadius: 12, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}>
-        <h2 style={{ 
-          margin: 0, 
-          marginBottom: 24, 
-          fontSize: isMobile ? 20 : 24, 
-          fontWeight: 600, 
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#333",
-        }}>
+      <div
+        style={{
+          marginTop: 48,
+          padding: isMobile ? 16 : 24,
+          background: "white",
+          borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h2
+          style={{
+            margin: 0,
+            marginBottom: 24,
+            fontSize: isMobile ? 20 : 24,
+            fontWeight: 600,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "#333",
+          }}
+        >
           {t("admin.eventLog.title") || "Subscription Events"}
         </h2>
-        
+
         {isLoadingEventLogs ? null : eventLogs.length === 0 ? (
-          <div style={{ padding: 48, textAlign: "center", color: "#999", fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+          <div
+            style={{
+              padding: 48,
+              textAlign: "center",
+              color: "#999",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {t("admin.eventLog.noLogs") || "No events found"}
           </div>
         ) : (
@@ -1578,16 +2192,56 @@ export function SubscriptionsDashboardPage() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                    <th
+                      style={{
+                        padding: 12,
+                        textAlign: "left",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#374151",
+                      }}
+                    >
                       {t("admin.eventLog.date") || "Date"}
                     </th>
-                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                    <th
+                      style={{
+                        padding: 12,
+                        textAlign: "left",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#374151",
+                      }}
+                    >
                       {t("admin.eventLog.user") || "User"}
                     </th>
-                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                    <th
+                      style={{
+                        padding: 12,
+                        textAlign: "left",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#374151",
+                      }}
+                    >
                       {t("admin.eventLog.action") || "Action"}
                     </th>
-                    <th style={{ padding: 12, textAlign: "left", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#374151" }}>
+                    <th
+                      style={{
+                        padding: 12,
+                        textAlign: "left",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        color: "#374151",
+                      }}
+                    >
                       {t("admin.eventLog.description") || "Description"}
                     </th>
                   </tr>
@@ -1595,10 +2249,25 @@ export function SubscriptionsDashboardPage() {
                 <tbody>
                   {eventLogs.map((log) => (
                     <tr key={log.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#666" }}>
+                      <td
+                        style={{
+                          padding: 12,
+                          fontSize: 14,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "#666",
+                        }}
+                      >
                         {new Date(log.createdAt).toLocaleString()}
                       </td>
-                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                      <td
+                        style={{
+                          padding: 12,
+                          fontSize: 14,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        }}
+                      >
                         <div>
                           <div style={{ fontWeight: 500, color: "#333" }}>
                             {log.user.firstName} {log.user.lastName}
@@ -1610,18 +2279,36 @@ export function SubscriptionsDashboardPage() {
                         <span
                           style={{
                             padding: "4px 8px",
-                            background: log.action === "create" ? "#10b981" : log.action === "update" ? "#3b82f6" : log.action === "delete" ? "#ef4444" : "#6b7280",
+                            background:
+                              log.action === "create"
+                                ? "#10b981"
+                                : log.action === "update"
+                                  ? "#3b82f6"
+                                  : log.action === "delete"
+                                    ? "#ef4444"
+                                    : "#6b7280",
                             color: "white",
                             borderRadius: 4,
                             fontSize: 12,
                             fontWeight: 600,
-                            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
-                          {t(`admin.eventLog.actions.${log.action.toLowerCase()}`, { defaultValue: log.action })}
+                          {t(`admin.eventLog.actions.${log.action.toLowerCase()}`, {
+                            defaultValue: log.action,
+                          })}
                         </span>
                       </td>
-                      <td style={{ padding: 12, fontSize: 14, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#666" }}>
+                      <td
+                        style={{
+                          padding: 12,
+                          fontSize: 14,
+                          fontFamily:
+                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          color: "#666",
+                        }}
+                      >
                         {log.description || "-"}
                       </td>
                     </tr>
@@ -1629,25 +2316,32 @@ export function SubscriptionsDashboardPage() {
                 </tbody>
               </table>
             </div>
-            
+
             {/* Pagination for event logs */}
             {eventLogTotal > eventLogPageSize && (
-              <div style={{
-                marginTop: 20,
-                paddingTop: 20,
-                borderTop: "1px solid #e5e7eb",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 12,
-              }}>
-                <div style={{ 
-                  fontSize: 14, 
-                  color: "#666", 
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}>
-                  {t("admin.showing") || "Showing"} {eventLogPage * eventLogPageSize + 1}-{Math.min((eventLogPage + 1) * eventLogPageSize, eventLogTotal)} {t("admin.of") || "of"} {eventLogTotal}
+              <div
+                style={{
+                  marginTop: 20,
+                  paddingTop: 20,
+                  borderTop: "1px solid #e5e7eb",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.showing") || "Showing"} {eventLogPage * eventLogPageSize + 1}-
+                  {Math.min((eventLogPage + 1) * eventLogPageSize, eventLogTotal)}{" "}
+                  {t("admin.of") || "of"} {eventLogTotal}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -1661,7 +2355,8 @@ export function SubscriptionsDashboardPage() {
                       borderRadius: 6,
                       fontSize: 14,
                       cursor: eventLogPage === 0 ? "not-allowed" : "pointer",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {t("admin.previous") || "Előző"}
@@ -1671,13 +2366,21 @@ export function SubscriptionsDashboardPage() {
                     disabled={(eventLogPage + 1) * eventLogPageSize >= eventLogTotal}
                     style={{
                       padding: "8px 16px",
-                      background: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#e5e7eb" : "#667eea",
-                      color: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#999" : "white",
+                      background:
+                        (eventLogPage + 1) * eventLogPageSize >= eventLogTotal
+                          ? "#e5e7eb"
+                          : "#667eea",
+                      color:
+                        (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#999" : "white",
                       border: "none",
                       borderRadius: 6,
                       fontSize: 14,
-                      cursor: (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "not-allowed" : "pointer",
-                      fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      cursor:
+                        (eventLogPage + 1) * eventLogPageSize >= eventLogTotal
+                          ? "not-allowed"
+                          : "pointer",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
                     {t("admin.next") || "Következő"}

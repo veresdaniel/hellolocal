@@ -40,4 +40,3 @@ export function getTokenExpiration(token: string | null): number | null {
   if (!decoded || !decoded.exp) return null;
   return decoded.exp * 1000;
 }
-

@@ -5,6 +5,7 @@ Moduláris fájlfeltöltési szolgáltatás, amely könnyen cserélhető CDN szo
 ## Jelenlegi implementáció: Cloudinary
 
 **Ingyenes tier:**
+
 - 25GB storage
 - 25GB bandwidth/hó
 - Képek és videók feltöltése
@@ -36,12 +37,12 @@ import { uploadService } from "./services/upload/uploadService";
 // Kép feltöltése
 const imageUrl = await uploadService.uploadImage(file, {
   folder: "editor/places",
-  onProgress: (progress) => console.log(`${progress}%`)
+  onProgress: (progress) => console.log(`${progress}%`),
 });
 
 // Video feltöltése
 const videoUrl = await uploadService.uploadVideo(file, {
-  folder: "editor/events"
+  folder: "editor/events",
 });
 ```
 
@@ -60,16 +61,19 @@ export const uploadService: IUploadService = new UploadcareUploadService();
 ## Alternatív CDN szolgáltatók
 
 ### Uploadcare
+
 - **Ingyenes tier:** 5GB storage + 5GB bandwidth/hó
 - **Előnyök:** Nagy fájlok (5TB), biztonsági funkciók
 - **Implementáció:** `UploadcareUploadService.ts`
 
 ### ImageKit
+
 - **Ingyenes tier:** 20GB bandwidth/hó
 - **Előnyök:** Gyors optimalizálás, alacsony költség
 - **Implementáció:** `ImageKitUploadService.ts`
 
 ### Supabase Storage
+
 - **Ingyenes tier:** 1GB storage
 - **Előnyök:** Ha már használsz Supabase-t
 - **Implementáció:** `SupabaseUploadService.ts`
@@ -77,6 +81,7 @@ export const uploadService: IUploadService = new UploadcareUploadService();
 ## Biztonsági megjegyzés
 
 A jelenlegi implementáció közvetlenül a frontend-ről tölt fel. Éles környezetben ajánlott:
+
 1. Backend API endpoint létrehozása a feltöltéshez
 2. API Secret használata csak backend-en
 3. Fájl validáció és méretkorlátok

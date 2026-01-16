@@ -11,9 +11,7 @@ type ListArgs = {
 
 @Injectable()
 export class SitesService {
-  constructor(
-    private readonly prisma: PrismaService
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Normalizes language code to ensure it's valid.
@@ -81,16 +79,16 @@ export class SitesService {
     });
 
     // Filter translations by language in memory
-    const sitesWithFilteredTranslations = sites.map(site => ({
+    const sitesWithFilteredTranslations = sites.map((site) => ({
       ...site,
-      translations: site.translations.filter(t => t.lang === lang),
+      translations: site.translations.filter((t) => t.lang === lang),
     }));
 
     // Apply search filter in memory if needed
     let filteredSites = sitesWithFilteredTranslations;
     if (args.q && args.q.trim()) {
       const searchQuery = args.q.trim().toLowerCase();
-      filteredSites = sitesWithFilteredTranslations.filter(site => {
+      filteredSites = sitesWithFilteredTranslations.filter((site) => {
         const translation = site.translations[0];
         return translation?.name?.toLowerCase().includes(searchQuery);
       });
@@ -110,7 +108,7 @@ export class SitesService {
     // Transform sites to match the expected format
     return paginatedSites.map((site) => {
       const translation = site.translations[0] || null;
-      
+
       return {
         id: site.id,
         slug: site.slug,

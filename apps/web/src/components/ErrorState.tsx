@@ -73,7 +73,8 @@ export function ErrorState({
               fontWeight: 600,
               margin: "0 0 12px 0",
               color: "#1a1a1a",
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {defaultTitle}
@@ -84,7 +85,8 @@ export function ErrorState({
               color: "#666",
               margin: "0 0 24px 0",
               lineHeight: 1.6,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
             {defaultMessage}
@@ -260,7 +262,8 @@ export function ErrorState({
             color: "white",
             marginBottom: 16,
             textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {defaultTitle}
@@ -272,7 +275,8 @@ export function ErrorState({
             marginBottom: 40,
             lineHeight: 1.6,
             textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-            fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           {defaultMessage}
@@ -291,7 +295,8 @@ export function ErrorState({
                 borderRadius: "12px",
                 fontWeight: 600,
                 fontSize: 16,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 transition: "all 0.3s ease",
                 backdropFilter: "blur(10px)",
                 display: "inline-block",
@@ -321,7 +326,8 @@ export function ErrorState({
                 borderRadius: "12px",
                 fontWeight: 600,
                 fontSize: 16,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 backdropFilter: "blur(10px)",

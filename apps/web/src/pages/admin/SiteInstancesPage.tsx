@@ -5,9 +5,23 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/AdminSiteContext";
-import { getSiteInstances, createSiteInstance, updateSiteInstance, deleteSiteInstance, getSites, type SiteInstance, type CreateSiteInstanceDto, type UpdateSiteInstanceDto, type Site } from "../../api/admin.api";
+import {
+  getSiteInstances,
+  createSiteInstance,
+  updateSiteInstance,
+  deleteSiteInstance,
+  getSites,
+  type SiteInstance,
+  type CreateSiteInstanceDto,
+  type UpdateSiteInstanceDto,
+  type Site,
+} from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { AdminResponsiveTable, type TableColumn, type CardField } from "../../components/AdminResponsiveTable";
+import {
+  AdminResponsiveTable,
+  type TableColumn,
+  type CardField,
+} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { ROLE_SUPERADMIN } from "../../types/enums";
 
@@ -46,7 +60,7 @@ export function SiteInstancesPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      setFormData(prev => ({ ...prev, siteId: selectedSiteId }));
+      setFormData((prev) => ({ ...prev, siteId: selectedSiteId }));
     }
     loadSiteInstances();
   }, [selectedSiteId]);
@@ -77,7 +91,7 @@ export function SiteInstancesPage() {
     const errors: Record<string, string> = {};
     if (!formData.siteId.trim()) errors.siteId = t("admin.validation.siteRequired");
     if (!formData.lang) errors.lang = t("admin.validation.languageRequired");
-    
+
     // Validate map coordinates
     if (formData.mapConfigLat && isNaN(parseFloat(formData.mapConfigLat))) {
       errors.mapConfigLat = t("admin.validation.invalidNumber");
@@ -220,14 +234,17 @@ export function SiteInstancesPage() {
     {
       key: "isDefault",
       label: t("admin.isDefault"),
-      render: (instance) => instance.isDefault ? t("common.yes") : t("common.no"),
+      render: (instance) => (instance.isDefault ? t("common.yes") : t("common.no")),
     },
   ];
 
   const cardFields: CardField<SiteInstance>[] = [
     { key: "site", render: (instance) => instance.site?.slug || instance.siteId },
     { key: "lang", render: (instance) => instance.lang.toUpperCase() },
-    { key: "isDefault", render: (instance) => instance.isDefault ? t("common.yes") : t("common.no") },
+    {
+      key: "isDefault",
+      render: (instance) => (instance.isDefault ? t("common.yes") : t("common.no")),
+    },
   ];
 
   const isSuperadmin = currentUser?.role === ROLE_SUPERADMIN;
@@ -244,7 +261,7 @@ export function SiteInstancesPage() {
         onNewClick={() => setIsCreating(true)}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
-        onSave={() => editingId ? handleUpdate(editingId) : handleCreate()}
+        onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
@@ -255,32 +272,39 @@ export function SiteInstancesPage() {
       />
 
       {error && (
-        <div style={{ 
-          padding: 16, 
-          background: "#f8d7da", 
-          color: "#721c24", 
-          borderRadius: 8, 
-          marginBottom: 24 
-        }}>
+        <div
+          style={{
+            padding: 16,
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: 8,
+            marginBottom: 24,
+          }}
+        >
           {error}
         </div>
       )}
 
       {(isCreating || editingId) && (
-        <div style={{ 
-          padding: "clamp(24px, 5vw, 32px)", 
-          background: "white", 
-          borderRadius: 16, 
-          marginBottom: 32, 
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-        }}>
-          <h2 style={{ 
-            marginBottom: 24, 
-            color: "#667eea",
-            fontSize: "clamp(18px, 4vw, 22px)",
-            fontWeight: 700,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}>
+        <div
+          style={{
+            padding: "clamp(24px, 5vw, 32px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 32,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 24,
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 22px)",
+              fontWeight: 700,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
             {editingId ? t("admin.forms.editSiteInstance") : t("admin.forms.newSiteInstance")}
           </h2>
 
@@ -305,7 +329,7 @@ export function SiteInstancesPage() {
                 <option value="">{t("admin.selectSite")}</option>
                 {sites.map((site) => (
                   <option key={site.id} value={site.id}>
-                    {site.translations.find(t => t.lang === "hu")?.name || site.slug}
+                    {site.translations.find((t) => t.lang === "hu")?.name || site.slug}
                   </option>
                 ))}
               </select>
@@ -320,7 +344,9 @@ export function SiteInstancesPage() {
               </label>
               <select
                 value={formData.lang}
-                onChange={(e) => setFormData({ ...formData, lang: e.target.value as "hu" | "en" | "de" })}
+                onChange={(e) =>
+                  setFormData({ ...formData, lang: e.target.value as "hu" | "en" | "de" })
+                }
                 style={{
                   width: "100%",
                   padding: "12px 16px",
@@ -340,7 +366,16 @@ export function SiteInstancesPage() {
             </div>
 
             <div>
-              <label style={{ display: "flex", alignItems: "center", gap: 12, fontWeight: 600, cursor: "pointer", fontSize: 15 }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: 15,
+                }}
+              >
                 <input
                   type="checkbox"
                   style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
@@ -352,17 +387,26 @@ export function SiteInstancesPage() {
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ 
-                marginBottom: 16, 
-                color: "#667eea", 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 600,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <h3
+                style={{
+                  marginBottom: 16,
+                  color: "#667eea",
+                  fontSize: "clamp(16px, 3.5vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.mapConfig")}
               </h3>
-              
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 16,
+                }}
+              >
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
                     {t("admin.mapDefaultTownId")}
@@ -401,7 +445,9 @@ export function SiteInstancesPage() {
                     }}
                   />
                   {formErrors.mapConfigLat && (
-                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.mapConfigLat}</p>
+                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                      {formErrors.mapConfigLat}
+                    </p>
                   )}
                 </div>
 
@@ -424,7 +470,9 @@ export function SiteInstancesPage() {
                     }}
                   />
                   {formErrors.mapConfigLng && (
-                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.mapConfigLng}</p>
+                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                      {formErrors.mapConfigLng}
+                    </p>
                   )}
                 </div>
 
@@ -447,26 +495,39 @@ export function SiteInstancesPage() {
                     }}
                   />
                   {formErrors.mapConfigZoom && (
-                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>{formErrors.mapConfigZoom}</p>
+                    <p style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
+                      {formErrors.mapConfigZoom}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
 
             <div style={{ borderTop: "1px solid #e0e7ff", paddingTop: 20 }}>
-              <h3 style={{ 
-                marginBottom: 16, 
-                color: "#667eea", 
-                fontSize: "clamp(16px, 3.5vw, 18px)", 
-                fontWeight: 600,
-                fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <h3
+                style={{
+                  marginBottom: 16,
+                  color: "#667eea",
+                  fontSize: "clamp(16px, 3.5vw, 18px)",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.features")}
               </h3>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      cursor: "pointer",
+                      fontSize: 15,
+                    }}
+                  >
                     <input
                       type="checkbox"
                       style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
@@ -475,16 +536,28 @@ export function SiteInstancesPage() {
                     />
                     <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isCrawlable")}</span>
                   </label>
-                  <div style={{ 
-                    fontSize: 12, 
-                    color: "#666", 
-                    marginLeft: 32,
-                    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}>
-                    {t("admin.isCrawlableDescription") || "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#666",
+                      marginLeft: 32,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.isCrawlableDescription") ||
+                      "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
                   </div>
                 </div>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    cursor: "pointer",
+                    fontSize: 15,
+                  }}
+                >
                   <input
                     type="checkbox"
                     style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
@@ -493,7 +566,15 @@ export function SiteInstancesPage() {
                   />
                   <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableEvents")}</span>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    cursor: "pointer",
+                    fontSize: 15,
+                  }}
+                >
                   <input
                     type="checkbox"
                     style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
@@ -502,14 +583,26 @@ export function SiteInstancesPage() {
                   />
                   <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableBlog")}</span>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", fontSize: 15 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    cursor: "pointer",
+                    fontSize: 15,
+                  }}
+                >
                   <input
                     type="checkbox"
                     style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     checked={formData.enableStaticPages}
-                    onChange={(e) => setFormData({ ...formData, enableStaticPages: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, enableStaticPages: e.target.checked })
+                    }
                   />
-                  <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.enableStaticPages")}</span>
+                  <span style={{ color: "#333", fontWeight: 500 }}>
+                    {t("admin.enableStaticPages")}
+                  </span>
                 </label>
               </div>
             </div>
@@ -534,7 +627,9 @@ export function SiteInstancesPage() {
             );
           }}
           columns={columns}
-          cardTitle={(instance) => `${instance.site?.slug || instance.siteId} - ${instance.lang.toUpperCase()}`}
+          cardTitle={(instance) =>
+            `${instance.site?.slug || instance.siteId} - ${instance.lang.toUpperCase()}`
+          }
           cardFields={cardFields}
           onEdit={startEdit}
           onDelete={(instance) => handleDelete(instance.id)}

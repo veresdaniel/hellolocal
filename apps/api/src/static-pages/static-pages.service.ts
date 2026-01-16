@@ -19,7 +19,7 @@ export class StaticPagesService {
 
   /**
    * Lists static pages with optional category filtering.
-   * 
+   *
    * @param args - Page listing arguments
    * @param args.lang - Language code
    * @param args.siteKey - Optional site key for multi-site support
@@ -47,30 +47,33 @@ export class StaticPagesService {
       orderBy: { createdAt: "desc" },
     });
 
-    return staticPages.map((page) => {
-      // Get translation with fallback to Hungarian
-      const translation = page.translations.find((t) => t.lang === lang) ||
-        page.translations.find((t) => t.lang === "hu");
+    return staticPages
+      .map((page) => {
+        // Get translation with fallback to Hungarian
+        const translation =
+          page.translations.find((t) => t.lang === lang) ||
+          page.translations.find((t) => t.lang === "hu");
 
-      if (!translation) {
-        return null;
-      }
+        if (!translation) {
+          return null;
+        }
 
-      return {
-        id: page.id,
-        category: page.category,
-        title: translation.title,
-        shortDescription: translation.shortDescription ?? null,
-        content: translation.content ?? "",
-        createdAt: page.createdAt,
-        updatedAt: page.updatedAt,
-      };
-    }).filter((page) => page !== null);
+        return {
+          id: page.id,
+          category: page.category,
+          title: translation.title,
+          shortDescription: translation.shortDescription ?? null,
+          content: translation.content ?? "",
+          createdAt: page.createdAt,
+          updatedAt: page.updatedAt,
+        };
+      })
+      .filter((page) => page !== null);
   }
 
   /**
    * Gets a single static page by ID.
-   * 
+   *
    * @param args - Page retrieval arguments
    * @param args.lang - Language code
    * @param args.id - Static page ID
@@ -97,7 +100,8 @@ export class StaticPagesService {
     }
 
     // Get translation with fallback to Hungarian
-    const translation = staticPage.translations.find((t) => t.lang === lang) ||
+    const translation =
+      staticPage.translations.find((t) => t.lang === lang) ||
       staticPage.translations.find((t) => t.lang === "hu");
 
     if (!translation) {
@@ -117,7 +121,10 @@ export class StaticPagesService {
     const getFirstSentences = (html: string | null | undefined, count: number = 2): string => {
       if (!html) return "";
       // Remove HTML tags
-      const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      const text = html
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       // Split by sentence endings (. ! ?)
       const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
       return sentences.slice(0, count).join(" ").trim();
@@ -126,8 +133,8 @@ export class StaticPagesService {
     // Fallback description: first 2 sentences from content
     const fallbackDescription = getFirstSentences(translation.content, 2) || "";
     // Strip HTML from seoDescription if present
-    const seoDescription = translation.seoDescription 
-      ? stripHtml(translation.seoDescription) 
+    const seoDescription = translation.seoDescription
+      ? stripHtml(translation.seoDescription)
       : fallbackDescription;
 
     return {
@@ -151,4 +158,3 @@ export class StaticPagesService {
     };
   }
 }
-

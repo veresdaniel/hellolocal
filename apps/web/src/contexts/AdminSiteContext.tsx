@@ -25,14 +25,14 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
   const [selectedSiteId, setSelectedSiteIdState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // If AuthContext is still loading, wait for it
   // This prevents showing "please select site" while auth is initializing
   // But once auth is done, we should proceed even if site loading is in progress
   // IMPORTANT: Public pages don't use this context, so isLoading shouldn't block them
   // Only admin pages check isSiteLoading, so this is fine
   const isLoadingSites = authIsLoading ? true : isLoading;
-  
+
   const loadSites = async () => {
     // Don't load if user is not logged in
     if (!user) {
@@ -42,11 +42,11 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
       setError(null);
       return;
     }
-    
+
     // Ensure isLoading is true when starting to load
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Only superadmin and admin can call getSites to see all sites
       if (user.role === ROLE_SUPERADMIN || user.role === ROLE_ADMIN) {
@@ -66,11 +66,14 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
         } else {
           setSites([]);
         }
-      } else if ((user.siteIds && user.siteIds.length > 0) || (user.tenantIds && user.tenantIds.length > 0)) {
+      } else if (
+        (user.siteIds && user.siteIds.length > 0) ||
+        (user.tenantIds && user.tenantIds.length > 0)
+      ) {
         const siteIds = user.siteIds || user.tenantIds || [];
         // Regular users see only their assigned sites
         // Load each site individually using getSite
-        const sitePromises = siteIds.map((siteId: string) => 
+        const sitePromises = siteIds.map((siteId: string) =>
           getSite(siteId).catch((err: unknown) => {
             console.error(`Failed to load site ${siteId}`, err);
             return null;
@@ -99,16 +102,23 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       // Only log error if it's not a network error (backend not running)
       const errorMessage = err instanceof Error ? err.message : String(err);
-      const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
-      const isSchemaError = errorMessage.includes("Database schema is out of sync") || errorMessage.includes("migrations");
-      
+      const isNetworkError =
+        errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+      const isSchemaError =
+        errorMessage.includes("Database schema is out of sync") ||
+        errorMessage.includes("migrations");
+
       if (!isNetworkError) {
         console.error("[AdminSiteContext] Failed to load sites", err);
-        
+
         // For schema errors, set error state but don't crash
         if (isSchemaError) {
-          console.warn("[AdminSiteContext] Database schema is out of sync. Please run migrations on the server.");
-          setError("Database schema is out of sync. Please contact the administrator to run migrations.");
+          console.warn(
+            "[AdminSiteContext] Database schema is out of sync. Please run migrations on the server."
+          );
+          setError(
+            "Database schema is out of sync. Please contact the administrator to run migrations."
+          );
         } else {
           // For other errors, set a generic error message
           setError("Failed to load sites. Please try again later.");
@@ -131,14 +141,15 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
       // Don't set isLoading here - it's already true from initial state
       return;
     }
-    
+
     // Only load sites if user is logged in
     if (user) {
       loadSites().catch((err) => {
         // Only log error if it's not a network error (backend not running)
         const errorMessage = err instanceof Error ? err.message : String(err);
-        const isNetworkError = errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
-        
+        const isNetworkError =
+          errorMessage.includes("Failed to connect") || errorMessage.includes("Failed to fetch");
+
         if (!isNetworkError) {
           console.error("[AdminSiteContext] loadSites failed:", err);
         }
@@ -202,11 +213,7 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
     reloadSites,
   };
 
-  return (
-    <AdminSiteContext.Provider value={contextValue}>
-      {children}
-    </AdminSiteContext.Provider>
-  );
+  return <AdminSiteContext.Provider value={contextValue}>{children}</AdminSiteContext.Provider>;
 }
 
 export function useAdminSite() {
@@ -215,7 +222,9 @@ export function useAdminSite() {
     // During lazy loading, the context might be undefined temporarily
     // This should not happen if the Provider is properly set up in main.tsx
     // But we handle it gracefully to prevent crashes during lazy loading
-    console.warn("useAdminSite called outside AdminSiteProvider - this should not happen if Provider is set up correctly");
+    console.warn(
+      "useAdminSite called outside AdminSiteProvider - this should not happen if Provider is set up correctly"
+    );
     // Return a default value that matches the expected interface
     // Components will re-render once the Provider initializes
     return {
@@ -233,4 +242,3 @@ export function useAdminSite() {
   }
   return context;
 }
-

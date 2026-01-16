@@ -21,7 +21,11 @@ function isLang(x: unknown): x is Lang {
   return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
 }
 
-export function ProtectedRoute({ children, requiredRole, considerSiteRole = false }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  requiredRole,
+  considerSiteRole = false,
+}: ProtectedRouteProps) {
   // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY EARLY RETURNS
   // Use useContext directly to avoid throwing error if AuthContext is not available
   const authContext = useContext(AuthContext);
@@ -30,17 +34,17 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [isCheckingSiteRole, setIsCheckingSiteRole] = useState(false);
-  
+
   // Check for tokens immediately (before waiting for AuthContext)
   const [shouldRedirect, setShouldRedirect] = useState(() => {
     const accessToken = localStorage.getItem("accessToken");
     const refreshTokenValue = localStorage.getItem("refreshToken");
-    
+
     // If no tokens at all, redirect immediately
     if (!accessToken && !refreshTokenValue) {
       return true;
     }
-    
+
     // If access token is expired
     if (accessToken && isTokenExpired(accessToken)) {
       // If refresh token is also expired or missing, redirect immediately
@@ -48,7 +52,7 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
         return true;
       }
     }
-    
+
     return false;
   });
 
@@ -64,11 +68,13 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
         setIsCheckingSiteRole(false);
         return;
       }
-      
+
       setIsCheckingSiteRole(true);
       try {
         const memberships = await getSiteMemberships(selectedSiteId, user.id);
-        const membership = memberships.find(m => m.siteId === selectedSiteId && m.userId === user.id);
+        const membership = memberships.find(
+          (m) => m.siteId === selectedSiteId && m.userId === user.id
+        );
         setIsSiteAdmin(membership?.role === "siteadmin" || false);
       } catch (err) {
         console.error("Failed to check site admin role", err);
@@ -77,7 +83,7 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
         setIsCheckingSiteRole(false);
       }
     };
-    
+
     checkSiteAdminRole();
   }, [considerSiteRole, selectedSiteId, user?.id]);
 
@@ -120,7 +126,7 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
   }, []);
 
   // NOW WE CAN DO EARLY RETURNS AFTER ALL HOOKS HAVE BEEN CALLED
-  
+
   // If we should redirect (no tokens or expired tokens), redirect immediately
   // Don't wait for AuthContext to load
   if (shouldRedirect) {
@@ -175,7 +181,8 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
   const userIsAdmin = user.role === ROLE_ADMIN;
   const userIsEditor = user.role === ROLE_EDITOR;
   const hasAdminAccess = userIsSuperadmin || userIsAdmin || userIsEditor;
-  const isVisitor = !hasAdminAccess && (user.activeSiteId === null || user.activeSiteId === undefined);
+  const isVisitor =
+    !hasAdminAccess && (user.activeSiteId === null || user.activeSiteId === undefined);
   if (isVisitor) {
     // Redirect visitor to public pages (home page)
     return <Navigate to={`/${lang}`} replace />;
@@ -195,10 +202,13 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
     if (userIsSuperadmin) {
       return <>{children}</>;
     }
-    
+
     // Effective admin permissions: global admin OR siteadmin (if considerSiteRole is enabled)
-    const hasAdminPermissions = isAdmin(user.role as UserRole, isSiteAdmin ? "siteadmin" : undefined);
-    
+    const hasAdminPermissions = isAdmin(
+      user.role as UserRole,
+      isSiteAdmin ? "siteadmin" : undefined
+    );
+
     // Admin (global or site-level) has access to everything except superadmin-only routes
     if (hasAdminPermissions && requiredRole !== ROLE_SUPERADMIN) {
       return <>{children}</>;
@@ -217,4 +227,3 @@ export function ProtectedRoute({ children, requiredRole, considerSiteRole = fals
 
   return <>{children}</>;
 }
-

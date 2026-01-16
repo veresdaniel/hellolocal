@@ -284,7 +284,7 @@ export class RbacService {
         return; // User has at least one of the required roles
       }
     }
-    
+
     // User doesn't have any of the required roles
     throw new ForbiddenException(
       `User does not have required site permission. Required: ${allowedRoles.join(" or ")}`

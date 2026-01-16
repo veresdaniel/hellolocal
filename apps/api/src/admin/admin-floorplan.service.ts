@@ -43,14 +43,21 @@ export class AdminFloorplanService {
 
     // RBAC check only for authenticated users
     if (userId !== "public-read") {
-      await this.rbacService.checkSiteAccessWithUser(userId, place.siteId, ["siteadmin", "editor", "viewer"]);
+      await this.rbacService.checkSiteAccessWithUser(userId, place.siteId, [
+        "siteadmin",
+        "editor",
+        "viewer",
+      ]);
     }
 
     // For public-read, check if there's an active subscription
     // Only return floorplans if the place has an active floorplan subscription
     if (userId === "public-read") {
-      const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(placeId, place.siteId);
-      
+      const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(
+        placeId,
+        place.siteId
+      );
+
       // If not entitled (no active subscription), return empty array
       if (!entitlement.entitled) {
         return [];
@@ -90,7 +97,10 @@ export class AdminFloorplanService {
 
     // RBAC check only for authenticated users
     if (userId !== "public-read") {
-      await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, ["siteadmin", "editor"]);
+      await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, [
+        "siteadmin",
+        "editor",
+      ]);
     }
 
     return floorplan;
@@ -114,15 +124,22 @@ export class AdminFloorplanService {
     await this.rbacService.checkSiteAccessWithUser(userId, place.siteId, ["siteadmin", "editor"]);
 
     // Check entitlement
-    const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(dto.placeId, place.siteId);
+    const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(
+      dto.placeId,
+      place.siteId
+    );
 
     if (!entitlement.entitled) {
-      throw new BadRequestException("Floorplan feature is not available for this place. Please subscribe first.");
+      throw new BadRequestException(
+        "Floorplan feature is not available for this place. Please subscribe first."
+      );
     }
 
     // Check limit
     if (entitlement.used >= entitlement.limit) {
-      throw new BadRequestException(`Floorplan limit reached (${entitlement.used}/${entitlement.limit}).`);
+      throw new BadRequestException(
+        `Floorplan limit reached (${entitlement.used}/${entitlement.limit}).`
+      );
     }
 
     // If isPrimary is true, unset other primary floorplans
@@ -172,7 +189,10 @@ export class AdminFloorplanService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     // If isPrimary is being set to true, unset other primary floorplans
     if (dto.isPrimary === true) {
@@ -220,7 +240,10 @@ export class AdminFloorplanService {
     }
 
     // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, ["siteadmin", "editor"]);
+    await this.rbacService.checkSiteAccessWithUser(userId, floorplan.place.siteId, [
+      "siteadmin",
+      "editor",
+    ]);
 
     return this.prisma.placeFloorplan.delete({
       where: { id: floorplanId },

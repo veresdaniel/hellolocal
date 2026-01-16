@@ -22,11 +22,7 @@ export interface LangFieldValues {
 /**
  * Get field value for a specific language
  */
-export function getLangFieldValue(
-  values: LangFieldValues,
-  field: string,
-  lang: Lang
-): string {
+export function getLangFieldValue(values: LangFieldValues, field: string, lang: Lang): string {
   const key = `${field}${lang.charAt(0).toUpperCase() + lang.slice(1)}` as keyof LangFieldValues;
   return values[key] || "";
 }
@@ -80,7 +76,7 @@ export function formDataToTranslations<T extends LangFieldValues>(
   for (const lang of LANG_VALUES) {
     const langKey = `${lang.charAt(0).toUpperCase() + lang.slice(1)}` as "Hu" | "En" | "De";
     const nameField = `name${langKey}` as keyof LangFieldValues;
-    
+
     // Always include Hungarian if nameHu exists, for others only if name field exists
     if (lang === "hu" ? formData[nameField]?.trim() : formData[nameField]?.trim()) {
       const translation: { lang: Lang; [key: string]: string | null } = { lang };
@@ -147,8 +143,6 @@ export function getTranslation<T extends { lang: Lang }>(
 /**
  * Get Hungarian translation (most common fallback)
  */
-export function getHuTranslation<T extends { lang: Lang }>(
-  translations: T[]
-): T | undefined {
+export function getHuTranslation<T extends { lang: Lang }>(translations: T[]): T | undefined {
   return getTranslation(translations, "hu", true);
 }

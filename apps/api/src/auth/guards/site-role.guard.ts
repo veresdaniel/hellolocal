@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { SiteRole } from "@prisma/client";
 import { RbacService } from "../rbac.service";
@@ -8,11 +14,11 @@ export const SITE_ROLE_KEY = "siteRole";
 /**
  * Site-level role-based access control guard.
  * Use with @SiteRole() decorator to restrict access based on site membership.
- * 
+ *
  * Requires:
  * - JwtAuthGuard to be applied first (to get user from request)
  * - siteId parameter in route or query
- * 
+ *
  * @example
  * @SiteRole(SiteRole.siteadmin)
  * @UseGuards(JwtAuthGuard, SiteRoleGuard)

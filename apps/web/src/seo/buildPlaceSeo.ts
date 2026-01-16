@@ -2,10 +2,14 @@ import type { Seo } from "../types/seo";
 import type { Place } from "../types/place";
 import { generateLocalBusinessSchema } from "./schemaOrg";
 
-export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canonical: string; townName?: string }) {
+export function buildPlaceSeo(
+  base: Seo | undefined,
+  place: Place,
+  ctx: { canonical: string; townName?: string }
+) {
   const town = ctx.townName ? ` – ${ctx.townName}` : "";
   const placeImage = base?.image || place.heroImage;
-  
+
   // Helper to remove HTML tags and normalize whitespace
   const stripHtml = (html: string | null | undefined): string => {
     if (!html) return "";
@@ -19,37 +23,40 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   const getFirstSentences = (html: string | undefined, count: number = 2): string => {
     if (!html) return "";
     // Remove HTML tags
-    const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    const text = html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     // Split by sentence endings (. ! ?)
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
     return sentences.slice(0, count).join(" ").trim();
   };
-  
+
   // Fallback title: seoTitle or name + town
   const fallbackTitle = base?.title || `${place.name}${town}`;
-  
+
   // Fallback description: seoDescription (strip HTML) or first 2 sentences from description
-  const fallbackDescription = 
-    (base?.description ? stripHtml(base.description) : null) || 
-    getFirstSentences(place.description, 2) || 
+  const fallbackDescription =
+    (base?.description ? stripHtml(base.description) : null) ||
+    getFirstSentences(place.description, 2) ||
     `Fedezd fel: ${place.name}${town}.`;
-  
+
   // Combine SEO keywords from base and place.seo
   const allKeywords = [...(base?.keywords ?? []), ...(place.seo?.keywords ?? [])];
-  
+
   const seo: Seo = {
     title: fallbackTitle,
     description: fallbackDescription,
     image: placeImage,
     keywords: allKeywords,
     canonical: base?.canonical ?? ctx.canonical,
-    og: { 
+    og: {
       type: "article",
       title: base?.og?.title || base?.title || fallbackTitle,
       description: base?.og?.description || base?.description || fallbackDescription,
       image: base?.og?.image ?? placeImage,
     },
-    twitter: { 
+    twitter: {
       card: placeImage ? "summary_large_image" : "summary",
       title: base?.twitter?.title || base?.title || fallbackTitle,
       description: base?.twitter?.description || base?.description || fallbackDescription,
@@ -62,21 +69,41 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   // we add keywords based on common category name patterns
   const extraKw: string[] = [];
   const categoryLower = place.category?.toLowerCase() ?? "";
-  
+
   // Match common category names in different languages
-  if (categoryLower.includes("bor") || categoryLower.includes("winery") || categoryLower.includes("weingut")) {
+  if (
+    categoryLower.includes("bor") ||
+    categoryLower.includes("winery") ||
+    categoryLower.includes("weingut")
+  ) {
     extraKw.push("borászat", "borkóstoló");
   }
-  if (categoryLower.includes("szállás") || categoryLower.includes("accommodation") || categoryLower.includes("unterkunft")) {
+  if (
+    categoryLower.includes("szállás") ||
+    categoryLower.includes("accommodation") ||
+    categoryLower.includes("unterkunft")
+  ) {
     extraKw.push("szállás", "foglalás");
   }
-  if (categoryLower.includes("termelő") || categoryLower.includes("producer") || categoryLower.includes("produzent")) {
+  if (
+    categoryLower.includes("termelő") ||
+    categoryLower.includes("producer") ||
+    categoryLower.includes("produzent")
+  ) {
     extraKw.push("helyi termék", "termelő");
   }
-  if (categoryLower.includes("vendéglátás") || categoryLower.includes("hospitality") || categoryLower.includes("gastronomie")) {
+  if (
+    categoryLower.includes("vendéglátás") ||
+    categoryLower.includes("hospitality") ||
+    categoryLower.includes("gastronomie")
+  ) {
     extraKw.push("vendéglátás", "étterem", "kávézó");
   }
-  if (categoryLower.includes("kézműves") || categoryLower.includes("craft") || categoryLower.includes("handwerk")) {
+  if (
+    categoryLower.includes("kézműves") ||
+    categoryLower.includes("craft") ||
+    categoryLower.includes("handwerk")
+  ) {
     extraKw.push("kézműves", "workshop");
   }
 
@@ -87,7 +114,8 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
   const openingHoursSpec = place.openingHours
     ?.filter((oh) => !oh.isClosed && oh.openTime && oh.closeTime)
     .map((oh) => ({
-      dayOfWeek: dayNames[oh.dayOfWeek] || `https://schema.org/${dayNames[oh.dayOfWeek] || "DayOfWeek"}`,
+      dayOfWeek:
+        dayNames[oh.dayOfWeek] || `https://schema.org/${dayNames[oh.dayOfWeek] || "DayOfWeek"}`,
       opens: oh.openTime || undefined,
       closes: oh.closeTime || undefined,
     }));
@@ -112,7 +140,8 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
             longitude: place.location.lng,
           }
         : undefined,
-      openingHoursSpecification: openingHoursSpec && openingHoursSpec.length > 0 ? openingHoursSpec : undefined,
+      openingHoursSpecification:
+        openingHoursSpec && openingHoursSpec.length > 0 ? openingHoursSpec : undefined,
       priceRange: place.priceBand || undefined,
       sameAs: sameAs.length > 0 ? sameAs : undefined,
     },
@@ -123,6 +152,6 @@ export function buildPlaceSeo(base: Seo | undefined, place: Place, ctx: { canoni
 
 function uniq(arr: string[]) {
   const out: string[] = [];
-  for (const s of arr.map(x => x.trim()).filter(Boolean)) if (!out.includes(s)) out.push(s);
+  for (const s of arr.map((x) => x.trim()).filter(Boolean)) if (!out.includes(s)) out.push(s);
   return out;
 }

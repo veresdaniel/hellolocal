@@ -167,24 +167,24 @@ export class BillingService {
     // Get old subscription data for history tracking
     const oldSubscription = place.subscription;
     // If no subscription exists, use the place's current plan as the old plan
-    const oldPlan = oldSubscription?.plan || (place.plan === "free" ? "FREE" : place.plan === "basic" ? "BASIC" : "PRO");
+    const oldPlan =
+      oldSubscription?.plan ||
+      (place.plan === "free" ? "FREE" : place.plan === "basic" ? "BASIC" : "PRO");
 
     // If plan is being changed, validate that current usage doesn't exceed new plan limits
     if (data.plan && data.plan !== place.plan) {
       const overrides = await this.getPlacePlanOverrides();
       const newLimits = getPlaceLimits(data.plan, overrides);
       // Extract all images from galleries and count them
-      const galleryImages = (place.galleries || [])
-        .flatMap((gallery: any) => {
-          try {
-            const images = typeof gallery.images === 'string' 
-              ? JSON.parse(gallery.images) 
-              : gallery.images;
-            return Array.isArray(images) ? images : [];
-          } catch {
-            return [];
-          }
-        });
+      const galleryImages = (place.galleries || []).flatMap((gallery: any) => {
+        try {
+          const images =
+            typeof gallery.images === "string" ? JSON.parse(gallery.images) : gallery.images;
+          return Array.isArray(images) ? images : [];
+        } catch {
+          return [];
+        }
+      });
       const currentImageCount = galleryImages.length + (place.heroImage ? 1 : 0);
       const currentEventCount = place.events?.length || 0;
 
@@ -215,9 +215,7 @@ export class BillingService {
       const overrides = await this.getPlacePlanOverrides();
       const limits = getPlaceLimits(data.plan, overrides);
       if (!limits.featured) {
-        throw new BadRequestException(
-          `Plan ${data.plan} does not support featured status`
-        );
+        throw new BadRequestException(`Plan ${data.plan} does not support featured status`);
       }
     }
 
@@ -241,17 +239,17 @@ export class BillingService {
     const subscriptionData: any = {};
     if (data.priceCents !== undefined) subscriptionData.priceCents = data.priceCents;
     if (data.currency !== undefined) subscriptionData.currency = data.currency;
-    
+
     // If plan changed, update statusChangedAt and plan in subscription
     const newPlan = data.plan || place.plan;
     const planChanged = data.plan && data.plan !== place.plan;
     const isNewSubscription = !oldSubscription;
     const newSubscriptionPlan = placePlanToSubscriptionPlan(newPlan);
-    
+
     if (planChanged) {
       subscriptionData.statusChangedAt = new Date();
       subscriptionData.plan = newSubscriptionPlan;
-      
+
       // If plan changed and validUntil is not explicitly set, set to first day of next month
       if (data.validUntil === undefined) {
         subscriptionData.validUntil = getFirstDayOfNextMonth();
@@ -273,10 +271,9 @@ export class BillingService {
     }
 
     // If creating new subscription and validUntil is not set, set to first day of next month
-    const createValidUntil = isNewSubscription && !data.validUntil
-      ? getFirstDayOfNextMonth()
-      : (data.validUntil ?? null);
-    
+    const createValidUntil =
+      isNewSubscription && !data.validUntil ? getFirstDayOfNextMonth() : (data.validUntil ?? null);
+
     const subscription = await this.prisma.placeSubscription.upsert({
       where: { placeId },
       create: {
@@ -389,17 +386,15 @@ export class BillingService {
     const overrides = await this.getPlacePlanOverrides();
     const limits = getPlaceLimits(place.plan, overrides);
     // Extract all images from galleries and count them
-    const galleryImages = (place.galleries || [])
-      .flatMap((gallery: any) => {
-        try {
-          const images = typeof gallery.images === 'string' 
-            ? JSON.parse(gallery.images) 
-            : gallery.images;
-          return Array.isArray(images) ? images : [];
-        } catch {
-          return [];
-        }
-      });
+    const galleryImages = (place.galleries || []).flatMap((gallery: any) => {
+      try {
+        const images =
+          typeof gallery.images === "string" ? JSON.parse(gallery.images) : gallery.images;
+        return Array.isArray(images) ? images : [];
+      } catch {
+        return [];
+      }
+    });
     const imageCount = galleryImages.length + (place.heroImage ? 1 : 0);
     const eventCount = place.events?.length || 0;
 
@@ -528,8 +523,7 @@ export class BillingService {
 
     const limits = getSiteLimits(site.plan);
     const placeCount = site.places?.length || 0;
-    const featuredPlaceCount =
-      site.places?.filter((p) => p.isFeatured).length || 0;
+    const featuredPlaceCount = site.places?.filter((p) => p.isFeatured).length || 0;
     const eventCount = site.events?.length || 0;
 
     // Determine if upgrade/downgrade is possible

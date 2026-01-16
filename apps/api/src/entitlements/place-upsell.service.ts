@@ -10,7 +10,12 @@ import type { AdminFeatureSubscriptionService } from "../admin/admin-feature-sub
 export type FeatureGate =
   | { state: "enabled" }
   | { state: "locked"; reason: string; upgradeCta: "viewPlans" | "contactAdmin" }
-  | { state: "limit_reached"; reason: string; upgradeCta: "upgradePlan"; alternativeCta?: "manageExisting" };
+  | {
+      state: "limit_reached";
+      reason: string;
+      upgradeCta: "upgradePlan";
+      alternativeCta?: "manageExisting";
+    };
 
 export type PlaceUpsellState = {
   featured: FeatureGate;
@@ -31,7 +36,10 @@ export class PlaceUpsellService implements OnModuleInit {
   async onModuleInit() {
     // Lazy load AdminFeatureSubscriptionService to avoid circular dependency
     try {
-      this.featureSubscriptionService = await this.moduleRef.get("AdminFeatureSubscriptionService", { strict: false });
+      this.featureSubscriptionService = await this.moduleRef.get(
+        "AdminFeatureSubscriptionService",
+        { strict: false }
+      );
     } catch (error) {
       // Service not available, that's okay - floorplan feature will be disabled
       console.debug("AdminFeatureSubscriptionService not available, floorplan feature disabled");
@@ -93,7 +101,7 @@ export class PlaceUpsellService implements OnModuleInit {
     const overrides = await this.getPlacePlanOverrides();
     const placeLimits = getPlaceLimits(placePlan, overrides);
     const baseLimit = placeLimits.images;
-    
+
     // If limit is Infinity, always enabled
     if (baseLimit === Infinity) {
       return { state: "enabled" };
@@ -126,7 +134,11 @@ export class PlaceUpsellService implements OnModuleInit {
   /**
    * Get feature gate for floorplans
    */
-  async getFloorplanGate(siteId: string, placeId: string, placePlan?: PlacePlan): Promise<FeatureGate> {
+  async getFloorplanGate(
+    siteId: string,
+    placeId: string,
+    placePlan?: PlacePlan
+  ): Promise<FeatureGate> {
     // Free accounts cannot use floorplan feature at all
     if (placePlan === "free") {
       return {
@@ -139,7 +151,10 @@ export class PlaceUpsellService implements OnModuleInit {
     // Lazy load service if not yet loaded
     if (!this.featureSubscriptionService) {
       try {
-        this.featureSubscriptionService = await this.moduleRef.get("AdminFeatureSubscriptionService", { strict: false });
+        this.featureSubscriptionService = await this.moduleRef.get(
+          "AdminFeatureSubscriptionService",
+          { strict: false }
+        );
       } catch {
         // Service not available
       }
@@ -154,7 +169,10 @@ export class PlaceUpsellService implements OnModuleInit {
     }
 
     try {
-      const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(placeId, siteId);
+      const entitlement = await this.featureSubscriptionService.getFloorplanEntitlement(
+        placeId,
+        siteId
+      );
 
       if (!entitlement.entitled) {
         // This will be handled by frontend - it will show positive message when onClick is available

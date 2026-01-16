@@ -9,11 +9,11 @@
  */
 export function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
-  
+
   // Create a temporary DOM element to parse HTML
   const tmp = document.createElement("div");
   tmp.innerHTML = html;
-  
+
   // Get text content (automatically strips HTML tags)
   return tmp.textContent || tmp.innerText || "";
 }

@@ -52,21 +52,30 @@ export function FeatureLockTooltip({
         >
           <span style={{ fontSize: 18 }}>🔒</span>
           <div style={{ flex: 1 }}>
-            <div style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              fontWeight: 600, 
-              color: "#92400e", 
-              marginBottom: 4,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {(t("admin.featureLocked") || "Ez a funkció az {plan} csomagban nem érhető el.").replace("{plan}", planName || t("admin.currentPlan") || "jelenlegi")}
+            <div
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontWeight: 600,
+                color: "#92400e",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {(
+                t("admin.featureLocked") || "Ez a funkció az {plan} csomagban nem érhető el."
+              ).replace("{plan}", planName || t("admin.currentPlan") || "jelenlegi")}
             </div>
-            <div style={{ 
-              fontSize: "clamp(13px, 3vw, 15px)", 
-              color: "#78350f",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {t("admin.featureLockedDescription") || "A funkció használatához frissíts egy magasabb csomagra."}
+            <div
+              style={{
+                fontSize: "clamp(13px, 3vw, 15px)",
+                color: "#78350f",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.featureLockedDescription") ||
+                "A funkció használatához frissíts egy magasabb csomagra."}
             </div>
           </div>
           <button
@@ -79,7 +88,8 @@ export function FeatureLockTooltip({
               border: "none",
               borderRadius: 6,
               fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 600,
               cursor: "pointer",
             }}
@@ -99,7 +109,8 @@ export function FeatureLockTooltip({
               color: "white",
               borderRadius: 8,
               fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               zIndex: 1000,
               maxWidth: 300,
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
@@ -130,25 +141,34 @@ export function FeatureLockTooltip({
         >
           <span style={{ fontSize: 18 }}>⚠️</span>
           <div style={{ flex: 1 }}>
-            <div style={{ 
-              fontSize: "clamp(14px, 3.5vw, 16px)", 
-              fontWeight: 600, 
-              color: "#92400e", 
-              marginBottom: 4,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}>
-              {(t("admin.limitReachedMessage") || "Elérted a csomagodban engedélyezett {feature} számát ({current} / {limit}).")
+            <div
+              style={{
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontWeight: 600,
+                color: "#92400e",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {(
+                t("admin.limitReachedMessage") ||
+                "Elérted a csomagodban engedélyezett {feature} számát ({current} / {limit})."
+              )
                 .replace("{feature}", featureName)
                 .replace("{current}", String(currentUsage || 0))
                 .replace("{limit}", String(limit || 0))}
             </div>
             {alternativeAction && (
-              <div style={{ 
-                fontSize: "clamp(13px, 3vw, 15px)", 
-                color: "#78350f", 
-                marginTop: 4,
-                fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}>
+              <div
+                style={{
+                  fontSize: "clamp(13px, 3vw, 15px)",
+                  color: "#78350f",
+                  marginTop: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {alternativeAction}
               </div>
             )}
@@ -163,7 +183,8 @@ export function FeatureLockTooltip({
               border: "none",
               borderRadius: 6,
               fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 600,
               cursor: "pointer",
             }}
@@ -181,7 +202,8 @@ export function FeatureLockTooltip({
                 border: "1px solid #f59e0b",
                 borderRadius: 6,
                 fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 600,
                 cursor: "pointer",
                 marginLeft: 8,
@@ -203,7 +225,8 @@ export function FeatureLockTooltip({
               color: "white",
               borderRadius: 8,
               fontSize: "clamp(13px, 3vw, 15px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               zIndex: 1000,
               maxWidth: 300,
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",

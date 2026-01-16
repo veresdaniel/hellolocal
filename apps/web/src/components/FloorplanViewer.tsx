@@ -29,7 +29,8 @@ export function FloorplanViewer({ floorplan, isPublic = false }: FloorplanViewer
             color: "white",
             fontSize: "clamp(16px, 3vw, 18px)",
             fontWeight: 600,
-            fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             cursor: "pointer",
             boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
             transition: "all 0.2s",
@@ -71,12 +72,13 @@ export function FloorplanViewer({ floorplan, isPublic = false }: FloorplanViewer
   }
 
   // Admin/editor view: show inline viewer (backward compatibility)
-  const pins: FloorplanPin[] = floorplan.pins?.map((pin) => ({
-    id: pin.id,
-    x: pin.x,
-    y: pin.y,
-    label: pin.label,
-  })) || [];
+  const pins: FloorplanPin[] =
+    floorplan.pins?.map((pin) => ({
+      id: pin.id,
+      x: pin.x,
+      y: pin.y,
+      label: pin.label,
+    })) || [];
 
   return (
     <FloorplanImageViewer

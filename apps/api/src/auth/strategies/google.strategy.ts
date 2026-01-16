@@ -8,16 +8,15 @@ import { ConfigService } from "@nestjs/config";
 export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
   private readonly logger = new Logger(GoogleStrategy.name);
 
-  constructor(
-    private readonly configService: ConfigService
-  ) {
+  constructor(private readonly configService: ConfigService) {
     const clientID = configService.get<string>("GOOGLE_CLIENT_ID") || "";
     const clientSecret = configService.get<string>("GOOGLE_CLIENT_SECRET") || "";
-    
+
     // Get API URL from environment or construct from PORT
     const apiPort = configService.get<string>("PORT") || "3002";
     const apiUrl = configService.get<string>("API_URL") || `http://localhost:${apiPort}`;
-    const callbackURL = configService.get<string>("GOOGLE_CALLBACK_URL") || `${apiUrl}/api/auth/google/callback`;
+    const callbackURL =
+      configService.get<string>("GOOGLE_CALLBACK_URL") || `${apiUrl}/api/auth/google/callback`;
 
     super({
       clientID: clientID || "dummy-client-id",
@@ -33,7 +32,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
     if (!clientID || !clientSecret) {
       this.logger.warn(
         "⚠️  Google OAuth credentials not configured. " +
-        "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables to enable Google login."
+          "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables to enable Google login."
       );
     } else {
       this.logger.log("Google OAuth credentials configured");
@@ -60,7 +59,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
         picture: photos?.[0]?.value,
         accessToken,
       };
-      
+
       this.logger.log(`Google OAuth successful for user: ${user.email}`);
       done(null, user);
     } catch (error) {

@@ -54,12 +54,13 @@ export function FloorplanFullscreenModal({
   if (!isOpen || floorplans.length === 0) return null;
 
   const currentFloorplan = floorplans[selectedFloorplanIndex];
-  const pins: FloorplanPin[] = currentFloorplan.pins?.map((pin) => ({
-    id: pin.id,
-    x: pin.x,
-    y: pin.y,
-    label: pin.label,
-  })) || [];
+  const pins: FloorplanPin[] =
+    currentFloorplan.pins?.map((pin) => ({
+      id: pin.id,
+      x: pin.x,
+      y: pin.y,
+      label: pin.label,
+    })) || [];
 
   return (
     <div
@@ -94,7 +95,8 @@ export function FloorplanFullscreenModal({
               margin: 0,
               fontSize: "clamp(20px, 4vw, 24px)",
               fontWeight: 600,
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#fff",
               marginBottom: 4,
             }}
@@ -105,7 +107,8 @@ export function FloorplanFullscreenModal({
             style={{
               margin: 0,
               fontSize: "clamp(14px, 3vw, 16px)",
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "rgba(255, 255, 255, 0.7)",
             }}
           >

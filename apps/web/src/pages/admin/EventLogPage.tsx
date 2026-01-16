@@ -72,13 +72,13 @@ export function EventLogPage() {
   // Initial load - load data and logs
   useEffect(() => {
     let isMounted = true;
-    
+
     const initialize = async () => {
       try {
         await Promise.all([loadData(), loadFilterOptions()]);
-        
+
         if (!isMounted) return;
-        
+
         // Load logs immediately with current filters
         const initialFilters = {
           siteId: selectedSiteId || undefined,
@@ -90,9 +90,9 @@ export function EventLogPage() {
           page: 1,
           limit: 10,
         };
-        
+
         prevFiltersRef.current = JSON.stringify(initialFilters);
-        
+
         // Load logs directly
         setIsLoading(true);
         setError(null);
@@ -109,7 +109,8 @@ export function EventLogPage() {
             setIsLoading(false);
             return;
           }
-          const errorMessage = err instanceof Error ? err.message : t("admin.errors.loadEventLogsFailed");
+          const errorMessage =
+            err instanceof Error ? err.message : t("admin.errors.loadEventLogsFailed");
           setError(errorMessage);
           if (!errorShownRef.current) {
             showToast(errorMessage, "error");
@@ -120,7 +121,7 @@ export function EventLogPage() {
             setIsLoading(false);
           }
         }
-        
+
         hasLoadedInitial.current = true;
       } catch (err) {
         console.error("Failed to initialize EventLogPage:", err);
@@ -130,9 +131,9 @@ export function EventLogPage() {
         }
       }
     };
-    
+
     initialize();
-    
+
     return () => {
       isMounted = false;
     };
@@ -156,7 +157,7 @@ export function EventLogPage() {
     if (isDeletingRef.current) {
       return;
     }
-    
+
     // Skip if delete just completed (one cycle grace period)
     if (deleteCompletedRef.current) {
       deleteCompletedRef.current = false;
@@ -165,7 +166,7 @@ export function EventLogPage() {
 
     // Create a stable string representation of filters to compare
     const filtersKey = JSON.stringify(filters);
-    
+
     // Only call loadLogs if filters actually changed
     if (prevFiltersRef.current !== filtersKey) {
       prevFiltersRef.current = filtersKey;
@@ -201,11 +202,10 @@ export function EventLogPage() {
     }
     setError(null);
     const filtersToUse = customFilters || filters;
-    
-    
+
     try {
       const response = await getEventLogs(filtersToUse);
-      
+
       setLogs(response.logs || []);
       setPagination(response.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
       // Reset error shown flag on success
@@ -218,7 +218,8 @@ export function EventLogPage() {
         }
         return;
       }
-      const errorMessage = err instanceof Error ? err.message : t("admin.errors.loadEventLogsFailed");
+      const errorMessage =
+        err instanceof Error ? err.message : t("admin.errors.loadEventLogsFailed");
       setError(errorMessage);
       // Only show toast once per error
       if (!errorShownRef.current) {
@@ -260,7 +261,9 @@ export function EventLogPage() {
   const handleDelete = async () => {
     const confirmed = await confirm({
       title: t("admin.eventLog.delete") || "Eseménynapló törlése",
-      message: t("admin.eventLog.deleteConfirm") || "Biztosan törölni szeretnéd a kiválasztott eseménynapló bejegyzéseket?",
+      message:
+        t("admin.eventLog.deleteConfirm") ||
+        "Biztosan törölni szeretnéd a kiválasztott eseménynapló bejegyzéseket?",
       confirmLabel: t("common.delete") || "Törlés",
       cancelLabel: t("common.cancel") || "Mégse",
       confirmVariant: "danger",
@@ -269,10 +272,9 @@ export function EventLogPage() {
       return;
     }
 
-    
     setIsDeleting(true);
     isDeletingRef.current = true; // Prevent useEffect from triggering reload
-    
+
     try {
       // Remove page and limit from delete filters
       const deleteFilters = {
@@ -283,26 +285,21 @@ export function EventLogPage() {
         startDate: filters.startDate,
         endDate: filters.endDate,
       };
-      
+
       const result = await deleteEventLogs(deleteFilters);
-      
-      showToast(
-        t("admin.eventLog.deleteSuccess", { count: result.count }),
-        "success"
-      );
-      
+
+      showToast(t("admin.eventLog.deleteSuccess", { count: result.count }), "success");
+
       // Update prevFiltersRef FIRST to prevent useEffect from triggering
       const currentFiltersKey = JSON.stringify(filters);
       prevFiltersRef.current = currentFiltersKey;
-      
+
       // Set delete completed flag to skip next useEffect cycle
       deleteCompletedRef.current = true;
-      
+
       // Simple optimistic update: just clear the list
       setLogs([]);
       setPagination({ page: 1, limit: 50, total: 0, totalPages: 0 });
-      
-      
     } catch (err) {
       console.error("[EventLogPage] Delete error:", err);
       const errorMessage = err instanceof Error ? err.message : t("admin.errors.deleteFailed");
@@ -343,32 +340,40 @@ export function EventLogPage() {
 
   const translateEntityType = (entityType: string | null) => {
     if (!entityType) return "-";
-    return t(`admin.eventLog.entityTypes.${entityType.toLowerCase()}`, { defaultValue: entityType });
+    return t(`admin.eventLog.entityTypes.${entityType.toLowerCase()}`, {
+      defaultValue: entityType,
+    });
   };
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <h1 style={{
-          fontSize: "clamp(20px, 4vw, 28px)",
-          fontWeight: 700,
-          fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "white",
-          margin: 0,
-          marginBottom: 8,
-          textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        }}>
+        <h1
+          style={{
+            fontSize: "clamp(20px, 4vw, 28px)",
+            fontWeight: 700,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            color: "white",
+            margin: 0,
+            marginBottom: 8,
+            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          }}
+        >
           {t("admin.eventLog")}
         </h1>
-        <p style={{ 
-          fontSize: "clamp(14px, 3.5vw, 16px)",
-          fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 400,
-          color: "#c0c0d0",
-          margin: 0,
-          textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-        }}>
+        <p
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontWeight: 400,
+            color: "#c0c0d0",
+            margin: 0,
+            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+          }}
+        >
           {t("admin.eventLog.description")}
         </p>
       </div>
@@ -383,24 +388,48 @@ export function EventLogPage() {
           marginBottom: 24,
         }}
       >
-        <h3 style={{ marginTop: 0, marginBottom: 16, fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t("admin.eventLog.filters")}</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+        <h3
+          style={{
+            marginTop: 0,
+            marginBottom: 16,
+            fontFamily:
+              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.eventLog.filters")}
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+          }}
+        >
           {/* Site Filter */}
           {HAS_MULTIPLE_SITES && (currentUser?.role === ROLE_SUPERADMIN || sites.length > 1) && (
             <div>
-              <label style={{ display: "block", marginBottom: 4, fontWeight: 500, fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 4,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
                 {t("admin.eventLog.filterSite")}
               </label>
               <select
                 value={filters.siteId || ""}
                 onChange={(e) => handleFilterChange("siteId", e.target.value || undefined)}
-                style={{ 
-                  width: "100%", 
-                  padding: 12, 
-                  fontSize: "clamp(15px, 3.5vw, 16px)", 
-                  border: "1px solid #ddd", 
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  border: "1px solid #ddd",
                   borderRadius: 4,
-                  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
                 <option value="">{t("admin.eventLog.allSites")}</option>
@@ -421,7 +450,13 @@ export function EventLogPage() {
             <select
               value={filters.userId || ""}
               onChange={(e) => handleFilterChange("userId", e.target.value || undefined)}
-              style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 14,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             >
               <option value="">{t("admin.eventLog.allUsers")}</option>
               {users.map((user) => (
@@ -440,7 +475,13 @@ export function EventLogPage() {
             <select
               value={filters.action || ""}
               onChange={(e) => handleFilterChange("action", e.target.value || undefined)}
-              style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 14,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             >
               <option value="">{t("admin.eventLog.allActions")}</option>
               {filterOptions.actions.map((action) => (
@@ -459,7 +500,13 @@ export function EventLogPage() {
             <select
               value={filters.entityType || ""}
               onChange={(e) => handleFilterChange("entityType", e.target.value || undefined)}
-              style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 14,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             >
               <option value="">{t("admin.eventLog.allEntityTypes")}</option>
               {filterOptions.entityTypes.map((type) => (
@@ -479,7 +526,13 @@ export function EventLogPage() {
               type="datetime-local"
               value={filters.startDate || ""}
               onChange={(e) => handleFilterChange("startDate", e.target.value || undefined)}
-              style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 14,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             />
           </div>
 
@@ -492,7 +545,13 @@ export function EventLogPage() {
               type="datetime-local"
               value={filters.endDate || ""}
               onChange={(e) => handleFilterChange("endDate", e.target.value || undefined)}
-              style={{ width: "100%", padding: 8, fontSize: 14, border: "1px solid #ddd", borderRadius: 4 }}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 14,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+              }}
             />
           </div>
         </div>
@@ -573,23 +632,47 @@ export function EventLogPage() {
       {/* Logs Table */}
       {isLoading ? null : (
         <>
-          <div style={{ background: "white", border: "1px solid #ddd", borderRadius: 8, overflow: "hidden" }}>
+          <div
+            style={{
+              background: "white",
+              border: "1px solid #ddd",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.timestamp")}</th>
-                    {HAS_MULTIPLE_SITES && <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.site")}</th>}
-                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.user")}</th>
-                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.action")}</th>
-                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.entityType")}</th>
-                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>{t("admin.eventLog.description")}</th>
+                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                      {t("admin.eventLog.timestamp")}
+                    </th>
+                    {HAS_MULTIPLE_SITES && (
+                      <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                        {t("admin.eventLog.site")}
+                      </th>
+                    )}
+                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                      {t("admin.eventLog.user")}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                      {t("admin.eventLog.action")}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                      {t("admin.eventLog.entityType")}
+                    </th>
+                    <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>
+                      {t("admin.eventLog.description")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.length === 0 ? (
                     <tr>
-                      <td colSpan={HAS_MULTIPLE_SITES ? 6 : 5} style={{ padding: 24, textAlign: "center", color: "#666" }}>
+                      <td
+                        colSpan={HAS_MULTIPLE_SITES ? 6 : 5}
+                        style={{ padding: 24, textAlign: "center", color: "#666" }}
+                      >
                         {t("admin.eventLog.noLogs")}
                       </td>
                     </tr>
@@ -599,13 +682,16 @@ export function EventLogPage() {
                         <td style={{ padding: 12 }}>{formatDate(log.createdAt)}</td>
                         {HAS_MULTIPLE_SITES && (
                           <td style={{ padding: 12 }}>
-                            <span style={{ 
-                              padding: "4px 8px", 
-                              background: "#f3f4f6", 
-                              borderRadius: 4, 
-                              fontSize: "clamp(13px, 3vw, 15px)",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}>
+                            <span
+                              style={{
+                                padding: "4px 8px",
+                                background: "#f3f4f6",
+                                borderRadius: 4,
+                                fontSize: "clamp(13px, 3vw, 15px)",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
                               {log.site?.slug || log.siteId}
                             </span>
                           </td>
@@ -615,11 +701,16 @@ export function EventLogPage() {
                             <div style={{ fontWeight: 500 }}>
                               {log.user.firstName} {log.user.lastName}
                             </div>
-                            <div style={{ 
-                              fontSize: "clamp(13px, 3vw, 15px)", 
-                              color: "#666",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}>{log.user.email}</div>
+                            <div
+                              style={{
+                                fontSize: "clamp(13px, 3vw, 15px)",
+                                color: "#666",
+                                fontFamily:
+                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              }}
+                            >
+                              {log.user.email}
+                            </div>
                           </div>
                         </td>
                         <td style={{ padding: 12 }}>
@@ -630,7 +721,8 @@ export function EventLogPage() {
                               color: getActionColor(log.action),
                               borderRadius: 4,
                               fontSize: "clamp(13px, 3vw, 15px)",
-                              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                              fontFamily:
+                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               fontWeight: 500,
                             }}
                           >

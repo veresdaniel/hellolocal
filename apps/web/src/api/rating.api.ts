@@ -32,10 +32,7 @@ export function createOrUpdateRating(
  * Requires authentication.
  * Returns null if the user hasn't rated the place yet.
  */
-export function getMyRating(
-  lang: string,
-  placeId: string
-): Promise<MyRatingResponse> {
+export function getMyRating(lang: string, placeId: string): Promise<MyRatingResponse> {
   return apiGet<MyRatingResponse>(`/${lang}/places/${placeId}/rating/me`);
 }
 
@@ -56,9 +53,6 @@ export function createOrUpdateEventRating(
  * Requires authentication.
  * Returns null if the user hasn't rated the event yet.
  */
-export function getMyEventRating(
-  lang: string,
-  eventId: string
-): Promise<MyRatingResponse> {
+export function getMyEventRating(lang: string, eventId: string): Promise<MyRatingResponse> {
   return apiGet<MyRatingResponse>(`/${lang}/events/${eventId}/rating/me`);
 }

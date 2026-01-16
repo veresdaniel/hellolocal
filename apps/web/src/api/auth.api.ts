@@ -81,4 +81,3 @@ export function refreshToken(data: RefreshTokenDto) {
 export function logout() {
   return apiPost<{ message: string }>("/auth/logout", {});
 }
-

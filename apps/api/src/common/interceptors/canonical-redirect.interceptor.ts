@@ -13,18 +13,18 @@ import { ResolveService } from "../../site/resolve.service";
 
 /**
  * Interceptor that handles canonical URL redirects for public endpoints.
- * 
+ *
  * This interceptor:
  * 1. Checks if the request is for a slug-based detail endpoint
  * 2. Resolves the slug to get canonical URL information BEFORE processing the request
  * 3. If the current URL is not canonical, returns a 301 redirect to the canonical URL
- * 
+ *
  * Works with:
  * - GET /api/public/:lang/:tenantKey/places/:slug
  * - GET /api/public/:lang/:tenantKey/events/:slug
  * - GET /api/public/:lang/:tenantKey/resolve/:slug
  * - GET /api/public/:lang/:tenantKey/static-pages/:slug (if applicable)
- * 
+ *
  * Note: This only applies to slug-based endpoints, not by-id endpoints.
  */
 @Injectable()
@@ -80,20 +80,18 @@ export class CanonicalRedirectInterceptor implements NestInterceptor {
           // Determine the entity type to build the correct canonical URL
           const entityPath = this.getEntityPath(resolved.entityType);
           const canonicalUrl = `/api/public/${resolved.canonical.lang}/${resolved.canonical.siteKey}${entityPath}/${resolved.canonical.slug}`;
-          
+
           // Preserve query string
-          const queryString = request.url.includes("?") 
-            ? request.url.substring(request.url.indexOf("?")) 
+          const queryString = request.url.includes("?")
+            ? request.url.substring(request.url.indexOf("?"))
             : "";
           const fullCanonicalUrl = canonicalUrl + queryString;
 
-          this.logger.log(
-            `Redirecting ${request.path} -> ${fullCanonicalUrl} (301)`
-          );
+          this.logger.log(`Redirecting ${request.path} -> ${fullCanonicalUrl} (301)`);
 
           // Send 301 Permanent Redirect
           response.redirect(HttpStatus.MOVED_PERMANENTLY, fullCanonicalUrl);
-          
+
           // Return empty observable - redirect was sent, don't process the request
           return new Observable((subscriber) => {
             subscriber.complete();

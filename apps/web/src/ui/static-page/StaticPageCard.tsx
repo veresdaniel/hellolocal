@@ -116,14 +116,32 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
         </div>
       </div>
 
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
+      <div
+        style={{
+          padding: 24,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 12,
+            minWidth: 0,
+          }}
+        >
           <h3
             style={{
               margin: 0,
               fontSize: 20,
               fontWeight: 600,
-              fontFamily: "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               color: "#1a1a1a",
               lineHeight: 1.3,
               flex: 1,
@@ -143,7 +161,8 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               fontSize: 14,
               color: "#666",
               lineHeight: 1.6,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontWeight: 400,
               overflow: "hidden",
               display: "-webkit-box",
@@ -174,7 +193,8 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
               color: categoryColor,
               fontSize: 14,
               fontWeight: 500,
-              fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               transition: "all 0.3s ease",
             }}
           >
@@ -253,4 +273,3 @@ export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
     </div>
   );
 }
-
