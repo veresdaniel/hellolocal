@@ -34,9 +34,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": {
-    "license": "SEE LICENSE IN LICENSE.md"
-  },
+  "license": "SEE LICENSE IN LICENSE.md",
   "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@nestjs/common": "^11.1.11",
