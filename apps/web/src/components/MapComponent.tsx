@@ -192,6 +192,7 @@ export function MapComponent({
   >([]);
   const loadingRoutesRef = useRef<Set<string>>(new Set());
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const lastClickTimeRef = useRef<{ [key: string]: number }>({});
 
   const isDesktop =
     typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
@@ -787,28 +788,30 @@ export function MapComponent({
   //   - Second click on same marker: navigates to place detail page
   const handleMarkerClick = useCallback(
     (marker: (typeof markersWithDistance)[0], event: React.MouseEvent | React.TouchEvent) => {
-      event.stopPropagation(); // Prevent map click
-      // Don't preventDefault - it can block navigation
+      const now = Date.now();
+      const lastClickTime = lastClickTimeRef.current[marker.id] || 0;
+
+      if (now - lastClickTime < 300) {
+        return;
+      }
+      lastClickTimeRef.current[marker.id] = now;
+
+      event.stopPropagation();
 
       if (!showUserLocation) {
-        // If user location is disabled, navigate immediately on first click
         if (marker.onClick) {
           marker.onClick();
         }
         return;
       }
 
-      // If user location is enabled, use two-click behavior
       if (selectedMarkerId === marker.id) {
-        // Second click on same marker - navigate (only if onClick exists)
         if (marker.onClick) {
           marker.onClick();
         }
       } else {
-        // Click on different marker (or first click if no marker selected) - switch immediately
-        // Clear all previous routes when selecting a new marker
-        setRoutes([]); // Clear all routes when selecting a new marker
-        lastRouteFetchPosition.current = null; // Reset route fetch position tracking
+        setRoutes([]);
+        lastRouteFetchPosition.current = null;
         setSelectedMarkerId(marker.id);
       }
     },
@@ -1194,20 +1197,17 @@ export function MapComponent({
                   cursor: "pointer",
                 }}
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent map click
+                  e.stopPropagation();
                   handleMarkerClick(marker, e as any);
                 }}
                 onTouchEnd={(e) => {
-                  e.stopPropagation(); // Prevent map click
-                  // Don't preventDefault - it blocks navigation on second tap
+                  e.stopPropagation();
                   handleMarkerClick(marker, e as any);
                 }}
                 onMouseDown={(e) => {
-                  // Also stop propagation on mousedown to prevent map click
                   e.stopPropagation();
                 }}
                 onTouchStart={(e) => {
-                  // Also stop propagation on touchstart to prevent map click
                   e.stopPropagation();
                 }}
               >
