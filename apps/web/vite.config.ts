@@ -16,27 +16,25 @@ function generateVersionJson() {
     const buildHash = createHash("md5")
       .update(`${Date.now()}-${Math.random()}`)
       .digest("hex");
-    
+
     const versionInfo = {
       version,
       buildHash,
       timestamp: Date.now(),
     };
-    
+
     writeFileSync(
       join(__dirname, "public/version.json"),
       JSON.stringify(versionInfo, null, 2),
       "utf-8"
     );
-    
+
     console.log(`[Vite] Generated version.json: ${version} (${buildHash.substring(0, 7)})`);
   } catch (error) {
     console.warn("[Vite] Failed to generate version.json:", error);
   }
 }
 
-// Generate version.json on config load
-generateVersionJson();
 
 // Read version from package.json for Vite define
 const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf-8"));
@@ -61,7 +59,7 @@ export default defineConfig(({ mode }) => ({
           if (req.headers.upgrade === 'websocket') {
             return next();
           }
-          
+
           // Handle favicon.ico requests by serving vite.svg
           if (req.url === '/favicon.ico' || req.url?.startsWith('/favicon.ico?')) {
             try {
