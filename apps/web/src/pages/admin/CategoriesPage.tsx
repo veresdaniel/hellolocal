@@ -288,7 +288,6 @@ export function CategoriesPage() {
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
 
-
       {(isCreating || editingId) && (
         <div style={{ 
           padding: "clamp(24px, 5vw, 32px)", 
@@ -676,7 +675,6 @@ export function CategoriesPage() {
                         setDragOverId(null);
                         return;
                       }
-
 
                       try {
                         // Double-check all IDs exist before sending

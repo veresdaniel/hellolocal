@@ -10,17 +10,8 @@ async function fetchPlatformSettings({ lang, siteKey, tenantKey }: Args): Promis
   // Backend expects path parameters: /api/public/:lang/:siteKey/platform
   const key = siteKey || tenantKey || "";
   const apiPath = `/public/${lang}/${key}/platform`;
-  
-  console.log(`[usePlatformSettings] Fetching platform settings:`, {
-    lang,
-    siteKey: key,
-    apiPath,
-    apiUrl: import.meta.env.VITE_API_URL || 'not set',
-  });
-  
   try {
     const result = await apiGetPublic<PlatformSettings>(apiPath);
-    console.log(`[usePlatformSettings] Success:`, result);
     return result;
   } catch (error: any) {
     console.error(`[usePlatformSettings] Error fetching platform settings:`, {

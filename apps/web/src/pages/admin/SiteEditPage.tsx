@@ -96,7 +96,6 @@ export function SiteEditPage() {
       
       // Use SiteInstances from getSite API if available (fallback)
       if (data.siteInstances && data.siteInstances.length > 0) {
-        console.log(`[SiteEditPage] Using SiteInstances from getSite API: ${data.siteInstances.length} instances`);
         setSiteInstances(data.siteInstances);
       } else if (data.translations && data.translations.length > 0) {
         // If no SiteInstances but translations exist, try to create them automatically
@@ -119,7 +118,6 @@ export function SiteEditPage() {
             });
             createdInstances.push(newInstance);
             isFirst = false;
-            console.log(`[SiteEditPage] Created SiteInstance for lang ${translation.lang}`);
           } catch (err: any) {
             console.error(`[SiteEditPage] Failed to create SiteInstance for lang ${translation.lang}:`, err);
             // Continue with other languages even if one fails
@@ -127,7 +125,6 @@ export function SiteEditPage() {
         }
         
         if (createdInstances.length > 0) {
-          console.log(`[SiteEditPage] Created ${createdInstances.length} SiteInstances automatically`);
           setSiteInstances(createdInstances);
           showToast(t("admin.siteEdit.siteInstancesCreated") || `${createdInstances.length} SiteInstance létrehozva`, "success");
         }
@@ -181,7 +178,6 @@ export function SiteEditPage() {
     try {
       const data = await getSiteInstances(id);
       if (data && data.length > 0) {
-        console.log(`[SiteEditPage] Loaded SiteInstances from API: ${data.length} instances`);
         setSiteInstances(data);
       } else {
         console.warn(`[SiteEditPage] No SiteInstances returned from API for site ${id}`);

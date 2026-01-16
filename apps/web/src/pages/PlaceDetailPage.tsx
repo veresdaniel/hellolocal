@@ -113,18 +113,6 @@ export function PlaceDetailPage() {
   // Debug: log floorplans state
   useEffect(() => {
     if (shouldLoadPlace && resolveQ.data?.entityId) {
-      console.log("PlaceDetailPage - Floorplans state:", {
-        floorplans,
-        isLoadingFloorplans,
-        floorplansError,
-        hasFloorplans: floorplans && Array.isArray(floorplans) && floorplans.length > 0,
-        placeId: resolveQ.data?.entityId,
-        enabled: shouldLoadPlace && !!siteKey && !!lang,
-        lang,
-        siteKey,
-        shouldLoadPlace,
-      });
-      
       if (floorplansError) {
         console.error("PlaceDetailPage - Floorplans error:", floorplansError);
       }

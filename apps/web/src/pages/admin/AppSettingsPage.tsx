@@ -47,7 +47,6 @@ export function AppSettingsPage() {
     loadDefaultLanguage();
   }, [t]);
 
-
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -63,7 +62,6 @@ export function AppSettingsPage() {
       setIsSaving(false);
     }
   };
-
 
   const userIsAdmin = user ? isAdmin(user.role as UserRole) : false;
   const userIsSuperadmin = user ? isSuperadmin(user.role) : false;

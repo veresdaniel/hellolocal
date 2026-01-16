@@ -423,7 +423,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Site Selector */}
             {!isMobile && HAS_MULTIPLE_SITES && <SiteSelector />}
 
-
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
             

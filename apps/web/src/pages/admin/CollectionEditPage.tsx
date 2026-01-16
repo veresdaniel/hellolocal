@@ -181,13 +181,10 @@ export function CollectionEditPage() {
   }, [urlId, localId]);
 
   useEffect(() => {
-    console.log("useEffect [id, isNew]:", { id, isNew, isLoading, hasCollection: !!collection });
     // Only load if we don't already have the collection data (avoid reload after create)
     if (!isNew && id && (!collection || collection.id !== id)) {
-      console.log("useEffect: loading collection", { id, currentCollectionId: collection?.id });
       loadCollection(true); // Show loading spinner
     } else {
-      console.log("useEffect: new collection or no id or already loaded, setting loading to false");
       setIsLoading(false);
     }
     loadSites();
@@ -199,7 +196,6 @@ export function CollectionEditPage() {
   useEffect(() => {
     if (id && !isNew && autoSaveCompletedRef.current && collection && activeTab === "content") {
       // Collection was just created, switch to items tab
-      console.log("useEffect: auto-switching to items tab", { id, hasCollection: !!collection });
       setActiveTab("items");
       setIsAutoSaving(false);
       autoSaveCompletedRef.current = false;
@@ -208,21 +204,15 @@ export function CollectionEditPage() {
   }, [id, isNew, collection, activeTab]);
 
   const loadCollection = async (showLoading = false) => {
-    console.log("loadCollection: called", { id, showLoading });
     if (!id || id === "new") {
-      console.log("loadCollection: no id or is new, returning", { id });
       return;
     }
     if (showLoading) {
-      console.log("loadCollection: setting isLoading to true");
       setIsLoading(true);
     }
     try {
-      console.log("loadCollection: fetching collection", { id });
       const data = await getCollection(id);
-      console.log("loadCollection: received data", { id: data.id, itemsCount: data.items?.length, items: data.items });
       setCollection(data);
-      console.log("loadCollection: collection state updated", { id: data.id, itemsCount: data.items?.length });
       // Clear pending items when collection is reloaded from server
       setPendingItems(null);
 
@@ -259,13 +249,11 @@ export function CollectionEditPage() {
         seoKeywordsEn: (translationEn?.seoKeywords || []).join(", "),
         seoKeywordsDe: (translationDe?.seoKeywords || []).join(", "),
       });
-      console.log("loadCollection: formData updated");
     } catch (err) {
       console.error("loadCollection: error", err);
       showToast(t("admin.errors.loadCollectionFailed"), "error");
     } finally {
       if (showLoading) {
-        console.log("loadCollection: setting isLoading to false");
         setIsLoading(false);
       }
     }
@@ -291,17 +279,6 @@ export function CollectionEditPage() {
     if (!formData.titleHu?.trim() && !formData.titleEn?.trim() && !formData.titleDe?.trim()) {
       errors.titleHu = t("admin.validation.atLeastOneTitleRequired") || "At least one title (HU, EN, or DE) is required";
     }
-    
-    console.log("validateForm:", { 
-      hasSlug: !!formData.slug, 
-      slug: formData.slug,
-      hasTitleHu: !!formData.titleHu?.trim(),
-      hasTitleEn: !!formData.titleEn?.trim(),
-      hasTitleDe: !!formData.titleDe?.trim(),
-      errors: Object.keys(errors),
-      isValid: Object.keys(errors).length === 0
-    });
-    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -319,16 +296,6 @@ export function CollectionEditPage() {
       const translations = buildTranslations();
 
       if (isNew || !id) {
-        console.log("handleAutoSave: creating new collection", {
-          slug: formData.slug,
-          domain: formData.domainEnabled ? (formData.domain || null) : null,
-          isActive: formData.isActive,
-          isCrawlable: formData.isCrawlable,
-          order: formData.order,
-          translationsCount: translations.length,
-          translations: translations
-        });
-        
         const newCollection = await createCollection({
           slug: formData.slug,
           domain: formData.domainEnabled ? (formData.domain || null) : null,
@@ -337,12 +304,6 @@ export function CollectionEditPage() {
           order: formData.order,
           translations,
         });
-        
-        console.log("handleAutoSave: collection created successfully", { 
-          id: newCollection.id, 
-          slug: newCollection.slug 
-        });
-        
         // Update form data from the new collection
         const translationHu = newCollection.translations.find((t) => t.lang === "hu");
         const translationEn = newCollection.translations.find((t) => t.lang === "en");
@@ -482,25 +443,18 @@ export function CollectionEditPage() {
 
   // Handle tab change - auto-save if switching to items tab and collection is new
   const handleTabChange = async (newTab: TabId) => {
-    console.log("handleTabChange: called", { newTab, isNew, id, currentTab: activeTab });
-    
     if (newTab === "items" && (isNew || !id)) {
-      console.log("handleTabChange: switching to items tab, need to auto-save first", { isNew, id });
       // Validate and auto-save before switching to items tab
       const saved = await handleAutoSave();
-      console.log("handleTabChange: auto-save result", { saved, isNew, id });
       if (!saved) {
         // Don't switch tab if save failed - stay on content tab
-        console.log("handleTabChange: auto-save failed, not switching tab");
         return;
       }
       // After successful save, switch to items tab immediately
       // The collection state is already updated in handleAutoSave
-      console.log("handleTabChange: switching to items tab after save", { id, isNew, collectionId: collection?.id });
       setActiveTab(newTab);
       return;
     }
-    console.log("handleTabChange: normal tab switch", { newTab });
     setActiveTab(newTab);
   };
 
@@ -544,13 +498,6 @@ export function CollectionEditPage() {
     // Update pending items
     const updatedItems = [...currentItems, newItem];
     setPendingItems(updatedItems);
-    
-    console.log("handleAddItem: added item locally", { 
-      siteId, 
-      newOrder, 
-      totalItems: updatedItems.length 
-    });
-    
     setSiteSearchQuery("");
   };
 
@@ -567,11 +514,6 @@ export function CollectionEditPage() {
     // Remove the item
     const updatedItems = currentItems.filter(item => item.id !== itemId);
     setPendingItems(updatedItems);
-    
-    console.log("handleDeleteItem: deleted item locally", { 
-      itemId, 
-      remainingItems: updatedItems.length 
-    });
   };
 
   // Store pending item order changes locally (no API call)
@@ -590,11 +532,6 @@ export function CollectionEditPage() {
     
     // Update pending items with new order
     setPendingItems(reorderedItems);
-    
-    console.log("handleReorderItems: reordered items locally", { 
-      itemIds, 
-      itemsCount: reorderedItems.length 
-    });
   };
 
   // Save pending items changes (called from handleSave)
@@ -745,7 +682,6 @@ export function CollectionEditPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log("Tab button clicked", { tabId: tab.id, currentTab: activeTab });
                   handleTabChange(tab.id);
                 }}
                 style={{
@@ -1411,13 +1347,6 @@ function ItemsTab({
     
     // Only sync if the items actually changed from the server AND user hasn't made local changes
     if (sortedIds !== prevItemsIdsRef.current && !hasLocalReorderingRef.current) {
-      console.log("ItemsTab: syncing items prop to local state", { 
-        itemsPropLength: items.length,
-        itemsCount: sorted.length,
-        collectionId: collection?.id,
-        itemsIds: sortedIds,
-        prevItemsIds: prevItemsIdsRef.current
-      });
       setCurrentItems(sorted);
       prevItemsIdsRef.current = sortedIds;
       
@@ -1428,10 +1357,6 @@ function ItemsTab({
       }
     } else if (sortedIds !== prevItemsIdsRef.current && hasLocalReorderingRef.current) {
       // Server data changed but we have local changes - update prevItemsIdsRef to avoid re-syncing
-      console.log("ItemsTab: skipping sync due to local reordering changes", {
-        sortedIds,
-        prevItemsIds: prevItemsIdsRef.current
-      });
       prevItemsIdsRef.current = sortedIds;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1484,7 +1409,6 @@ function ItemsTab({
 
   // Handle drag start for available sites (adding to collection)
   const handleSiteDragStart = (e: React.DragEvent, siteId: string) => {
-    console.log("Drag start:", siteId);
     setDraggedSiteId(siteId);
     e.dataTransfer.effectAllowed = "copy";
     // Set data - use text/plain as primary (most compatible)
@@ -1528,14 +1452,6 @@ function ItemsTab({
     const hasDraggedSite = draggedSiteId || 
                           e.dataTransfer.types.includes("application/available-site") ||
                           e.dataTransfer.types.includes("text/plain");
-    
-    console.log("Drag over: allowing drop", { 
-      collectionId, 
-      hasDraggedSite, 
-      draggedSiteId, 
-      draggedItemId 
-    });
-    
     if (hasDraggedSite) {
       e.dataTransfer.dropEffect = "copy";
       setDragOverCollectionPanel(true);
@@ -1569,18 +1485,6 @@ function ItemsTab({
     
     // Use effectiveCollectionId (collectionId prop or collection?.id)
     const effectiveCollectionId = collectionId || collection?.id;
-    
-    console.log("Drop event on panel:", { 
-      currentDraggedSiteId, 
-      currentDraggedItemId,
-      dataTransferTypes: Array.from(e.dataTransfer.types),
-      dataTransferData: e.dataTransfer.getData("text/plain"),
-      hasCollection: !!collection,
-      collectionIdFromProp: collectionId,
-      collectionIdFromCollection: collection?.id,
-      effectiveCollectionId: effectiveCollectionId
-    });
-    
     // Ensure collection ID is available (not "new" and not undefined)
     if (!effectiveCollectionId || effectiveCollectionId === "new") {
       console.error("Cannot add item: collection ID not available", { 
@@ -1597,7 +1501,6 @@ function ItemsTab({
     
     // Ensure collection is loaded before proceeding
     if (!collection && loadCollection && effectiveCollectionId) {
-      console.log("Collection not loaded, loading now...", { collectionId: effectiveCollectionId });
       try {
         await loadCollection(false);
         // Wait for state to update - need to wait longer for React to re-render
@@ -1619,26 +1522,10 @@ function ItemsTab({
     const isAvailableSite = siteIdFromState || 
                             e.dataTransfer.types.includes("application/available-site") ||
                             (siteIdToAdd && availableSites.some(s => s.id === siteIdToAdd));
-    
-    console.log("Drop check:", { 
-      siteIdToAdd, 
-      isAvailableSite, 
-      currentDraggedSiteId, 
-      currentDraggedItemId,
-      siteIdFromState,
-      siteIdFromDataTransfer,
-      availableSiteIds: availableSites.map(s => s.id),
-      hasCollection: !!collection,
-      collectionId: collectionId,
-      effectiveCollectionId: effectiveCollectionId
-    });
-    
     if (siteIdToAdd && isAvailableSite) {
-      console.log("Adding site to collection:", siteIdToAdd);
       // Adding new site to collection - now just calls the handler (no API call)
       try {
         onAddItem(siteIdToAdd);
-        console.log("Site added successfully (local)");
         // Set dropEffect to 'copy' to indicate successful drop
         e.dataTransfer.dropEffect = 'copy';
       } catch (err) {
@@ -1646,7 +1533,6 @@ function ItemsTab({
         e.dataTransfer.dropEffect = 'none';
       }
     } else if (currentDraggedItemId) {
-      console.log("Reordering item:", currentDraggedItemId);
       // Reordering within collection - drop at end
       const itemIds = currentItems.map((item) => item.id);
       const draggedIndex = itemIds.indexOf(currentDraggedItemId);
@@ -1691,7 +1577,6 @@ function ItemsTab({
     
     // Only handle reordering collection items, not site drops
     if (draggedItemId && draggedItemId !== itemId) {
-      console.log("Reordering item:", draggedItemId, "before:", itemId);
       // Reordering within collection
       const itemIds = currentItems.map((item) => item.id);
       const draggedIndex = itemIds.indexOf(draggedItemId);
@@ -1717,14 +1602,6 @@ function ItemsTab({
         
         // Notify parent about the change (no API call, just store for later save)
         onReorderItems(newItemIds);
-        
-        console.log("ItemsTab: reordered items locally", {
-          draggedItemId,
-          itemId,
-          newItemIds,
-          reorderedItemsCount: reorderedItems.length,
-          hasLocalReordering: hasLocalReorderingRef.current
-        });
       }
     }
 
@@ -1977,7 +1854,6 @@ function ItemsTab({
         onDragLeave={(e) => handleCollectionPanelDragLeave(e)}
         onDrop={(e) => {
           // Always handle drop on the panel itself
-          console.log("Drop on panel container");
           handleCollectionPanelDrop(e);
         }}
       >
@@ -2053,7 +1929,6 @@ function ItemsTab({
               // Handle drop on table container - bubble up to panel
               e.preventDefault();
               e.stopPropagation();
-              console.log("Drop on table container:", { draggedSiteId, draggedItemId });
               // Call the panel drop handler directly
               handleCollectionPanelDrop(e);
             }}

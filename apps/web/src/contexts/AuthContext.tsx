@@ -509,7 +509,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   }, []);
 
-
   // Refresh user function that can be called externally
   const handleRefreshUser = useCallback(async () => {
     await loadUserFromStorage();

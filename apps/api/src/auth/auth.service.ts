@@ -305,20 +305,17 @@ export class AuthService {
 
       if (!user) {
         // Log for debugging (not exposed to client for security)
-        console.log(`Login attempt failed: User not found for email: ${dto.email}`);
         throw new UnauthorizedException("Invalid credentials");
       }
 
       if (!user.isActive) {
         // Log for debugging (not exposed to client for security)
-        console.log(`Login attempt failed: User is inactive for email: ${dto.email} (userId: ${user.id})`);
         throw new UnauthorizedException("Invalid credentials");
       }
 
       const isPasswordValid = await this.comparePassword(dto.password, user.passwordHash);
       if (!isPasswordValid) {
         // Log for debugging (not exposed to client for security)
-        console.log(`Login attempt failed: Invalid password for email: ${dto.email} (userId: ${user.id})`);
         throw new UnauthorizedException("Invalid credentials");
       }
 

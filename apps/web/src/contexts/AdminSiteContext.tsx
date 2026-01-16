@@ -168,7 +168,6 @@ export function AdminSiteProvider({ children }: { children: ReactNode }) {
     }
   }, [sites, selectedSiteId, user]);
 
-
   const setSelectedSiteId = (siteId: string | null) => {
     setSelectedSiteIdState(siteId);
     // Store in localStorage for persistence

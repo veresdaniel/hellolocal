@@ -41,7 +41,6 @@ async function bootstrap() {
       "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hellolocal-frontend.onrender.com)"
     );
   } else if (allowedOrigins.length > 0) {
-    console.log(`✅ CORS enabled for origins: ${allowedOrigins.join(", ")}`);
   }
 
   // CORS origin validation function - dinamikusan ellenőrzi az origin-eket

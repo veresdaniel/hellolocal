@@ -83,7 +83,6 @@ export function PlaceBillingSection({
       setFloorplanSubscription(activeFloorplanSub || null);
       // Notify parent about active subscription status
       const hasActive = !!activeFloorplanSub;
-      console.log("PlaceBillingSection - Active floorplan subscription found:", hasActive, activeFloorplanSub);
       onActiveFloorplanSubscriptionChange?.(hasActive);
     } catch (error) {
       console.error("Failed to load billing data:", error);
@@ -92,7 +91,6 @@ export function PlaceBillingSection({
       setIsLoading(false);
     }
   };
-
 
   const renderFeatureGate = (gate: FeatureGate, label: string, icon: string, onClick?: () => void, isFloorplan: boolean = false) => {
     if (gate.state === "enabled") {

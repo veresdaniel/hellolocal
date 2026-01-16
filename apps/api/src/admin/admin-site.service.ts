@@ -245,7 +245,6 @@ export class AdminSiteService {
             },
           });
           createdSiteKeys.push(`${lang}:${createdKey.id}`);
-          console.log(`✅ Created SiteKey: ${createdKey.id} for site ${site.id}, lang ${lang}, slug ${normalizedSlug}`);
         } else {
           // Ensure existing SiteKey is active and primary
           if (!existingKey.isActive || !existingKey.isPrimary) {
@@ -253,9 +252,7 @@ export class AdminSiteService {
               where: { id: existingKey.id },
               data: { isActive: true, isPrimary: true },
             });
-            console.log(`✅ Updated SiteKey: ${existingKey.id} for site ${site.id}, lang ${lang}`);
           } else {
-            console.log(`ℹ️  SiteKey already exists and is active: ${existingKey.id} for site ${site.id}, lang ${lang}`);
           }
           createdSiteKeys.push(`${lang}:${existingKey.id}`);
         }
@@ -279,12 +276,10 @@ export class AdminSiteService {
       console.warn(`   Created: ${createdSiteKeys.join(", ")}`);
       console.warn(`   Please run: pnpm db:ensure-site-keys to fix missing SiteKeys`);
     } else {
-      console.log(`✅ Successfully created/verified ${createdSiteKeys.length} SiteKeys for site ${site.id} (${normalizedSlug})`);
     }
 
     // Create SiteInstance records for all languages that have translations
     // This ensures the site has SiteInstance entries for all configured languages
-    console.log(`🔧 Creating SiteInstance records for site ${site.id}...`);
     const createdInstances: string[] = [];
     let isFirstInstance = true;
 
@@ -317,14 +312,12 @@ export class AdminSiteService {
             },
           });
           createdInstances.push(lang);
-          console.log(`✅ Created SiteInstance: ${site.id} (${lang}), isDefault: ${isFirstInstance}`);
           isFirstInstance = false;
         } catch (error: any) {
           console.error(`❌ Failed to create SiteInstance for site ${site.id}, lang ${lang}:`, error.message);
           // Don't fail site creation if SiteInstance creation fails
         }
       } else {
-        console.log(`ℹ️  SiteInstance already exists: ${site.id} (${lang})`);
         isFirstInstance = false;
       }
     }
@@ -333,7 +326,6 @@ export class AdminSiteService {
       console.warn(`⚠️  WARNING: No SiteInstances were created for site ${site.id} (${normalizedSlug})`);
       console.warn(`   This will cause "SiteInstance not found" errors in the admin interface.`);
     } else if (createdInstances.length > 0) {
-      console.log(`✅ Successfully created ${createdInstances.length} SiteInstance(s) for site ${site.id} (${normalizedSlug})`);
     }
 
     // Return site with SiteKeys included for verification

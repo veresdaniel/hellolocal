@@ -113,7 +113,6 @@ export function SiteLayout() {
   );
 }
 
-
 // Inner component that uses hooks that require PlatformSettingsProvider
 function SiteLayoutContent({
   lang,

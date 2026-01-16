@@ -156,7 +156,6 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
     }
   }, [selectedFloorplan]);
 
-
   const loadFloorplans = async () => {
     setIsLoading(true);
     try {
@@ -539,7 +538,6 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
     }
   }, [isDragging, handlePinDrag, handlePinDragEnd]);
 
-
   const toggleInstructions = () => {
     const newState = !isInstructionsOpen;
     setIsInstructionsOpen(newState);
@@ -668,7 +666,6 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
           )}
         </div>
       </div>
-
 
       <div style={{ 
         display: "flex", 
@@ -1328,7 +1325,6 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
             </div>
           </div>
       </div>
-
 
       {isLoading && (
         <div style={{ textAlign: "center", padding: 40, color: "#666" }}>

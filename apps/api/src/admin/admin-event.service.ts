@@ -82,7 +82,6 @@ export class AdminEventService {
     private readonly rbacService: RbacService
   ) {}
 
-
   /**
    * Create slugs for an event in all languages
    * @param throwOnConflict - If true, throw BadRequestException when slug conflict is detected instead of auto-resolving

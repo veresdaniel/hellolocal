@@ -25,7 +25,6 @@ export class AppSettingsController {
     return { defaultLanguage: lang };
   }
 
-
   /**
    * Get active sites count - public endpoint, no authentication required
    * Returns the number of active sites to determine if multi-site URLs should be used

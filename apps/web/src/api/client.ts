@@ -289,27 +289,12 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiGetPublic<T>(path: string): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
   const fullUrl = `${apiBaseUrl}/api${path}`;
-  
-  console.log(`[apiGetPublic] Making request:`, {
-    path,
-    apiBaseUrl: apiBaseUrl || 'empty (using relative)',
-    fullUrl,
-    viteApiUrl: import.meta.env.VITE_API_URL || 'not set',
-  });
-  
   let res: Response;
   try {
     res = await fetch(fullUrl, {
       headers: {
         Accept: "application/json",
       },
-    });
-    
-    console.log(`[apiGetPublic] Response:`, {
-      status: res.status,
-      statusText: res.statusText,
-      ok: res.ok,
-      url: res.url,
     });
   } catch (err: any) {
     // Handle network errors (server not running, CORS, etc.)

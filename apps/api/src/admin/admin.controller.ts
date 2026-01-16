@@ -1723,7 +1723,6 @@ export class AdminController {
     return this.appSettingsService.findAll();
   }
 
-
   @Get("/app-settings/:key")
   @Roles(UserRole.superadmin, UserRole.admin)
   async getAppSetting(@Param("key") key: string) {

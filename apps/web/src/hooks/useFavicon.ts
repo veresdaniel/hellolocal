@@ -40,9 +40,6 @@ export function useFavicon() {
     // Add new cache-busting param with current timestamp
     url.searchParams.set('v', Date.now().toString());
     const faviconUrlWithCacheBusting = url.toString();
-    
-    console.log("[useFavicon] Setting favicon URL with cache-busting:", faviconUrlWithCacheBusting);
-
     // Find and remove ALL existing favicon links (including default vite.svg if it's not the one we want)
     const existingFavicons = document.querySelectorAll(
       'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
@@ -76,7 +73,6 @@ export function useFavicon() {
       // Don't remove the link - let browser handle it
     };
     img.onload = () => {
-      console.log("[useFavicon] Successfully verified favicon:", faviconUrlWithCacheBusting);
     };
     img.src = faviconUrlWithCacheBusting;
 

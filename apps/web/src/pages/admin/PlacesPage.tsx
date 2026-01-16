@@ -74,7 +74,6 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
     // Always load data when component mounts or dependencies change
     // If refreshTrigger is provided and > 0, it means we need to force refresh
     const shouldForceRefresh = refreshTrigger !== undefined && refreshTrigger > 0;
-    console.log("FloorplanSection - useEffect triggered. refreshTrigger:", refreshTrigger, "shouldForceRefresh:", shouldForceRefresh, "hasActiveSubscription:", hasActiveSubscription);
     loadData(shouldForceRefresh);
   }, [placeId, siteId, refreshTrigger, hasActiveSubscription]);
 
@@ -85,9 +84,6 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
       if (forceRefresh) {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
-      console.log("FloorplanSection - Loading data for placeId:", placeId, "siteId:", siteId, "hasActiveSubscription:", hasActiveSubscription);
-      
       // Try to get both entitlement and subscriptions to have a fallback
       const [ent, floorplanData, subscriptions] = await Promise.all([
         getFloorplanEntitlement(placeId, siteId).catch((err) => {
@@ -104,23 +100,12 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
           return [];
         }),
       ]);
-      
-      console.log("FloorplanSection - Entitlement response:", ent);
-      console.log("FloorplanSection - Floorplans response:", floorplanData);
-      console.log("FloorplanSection - Subscriptions response:", subscriptions);
-      console.log("FloorplanSection - Entitlement.entitled:", ent?.entitled);
-      console.log("FloorplanSection - hasActiveSubscription fallback:", hasActiveSubscription);
-      
       // Check if we have an active subscription as fallback
       const activeSub = (subscriptions || []).find(
         (s) => s.status === "active" && s.featureKey === "FLOORPLANS" && (!s.currentPeriodEnd || new Date(s.currentPeriodEnd) > new Date())
       );
-      
-      console.log("FloorplanSection - Active subscription found:", !!activeSub, activeSub);
-      
       // If entitlement API failed but we have active subscription, create a fallback entitlement
       if (!ent && activeSub) {
-        console.log("FloorplanSection - Creating fallback entitlement from active subscription");
         const fallbackEntitlement = {
           entitled: true,
           activeScope: activeSub.scope,
@@ -150,20 +135,16 @@ function FloorplanSection({ placeId, siteId, refreshTrigger, hasActiveSubscripti
   // Show if entitled (even if no floorplans yet - user can upload)
   // Fallback: if we have active subscription from parent, show even if entitlement API fails
   if (!entitlement && !hasActiveSubscription) {
-    console.log("FloorplanSection - No entitlement data and no active subscription. Entitlement:", entitlement);
     return null;
   }
   
   if (entitlement && !entitlement.entitled && !hasActiveSubscription) {
-    console.log("FloorplanSection - Not entitled and no active subscription. Entitlement:", entitlement);
     return null;
   }
   
   // If we have active subscription but entitlement API failed, still show the editor
   if (hasActiveSubscription && (!entitlement || !entitlement.entitled)) {
-    console.log("FloorplanSection - Rendering with active subscription fallback. Entitlement:", entitlement);
   } else {
-    console.log("FloorplanSection - Rendering FloorplanEditor. Entitlement:", entitlement);
   }
 
   return (
@@ -346,7 +327,6 @@ export function PlacesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId, pagination.page, pagination.limit]);
-
 
   const loadData = async () => {
     if (!selectedSiteId) return;
@@ -942,7 +922,6 @@ export function PlacesPage() {
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
-
 
       {(isCreating || editingId) && (
         <div style={{ 
@@ -1705,7 +1684,6 @@ export function PlacesPage() {
                   setFloorplanRefreshTrigger(prev => prev + 1);
                 }}
                 onActiveFloorplanSubscriptionChange={(hasActive) => {
-                  console.log("PlacesPage - onActiveFloorplanSubscriptionChange called with:", hasActive);
                   setHasActiveFloorplanSubscription(hasActive);
                   // Also trigger refresh when subscription status changes
                   if (hasActive) {

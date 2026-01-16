@@ -116,11 +116,8 @@ export class SitesController {
     // If siteKey is provided, resolve it to a siteId
     if (body.siteKey) {
       try {
-        console.log(`[activate-free] Resolving siteKey: ${body.siteKey} for lang: ${lang}`);
         const resolved = await this.siteResolver.resolveSite({ lang, siteKey: body.siteKey });
         targetSiteId = resolved.siteId;
-        console.log(`[activate-free] Resolved siteKey ${body.siteKey} to siteId: ${targetSiteId}`);
-        
         // Get site slug for response
         const site = await this.prisma.site.findUnique({
           where: { id: targetSiteId },
@@ -133,7 +130,6 @@ export class SitesController {
         console.warn(`[activate-free] Falling back to default logic`);
       }
     } else {
-      console.log(`[activate-free] No siteKey provided in request body`);
     }
 
     // If no siteKey provided or resolution failed, use user's existing sites or default

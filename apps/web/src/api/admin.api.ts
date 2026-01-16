@@ -668,7 +668,6 @@ export function deleteSite(id: string) {
   return apiDelete<{ message: string }>(`/admin/sites/${id}`);
 }
 
-
 // Brands (admin only)
 export function getBrands() {
   return apiGet<Brand[]>("/admin/brands");
@@ -1956,7 +1955,6 @@ export function getFloorplanEntitlement(placeId: string, siteId: string) {
 export function createFeatureSubscription(data: CreateFeatureSubscriptionDto) {
   return apiPost<FeatureSubscription>("/admin/feature-subscriptions", data);
 }
-
 
 export function updateFeatureSubscription(id: string, data: UpdateFeatureSubscriptionDto) {
   return apiPut<FeatureSubscription>(`/admin/feature-subscriptions/${id}`, data);

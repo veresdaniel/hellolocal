@@ -106,7 +106,6 @@ export function EventsList({ lang }: EventsListProps) {
     };
   }, [lang, siteKey, queryClient]);
 
-
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events", lang, siteKey],
     queryFn: () => getEvents(lang, siteKey ?? "", undefined, undefined, 50, 0),

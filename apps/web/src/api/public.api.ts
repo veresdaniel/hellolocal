@@ -71,4 +71,3 @@ export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {
   return (await res.json()) as ActiveSitesCountResponse;
 }
 
-

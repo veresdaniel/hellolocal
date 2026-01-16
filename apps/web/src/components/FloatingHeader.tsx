@@ -126,7 +126,6 @@ export function FloatingHeader({ onMapViewClick, editUrl, showEditButton = false
       // Pass the current siteKey so the backend knows which site to assign
       // Only pass siteKey if it's actually in the URL (not the default fallback)
       const effectiveSiteKey = siteKeyParam || undefined;
-      console.log(`[activate-free] Activating with siteKey: ${effectiveSiteKey}, lang: ${lang}, siteKeyParam: ${siteKeyParam}`);
       const result = await activateFreeSite(lang, effectiveSiteKey);
       showToast(t("public.activateFree.success"), "success");
       

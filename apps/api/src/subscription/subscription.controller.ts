@@ -13,7 +13,6 @@ export class SubscriptionController {
     private readonly prisma: PrismaService
   ) {}
 
-
   /* =========================
      GET SITE SUBSCRIPTION
      ========================= */

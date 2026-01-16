@@ -146,7 +146,6 @@ export class AdminEventLogService {
       this.prisma.eventLog.count({ where }),
     ]);
 
-
     return {
       logs,
       pagination: {
