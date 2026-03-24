@@ -8,7 +8,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { AuthContext } from "../contexts/AuthContext";
-import { useAdminSite } from "../contexts/AdminSiteContext";
+import { useAdminSite } from "../contexts/useAdminSite";
 import { activateFreeSite } from "../api/sites.api";
 import { getCurrentUser } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";

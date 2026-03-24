@@ -2,7 +2,7 @@
 import { Navigate, useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useAdminSite } from "../contexts/AdminSiteContext";
+import { useAdminSite } from "../contexts/useAdminSite";
 import { getSiteMemberships } from "../api/admin.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";

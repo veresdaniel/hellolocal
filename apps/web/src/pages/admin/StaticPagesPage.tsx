@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAdminSite } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/useAdminSite";
 import {
   getStaticPages,
   createStaticPage,

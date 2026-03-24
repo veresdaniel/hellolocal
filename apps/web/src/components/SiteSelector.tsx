@@ -5,10 +5,12 @@ import { AdminSiteContext } from "../contexts/AdminSiteContext";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { buildUrl } from "../app/urls";
 import { getHuTranslation } from "../utils/langHelpers";
+import { useToast } from "../contexts/ToastContext";
 
 export function SiteSelector() {
   const { t } = useTranslation();
   const context = useContext(AdminSiteContext);
+  const { showToast } = useToast();
 
   // Responsive: show only icon on small screens
   // IMPORTANT: All hooks must be called before any conditional returns
@@ -77,6 +79,22 @@ export function SiteSelector() {
     return huTranslation?.name || site.translations[0]?.name || site.slug;
   };
 
+  // Handle site selection with toast notification
+  const handleSiteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSiteId = e.target.value || null;
+    setSelectedSiteId(newSiteId);
+    
+    if (newSiteId) {
+      const selectedSite = sites.find(s => s.id === newSiteId);
+      if (selectedSite) {
+        showToast(
+          t("admin.siteChangedSuccess", { siteName: getSiteName(selectedSite) }),
+          "success"
+        );
+      }
+    }
+  };
+
   // Get current site
   const currentSite = sites.find((s) => s.id === selectedSiteId);
 
@@ -138,7 +156,7 @@ export function SiteSelector() {
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
       <select
         value={selectedSiteId || ""}
-        onChange={(e) => setSelectedSiteId(e.target.value || null)}
+        onChange={handleSiteChange}
         style={{
           padding: "8px 16px",
           fontSize: 16,

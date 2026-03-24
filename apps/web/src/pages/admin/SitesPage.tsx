@@ -4,9 +4,9 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import { useAdminSite } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/useAdminSite";
+import { useAdminSiteStore } from "../../stores/adminSiteStore";
 import {
-  getSites,
   createSite,
   updateSite,
   deleteSite,
@@ -34,10 +34,16 @@ export function SitesPage() {
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { reloadSites, setSelectedSiteId, selectedSiteId } = useAdminSite();
+  
+  // Use Zustand store for sites data - no need for local state
+  const storeState = useAdminSiteStore();
+  const sites = storeState.sites;
+  const isLoadingSites = storeState.isLoading;
+  const storeError = storeState.error;
+  
   usePageTitle("admin.sites");
-  const [sites, setSites] = useState<Site[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBrands, setIsLoadingBrands] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,7 +70,6 @@ export function SitesPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadSites();
     loadBrands();
   }, []);
 
@@ -74,19 +79,6 @@ export function SitesPage() {
       setBrands(data);
     } catch (err) {
       console.error("Failed to load brands", err);
-    }
-  };
-
-  const loadSites = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getSites();
-      setSites(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadSitesFailed"));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -145,8 +137,7 @@ export function SitesPage() {
       });
       setIsCreating(false);
       resetForm();
-      await loadSites();
-      reloadSites();
+      await reloadSites();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.createSiteFailed"));
     }
@@ -198,8 +189,7 @@ export function SitesPage() {
       });
       setEditingId(null);
       resetForm();
-      await loadSites();
-      reloadSites();
+      await reloadSites();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.updateSiteFailed"));
     }
@@ -213,8 +203,7 @@ export function SitesPage() {
       if (selectedSiteId === id) {
         setSelectedSiteId(null);
       }
-      await loadSites();
-      reloadSites();
+      await reloadSites();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.deleteSiteFailed"));
     }
@@ -729,7 +718,7 @@ export function SitesPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder={t("admin.searchPlaceholders.sites")}
-          isLoading={isLoading}
+          isLoading={isLoadingSites}
           filterFn={(site, query) => {
             const lowerQuery = query.toLowerCase();
             return (

@@ -343,6 +343,7 @@
   "role": "Rolle",
   "noSites": "Keine Sites verfügbar",
   "noTenants": "Keine Sites verfügbar",
+  "siteChangedSuccess": "Zu {{siteName}} gewechselt",
   "sessionExpiring": "Sitzung läuft ab",
   "sessionExpired": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
   "sessionExpiringSoon": "Sitzung läuft bald ab",

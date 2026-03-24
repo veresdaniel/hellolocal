@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { useAdminSite } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/useAdminSite";
 import { useToast } from "../../contexts/ToastContext";
 import {
   getDefaultLanguage,

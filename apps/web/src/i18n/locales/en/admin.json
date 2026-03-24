@@ -341,6 +341,7 @@
   "role": "Role",
   "noSites": "No sites available",
   "noTenants": "No regions available",
+  "siteChangedSuccess": "Switched to {{siteName}}",
   "sessionExpiring": "Session expiring",
   "sessionExpired": "Session expired. Please login again.",
   "sessionExpiringSoon": "Session expiring soon",

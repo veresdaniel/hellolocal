@@ -349,6 +349,7 @@
   "userInformation": "Felhasználói információk",
   "role": "Szerepkör",
   "noSites": "Nincs elérhető site",
+  "siteChangedSuccess": "Átváltottál a(z) {{siteName}} sitehoz",
   "sessionExpiring": "Munkamenet lejár",
   "sessionExpired": "Munkamenet lejárt. Kérlek jelentkezz be újra.",
   "sessionExpiringSoon": "Munkamenet hamarosan lejár",

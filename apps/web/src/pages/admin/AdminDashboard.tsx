@@ -4,7 +4,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useMemo } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
-import { useAdminSite } from "../../contexts/AdminSiteContext";
+import { useAdminSite } from "../../contexts/useAdminSite";
 import {
   APP_LANGS,
   DEFAULT_LANG,
