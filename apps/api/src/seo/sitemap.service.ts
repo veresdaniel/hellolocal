@@ -3,10 +3,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SlugEntityType } from "@prisma/client";
 import {
   PUBLIC_LANGS,
-  absolutePublicUrl,
+  SEO_CACHE_TTL_SECONDS,
+  absoluteUrlOnOrigin,
   collectionPath,
   eventDetailPath,
-  frontendOrigin,
   legalPagePath,
   overviewPath,
   placeDetailPath,
@@ -18,6 +18,7 @@ import {
   staticPagesListPath,
   townDetailPath,
 } from "./public-path.util";
+import { SitemapScope, SitemapScopeResolver } from "./sitemap-scope";
 
 export type SitemapUrl = {
   loc: string;
@@ -38,80 +39,168 @@ const SITEMAP_CHUNKS = [
 
 export type SitemapChunk = (typeof SITEMAP_CHUNKS)[number];
 
+type CacheEntry = { expiresAt: number; body: string };
+
+/**
+ * Dynamic, host-scoped sitemaps from DB.
+ * Cache: in-memory, TTL {@link SEO_CACHE_TTL_SECONDS}s, cleared on content writes via invalidate().
+ */
 @Injectable()
 export class SitemapService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly cache = new Map<string, CacheEntry>();
+  private generation = 0;
+  private lastInvalidatedAt = new Date();
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeResolver: SitemapScopeResolver
+  ) {}
 
   chunks(): readonly SitemapChunk[] {
     return SITEMAP_CHUNKS;
   }
 
-  async buildIndexXml(): Promise<string> {
-    const origin = frontendOrigin();
-    const now = new Date().toISOString();
-    const entries = SITEMAP_CHUNKS.map(
-      (chunk) => `  <sitemap>
-    <loc>${escapeXml(`${origin}/sitemap-${chunk}.xml`)}</loc>
-    <lastmod>${now}</lastmod>
-  </sitemap>`
-    ).join("\n");
+  /** Bust in-memory sitemap cache (all hosts). Call after public content / domain writes. */
+  invalidate(): void {
+    this.generation += 1;
+    this.cache.clear();
+    this.lastInvalidatedAt = new Date();
+  }
 
-    return `<?xml version="1.0" encoding="UTF-8"?>
+  lastmodIso(): string {
+    return this.lastInvalidatedAt.toISOString();
+  }
+
+  async buildIndexXml(scope: SitemapScope): Promise<string> {
+    return this.cached(`index:${scope.kind}:${scope.host}:${this.generation}`, async () => {
+      const lastmod = this.lastmodIso();
+      const entries = SITEMAP_CHUNKS.map(
+        (chunk) => `  <sitemap>
+    <loc>${escapeXml(`${scope.origin}/sitemap-${chunk}.xml`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>`
+      ).join("\n");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries}
 </sitemapindex>
 `;
+    });
   }
 
-  async buildChunkXml(chunk: string): Promise<string> {
+  async buildChunkXml(scope: SitemapScope, chunk: string): Promise<string> {
     if (!SITEMAP_CHUNKS.includes(chunk as SitemapChunk)) {
       throw new NotFoundException(`Unknown sitemap chunk: ${chunk}`);
     }
-    const urls = await this.urlsForChunk(chunk as SitemapChunk);
-    return this.toUrlSetXml(urls);
+    return this.cached(
+      `chunk:${scope.kind}:${scope.host}:${chunk}:${this.generation}`,
+      async () => {
+        const urls = await this.urlsForChunk(scope, chunk as SitemapChunk);
+        return this.toUrlSetXml(urls);
+      }
+    );
   }
 
-  private async urlsForChunk(chunk: SitemapChunk): Promise<SitemapUrl[]> {
+  private async cached(key: string, build: () => Promise<string>): Promise<string> {
+    const hit = this.cache.get(key);
+    if (hit && hit.expiresAt > Date.now()) return hit.body;
+    const body = await build();
+    this.cache.set(key, {
+      body,
+      expiresAt: Date.now() + SEO_CACHE_TTL_SECONDS * 1000,
+    });
+    return body;
+  }
+
+  private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {
+    if (scope.kind === "unknown") return [];
+
+    if (scope.kind === "town") {
+      return chunk === "towns" ? this.townEntityHostUrls(scope) : [];
+    }
+    if (scope.kind === "place") {
+      return chunk === "places" ? this.placeEntityHostUrls(scope) : [];
+    }
+    if (scope.kind === "collection") {
+      return chunk === "collections" ? this.collectionHostUrls(scope) : [];
+    }
+
+    const siteIds =
+      scope.kind === "site"
+        ? [scope.siteId]
+        : await this.scopeResolver.platformTenantSiteIds();
+
     switch (chunk) {
       case "static":
-        return this.staticPlatformUrls();
+        return scope.kind === "platform" ? this.staticPlatformUrls(scope.origin) : [];
       case "sites":
-        return this.siteUrls();
+        return this.siteUrls(scope.origin, siteIds);
       case "places":
-        return this.entitySlugUrls(SlugEntityType.place, placeDetailPath, "weekly", 0.8);
+        return this.entitySlugUrls(
+          scope.origin,
+          siteIds,
+          SlugEntityType.place,
+          placeDetailPath,
+          "weekly",
+          0.8,
+          { excludeOwnCustomDomain: true }
+        );
       case "events":
-        return this.entitySlugUrls(SlugEntityType.event, eventDetailPath, "daily", 0.7);
+        return this.entitySlugUrls(
+          scope.origin,
+          siteIds,
+          SlugEntityType.event,
+          eventDetailPath,
+          "daily",
+          0.7
+        );
       case "towns":
-        return this.entitySlugUrls(SlugEntityType.town, townDetailPath, "weekly", 0.7);
+        return this.entitySlugUrls(
+          scope.origin,
+          siteIds,
+          SlugEntityType.town,
+          townDetailPath,
+          "weekly",
+          0.7,
+          { excludeOwnCustomDomain: true }
+        );
       case "pages":
-        return this.entitySlugUrls(SlugEntityType.page, staticPagePath, "monthly", 0.6);
+        return this.entitySlugUrls(
+          scope.origin,
+          siteIds,
+          SlugEntityType.page,
+          staticPagePath,
+          "monthly",
+          0.6
+        );
       case "collections":
-        return this.collectionUrls();
+        return scope.kind === "platform" ? this.collectionUrls(scope.origin) : [];
       default:
         return [];
     }
   }
 
-  private staticPlatformUrls(): SitemapUrl[] {
+  private staticPlatformUrls(origin: string): SitemapUrl[] {
     const urls: SitemapUrl[] = [];
     for (const lang of PUBLIC_LANGS) {
       urls.push({
-        loc: absolutePublicUrl(overviewPath(lang)),
+        loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
         changefreq: "weekly",
         priority: 0.9,
       });
       urls.push({
-        loc: absolutePublicUrl(regionListPath(lang)),
+        loc: absoluteUrlOnOrigin(origin, regionListPath(lang)),
         changefreq: "daily",
         priority: 0.9,
       });
       urls.push({
-        loc: absolutePublicUrl(platformPricingPath(lang)),
+        loc: absoluteUrlOnOrigin(origin, platformPricingPath(lang)),
         changefreq: "monthly",
         priority: 0.5,
       });
       urls.push({
-        loc: absolutePublicUrl(`/${lang}`),
+        loc: absoluteUrlOnOrigin(origin, `/${lang}`),
         changefreq: "daily",
         priority: 1.0,
       });
@@ -119,9 +208,10 @@ ${entries}
     return urls;
   }
 
-  private async siteUrls(): Promise<SitemapUrl[]> {
+  private async siteUrls(origin: string, siteIds: string[]): Promise<SitemapUrl[]> {
+    if (siteIds.length === 0) return [];
     const sites = await this.prisma.site.findMany({
-      where: { isActive: true },
+      where: { id: { in: siteIds }, isActive: true },
       select: {
         id: true,
         updatedAt: true,
@@ -144,19 +234,19 @@ ${entries}
         const lang = key.lang;
         if (!site.languages.includes(lang)) continue;
         urls.push({
-          loc: absolutePublicUrl(siteHomePath(lang, key.slug)),
+          loc: absoluteUrlOnOrigin(origin, siteHomePath(lang, key.slug)),
           lastmod,
           changefreq: "daily",
           priority: 0.9,
         });
         urls.push({
-          loc: absolutePublicUrl(productsPath(lang, key.slug)),
+          loc: absoluteUrlOnOrigin(origin, productsPath(lang, key.slug)),
           lastmod,
           changefreq: "weekly",
           priority: 0.5,
         });
         urls.push({
-          loc: absolutePublicUrl(staticPagesListPath(lang, key.slug)),
+          loc: absoluteUrlOnOrigin(origin, staticPagesListPath(lang, key.slug)),
           lastmod,
           changefreq: "weekly",
           priority: 0.5,
@@ -165,7 +255,7 @@ ${entries}
           const path = legalPagePath(lang, key.slug, legal.key);
           if (!path) continue;
           urls.push({
-            loc: absolutePublicUrl(path),
+            loc: absoluteUrlOnOrigin(origin, path),
             lastmod: legal.updatedAt.toISOString(),
             changefreq: "yearly",
             priority: 0.3,
@@ -177,17 +267,23 @@ ${entries}
   }
 
   private async entitySlugUrls(
+    origin: string,
+    siteIds: string[],
     entityType: (typeof SlugEntityType)[keyof typeof SlugEntityType],
     pathFn: (lang: string, siteKey: string, slug: string) => string,
     changefreq: SitemapUrl["changefreq"],
-    priority: number
+    priority: number,
+    opts?: { excludeOwnCustomDomain?: boolean }
   ): Promise<SitemapUrl[]> {
+    if (siteIds.length === 0) return [];
+
     const slugs = await this.prisma.slug.findMany({
       where: {
         entityType,
         isActive: true,
         isPrimary: true,
         redirectToId: null,
+        siteId: { in: siteIds },
         site: { isActive: true },
       },
       select: {
@@ -209,7 +305,8 @@ ${entries}
 
     const activeIds = await this.activeEntityIds(
       entityType,
-      slugs.map((s) => s.entityId)
+      slugs.map((s) => s.entityId),
+      opts?.excludeOwnCustomDomain === true
     );
 
     const urls: SitemapUrl[] = [];
@@ -219,7 +316,7 @@ ${entries}
       const siteKey = row.site.siteKeys.find((k) => k.lang === row.lang)?.slug;
       if (!siteKey) continue;
       urls.push({
-        loc: absolutePublicUrl(pathFn(row.lang, siteKey, row.slug)),
+        loc: absoluteUrlOnOrigin(origin, pathFn(row.lang, siteKey, row.slug)),
         lastmod: row.updatedAt.toISOString(),
         changefreq,
         priority,
@@ -230,14 +327,19 @@ ${entries}
 
   private async activeEntityIds(
     entityType: (typeof SlugEntityType)[keyof typeof SlugEntityType],
-    ids: string[]
+    ids: string[],
+    excludeOwnCustomDomain = false
   ): Promise<Set<string>> {
     if (ids.length === 0) return new Set();
     const unique = [...new Set(ids)];
     switch (entityType) {
       case SlugEntityType.place: {
         const rows = await this.prisma.place.findMany({
-          where: { id: { in: unique }, isActive: true },
+          where: {
+            id: { in: unique },
+            isActive: true,
+            ...(excludeOwnCustomDomain ? { customDomain: null } : {}),
+          },
           select: { id: true },
         });
         return new Set(rows.map((r) => r.id));
@@ -251,7 +353,11 @@ ${entries}
       }
       case SlugEntityType.town: {
         const rows = await this.prisma.town.findMany({
-          where: { id: { in: unique }, isActive: true },
+          where: {
+            id: { in: unique },
+            isActive: true,
+            ...(excludeOwnCustomDomain ? { customDomain: null } : {}),
+          },
           select: { id: true },
         });
         return new Set(rows.map((r) => r.id));
@@ -268,23 +374,148 @@ ${entries}
     }
   }
 
-  private async collectionUrls(): Promise<SitemapUrl[]> {
+  private async collectionUrls(origin: string): Promise<SitemapUrl[]> {
+    // Platform host: only collections without their own custom domain.
     const collections = await this.prisma.collection.findMany({
-      where: { isActive: true, isCrawlable: true },
+      where: { isActive: true, isCrawlable: true, domain: null },
       select: { slug: true, updatedAt: true, translations: { select: { lang: true } } },
     });
+    return this.collectionRowsToUrls(origin, collections);
+  }
+
+  private async collectionHostUrls(
+    scope: Extract<SitemapScope, { kind: "collection" }>
+  ): Promise<SitemapUrl[]> {
+    const collection = await this.prisma.collection.findFirst({
+      where: {
+        id: scope.collectionId,
+        isActive: true,
+        isCrawlable: true,
+      },
+      select: { slug: true, updatedAt: true, translations: { select: { lang: true } } },
+    });
+    if (!collection) return [];
+    return this.collectionRowsToUrls(scope.origin, [collection]);
+  }
+
+  private collectionRowsToUrls(
+    origin: string,
+    collections: Array<{
+      slug: string;
+      updatedAt: Date;
+      translations: Array<{ lang: string }>;
+    }>
+  ): SitemapUrl[] {
     const urls: SitemapUrl[] = [];
     for (const collection of collections) {
       const langs = collection.translations.map((t) => t.lang);
       const targets = langs.length > 0 ? langs : PUBLIC_LANGS;
       for (const lang of targets) {
         urls.push({
-          loc: absolutePublicUrl(collectionPath(lang, collection.slug)),
+          loc: absoluteUrlOnOrigin(origin, collectionPath(lang, collection.slug)),
           lastmod: collection.updatedAt.toISOString(),
           changefreq: "weekly",
           priority: 0.6,
         });
       }
+    }
+    return urls;
+  }
+
+  /** Town custom domain: root + entity path(s) on that origin only. */
+  private async townEntityHostUrls(
+    scope: Extract<SitemapScope, { kind: "town" }>
+  ): Promise<SitemapUrl[]> {
+    const town = await this.prisma.town.findFirst({
+      where: { id: scope.townId, isActive: true },
+      select: {
+        updatedAt: true,
+        site: {
+          select: {
+            languages: true,
+            siteKeys: {
+              where: { isActive: true, isPrimary: true, redirectToId: null },
+              select: { lang: true, slug: true },
+            },
+          },
+        },
+      },
+    });
+    if (!town?.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
+
+    const urls: SitemapUrl[] = [
+      {
+        loc: absoluteUrlOnOrigin(scope.origin, "/"),
+        lastmod: town.updatedAt.toISOString(),
+        changefreq: "weekly",
+        priority: 1.0,
+      },
+    ];
+    for (const lang of town.site.languages) {
+      const siteKey = town.site.siteKeys.find((k) => k.lang === lang)?.slug;
+      if (!siteKey) continue;
+      const slug = await this.scopeResolver.primaryEntitySlug(
+        scope.siteId,
+        SlugEntityType.town,
+        scope.townId,
+        lang
+      );
+      if (!slug) continue;
+      urls.push({
+        loc: absoluteUrlOnOrigin(scope.origin, townDetailPath(lang, siteKey, slug)),
+        lastmod: town.updatedAt.toISOString(),
+        changefreq: "weekly",
+        priority: 0.9,
+      });
+    }
+    return urls;
+  }
+
+  /** Place custom domain: root + entity path(s) on that origin only. */
+  private async placeEntityHostUrls(
+    scope: Extract<SitemapScope, { kind: "place" }>
+  ): Promise<SitemapUrl[]> {
+    const place = await this.prisma.place.findFirst({
+      where: { id: scope.placeId, isActive: true },
+      select: {
+        updatedAt: true,
+        site: {
+          select: {
+            languages: true,
+            siteKeys: {
+              where: { isActive: true, isPrimary: true, redirectToId: null },
+              select: { lang: true, slug: true },
+            },
+          },
+        },
+      },
+    });
+    if (!place?.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
+
+    const urls: SitemapUrl[] = [
+      {
+        loc: absoluteUrlOnOrigin(scope.origin, "/"),
+        lastmod: place.updatedAt.toISOString(),
+        changefreq: "weekly",
+        priority: 1.0,
+      },
+    ];
+    for (const lang of place.site.languages) {
+      const siteKey = place.site.siteKeys.find((k) => k.lang === lang)?.slug;
+      if (!siteKey) continue;
+      const slug = await this.scopeResolver.primaryEntitySlug(
+        scope.siteId,
+        SlugEntityType.place,
+        scope.placeId,
+        lang
+      );
+      if (!slug) continue;
+      urls.push({
+        loc: absoluteUrlOnOrigin(scope.origin, placeDetailPath(lang, siteKey, slug)),
+        lastmod: place.updatedAt.toISOString(),
+        changefreq: "weekly",
+        priority: 0.9,
+      });
     }
     return urls;
   }

@@ -1,28 +1,42 @@
 import { Injectable } from "@nestjs/common";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
-import { frontendOrigin } from "./public-path.util";
+import { isProductionSeoEnvironment } from "./public-path.util";
+import type { SitemapScope } from "./sitemap-scope";
 
 @Injectable()
 export class RobotsService {
   constructor(private readonly platformSettings: PlatformSettingsService) {}
 
-  async buildRobotsTxt(): Promise<string> {
-    const origin = frontendOrigin();
-    const crawlable = await this.platformSettings.getGlobalCrawlability();
-
-    if (!crawlable) {
+  /**
+   * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
+   * Prod: allow crawl when platform crawlability is on; Sitemap: same-host only.
+   */
+  async buildRobotsTxt(scope: SitemapScope): Promise<string> {
+    if (!isProductionSeoEnvironment()) {
       return [
-        "# HelloLocal — global crawlability disabled",
+        "# HelloLocal — non-production: indexing disabled",
         "User-agent: *",
         "Disallow: /",
         "",
-        `Sitemap: ${origin}/sitemap.xml`,
+      ].join("\n");
+    }
+
+    const crawlable = await this.platformSettings.getGlobalCrawlability();
+    const sitemapLine = `Sitemap: ${scope.origin}/sitemap.xml`;
+
+    if (!crawlable || scope.kind === "unknown") {
+      return [
+        "# HelloLocal — crawling disabled",
+        "User-agent: *",
+        "Disallow: /",
+        "",
+        sitemapLine,
         "",
       ].join("\n");
     }
 
     return [
-      "# HelloLocal robots.txt (auto-generated)",
+      "# HelloLocal robots.txt (auto-generated, host-scoped)",
       "User-agent: *",
       "Allow: /",
       "",
@@ -37,7 +51,7 @@ export class RobotsService {
       "Disallow: /*/offline",
       "Disallow: /offline",
       "",
-      `Sitemap: ${origin}/sitemap.xml`,
+      sitemapLine,
       "",
     ].join("\n");
   }
