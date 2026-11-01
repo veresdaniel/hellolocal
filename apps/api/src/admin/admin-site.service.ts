@@ -12,6 +12,7 @@ import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { isMissingColumn } from "../common/prisma-column";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { sanitizeSiteTheme } from "../common/public-theme-colors";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface CreateSiteDto {
   slug: string;
@@ -84,7 +85,8 @@ export interface UpdateSiteDto {
 export class AdminSiteService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly entitlements: EntitlementsService
+    private readonly entitlements: EntitlementsService,
+    private readonly sitemapService: SitemapService
   ) {}
 
   /**
@@ -166,6 +168,8 @@ export class AdminSiteService {
       }
       await tx.site.update({ where: { id: siteId }, data: { primaryDomain: primary } });
     });
+    // Domain rows drive Host → sitemap/robots at request time; bust cache immediately.
+    this.sitemapService.invalidate();
   }
 
   /** The list form sends one primary host. Aliases already stored on the region stay. */

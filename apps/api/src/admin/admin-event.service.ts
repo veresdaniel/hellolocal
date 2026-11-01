@@ -879,6 +879,7 @@ export class AdminEventService {
       },
     });
 
+    this.sitemapService.invalidate();
     return updated;
   }
 
@@ -894,6 +895,7 @@ export class AdminEventService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Event deleted successfully" };
   }
 
