@@ -209,13 +209,18 @@
   "noResults": "Nincs találat",
   "filtersTitle": "Szűrők",
   "placeSlugMissing": "Részletek hamarosan...",
+  "close": "Bezárás",
+  "featured": "Kiemelt",
   "filters": {
     "all": "Összes",
     "openNow": "Most nyitva",
     "eventToday": "Ma van esemény",
     "within10MinutesWalk": "10 perc séta ide",
     "rainSafe": "Esőbiztos program",
-    "contextFilters": "Kontextus alapú szűrők"
+    "contextFilters": "Kontextus alapú szűrők",
+    "categories": "Kategóriák",
+    "price": "Ár",
+    "clear": "Törlés"
   },
   "yourLocation": "Itt vagy most.",
   "showMyLocation": "Mutasd a helyzetem",

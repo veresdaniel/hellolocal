@@ -210,13 +210,17 @@
   "noResults": "No results found",
   "filtersTitle": "Filters",
   "placeSlugMissing": "Details coming soon...",
+  "featured": "Featured",
   "filters": {
     "all": "All",
     "openNow": "Open now",
     "eventToday": "Event today",
     "within10MinutesWalk": "10 minutes walk",
     "rainSafe": "Rain-safe program",
-    "contextFilters": "Context-based filters"
+    "contextFilters": "Context-based filters",
+    "categories": "Categories",
+    "price": "Price",
+    "clear": "Clear"
   },
   "yourLocation": "I'm here now.",
   "showMyLocation": "Show my location",

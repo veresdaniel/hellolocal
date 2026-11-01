@@ -200,13 +200,17 @@
   "noResults": "Keine Ergebnisse gefunden",
   "filtersTitle": "Filter",
   "placeSlugMissing": "Details in Kürze...",
+  "featured": "Hervorgehoben",
   "filters": {
     "all": "Alle",
     "openNow": "Jetzt geöffnet",
     "eventToday": "Heute Veranstaltung",
     "within10MinutesWalk": "10 Minuten zu Fuß",
     "rainSafe": "Regensicheres Programm",
-    "contextFilters": "Kontextbasierte Filter"
+    "contextFilters": "Kontextbasierte Filter",
+    "categories": "Kategorien",
+    "price": "Preis",
+    "clear": "Zurücksetzen"
   },
   "yourLocation": "Hier bin ich jetzt.",
   "showMyLocation": "Meine Position anzeigen",

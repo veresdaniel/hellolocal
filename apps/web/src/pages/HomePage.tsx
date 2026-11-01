@@ -7,9 +7,8 @@ import { getPlaces, getEvents, getMapSettings, getPlatformSettings } from "../ap
 import { useSeo } from "../seo/useSeo";
 import { generateWebSiteSchema } from "../seo/schemaOrg";
 import { MapComponent } from "../components/MapComponent";
-import { MapFilters } from "../components/MapFilters";
+import { MapDock } from "../components/MapDock";
 import { PlacesListView } from "../components/PlacesListView";
-import { EventsList } from "../components/EventsList";
 import { Header } from "../ui/layout/Header";
 import { buildUrl } from "../app/urls";
 import { useNavigate } from "react-router-dom";
@@ -721,24 +720,22 @@ export function HomePage() {
                 📋 {t("public.listView")}
               </button>
             </div>
-            <EventsList lang={lang} />
+            <MapDock
+              lang={lang}
+              selectedCategories={selectedCategories}
+              selectedPriceBands={selectedPriceBands}
+              onCategoriesChange={setSelectedCategories}
+              onPriceBandsChange={setSelectedPriceBands}
+              isOpenNow={isOpenNow}
+              hasEventToday={hasEventToday}
+              within30Minutes={within30Minutes}
+              rainSafe={rainSafe}
+              onOpenNowChange={setIsOpenNow}
+              onHasEventTodayChange={setHasEventToday}
+              onWithin30MinutesChange={setWithin30Minutes}
+              onRainSafeChange={setRainSafe}
+            />
           </div>
-          {/* MapFilters at top level to be above footer */}
-          <MapFilters
-            selectedCategories={selectedCategories}
-            selectedPriceBands={selectedPriceBands}
-            onCategoriesChange={setSelectedCategories}
-            onPriceBandsChange={setSelectedPriceBands}
-            isOpenNow={isOpenNow}
-            hasEventToday={hasEventToday}
-            within30Minutes={within30Minutes}
-            rainSafe={rainSafe}
-            onOpenNowChange={setIsOpenNow}
-            onHasEventTodayChange={setHasEventToday}
-            onWithin30MinutesChange={setWithin30Minutes}
-            onRainSafeChange={setRainSafe}
-            lang={lang}
-          />
         </>
       ) : (
         <>
