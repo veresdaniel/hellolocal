@@ -11,49 +11,96 @@
   "mapView": "Térkép nézet",
   "overview": {
     "menu": "Áttekintés",
-    "title": "Helyi turizmus, egy rendszerben",
-    "lead": "A HelloLocal helyeket, eseményeket és térképet ad egy településnek. A felület magyar, angol és német, és több helyszín fér el ugyanabban a rendszerben.",
-    "featuresTitle": "Amit a rendszer tud",
-    "audienceTitle": "Kinek készül",
-    "cta": "Területek megnyitása",
-    "features": {
-      "places": {
-        "title": "Helyek",
-        "text": "Kategóriák, címkék, árak és leírás. Minden helynek saját címe van."
+    "eyebrow": "Önkormányzatoknak és turisztikai irodáknak",
+    "title": "A város, amit a látogató egy térképen talál meg",
+    "lead": "A HelloLocal a helyi helyek, a programok és a térkép egy oldalon. Magyarul, angolul és németül. A szerkesztő feltölti, a vendég a telefonján nyitja meg. Külön alkalmazás nélkül.",
+    "seoTitle": "HelloLocal | Települési térkép, programok és helyek",
+    "seoDescription": "Helyek, események és egy közös térkép magyarul, angolul és németül. Önkormányzatoknak, turisztikai irodáknak és desztinációknak.",
+    "keywords": "települési turizmus, helyi térkép, programnaptár, turisztikai iroda, desztináció, HelloLocal",
+    "cta": "Nézd meg élőben",
+    "ctaSecondary": "Hogyan működik",
+    "shotCaption": "Szeged a térképen: a helyek, a szűrők és a következő programok egy képernyőn.",
+    "shotLabel": "Élő térkép",
+    "statsLanguages": "nyelv, saját címmel",
+    "statsMap": "térkép a helyeknek és a programoknak",
+    "statsApp": "letöltés a vendégnek",
+    "featuresTitle": "Ami a vendéget ott tartja",
+    "featuresLead": "Nem egy újabb brosúra. Egy oldal, amin a látogató eldönti, hova menjen ma délután.",
+    "stepsTitle": "Három lépés, és már böngészik",
+    "audienceTitle": "Kinek éri meg",
+    "faqTitle": "Amit általában megkérdeznek",
+    "closingTitle": "A következő vendég már a telefonján keres.",
+    "closingText": "Nyisd meg a térképet, nézd meg a programokat, és képzeld a saját településed helyeit a pontok helyére.",
+    "steps": {
+      "collect": {
+        "title": "Összegyűjtöd a helyeket",
+        "text": "Borászat, sétány, múzeum, piac. Kategória, nyitvatartás, kép és egy rövid szöveg. Mindegyiknek saját címe van, amit el lehet küldeni."
       },
-      "events": {
-        "title": "Események",
-        "text": "Időponthoz kötött programok, kiemelés és értékelés ugyanabban a listában."
+      "publish": {
+        "title": "Kirakod a programokat",
+        "text": "A következő hetek eseményei a térkép mellett jelennek meg. A kiemelt program feljebb kerül, a lejárt pedig eltűnik."
       },
-      "map": {
-        "title": "Térkép",
-        "text": "A helyek és a programok egy térképen jelennek meg, mobilon is."
+      "share": {
+        "title": "Átadod a látogatónak",
+        "text": "Egy link magyarul, angolul vagy németül. A vendég szűr, ráközelít, és elindul. Nincs áruház, nincs regisztráció."
+      }
+    },
+    "faq": {
+      "app": {
+        "q": "Kell a vendégnek alkalmazást letöltenie?",
+        "a": "Nem. A térkép és a programok a böngészőben nyílnak, telefonon és számítógépen is."
       },
       "languages": {
-        "title": "Három nyelv",
-        "text": "Magyar, angol és német tartalom, saját URL-lel."
-      },
-      "sites": {
-        "title": "Több település",
-        "text": "Egy rendszerben több site. Mindegyiknek saját tartalma és jogosultsága van."
+        "q": "Külön oldal készül minden nyelvhez?",
+        "a": "A tartalom magyar, angol és német lehet, mindegyiknek saját webcíme van. A kereső így a megfelelő nyelven találja meg."
       },
       "editors": {
-        "title": "Szerkesztők",
-        "text": "Szerepkörök, kétlépcsős belépés, és szerkesztő a szövegekhez."
+        "q": "Ki tudja frissíteni a szöveget?",
+        "a": "A szerkesztők és a helyek gazdái a saját jogosultságukkal dolgoznak. A szövegszerkesztő a leírásokhoz van, a belépéshez kétlépcsős azonosítás is bekapcsolható."
+      },
+      "towns": {
+        "q": "Egy rendszerben elfér több település?",
+        "a": "Igen. Minden település vagy desztináció saját tartalmat, térképet és szerkesztőket kap, a látogató pedig csak a sajátját látja."
+      }
+    },
+    "features": {
+      "places": {
+        "title": "Helyek, amiket érdemes megnyitni",
+        "text": "Kategória, ár, nyitvatartás és egy oldal, amit a vendég elküldhet a társaságnak. Nem egy táblázat: egy cím, egy kép, egy ok, hogy odamenjen."
+      },
+      "events": {
+        "title": "A következő program, nem a tavalyi plakát",
+        "text": "Az események a térkép szélén sorakoznak, időrendben. Ami véget ért, lekerül. Ami kiemelt, elöl marad."
+      },
+      "map": {
+        "title": "Egy térkép, amin el lehet indulni",
+        "text": "A pontok a helyek. A szűrő megmondja, mi van nyitva, mi esőbiztos, és hol van ma program. Mobilon a panel alulról nyílik, a térkép közben látható marad."
+      },
+      "languages": {
+        "title": "Az a nyelv, amin a vendég keres",
+        "text": "Magyar, angol és német tartalom, külön webcímen. A külföldi látogató nem egy lefordított szórólapot kap, hanem ugyanazt a térképet a saját nyelvén."
+      },
+      "sites": {
+        "title": "Több település, tiszta határokkal",
+        "text": "Egy desztináció több helyszínt vihet. Mindegyiknek saját tartalma, térképe és szerkesztői vannak, a látogató pedig nem keveredik el egy másik város programjai között."
+      },
+      "editors": {
+        "title": "A helyi szerkesztő, nem egy ügynökség",
+        "text": "A szöveget az írja, aki ismeri a helyet. Szerepkörök választják el a városi szerkesztőt a hely tulajdonosától. A változás a nyilvános oldalon jelenik meg."
       }
     },
     "audience": {
       "municipality": {
         "title": "Önkormányzat",
-        "text": "A település programjai és látnivalói egy oldalon."
+        "text": "A városi programok, a sétány és a piac végre egy linken élnek, nem három külön Facebook-eseményben."
       },
       "office": {
         "title": "Turisztikai iroda",
-        "text": "Több nyelv és egy térkép, amit a látogató meg tud nyitni."
+        "text": "A külföldi vendég angolul vagy németül kapja ugyanazt a térképet, amit a helyiek magyarul használnak."
       },
       "destination": {
-        "title": "Desztináció",
-        "text": "Több település egy platformon, mindegyik a saját tartalmával."
+        "title": "Desztináció és borvidék",
+        "text": "Több település egy rendszerben, mindegyik a saját helyeivel. A látogató a borvidéket járja, nem egy közös, kevert listát."
       }
     }
   },

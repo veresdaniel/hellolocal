@@ -11,49 +11,96 @@
   "mapView": "Kartenansicht",
   "overview": {
     "menu": "Überblick",
-    "title": "Lokaler Tourismus, in einem System",
-    "lead": "HelloLocal gibt einem Ort seine Plätze, Veranstaltungen und Karte. Die Oberfläche ist ungarisch, englisch und deutsch, und mehrere Standorte teilen sich dasselbe System.",
-    "featuresTitle": "Was das System kann",
-    "audienceTitle": "Für wen es ist",
-    "cta": "Gebiete öffnen",
-    "features": {
-      "places": {
-        "title": "Orte",
-        "text": "Kategorien, Schlagwörter, Preise und Beschreibung. Jeder Ort hat eine eigene Adresse."
+    "eyebrow": "Für Gemeinden und Tourismusbüros",
+    "title": "Die Stadt, die ein Besucher auf einer Karte findet",
+    "lead": "HelloLocal legt lokale Orte, Veranstaltungen und die Karte auf eine Seite. Auf Ungarisch, Englisch und Deutsch. Die Redaktion veröffentlicht, der Gast öffnet es am Telefon. Ohne eigene App.",
+    "seoTitle": "HelloLocal | Karte, Programm und Orte einer Stadt",
+    "seoDescription": "Orte, Veranstaltungen und eine gemeinsame Karte auf Ungarisch, Englisch und Deutsch. Für Gemeinden, Tourismusbüros und Destinationen.",
+    "keywords": "lokaler Tourismus, Stadtkarte, Veranstaltungskalender, Tourismusbüro, Destination, HelloLocal",
+    "cta": "Live ansehen",
+    "ctaSecondary": "So funktioniert es",
+    "shotCaption": "Szeged auf der Karte: Orte, Filter und die nächsten Veranstaltungen auf einem Bildschirm.",
+    "shotLabel": "Live-Karte",
+    "statsLanguages": "Sprachen, jede mit eigener Adresse",
+    "statsMap": "Karte für Orte und Veranstaltungen",
+    "statsApp": "Download für den Gast",
+    "featuresTitle": "Was den Gast auf der Seite hält",
+    "featuresLead": "Keine weitere Broschüre. Eine Seite, auf der jemand entscheidet, wohin er heute Nachmittag geht.",
+    "stepsTitle": "Drei Schritte, und schon wird geblättert",
+    "audienceTitle": "Für wen es sich lohnt",
+    "faqTitle": "Was meistens gefragt wird",
+    "closingTitle": "Der nächste Gast sucht schon auf dem Telefon.",
+    "closingText": "Öffne die Karte, schau dir das Programm an, und stell dir die Orte deiner eigenen Stadt an diesen Punkten vor.",
+    "steps": {
+      "collect": {
+        "title": "Du sammelst die Orte",
+        "text": "Weingut, Promenade, Museum, Markt. Kategorie, Öffnungszeiten, ein Foto und ein kurzer Text. Jeder Ort hat eine Adresse, die man schicken kann."
       },
-      "events": {
-        "title": "Veranstaltungen",
-        "text": "Terminierte Programme, Hervorhebung und Bewertung in derselben Liste."
+      "publish": {
+        "title": "Du veröffentlichst das Programm",
+        "text": "Die kommenden Wochen stehen neben der Karte. Eine hervorgehobene Veranstaltung bleibt oben. Was vorbei ist, verschwindet."
       },
-      "map": {
-        "title": "Karte",
-        "text": "Orte und Programme erscheinen auf einer Karte, auch auf dem Handy."
+      "share": {
+        "title": "Du gibst sie dem Gast",
+        "text": "Ein Link auf Ungarisch, Englisch oder Deutsch. Der Gast filtert, zoomt und geht los. Kein App-Store, kein Konto."
+      }
+    },
+    "faq": {
+      "app": {
+        "q": "Muss der Gast eine App laden?",
+        "a": "Nein. Karte und Programm öffnen sich im Browser, auf dem Telefon und am Computer."
       },
       "languages": {
-        "title": "Drei Sprachen",
-        "text": "Ungarische, englische und deutsche Inhalte, jeweils mit eigener URL."
-      },
-      "sites": {
-        "title": "Mehrere Orte",
-        "text": "Mehrere Sites in einem System. Jede hat eigene Inhalte und Rechte."
+        "q": "Gibt es für jede Sprache eine eigene Seite?",
+        "a": "Inhalte können ungarisch, englisch und deutsch sein, jeder mit eigener Adresse. Die Suche findet sie dann in der passenden Sprache."
       },
       "editors": {
-        "title": "Redaktion",
-        "text": "Rollen, Anmeldung in zwei Schritten und ein Editor für die Texte."
+        "q": "Wer kann den Text aktualisieren?",
+        "a": "Redaktion und Gastgeber arbeiten mit eigenen Rechten. Beschreibungen nutzen einen Editor, und die Anmeldung kann einen zweiten Schritt verlangen."
+      },
+      "towns": {
+        "q": "Können mehrere Orte ein System teilen?",
+        "a": "Ja. Jede Gemeinde oder Destination bekommt eigene Inhalte, eine eigene Karte und eigene Redakteure. Der Gast sieht nur den Ort, den er geöffnet hat."
+      }
+    },
+    "features": {
+      "places": {
+        "title": "Orte, die sich zu öffnen lohnen",
+        "text": "Kategorie, Preis, Öffnungszeiten und eine Seite, die der Gast der Gruppe schicken kann. Keine Tabelle: eine Adresse, ein Foto, ein Grund hinzugehen."
+      },
+      "events": {
+        "title": "Das nächste Programm, nicht das Plakat von letztem Jahr",
+        "text": "Veranstaltungen stehen zeitlich sortiert neben der Karte. Was vorbei ist, fällt weg. Was hervorgehoben ist, bleibt vorn."
+      },
+      "map": {
+        "title": "Eine Karte, von der man losgehen kann",
+        "text": "Die Punkte sind die Orte. Der Filter zeigt, was offen ist, was bei Regen taugt und wo heute etwas stattfindet. Auf dem Telefon kommt das Panel von unten, die Karte bleibt sichtbar."
+      },
+      "languages": {
+        "title": "Die Sprache, in der der Gast sucht",
+        "text": "Ungarische, englische und deutsche Inhalte, jede unter eigener Adresse. Der Gast bekommt dieselbe Karte, kein übersetztes Faltblatt."
+      },
+      "sites": {
+        "title": "Mehrere Orte, klar getrennt",
+        "text": "Eine Destination kann mehrere Standorte tragen. Jeder hat eigene Inhalte, eine eigene Karte und eigene Redakteure, damit niemand im Programm einer anderen Stadt landet."
+      },
+      "editors": {
+        "title": "Die lokale Redaktion, keine Agentur",
+        "text": "Den Text schreibt, wer den Ort kennt. Rollen trennen die Stadtredaktion vom Gastgeber. Die Änderung erscheint auf der öffentlichen Seite."
       }
     },
     "audience": {
       "municipality": {
         "title": "Gemeinde",
-        "text": "Programme und Sehenswürdigkeiten eines Ortes auf einer Seite."
+        "text": "Stadtprogramm, Promenade und Markt leben endlich auf einem Link, nicht in drei einzelnen Beiträgen."
       },
       "office": {
         "title": "Tourismusbüro",
-        "text": "Mehrere Sprachen und eine Karte, die Besucher öffnen können."
+        "text": "Der Gast aus dem Ausland bekommt dieselbe Karte auf Englisch oder Deutsch, die Einheimische auf Ungarisch nutzen."
       },
       "destination": {
-        "title": "Destination",
-        "text": "Mehrere Orte auf einer Plattform, jeder mit eigenen Inhalten."
+        "title": "Destination und Weinregion",
+        "text": "Mehrere Orte in einem System, jeder mit eigenen Plätzen. Der Gast durchquert die Region, keine vermischte Liste."
       }
     }
   },

@@ -7,9 +7,13 @@ import { useSeo } from "../seo/useSeo";
 import { buildUrl } from "../app/urls";
 import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
 import { useRouteCtx } from "../app/useRouteCtx";
+import "../styles/overview.css";
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
 const AUDIENCE_KEYS = ["municipality", "office", "destination"] as const;
+const STEP_KEYS = ["collect", "publish", "share"] as const;
+const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
+const LANGS: Lang[] = ["hu", "en", "de"];
 
 function isLang(value: string): value is Lang {
   return (APP_LANGS as readonly string[]).includes(value);
@@ -30,195 +34,187 @@ export function OverviewPage() {
   }, [i18n, lang]);
 
   const title = t("public.overview.title");
-  const description = t("public.overview.lead");
+  const description = t("public.overview.seoDescription");
+  const seoTitle = t("public.overview.seoTitle");
+  const origin = typeof window === "undefined" ? "https://hello-local.io" : window.location.origin;
+  const image = `${origin}/marketing/map-szeged.jpg`;
 
   useSeo({
-    title,
+    title: seoTitle,
     description,
-    og: { type: "website", title, description },
-    twitter: { card: "summary", title, description },
+    keywords: t("public.overview.keywords")
+      .split(",")
+      .map((word) => word.trim())
+      .filter(Boolean),
+    image,
+    canonical: `${origin}/${lang}/overview`,
+    robots: "index,follow",
+    og: { type: "website", title: seoTitle, description, image },
+    twitter: { card: "summary_large_image", title: seoTitle, description, image },
   });
+
+  useEffect(() => {
+    LANGS.forEach((code) => {
+      const selector = `link[rel="alternate"][hreflang="${code}"]`;
+      let link = document.head.querySelector<HTMLLinkElement>(selector);
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "alternate";
+        link.hreflang = code;
+        document.head.appendChild(link);
+      }
+      link.href = `${origin}/${code}/overview`;
+    });
+    let xDefault = document.head.querySelector<HTMLLinkElement>(
+      'link[rel="alternate"][hreflang="x-default"]'
+    );
+    if (!xDefault) {
+      xDefault = document.createElement("link");
+      xDefault.rel = "alternate";
+      xDefault.hreflang = "x-default";
+      document.head.appendChild(xDefault);
+    }
+    xDefault.href = `${origin}/hu/overview`;
+
+    const graph = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          name: "HelloLocal",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          url: `${origin}/${lang}/overview`,
+          description,
+          inLanguage: ["hu", "en", "de"],
+          image,
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: FAQ_KEYS.map((key) => ({
+            "@type": "Question",
+            name: t(`public.overview.faq.${key}.q`),
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: t(`public.overview.faq.${key}.a`),
+            },
+          })),
+        },
+      ],
+    };
+    let script = document.getElementById("overview-jsonld") as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = "overview-jsonld";
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(graph);
+  }, [description, image, lang, t]);
 
   return (
     <>
       <FloatingHeader hideMapViewButton />
-      <main
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          paddingTop: "clamp(88px, 12vw, 112px)",
-          paddingBottom: "clamp(48px, 8vw, 80px)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1100,
-            margin: "0 auto",
-            padding: "0 clamp(16px, 4vw, 24px)",
-          }}
-        >
-          <header style={{ maxWidth: 720, marginBottom: "clamp(36px, 6vw, 56px)" }}>
-            <p
-              style={{
-                margin: "0 0 12px",
-                color: "rgba(255,255,255,0.85)",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                fontSize: 13,
-                fontFamily: "Inter, system-ui, sans-serif",
-              }}
-            >
-              HelloLocal
-            </p>
-            <h1
-              style={{
-                margin: 0,
-                color: "#fff",
-                fontSize: "clamp(36px, 6vw, 56px)",
-                lineHeight: 1.1,
-                fontWeight: 700,
-                fontFamily: "Poppins, system-ui, sans-serif",
-              }}
-            >
-              {title}
-            </h1>
-            <p
-              style={{
-                margin: "18px 0 0",
-                color: "rgba(255,255,255,0.95)",
-                fontSize: "clamp(18px, 2.4vw, 22px)",
-                lineHeight: 1.55,
-                fontFamily: "Inter, system-ui, sans-serif",
-              }}
-            >
-              {description}
-            </p>
-            <Link
-              to={buildUrl({ lang, path: "" })}
-              style={{
-                display: "inline-flex",
-                marginTop: 28,
-                padding: "12px 20px",
-                borderRadius: 999,
-                background: "#fff",
-                color: "#4c51bf",
-                fontWeight: 700,
-                textDecoration: "none",
-                fontFamily: "Inter, system-ui, sans-serif",
-              }}
-            >
-              {t("public.overview.cta")}
-            </Link>
+      <main className="overview">
+        <div className="overview__wrap">
+          <header className="overview__hero">
+            <div className="overview__rise">
+              <p className="overview__eyebrow">{t("public.overview.eyebrow")}</p>
+              <h1>{title}</h1>
+              <p className="overview__lead">{t("public.overview.lead")}</p>
+              <div className="overview__actions">
+                <Link className="overview__cta" to={buildUrl({ lang, path: "" })}>
+                  {t("public.overview.cta")}
+                </Link>
+                <a className="overview__ghost" href="#how">
+                  {t("public.overview.ctaSecondary")}
+                </a>
+              </div>
+              <ul className="overview__stats">
+                <li>
+                  <strong>3</strong>
+                  <span>{t("public.overview.statsLanguages")}</span>
+                </li>
+                <li>
+                  <strong>1</strong>
+                  <span>{t("public.overview.statsMap")}</span>
+                </li>
+                <li>
+                  <strong>0</strong>
+                  <span>{t("public.overview.statsApp")}</span>
+                </li>
+              </ul>
+            </div>
+            <figure className="overview__stage overview__rise">
+              <div className="overview__window">
+                <div className="overview__chrome">
+                  <i />
+                  <i />
+                  <i />
+                  <span>hello-local.io</span>
+                </div>
+                <img src="/marketing/map-szeged.jpg" alt={t("public.overview.shotCaption")} />
+              </div>
+              <figcaption className="overview__caption">{t("public.overview.shotLabel")}</figcaption>
+            </figure>
           </header>
 
-          <section>
-            <h2
-              style={{
-                margin: "0 0 16px",
-                color: "#fff",
-                fontSize: "clamp(26px, 4vw, 34px)",
-                fontFamily: "Poppins, system-ui, sans-serif",
-              }}
-            >
-              {t("public.overview.featuresTitle")}
-            </h2>
-            <ul
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 16,
-                margin: 0,
-                padding: 0,
-                listStyle: "none",
-              }}
-            >
+          <section className="overview__section" id="how">
+            <h2>{t("public.overview.stepsTitle")}</h2>
+            <ol className="overview__steps">
+              {STEP_KEYS.map((key, index) => (
+                <li className="overview__step" key={key}>
+                  <span>0{index + 1}</span>
+                  <h3>{t(`public.overview.steps.${key}.title`)}</h3>
+                  <p>{t(`public.overview.steps.${key}.text`)}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="overview__section">
+            <h2>{t("public.overview.featuresTitle")}</h2>
+            <p>{t("public.overview.featuresLead")}</p>
+            <ul className="overview__grid">
               {FEATURE_KEYS.map((key) => (
-                <li
-                  key={key}
-                  style={{
-                    background: "rgba(255,255,255,0.96)",
-                    borderRadius: 16,
-                    padding: "20px 18px",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 8px",
-                      fontSize: 18,
-                      fontFamily: "Poppins, system-ui, sans-serif",
-                    }}
-                  >
-                    {t(`public.overview.features.${key}.title`)}
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#4b5563",
-                      lineHeight: 1.5,
-                      fontFamily: "Inter, system-ui, sans-serif",
-                    }}
-                  >
-                    {t(`public.overview.features.${key}.text`)}
-                  </p>
+                <li className="overview__card" key={key}>
+                  <h3>{t(`public.overview.features.${key}.title`)}</h3>
+                  <p>{t(`public.overview.features.${key}.text`)}</p>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section style={{ marginTop: 40 }}>
-            <h2
-              style={{
-                margin: "0 0 16px",
-                color: "#fff",
-                fontSize: "clamp(26px, 4vw, 34px)",
-                fontFamily: "Poppins, system-ui, sans-serif",
-              }}
-            >
-              {t("public.overview.audienceTitle")}
-            </h2>
-            <ul
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 16,
-                margin: 0,
-                padding: 0,
-                listStyle: "none",
-              }}
-            >
+          <section className="overview__section overview__audience">
+            <h2>{t("public.overview.audienceTitle")}</h2>
+            <ul>
               {AUDIENCE_KEYS.map((key) => (
-                <li
-                  key={key}
-                  style={{
-                    background: "rgba(255,255,255,0.16)",
-                    border: "1px solid rgba(255,255,255,0.28)",
-                    borderRadius: 16,
-                    padding: "20px 18px",
-                    color: "#fff",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 8px",
-                      fontSize: 18,
-                      fontFamily: "Poppins, system-ui, sans-serif",
-                    }}
-                  >
-                    {t(`public.overview.audience.${key}.title`)}
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontFamily: "Inter, system-ui, sans-serif",
-                    }}
-                  >
-                    {t(`public.overview.audience.${key}.text`)}
-                  </p>
+                <li key={key}>
+                  <h3>{t(`public.overview.audience.${key}.title`)}</h3>
+                  <p>{t(`public.overview.audience.${key}.text`)}</p>
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="overview__section">
+            <h2>{t("public.overview.faqTitle")}</h2>
+            <div className="overview__faq">
+              {FAQ_KEYS.map((key) => (
+                <article key={key}>
+                  <h3>{t(`public.overview.faq.${key}.q`)}</h3>
+                  <p>{t(`public.overview.faq.${key}.a`)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="overview__close">
+            <h2>{t("public.overview.closingTitle")}</h2>
+            <p>{t("public.overview.closingText")}</p>
+            <Link className="overview__cta" to={buildUrl({ lang, path: "" })}>
+              {t("public.overview.cta")}
+            </Link>
           </section>
         </div>
       </main>

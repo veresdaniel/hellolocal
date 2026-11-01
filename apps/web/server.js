@@ -5,6 +5,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
+import { overviewLang, renderOverviewDocument } from './ssr/renderOverview.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -266,6 +267,18 @@ app.get('*', (req, res, next) => {
   if (isStaticFile) {
     // Let express.static handle it, or return 404 if not found
     return next();
+  }
+
+  const overview = overviewLang(req.path);
+  if (overview) {
+    try {
+      const html = readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf-8');
+      const origin = (process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(renderOverviewDocument(html, { lang: overview, origin }));
+    } catch (error) {
+      console.error(`[SSR] Overview render failed: ${error.message}`);
+    }
   }
   
   // For non-static files, check if it's a bot request

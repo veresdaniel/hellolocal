@@ -11,49 +11,96 @@
   "mapView": "Map View",
   "overview": {
     "menu": "Overview",
-    "title": "Local tourism, in one system",
-    "lead": "HelloLocal gives a town its places, events and map. The interface is Hungarian, English and German, and several locations share the same system.",
-    "featuresTitle": "What the system does",
-    "audienceTitle": "Who it is for",
-    "cta": "Open the areas",
-    "features": {
-      "places": {
-        "title": "Places",
-        "text": "Categories, tags, prices and a description. Each place has its own address."
+    "eyebrow": "For municipalities and tourist offices",
+    "title": "The town a visitor can find on one map",
+    "lead": "HelloLocal puts local places, events and the map on a single page. In Hungarian, English and German. An editor publishes it, a guest opens it on a phone. No separate app.",
+    "seoTitle": "HelloLocal | A town map, its events and its places",
+    "seoDescription": "Places, events and one shared map in Hungarian, English and German. For municipalities, tourist offices and destinations.",
+    "keywords": "local tourism, town map, event calendar, tourist office, destination, HelloLocal",
+    "cta": "See it live",
+    "ctaSecondary": "How it works",
+    "shotCaption": "Szeged on the map: places, filters and the next events on one screen.",
+    "shotLabel": "Live map",
+    "statsLanguages": "languages, each with its own address",
+    "statsMap": "map for places and events",
+    "statsApp": "download for the guest",
+    "featuresTitle": "What keeps a visitor on the page",
+    "featuresLead": "Not another brochure. A page where someone decides where to go this afternoon.",
+    "stepsTitle": "Three steps, and they are already browsing",
+    "audienceTitle": "Who it pays off for",
+    "faqTitle": "What people usually ask",
+    "closingTitle": "The next guest is already searching on a phone.",
+    "closingText": "Open the map, look at the events, and picture your own town's places on those dots.",
+    "steps": {
+      "collect": {
+        "title": "You gather the places",
+        "text": "A winery, a promenade, a museum, a market. Category, opening hours, a photo and a short text. Each one has an address you can send."
       },
-      "events": {
-        "title": "Events",
-        "text": "Dated programmes, featuring and ratings in the same list."
+      "publish": {
+        "title": "You publish the programme",
+        "text": "The coming weeks sit beside the map. A featured event stays at the top. One that has ended drops off."
       },
-      "map": {
-        "title": "Map",
-        "text": "Places and events appear on one map, including on a phone."
+      "share": {
+        "title": "You hand it to the visitor",
+        "text": "One link in Hungarian, English or German. The guest filters, zooms in and sets off. No app store, no account."
+      }
+    },
+    "faq": {
+      "app": {
+        "q": "Does a guest have to download an app?",
+        "a": "No. The map and the events open in the browser, on a phone and on a computer."
       },
       "languages": {
-        "title": "Three languages",
-        "text": "Hungarian, English and German content, each with its own URL."
-      },
-      "sites": {
-        "title": "Several towns",
-        "text": "More than one site in a single system. Each has its own content and permissions."
+        "q": "Is there a separate site for each language?",
+        "a": "Content can be Hungarian, English and German, each with its own address. Search engines can then find it in the right language."
       },
       "editors": {
-        "title": "Editors",
-        "text": "Roles, two-step sign-in, and an editor for the text."
+        "q": "Who can update the text?",
+        "a": "Editors and place owners work with their own permissions. Descriptions use a text editor, and sign-in can require a second step."
+      },
+      "towns": {
+        "q": "Can several towns share one system?",
+        "a": "Yes. Each town or destination gets its own content, map and editors. A visitor only sees the one they opened."
+      }
+    },
+    "features": {
+      "places": {
+        "title": "Places worth opening",
+        "text": "Category, price, opening hours and a page a guest can send to the group. Not a spreadsheet: an address, a photo, a reason to go."
+      },
+      "events": {
+        "title": "The next event, not last year's poster",
+        "text": "Events line up beside the map, in time order. What has finished comes off. What is featured stays in front."
+      },
+      "map": {
+        "title": "A map you can actually leave from",
+        "text": "The dots are the places. Filters show what is open, what is fine in the rain, and where something happens today. On a phone the panel rises from the bottom and the map stays visible."
+      },
+      "languages": {
+        "title": "The language the guest searches in",
+        "text": "Hungarian, English and German content, each on its own address. A foreign visitor gets the same map, not a translated leaflet."
+      },
+      "sites": {
+        "title": "Several towns, with clear edges",
+        "text": "A destination can carry more than one place. Each has its own content, map and editors, so a visitor does not wander into another town's programme."
+      },
+      "editors": {
+        "title": "A local editor, not an agency",
+        "text": "The text is written by someone who knows the place. Roles separate the town editor from the owner of a venue. The change shows up on the public page."
       }
     },
     "audience": {
       "municipality": {
         "title": "Municipality",
-        "text": "A town's programmes and sights on one page."
+        "text": "The town's events, the promenade and the market finally live on one link, not in three separate social posts."
       },
       "office": {
         "title": "Tourist office",
-        "text": "Several languages, and a map a visitor can actually open."
+        "text": "A foreign guest gets the same map in English or German that locals use in Hungarian."
       },
       "destination": {
-        "title": "Destination",
-        "text": "Several towns on one platform, each with its own content."
+        "title": "Destination and wine region",
+        "text": "Several towns in one system, each with its own places. The visitor tours the region instead of a mixed list."
       }
     }
   },
