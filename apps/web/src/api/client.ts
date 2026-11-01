@@ -4,12 +4,9 @@ import { DEFAULT_BACKEND_URL, type Lang} from "../app/config";
 import { preferredLang} from "../app/browserLang";
 
 /**
- * Get API base URL from environment variable or use relative path for development
- * In production, set VITE_API_URL environment variable to the backend URL
- * Example: VITE_API_URL=https://hellolocal.onrender.com
- *
- * IMPORTANT: On Render.com, this must be set as an environment variable
- * in the frontend service settings BEFORE building.
+ * Get API base URL from environment variable or use relative path for development.
+ * In production, set VITE_API_URL at image build time (see deploy/docker-compose.yml).
+ * Example: VITE_API_URL=https://api.hello-local.io
  */
 function getApiBaseUrl(): string {
   // In production, use environment variable if set

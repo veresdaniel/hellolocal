@@ -1,6 +1,5 @@
-// Simple Node.js server for Render.com to handle SPA routing
-// This server serves static files and rewrites all routes to index.html
-// Public HTML responses include Open Graph and Twitter card tags.
+// Production SPA/SSR Node server (Hetzner Docker web container; Express).
+// Serves static files, rewrites routes to index.html, and injects social/SEO tags.
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';

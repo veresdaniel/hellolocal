@@ -226,7 +226,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 - [ ] **VITE_API_URL** beállítva (production API URL)
 - [ ] Content Security Policy (CSP) header beállítva (ha lehetséges)
-- [ ] HTTPS használata (Render.com automatikus)
+- [ ] HTTPS használata (Hetzner/Caddy automatikus)
 
 ### Általános
 

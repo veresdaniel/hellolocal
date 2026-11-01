@@ -186,26 +186,15 @@ docker build -f apps/web/Dockerfile -t hellolocal-web .
 docker run -p 5173:5173 hellolocal-web
 ```
 
-## ☁️ Cloud Deployment Opciók
+## ☁️ Cloud Deployment
 
-### 🎯 Ajánlott: Render.com (Ingyenes kezdéshez)
+**Live production**: Hetzner VPS (`hello-local.io`) via GitHub Actions SSH deploy — see `.github/workflows/deploy.yml` and `deploy/`.
 
-**Előnyök:**
-- Ingyenes PostgreSQL adatbázis (90 nap után inaktív)
-- Automatikus HTTPS
-- GitHub integration
-- Egyszerű setup
+Push to `main` / `devel` triggers production/devel stacks; `staging` uses `deploy-beta.yml` for beta.
 
-**Lépések:**
-1. Fork-old a repository-t
-2. Hozz létre egy új **Web Service**-t Render-en a backend-hez
-3. Hozz létre egy **Static Site**-ot a frontend-hez
-4. Hozz létre egy **PostgreSQL** adatbázist
-5. Állítsd be a környezeti változókat
+Render.com is **retired** in this repo (`render.yaml` removed). Historical notes: [docs/deployment-render.md](docs/deployment-render.md) (deprecated). Delete leftover Render services in the dashboard manually.
 
-[Részletes útmutató](docs/deployment-render.md)
-
-### Alternatívák
+### Alternatívák (nem az éles stack)
 
 | Platform | Ár | Előnyök | Hátrányok |
 |----------|-----|---------|----------|
@@ -213,7 +202,7 @@ docker run -p 5173:5173 hellolocal-web
 | **Fly.io** | $0-5/hó | Global edge, Docker | Bonyolultabb config |
 | **Vercel (Frontend)** | Ingyenes | Nagyon gyors, CDN | Csak frontend |
 | **Heroku** | $7/hó | Megbízható | Nincs ingyenes tier |
-| **VPS (Hetzner, DigitalOcean)** | €4-5/hó | Teljes kontroll | Több setup munka |
+| **VPS (egyéb)** | €4-5/hó | Teljes kontroll | Több setup munka |
 
 ## 🔐 Alapértelmezett Admin Felhasználók
 
@@ -260,7 +249,7 @@ pg_dump -h localhost -U user -d hellolocal > backup.sql
 
 ### Log monitoring
 
-Production környezetben használd a Render.com vagy más szolgáltatás beépített log nézőjét.
+Production környezetben nézd a Hetzner szerveren a Docker Compose logokat (`docker compose logs`), vagy a GitHub Actions Deploy workflow futásait.
 
 ## 🤝 Közreműködés
 

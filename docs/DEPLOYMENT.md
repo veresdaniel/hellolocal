@@ -3,8 +3,10 @@
 ## ✅ Projekt Állapota
 
 **Verzió**: `0.1.0-beta`  
-**Status**: ✅ Készen áll béta deploymentre  
-**Utolsó frissítés**: 2026-01-07
+**Status**: ✅ Live on **Hetzner** (`hello-local.io`) via `.github/workflows/deploy.yml`  
+**Utolsó frissítés**: 2026-11-02  
+
+> Render.com is retired in-repo (`render.yaml` removed). Historical guide: [deployment-render.md](deployment-render.md) (deprecated). Delete leftover Render dashboard services manually.
 
 ---
 
@@ -28,9 +30,9 @@
 - [x] Production checklist
 
 ### 4. ✅ Deployment Platformok
-- [x] **Render.com** - Részletes útmutató (AJÁNLOTT)
-- [x] **Docker** - VPS deployment
-- [x] **Alternatívák** - Railway, Fly.io, Vercel
+- [x] **Hetzner + GitHub Actions** - Live production / devel / beta (AJÁNLOTT)
+- [x] **Docker Compose** - `deploy/docker-compose.yml`
+- [ ] ~~Render.com~~ - Deprecated; do not use for new deploys
 
 ---
 
@@ -64,18 +66,16 @@
    - Ismételd meg mindhárom admin accountra
 
 4. **Database Backup Stratégia**
-   - Render: Fizetős terv vagy manuális backup
-   - VPS: Cron job `pg_dump` daily
+   - Hetzner/VPS: Cron job `pg_dump` daily (recommended)
 
 ### 🟡 FONTOS - Rövidtávon
 
 5. **HTTPS Ellenőrzés**
-   - Render/Railway: Automatikus ✅
-   - VPS: Certbot setup szükséges
+   - Hetzner: Caddy in `deploy/Caddyfile` (automatic HTTPS) ✅
 
 6. **Monitoring Beállítás**
    - UptimeRobot - Uptime checking
-   - Render beépített metrics
+   - Docker / host metrics on Hetzner
    - Error logging (Sentry - később)
 
 7. **Domain Setup** (ha van)
@@ -104,20 +104,20 @@
 
 ## 🚀 Deployment Opciók
 
-### Option A: Render.com (AJÁNLOTT - Legegyszerűbb)
+### Option A: Hetzner + GitHub Actions (ÉLES — AJÁNLOTT)
 
-**Előnyök**: 
-- ✅ Ingyenes kezdéshez
-- ✅ Automatikus HTTPS
-- ✅ GitHub auto-deploy
-- ✅ 10 perc setup
+**Előnyök**:
+- ✅ Live stack at `hello-local.io`
+- ✅ Push to `main` / `devel` deploys via SSH
+- ✅ Docker Compose + Caddy HTTPS
+- ✅ Beta via `staging` → `deploy-beta.yml`
 
 **Lépések**:
-1. Push projektet GitHub-ra
-2. Kövesd: [`docs/deployment-render.md`](docs/deployment-render.md)
-3. Kész! 🎉
+1. Server bootstrap: `deploy/bootstrap.sh` (once) + `HETZNER_SSH_KEY` GitHub secret
+2. Push to `main` (prod) or `devel` — workflow: `.github/workflows/deploy.yml`
+3. Compose + remote script: `deploy/docker-compose.yml`, `deploy/remote-deploy.sh`
 
-**Becsült idő**: 15 perc
+**Becsült idő**: már beállítva productionön
 
 ---
 
@@ -229,17 +229,15 @@ sudo certbot --nginx -d yourdomain.com
 
 ## 🎯 Deployment Prioritás
 
-### 1. GYORS TESZT (Render.com)
-**Célcsoport**: Beta tesztelők  
-**Idő**: 15 perc  
-**Költség**: €0  
-**Dokumentáció**: [`docs/deployment-render.md`](docs/deployment-render.md)
+### 1. ÉLES / DEVEL (Hetzner)
+**Célcsoport**: Production / devel  
+**Workflow**: `.github/workflows/deploy.yml`  
+**Dokumentáció**: `deploy/`, ez a fájl (Option A)
 
-### 2. STABIL PRODUCTION (VPS + Docker)
-**Célcsoport**: Production users  
-**Idő**: 45 perc  
-**Költség**: €4-5/hó  
-**Dokumentáció**: [`docs/deployment-quick-start.md`](docs/deployment-quick-start.md)
+### 2. BETA (Hetzner)
+**Célcsoport**: Beta tesztelők  
+**Workflow**: `.github/workflows/deploy-beta.yml` (`staging`)  
+**Dokumentáció**: `deploy/remote-deploy-beta.sh`
 
 ### 3. SKÁLÁZHATÓ (Kubernetes)
 **Célcsoport**: Nagy forgalom  
@@ -254,8 +252,8 @@ sudo certbot --nginx -d yourdomain.com
 ### Dokumentációk
 - [README.md](README.md) - Átfogó leírás
 - [CHANGELOG.md](CHANGELOG.md) - Verziókövetés
-- [docs/deployment-render.md](docs/deployment-render.md) - Render.com útmutató
-- [docs/deployment-quick-start.md](docs/deployment-quick-start.md) - Gyors áttekintő
+- [docs/deployment-quick-start.md](docs/deployment-quick-start.md) - Gyors áttekintő (Hetzner first)
+- [docs/deployment-render.md](docs/deployment-render.md) - Render.com (deprecated, historical)
 - [docs/readme_dev.md](docs/readme_dev.md) - Fejlesztői docs
 
 ### Gyakori Hibák
@@ -286,9 +284,10 @@ docker-compose logs -f api
 docker-compose logs -f web
 ```
 
-**Render**:
-```
-Dashboard → Service → Logs tab
+**Hetzner**:
+```bash
+# on the VPS, under the stack directory
+docker compose -f docker-compose.yml logs -f
 ```
 
 ---
@@ -343,16 +342,16 @@ pnpm prisma migrate reset
 | Frontend | ✅ Ready | Tested locally |
 | Database | ✅ Ready | Migrations OK |
 | Docker | ✅ Ready | Tested locally |
-| Render Config | ✅ Ready | Docs prepared |
-| HTTPS | ⚠️ Platform | Auto on Render |
+| Hetzner Deploy | ✅ Live | Actions SSH + Compose |
+| HTTPS | ✅ | Caddy on Hetzner |
 | Monitoring | ⏳ TODO | Optional |
-| Backup | ⏳ TODO | Platform dependent |
+| Backup | ⏳ TODO | Host `pg_dump` |
 
 ---
 
 **Verzió**: 0.1.0-beta  
-**Utolsó frissítés**: 2026-01-07  
-**Status**: 🟢 READY FOR BETA DEPLOYMENT
+**Utolsó frissítés**: 2026-11-02  
+**Status**: 🟢 LIVE ON HETZNER (`hello-local.io`)
 
 ---
 

@@ -1,5 +1,5 @@
-# Redirect all routes to index.html for React Router
-# This allows client-side routing to work on Render.com
+# Redirect all routes to index.html for React Router (static hosts).
+# Production Hetzner uses Express server.js; this file is for static hosts only.
 /*    /index.html   200
 
 

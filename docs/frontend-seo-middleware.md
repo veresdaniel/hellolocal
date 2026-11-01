@@ -29,7 +29,7 @@ A HelloLocal projektben **két helyen** van SEO middleware:
    - Lásd: [SEO Middleware dokumentáció](./seo-middleware.md)
 
 2. **Frontend middleware** (`apps/web/server.js`) ← **Ez a dokumentum**
-   - Akkor használatos, ha a frontend külön szerveren fut (pl. Render.com, Vercel)
+   - Akkor használatos, ha a frontend külön konténerben/szerveren fut (pl. Hetzner web service, Vercel)
    - Ez a jelenlegi deployment setup
 
 ## Miért van szükség rá?
@@ -133,14 +133,9 @@ VITE_FRONTEND_URL=https://example.com
 2. `VITE_API_URL` / `VITE_FRONTEND_URL` (Vite build-time változók)
 3. Alapértelmezett értékek (`http://localhost:3002` / `http://localhost:3000`)
 
-### Render.com deployment
+### Hetzner / Docker Compose deployment
 
-Render.com esetén állítsd be a környezeti változókat:
-
-```env
-API_URL=https://your-backend-service.onrender.com
-FRONTEND_URL=https://your-frontend-service.onrender.com
-```
+Éles stack: `deploy/docker-compose.yml` állítja `API_URL` / `FRONTEND_URL` (pl. `https://api.hello-local.io`, `https://hello-local.io`).
 
 ## Támogatott útvonalak
 
@@ -175,35 +170,13 @@ A middleware robusztus hibakezeléssel rendelkezik:
 
 ## Deployment
 
-### Render.com
+### Hetzner (live)
 
-A `server.js` automatikusan használatban van Render.com deployment esetén:
-
-```yaml
-# render.yaml
-services:
-  - type: web
-    name: hellolocal-frontend
-    startCommand: node server.js
-    envVars:
-      - key: API_URL
-        value: https://your-backend.onrender.com
-      - key: FRONTEND_URL
-        value: https://your-frontend.onrender.com
-```
-
-### Vercel
-
-Vercel esetén a `vercel.json` konfigurációt használd (ha van), vagy a Vercel beépített routing-ot.
+A web image `node server.js`-t futtat a Docker Compose stackben (`deploy/docker-compose.yml`). Caddy reverse-proxy-zza a public hostokat.
 
 ### Egyéb platformok
 
-Bármely Node.js platformon, amely Express-t támogat, működik:
-- Railway
-- Fly.io
-- Heroku
-- AWS Elastic Beanstalk
-- stb.
+Bármely Node.js platformon, amely Express-t támogat, működik (Railway, Fly.io, stb.). `render.yaml` has been removed — do not treat Render as the primary deploy path.
 
 ## Tesztelés
 
@@ -286,11 +259,11 @@ A middleware részletes logolást végez:
 
 ### Mikor használd a Frontend middleware-t? (jelenlegi setup)
 
-- Ha a frontend külön szerveren fut (pl. Render.com, Vercel)
+- Ha a frontend külön konténerben/szerveren fut (pl. Hetzner web, Vercel)
 - Ha a frontend és backend külön service-ként vannak deploy-olva
 - Ha a frontend CDN-en vagy edge network-en fut
 
-**Jelenlegi HelloLocal setup**: Frontend middleware (Render.com külön service-ként)
+**Jelenlegi HelloLocal setup**: Frontend middleware on Hetzner (`server.js` web container + Caddy)
 
 ## Jövőbeli fejlesztések
 

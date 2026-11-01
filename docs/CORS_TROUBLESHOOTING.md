@@ -1,5 +1,7 @@
 # 🔧 CORS Hibaelhárítási Útmutató
 
+> **Deprecated context (2026-11).** Live stack is Hetzner (`hello-local.io`), not Render. Historical Render dashboard notes only.
+
 ## Probléma: PreflightMissingAllowOriginHeader
 
 Ha a frontend `PreflightMissingAllowOriginHeader` hibát kap, az azt jelenti, hogy a backend nem küldi a megfelelő CORS header-eket az OPTIONS preflight kérésre.

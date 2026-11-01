@@ -1,5 +1,7 @@
 # 🔧 Health Check 429-es Hiba Javítása
 
+> **Deprecated context (2026-11).** Written for Render health checks; live stack is Hetzner. Historical notes only.
+
 ## Probléma
 
 A Render.com health check-je 429-es hibát kap (Too Many Requests).

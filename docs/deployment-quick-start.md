@@ -2,27 +2,29 @@
 
 Gyors áttekintő a különböző deployment opciókról.
 
-## 🎯 Legjobb Opció: Render.com (AJÁNLOTT)
+## 🎯 Éles stack: Hetzner (AJÁNLOTT)
 
-**Költség**: INGYENES kezdéshez  
-**Setup idő**: ~10 perc  
-**HTTPS**: ✅ Automatikus  
-**Nehézség**: ⭐ Könnyű
+**Live**: `https://hello-local.io`  
+**HTTPS**: ✅ Caddy  
+**Deploy**: GitHub Actions → SSH (`.github/workflows/deploy.yml`)
 
 ```bash
-# Nincs szükség előkészítésre, csak GitHub push
-git push origin main
+# Production / devel: push triggers Hetzner deploy
+git push origin main   # or devel
 ```
 
-👉 [Részletes Render.com Útmutató](deployment-render.md)
+Bootstrap (egyszer a szerveren): `deploy/bootstrap.sh` + `HETZNER_SSH_KEY` secret.  
+Részletek: [DEPLOYMENT.md](DEPLOYMENT.md), `deploy/`.
+
+> ~~Render.com~~ retired in-repo (`render.yaml` removed). Historical: [deployment-render.md](deployment-render.md). Delete leftover Render services in the dashboard.
 
 ---
 
 ## 🐳 Docker Compose (Helyi vagy VPS)
 
-**Költség**: VPS esetén ~€4-5/hó  
+**Költség**: VPS esetén ~€4-5/hó (élesen: Hetzner)  
 **Setup idő**: ~5 perc  
-**HTTPS**: ⚠️ Manuális (Nginx + Certbot)  
+**HTTPS**: ✅ Caddy on Hetzner (`deploy/Caddyfile`); egyéb VPS-en Nginx+Certbot  
 **Nehézség**: ⭐⭐ Közepes
 
 ### Gyors Start
@@ -119,18 +121,19 @@ vercel
 
 | Platform | Költség/hó | Setup | HTTPS | Nehézség | PostgreSQL |
 |----------|------------|-------|-------|----------|------------|
-| **Render.com** | **€0** | 10 min | ✅ Auto | ⭐ | ✅ Ingyen |
+| **Hetzner (live)** | €4-5 | Actions | ✅ Caddy | ⭐⭐ | ✅ Host |
 | Railway.app | €5+ | 5 min | ✅ Auto | ⭐ | ✅ Ingyen |
 | Fly.io | €0-5 | 15 min | ✅ Auto | ⭐⭐ | ✅ Fizetős |
-| Docker (VPS) | €4-5 | 20 min | ⚠️ Manual | ⭐⭐ | ✅ Helyi |
+| Docker (egyéb VPS) | €4-5 | 20 min | ⚠️ Manual | ⭐⭐ | ✅ Helyi |
 | Vercel | €0 | 5 min | ✅ Auto | ⭐ | ❌ Külön |
+| ~~Render.com~~ | — | — | — | — | Deprecated |
 
 ---
 
 ## 🔐 HTTPS Beállítás Különböző Platformokon
 
-### Automatikus HTTPS (Render, Railway, Fly, Vercel)
-✅ Nincs teendő - a platform automatikusan beállítja
+### Automatikus HTTPS (Hetzner/Caddy, Railway, Fly, Vercel)
+✅ Hetzner: Caddy in `deploy/Caddyfile`. Más PaaS: platform auto TLS.
 
 ### Manuális HTTPS (VPS + Nginx)
 
@@ -191,11 +194,13 @@ sudo certbot renew --dry-run
 
 ### 1. DNS Beállítások
 
-**Render.com / Railway.app / Fly.io:**
+**Hetzner (live `hello-local.io`):** A records → VPS IP (see `deploy/`).
+
+**Railway.app / Fly.io:**
 ```
 Type: CNAME
 Name: www (vagy @)
-Value: your-app.onrender.com (vagy railway.app/fly.dev)
+Value: your-app.railway.app (vagy fly.dev)
 TTL: Auto
 ```
 
@@ -214,10 +219,7 @@ TTL: 3600
 
 ### 2. Platform Custom Domain Hozzáadás
 
-**Render.com:**
-1. Service Settings → Custom Domain
-2. Add Custom Domain → `www.yourdomain.com`
-3. Follow instructions
+**Hetzner / Caddy:** point DNS at the VPS; hosts are listed in `deploy/Caddyfile`.
 
 **Railway.app:**
 1. Settings → Domains
@@ -322,21 +324,19 @@ pnpm prisma migrate deploy
 ### "502 Bad Gateway"
 ```bash
 # Ellenőrizd a backend logs-ot
-docker-compose logs -f api
-# vagy
-render logs -f
+docker compose logs -f api
 ```
 
 ---
 
 ## 📞 Támogatás
 
-- Render: https://render.com/docs
+- Hetzner deploy: `deploy/`, `.github/workflows/deploy.yml`
 - Railway: https://docs.railway.app
 - Fly.io: https://fly.io/docs
 - Docker: https://docs.docker.com
 
 ---
 
-**Választott a platformot?** → [Részletes Render Útmutató](deployment-render.md)
+**Éles stack?** → [DEPLOYMENT.md](DEPLOYMENT.md) (Hetzner). Render historical: [deployment-render.md](deployment-render.md) (deprecated).
 

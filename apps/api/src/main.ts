@@ -38,7 +38,7 @@ async function bootstrap() {
       "⚠️  WARNING: CORS_ORIGIN and FRONTEND_URL are not set! CORS will be disabled and frontend requests will fail!"
     );
     console.warn(
-      "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hellolocal-frontend.onrender.com)"
+      "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hello-local.io)"
     );
   } else if (allowedOrigins.length > 0) {
   }
@@ -65,7 +65,7 @@ async function bootstrap() {
       if (origin === allowedOrigin) {
         return true;
       }
-      // Support wildcard subdomains (e.g., *.render.com)
+      // Support wildcard subdomains (e.g., *.hello-local.io)
       if (allowedOrigin.startsWith("*.")) {
         const domain = allowedOrigin.substring(2);
         return (
@@ -121,6 +121,6 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3002;
-  await app.listen(port, "0.0.0.0"); // Listen on all interfaces for Render.com
+  await app.listen(port, "0.0.0.0"); // Listen on all interfaces (Docker / reverse proxy)
 }
 bootstrap();

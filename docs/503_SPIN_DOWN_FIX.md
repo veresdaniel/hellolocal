@@ -1,5 +1,7 @@
 # 🔄 503 Service Unavailable - Render.com Free Tier "Spin Down"
 
+> **Deprecated (2026-11).** Live stack is Hetzner — no Render free-tier spin-down. Historical notes only.
+
 ## Probléma
 
 A backend API 503-as hibát ad vissza (Service Unavailable).

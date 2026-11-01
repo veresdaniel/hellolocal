@@ -1,5 +1,7 @@
 # Deployment Útmutató - Render.com
 
+> **Deprecated (2026-11).** Live production is **Hetzner** via `.github/workflows/deploy.yml` (SSH + Docker Compose). The repo `render.yaml` has been removed so Render Blueprint auto-setup is no longer implied. Keep this page only as historical notes; do not deploy new environments here. Delete any remaining Render services in the [Render dashboard](https://dashboard.render.com). See [DEPLOYMENT.md](DEPLOYMENT.md) and `deploy/`.
+
 Ez az útmutató lépésről lépésre bemutatja, hogyan telepítsd a HelloLocal alkalmazást a **Render.com** platformra, amely **ingyenes kezdéshez** és automatikus HTTPS-t biztosít.
 
 ## 🎯 Miért Render.com?

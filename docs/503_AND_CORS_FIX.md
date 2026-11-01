@@ -1,5 +1,7 @@
 # 🚨 503 + CORS Hibák Együttes Megoldása
 
+> **Deprecated context (2026-11).** Live stack is Hetzner (`hello-local.io`), not Render free-tier spin-down. Historical notes only.
+
 ## Probléma
 
 A konzolban látod:

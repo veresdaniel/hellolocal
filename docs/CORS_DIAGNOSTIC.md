@@ -1,5 +1,7 @@
 # 🔍 CORS Diagnosztika - Mi lehet még a probléma?
 
+> **Deprecated context (2026-11).** Live stack is Hetzner (`hello-local.io`), not Render. Historical Render dashboard notes only.
+
 Ha már beállítottad a `CORS_ORIGIN` változót, de még mindig CORS hibákat kapsz, akkor ezeket ellenőrizd:
 
 ## 1. ✅ Backend Logok Ellenőrzése

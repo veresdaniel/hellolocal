@@ -1,5 +1,7 @@
 # 🚨 CORS Hiba Gyors Javítás
 
+> **Deprecated context (2026-11).** Live stack is Hetzner (`hello-local.io`), not Render. Steps below are historical Render dashboard notes; set `CORS_ORIGIN` in `/opt/hellolocal` stack env instead.
+
 ## Probléma
 
 ```

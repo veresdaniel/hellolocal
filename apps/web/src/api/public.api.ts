@@ -5,9 +5,8 @@ import type { Lang} from "../types/enums";
  */
 
 /**
- * Get API base URL from environment variable or use relative path for development
- * IMPORTANT: On Render.com, this must be set as an environment variable
- * in the frontend service settings BEFORE building.
+ * Get API base URL from environment variable or use relative path for development.
+ * In production, set VITE_API_URL at image build time (see deploy/docker-compose.yml).
  */
 function getApiBaseUrl(): string {
   // In production, use environment variable if set
