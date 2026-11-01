@@ -124,7 +124,7 @@ export default defineConfig(({ mode }) => ({
           // i18n libraries
           "i18n-vendor": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
           // Map libraries (large)
-          "map-vendor": ["maplibre-gl", "react-map-gl"],
+          "map-vendor": ["maplibre-gl", "react-map-gl/maplibre"],
           // Editor libraries (large, only used in admin)
           "editor-vendor": ["@tiptap/react", "@tiptap/starter-kit", "@tiptap/extension-placeholder"],
           // Chart library
