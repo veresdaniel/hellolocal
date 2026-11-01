@@ -8,6 +8,7 @@ import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { generateSlug } from "../slug/slug.helper";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface CreateTownDto {
   /**
@@ -72,7 +73,8 @@ export type FindTownsOptions = {
 export class AdminTownService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly entitlementsService: EntitlementsService
+    private readonly entitlementsService: EntitlementsService,
+    private readonly sitemapService: SitemapService
   ) {}
 
   /**
@@ -220,6 +222,7 @@ export class AdminTownService {
       );
     }
 
+    this.sitemapService.invalidate();
     return town;
   }
 
@@ -361,6 +364,7 @@ export class AdminTownService {
       );
     }
 
+    this.sitemapService.invalidate();
     return updated;
   }
 
@@ -440,6 +444,7 @@ export class AdminTownService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Town deleted successfully" };
   }
 }

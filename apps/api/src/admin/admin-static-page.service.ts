@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
+import { SitemapService } from "../seo/sitemap.service";
 
 const ALLOWED_CATEGORIES = new Set(["blog", "tudastar", "infok"] as const);
 type StaticPageCategory = "blog" | "tudastar" | "infok";
@@ -39,7 +40,10 @@ export interface UpdateStaticPageDto {
 
 @Injectable()
 export class AdminStaticPageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sitemapService: SitemapService
+  ) {}
 
   async findAll(siteId: string, category?: StaticPageCategory, page?: number, limit?: number) {
     const where: any = { siteId };

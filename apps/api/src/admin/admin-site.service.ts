@@ -726,6 +726,7 @@ export class AdminSiteService {
       throw new Error(`Site ${site.id} was created but could not be retrieved`);
     }
 
+    this.sitemapService.invalidate();
     return result;
   }
 
@@ -1026,6 +1027,7 @@ export class AdminSiteService {
       }
     }
 
+    this.sitemapService.invalidate();
     return this.findOne(id);
   }
 
@@ -1056,6 +1058,7 @@ export class AdminSiteService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Site deleted successfully" };
   }
 }
