@@ -165,6 +165,7 @@ export function Header() {
 
   return (
     <header
+      className="hl-public"
       ref={headerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -174,17 +175,19 @@ export function Header() {
         left: position.left,
         zIndex: currentZIndex, // Dynamic z-index based on active state
         overflow: "visible", // Allow dropdown to overflow
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        borderRadius: isMobile ? 12 : 16,
-        padding: "12px 16px",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-        border: "1px solid rgba(0, 0, 0, 0.06)",
+        background: "rgba(255, 253, 249, 0.94)",
+        borderRadius: 999,
+        padding: isMobile ? "8px 12px" : "10px 16px",
+        maxWidth: isMobile ? "min(72vw, 280px)" : "none",
+        boxShadow: "0 12px 32px rgba(27, 23, 48, 0.16)",
+        border: "1px solid rgba(255, 255, 255, 0.8)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         cursor: isDesktop ? (isDragging ? "grabbing" : "grab") : "default",
         userSelect: "none",
         transition: isDragging ? "none" : "box-shadow 0.2s ease",
         touchAction: "none", // Prevent default touch behaviors
+        boxSizing: "border-box",
       }}
       onMouseEnter={(e) => {
         if (isDesktop && !isDragging) {
@@ -199,7 +202,7 @@ export function Header() {
         }
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16, minWidth: 0 }}>
         {(siteName || brandBadgeIcon) && (
           <Link
             to={buildUrl({ lang, siteKey, path: "" })}
@@ -207,9 +210,11 @@ export function Header() {
               textDecoration: "none",
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              color: "white",
+              gap: isMobile ? 8 : 12,
+              color: "#1b1730",
               pointerEvents: isDragging ? "none" : "auto",
+              minWidth: 0,
+              flex: "1 1 auto",
             }}
             onClick={(e) => {
               if (isDragging) {
@@ -226,17 +231,22 @@ export function Header() {
                   height: 28,
                   objectFit: "contain",
                   borderRadius: 4,
+                  flexShrink: 0,
                 }}
               />
             )}
             {siteName && (
               <span
                 style={{
-                  fontSize: 18,
+                  fontSize: isMobile ? 15 : 18,
                   fontWeight: 700,
                   letterSpacing: "-0.02em",
                   fontFamily:
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
                 }}
               >
                 {siteName}
@@ -264,10 +274,9 @@ export function Header() {
             >
               <LanguageSelector />
               <style>{`
-                /* White text and border for language selector in map view header */
                 header select {
-                  color: white !important;
-                  border-color: rgba(255, 255, 255, 0.3) !important;
+                  color: #1b1730 !important;
+                  border-color: rgba(27, 23, 48, 0.16) !important;
                   padding: 4px 12px !important;
                   height: auto !important;
                 }
@@ -286,7 +295,7 @@ export function Header() {
               style={{
                 width: 1,
                 height: 24,
-                background: "rgba(255, 255, 255, 0.3)",
+                background: "rgba(27, 23, 48, 0.12)",
                 marginLeft: 8,
                 marginRight: 8,
               }}
@@ -301,10 +310,10 @@ export function Header() {
                 }, 100);
               }}
               style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                borderRadius: 8,
-                color: "white",
+                background: "#1b1730",
+                border: "1px solid #1b1730",
+                borderRadius: 999,
+                color: "#fffdf9",
                 fontSize: "clamp(12px, 2.5vw, 14px)",
                 fontWeight: 500,
                 height: "clamp(32px, 4vw, 36px)",
@@ -323,14 +332,14 @@ export function Header() {
               }}
               onMouseEnter={(e) => {
                 if (!isDragging) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
+                  e.currentTarget.style.background = "#322b52";
+                  e.currentTarget.style.borderColor = "#322b52";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isDragging) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.background = "#1b1730";
+                  e.currentTarget.style.borderColor = "#1b1730";
                 }
               }}
               onMouseDown={(e) => e.stopPropagation()}

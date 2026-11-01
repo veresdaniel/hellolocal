@@ -1,27 +1,28 @@
 // src/pages/admin/AdminDashboard.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useContext, useState, useEffect, useMemo } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import {
-  APP_LANGS,
   DEFAULT_LANG,
-  HAS_MULTIPLE_SITES,
-  DEFAULT_SITE_SLUG,
   type Lang,
+  isLang,
 } from "../../app/config";
-import { buildUrl } from "../../app/urls";
-import { useRouteCtx } from "../../app/useRouteCtx";
 import { getSiteMemberships } from "../../api/admin.api";
-import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
-import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR, ROLE_VIEWER } from "../../types/enums";
+import { isSuperadmin, hasUserRolePermission } from "../../utils/roleHelpers";
+import { ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 import type { UserRole } from "../../types/enums";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
+type DashboardCardItem = {
+  key: string;
+  title: string;
+  description: string;
+  link: string;
+  icon: string;
+  variant: "content" | "admin";
+};
 
 export function AdminDashboard() {
   const { t } = useTranslation();
@@ -29,8 +30,6 @@ export function AdminDashboard() {
   const user = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
   const { lang: langParam } = useParams<{ lang?: string }>();
-  const navigate = useNavigate();
-  const { lang, siteKey } = useRouteCtx();
   usePageTitle("admin.dashboard");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
@@ -74,58 +73,223 @@ export function AdminDashboard() {
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${currentLang}/admin${subPath}`;
 
-  // Determine permissions: consider both global role and tenant-level role
-  const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
-  const userIsGlobalAdmin = user?.role === ROLE_ADMIN;
-  const userIsGlobalEditor = user?.role === ROLE_EDITOR;
-  const userIsGlobalViewer = user?.role === ROLE_VIEWER;
+  // Align card visibility with ProtectedRoute ROLE_* guards (presentation only)
+  const userRole = (user?.role ?? null) as UserRole | null;
+  const userIsSuperadmin = userRole ? isSuperadmin(userRole) : false;
+  // Content routes: requiredRole=editor (no considerSiteRole) → editor / admin / superadmin
+  const canEditContent = userRole ? hasUserRolePermission(userRole, ROLE_EDITOR) : false;
+  // Site admin routes: requiredRole=admin + considerSiteRole → global admin / siteadmin / superadmin
+  const canManageSite =
+    userIsSuperadmin ||
+    (userRole ? hasUserRolePermission(userRole, ROLE_ADMIN) : false) ||
+    isSiteAdmin;
+  // Tartalom order: Új hely → Új esemény → Régió/tagságok → Települések → Hely tagságok → Kategóriák → Eseménynapló → Régióállapot.
+  // Galériák/Termékek/Címkék live under hely in Települések — not top-level cards.
+  // Régió card: superadmin label includes region settings; siteadmin/régióadmin sees memberships-only label.
+  const contentCards = useMemo((): DashboardCardItem[] => {
+    const cards: DashboardCardItem[] = [];
+    if (canEditContent) {
+      cards.push(
+        {
+          key: "newPlace",
+          title: t("admin.dashboardCards.newPlace"),
+          description: t("admin.dashboardCards.newPlaceDesc"),
+          link: `${adminPath("/places")}?new=true&from=dashboard`,
+          icon: "📍",
+          variant: "content",
+        },
+        {
+          key: "newEvent",
+          title: t("admin.dashboardCards.newEvent"),
+          description: t("admin.dashboardCards.newEventDesc"),
+          link: `${adminPath("/events")}?new=true&from=dashboard`,
+          icon: "✨",
+          variant: "content",
+        }
+      );
+    }
+    // Matches site-memberships: ROLE_ADMIN + considerSiteRole
+    if (canManageSite) {
+      cards.push({
+        key: "regionAndMemberships",
+        title: userIsSuperadmin
+          ? t("admin.dashboardCards.regionAndMemberships")
+          : t("admin.dashboardCards.regionMembershipsOnly"),
+        description: t("admin.dashboardCards.regionAndMembershipsDesc"),
+        link: adminPath("/site-memberships"),
+        icon: "🗺️",
+        variant: "content",
+      });
+    }
+    if (canEditContent) {
+      cards.push({
+        key: "contentHierarchy",
+        title: t("admin.dashboardCards.contentHierarchy"),
+        description: t("admin.dashboardCards.contentHierarchyDesc"),
+        link: adminPath("/towns"),
+        icon: "🏘️",
+        variant: "content",
+      });
+    }
+    // Matches place-memberships: ROLE_ADMIN + considerSiteRole
+    if (canManageSite) {
+      cards.push({
+        key: "placeMemberships",
+        title: t("admin.dashboardCards.placeMemberships"),
+        description: t("admin.dashboardCards.placeMembershipsDesc"),
+        link: adminPath("/place-memberships"),
+        icon: "🔐",
+        variant: "content",
+      });
+    }
+    if (canEditContent) {
+      cards.push({
+        key: "categories",
+        title: t("admin.dashboardCards.categories"),
+        description: t("admin.dashboardCards.categoriesDesc"),
+        link: adminPath("/categories"),
+        icon: "📁",
+        variant: "content",
+      });
+    }
+    // Matches event-log: ROLE_ADMIN + considerSiteRole
+    if (canManageSite) {
+      cards.push({
+        key: "eventLog",
+        title: t("admin.dashboardCards.eventLog"),
+        description: t("admin.dashboardCards.eventLogDesc"),
+        link: adminPath("/event-log"),
+        icon: "📋",
+        variant: "content",
+      });
+    }
+    // Régióállapot: content-scoped; superadmin sees all regions, others only assigned
+    if (canManageSite) {
+      cards.push({
+        key: "siteStatus",
+        title: t("admin.siteStatus.title"),
+        description: t("admin.dashboardCards.siteStatusDesc"),
+        link: adminPath("/site-status"),
+        icon: "📡",
+        variant: "content",
+      });
+    }
+    return cards;
+  }, [canEditContent, canManageSite, userIsSuperadmin, currentLang, t]);
 
-  // Effective admin permissions: superadmin OR global admin OR siteadmin
-  const hasAdminPermissions = userIsSuperadmin || userIsGlobalAdmin || isSiteAdmin;
+  // Platform / superadmin only — matches ROLE_SUPERADMIN route gates
+  // Régió + régió tagságok live under Tartalom (combined card).
+  const platformCards = useMemo((): DashboardCardItem[] => {
+    if (!userIsSuperadmin) return [];
+    return [
+      {
+        key: "users",
+        title: t("admin.users"),
+        description: t("admin.dashboardCards.usersDesc"),
+        link: adminPath("/users"),
+        icon: "👥",
+        variant: "admin",
+      },
+      {
+        key: "i18n",
+        title: t("admin.i18n.title"),
+        description: t("admin.dashboardCards.i18nDesc"),
+        link: adminPath("/i18n"),
+        icon: "🌐",
+        variant: "admin",
+      },
+      {
+        key: "appSettings",
+        title: t("admin.appSettings"),
+        description: t("admin.dashboardCards.appSettingsDesc"),
+        link: adminPath("/platform-settings"),
+        icon: "⚙️",
+        variant: "admin",
+      },
+      {
+        key: "priceBands",
+        title: t("admin.dashboardCards.priceBands"),
+        description: t("admin.dashboardCards.priceBandsDesc"),
+        link: adminPath("/price-bands"),
+        icon: "💰",
+        variant: "admin",
+      },
+      {
+        key: "staticPages",
+        title: t("admin.dashboardCards.staticPages"),
+        description: t("admin.dashboardCards.staticPagesDesc"),
+        link: adminPath("/static-pages"),
+        icon: "📝",
+        variant: "admin",
+      },
+      {
+        key: "legalPages",
+        title: t("admin.dashboardCards.legalPages"),
+        description: t("admin.dashboardCards.legalPagesDesc"),
+        link: adminPath("/legal"),
+        icon: "📄",
+        variant: "admin",
+      },
+      {
+        key: "domains",
+        title: t("admin.dashboardCards.domains"),
+        description: t("admin.dashboardCards.domainsDesc"),
+        link: adminPath("/domains"),
+        icon: "🏷️",
+        variant: "admin",
+      },
+      {
+        key: "collections",
+        title: t("admin.dashboardCards.collections"),
+        description: t("admin.dashboardCards.collectionsDesc"),
+        link: adminPath("/collections"),
+        icon: "📚",
+        variant: "admin",
+      },
+      // Site instances live under Régió edit (Instances tab) — not a platform card
+      {
+        key: "subscriptions",
+        title: t("admin.subscriptionsDashboard"),
+        description: t("admin.dashboardCards.subscriptionsDesc"),
+        link: adminPath("/subscriptions"),
+        icon: "💳",
+        variant: "admin",
+      },
+      {
+        key: "globalAnalytics",
+        title: t("admin.dashboardCards.globalAnalytics"),
+        description: t("admin.dashboardCards.globalAnalyticsDesc"),
+        link: adminPath("/analytics"),
+        icon: "📊",
+        variant: "admin",
+      },
+    ];
+  }, [userIsSuperadmin, currentLang, t]);
 
-  // Determine if EventLog card should be shown (admin or siteadmin)
-  const showEventLog = hasAdminPermissions;
-
-  // Count cards in each section to conditionally show section titles
-  const permissionsCardsCount = useMemo(() => {
-    let count = 0;
-    if (userIsSuperadmin) count += 2; // users + siteMemberships
-    if (hasAdminPermissions) count += 1; // placeMemberships
-    return count;
-  }, [user?.role, hasAdminPermissions]);
-
-  const systemCardsCount = useMemo(() => {
-    let count = 0;
-    if (user?.role === ROLE_SUPERADMIN) count += 4; // appSettings + brands + subscriptions + siteStatus
-    if (user?.role === ROLE_SUPERADMIN && HAS_MULTIPLE_SITES) count += 1; // sites
-    if (showEventLog) count += 1; // eventLog
-    return count;
-  }, [user?.role, showEventLog]);
-
-  // Public site URL
-  const publicSiteUrl = buildUrl({ lang: currentLang, siteKey, path: "" });
-
-  // Quick actions handlers
-  const handleNewPlace = () => {
-    // Navigate to places page with query param to trigger new form and track that we came from dashboard
-    navigate(`${adminPath("/places")}?new=true&from=dashboard`);
-  };
-
-  const handleNewEvent = () => {
-    // Navigate to events page with query param to trigger new form and track that we came from dashboard
-    navigate(`${adminPath("/events")}?new=true&from=dashboard`);
+  const gridStyle = {
+    display: "grid" as const,
+    gridTemplateColumns: isMobile
+      ? "repeat(auto-fit, minmax(min(100%, 96px), 1fr))"
+      : isTablet
+        ? "repeat(auto-fit, minmax(min(100%, 180px), 1fr))"
+        : "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
+    gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box" as const,
   };
 
   return (
     <div>
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <h1
+          className="admin-page-title"
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
               "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
+            color: "var(--hl-on-dark-strong, #ffffff)",
             margin: 0,
             marginBottom: 8,
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -134,12 +298,13 @@ export function AdminDashboard() {
           {t("admin.dashboard")}
         </h1>
         <p
+          className="admin-page-muted"
           style={{
             fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 400,
-            color: "#c0c0d0",
+            color: "var(--hl-muted-on-dark, #a8b0c8)",
             margin: 0,
             textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
           }}
@@ -148,330 +313,40 @@ export function AdminDashboard() {
         </p>
       </div>
 
-      {/* Quick Actions - Only show for editor, admin, superadmin (not viewer) */}
-      {!isMobile && user && user.role !== "viewer" && (
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            marginBottom: "clamp(24px, 5vw, 32px)",
-            flexWrap: "wrap",
-          }}
-        >
-          <QuickActionButton icon="➕" label={t("admin.forms.newPlace")} onClick={handleNewPlace} />
-          <QuickActionButton
-            icon="➕"
-            label={t("admin.forms.newEvent")}
-            onClick={handleNewEvent}
-            highlight
-          />
-          <QuickActionButton
-            icon="🔗"
-            label={t("admin.viewPublicSite")}
-            onClick={() => window.open(publicSiteUrl, "_blank")}
-            isExternal
-          />
-        </div>
-      )}
-
-      {/* Content Creation Block */}
-      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <SectionTitle label={t("admin.dashboardSections.contentCreation")} />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile
-              ? "repeat(auto-fit, minmax(85px, 1fr))"
-              : isTablet
-                ? "repeat(auto-fit, minmax(180px, 1fr))"
-                : "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          <DashboardCard
-            title={t("admin.dashboardCards.places")}
-            description={t("admin.dashboardCards.placesDesc")}
-            link={adminPath("/places")}
-            icon="📍"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.events")}
-            description={t("admin.dashboardCards.eventsDesc")}
-            link={adminPath("/events")}
-            icon="📅"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.towns")}
-            description={t("admin.dashboardCards.townsDesc")}
-            link={adminPath("/towns")}
-            icon="🏘️"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.categories")}
-            description={t("admin.dashboardCards.categoriesDesc")}
-            link={adminPath("/categories")}
-            icon="📁"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.priceBands")}
-            description={t("admin.dashboardCards.priceBandsDesc")}
-            link={adminPath("/price-bands")}
-            icon="💰"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.tags")}
-            description={t("admin.dashboardCards.tagsDesc")}
-            link={adminPath("/tags")}
-            icon="🏷️"
-            isMobile={isMobile}
-            variant="content"
-          />
-        </div>
-      </div>
-
-      {/* Analytics & Insights Block - Only for editor+ */}
-      {!userIsGlobalViewer && (
+      {contentCards.length > 0 && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-          <SectionTitle label={t("admin.dashboardSections.analytics") || "Analytics & Insights"} />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "repeat(auto-fit, minmax(85px, 1fr))"
-                : isTablet
-                  ? "repeat(auto-fit, minmax(180px, 1fr))"
-                  : "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            <DashboardCard
-              title={t("admin.dashboardCards.analytics") || "Analytics"}
-              description={
-                t("admin.dashboardCards.analyticsDesc") ||
-                "View site and place analytics, page views, and CTA clicks"
-              }
-              link={adminPath("/analytics")}
-              icon="📊"
-              isMobile={isMobile}
-              variant="content"
-            />
+          <SectionTitle label={t("admin.dashboardSections.content")} />
+          <div style={gridStyle}>
+            {contentCards.map((card) => (
+              <DashboardCard
+                key={card.key}
+                title={card.title}
+                description={card.description}
+                link={card.link}
+                icon={card.icon}
+                isMobile={isMobile}
+                variant={card.variant}
+              />
+            ))}
           </div>
         </div>
       )}
 
-      {/* Public Appearance Block */}
-      <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-        <SectionTitle label={t("admin.dashboardSections.publicAppearance")} />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile
-              ? "repeat(auto-fit, minmax(85px, 1fr))"
-              : isTablet
-                ? "repeat(auto-fit, minmax(180px, 1fr))"
-                : "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          <DashboardCard
-            title={t("admin.dashboardCards.staticPages")}
-            description={t("admin.dashboardCards.staticPagesDesc")}
-            link={adminPath("/static-pages")}
-            icon="📝"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.legalPages")}
-            description={t("admin.dashboardCards.legalPagesDesc")}
-            link={adminPath("/legal")}
-            icon="📄"
-            isMobile={isMobile}
-            variant="content"
-          />
-          <DashboardCard
-            title={t("admin.dashboardCards.galleries")}
-            description={t("admin.dashboardCards.galleriesDesc")}
-            link={adminPath("/galleries")}
-            icon="🖼️"
-            isMobile={isMobile}
-            variant="content"
-          />
-          {user?.role === ROLE_SUPERADMIN && (
-            <>
-              <DashboardCard
-                title={t("admin.dashboardCards.collections")}
-                description={t("admin.dashboardCards.collectionsDesc")}
-                link={adminPath("/collections")}
-                icon="📚"
-                isMobile={isMobile}
-                variant="content"
-              />
-              <DashboardCard
-                title={t("admin.dashboardCards.siteInstances")}
-                description={t("admin.dashboardCards.siteInstancesDesc")}
-                link={adminPath("/site-instances")}
-                icon="🌐"
-                isMobile={isMobile}
-                variant="content"
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Permissions & People Block */}
-      {permissionsCardsCount > 0 && (
+      {platformCards.length > 0 && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-          <SectionTitle label={t("admin.dashboardSections.permissions")} />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "repeat(auto-fit, minmax(85px, 1fr))"
-                : isTablet
-                  ? "repeat(auto-fit, minmax(180px, 1fr))"
-                  : "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            {user?.role === ROLE_SUPERADMIN && (
+          <SectionTitle label={t("admin.dashboardSections.platform")} />
+          <div style={gridStyle}>
+            {platformCards.map((card) => (
               <DashboardCard
-                title={t("admin.users")}
-                description={t("admin.dashboardCards.usersDesc")}
-                link={adminPath("/users")}
-                icon="👥"
+                key={card.key}
+                title={card.title}
+                description={card.description}
+                link={card.link}
+                icon={card.icon}
                 isMobile={isMobile}
-                variant="admin"
+                variant={card.variant}
               />
-            )}
-            {user?.role === ROLE_SUPERADMIN && (
-              <DashboardCard
-                title={t("admin.dashboardCards.siteMemberships")}
-                description={t("admin.dashboardCards.siteMembershipsDesc")}
-                link={adminPath("/site-memberships")}
-                icon="👥"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {hasAdminPermissions && (
-              <DashboardCard
-                title={t("admin.dashboardCards.placeMemberships")}
-                description={t("admin.dashboardCards.placeMembershipsDesc")}
-                link={adminPath("/place-memberships")}
-                icon="📍"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* System / Admin Block */}
-      {systemCardsCount > 0 && (
-        <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
-          <SectionTitle label={t("admin.dashboardSections.system")} />
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile
-                ? "repeat(auto-fit, minmax(85px, 1fr))"
-                : isTablet
-                  ? "repeat(auto-fit, minmax(180px, 1fr))"
-                  : "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: isMobile ? "12px" : "clamp(16px, 3vw, 24px)",
-              width: "100%",
-              maxWidth: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            {user?.role === ROLE_SUPERADMIN && (
-              <DashboardCard
-                title={t("admin.appSettings")}
-                description={t("admin.dashboardCards.appSettingsDesc")}
-                link={adminPath("/platform-settings")}
-                icon="⚙️"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {user?.role === ROLE_SUPERADMIN && (
-              <DashboardCard
-                title={t("admin.dashboardCards.brands")}
-                description={t("admin.dashboardCards.brandsDesc")}
-                link={adminPath("/brands")}
-                icon="🏷️"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {user?.role === ROLE_SUPERADMIN && HAS_MULTIPLE_SITES && (
-              <DashboardCard
-                title={t("admin.sites")}
-                description={t("admin.dashboardCards.sitesDesc")}
-                link={adminPath("/sites")}
-                icon="🗺️"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {showEventLog && (
-              <DashboardCard
-                title={t("admin.dashboardCards.eventLog")}
-                description={t("admin.dashboardCards.eventLogDesc")}
-                link={adminPath("/event-log")}
-                icon="📋"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {user?.role === ROLE_SUPERADMIN && (
-              <DashboardCard
-                title={t("admin.subscriptionsDashboard")}
-                description={t("admin.dashboardCards.subscriptionsDesc")}
-                link={adminPath("/subscriptions")}
-                icon="💳"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
-            {user?.role === ROLE_SUPERADMIN && (
-              <DashboardCard
-                title={t("admin.siteStatus.title") || "Site Status"}
-                description={
-                  t("admin.dashboardCards.siteStatusDesc") ||
-                  "View site statistics and manage cache"
-                }
-                link={adminPath("/site-status")}
-                icon="📊"
-                isMobile={isMobile}
-                variant="admin"
-              />
-            )}
+            ))}
           </div>
         </div>
       )}
@@ -482,12 +357,13 @@ export function AdminDashboard() {
 function SectionTitle({ label }: { label: string }) {
   return (
     <h2
+      className="admin-page-section-title"
       style={{
         fontSize: "clamp(14px, 3vw, 16px)",
         fontWeight: 600,
         fontFamily:
           "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#a8b3ff",
+        color: "var(--hl-on-dark-strong, #ffffff)",
         margin: "0 0 12px 0",
         textTransform: "uppercase",
         letterSpacing: "0.5px",
@@ -495,98 +371,6 @@ function SectionTitle({ label }: { label: string }) {
     >
       {label}
     </h2>
-  );
-}
-
-function QuickActionButton({
-  icon,
-  label,
-  onClick,
-  isExternal = false,
-  highlight = false,
-}: {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  isExternal?: boolean;
-  highlight?: boolean;
-}) {
-  // Highlighted button (for "Új esemény") - lighter background with sparkle badge
-  const normalBg = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
-  const normalBgHover = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
-  const highlightBg = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
-  const highlightBgHover = "linear-gradient(135deg, #6a6584 0%, #5d5a78 100%)";
-
-  const background = highlight ? highlightBg : normalBg;
-  const backgroundHover = highlight ? highlightBgHover : normalBgHover;
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "10px 16px",
-        background,
-        border: highlight
-          ? "1px solid rgba(102, 126, 234, 0.6)"
-          : "1px solid rgba(102, 126, 234, 0.4)",
-        borderRadius: 8,
-        color: "white",
-        fontSize: "clamp(13px, 2.5vw, 14px)",
-        fontWeight: 600,
-        fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        cursor: "pointer",
-        transition: "all 0.2s ease",
-        boxShadow: highlight
-          ? "0 2px 8px rgba(102, 126, 234, 0.3)"
-          : "0 2px 8px rgba(0, 0, 0, 0.2)",
-        position: "relative",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = highlight
-          ? "0 4px 12px rgba(102, 126, 234, 0.4)"
-          : "0 4px 12px rgba(0, 0, 0, 0.3)";
-        e.currentTarget.style.background = backgroundHover;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = highlight
-          ? "0 2px 8px rgba(102, 126, 234, 0.3)"
-          : "0 2px 8px rgba(0, 0, 0, 0.2)";
-        e.currentTarget.style.background = background;
-      }}
-    >
-      <span style={{ fontSize: "16px" }}>{icon}</span>
-      <span>{label}</span>
-      {highlight && (
-        <span
-          style={{
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            marginLeft: "2px",
-            filter: "drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))",
-          }}
-        >
-          ✨
-        </span>
-      )}
-      {isExternal && (
-        <span
-          style={{
-            fontSize: "clamp(13px, 3vw, 15px)",
-            opacity: 0.7,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          ↗
-        </span>
-      )}
-    </button>
   );
 }
 
@@ -629,7 +413,7 @@ function DashboardCard({
           background,
           borderRadius: 16,
           textDecoration: "none",
-          color: "white",
+          color: "var(--hl-on-dark, #f2f4fb)",
           transition: "all 0.2s ease",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
           border: "1px solid rgba(102, 126, 234, 0.3)",
@@ -637,6 +421,7 @@ function DashboardCard({
           padding: 8,
           boxSizing: "border-box",
         }}
+        className="admin-dash-card"
         onTouchStart={(e) => {
           e.currentTarget.style.transform = "scale(0.95)";
           e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
@@ -662,12 +447,13 @@ function DashboardCard({
           {icon}
         </div>
         <div
+          className="admin-dash-card__title"
           style={{
             fontSize: "clamp(13px, 3vw, 15px)",
             fontFamily:
               "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 600,
-            color: "#a8b3ff",
+            color: "var(--hl-on-dark-strong, #ffffff)",
             textAlign: "center",
             lineHeight: 1.2,
             overflow: "hidden",
@@ -690,6 +476,7 @@ function DashboardCard({
   return (
     <Link
       to={link}
+      className="admin-dash-card"
       style={{
         display: "flex",
         flexDirection: "row",
@@ -699,7 +486,7 @@ function DashboardCard({
         background,
         borderRadius: 12,
         textDecoration: "none",
-        color: "white",
+        color: "var(--hl-on-dark, #f2f4fb)",
         transition: "all 0.3s ease",
         boxShadow: "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
         minHeight: 70,
@@ -730,13 +517,14 @@ function DashboardCard({
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <h3
+          className="admin-dash-card__title"
           style={{
             margin: "0 0 3px 0",
             fontSize: "clamp(15px, 3.5vw, 16px)",
             fontFamily:
               "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
-            color: "#a8b3ff",
+            color: "var(--hl-on-dark-strong, #ffffff)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -745,9 +533,10 @@ function DashboardCard({
           {title}
         </h3>
         <p
+          className="admin-dash-card__desc"
           style={{
             margin: 0,
-            color: "rgba(255, 255, 255, 0.75)",
+            color: "var(--hl-muted-on-dark, #a8b0c8)",
             fontSize: "clamp(13px, 3vw, 15px)",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

@@ -117,18 +117,31 @@ pnpm prisma db seed
 
 ### 5. Fejlesztői szerverek indítása
 
-Két terminálban:
+Három helyi mód (párhuzamosan is futhatnak, külön portokon):
 
 ```bash
-# Terminal 1 - Backend
-pnpm run dev:api
+# Helyi docker/dev DB (apps/api/.env) — web 5173, API 3002
+pnpm local:dev
 
-# Terminal 2 - Frontend
-pnpm run dev:web
+# Staging / beta DB (apps/api/.env.staging) — web 5174, API 3003
+pnpm local:staging
+
+# Éles adatok böngészése — web 5175, /api → https://api.hello-local.io (Vite proxy)
+# Nincs helyi API production DATABASE_URL-lel. NE seed/migrate/truncate live ellen.
+pnpm local:live
 ```
 
-A frontend elérhető lesz: `http://localhost:5173`  
-A backend API elérhető lesz: `http://localhost:3002`
+Külön terminálokban továbbra is:
+
+```bash
+pnpm run dev:api   # 3002
+pnpm run dev:web   # 5173
+```
+
+Ha `http://localhost:5173/hu/etyek-budai` üres: a **local** DB-ben nincs site/hely.
+Csak a helyi (127.0.0.1) DB-n: `pnpm -C apps/api db:seed` (TRUNCATE + minta).
+`db:fill-etyek` csak meglévő etyek helyeket frissít; üres DB-n nem elég.
+Staging/live/production URL ellen soha ne futtass seedet.
 
 ## 📦 Production Build
 

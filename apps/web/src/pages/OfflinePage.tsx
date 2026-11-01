@@ -1,13 +1,10 @@
 // src/pages/OfflinePage.tsx
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+import {  DEFAULT_LANG, type Lang, isLang} from "../app/config";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "../app/config";
 import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function OfflinePage() {
   const { t } = useTranslation();

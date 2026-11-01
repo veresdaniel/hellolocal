@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import {
   getGalleries,
@@ -10,8 +11,6 @@ import {
   deleteGallery,
   type Gallery,
   type GalleryImage,
-  type CreateGalleryDto,
-  type UpdateGalleryDto,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
@@ -19,7 +18,10 @@ import {
   type TableColumn,
   type CardField,
 } from "../../components/AdminResponsiveTable";
+import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { uploadService } from "../../services/upload/uploadService";
 
 // Generate UUID v4 (using crypto.randomUUID if available, fallback to simple random)
@@ -38,6 +40,9 @@ const generateId = () => {
 export function GalleriesPage() {
   const { t } = useTranslation();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hierarchy = useAdminHierarchyFilters();
+  const placeIdFilter = hierarchy.placeId || undefined;
   usePageTitle("admin.galleries");
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +50,7 @@ export function GalleriesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [linkedPlaceId, setLinkedPlaceId] = useState<string | null>(placeIdFilter || null);
   const [formData, setFormData] = useState({
     name: "",
     images: [] as GalleryImage[],
@@ -64,14 +70,14 @@ export function GalleriesPage() {
     } else {
       setIsLoading(false);
     }
-  }, [selectedSiteId]);
+  }, [selectedSiteId, placeIdFilter, hierarchy.townId]);
 
   const loadGalleries = async () => {
     if (!selectedSiteId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getGalleries(selectedSiteId);
+      const response = await getGalleries(selectedSiteId, placeIdFilter);
       setGalleries(response.galleries || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadGalleriesFailed"));
@@ -223,6 +229,7 @@ export function GalleriesPage() {
     try {
       await createGallery({
         siteId: selectedSiteId,
+        placeId: linkedPlaceId,
         name: formData.name || null,
         images: formData.images,
         layout: formData.layout,
@@ -246,6 +253,7 @@ export function GalleriesPage() {
       await updateGallery(
         id,
         {
+          placeId: linkedPlaceId,
           name: formData.name || null,
           images: formData.images,
           layout: formData.layout,
@@ -277,6 +285,7 @@ export function GalleriesPage() {
 
   const handleEdit = (gallery: Gallery) => {
     setEditingId(gallery.id);
+    setLinkedPlaceId(gallery.placeId || placeIdFilter || null);
     setFormData({
       name: gallery.name || "",
       images: gallery.images || [],
@@ -290,8 +299,53 @@ export function GalleriesPage() {
   const handleCancel = () => {
     setEditingId(null);
     setIsCreating(false);
+    setLinkedPlaceId(placeIdFilter || null);
     resetForm();
   };
+
+  // Deep-link from Települések hierarchy: ?new=true&placeId=… or ?edit=…
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    const wantNew = searchParams.get("new") === "true";
+    if (placeIdFilter) setLinkedPlaceId(placeIdFilter);
+    if (wantNew) {
+      setEditingId(null);
+      setIsCreating(true);
+      setFormData({
+        name: "",
+        images: [],
+        layout: "grid",
+        columns: { base: 2, md: 3, lg: 4 },
+        aspect: "auto",
+        isActive: true,
+      });
+      setFormErrors({});
+      const next = new URLSearchParams(searchParams);
+      next.delete("new");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    if (editId && galleries.length > 0) {
+      const gallery = galleries.find((g) => g.id === editId);
+      if (gallery) {
+        setEditingId(gallery.id);
+        setIsCreating(false);
+        setLinkedPlaceId(gallery.placeId || placeIdFilter || null);
+        setFormData({
+          name: gallery.name || "",
+          images: gallery.images || [],
+          layout: gallery.layout || "grid",
+          columns: gallery.columns || { base: 2, md: 3, lg: 4 },
+          aspect: gallery.aspect || "auto",
+          isActive: gallery.isActive,
+        });
+        const next = new URLSearchParams(searchParams);
+        next.delete("edit");
+        setSearchParams(next, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, galleries, placeIdFilter]);
 
   const getShortcode = (galleryId: string) => {
     return `[gallery id="${galleryId}"]`;
@@ -307,7 +361,15 @@ export function GalleriesPage() {
     );
   };
 
-  const filteredGalleries = galleries.filter((gallery) => filterFn(gallery, searchQuery));
+  const placeIdSet =
+    hierarchy.townId && !hierarchy.placeId
+      ? new Set(hierarchy.matchingPlaceIds)
+      : null;
+  const filteredGalleries = galleries.filter((gallery) => {
+    if (hierarchy.placeId && gallery.placeId !== hierarchy.placeId) return false;
+    if (placeIdSet && (!gallery.placeId || !placeIdSet.has(gallery.placeId))) return false;
+    return filterFn(gallery, searchQuery);
+  });
 
   const columns: TableColumn<Gallery>[] = [
     {
@@ -433,6 +495,19 @@ export function GalleriesPage() {
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
               {t("admin.galleries.name")} ({t("admin.common.optional")})
             </label>
+            <AiPostfixField
+              draft={{
+                kind: "gallery",
+                field: "name",
+                lang: "hu",
+                siteId: selectedSiteId || undefined,
+                placeId: linkedPlaceId || undefined,
+                name: formData.name,
+                contextHints: "Photo gallery name",
+              }}
+              value={formData.name}
+              onApply={(text) => setFormData((prev) => ({ ...prev, name: text }))}
+            >
             <input
               type="text"
               value={formData.name}
@@ -445,6 +520,7 @@ export function GalleriesPage() {
               }}
               placeholder={t("admin.galleries.namePlaceholder")}
             />
+            </AiPostfixField>
           </div>
 
           <div style={{ marginBottom: "16px" }}>
@@ -551,6 +627,20 @@ export function GalleriesPage() {
                       }}
                     />
                     <div style={{ padding: "8px" }}>
+                      <AiPostfixField
+                        draft={{
+                          kind: "gallery",
+                          field: "caption",
+                          lang: "hu",
+                          siteId: selectedSiteId || undefined,
+                          placeId: linkedPlaceId || undefined,
+                          name: formData.name || image.alt || "gallery image",
+                          contextHints: image.alt || undefined,
+                        }}
+                        value={image.caption || ""}
+                        onApply={(text) => handleUpdateImageCaption(image.id, text)}
+                        variant="textarea"
+                      >
                       <textarea
                         value={image.caption || ""}
                         onChange={(e) => handleUpdateImageCaption(image.id, e.target.value)}
@@ -565,6 +655,7 @@ export function GalleriesPage() {
                           resize: "vertical",
                         }}
                       />
+                      </AiPostfixField>
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(image.id)}
@@ -683,6 +774,30 @@ export function GalleriesPage() {
           </div>
         </div>
       )}
+
+      {!isCreating && !editingId ? (
+        <div style={{ marginBottom: 16 }}>
+          <AdminHierarchyFilters
+            idPrefix="galleries-filter"
+            requireSite
+            allowClearSite={hierarchy.canPickSite}
+            siteId={hierarchy.siteId}
+            townId={hierarchy.townId}
+            placeId={hierarchy.placeId}
+            onSiteChange={hierarchy.setSiteId}
+            onTownChange={hierarchy.setTownId}
+            onPlaceChange={hierarchy.setPlaceId}
+            siteOptions={hierarchy.siteOptions}
+            townOptions={hierarchy.townOptions}
+            placeOptions={hierarchy.placeOptions}
+            onClear={() => {
+              hierarchy.clearFilters();
+              setSearchQuery("");
+            }}
+            clearDisabled={!hierarchy.filtersActive && !searchQuery.trim()}
+          />
+        </div>
+      ) : null}
 
       <AdminResponsiveTable<Gallery>
         data={filteredGalleries}

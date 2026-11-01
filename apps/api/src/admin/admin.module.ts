@@ -26,12 +26,15 @@ import { AdminFloorplanService } from "./admin-floorplan.service";
 import { AdminFloorplanPinService } from "./admin-floorplan-pin.service";
 import { GalleryPublicService } from "./gallery-public.service";
 import { GalleryPublicController } from "./gallery-public.controller";
+import { ContentDraftController } from "./content-draft.controller";
+import { ContentDraftService } from "./content-draft.service";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { SiteModule } from "../site/site.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { AuthModule } from "../auth/auth.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 import { EntitlementsModule } from "../entitlements/entitlements.module";
+import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
 
 @Module({
   imports: [
@@ -43,8 +46,9 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     PlatformSettingsModule,
     forwardRef(() => EntitlementsModule),
     SiteModule,
+    VisitorLadderModule,
   ],
-  controllers: [AdminController, GalleryPublicController],
+  controllers: [AdminController, GalleryPublicController, ContentDraftController],
   providers: [
     AdminCategoryService,
     AdminTagService,
@@ -69,6 +73,7 @@ import { EntitlementsModule } from "../entitlements/entitlements.module";
     AdminFloorplanService,
     AdminFloorplanPinService,
     GalleryPublicService,
+    ContentDraftService,
     // AdminEventLogService is now provided by EventLogModule
   ],
   exports: [

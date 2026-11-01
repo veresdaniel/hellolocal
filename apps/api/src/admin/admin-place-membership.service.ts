@@ -230,8 +230,8 @@ export class AdminPlaceMembershipService {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
-    // Superadmin and siteadmin can assign any role
-    if (actor.role === UserRole.superadmin) {
+    // Global admin/superadmin can assign any role (align with site-membership RBAC).
+    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
       return;
     }
 
@@ -246,7 +246,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (siteMembership?.role === SiteRole.siteadmin) {
-      return; // Siteadmin can assign any role
+      return; // Régióadmin can assign any place role in their region
     }
 
     // Check place membership
@@ -308,8 +308,8 @@ export class AdminPlaceMembershipService {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
-    // Superadmin and siteadmin can delete any membership
-    if (actor.role === UserRole.superadmin) {
+    // Global admin/superadmin can delete any membership (align with site-membership RBAC).
+    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
       return;
     }
 
@@ -324,7 +324,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (siteMembership?.role === SiteRole.siteadmin) {
-      return; // Siteadmin can delete any membership
+      return; // Régióadmin can delete any place membership in their region
     }
 
     // Check place membership

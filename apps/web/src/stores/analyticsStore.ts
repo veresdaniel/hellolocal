@@ -62,6 +62,11 @@ type PlaceDashboard = {
     ctaMaps: number;
     ctaFloorplan: number;
   };
+  productClicks: Array<{
+    productId: string;
+    name: string;
+    clicks: number;
+  }>;
 };
 
 type EventDashboard = {
@@ -92,15 +97,93 @@ type EventDashboard = {
   };
 };
 
+type TownDashboard = {
+  scope: "town";
+  townId: string;
+  days: number;
+  summary: {
+    pageViews: number;
+    placeViews: number;
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+    ctaFloorplan: number;
+  };
+  timeseries: Array<{
+    day: string;
+    pageViews: number;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+  ctaBreakdown: {
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+    ctaFloorplan: number;
+  };
+  topPlaces: Array<{
+    placeId: string;
+    name: string;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+};
+
+type GlobalDashboard = {
+  scope: "global";
+  days: number;
+  summary: {
+    pageViews: number;
+    placeViews: number;
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+    ctaFloorplan: number;
+  };
+  timeseries: Array<{
+    day: string;
+    pageViews: number;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+  ctaBreakdown: {
+    ctaPhone: number;
+    ctaEmail: number;
+    ctaWebsite: number;
+    ctaMaps: number;
+    ctaFloorplan: number;
+  };
+  topSites: Array<{
+    siteId: string;
+    name: string;
+    pageViews: number;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+  topPlaces: Array<{
+    placeId: string;
+    name: string;
+    placeViews: number;
+    ctaTotal: number;
+  }>;
+};
+
 type State = {
   loading: boolean;
   error?: string;
   site?: SiteDashboard;
   place?: PlaceDashboard;
   event?: EventDashboard;
+  town?: TownDashboard;
+  global?: GlobalDashboard;
   fetchSite: (range: Range, lang?: string) => Promise<void>;
   fetchPlace: (placeId: string, range: Range, lang?: string) => Promise<void>;
   fetchEvent: (eventId: string, range: Range, lang?: string) => Promise<void>;
+  fetchTown: (townId: string, range: Range, lang?: string) => Promise<void>;
+  fetchGlobal: (range: Range, lang?: string) => Promise<void>;
 };
 
 export const useAnalyticsStore = create<State>((set) => ({
@@ -109,6 +192,8 @@ export const useAnalyticsStore = create<State>((set) => ({
   site: undefined,
   place: undefined,
   event: undefined,
+  town: undefined,
+  global: undefined,
 
   fetchSite: async (range, lang = "hu") => {
     set({ loading: true, error: undefined });
@@ -141,6 +226,30 @@ export const useAnalyticsStore = create<State>((set) => ({
         `/${lang}/analytics/event/${eventId}?range=${range}`
       );
       set({ event: data, loading: false });
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  fetchTown: async (townId, range, lang = "hu") => {
+    set({ loading: true, error: undefined });
+    try {
+      const data = await apiGet<TownDashboard>(
+        `/${lang}/analytics/town/${townId}?range=${range}`
+      );
+      set({ town: data, loading: false });
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  fetchGlobal: async (range, lang = "hu") => {
+    set({ loading: true, error: undefined });
+    try {
+      const data = await apiGet<GlobalDashboard>(`/${lang}/analytics/global?range=${range}`);
+      set({ global: data, loading: false });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";
       set({ error: errorMessage, loading: false });

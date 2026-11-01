@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 const ALLOWED_CATEGORIES = new Set(["blog", "tudastar", "infok"] as const);
 type StaticPageCategory = "blog" | "tudastar" | "infok";

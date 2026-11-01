@@ -3,11 +3,8 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+import {  DEFAULT_LANG, type Lang, isLang} from "../app/config";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function PublicAuthBadge() {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -222,7 +219,7 @@ export function PublicAuthBadge() {
       {/* User info badge */}
       <div
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#1b1730",
           borderRadius: 16,
           boxShadow: isDragging
             ? "0 12px 40px rgba(102, 126, 234, 0.5), 0 6px 12px rgba(0, 0, 0, 0.15)"
@@ -296,7 +293,7 @@ export function PublicAuthBadge() {
           onClick={handleDashboard}
           style={{
             padding: "11px 18px",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "#1b1730",
             color: "white",
             border: "none",
             fontSize: "clamp(14px, 3.5vw, 16px)",

@@ -175,7 +175,7 @@ export function AdminResponsiveTable<T>({
               style={{
                 marginTop: 12,
                 fontSize: "clamp(14px, 3.5vw, 16px)",
-                color: "white",
+                color: "var(--hl-on-dark-strong, #ffffff)",
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 textAlign: "center",
@@ -252,7 +252,7 @@ export function AdminResponsiveTable<T>({
                       "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontWeight: 600,
                     fontSize: 14,
-                    color: "#333",
+                    color: "var(--hl-ink, #1b1730)",
                     fontStyle: "normal",
                     fontVariant: "normal",
                     textRendering: "optimizeLegibility",
@@ -283,7 +283,7 @@ export function AdminResponsiveTable<T>({
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 600,
                   fontSize: 14,
-                  color: "#333",
+                  color: "var(--hl-ink, #1b1730)",
                   fontStyle: "normal",
                   fontVariant: "normal",
                   textRendering: "optimizeLegibility",
@@ -347,7 +347,7 @@ export function AdminResponsiveTable<T>({
                       style={{
                         padding: "6px 10px",
                         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        color: "white",
+                        color: "var(--hl-on-dark-strong, #ffffff)",
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
@@ -433,7 +433,7 @@ export function AdminResponsiveTable<T>({
                       style={{
                         padding: "6px 10px",
                         background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                        color: "white",
+                        color: "var(--hl-on-dark-strong, #ffffff)",
                         border: "none",
                         borderRadius: 6,
                         cursor: "pointer",
@@ -484,7 +484,7 @@ export function AdminResponsiveTable<T>({
             style={{
               padding: 48,
               textAlign: "center",
-              color: "#999",
+              color: "var(--hl-muted, #665d78)",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               fontSize: 14,
@@ -518,7 +518,7 @@ export function AdminResponsiveTable<T>({
             style={{
               padding: 48,
               textAlign: "center",
-              color: "#999",
+              color: "var(--hl-muted, #665d78)",
               background: "white",
               borderRadius: 12,
             }}
@@ -554,7 +554,7 @@ export function AdminResponsiveTable<T>({
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
                     cursor: "pointer",
@@ -589,7 +589,7 @@ export function AdminResponsiveTable<T>({
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
                     cursor: "pointer",
@@ -904,7 +904,7 @@ export function AdminResponsiveTable<T>({
                               style={{
                                 width: 80,
                                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                color: "white",
+                                color: "var(--hl-on-dark-strong, #ffffff)",
                                 border: "none",
                                 cursor: "pointer",
                                 display: "flex",
@@ -946,7 +946,7 @@ export function AdminResponsiveTable<T>({
                                 style={{
                                   width: 80,
                                   background: "rgba(16, 185, 129, 0.9)",
-                                  color: "white",
+                                  color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",
                                   display: "flex",
@@ -988,7 +988,7 @@ export function AdminResponsiveTable<T>({
                               style={{
                                 width: 80,
                                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                                color: "white",
+                                color: "var(--hl-on-dark-strong, #ffffff)",
                                 border: "none",
                                 cursor: "pointer",
                                 display: "flex",
@@ -1146,7 +1146,7 @@ export function AdminResponsiveTable<T>({
                               style={{
                                 fontSize: 18,
                                 fontWeight: 700,
-                                color: "#333",
+                                color: "var(--hl-ink, #1b1730)",
                                 marginBottom: 4,
                               }}
                             >
@@ -1158,7 +1158,7 @@ export function AdminResponsiveTable<T>({
                               <div
                                 style={{
                                   fontSize: 13,
-                                  color: "#666",
+                                  color: "var(--hl-muted, #665d78)",
                                   fontFamily:
                                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                 }}
@@ -1180,7 +1180,7 @@ export function AdminResponsiveTable<T>({
                                   gap: 8,
                                   marginBottom: 8,
                                   fontSize: 14,
-                                  color: "#666",
+                                  color: "var(--hl-muted, #665d78)",
                                 }}
                               >
                                 {field.icon && (

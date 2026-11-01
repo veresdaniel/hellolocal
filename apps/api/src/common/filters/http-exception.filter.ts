@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from "@nestjs/common";
+import { langFromPath, langOrDefault } from "../lang";
 
 /**
  * Global exception filter that catches all exceptions and returns a consistent error response format.
@@ -57,7 +58,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         // For OAuth errors, redirect to frontend login page instead of returning JSON
         if (request.url?.includes("/google/callback")) {
           const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-          const lang = request.headers.referer?.match(/\/(hu|en|de)(\/|$)/)?.[1] || "hu";
+          const lang = langFromPath(request.headers.referer) || langOrDefault(undefined);
           return response.redirect(
             `${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(message)}`
           );

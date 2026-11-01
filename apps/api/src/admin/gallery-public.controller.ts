@@ -7,6 +7,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { GalleryPublicService } from "./gallery-public.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for gallery endpoints.
@@ -22,14 +23,6 @@ export class GalleryPublicController {
 
   constructor(private readonly galleryService: GalleryPublicService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Gets a single gallery by ID.
@@ -45,7 +38,7 @@ export class GalleryPublicController {
     @Param("siteKey") siteKey: string,
     @Param("id") id: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     try {
       return await this.galleryService.findOne(lang, siteKey, id);
     } catch (error) {

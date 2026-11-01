@@ -18,6 +18,7 @@ import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { UserRole } from "@prisma/client";
+import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
 
 export interface JwtPayload {
@@ -164,8 +165,8 @@ export class AuthService {
     } else if (referer) {
       // Try to extract siteKey and lang from referer URL
       // Format: /:lang/:siteKey/... or /:lang/admin/...
-      const refererMatch = referer.match(/\/(hu|en|de)\/([^\/]+)/);
-      if (refererMatch) {
+      const refererMatch = referer.match(/\/([a-z]{2,3})\/([^/]+)/);
+      if (refererMatch && isSupportedLang(refererMatch[1])) {
         const lang = refererMatch[1];
         const siteKey = refererMatch[2];
 
@@ -175,7 +176,7 @@ export class AuthService {
             // Try to resolve site from siteKey + lang
             const siteKeyRecord = await this.prisma.siteKey.findFirst({
               where: {
-                lang: lang as any,
+                lang,
                 slug: siteKey,
                 isActive: true,
               },
@@ -225,7 +226,10 @@ export class AuthService {
 
     // For pro/business plans, check if public registration is enabled
     // Basic plan always allows public registration
-    if ((site.plan === "pro" || site.plan === "business") && !site.allowPublicRegistration) {
+    if (
+      (site.plan === "pro" || site.plan === "business" || site.plan === "municipal") &&
+      !site.allowPublicRegistration
+    ) {
       throw new BadRequestException(
         "Public registration is disabled for this site. Please contact the site administrator."
       );

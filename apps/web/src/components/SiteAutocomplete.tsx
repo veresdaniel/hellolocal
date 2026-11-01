@@ -72,7 +72,7 @@ export function SiteAutocomplete({
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
-        {t("admin.sites")}
+        {t("admin.tenants")}
       </label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         {selectedSiteIds.map((siteId) => (

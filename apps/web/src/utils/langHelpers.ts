@@ -5,6 +5,7 @@
 
 import type { Lang } from "../types/enums";
 import { LANG_VALUES } from "../types/enums";
+import { languagesOnForm } from "./langFields";
 
 export interface LangFieldValues {
   nameHu?: string;

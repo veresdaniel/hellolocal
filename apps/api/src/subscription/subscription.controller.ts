@@ -13,7 +13,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { SubscriptionService } from "./subscription.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 @Controller("/api/:lang/sites")
 export class SubscriptionController {

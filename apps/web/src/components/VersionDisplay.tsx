@@ -26,13 +26,13 @@ export function VersionDisplay() {
         bottom: 8,
         right: 8,
         fontSize: "10px",
-        color: "#999",
+        color: "var(--hl-muted, #665d78)",
         fontFamily: "monospace",
         zIndex: 1000,
-        background: "rgba(255, 255, 255, 0.8)",
+        background: "var(--hl-card, #fffdf9)",
         padding: "4px 8px",
         borderRadius: 4,
-        border: "1px solid #e0e0e0",
+        border: "1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.12))",
       }}
     >
       v{displayVersion}

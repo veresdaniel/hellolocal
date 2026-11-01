@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { langOrDefault } from "../common/lang";
 
 @Injectable()
 export class CollectionsService {
@@ -74,7 +75,7 @@ export class CollectionsService {
    *
    * Items list:
    * For each item:
-   * 1. itemTranslation = CollectionItemTranslation[lang] if exists
+    const lang = langOrDefault(args.lang, { lower: true });
    * 2. siteTranslation = SiteTranslation[lang] if exists (fallback hu)
    * 3. Displayed fields:
    *    - title: itemTranslation.titleOverride ?? siteTranslation.name

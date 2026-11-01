@@ -2,6 +2,7 @@
 import { Injectable, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { canEditCopy, type CopyActor, type CopyScope } from "./copy-access";
 
 @Injectable()
 export class RbacService {
@@ -288,6 +289,55 @@ export class RbacService {
     // User doesn't have any of the required roles
     throw new ForbiddenException(
       `User does not have required site permission. Required: ${allowedRoles.join(" or ")}`
+    );
+  }
+
+  /**
+   * Global role plus membership on one site and optionally one place.
+   * A missing site id is only valid for platform copy, which ignores site/place role.
+   */
+  async copyActor(
+    userId: string,
+    role: string | null | undefined,
+    siteId?: string,
+    placeId?: string
+  ): Promise<CopyActor> {
+    let resolved = role;
+    if (!resolved) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      resolved = user?.role ?? null;
+    }
+    if (resolved === UserRole.superadmin) {
+      return { role: resolved, siteRole: null, placeRole: null };
+    }
+    let siteRole: string | null = null;
+    if (siteId) {
+      const membership = await this.prisma.siteMembership.findUnique({
+        where: { siteId_userId: { siteId, userId } },
+        select: { role: true },
+      });
+      siteRole = membership?.role ?? null;
+    }
+    let placeRole: string | null = null;
+    if (placeId) {
+      const membership = await this.prisma.placeMembership.findUnique({
+        where: { placeId_userId: { placeId, userId } },
+        select: { role: true },
+      });
+      placeRole = membership?.role ?? null;
+    }
+    return { role: resolved, siteRole, placeRole };
+  }
+
+  assertCopyEditor(actor: CopyActor, scope: CopyScope): void {
+    if (canEditCopy(actor, scope)) return;
+    throw new ForbiddenException(
+      scope === "platform"
+        ? "Only a superadmin can edit platform UI copy"
+        : "Only the site owner or a superadmin can edit these translations"
     );
   }
 }

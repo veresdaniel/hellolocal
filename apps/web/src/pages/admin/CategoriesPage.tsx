@@ -1,5 +1,6 @@
 // src/pages/admin/CategoriesPage.tsx
 import { useState, useEffect } from "react";
+import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -24,13 +25,15 @@ import {
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import type { Lang} from "../../types/enums";
 
 interface Category {
   id: string;
   tenantId: string;
   parentId: string | null;
+  kind?: "place" | "service";
   isActive: boolean;
   color: string | null;
   order: number;
@@ -74,6 +77,7 @@ export function CategoriesPage() {
     isActive: true,
     color: "",
     parentId: "" as string | "",
+    kind: "place" as "place" | "service",
     order: 0,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -158,9 +162,11 @@ export function CategoriesPage() {
           description: formData.descriptionDe || null,
         });
       }
+      appendExtraLanguages(translations, formData, "name", ["description"]);
       await createCategory({
         tenantId: selectedSiteId,
         parentId: formData.parentId || null,
+        kind: formData.kind,
         translations,
         isActive: formData.isActive,
         color: formData.color || null,
@@ -201,10 +207,12 @@ export function CategoriesPage() {
           description: formData.descriptionDe || null,
         });
       }
+      appendExtraLanguages(translations, formData, "name", ["description"]);
       await updateCategory(
         id,
         {
           parentId: formData.parentId || null,
+          kind: formData.kind,
           translations,
           isActive: formData.isActive,
           color: formData.color || null,
@@ -269,8 +277,12 @@ export function CategoriesPage() {
       isActive: category.isActive,
       color: category.color || "",
       parentId: category.parentId || "",
+      kind: category.kind === "service" ? "service" : "place",
       order: category.order,
     });
+    setFormData((current) =>
+      mergeTranslations(current, category.translations, ["name", "description"])
+    );
   };
 
   const resetForm = () => {
@@ -284,6 +296,7 @@ export function CategoriesPage() {
       isActive: true,
       color: "",
       parentId: "",
+      kind: "place",
       order: 0,
     });
     setFormErrors({});
@@ -358,44 +371,42 @@ export function CategoriesPage() {
                   >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
+                  <AiPostfixField
+                    draft={{
+                      kind: "category",
+                      field: "name",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
+                    value={readLang(formData, "name", selectedLang)}
+                    onApply={(text) =>
+                      setFormData(patchLang(formData, "name", selectedLang, text))
+                    }
+                  >
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe
+                      readLang(formData, "name", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, nameEn: e.target.value });
-                      else setFormData({ ...formData, nameDe: e.target.value });
+                      setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
                       padding: 8,
                       fontSize: 16,
                       border:
-                        (selectedLang === "hu" && formErrors.nameHu) ||
-                        (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe)
+                        readLang(formErrors, "name", selectedLang)
                           ? "1px solid #dc3545"
                           : "1px solid #ddd",
                       borderRadius: 4,
                     }}
                   />
-                  {(selectedLang === "hu" && formErrors.nameHu) ||
-                  (selectedLang === "en" && formErrors.nameEn) ||
-                  (selectedLang === "de" && formErrors.nameDe) ? (
+                  </AiPostfixField>
+                  {readLang(formErrors, "name", selectedLang) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-                      {selectedLang === "hu"
-                        ? formErrors.nameHu
-                        : selectedLang === "en"
-                          ? formErrors.nameEn
-                          : formErrors.nameDe}
+                      {readLang(formErrors, "name", selectedLang)}
                     </div>
                   ) : null}
                 </div>
@@ -413,21 +424,21 @@ export function CategoriesPage() {
                   </label>
                   <TipTapEditorWithUpload
                     value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                          ? formData.descriptionEn
-                          : formData.descriptionDe
+                      readLang(formData, "description", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, descriptionEn: value });
-                      else setFormData({ ...formData, descriptionDe: value });
+                      setFormData(patchLang(formData, "description", selectedLang, value));
                     }}
                     placeholder={t("common.description")}
                     height={200}
                     uploadFolder="editor/categories"
+                    aiDraft={{
+                      kind: "category",
+                      field: "description",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
                   />
                 </div>
               </>
@@ -474,6 +485,17 @@ export function CategoriesPage() {
             </select>
           </div>
 
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <input
+              type="checkbox"
+              checked={formData.kind === "service"}
+              onChange={(e) =>
+                setFormData({ ...formData, kind: e.target.checked ? "service" : "place" })
+              }
+            />
+            {t("admin.categoryKindService")}
+          </label>
+
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", marginBottom: 4 }}>
               {t("admin.order") || "Sorrend"}
@@ -493,7 +515,7 @@ export function CategoriesPage() {
             />
             <p
               style={{
-                color: "#666",
+                color: "var(--hl-muted, #665d78)",
                 fontSize: 12,
                 marginTop: 4,
                 fontFamily:
@@ -529,7 +551,7 @@ export function CategoriesPage() {
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+              <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
 
@@ -567,7 +589,7 @@ export function CategoriesPage() {
             </div>
             <p
               style={{
-                color: "#666",
+                color: "var(--hl-muted, #665d78)",
                 fontSize: 12,
                 marginTop: 4,
                 fontFamily:
@@ -597,7 +619,7 @@ export function CategoriesPage() {
               background: "#f5f5f5",
               borderBottom: "1px solid #ddd",
               fontSize: 12,
-              color: "#666",
+              color: "var(--hl-muted, #665d78)",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
@@ -644,7 +666,7 @@ export function CategoriesPage() {
             <tbody>
               {categories.map((category, index) => {
                 // Get current language or fallback to Hungarian
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   category.translations.find((t) => t.lang === currentLang) ||
                   category.translations.find((t) => t.lang === "hu");
@@ -988,12 +1010,12 @@ export function CategoriesPage() {
                       cursor: isMobile ? "default" : "move",
                     }}
                   >
-                    <td style={{ padding: 12, textAlign: "center", color: "#999" }}>
+                    <td style={{ padding: 12, textAlign: "center", color: "var(--hl-muted, #665d78)" }}>
                       <span style={{ fontSize: 18 }}>⋮⋮</span>
                     </td>
                     <td style={{ padding: 12, paddingLeft: category.parentId ? 32 : 12 }}>
                       {category.parentId && (
-                        <span style={{ color: "#999", marginRight: 8 }}>└─</span>
+                        <span style={{ color: "var(--hl-muted, #665d78)", marginRight: 8 }}>└─</span>
                       )}
                       {translation?.name || "-"}
                     </td>
@@ -1005,7 +1027,7 @@ export function CategoriesPage() {
                           padding: "4px 8px",
                           borderRadius: 4,
                           background: category.isActive ? "#28a745" : "#dc3545",
-                          color: "white",
+                          color: "var(--hl-on-dark-strong, #ffffff)",
                           fontSize: 12,
                         }}
                       >
@@ -1019,7 +1041,7 @@ export function CategoriesPage() {
                           style={{
                             padding: "4px 8px",
                             background: "#007bff",
-                            color: "white",
+                            color: "var(--hl-on-dark-strong, #ffffff)",
                             border: "none",
                             borderRadius: 4,
                             cursor: "pointer",
@@ -1033,7 +1055,7 @@ export function CategoriesPage() {
                           style={{
                             padding: "4px 8px",
                             background: "#dc3545",
-                            color: "white",
+                            color: "var(--hl-on-dark-strong, #ffffff)",
                             border: "none",
                             borderRadius: 4,
                             cursor: "pointer",
@@ -1050,7 +1072,7 @@ export function CategoriesPage() {
             </tbody>
           </table>
           {categories.length === 0 && (
-            <div style={{ padding: 48, textAlign: "center", color: "#999" }}>
+            <div style={{ padding: 48, textAlign: "center", color: "var(--hl-muted, #665d78)" }}>
               {t("admin.table.noData")}
             </div>
           )}
@@ -1080,7 +1102,7 @@ export function CategoriesPage() {
           }}
           filterFn={(category, query) => {
             const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               category.translations.find((t) => t.lang === currentLang) ||
               category.translations.find((t) => t.lang === "hu");
@@ -1092,7 +1114,7 @@ export function CategoriesPage() {
               key: "name",
               label: t("common.name"),
               render: (category) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   category.translations.find((t) => t.lang === currentLang) ||
                   category.translations.find((t) => t.lang === "hu");
@@ -1104,7 +1126,7 @@ export function CategoriesPage() {
               label: t("admin.parentCategory") || "Szülő",
               render: (category) => {
                 if (!category.parent) return "-";
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const parentTranslation =
                   category.parent.translations.find((t) => t.lang === currentLang) ||
                   category.parent.translations.find((t) => t.lang === "hu");
@@ -1122,7 +1144,7 @@ export function CategoriesPage() {
                     background: category.isActive
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     fontSize: 12,
                     fontWeight: 600,
                   }}
@@ -1133,7 +1155,7 @@ export function CategoriesPage() {
             },
           ]}
           cardTitle={(category) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               category.translations.find((t) => t.lang === currentLang) ||
               category.translations.find((t) => t.lang === "hu");
@@ -1141,7 +1163,7 @@ export function CategoriesPage() {
           }}
           cardSubtitle={(category) => {
             if (!category.parent) return null;
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const parentTranslation =
               category.parent.translations.find((t) => t.lang === currentLang) ||
               category.parent.translations.find((t) => t.lang === "hu");
@@ -1151,7 +1173,7 @@ export function CategoriesPage() {
             {
               key: "order",
               render: (category) => (
-                <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>
+                <div style={{ color: "var(--hl-muted, #665d78)", fontSize: 14, marginBottom: 8 }}>
                   #{category.order}
                 </div>
               ),
@@ -1167,7 +1189,7 @@ export function CategoriesPage() {
                     background: category.isActive
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     fontSize: 13,
                     fontWeight: 600,
                   }}

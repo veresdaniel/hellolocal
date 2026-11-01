@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { PrismaClient, Lang, UserRole } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
+import { Lang } from "../src/common/language-code";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { SlugEntityType } from "../src/slug/slug-entity-type";
 import * as bcrypt from "bcryptjs";

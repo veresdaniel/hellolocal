@@ -11,6 +11,10 @@ import Image from "@tiptap/extension-image";
 import ImageResize from "tiptap-extension-resize-image";
 import { useEffect, useState, useRef } from "react";
 import { uploadService } from "../services/upload/uploadService";
+import {
+  AiGeneratePostfixButton,
+  type AiDraftTarget,
+} from "./AiGeneratePostfixButton";
 
 interface TipTapEditorWithUploadProps {
   value: string;
@@ -25,6 +29,8 @@ interface TipTapEditorWithUploadProps {
    * Enable video uploads (default: false)
    */
   enableVideo?: boolean;
+  /** Optional AI draft control shown as a compact toolbar postfix. */
+  aiDraft?: AiDraftTarget;
 }
 
 export function TipTapEditorWithUpload({
@@ -34,6 +40,7 @@ export function TipTapEditorWithUpload({
   height = 300,
   uploadFolder = "editor",
   enableVideo = false,
+  aiDraft,
 }: TipTapEditorWithUploadProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -239,6 +246,7 @@ export function TipTapEditorWithUpload({
         <textarea
           value={sourceCode}
           onChange={(e) => handleSourceCodeChange(e.target.value)}
+          aria-label="HTML source code"
           style={{
             width: "100%",
             minHeight: `${height}px`,
@@ -283,6 +291,8 @@ export function TipTapEditorWithUpload({
 
       {/* Toolbar */}
       <div
+        role="toolbar"
+        aria-label="Editor toolbar"
         style={{
           padding: 8,
           background: "#f5f5f5",
@@ -340,10 +350,11 @@ export function TipTapEditorWithUpload({
         {showLinkInput ? (
           <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
             <input
-              type="text"
+              type="url"
               placeholder="URL"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
+              aria-label="URL"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSetLink();
@@ -365,6 +376,7 @@ export function TipTapEditorWithUpload({
                 placeholder="Link text"
                 value={linkText}
                 onChange={(e) => setLinkText(e.target.value)}
+                aria-label="Link text"
                 style={{
                   padding: "4px 8px",
                   border: "1px solid #ddd",
@@ -391,6 +403,7 @@ export function TipTapEditorWithUpload({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Set Link"
+              aria-label="Set Link"
             >
               ✓
             </button>
@@ -410,6 +423,7 @@ export function TipTapEditorWithUpload({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
                 title="Remove Link"
+                aria-label="Remove Link"
               >
                 ✕
               </button>
@@ -433,6 +447,7 @@ export function TipTapEditorWithUpload({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
               title="Cancel"
+              aria-label="Cancel"
             >
               ✕
             </button>
@@ -529,6 +544,16 @@ export function TipTapEditorWithUpload({
         )}
 
         <div style={{ flex: 1 }} />
+
+        {aiDraft ? (
+          <AiGeneratePostfixButton
+            draft={aiDraft}
+            value={value}
+            onApply={(text) => onChange(text)}
+            variant="toolbar"
+            style={{ marginRight: 4 }}
+          />
+        ) : null}
 
         {/* Source Code Toggle */}
         <ToolbarButton onClick={handleToggleSourceCode} title="Toggle HTML Source Code View">
@@ -659,6 +684,8 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
+      aria-pressed={typeof isActive === "boolean" ? isActive : undefined}
       style={{
         padding: "4px 8px",
         background: isActive ? "#667eea" : disabled ? "#ccc" : "white",

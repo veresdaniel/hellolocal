@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Site } from "../../../api/places.api";
 import { buildUrl } from "../../../app/urls";
 import { useRouteCtx } from "../../../app/useRouteCtx";
+import type { Lang } from "../../../types/enums";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../../../api/places.api";
 import { sanitizeImageUrl } from "../../../utils/urlValidation";
@@ -32,7 +33,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
 
   // Default gradient colors for tenant cards
   const gradients = [
-    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "linear-gradient(160deg, #1b1730 0%, #322b52 100%)",
     "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
@@ -44,9 +45,6 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
   return (
     <div
       style={{
-        opacity: 0,
-        transform: "translateY(30px)",
-        animation: `fadeInUp 0.6s ease-out ${index * 0.08}s forwards`,
         width: "100%",
         maxWidth: "100%",
         minWidth: 0,
@@ -56,12 +54,6 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
       }}
     >
       <style>{`
-        @keyframes fadeInUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
         .tenant-card:hover .card-read-more span:last-child {
           transform: translateX(6px);
         }
@@ -70,7 +62,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
         }
       `}</style>
       <Link
-        to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey: tenant.slug, path: "" })}
+        to={buildUrl({ lang: lang as Lang, siteKey: tenant.slug, path: "" })}
         style={{
           textDecoration: "none",
           color: "inherit",
@@ -237,7 +229,7 @@ export function TenantCard({ tenant, index = 0 }: TenantCardProps) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  color: "#667eea",
+                  color: "#c45c26",
                   fontSize: 15,
                   fontWeight: 600,
                   transition: "all 0.3s ease",

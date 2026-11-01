@@ -8,14 +8,15 @@ import { getStaticPage } from "../api/static-pages.api";
 import { getPlatformSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { ErrorState } from "../components/ErrorState";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
+import { NotFoundPage } from "./NotFoundPage";
+import { hasVisibleHtml } from "../utils/hasVisibleHtml";
+import "../styles/story.css";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { HAS_MULTIPLE_SITES } from "../app/config";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { useAuth } from "../contexts/AuthContext";
-import { getSiteMemberships } from "../api/admin.api";
-import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
+import { isSuperadmin } from "../utils/roleHelpers";
 
 export function StaticPageDetailPage() {
   const { t } = useTranslation();
@@ -243,114 +244,44 @@ export function StaticPageDetailPage() {
     }
   }, [staticPage?.content]);
 
-  // Check if user can edit this static page (site admin permissions)
-  const [canEditStaticPage, setCanEditStaticPage] = useState(false);
-  const [staticPageSiteId, setStaticPageSiteId] = useState<string | null>(null);
+  // Static pages admin is superadmin-only
+  const canEditStaticPage =
+    isAuthenticated && !!user && isSuperadmin(user.role);
 
-  useEffect(() => {
-    if (staticPage?.siteId) {
-      setStaticPageSiteId(staticPage.siteId);
-    }
-  }, [staticPage?.siteId]);
-
-  // Check static page permissions
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!isAuthenticated || !user || !staticPageSiteId) {
-        setCanEditStaticPage(false);
-        return;
-      }
-
-      try {
-        // Check global role (superadmin, admin, editor can edit)
-        if (isSuperadmin(user.role) || isAdmin(user.role) || canEdit(user.role)) {
-          setCanEditStaticPage(true);
-          return;
-        }
-
-        // Check site-level role
-        try {
-          const siteMemberships = await getSiteMemberships(staticPageSiteId, user.id);
-          const siteMembership = siteMemberships.find(
-            (m) => m.siteId === staticPageSiteId && m.userId === user.id
-          );
-          if (
-            siteMembership &&
-            (siteMembership.role === "siteadmin" || siteMembership.role === "editor")
-          ) {
-            setCanEditStaticPage(true);
-            return;
-          }
-        } catch (err) {
-          // Site membership check failed
-        }
-
-        setCanEditStaticPage(false);
-      } catch (err) {
-        console.error("Failed to check static page permissions", err);
-        setCanEditStaticPage(false);
-      }
-    };
-
-    checkPermissions();
-  }, [isAuthenticated, user, staticPageSiteId]);
-
-  if (error || (!isLoading && !staticPage)) {
-    return (
-      <ErrorState
-        title={t("error.errorOccurred")}
-        message={t("public.errorLoadingPlace")}
-        variant="minimal"
-      />
-    );
+  if (error || (!isLoading && (!staticPage || !hasVisibleHtml(staticPage.content)))) {
+    return <NotFoundPage />;
   }
 
   if (!staticPage) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
+    return (
+      <>
+        <FloatingHeader />
+        <PublicPageSkeleton withHero={false} label={t("common.loading")} />
+      </>
+    );
   }
 
   // Build edit URL if user can edit
   const editUrl = canEditStaticPage && id ? `/${lang}/admin/static-pages?edit=${id}` : undefined;
 
+  const categoryLabel =
+    staticPage.category === "blog"
+      ? t("admin.categoryBlog")
+      : staticPage.category === "tudastar"
+        ? t("admin.categoryTudastar")
+        : staticPage.category === "infok"
+          ? t("admin.categoryInfok")
+          : staticPage.category;
+
   return (
     <>
-      <LoadingSpinner isLoading={isLoading} />
       <FloatingHeader editUrl={editUrl} showEditButton={canEditStaticPage} />
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          paddingTop: "clamp(72px, 8vw, 88px)",
-        }}
-      >
-        <article
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "0 16px 64px",
-            width: "100%",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "clamp(24px, 5vw, 36px)",
-              fontWeight: 700,
-              marginTop: 0,
-              marginBottom: 24,
-              color: "#1a1a1a",
-              lineHeight: 1.3,
-            }}
-          >
-            {staticPage.title}
-          </h1>
-          <div
-            ref={contentRef}
-            style={{
-              fontSize: 16,
-              lineHeight: 1.8,
-              color: "#333",
-            }}
-          >
+      <div className="story">
+        <div className="story__sky" aria-hidden="true" />
+        <article className="story__sheet">
+          {categoryLabel ? <p className="story__eyebrow">{categoryLabel}</p> : null}
+          <h1>{staticPage.title}</h1>
+          <div className="story__body" ref={contentRef}>
             <ShortcodeRenderer
               content={staticPage.content}
               lang={safeLang}

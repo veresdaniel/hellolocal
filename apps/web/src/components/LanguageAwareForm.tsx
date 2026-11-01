@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
-import { LANG_VALUES, type Lang } from "../types/enums";
+import { type Lang } from "../types/enums";
+import { useContentLanguages } from "../hooks/useContentLanguages";
+import { languageLabel } from "../utils/langFields";
 
 interface LanguageAwareFormProps {
   children: (selectedLang: Lang) => ReactNode;
@@ -10,8 +12,10 @@ interface LanguageAwareFormProps {
 }
 
 export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwareFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const languages = useContentLanguages();
   const [selectedLang, setSelectedLang] = useState<Lang>(defaultLang);
+  const activeLang = languages.includes(selectedLang) ? selectedLang : languages[0] || defaultLang;
 
   return (
     <div>
@@ -27,7 +31,7 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
           {t("admin.language")}:
         </label>
         <select
-          value={selectedLang}
+          value={activeLang}
           onChange={(e) => setSelectedLang(e.target.value as Lang)}
           style={{
             padding: "6px 12px",
@@ -38,14 +42,16 @@ export function LanguageAwareForm({ children, defaultLang = "hu" }: LanguageAwar
             cursor: "pointer",
           }}
         >
-          {LANG_VALUES.map((lang) => (
+          {languages.map((lang) => (
             <option key={lang} value={lang}>
-              {t(`admin.languageNames.${lang}`)}
+              {t(`admin.languageNames.${lang}`, {
+                defaultValue: languageLabel(lang, i18n.language),
+              })}
             </option>
           ))}
         </select>
       </div>
-      {children(selectedLang)}
+      {children(activeLang)}
     </div>
   );
 }

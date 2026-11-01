@@ -1,24 +1,22 @@
 // src/app/routes.tsx
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Outlet, useParams, Navigate } from "react-router-dom";
-import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "./config";
+import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang, isLang } from "./config";
 import { SiteLayout } from "./site/SiteLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { DomainRedirect } from "../components/DomainRedirect";
 import { RootRedirect } from "../components/RootRedirect";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
+import { PlatformGaShell } from "../components/PlatformGaShell";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
+import { PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH } from "./entityPaths";
+import { useAdminSite } from "../contexts/useAdminSite";
 
-// Public pages - loaded eagerly (main entry point)
+// Public entry / shell pages — keep eager (LCP, auth, error paths)
 import { HomePage } from "../pages/HomePage";
-import { PlaceDetailPage } from "../pages/PlaceDetailPage";
-import { EventDetailPage } from "../pages/EventDetailPage";
-import { LegalPage } from "../pages/LegalPage";
-import { PricingPage } from "../pages/PricingPage";
-import { OverviewPage } from "../pages/OverviewPage";
-import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
-import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
 import { SitesListPage } from "../pages/SitesListPage";
+import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
 import { OfflinePage } from "../pages/OfflinePage";
@@ -31,6 +29,32 @@ import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
 
 // AdminLayout - eagerly loaded (layout component, should not be lazy loaded to prevent hook errors during navigation)
 import { AdminLayout } from "../components/AdminLayout";
+
+// Heavy public pages — route-level code split (SSR overview meta stays in server.js / renderOverview.js)
+const PlaceDetailPage = lazy(() =>
+  import("../pages/PlaceDetailPage").then((m) => ({ default: m.PlaceDetailPage }))
+);
+const EventDetailPage = lazy(() =>
+  import("../pages/EventDetailPage").then((m) => ({ default: m.EventDetailPage }))
+);
+const LegalPage = lazy(() =>
+  import("../pages/LegalPage").then((m) => ({ default: m.LegalPage }))
+);
+const PricingPage = lazy(() =>
+  import("../pages/PricingPage").then((m) => ({ default: m.PricingPage }))
+);
+const OverviewPage = lazy(() =>
+  import("../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
+);
+const PublicPricingPage = lazy(() =>
+  import("../pages/PublicPricingPage").then((m) => ({ default: m.PublicPricingPage }))
+);
+const StaticPageDetailPage = lazy(() =>
+  import("../pages/StaticPageDetailPage").then((m) => ({ default: m.StaticPageDetailPage }))
+);
+const ProductsPage = lazy(() =>
+  import("../pages/ProductsPage").then((m) => ({ default: m.ProductsPage }))
+);
 
 // Admin pages - lazy loaded (only needed when user is logged in)
 const AdminDashboardWrapper = lazy(() =>
@@ -63,6 +87,9 @@ const StaticPagesPage = lazy(() =>
 const GalleriesPage = lazy(() =>
   import("../pages/admin/GalleriesPage").then((m) => ({ default: m.GalleriesPage }))
 );
+const ProductsAdminPage = lazy(() =>
+  import("../pages/admin/ProductsAdminPage").then((m) => ({ default: m.ProductsAdminPage }))
+);
 const SitesPage = lazy(() =>
   import("../pages/admin/SitesPage").then((m) => ({ default: m.SitesPage }))
 );
@@ -79,11 +106,8 @@ const SubscriptionsDashboardPage = lazy(() =>
     default: m.SubscriptionsDashboardPage,
   }))
 );
-const BrandsPage = lazy(() =>
-  import("../pages/admin/BrandsPage").then((m) => ({ default: m.BrandsPage }))
-);
-const SiteInstancesPage = lazy(() =>
-  import("../pages/admin/SiteInstancesPage").then((m) => ({ default: m.SiteInstancesPage }))
+const DomainsPage = lazy(() =>
+  import("../pages/admin/DomainsPage").then((m) => ({ default: m.DomainsPage }))
 );
 const SiteMembershipsPage = lazy(() =>
   import("../pages/admin/SiteMembershipsPage").then((m) => ({ default: m.SiteMembershipsPage }))
@@ -103,14 +127,26 @@ const EventsPage = lazy(() =>
 const AppSettingsPage = lazy(() =>
   import("../pages/admin/AppSettingsPage").then((m) => ({ default: m.AppSettingsPage }))
 );
+const UiCopyPage = lazy(() =>
+  import("../pages/admin/UiCopyPage").then((m) => ({ default: m.UiCopyPage }))
+);
+const I18nAdminPage = lazy(() =>
+  import("../pages/admin/I18nAdminPage").then((m) => ({ default: m.I18nAdminPage }))
+);
 const EventLogPage = lazy(() =>
   import("../pages/admin/EventLogPage").then((m) => ({ default: m.EventLogPage }))
 );
 const SiteAnalyticsPage = lazy(() =>
   import("../pages/admin/SiteAnalyticsPage").then((m) => ({ default: m.SiteAnalyticsPage }))
 );
+const GlobalAnalyticsPage = lazy(() =>
+  import("../pages/admin/GlobalAnalyticsPage").then((m) => ({ default: m.GlobalAnalyticsPage }))
+);
 const PlaceAnalyticsPage = lazy(() =>
   import("../pages/admin/PlaceAnalyticsPage").then((m) => ({ default: m.PlaceAnalyticsPage }))
+);
+const TownAnalyticsPage = lazy(() =>
+  import("../pages/admin/TownAnalyticsPage").then((m) => ({ default: m.TownAnalyticsPage }))
 );
 const EventAnalyticsPage = lazy(() =>
   import("../pages/admin/EventAnalyticsPage").then((m) => ({ default: m.EventAnalyticsPage }))
@@ -128,27 +164,74 @@ const CollectionDetailPage = lazy(() =>
   import("../pages/CollectionDetailPage").then((m) => ({ default: m.CollectionDetailPage }))
 );
 
-// If multi-site is enabled, we need two separate routes
-// Redirect component for old-style URLs (without siteKey) to default site
+// Redirect URLs without region slug to the default region
 function RedirectToSiteRoute({ entityType }: { entityType: "place" | "event" }) {
   const { lang, slug } = useParams<{ lang: string; slug: string }>();
   if (!lang || !slug) return null;
-  return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}/${entityType}/${slug}`} replace />;
+  const safeLang: Lang = isLang(lang) ? lang : "hu";
+  const segment = entityType === "place" ? placeSegment(safeLang) : "event";
+  return <Navigate to={`/${safeLang}/${DEFAULT_SITE_SLUG}/${segment}/${slug}`} replace />;
 }
 
-// One with site slug and one without
+/** Admin alias: /admin/regions → /admin/sites (Site model kept; UI says Régió) */
+function RedirectRegionsToSites() {
+  const { lang, id } = useParams<{ lang: string; id?: string }>();
+  if (!lang) return null;
+  const tail = id ? `/sites/${id}/edit` : "/sites";
+  return <Navigate to={`/${lang}/admin${tail}`} replace />;
+}
+
+/** Legacy /admin/site-instances → region edit Instances tab (or regions list) */
+function RedirectSiteInstancesToRegion() {
+  const { lang } = useParams<{ lang: string }>();
+  const { selectedSiteId } = useAdminSite();
+  if (!lang) return null;
+  if (selectedSiteId) {
+    return (
+      <Navigate to={`/${lang}/admin/sites/${selectedSiteId}/edit?tab=instances`} replace />
+    );
+  }
+  return <Navigate to={`/${lang}/admin/sites`} replace />;
+}
+
+/** Admin alias: /admin/analytics/region → /admin/analytics/site */
+function RedirectRegionAnalytics() {
+  const { lang } = useParams<{ lang: string }>();
+  if (!lang) return null;
+  return <Navigate to={`/${lang}/admin/analytics/site`} replace />;
+}
+
+const placeDetailRoutes = PLACE_PATH_ALIASES.map((segment) => ({
+  path: `${segment}/:slug`,
+  element: <PlaceDetailPage />,
+}));
+
+const townExploreRoutes = [
+  { path: "town/:townSlug", element: <HomePage /> },
+  { path: "telepules/:townSlug", element: <HomePage /> },
+  { path: "gemeinde/:townSlug", element: <HomePage /> },
+];
+
+const regionListRoutes = [
+  { path: REGION_LIST_PATH.hu, element: <SitesListPage /> },
+  { path: REGION_LIST_PATH.en, element: <SitesListPage /> },
+  { path: REGION_LIST_PATH.de, element: <SitesListPage /> },
+  // Legacy Hungarian path — SitesListPage redirects to regiok
+  { path: "teruletek", element: <SitesListPage /> },
+];
+
+// One with site slug (region key) and one without
 // IMPORTANT: These routes should NOT match /admin paths
 const createPublicRoutes = () => {
   const baseChildren = [
     { index: true, element: <HomePage /> },
-    { path: "place/:slug", element: <PlaceDetailPage /> },
+    ...placeDetailRoutes,
+    ...townExploreRoutes,
     { path: "event/:slug", element: <EventDetailPage /> },
     { path: "static-pages", element: <StaticPagesRouteGuard /> },
+    { path: "products", element: <ProductsPage /> },
     { path: "static-page/:id", element: <StaticPageDetailPage /> },
-    // Sites page - use language from URL, not from path
-    { path: "teruletek", element: <SitesListPage /> },
-    { path: "regions", element: <SitesListPage /> },
-    { path: "regionen", element: <SitesListPage /> },
+    ...regionListRoutes,
     { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
     { path: "aszf", element: <LegalPage pageKey="terms" /> },
     { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
@@ -161,25 +244,38 @@ const createPublicRoutes = () => {
 
   if (HAS_MULTIPLE_SITES) {
     // Multi-site mode:
-    // - /:lang route shows SitesListPage (site selection)
-    // - /:lang/:siteKey route uses TenantLayout (specific site)
-    // Backward compatibility: also support :tenantKey
+    // - /:lang → region list
+    // - /:lang/:siteKey → region (Prisma Site slug)
     return [
       {
-        // Route without siteKey - shows site selection page
         path: `/:lang`,
-        element: <Outlet />,
+        element: (
+          <>
+            <DomainRedirect />
+            <Outlet />
+          </>
+        ),
         errorElement: <ErrorPage />,
         children: [
-          { index: true, element: <SitesListPage /> },
-          { path: "teruletek", element: <SitesListPage /> },
-          { path: "regions", element: <SitesListPage /> },
-          { path: "regionen", element: <SitesListPage /> },
-          { path: "overview", element: <OverviewPage /> },
-          // Redirect old-style URLs (without siteKey) to default site
-          { path: "place/:slug", element: <RedirectToSiteRoute entityType="place" /> },
-          { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
-          // Collections route without siteKey - uses SiteLayout for header/footer
+          {
+            element: <PlatformGaShell />,
+            children: [
+              { index: true, element: <SitesListPage /> },
+              ...regionListRoutes,
+              { path: "overview", element: <OverviewPage /> },
+              { path: "pricing", element: <PublicPricingPage /> },
+              { path: "tarife", element: <PublicPricingPage /> },
+              { path: "preise", element: <PublicPricingPage /> },
+              { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
+              { path: "aszf", element: <LegalPage pageKey="terms" /> },
+              { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+              ...PLACE_PATH_ALIASES.map((segment) => ({
+                path: `${segment}/:slug`,
+                element: <RedirectToSiteRoute entityType="place" />,
+              })),
+              { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
+            ],
+          },
           {
             path: "collections/:slug",
             element: <SiteLayout />,
@@ -188,7 +284,7 @@ const createPublicRoutes = () => {
         ],
       },
       {
-        // Route with siteKey - uses SiteLayout
+        // siteKey = public region slug
         path: `/:lang/:siteKey`,
         element: <SiteLayout />,
         errorElement: <ErrorPage />,
@@ -196,7 +292,6 @@ const createPublicRoutes = () => {
       },
     ];
   } else {
-    // Single site mode - just one route without siteKey
     return [
       {
         path: `/:lang`,
@@ -231,20 +326,14 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        path: "login",
-        element: <LoginPage />,
-      },
-      {
-        path: "register",
-        element: <RegisterPage />,
-      },
-      {
-        path: "forgot-password",
-        element: <ForgotPasswordPage />,
-      },
-      {
-        path: "reset-password",
-        element: <ResetPasswordPage />,
+        // Auth pages use platform-wide GA (consent-gated), not site IDs
+        element: <PlatformGaShell />,
+        children: [
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
+          { path: "forgot-password", element: <ForgotPasswordPage /> },
+          { path: "reset-password", element: <ResetPasswordPage /> },
+        ],
       },
       {
         path: "",
@@ -309,7 +398,7 @@ export const router = createBrowserRouter([
       {
         path: "price-bands",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PriceBandsPage />
@@ -355,6 +444,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "towns/:townId/analytics",
+        element: (
+          <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <TownAnalyticsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "events/:eventId/analytics",
         element: (
           <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
@@ -381,7 +482,7 @@ export const router = createBrowserRouter([
       {
         path: "legal",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <LegalPagesPage />
@@ -393,7 +494,7 @@ export const router = createBrowserRouter([
       {
         path: "static-pages",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <StaticPagesPage />
@@ -409,6 +510,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <GalleriesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "products",
+        element: (
+          <ProtectedRoute requiredRole="editor">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <ProductsAdminPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>
@@ -442,6 +555,9 @@ export const router = createBrowserRouter([
           <NotFoundPage />
         ),
       },
+      // Additive aliases: UI says Régió / Region; Prisma model stays Site
+      { path: "regions", element: <RedirectRegionsToSites /> },
+      { path: "regions/:id/edit", element: <RedirectRegionsToSites /> },
       {
         path: "collections",
         element: (
@@ -481,6 +597,18 @@ export const router = createBrowserRouter([
       {
         path: "analytics",
         element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <GlobalAnalyticsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "analytics/site",
+        element: (
           <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
@@ -490,6 +618,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      { path: "analytics/region", element: <RedirectRegionAnalytics /> },
       {
         path: "subscription-overview",
         element: HAS_MULTIPLE_SITES ? (
@@ -517,33 +646,30 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "brands",
+        path: "domains",
         element: (
           <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
-                <BrandsPage />
+                <DomainsPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>
         ),
       },
       {
+        // Legacy global Site Instances → Régió edit Instances tab
         path: "site-instances",
         element: (
           <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
-            <Suspense fallback={<AdminPageSkeleton />}>
-              <AdminLayout>
-                <SiteInstancesPage />
-              </AdminLayout>
-            </Suspense>
+            <RedirectSiteInstancesToRegion />
           </ProtectedRoute>
         ),
       },
       {
         path: "site-memberships",
         element: (
-          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteMembershipsPage />
@@ -577,6 +703,30 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "i18n",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <I18nAdminPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "ui-copy",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <UiCopyPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "events",
         element: (
           <ProtectedRoute requiredRole="editor">
@@ -603,7 +753,7 @@ export const router = createBrowserRouter([
       {
         path: "site-status",
         element: (
-          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteStatusPage />

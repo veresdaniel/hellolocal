@@ -1,7 +1,7 @@
 // src/admin/admin-site-instance.service.ts
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 export interface CreateSiteInstanceDto {
   siteId: string;

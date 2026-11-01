@@ -3,7 +3,8 @@
 // Run with: pnpm migrate:to-brand
 
 import "dotenv/config";
-import { PrismaClient, Lang } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import { Lang } from "../src/common/language-code";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 if (!process.env.DATABASE_URL) {

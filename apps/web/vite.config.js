@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -29,7 +29,22 @@ function generateVersionJson() {
 // Read version from package.json for Vite define
 const packageJson = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf-8"));
 const appVersion = packageJson.version || "0.1.0-beta";
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+    const isStaging = mode === "staging";
+    const isLive = mode === "live";
+    const liveApiTarget = "https://api.hello-local.io";
+    const stagingApiUrl = isStaging
+        ? process.env.VITE_API_URL ||
+            loadEnv(mode, __dirname, "VITE_").VITE_API_URL ||
+            "http://localhost:3003"
+        : "http://localhost:3002";
+    const apiProxyTarget = isLive
+        ? liveApiTarget
+        : isStaging
+            ? stagingApiUrl
+            : "http://localhost:3002";
+    const serverPort = isLive ? 5175 : isStaging ? 5174 : 5173;
+    return {
     plugins: [
         react(),
         {
@@ -48,28 +63,35 @@ export default defineConfig(({ mode }) => ({
                     if (req.headers.upgrade === 'websocket') {
                         return next();
                     }
-                    // Handle favicon.ico requests by serving vite.svg
                     if (req.url === '/favicon.ico' || req.url?.startsWith('/favicon.ico?')) {
                         try {
-                            const viteSvgPath = join(__dirname, 'public', 'vite.svg');
-                            if (existsSync(viteSvgPath)) {
-                                const svgContent = readFileSync(viteSvgPath, 'utf-8');
-                                res.setHeader('Content-Type', 'image/svg+xml');
+                            const iconPath = join(__dirname, 'public', 'favicon.ico');
+                            if (existsSync(iconPath)) {
+                                res.setHeader('Content-Type', 'image/x-icon');
                                 res.setHeader('Cache-Control', 'public, max-age=31536000');
                                 res.statusCode = 200;
-                                res.end(svgContent);
+                                res.end(readFileSync(iconPath));
                                 return;
-                            }
-                            else {
-                                console.warn('[Vite] favicon-fallback: vite.svg not found at', viteSvgPath);
                             }
                         }
                         catch (error) {
                             console.error('[Vite] favicon-fallback error:', error);
-                            // Fall through to next() on error
                         }
                     }
                     next();
+                });
+            },
+        },
+        {
+            name: "live-browse-banner",
+            configureServer(server) {
+                if (!isLive)
+                    return;
+                server.httpServer?.once("listening", () => {
+                    console.warn("");
+                    console.warn("[local:live] Proxy /api → https://api.hello-local.io — production data, browse-only.");
+                    console.warn("[local:live] No local API / no production DATABASE_URL in this process. Do not seed/migrate/truncate live.");
+                    console.warn("");
                 });
             },
         },
@@ -77,6 +99,7 @@ export default defineConfig(({ mode }) => ({
     define: {
         // Inject version from package.json at build time
         __APP_VERSION__: JSON.stringify(appVersion),
+        ...(isLive ? { "import.meta.env.VITE_API_URL": JSON.stringify("") } : {}),
     },
     resolve: {
         alias: {
@@ -85,13 +108,14 @@ export default defineConfig(({ mode }) => ({
     },
     server: {
         host: 'localhost', // Listen on localhost only (fixes EPERM on macOS)
-        port: 5173,
-        strictPort: false, // Allow fallback to next available port
+        port: serverPort,
+        strictPort: isStaging || isLive,
         // HMR is automatically configured by Vite, no need for explicit config
         proxy: {
             "/api": {
-                target: "http://localhost:3002",
+                target: apiProxyTarget,
                 changeOrigin: true,
+                secure: isLive ? true : undefined,
                 ws: true, // Enable WebSocket proxying for API
             },
         },
@@ -126,4 +150,5 @@ export default defineConfig(({ mode }) => ({
         },
         chunkSizeWarningLimit: 1000, // Increase limit to 1MB for better visibility
     },
-}));
+    };
+});

@@ -4,15 +4,18 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { buildUrl } from "../app/urls";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
+import { LanguageSelectOptions } from "./LanguageSelectOptions";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 
 export function LanguageSelector() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { lang: currentLang, siteKey } = useRouteCtx();
+  const languages = usePublishedLanguages();
   const isAdminPage = location.pathname.includes("/admin");
 
-  const handleLanguageChange = (lang: "hu" | "en" | "de") => {
+  const handleLanguageChange = (lang: Lang) => {
     i18n.changeLanguage(lang);
     localStorage.setItem("i18nextLng", lang);
 
@@ -43,7 +46,8 @@ export function LanguageSelector() {
   return (
     <select
       value={i18n.language || "hu"}
-      onChange={(e) => handleLanguageChange(e.target.value as "hu" | "en" | "de")}
+      onChange={(e) => handleLanguageChange(e.target.value as Lang)}
+      aria-label={t("common.language")}
       style={{
         padding: "8px 16px",
         fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -52,30 +56,15 @@ export function LanguageSelector() {
         background: "transparent",
         cursor: "pointer",
         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#333",
+        color: "var(--hl-ink, #1b1730)",
         fontWeight: 500,
-        outline: "none",
         transition: "all 0.2s",
         height: "auto",
         lineHeight: 1,
         boxSizing: "border-box",
       }}
-      onMouseEnter={(e) => {
-        // No style change on hover - keep default state
-      }}
-      onMouseLeave={(e) => {
-        // No style change on leave - keep default state
-      }}
-      onFocus={(e) => {
-        // No style change on focus - keep default state
-      }}
-      onBlur={(e) => {
-        // No style change on blur - keep default state
-      }}
     >
-      <option value="hu">HU</option>
-      <option value="en">EN</option>
-      <option value="de">DE</option>
+      <LanguageSelectOptions variant="code" codes={languages} />
     </select>
   );
 }

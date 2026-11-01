@@ -1,0 +1,167 @@
+/**
+ * Admin contrast helpers — same --hl-* tokens as public.
+ * Purple/navy page chrome → on-dark. White/cream cards/tables/nav → ink.
+ * Do not paint cards blue; keep brand gradient on the page backdrop only.
+ */
+
+/* Never inherit public brand display/serif faces into admin chrome. */
+.admin-layout,
+.admin-layout button,
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea,
+.admin-layout label,
+.admin-layout p,
+.admin-layout span,
+.admin-layout strong,
+.admin-layout td,
+.admin-layout th,
+.admin-layout li,
+.admin-layout a,
+.admin-layout h1,
+.admin-layout h2,
+.admin-layout h3,
+.admin-layout h4 {
+  font-family: Inter, "Source Sans 3", system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+}
+
+.admin-layout {
+  color: var(--hl-on-dark, #f2f4fb);
+}
+
+.admin-page-title {
+  color: var(--hl-on-dark-strong, #ffffff);
+}
+
+.admin-page-copy {
+  color: var(--hl-on-dark, #f2f4fb);
+}
+
+.admin-page-muted {
+  color: var(--hl-muted-on-dark, #a8b0c8);
+}
+
+.admin-on-dark {
+  color: var(--hl-on-dark, #f2f4fb);
+}
+
+.admin-on-dark-strong {
+  color: var(--hl-on-dark-strong, #ffffff);
+}
+
+.admin-on-dark-muted {
+  color: var(--hl-muted-on-dark, #a8b0c8);
+}
+
+/* Light surfaces: dark ink even when nested under purple chrome */
+.admin-layout > nav,
+.admin-surface,
+.admin-pagination,
+.admin-flist,
+.admin-flist__filters,
+.admin-flist__table-wrap,
+.admin-flist__pagination,
+.admin-flist__card,
+.admin-flist__empty,
+.admin-layout .admin-table-wrapper,
+.admin-layout table.admin-table,
+.admin-layout [style*="background: white"],
+.admin-layout [style*="background:white"],
+.admin-layout [style*="background: #fff"],
+.admin-layout [style*="background:#fff"],
+.admin-layout [style*="background: #ffffff"],
+.admin-layout [style*="background:#ffffff"],
+.admin-layout [style*="background: #f9fafb"],
+.admin-layout [style*="background:#f9fafb"],
+.admin-layout [style*="background: #fafbff"],
+.admin-layout [style*="background:#fafbff"],
+.admin-layout [style*="background: #f8f8ff"],
+.admin-layout [style*="background:#f8f8ff"],
+.admin-layout [style*="background: #f5f7ff"],
+.admin-layout [style*="background:#f5f7ff"],
+.admin-layout [style*="background: #f5f3ff"],
+.admin-layout [style*="background:#f5f3ff"],
+.admin-layout [style*="background: #fffdf9"],
+.admin-layout [style*="background:#fffdf9"],
+.admin-layout [style*="background: #fff3cd"],
+.admin-layout [style*="background:#fff3cd"] {
+  color: var(--hl-ink, #1b1730);
+}
+
+.admin-surface h1,
+.admin-surface h2,
+.admin-surface h3,
+.admin-surface h4,
+.admin-surface strong,
+.admin-surface b,
+.admin-flist__card-title,
+.admin-flist__table th,
+.admin-flist__table td {
+  color: var(--hl-ink, #1b1730);
+}
+
+.admin-surface p,
+.admin-surface li,
+.admin-surface small,
+.admin-flist__card-sub,
+.admin-flist__count,
+.admin-flist__empty,
+.admin-page-card-muted {
+  color: var(--hl-muted, #665d78);
+}
+
+/* Form chrome on light cards */
+.admin-layout label {
+  color: var(--hl-ink, #1b1730);
+}
+
+.admin-layout input::placeholder,
+.admin-layout textarea::placeholder {
+  color: var(--hl-muted, #665d78) !important;
+  opacity: 1;
+}
+
+.admin-layout input[type="text"],
+.admin-layout input[type="url"],
+.admin-layout input[type="email"],
+.admin-layout input[type="number"],
+.admin-layout input[type="date"],
+.admin-layout input[type="datetime-local"],
+.admin-layout input[type="password"],
+.admin-layout input[type="search"],
+.admin-layout textarea,
+.admin-layout select {
+  color: var(--hl-ink, #1b1730) !important;
+}
+
+/* Icon + label share the button’s text color */
+.admin-layout button svg,
+.admin-layout a svg,
+.admin-layout button .admin-btn__icon,
+.admin-layout .admin-btn svg {
+  color: currentColor;
+}
+
+/* Dark dashboard tiles keep light text even if a child inherits wrongly */
+.admin-dash-card {
+  color: var(--hl-on-dark, #f2f4fb);
+}
+
+.admin-dash-card:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.admin-dash-card__title {
+  color: var(--hl-on-dark-strong, #ffffff);
+}
+
+.admin-dash-card__desc {
+  /* Slightly brighter than page muted — cards sit on deep purple */
+  color: #c5cce0;
+}
+
+.admin-page-section-title {
+  color: var(--hl-on-dark-strong, #ffffff);
+}

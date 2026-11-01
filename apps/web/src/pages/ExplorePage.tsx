@@ -1,16 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlaces } from "../api/places.api";
 import { PlaceCard } from "../ui/place/PlaceCard";
 import { useSeo } from "../seo/useSeo";
-import { MapComponent } from "../components/MapComponent";
 import { buildUrl } from "../app/urls";
+import { placeEntityPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useNavigate } from "react-router-dom";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { HAS_MULTIPLE_SITES } from "../app/config";
 import { useFiltersStore } from "../stores/useFiltersStore";
+
+const MapComponent = lazy(() =>
+  import("../components/MapComponent").then((m) => ({ default: m.MapComponent }))
+);
 
 export function ExplorePage() {
   const { t } = useTranslation();
@@ -162,9 +166,12 @@ export function ExplorePage() {
     lat: place.location!.lat!,
     lng: place.location!.lng!,
     name: place.name,
+    category: place.category,
+    mapImage: place.mapImage ?? null,
+    heroImage: place.heroImage ?? null,
     onClick: place.slug
       ? () => {
-          const path = buildUrl({ lang, siteKey, path: `place/${place.slug}` });
+          const path = buildUrl({ lang, siteKey, path: placeEntityPath(lang, place.slug) });
           navigate(path);
         }
       : undefined, // Only allow navigation if slug exists
@@ -182,22 +189,36 @@ export function ExplorePage() {
         placesWithCoordinates.length
       : 19.0402;
 
+  if (isLoading) {
+    return <PublicPageSkeleton label={t("common.loading")} />;
+  }
+
   return (
     <>
-      <LoadingSpinner isLoading={isLoading} />
       <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
         {showMap ? (
           <>
-            <MapComponent
-              latitude={centerLat}
-              longitude={centerLng}
-              markers={markers}
-              userLocation={userLocation || useFiltersStore.getState().userLocation}
-              showRoutes={false}
-              height={window.innerHeight}
-              interactive={true}
-              defaultZoom={placesWithCoordinates.length > 0 ? 12 : 13}
-            />
+            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-busy="true"
+                  aria-label={t("common.loading")}
+                  style={{ width: "100%", height: "100%", background: "var(--hl-bg, #1b1730)" }}
+                />
+              }
+            >
+              <MapComponent
+                latitude={centerLat}
+                longitude={centerLng}
+                markers={markers}
+                userLocation={userLocation || useFiltersStore.getState().userLocation}
+                showRoutes={false}
+                height={window.innerHeight}
+                interactive={true}
+                defaultZoom={placesWithCoordinates.length > 0 ? 12 : 13}
+              />
+            </Suspense>
             <div
               style={{
                 position: "absolute",

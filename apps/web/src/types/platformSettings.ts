@@ -5,6 +5,7 @@ export type { Lang };
 
 export type PlatformSettingsDto = {
   lang: Lang;
+  languages?: string[];
   siteKey: string;
 
   site: {
@@ -12,6 +13,10 @@ export type PlatformSettingsDto = {
     name: string;
     shortDescription?: string | null;
     description?: string | null;
+    heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
   };
 
   brand: {
@@ -20,6 +25,9 @@ export type PlatformSettingsDto = {
     faviconUrl?: string | null;
     theme?: any;
   };
+
+  /** Per-site theme colors override. Null = use brand / defaults. */
+  siteTheme?: any | null;
 
   seo: {
     defaultTitle?: string | null;
@@ -57,6 +65,9 @@ export type PlatformSettingsDto = {
     placePlanOverrides?: any;
   };
 
+  // Public map hidden by the visitor ladder. Places are not deleted.
+  visitorHold?: boolean;
+
   // SEO image (for backward compatibility)
   seoImage?: string | null;
   siteName?: string | null;
@@ -68,5 +79,10 @@ export type PlatformSettingsDto = {
     currency: string; // e.g., "HUF"
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
+  };
+
+  /** Per-site GA4 ID for this site's public pages. */
+  analytics?: {
+    gaMeasurementId?: string | null;
   };
 };

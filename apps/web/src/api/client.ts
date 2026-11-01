@@ -1,6 +1,7 @@
 import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
-import { DEFAULT_LANG, APP_LANGS, DEFAULT_BACKEND_URL, type Lang } from "../app/config";
+import { DEFAULT_BACKEND_URL, type Lang} from "../app/config";
+import { preferredLang} from "../app/browserLang";
 
 /**
  * Get API base URL from environment variable or use relative path for development
@@ -36,19 +37,7 @@ function recordApiInteraction() {
  * Helper function to extract language code from URL or localStorage
  */
 function getLanguageCode(): Lang {
-  const currentPath = window.location.pathname;
-  // Try to extract lang from URL (e.g., /hu/admin or /en/admin)
-  const pathMatch = currentPath.match(/^\/(hu|en|de)(\/|$)/);
-  if (pathMatch && APP_LANGS.includes(pathMatch[1] as Lang)) {
-    return pathMatch[1] as Lang;
-  }
-  // Fallback to localStorage i18nextLng
-  const storedLang = localStorage.getItem("i18nextLng");
-  if (storedLang && APP_LANGS.includes(storedLang as Lang)) {
-    return storedLang as Lang;
-  }
-  // Final fallback to default
-  return DEFAULT_LANG;
+  return preferredLang();
 }
 
 /**
@@ -288,7 +277,10 @@ export async function apiGet<T>(path: string): Promise<T> {
  * Public API GET function that doesn't require authentication
  * Use this for public endpoints like places, legal pages, etc.
  */
-export async function apiGetPublic<T>(path: string): Promise<T> {
+export async function apiGetPublic<T>(
+  path: string,
+  options?: { signal?: AbortSignal }
+): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
   const fullUrl = `${apiBaseUrl}/api${path}`;
   let res: Response;
@@ -297,8 +289,10 @@ export async function apiGetPublic<T>(path: string): Promise<T> {
       headers: {
         Accept: "application/json",
       },
+      signal: options?.signal,
     });
   } catch (err: any) {
+    if (err?.name === "AbortError") throw err;
     // Handle network errors (server not running, CORS, etc.)
     console.error(`[apiGetPublic] Network error:`, {
       path,

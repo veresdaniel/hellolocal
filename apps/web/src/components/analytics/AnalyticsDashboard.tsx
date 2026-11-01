@@ -24,7 +24,9 @@ import { COLORS as APP_COLORS, GRADIENTS, BREAKPOINTS } from "../../app/colors";
 import { BREAKPOINTS as VIEWPORT_BREAKPOINTS } from "../../utils/viewport";
 
 type Props =
+  | { scope: "global" }
   | { scope: "site" }
+  | { scope: "town"; townId: string }
   | { scope: "place"; placeId: string }
   | { scope: "event"; eventId: string };
 
@@ -128,8 +130,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export function AnalyticsDashboard(props: Props) {
   const { t } = useTranslation();
   const [range, setRange] = useState<7 | 30 | 90>(7);
-  const { loading, error, site, place, event, fetchSite, fetchPlace, fetchEvent } =
-    useAnalyticsStore();
+  const {
+    loading,
+    error,
+    site,
+    place,
+    event,
+    town,
+    global,
+    fetchSite,
+    fetchPlace,
+    fetchEvent,
+    fetchTown,
+    fetchGlobal,
+  } = useAnalyticsStore();
   const params = useParams<{ lang?: string }>();
   const lang = params.lang || "hu";
   const [isMobile, setIsMobile] = useState(() => {
@@ -155,21 +169,35 @@ export function AnalyticsDashboard(props: Props) {
   }, []);
 
   useEffect(() => {
-    if (props.scope === "site") {
+    if (props.scope === "global") {
+      fetchGlobal(range, lang);
+    } else if (props.scope === "site") {
       fetchSite(range, lang);
+    } else if (props.scope === "town") {
+      fetchTown(props.townId, range, lang);
     } else if (props.scope === "place") {
       fetchPlace(props.placeId, range, lang);
     } else if (props.scope === "event") {
       fetchEvent(props.eventId, range, lang);
     }
-  }, [props, range, lang, fetchSite, fetchPlace, fetchEvent]);
+  }, [props, range, lang, fetchSite, fetchPlace, fetchEvent, fetchTown, fetchGlobal]);
 
-  const data = props.scope === "site" ? site : props.scope === "place" ? place : event;
-  const isSiteScope = props.scope === "site";
+  const data =
+    props.scope === "global"
+      ? global
+      : props.scope === "site"
+        ? site
+        : props.scope === "town"
+          ? town
+          : props.scope === "place"
+            ? place
+            : event;
+  const isSiteScope =
+    props.scope === "global" || props.scope === "site" || props.scope === "town";
 
   const kpis = useMemo(() => {
     if (!data) return [];
-    if (props.scope === "site") {
+    if (props.scope === "global" || props.scope === "site" || props.scope === "town") {
       const siteData = data as {
         summary: {
           pageViews: number;
@@ -519,7 +547,7 @@ export function AnalyticsDashboard(props: Props) {
                     iconType="circle"
                     formatter={(value) => <span style={{ color: "#374151" }}>{value}</span>}
                   />
-                  {props.scope === "site" ? (
+                  {props.scope === "global" || props.scope === "site" || props.scope === "town" ? (
                     <>
                       <Area
                         type="monotone"
@@ -727,9 +755,55 @@ export function AnalyticsDashboard(props: Props) {
           }}
         >
           <h3 style={{ fontSize: "18px", fontWeight: 600, margin: "0 0 20px 0", color: "#1f2937" }}>
-            🏆 {t("admin.analytics.topPlaces")}
+            {props.scope === "place"
+              ? t("admin.analytics.productClicks")
+              : props.scope === "global"
+                ? `🏆 ${t("admin.analytics.topSites")}`
+                : `🏆 ${t("admin.analytics.topPlaces")}`}
           </h3>
-          {props.scope !== "site" ? (
+          {props.scope === "place" ? (
+            <div style={{ maxHeight: "280px", overflowY: "auto" }}>
+              {(place?.productClicks ?? []).length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {(place?.productClicks ?? []).map((product) => (
+                    <div
+                      key={product.productId}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        border: "1px solid #e5e7eb",
+                        color: "#1f2937",
+                      }}
+                    >
+                      <span style={{ fontSize: "14px", fontWeight: 600 }}>{product.name}</span>
+                      <span style={{ fontSize: "14px", color: "#6b7280", whiteSpace: "nowrap" }}>
+                        {t("admin.analytics.clicks", { count: product.clicks ?? 0 })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    color: "#6b7280",
+                    fontSize: "14px",
+                    textAlign: "center",
+                    padding: "40px 20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "280px",
+                  }}
+                >
+                  {t("admin.analytics.clicks", { count: 0 })}
+                </div>
+              )}
+            </div>
+          ) : props.scope !== "site" && props.scope !== "town" && props.scope !== "global" ? (
             <div
               style={{
                 color: "#9ca3af",
@@ -744,11 +818,78 @@ export function AnalyticsDashboard(props: Props) {
             >
               {t("admin.analytics.onlyAvailableOnSite")}
             </div>
+          ) : props.scope === "global" ? (
+            <div style={{ maxHeight: "280px", overflowY: "auto" }}>
+              {(global?.topSites ?? []).length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {(global?.topSites ?? []).slice(0, 10).map((s, index) => (
+                    <motion.div
+                      key={s.siteId}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.25 + index * 0.05 }}
+                      style={{
+                        display: "block",
+                        background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        border: "1px solid #e5e7eb",
+                        color: "inherit",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#1f2937",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        {s.name}
+                      </div>
+                      <div
+                        style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#6b7280" }}
+                      >
+                        <span>
+                          👁️ <strong>{s.pageViews}</strong>{" "}
+                          {t("admin.analytics.pageViews").toLowerCase()}
+                        </span>
+                        <span>
+                          📍 <strong>{s.placeViews}</strong>{" "}
+                          {t("admin.analytics.placeViews").toLowerCase()}
+                        </span>
+                        <span>
+                          🖱️ <strong>{s.ctaTotal}</strong>{" "}
+                          {t("admin.analytics.ctaClicks").toLowerCase()}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    color: "#9ca3af",
+                    fontSize: "14px",
+                    textAlign: "center",
+                    padding: "40px 20px",
+                    minHeight: "280px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {t("admin.analytics.noDataYet")}
+                </div>
+              )}
+            </div>
           ) : (
             <div style={{ maxHeight: "280px", overflowY: "auto" }}>
-              {(site?.topPlaces ?? []).length > 0 ? (
+              {((props.scope === "town" ? town?.topPlaces : site?.topPlaces) ?? []).length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {(site?.topPlaces ?? []).slice(0, 10).map((p, index) => (
+                  {((props.scope === "town" ? town?.topPlaces : site?.topPlaces) ?? [])
+                    .slice(0, 10)
+                    .map((p, index) => (
                     <motion.a
                       key={p.placeId}
                       href={`/${lang}/admin/places/${p.placeId}`}

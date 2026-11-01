@@ -31,7 +31,7 @@ export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
     featuredSlots: 3,
     events: Infinity,
     imagesPerPlace: Infinity,
-    customDomain: false,
+    customDomain: true,
     multiAdmin: false,
     analytics: "basic",
     support: "email",
@@ -45,6 +45,16 @@ export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
     multiAdmin: true,
     analytics: "advanced",
     support: "sla",
+  },
+  municipal: {
+    places: Infinity,
+    featuredSlots: Infinity,
+    events: Infinity,
+    imagesPerPlace: Infinity,
+    customDomain: true,
+    multiAdmin: true,
+    analytics: "advanced",
+    support: "email",
   },
 };
 

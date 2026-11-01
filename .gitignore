@@ -4,5 +4,7 @@ dist
 .env.*
 .DS_Store
 coverage
+reports
+.vitest
 prisma.config.js
 .pnpm_store

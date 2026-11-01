@@ -2,10 +2,51 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "../lib/maplibreWorker";
+import "../styles/map-markers.css";
 import { MAX_DISTANCE_KM } from "../app/config";
+import { useToast } from "../contexts/ToastContext";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { sanitizeImageUrl } from "../utils/urlValidation";
+import { devLog } from "../lib/devLog";
+import {
+  VINTAGE_WINE_REGION_STYLE_ID,
+  vintageWineRegionStyle,
+} from "../lib/mapStyles/vintageWineRegion";
+
+/** Declarative react-map-gl Source/Layer ids for the Navigáció polyline. */
+const ROUTE_SOURCE_ID = "hl-navigation-route";
+const ROUTE_LAYER_ID = "hl-navigation-route-line";
+
+const ROUTE_LINE_LAYOUT = {
+  "line-join": "round" as const,
+  "line-cap": "round" as const,
+};
+
+const ROUTE_LINE_PAINT = {
+  "line-color": "#2563eb",
+  "line-width": 5,
+  "line-opacity": 0.92,
+};
+
+function buildRouteGeoJson(coordinates: number[][]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        properties: {},
+        geometry: {
+          type: "LineString" as const,
+          coordinates,
+        },
+      },
+    ],
+  };
+}
 
 interface MapComponentProps {
   latitude: number | null;
@@ -17,6 +58,10 @@ interface MapComponentProps {
     lat: number;
     lng: number;
     name?: string;
+    category?: string | null;
+    /** Optional map-card image; falls back to heroImage. */
+    mapImage?: string | null;
+    heroImage?: string | null;
     onClick?: () => void;
     distance?: number; // Distance in km from user location
     walkingTime?: number; // Walking time in minutes
@@ -95,6 +140,73 @@ const formatWalkingTime = (minutes: number, t: (key: string) => string): string 
   return `${hours} ${hours === 1 ? t("public.hour") : t("public.hours")} ${mins} ${mins === 1 ? t("public.minute") : t("public.minutes")}`;
 };
 
+type LatLng = { lat: number; lng: number };
+
+function hasCoords(
+  point: { lat?: number | null; lng?: number | null } | null | undefined
+): point is LatLng {
+  return !!point && Number.isFinite(point.lat) && Number.isFinite(point.lng);
+}
+
+const DIRECTIONS_BUTTON_STYLE: React.CSSProperties = {
+  pointerEvents: "auto",
+  alignSelf: "stretch",
+  marginTop: 6,
+  minHeight: 48,
+  minWidth: 48,
+  boxSizing: "border-box",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "12px 16px",
+  border: "none",
+  borderRadius: 12,
+  background: "#c45c26",
+  color: "#fffdf9",
+  fontSize: 15,
+  fontWeight: 650,
+  fontFamily: "'Source Sans 3', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  letterSpacing: "-0.01em",
+  lineHeight: 1.2,
+  textDecoration: "none",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  touchAction: "manipulation",
+  WebkitTapHighlightColor: "transparent",
+};
+
+/** In-app Navigáció — draws walking route on the map; never opens external maps. */
+function DirectionsButton({
+  label,
+  onNavigate,
+}: {
+  label: string;
+  onNavigate: () => void;
+}) {
+  // Do NOT stop touchEnd — that prevents the synthetic click on mobile.
+  const guard = (event: React.SyntheticEvent) => {
+    event.stopPropagation();
+  };
+
+  return (
+    <button
+      type="button"
+      data-directions="walking"
+      style={DIRECTIONS_BUTTON_STYLE}
+      onPointerDown={guard}
+      onMouseDown={guard}
+      onTouchStart={guard}
+      onClick={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        onNavigate();
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 // Constants for zoom level thresholds
 const ZOOM_CLOSE_THRESHOLD = 13;
 const ZOOM_MEDIUM_THRESHOLD = 10;
@@ -108,6 +220,49 @@ const getZoomLevel = (zoom: number): ZoomLevel => {
   if (zoom >= ZOOM_FAR_THRESHOLD) return "far";
   return "veryFar";
 };
+
+/** Public map place pin — SVG silhouette; styles in map-markers.css */
+function PlaceMapPin({
+  zoomLevel,
+  isSelected,
+  isHovered,
+  isMuted,
+}: {
+  zoomLevel: ZoomLevel;
+  isSelected: boolean;
+  isHovered: boolean;
+  isMuted: boolean;
+}) {
+  const isDot = zoomLevel !== "close";
+  const className = [
+    "hl-map-marker",
+    `hl-map-marker--size-${zoomLevel}`,
+    isDot ? "hl-map-marker--dot" : "",
+    zoomLevel === "veryFar" ? "hl-map-marker--bare" : "",
+    isSelected ? "is-selected" : "",
+    isHovered ? "is-hovered" : "",
+    isMuted ? "is-muted" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (isDot) {
+    return <span className={className} aria-hidden="true" />;
+  }
+
+  return (
+    <span className={className} aria-hidden="true">
+      <svg className="hl-map-marker__svg" viewBox="0 0 40 52" role="presentation">
+        <path
+          className="hl-map-marker__body"
+          d="M20 2.5c-8.2 0-14.8 6.5-14.8 14.6 0 10.4 11.2 24.2 14.1 27.5a1 1 0 0 0 1.4 0c2.9-3.3 14.1-17.1 14.1-27.5C34.8 9 28.2 2.5 20 2.5z"
+        />
+        <circle className="hl-map-marker__ring" cx="20" cy="17" r="8.25" />
+        <circle className="hl-map-marker__core" cx="20" cy="17" r="4.75" />
+      </svg>
+    </span>
+  );
+}
 
 // Simple clustering: group markers by grid cells to avoid overcrowding at veryFar zoom
 // Returns only one representative marker per cell at veryFar zoom
@@ -160,6 +315,7 @@ export function MapComponent({
   hideLocationButton = false,
 }: MapComponentProps) {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const {
     showUserLocation,
     setShowUserLocation,
@@ -172,6 +328,12 @@ export function MapComponent({
 
   // Watch ID ref for geolocation
   const watchIdRef = useRef<number | null>(null);
+  const mapRef = useRef<MapRef | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+
+  const getMap = useCallback((): maplibregl.Map | null => {
+    return mapRef.current?.getMap?.() ?? mapInstanceRef.current;
+  }, []);
 
   // Cleanup geolocation watch on unmount
   useEffect(() => {
@@ -192,10 +354,24 @@ export function MapComponent({
   >([]);
   const loadingRoutesRef = useRef<Set<string>>(new Set());
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
+  const [pinnedMarkerId, setPinnedMarkerId] = useState<string | null>(null);
   const lastClickTimeRef = useRef<{ [key: string]: number }>({});
+  /** MapLibre often fires map click after HTML marker/card clicks — ignore those. */
+  const suppressMapClickUntilRef = useRef(0);
+  /** True while a Navigáció / selected route should stay on the map. */
+  const shouldHaveRoutesRef = useRef(false);
+
+  const suppressNextMapClick = useCallback((ms = 600) => {
+    suppressMapClickUntilRef.current = Date.now() + ms;
+  }, []);
 
   const isDesktop =
     typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
+  // Only treat mouseenter as hover on devices that actually hover (skip sticky touch "hover").
+  const canHoverPreview =
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   // Constants for location control positioning
   const LOCATION_CONTROL_DESKTOP_BOTTOM = 100;
@@ -233,10 +409,10 @@ export function MapComponent({
   const DRAG_RESET_DELAY_MS = 100; // Delay before resetting drag flag to allow click
 
   const [isDraggingLocationControl, setIsDraggingLocationControl] = useState(false);
-  const [hasDraggedLocationControl, setHasDraggedLocationControl] = useState(false);
   const [dragOffsetLocationControl, setDragOffsetLocationControl] = useState({ x: 0, y: 0 });
   const locationControlRef = useRef<HTMLDivElement>(null);
   const dragStartPosLocationControlRef = useRef({ x: 0, y: 0 });
+  const locationMovedRef = useRef(false);
 
   // Load position when device type changes
   useEffect(() => {
@@ -281,8 +457,7 @@ export function MapComponent({
     if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
       return;
     }
-    e.preventDefault();
-    setHasDraggedLocationControl(false);
+    locationMovedRef.current = false;
     const rect = locationControlRef.current.getBoundingClientRect();
     dragStartPosLocationControlRef.current = { x: e.clientX, y: e.clientY };
     setDragOffsetLocationControl({
@@ -300,8 +475,7 @@ export function MapComponent({
     if (target.tagName === "INPUT" && (target as HTMLInputElement).type === "checkbox") {
       return;
     }
-    e.preventDefault();
-    setHasDraggedLocationControl(false);
+    locationMovedRef.current = false;
     const touch = e.touches[0];
     const rect = locationControlRef.current.getBoundingClientRect();
     dragStartPosLocationControlRef.current = { x: touch.clientX, y: touch.clientY };
@@ -320,9 +494,8 @@ export function MapComponent({
       const moved =
         Math.abs(e.clientX - dragStartPosLocationControlRef.current.x) > 5 ||
         Math.abs(e.clientY - dragStartPosLocationControlRef.current.y) > 5;
-      if (moved) {
-        setHasDraggedLocationControl(true);
-      }
+      if (!moved) return;
+      locationMovedRef.current = true;
       if (locationControlRef.current) {
         const newX = e.clientX - dragOffsetLocationControl.x;
         const newY = e.clientY - dragOffsetLocationControl.y;
@@ -343,9 +516,8 @@ export function MapComponent({
       const moved =
         Math.abs(touch.clientX - dragStartPosLocationControlRef.current.x) > 5 ||
         Math.abs(touch.clientY - dragStartPosLocationControlRef.current.y) > 5;
-      if (moved) {
-        setHasDraggedLocationControl(true);
-      }
+      if (!moved) return;
+      locationMovedRef.current = true;
       if (locationControlRef.current) {
         const newX = touch.clientX - dragOffsetLocationControl.x;
         const newY = touch.clientY - dragOffsetLocationControl.y;
@@ -363,15 +535,14 @@ export function MapComponent({
       setIsDraggingLocationControl(false);
       // Reset drag flag after a short delay to allow click to work if no drag occurred
       setTimeout(() => {
-        setHasDraggedLocationControl(false);
+        locationMovedRef.current = false;
       }, DRAG_RESET_DELAY_MS);
     };
 
     const handleTouchEnd = () => {
       setIsDraggingLocationControl(false);
-      // Reset drag flag after a short delay to allow click to work if no drag occurred
       setTimeout(() => {
-        setHasDraggedLocationControl(false);
+        locationMovedRef.current = false;
       }, DRAG_RESET_DELAY_MS);
     };
 
@@ -519,22 +690,31 @@ export function MapComponent({
 
   const handleMapClick = useCallback(
     (event: { lngLat: { lng: number; lat: number } }) => {
-      // Deselect marker when clicking on map
+      // Clicks on marker HTML / Navigáció bubble as map clicks in MapLibre — ignore those.
+      if (Date.now() < suppressMapClickUntilRef.current) {
+        return;
+      }
+
+      // Outside click: dismiss sticky card + route
       if (selectedMarkerId) {
         setSelectedMarkerId(null);
+        setRoutes([]);
+        shouldHaveRoutesRef.current = false;
+        lastRouteFetchPosition.current = null;
       }
+      if (pinnedMarkerId) setPinnedMarkerId(null);
+      if (hoveredMarkerId) setHoveredMarkerId(null);
 
       if (!interactive || !onLocationChange) return;
       const { lng, lat } = event.lngLat;
       onLocationChange(lat, lng);
-      // Update viewState to center on clicked location
       setViewState((prev) => ({
         ...prev,
         longitude: lng,
         latitude: lat,
       }));
     },
-    [interactive, onLocationChange, selectedMarkerId]
+    [interactive, onLocationChange, selectedMarkerId, pinnedMarkerId, hoveredMarkerId]
   );
 
   const handleDragStart = useCallback(() => {
@@ -568,25 +748,77 @@ export function MapComponent({
   const currentLat = latitude != null ? latitude : viewState.latitude;
   const currentLng = longitude != null ? longitude : viewState.longitude;
 
-  // Fetch route from user location to marker using OSRM (Open Source Routing Machine)
-  // OSRM is free and doesn't require an API key
+  const fitMapToRoute = useCallback((coordinates: number[][]) => {
+    const map = getMap();
+    if (!map || coordinates.length < 2) return;
+
+    try {
+      const first = coordinates[0] as [number, number];
+      const bounds = coordinates.reduce(
+        (b, coord) => b.extend(coord as [number, number]),
+        new maplibregl.LngLatBounds(first, first)
+      );
+      map.fitBounds(bounds, { padding: 72, maxZoom: 16, duration: 750 });
+    } catch (error) {
+      console.warn("Failed to fit map to route:", error);
+    }
+  }, [getMap]);
+
+  const applyStraightLineRoute = useCallback(
+    (
+      origin: LatLng,
+      markerLat: number,
+      markerLng: number,
+      markerId: string,
+      shouldFit: boolean
+    ) => {
+      // GeoJSON LineString is [lng, lat]
+      const coordinates = [
+        [origin.lng, origin.lat],
+        [markerLng, markerLat],
+      ];
+      const distance = calculateDistance(origin.lat, origin.lng, markerLat, markerLng);
+      const newRoute = {
+        coordinates,
+        markerId,
+        distance,
+        duration: calculateWalkingTime(distance),
+      };
+      shouldHaveRoutesRef.current = true;
+      setRoutes((prev) => {
+        const filtered = prev.filter((r) => r.markerId !== markerId);
+        return [...filtered, newRoute];
+      });
+      if (shouldFit) fitMapToRoute(coordinates);
+      devLog.debug("navigation:straight-line", { markerId, distance });
+    },
+    [fitMapToRoute]
+  );
+
+  // Fetch walking route: paint straight line immediately, then upgrade with OSRM when available.
   const fetchRoute = useCallback(
-    async (markerLat: number, markerLng: number, markerId: string) => {
-      if (!userLocation) {
+    async (
+      markerLat: number,
+      markerLng: number,
+      markerId: string,
+      originOverride?: LatLng,
+      shouldFit = false
+    ) => {
+      const origin = originOverride ?? (hasCoords(userLocation) ? userLocation : null);
+      if (!origin) {
         return;
       }
+
+      // Immediate visible polyline so Navigáció never looks like a no-op.
+      applyStraightLineRoute(origin, markerLat, markerLng, markerId, shouldFit);
 
       setLoadingRoutes((prev) => new Set(prev).add(markerId));
 
       try {
-        // Using OSRM (Open Source Routing Machine) - free, no API key needed
-        // Using the public OSRM demo server
-        const start = `${userLocation.lng},${userLocation.lat}`;
+        const start = `${origin.lng},${origin.lat}`;
         const end = `${markerLng},${markerLat}`;
-        const profile = "driving"; // Can be: driving, walking, cycling
-
         const response = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${start};${end}?overview=full&geometries=geojson`
+          `https://router.project-osrm.org/route/v1/walking/${start};${end}?overview=full&geometries=geojson`
         );
 
         if (!response.ok) {
@@ -595,46 +827,39 @@ export function MapComponent({
             response.status,
             response.statusText
           );
-          // Remove route if API fails - don't show straight line
-          setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
           return;
         }
 
         const data = await response.json();
 
         if (data.code === "Ok" && data.routes && data.routes[0] && data.routes[0].geometry) {
-          const coordinates = data.routes[0].geometry.coordinates;
-          const distance = data.routes[0].distance / 1000; // Convert meters to km
-          const duration = data.routes[0].duration / 60; // Convert seconds to minutes (for driving)
-          // For walking, calculate based on distance
-          const walkingDuration = calculateWalkingTime(distance);
+          const coordinates = data.routes[0].geometry.coordinates as number[][];
+          const distance = data.routes[0].distance / 1000;
+          const osrmWalkingMinutes = data.routes[0].duration / 60;
+          const walkingDuration =
+            Number.isFinite(osrmWalkingMinutes) && osrmWalkingMinutes > 0
+              ? osrmWalkingMinutes
+              : calculateWalkingTime(distance);
 
-          const newRoute = {
-            coordinates,
-            markerId,
-            distance, // Store route distance
-            duration: walkingDuration, // Store walking duration
-          };
-
+          shouldHaveRoutesRef.current = true;
           setRoutes((prev) => {
             const filtered = prev.filter((r) => r.markerId !== markerId);
-            return [...filtered, newRoute];
+            return [
+              ...filtered,
+              {
+                coordinates,
+                markerId,
+                distance,
+                duration: walkingDuration,
+              },
+            ];
           });
-
-          // Remove from loading set
-          setLoadingRoutes((prev) => {
-            const updated = new Set(prev);
-            updated.delete(markerId);
-            return updated;
-          });
-        } else {
-          console.warn(`OSRM returned error for marker ${markerId}:`, data.code);
-          setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
+          if (shouldFit) fitMapToRoute(coordinates);
+          devLog.debug("navigation:osrm", { markerId, distance });
         }
       } catch (error) {
         console.warn(`Failed to fetch route for marker ${markerId}:`, error);
-        // Don't show straight line - just remove the route
-        setRoutes((prev) => prev.filter((r) => r.markerId !== markerId));
+        // Straight-line Source/Layer already committed via applyStraightLineRoute.
       } finally {
         setLoadingRoutes((prev) => {
           const next = new Set(prev);
@@ -643,7 +868,7 @@ export function MapComponent({
         });
       }
     },
-    [userLocation]
+    [userLocation, applyStraightLineRoute, fitMapToRoute]
   );
 
   // Keep track of last route fetch position to avoid excessive API calls
@@ -657,51 +882,39 @@ export function MapComponent({
     fetchRouteRef.current = fetchRoute;
   }, [fetchRoute]);
 
-  // Track whether we should have routes to avoid unnecessary clears
-  const shouldHaveRoutesRef = useRef(false);
-
-  // Fetch routes only for selected marker and if showUserLocation is enabled
-  // Update route when userLocation changes significantly (>50m) for real-time tracking
+  // Keep an existing Navigáció route updated when the user moves (>50m).
+  // Do NOT auto-draw on mere marker select — only Navigáció starts a route.
+  // Do NOT clear routes here when selection briefly flickers (map-click race).
   useEffect(() => {
     if (
-      showUserLocation &&
-      selectedMarkerId &&
-      userLocation &&
-      userLocation.lat &&
-      userLocation.lng
+      !shouldHaveRoutesRef.current ||
+      !showUserLocation ||
+      !selectedMarkerId ||
+      !hasCoords(userLocation)
     ) {
-      const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
+      return;
+    }
 
-      if (selectedMarker && selectedMarker.lat && selectedMarker.lng) {
-        const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
+    const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
+    if (!selectedMarker || !Number.isFinite(selectedMarker.lat) || !Number.isFinite(selectedMarker.lng)) {
+      return;
+    }
 
-        // Check if position has changed significantly (>50m or ~0.0005 degrees)
-        const lastFetch = lastRouteFetchPosition.current;
-        const shouldUpdate =
-          !lastFetch ||
-          lastFetch.markerId !== selectedMarkerId ||
-          Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
-          Math.abs(lastFetch.lng - userLocation.lng) > 0.0005;
+    const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
+    const lastFetch = lastRouteFetchPosition.current;
+    const shouldUpdate =
+      !!lastFetch &&
+      lastFetch.markerId === selectedMarkerId &&
+      (Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
+        Math.abs(lastFetch.lng - userLocation.lng) > 0.0005);
 
-        // Fetch route when marker changes or position changes significantly
-        if (!isLoading && shouldUpdate) {
-          lastRouteFetchPosition.current = {
-            lat: userLocation.lat,
-            lng: userLocation.lng,
-            markerId: selectedMarkerId,
-          };
-          fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
-        }
-        shouldHaveRoutesRef.current = true;
-      }
-    } else {
-      // Clear routes when no marker is selected or showUserLocation is disabled
-      // Only clear if we previously had routes to avoid unnecessary re-renders
-      if (shouldHaveRoutesRef.current) {
-        setRoutes([]);
-        shouldHaveRoutesRef.current = false;
-      }
-      lastRouteFetchPosition.current = null;
+    if (!isLoading && shouldUpdate) {
+      lastRouteFetchPosition.current = {
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        markerId: selectedMarkerId,
+      };
+      fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
     }
   }, [selectedMarkerId, userLocation, markers, showUserLocation]);
 
@@ -712,39 +925,20 @@ export function MapComponent({
       if (!markerStillExists) {
         setSelectedMarkerId(null);
         setRoutes([]);
+        shouldHaveRoutesRef.current = false;
         lastRouteFetchPosition.current = null;
       }
     }
   }, [markers, selectedMarkerId]);
 
-  // Clear selected marker when geolocation is disabled
+  // Location off: drop route polyline, but keep sticky card selection.
   useEffect(() => {
-    if (!showUserLocation && selectedMarkerId) {
-      setSelectedMarkerId(null);
+    if (!showUserLocation) {
       setRoutes([]);
+      shouldHaveRoutesRef.current = false;
       lastRouteFetchPosition.current = null;
     }
-  }, [showUserLocation, selectedMarkerId]);
-
-  // Automatically disable geotracking on medium, far and veryFar zoom levels
-  useEffect(() => {
-    const zoomLevel = getZoomLevel(viewState.zoom);
-    if (
-      (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") &&
-      showUserLocation
-    ) {
-      // Disable geotracking
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      setShowUserLocation(false);
-      setUserLocation(null);
-      setSelectedMarkerId(null);
-      setRoutes([]);
-      lastRouteFetchPosition.current = null;
-    }
-  }, [viewState.zoom, showUserLocation, setShowUserLocation, setUserLocation]);
+  }, [showUserLocation]);
 
   // Calculate distances for markers
   // ONLY use route distance from API - don't show straight-line distance
@@ -780,12 +974,9 @@ export function MapComponent({
     return clusterMarkers(markersWithDistance, viewState.zoom);
   }, [markersWithDistance, viewState.zoom]);
 
-  // Handle marker click - behavior depends on showUserLocation
-  // If showUserLocation is false: navigate immediately (single click)
-  // If showUserLocation is true:
-  //   - First click on a marker: selects it and calculates route
-  //   - Click on different marker: switches to that marker immediately
-  //   - Second click on same marker: navigates to place detail page
+  // Sticky card selection (hover is separate and never clears selection).
+  // Single click/tap → keep enhanced card open. Navigáció draws the route.
+  // Place detail opens via card title click, not by re-tapping the pin.
   const handleMarkerClick = useCallback(
     (marker: (typeof markersWithDistance)[0], event: React.MouseEvent | React.TouchEvent) => {
       const now = Date.now();
@@ -797,100 +988,180 @@ export function MapComponent({
       lastClickTimeRef.current[marker.id] = now;
 
       event.stopPropagation();
+      suppressNextMapClick();
 
-      if (!showUserLocation) {
-        if (marker.onClick) {
-          marker.onClick();
-        }
-        return;
-      }
+      setPinnedMarkerId(null);
+      setHoveredMarkerId(null);
 
-      if (selectedMarkerId === marker.id) {
-        if (marker.onClick) {
-          marker.onClick();
-        }
-      } else {
+      if (selectedMarkerId !== marker.id) {
+        // Switching place: drop previous route; new route only via Navigáció.
         setRoutes([]);
+        shouldHaveRoutesRef.current = false;
         lastRouteFetchPosition.current = null;
         setSelectedMarkerId(marker.id);
       }
+      // Same marker again: keep card sticky (do not navigate away).
     },
-    [selectedMarkerId, markersWithDistance, showUserLocation]
+    [selectedMarkerId, suppressNextMapClick]
   );
 
-  // Memoize map style to prevent re-initialization on every render
+  /** Start in-app walking route: select place, ensure geolocation, draw polyline. Never opens external maps. */
+  const startInAppNavigation = useCallback(
+    (marker: { id: string; lat: number; lng: number }) => {
+      // Keep map-click dismiss from racing the Navigáció click / geolocation prompt.
+      suppressNextMapClick(1500);
+      setPinnedMarkerId(null);
+      setHoveredMarkerId(null);
+      setSelectedMarkerId(marker.id);
+      shouldHaveRoutesRef.current = true;
+      devLog.debug("navigation:start", {
+        markerId: marker.id,
+        hasUserLocation: showUserLocation && hasCoords(userLocation),
+      });
+
+      const beginWatch = () => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) return;
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+        }
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (updatedPosition) => {
+            setUserLocation({
+              lat: updatedPosition.coords.latitude,
+              lng: updatedPosition.coords.longitude,
+            });
+          },
+          (error) => {
+            console.warn("Geolocation watch error:", error);
+            if (error.code === error.PERMISSION_DENIED) {
+              setShowUserLocation(false);
+              setUserLocation(null);
+              setRoutes([]);
+              shouldHaveRoutesRef.current = false;
+              lastRouteFetchPosition.current = null;
+              showToast(t("public.locationPermissionDenied"), "warning");
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
+          }
+        );
+      };
+
+      if (showUserLocation && hasCoords(userLocation)) {
+        lastRouteFetchPosition.current = {
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          markerId: marker.id,
+        };
+        shouldHaveRoutesRef.current = true;
+        void fetchRouteRef.current(marker.lat, marker.lng, marker.id, userLocation, true);
+        return;
+      }
+
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        showToast(t("public.locationPermissionPrompt"), "warning");
+        return;
+      }
+
+      // One permission prompt, then enable "Itt vagy most" and draw the route in-place.
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const origin = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(origin);
+          setShowUserLocation(true);
+          beginWatch();
+          lastRouteFetchPosition.current = {
+            lat: origin.lat,
+            lng: origin.lng,
+            markerId: marker.id,
+          };
+          shouldHaveRoutesRef.current = true;
+          setSelectedMarkerId(marker.id);
+          void fetchRouteRef.current(marker.lat, marker.lng, marker.id, origin, true);
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          setShowUserLocation(false);
+          setUserLocation(null);
+          setRoutes([]);
+          shouldHaveRoutesRef.current = false;
+          lastRouteFetchPosition.current = null;
+          if (error.code === error.PERMISSION_DENIED) {
+            showToast(t("public.locationPermissionDenied"), "warning");
+          } else {
+            showToast(t("public.locationPermissionPrompt"), "warning");
+          }
+        },
+        { enableHighAccuracy: true, maximumAge: 300000, timeout: 15000 }
+      );
+    },
+    [
+      showUserLocation,
+      userLocation,
+      setUserLocation,
+      setShowUserLocation,
+      showToast,
+      t,
+      suppressNextMapClick,
+    ]
+  );
+
+  // Keyless OpenFreeMap planet tiles + glyphs/sprites. Never use Carto (API KEY watermark).
+  // Default is a custom vintage wine-region palette on Bright layer structure — not a stock OFM URL.
+  // Bump MAP_STYLE_REV when swapping styles so HMR/SW cannot keep a stale style.
+  const MAP_STYLE_REV = VINTAGE_WINE_REGION_STYLE_ID;
   const memoizedMapStyle = useMemo(() => {
+    void MAP_STYLE_REV;
     if (mapStyle === "hand-drawn") {
-      return {
-        version: 8,
-        sources: {
-          "hand-drawn-tiles": {
-            type: "raster",
-            tiles: ["https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg"],
-            tileSize: 256,
-            attribution: "© Stamen Design, © OpenStreetMap contributors",
-          },
-        },
-        layers: [
-          {
-            id: "hand-drawn-layer",
-            type: "raster",
-            source: "hand-drawn-tiles",
-            minzoom: 0,
-            maxzoom: 18,
-          },
-        ],
-      };
-    } else if (mapStyle === "pastel") {
-      return {
-        version: 8,
-        sources: {
-          "pastel-tiles": {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors",
-          },
-        },
-        layers: [
-          {
-            id: "pastel-layer",
-            type: "raster",
-            source: "pastel-tiles",
-            minzoom: 0,
-            maxzoom: 22,
-            paint: {
-              "raster-saturation": -0.3,
-            },
-          },
-        ],
-      };
-    } else {
-      return {
-        version: 8,
-        sources: {
-          "raster-tiles": {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors",
-          },
-        },
-        layers: [
-          {
-            id: "simple-tiles",
-            type: "raster",
-            source: "raster-tiles",
-            minzoom: 0,
-            maxzoom: 22,
-            paint: {
-              "raster-saturation": -0.3,
-            },
-          },
-        ],
-      };
+      return "https://tiles.openfreemap.org/styles/fiord";
     }
+    if (mapStyle === "pastel") {
+      return "https://tiles.openfreemap.org/styles/positron";
+    }
+    // default: parchment / olive / sepia custom style (OFM tiles, no key)
+    return vintageWineRegionStyle;
   }, [mapStyle]);
+
+  // SVG overlay: always-visible route even when MapLibre style/tiles never finish loading.
+  const [routeOverlayPath, setRouteOverlayPath] = useState<string | null>(null);
+  useEffect(() => {
+    const coords = routes[0]?.coordinates;
+    const map = getMap();
+    if (!map || !coords || coords.length < 2) {
+      setRouteOverlayPath(null);
+      return;
+    }
+
+    const update = () => {
+      try {
+        const parts = coords.map(([lng, lat], index) => {
+          const point = map.project([lng as number, lat as number]);
+          return `${index === 0 ? "M" : "L"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
+        });
+        setRouteOverlayPath(parts.join(" "));
+      } catch (error) {
+        console.warn("Failed to project navigation route overlay:", error);
+      }
+    };
+
+    update();
+    map.on("move", update);
+    map.on("resize", update);
+    map.on("pitch", update);
+    map.on("rotate", update);
+    return () => {
+      map.off("move", update);
+      map.off("resize", update);
+      map.off("pitch", update);
+      map.off("rotate", update);
+    };
+  }, [routes, getMap, viewState.latitude, viewState.longitude, viewState.zoom]);
 
   // Convert height to CSS value
   const heightStyle = typeof height === "number" ? `${height}px` : height;
@@ -927,6 +1198,7 @@ export function MapComponent({
         }
       `}</style>
       <ReactMapGl
+        ref={mapRef}
         {...viewState}
         onMove={(evt) => {
           setViewState(evt.viewState);
@@ -948,11 +1220,36 @@ export function MapComponent({
           // Reduce scroll wheel zoom sensitivity
           // Default is 1/450, using 1/800 makes it much less sensitive
           const map = evt.target;
+          mapInstanceRef.current = map;
           if (map && map.scrollZoom) {
             map.scrollZoom.setWheelZoomRate(1 / 800);
           }
+          // Kick a repaint once the style reports ready — OSM previously hung forever.
+          map.once("idle", () => {
+            try {
+              map.triggerRepaint();
+            } catch {
+              /* ignore */
+            }
+          });
         }}
       >
+        {routes[0] &&
+          Array.isArray(routes[0].coordinates) &&
+          routes[0].coordinates.length >= 2 && (
+            <Source
+              id={ROUTE_SOURCE_ID}
+              type="geojson"
+              data={buildRouteGeoJson(routes[0].coordinates)}
+            >
+              <Layer
+                id={ROUTE_LAYER_ID}
+                type="line"
+                layout={ROUTE_LINE_LAYOUT}
+                paint={ROUTE_LINE_PAINT}
+              />
+            </Source>
+          )}
         {/* User location marker - only show if showUserLocation is enabled */}
         {showUserLocation &&
           userLocation &&
@@ -1062,47 +1359,6 @@ export function MapComponent({
             </Marker>
           )}
 
-        {/* Route lines from user location to selected marker only - only show if showUserLocation is enabled */}
-        {showUserLocation &&
-          selectedMarkerId &&
-          userLocation &&
-          routes.length > 0 &&
-          routes.map((route) => {
-            // Only show route if the marker still exists in the markers list (not filtered out)
-            const markerExists = markers.find((m) => m.id === route.markerId);
-            if (!markerExists) return null;
-
-            return (
-              <Source
-                key={`route-${route.markerId}`}
-                id={`route-${route.markerId}`}
-                type="geojson"
-                data={{
-                  type: "Feature",
-                  properties: {},
-                  geometry: {
-                    type: "LineString",
-                    coordinates: route.coordinates,
-                  },
-                }}
-              >
-                <Layer
-                  id={`route-layer-${route.markerId}`}
-                  type="line"
-                  layout={{
-                    "line-join": "round",
-                    "line-cap": "round",
-                  }}
-                  paint={{
-                    "line-color": "#3b82f6",
-                    "line-width": 6,
-                    "line-opacity": 0.8,
-                  }}
-                />
-              </Source>
-            );
-          })}
-
         {/* Main marker (editable location) */}
         {currentLat && currentLng && onLocationChange && (
           <Marker
@@ -1118,7 +1374,7 @@ export function MapComponent({
                 width: 28,
                 height: 28,
                 borderRadius: "50% 50% 50% 0",
-                background: "linear-gradient(135deg, #007bff 0%, #0056b3 100%)",
+                background: "#1b1730",
                 border: "3px solid white",
                 boxShadow: "0 4px 12px rgba(0, 123, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)",
                 cursor: interactive && !!onLocationChange ? "move" : "default",
@@ -1146,48 +1402,29 @@ export function MapComponent({
         {/* Additional markers (for places on explore page) */}
         {visibleMarkers.map((marker) => {
           const zoomLevel = getZoomLevel(viewState.zoom);
-          // Show labels only when zoomed in (zoom >= 13) - but NOT distance unless selected
+          // Name chip when zoomed in; enhanced card on desktop hover / touch pin / route select
           const showLabel = zoomLevel === "close" && marker.name;
           const isClickable = !!marker.onClick;
           const isSelected = selectedMarkerId === marker.id;
-
-          // Determine marker size and style based on zoom level
-          const isDot = zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar";
-          const markerSize = isSelected
-            ? zoomLevel === "close"
-              ? 28
-              : zoomLevel === "medium"
-                ? 16
-                : zoomLevel === "far"
-                  ? 12
-                  : 8
-            : zoomLevel === "close"
-              ? 24
-              : zoomLevel === "medium"
-                ? 14
-                : zoomLevel === "far"
-                  ? 10
-                  : 6;
-          const borderWidth = isSelected
-            ? zoomLevel === "close"
-              ? 4
-              : zoomLevel === "medium"
-                ? 3
-                : zoomLevel === "far"
-                  ? 2
-                  : 1.5
-            : zoomLevel === "close"
-              ? 3
-              : zoomLevel === "medium"
-                ? 2
-                : zoomLevel === "far"
-                  ? 2
-                  : 1.5;
-          const innerDotSize =
-            zoomLevel === "close" ? 8 : zoomLevel === "medium" ? 6 : zoomLevel === "far" ? 4 : 3;
+          const isHovered = hoveredMarkerId === marker.id;
+          const isPinned = pinnedMarkerId === marker.id;
+          const showEnhancedCard = isSelected || isHovered || isPinned;
+          const showZoomChip =
+            !showEnhancedCard && showLabel && (!!marker.name || !!marker.category);
+          const destinationReady = Number.isFinite(marker.lat) && Number.isFinite(marker.lng);
+          const showDirections = destinationReady && showEnhancedCard;
+          const cardImageUrl = showEnhancedCard
+            ? sanitizeImageUrl(marker.mapImage) || sanitizeImageUrl(marker.heroImage) || null
+            : null;
 
           return (
-            <Marker key={marker.id} longitude={marker.lng} latitude={marker.lat}>
+            <Marker
+              key={marker.id}
+              longitude={marker.lng}
+              latitude={marker.lat}
+              anchor={zoomLevel === "close" ? "bottom" : "center"}
+              style={{ zIndex: isSelected || isHovered || isPinned ? 5 : 1 }}
+            >
               <div
                 style={{
                   position: "relative",
@@ -1196,277 +1433,152 @@ export function MapComponent({
                   alignItems: "center",
                   cursor: "pointer",
                 }}
+                onMouseEnter={() => {
+                  if (canHoverPreview) setHoveredMarkerId(marker.id);
+                }}
+                onMouseLeave={() => {
+                  // Hover preview only — never clear sticky selection.
+                  if (!canHoverPreview) return;
+                  setHoveredMarkerId((current) => (current === marker.id ? null : current));
+                }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  suppressNextMapClick();
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  suppressNextMapClick();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  suppressNextMapClick();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleMarkerClick(marker, e as any);
                 }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  handleMarkerClick(marker, e as any);
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                }}
-                onTouchStart={(e) => {
-                  e.stopPropagation();
-                }}
               >
-                {/* Marker pin or dot design */}
-                {isDot ? (
-                  // Dot style for medium, far and veryFar zoom
-                  // VeryFar: simple dot without border/shadow
-                  zoomLevel === "veryFar" ? (
-                    <div
-                      style={{
-                        width: markerSize,
-                        height: markerSize,
-                        borderRadius: "50%",
-                        background: isSelected ? "#fbbf24" : isClickable ? "#667eea" : "#999",
-                        cursor: isClickable ? "pointer" : "default",
-                        transform: isSelected ? "scale(1.2)" : "scale(1)",
-                        transition: "all 0.2s ease",
-                        opacity: isClickable ? 1 : 0.7,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (isClickable && !isSelected) {
-                          e.currentTarget.style.transform = "scale(1.1)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = "scale(1)";
-                        }
-                      }}
-                    />
-                  ) : (
-                    // Medium and far: dot with border and shadow
-                    <div
-                      style={{
-                        width: markerSize,
-                        height: markerSize,
-                        borderRadius: "50%",
-                        background: isSelected ? "#fbbf24" : isClickable ? "#667eea" : "#999",
-                        border: `${borderWidth}px solid white`,
-                        boxShadow: isSelected
-                          ? "0 4px 12px rgba(251, 191, 36, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)"
-                          : isClickable
-                            ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
-                            : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)",
-                        cursor: isClickable ? "pointer" : "default",
-                        transform: isSelected ? "scale(1.3)" : "scale(1)",
-                        transition: "all 0.2s ease",
-                        opacity: isClickable ? 1 : 0.7,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (isClickable && !isSelected) {
-                          e.currentTarget.style.transform = "scale(1.2)";
-                          e.currentTarget.style.boxShadow =
-                            "0 4px 12px rgba(102, 126, 234, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.boxShadow = isClickable
-                            ? "0 2px 8px rgba(102, 126, 234, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2)"
-                            : "0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1)";
-                        }
-                      }}
-                    />
-                  )
-                ) : (
-                  // Pin style for close zoom
-                  <div
-                    style={{
-                      width: markerSize,
-                      height: markerSize,
-                      borderRadius: "50% 50% 50% 0",
-                      background: isSelected
-                        ? "#fbbf24"
-                        : isClickable
-                          ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                          : "linear-gradient(135deg, #999 0%, #777 100%)",
-                      border: `${borderWidth}px solid white`,
-                      boxShadow: isSelected
-                        ? "0 6px 16px rgba(251, 191, 36, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
-                        : isClickable
-                          ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
-                          : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)",
-                      cursor: isClickable ? "pointer" : "default",
-                      transform: isSelected ? "rotate(-45deg) scale(1.2)" : "rotate(-45deg)",
-                      transition: "all 0.2s ease",
-                      opacity: isClickable ? 1 : 0.7,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (isClickable && !isSelected) {
-                        e.currentTarget.style.transform = "rotate(-45deg) scale(1.15)";
-                        e.currentTarget.style.boxShadow =
-                          "0 6px 16px rgba(102, 126, 234, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.transform = "rotate(-45deg) scale(1)";
-                        e.currentTarget.style.boxShadow = isSelected
-                          ? "0 6px 16px rgba(245, 158, 11, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3)"
-                          : isClickable
-                            ? "0 4px 12px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)"
-                            : "0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1)";
-                      }
-                    }}
-                  >
-                    {/* Inner dot */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%) rotate(45deg)",
-                        width: innerDotSize,
-                        height: innerDotSize,
-                        borderRadius: "50%",
-                        background: "white",
-                      }}
-                    />
-                  </div>
-                )}
+                <PlaceMapPin
+                  zoomLevel={zoomLevel}
+                  isSelected={isSelected}
+                  isHovered={isHovered || isPinned}
+                  isMuted={!isClickable}
+                />
 
-                {/* Label - shows name when zoomed in, distance and walking time ONLY when selected */}
-                {(showLabel || isSelected) && (
+                {(showEnhancedCard || showZoomChip) && (
                   <div
-                    style={{
-                      position: "absolute",
-                      bottom: "100%",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      background: "rgba(255, 255, 255, 0.8)",
-                      backdropFilter: "blur(5px)",
-                      WebkitBackdropFilter: "blur(5px)",
-                      padding: isSelected ? "8px 14px" : "6px 12px",
-                      borderRadius: 12,
-                      fontSize: 13,
-                      fontWeight: 500,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      whiteSpace: "nowrap",
-                      boxShadow: isSelected
-                        ? "0 4px 12px rgba(251, 191, 36, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)"
-                        : "0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)",
-                      marginBottom: 8,
-                      pointerEvents: "none",
-                      color: "#1a1a1a",
-                      border: isSelected
-                        ? "2px solid rgba(251, 191, 36, 1)"
-                        : "1px solid rgba(0, 0, 0, 0.05)",
-                      letterSpacing: "-0.01em",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: isSelected ? 4 : 2,
-                      minWidth: isSelected ? 120 : "auto",
+                    className={[
+                      "hl-map-marker-card",
+                      showEnhancedCard ? "hl-map-marker-card--enhanced" : "hl-map-marker-card--chip",
+                      isSelected ? "hl-map-marker-card--selected" : "",
+                      cardImageUrl ? "hl-map-marker-card--has-media" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      suppressNextMapClick();
                     }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      suppressNextMapClick();
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      suppressNextMapClick();
+                    }}
+                    onClick={(e) => {
+                      // Keep card interactions from re-toggling the pin / bubbling to the map.
+                      e.stopPropagation();
+                      suppressNextMapClick();
+                    }}
+                    style={{ pointerEvents: showEnhancedCard ? "auto" : "none" }}
                   >
-                    {marker.name && !isSelected && (
-                      <span
-                        style={{
-                          fontWeight: 500,
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        }}
-                      >
-                        {marker.name}
-                      </span>
+                    {cardImageUrl && (
+                      <div className="hl-map-marker-card__media">
+                        <img
+                          className="hl-map-marker-card__img"
+                          src={cardImageUrl}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
                     )}
-                    {isSelected && (
-                      <>
-                        {marker.name && (
-                          <span
-                            style={{
-                              fontWeight: 500,
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            {marker.name}
-                          </span>
-                        )}
-                        {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
-                          <>
-                            <span
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 400,
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                opacity: 0.95,
-                              }}
-                            >
-                              {marker.isRouteDistance ? "🛣️" : "📍"}{" "}
-                              {formatDistance(marker.distance)}
+                    <div className="hl-map-marker-card__body">
+                      {marker.name && (
+                        <span
+                          className="hl-map-marker-card__title"
+                          role={isClickable ? "link" : undefined}
+                          tabIndex={isClickable ? 0 : undefined}
+                          onClick={(e) => {
+                            if (!isClickable || !marker.onClick) return;
+                            e.stopPropagation();
+                            suppressNextMapClick();
+                            marker.onClick();
+                          }}
+                          onKeyDown={(e) => {
+                            if (!isClickable || !marker.onClick) return;
+                            if (e.key !== "Enter" && e.key !== " ") return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            marker.onClick();
+                          }}
+                          style={isClickable ? { cursor: "pointer" } : undefined}
+                        >
+                          {marker.name}
+                        </span>
+                      )}
+                      {marker.category && (
+                        <span className="hl-map-marker-card__category">{marker.category}</span>
+                      )}
+                      {isSelected && (
+                        <>
+                          {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
+                            <>
+                              <span className="hl-map-marker-card__meta">
+                                {marker.isRouteDistance ? "🛣️" : "📍"}{" "}
+                                {formatDistance(marker.distance)}
+                              </span>
+                              <span className="hl-map-marker-card__meta hl-map-marker-card__meta--row">
+                                {marker.walkingTime !== undefined && (
+                                  <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>
+                                )}
+                                {marker.cyclingTime !== undefined && (
+                                  <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>
+                                )}
+                              </span>
+                            </>
+                          )}
+                          {marker.distance !== undefined && marker.distance > MAX_DISTANCE_KM && (
+                            <span className="hl-map-marker-card__meta is-muted">
+                              {t("public.tooFarAway", { distance: MAX_DISTANCE_KM })}
                             </span>
-                            <span
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 400,
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                opacity: 0.9,
-                                display: "flex",
-                                gap: 8,
-                                alignItems: "center",
-                              }}
-                            >
-                              {marker.walkingTime !== undefined && (
-                                <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>
-                              )}
-                              {marker.cyclingTime !== undefined && (
-                                <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>
-                              )}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 500,
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                opacity: 0.8,
-                                marginTop: 2,
-                              }}
-                            >
-                              {t("public.clickAgainToNavigate")}!
-                            </span>
-                          </>
-                        )}
-                        {marker.distance !== undefined && marker.distance > MAX_DISTANCE_KM && (
-                          <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 400,
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              opacity: 0.8,
-                              fontStyle: "italic",
-                            }}
-                          >
-                            {t("public.tooFarAway", { distance: MAX_DISTANCE_KM })}
-                          </span>
-                        )}
-                        {marker.distance === undefined && (
-                          <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 400,
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              opacity: 0.8,
-                              marginTop: 2,
-                              fontStyle: "italic",
-                            }}
-                          >
-                            ⏳ {t("public.calculatingRoute")}
-                          </span>
-                        )}
-                      </>
+                          )}
+                          {marker.distance === undefined &&
+                            loadingRoutes.has(marker.id) && (
+                              <span className="hl-map-marker-card__meta is-muted">
+                                ⏳ {t("public.calculatingRoute")}
+                              </span>
+                            )}
+                        </>
+                      )}
+                      {showDirections && (
+                        <DirectionsButton
+                          label={t("public.startNavigation")}
+                          onNavigate={() => {
+                            suppressNextMapClick(1500);
+                            startInAppNavigation({
+                              id: marker.id,
+                              lat: marker.lat,
+                              lng: marker.lng,
+                            });
+                          }}
+                        />
+                      )}
+                    </div>
+                    {showDirections && (
+                      <span className="hl-map-marker-card__bridge" aria-hidden="true" />
                     )}
                   </div>
                 )}
@@ -1475,6 +1587,31 @@ export function MapComponent({
           );
         })}
       </ReactMapGl>
+
+      {routeOverlayPath && (
+        <svg
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 4,
+            overflow: "visible",
+          }}
+        >
+          <path
+            d={routeOverlayPath}
+            fill="none"
+            stroke="#2563eb"
+            strokeWidth={5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.92}
+          />
+        </svg>
+      )}
 
       {/* Draggable user location control */}
       {!hideLocationButton && (
@@ -1521,16 +1658,7 @@ export function MapComponent({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              cursor:
-                getZoomLevel(viewState.zoom) === "medium" ||
-                getZoomLevel(viewState.zoom) === "far" ||
-                getZoomLevel(viewState.zoom) === "veryFar"
-                  ? "not-allowed"
-                  : isDesktop
-                    ? isDraggingLocationControl
-                      ? "grabbing"
-                      : "grab"
-                    : "pointer",
+              cursor: isDraggingLocationControl ? "grabbing" : "pointer",
               flex: 1,
               fontSize: 15,
               fontWeight: 500,
@@ -1543,45 +1671,13 @@ export function MapComponent({
               touchAction: "manipulation",
               margin: 0,
               padding: "10px 20px 10px 20px",
-              background:
-                getZoomLevel(viewState.zoom) === "medium" ||
-                getZoomLevel(viewState.zoom) === "far" ||
-                getZoomLevel(viewState.zoom) === "veryFar"
-                  ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
-                  : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "#1b1730",
               borderRadius: isDesktop ? 16 : 12,
               minHeight: 48,
               boxSizing: "border-box",
-              opacity:
-                getZoomLevel(viewState.zoom) === "medium" ||
-                getZoomLevel(viewState.zoom) === "far" ||
-                getZoomLevel(viewState.zoom) === "veryFar"
-                  ? 0.7
-                  : 1,
             }}
-            onMouseDown={
-              isDesktop
-                ? (e) => {
-                    // Allow drag on desktop when clicking on label (but not on checkbox)
-                    if ((e.target as HTMLElement).tagName !== "INPUT") {
-                      e.preventDefault(); // Prevent text selection
-                    }
-                  }
-                : undefined
-            }
             onClick={(e) => {
-              // Don't allow clicking if disabled (medium, far or veryFar zoom)
-              const zoomLevel = getZoomLevel(viewState.zoom);
-              if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
-                return;
-              }
-              // Make entire label area clickable on both mobile and desktop
-              // This gives a much larger tap/click target
-              // Only toggle if user didn't drag (hasDraggedLocationControl is checked in mouseUp/touchEnd)
-              if (hasDraggedLocationControl || isDraggingLocationControl) {
-                // If user was dragging, don't toggle
-                return;
-              }
+              if (locationMovedRef.current) return;
               const checkbox = e.currentTarget.querySelector(
                 'input[type="checkbox"]'
               ) as HTMLInputElement;
@@ -1614,53 +1710,24 @@ export function MapComponent({
               <input
                 type="checkbox"
                 checked={showUserLocation}
-                disabled={
-                  getZoomLevel(viewState.zoom) === "medium" ||
-                  getZoomLevel(viewState.zoom) === "far" ||
-                  getZoomLevel(viewState.zoom) === "veryFar"
-                }
                 style={{
                   width: 16,
                   height: 16,
-                  cursor:
-                    getZoomLevel(viewState.zoom) === "medium" ||
-                    getZoomLevel(viewState.zoom) === "far" ||
-                    getZoomLevel(viewState.zoom) === "veryFar"
-                      ? "not-allowed"
-                      : "pointer",
+                  cursor: "pointer",
                   margin: 0,
                   padding: 0,
                   appearance: "none",
                   WebkitAppearance: "none",
                   MozAppearance: "none",
-                  backgroundColor: showUserLocation ? "#667eea" : "white",
+                  backgroundColor: showUserLocation ? "#c45c26" : "white",
                   border: "2px solid rgba(255, 255, 255, 0.8)",
                   borderRadius: 3,
                   position: "relative",
                   touchAction: "manipulation",
                   WebkitTapHighlightColor: "rgba(255, 255, 255, 0.3)",
-                  pointerEvents:
-                    getZoomLevel(viewState.zoom) === "medium" ||
-                    getZoomLevel(viewState.zoom) === "far" ||
-                    getZoomLevel(viewState.zoom) === "veryFar"
-                      ? "none"
-                      : "auto",
                   zIndex: 1,
-                  opacity:
-                    getZoomLevel(viewState.zoom) === "medium" ||
-                    getZoomLevel(viewState.zoom) === "far" ||
-                    getZoomLevel(viewState.zoom) === "veryFar"
-                      ? 0.5
-                      : 1,
                 }}
                 onChange={(e) => {
-                  // Don't allow enabling on medium, far or veryFar zoom
-                  const zoomLevel = getZoomLevel(viewState.zoom);
-                  if (zoomLevel === "medium" || zoomLevel === "far" || zoomLevel === "veryFar") {
-                    e.target.checked = false;
-                    return;
-                  }
-                  // Handle checkbox change for both iOS and desktop
                   // Must call geolocation API directly in event handler to maintain user gesture context on iOS
                   const checked = e.target.checked;
 
@@ -1730,9 +1797,9 @@ export function MapComponent({
                     }
                     setShowUserLocation(false);
                     setUserLocation(null);
-                    // Clear selected marker and routes
                     setSelectedMarkerId(null);
                     setRoutes([]);
+                    shouldHaveRoutesRef.current = false;
                     lastRouteFetchPosition.current = null;
                   }
                 }}

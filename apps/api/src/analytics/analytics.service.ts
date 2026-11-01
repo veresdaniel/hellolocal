@@ -1,7 +1,10 @@
-import { BadRequestException, Injectable, ForbiddenException } from "@nestjs/common";
+import { BadRequestException, Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { TrackDto } from "./dto/track.dto";
+import { ProductClickDto } from "./dto/product-click.dto";
+import { isMissingProductClickTable } from "./product-click-table";
 import { RbacService } from "../auth/rbac.service";
 
 type TrackArgs = {
@@ -35,7 +38,8 @@ export class AnalyticsService {
 
   private clampRangeByPlan(plan: string | null | undefined, requestedDays: number): number {
     const days = Number.isFinite(requestedDays) ? requestedDays : 7;
-    const max = plan === "BUSINESS" ? 90 : plan === "PRO" ? 90 : plan === "BASIC" ? 30 : 7; // FREE/default
+    const max =
+      plan === "BUSINESS" || plan === "MUNICIPAL" ? 90 : plan === "PRO" ? 90 : plan === "BASIC" ? 30 : 7;
     return Math.min(Math.max(days, 1), max);
   }
 
@@ -97,6 +101,245 @@ export class AnalyticsService {
     });
 
     return { ok: true };
+  }
+
+  async trackProductClick(dto: ProductClickDto) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: dto.productId },
+      select: { id: true, siteId: true, placeId: true },
+    });
+    if (!product) throw new NotFoundException("Product not found");
+
+    const placeId = await this.resolveProductClickPlace(product, dto.placeId);
+    await this.incrementProductClick({
+      day: this.toDayStart(new Date()),
+      siteId: product.siteId,
+      productId: product.id,
+      placeId,
+    });
+
+    return { ok: true };
+  }
+
+  async getGlobalDashboard(args: { lang: string; rangeDays: number; userId: string }) {
+    if (!args.userId) {
+      throw new BadRequestException("userId is required");
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: args.userId },
+      select: { role: true },
+    });
+    if (!user || user.role !== UserRole.superadmin) {
+      throw new ForbiddenException("Superadmin required for global analytics");
+    }
+
+    const days = Math.min(Math.max(Number(args.rangeDays) || 7, 1), 90);
+    const from = new Date();
+    from.setDate(from.getDate() - (days - 1));
+    const fromDay = this.toDayStart(from);
+
+    const rows = await this.prisma.analyticsDaily.findMany({
+      where: { day: { gte: fromDay } },
+      orderBy: { day: "asc" },
+      select: {
+        day: true,
+        siteId: true,
+        placeId: true,
+        pageViews: true,
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
+        ctaMaps: true,
+        ctaFloorplan: true,
+      },
+    });
+
+    const summary = {
+      pageViews: 0,
+      placeViews: 0,
+      ctaPhone: 0,
+      ctaEmail: 0,
+      ctaWebsite: 0,
+      ctaMaps: 0,
+      ctaFloorplan: 0,
+    };
+    const byDay = new Map<
+      string,
+      {
+        pageViews: number;
+        placeViews: number;
+        ctaPhone: number;
+        ctaEmail: number;
+        ctaWebsite: number;
+        ctaMaps: number;
+        ctaFloorplan: number;
+      }
+    >();
+    const bySite = new Map<
+      string,
+      {
+        pageViews: number;
+        placeViews: number;
+        ctaPhone: number;
+        ctaEmail: number;
+        ctaWebsite: number;
+        ctaMaps: number;
+        ctaFloorplan: number;
+      }
+    >();
+
+    for (const r of rows) {
+      summary.pageViews += r.pageViews;
+      summary.placeViews += r.placeViews;
+      summary.ctaPhone += r.ctaPhone;
+      summary.ctaEmail += r.ctaEmail;
+      summary.ctaWebsite += r.ctaWebsite;
+      summary.ctaMaps += r.ctaMaps;
+      summary.ctaFloorplan += r.ctaFloorplan;
+
+      const dayKey = r.day.toISOString().slice(0, 10);
+      const dayAcc = byDay.get(dayKey) || {
+        pageViews: 0,
+        placeViews: 0,
+        ctaPhone: 0,
+        ctaEmail: 0,
+        ctaWebsite: 0,
+        ctaMaps: 0,
+        ctaFloorplan: 0,
+      };
+      dayAcc.pageViews += r.pageViews;
+      dayAcc.placeViews += r.placeViews;
+      dayAcc.ctaPhone += r.ctaPhone;
+      dayAcc.ctaEmail += r.ctaEmail;
+      dayAcc.ctaWebsite += r.ctaWebsite;
+      dayAcc.ctaMaps += r.ctaMaps;
+      dayAcc.ctaFloorplan += r.ctaFloorplan;
+      byDay.set(dayKey, dayAcc);
+
+      const siteAcc = bySite.get(r.siteId) || {
+        pageViews: 0,
+        placeViews: 0,
+        ctaPhone: 0,
+        ctaEmail: 0,
+        ctaWebsite: 0,
+        ctaMaps: 0,
+        ctaFloorplan: 0,
+      };
+      siteAcc.pageViews += r.pageViews;
+      siteAcc.placeViews += r.placeViews;
+      siteAcc.ctaPhone += r.ctaPhone;
+      siteAcc.ctaEmail += r.ctaEmail;
+      siteAcc.ctaWebsite += r.ctaWebsite;
+      siteAcc.ctaMaps += r.ctaMaps;
+      siteAcc.ctaFloorplan += r.ctaFloorplan;
+      bySite.set(r.siteId, siteAcc);
+    }
+
+    const siteIds = Array.from(bySite.keys());
+    const nameBySite = new Map<string, string>();
+    if (siteIds.length > 0) {
+      const sites = await this.prisma.site.findMany({
+        where: { id: { in: siteIds } },
+        select: {
+          id: true,
+          slug: true,
+          translations: { select: { lang: true, name: true } },
+        },
+      });
+      for (const s of sites) {
+        const name =
+          s.translations.find((t) => t.lang === args.lang)?.name ??
+          s.translations[0]?.name ??
+          s.slug ??
+          s.id;
+        nameBySite.set(s.id, name);
+      }
+    }
+
+    const topSites = Array.from(bySite.entries())
+      .map(([siteId, stats]) => ({
+        siteId,
+        name: nameBySite.get(siteId) ?? siteId,
+        pageViews: stats.pageViews,
+        placeViews: stats.placeViews,
+        ctaTotal:
+          stats.ctaPhone +
+          stats.ctaEmail +
+          stats.ctaWebsite +
+          stats.ctaMaps +
+          stats.ctaFloorplan,
+      }))
+      .sort((a, b) => b.pageViews + b.placeViews - (a.pageViews + a.placeViews))
+      .slice(0, 10);
+
+    const topPlacesRaw = await this.prisma.analyticsDaily.groupBy({
+      by: ["placeId"],
+      where: { placeId: { not: null }, day: { gte: fromDay } },
+      _sum: {
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
+        ctaMaps: true,
+        ctaFloorplan: true,
+      },
+      orderBy: { _sum: { placeViews: "desc" } },
+      take: 10,
+    });
+    const placeIds = topPlacesRaw.map((t) => t.placeId!).filter(Boolean);
+    const nameByPlace = new Map<string, string>();
+    if (placeIds.length > 0) {
+      const places = await this.prisma.place.findMany({
+        where: { id: { in: placeIds } },
+        select: { id: true, translations: { select: { lang: true, name: true } } },
+      });
+      for (const p of places) {
+        const name =
+          p.translations.find((t) => t.lang === args.lang)?.name ??
+          p.translations[0]?.name ??
+          p.id;
+        nameByPlace.set(p.id, name);
+      }
+    }
+
+    return {
+      scope: "global" as const,
+      days,
+      summary,
+      timeseries: Array.from(byDay.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, stats]) => ({
+          day,
+          pageViews: stats.pageViews,
+          placeViews: stats.placeViews,
+          ctaTotal:
+            stats.ctaPhone +
+            stats.ctaEmail +
+            stats.ctaWebsite +
+            stats.ctaMaps +
+            stats.ctaFloorplan,
+        })),
+      ctaBreakdown: {
+        ctaPhone: summary.ctaPhone,
+        ctaEmail: summary.ctaEmail,
+        ctaWebsite: summary.ctaWebsite,
+        ctaMaps: summary.ctaMaps,
+        ctaFloorplan: summary.ctaFloorplan,
+      },
+      topSites,
+      topPlaces: topPlacesRaw.map((t) => ({
+        placeId: t.placeId,
+        name: nameByPlace.get(t.placeId!) ?? t.placeId,
+        placeViews: t._sum.placeViews ?? 0,
+        ctaTotal:
+          (t._sum.ctaPhone ?? 0) +
+          (t._sum.ctaEmail ?? 0) +
+          (t._sum.ctaWebsite ?? 0) +
+          (t._sum.ctaMaps ?? 0) +
+          (t._sum.ctaFloorplan ?? 0),
+      })),
+    };
   }
 
   async getSiteDashboard(args: {
@@ -288,10 +531,18 @@ export class AnalyticsService {
     const conversion =
       summary.placeViews > 0 ? Math.round((ctaTotal / summary.placeViews) * 1000) / 10 : 0;
 
+    const productClicks = await this.placeProductClicks({
+      siteId: site.siteId,
+      placeId: args.placeId,
+      fromDay,
+      lang: args.lang,
+    });
+
     return {
       scope: "place",
       placeId: args.placeId,
       days,
+      productClicks,
       summary: { ...summary, ctaTotal, conversionPct: conversion },
       timeseries: rows.map((r) => ({
         day: r.day.toISOString().slice(0, 10),
@@ -299,6 +550,233 @@ export class AnalyticsService {
         ctaTotal: r.ctaPhone + r.ctaEmail + r.ctaWebsite + r.ctaMaps + r.ctaFloorplan,
       })),
       ctaBreakdown: summary,
+    };
+  }
+
+  async getTownDashboard(args: {
+    lang: string;
+    siteKey?: string;
+    townId: string;
+    rangeDays: number;
+    userId: string;
+  }) {
+    if (!args.userId) {
+      throw new BadRequestException("userId is required");
+    }
+    if (!args.townId) {
+      throw new BadRequestException("townId is required");
+    }
+    const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
+
+    const town = await this.prisma.town.findFirst({
+      where: {
+        id: args.townId,
+        OR: [{ siteId: site.siteId }, { siteId: null }],
+      },
+      select: { id: true },
+    });
+    if (!town) {
+      throw new NotFoundException("Town not found");
+    }
+
+    const hasPermission = await this.rbacService.hasSitePermission(
+      args.userId,
+      site.siteId,
+      "editor"
+    );
+    if (!hasPermission) {
+      throw new ForbiddenException("Insufficient site permissions. Required: editor or higher");
+    }
+
+    const plan = await this.getSitePlan(site.siteId);
+    const days = this.clampRangeByPlan(plan, args.rangeDays);
+    const from = new Date();
+    from.setDate(from.getDate() - (days - 1));
+    const fromDay = this.toDayStart(from);
+
+    const places = await this.prisma.place.findMany({
+      where: { siteId: site.siteId, townId: args.townId },
+      select: { id: true, translations: { select: { lang: true, name: true } } },
+    });
+    const placeIds = places.map((p) => p.id);
+
+    if (placeIds.length === 0) {
+      return {
+        scope: "town" as const,
+        townId: args.townId,
+        days,
+        summary: {
+          pageViews: 0,
+          placeViews: 0,
+          ctaPhone: 0,
+          ctaEmail: 0,
+          ctaWebsite: 0,
+          ctaMaps: 0,
+          ctaFloorplan: 0,
+        },
+        timeseries: [] as Array<{
+          day: string;
+          pageViews: number;
+          placeViews: number;
+          ctaTotal: number;
+        }>,
+        ctaBreakdown: {
+          ctaPhone: 0,
+          ctaEmail: 0,
+          ctaWebsite: 0,
+          ctaMaps: 0,
+          ctaFloorplan: 0,
+        },
+        topPlaces: [] as Array<{
+          placeId: string;
+          name: string;
+          placeViews: number;
+          ctaTotal: number;
+        }>,
+      };
+    }
+
+    const rows = await this.prisma.analyticsDaily.findMany({
+      where: { siteId: site.siteId, placeId: { in: placeIds }, day: { gte: fromDay } },
+      orderBy: { day: "asc" },
+      select: {
+        day: true,
+        placeId: true,
+        placeViews: true,
+        ctaPhone: true,
+        ctaEmail: true,
+        ctaWebsite: true,
+        ctaMaps: true,
+        ctaFloorplan: true,
+      },
+    });
+
+    const byDay = new Map<
+      string,
+      {
+        placeViews: number;
+        ctaPhone: number;
+        ctaEmail: number;
+        ctaWebsite: number;
+        ctaMaps: number;
+        ctaFloorplan: number;
+      }
+    >();
+    const summary = {
+      pageViews: 0,
+      placeViews: 0,
+      ctaPhone: 0,
+      ctaEmail: 0,
+      ctaWebsite: 0,
+      ctaMaps: 0,
+      ctaFloorplan: 0,
+    };
+    const byPlace = new Map<
+      string,
+      {
+        placeViews: number;
+        ctaPhone: number;
+        ctaEmail: number;
+        ctaWebsite: number;
+        ctaMaps: number;
+        ctaFloorplan: number;
+      }
+    >();
+
+    for (const r of rows) {
+      summary.placeViews += r.placeViews;
+      summary.ctaPhone += r.ctaPhone;
+      summary.ctaEmail += r.ctaEmail;
+      summary.ctaWebsite += r.ctaWebsite;
+      summary.ctaMaps += r.ctaMaps;
+      summary.ctaFloorplan += r.ctaFloorplan;
+
+      const dayKey = r.day.toISOString().slice(0, 10);
+      const dayAcc = byDay.get(dayKey) || {
+        placeViews: 0,
+        ctaPhone: 0,
+        ctaEmail: 0,
+        ctaWebsite: 0,
+        ctaMaps: 0,
+        ctaFloorplan: 0,
+      };
+      dayAcc.placeViews += r.placeViews;
+      dayAcc.ctaPhone += r.ctaPhone;
+      dayAcc.ctaEmail += r.ctaEmail;
+      dayAcc.ctaWebsite += r.ctaWebsite;
+      dayAcc.ctaMaps += r.ctaMaps;
+      dayAcc.ctaFloorplan += r.ctaFloorplan;
+      byDay.set(dayKey, dayAcc);
+
+      if (r.placeId) {
+        const placeAcc = byPlace.get(r.placeId) || {
+          placeViews: 0,
+          ctaPhone: 0,
+          ctaEmail: 0,
+          ctaWebsite: 0,
+          ctaMaps: 0,
+          ctaFloorplan: 0,
+        };
+        placeAcc.placeViews += r.placeViews;
+        placeAcc.ctaPhone += r.ctaPhone;
+        placeAcc.ctaEmail += r.ctaEmail;
+        placeAcc.ctaWebsite += r.ctaWebsite;
+        placeAcc.ctaMaps += r.ctaMaps;
+        placeAcc.ctaFloorplan += r.ctaFloorplan;
+        byPlace.set(r.placeId, placeAcc);
+      }
+    }
+
+    const nameById = new Map<string, string>();
+    for (const p of places) {
+      const name =
+        p.translations.find((t) => t.lang === args.lang)?.name ??
+        p.translations[0]?.name ??
+        p.id;
+      nameById.set(p.id, name);
+    }
+
+    const topPlaces = Array.from(byPlace.entries())
+      .map(([placeId, stats]) => ({
+        placeId,
+        name: nameById.get(placeId) ?? placeId,
+        placeViews: stats.placeViews,
+        ctaTotal:
+          stats.ctaPhone +
+          stats.ctaEmail +
+          stats.ctaWebsite +
+          stats.ctaMaps +
+          stats.ctaFloorplan,
+      }))
+      .sort((a, b) => b.placeViews - a.placeViews)
+      .slice(0, 10);
+
+    return {
+      scope: "town" as const,
+      townId: args.townId,
+      days,
+      summary,
+      timeseries: Array.from(byDay.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, stats]) => ({
+          day,
+          pageViews: 0,
+          placeViews: stats.placeViews,
+          ctaTotal:
+            stats.ctaPhone +
+            stats.ctaEmail +
+            stats.ctaWebsite +
+            stats.ctaMaps +
+            stats.ctaFloorplan,
+        })),
+      ctaBreakdown: {
+        ctaPhone: summary.ctaPhone,
+        ctaEmail: summary.ctaEmail,
+        ctaWebsite: summary.ctaWebsite,
+        ctaMaps: summary.ctaMaps,
+        ctaFloorplan: summary.ctaFloorplan,
+      },
+      topPlaces,
     };
   }
 
@@ -399,4 +877,97 @@ export class AnalyticsService {
       },
     };
   }
+
+  private async incrementProductClick(key: {
+    day: Date;
+    siteId: string;
+    productId: string;
+    placeId: string;
+  }) {
+    const existing = await this.prisma.productClickDaily.findFirst({
+      where: key,
+      select: { id: true },
+    });
+    if (existing) {
+      await this.prisma.productClickDaily.update({
+        where: { id: existing.id },
+        data: { clicks: { increment: 1 } },
+      });
+      return;
+    }
+    try {
+      await this.prisma.productClickDaily.create({ data: { ...key, clicks: 1 } });
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (code !== "P2002") throw error;
+      await this.prisma.productClickDaily.updateMany({
+        where: key,
+        data: { clicks: { increment: 1 } },
+      });
+    }
+  }
+
+  private async resolveProductClickPlace(
+    product: { siteId: string; placeId: string },
+    requested?: string
+  ): Promise<string> {
+    if (product.placeId) return product.placeId;
+    if (!requested) {
+      throw new BadRequestException("placeId is required for product clicks");
+    }
+    const place = await this.prisma.place.findFirst({
+      where: { id: requested, siteId: product.siteId },
+      select: { id: true },
+    });
+    if (!place) {
+      throw new BadRequestException("placeId must belong to the product site");
+    }
+    return place.id;
+  }
+
+  private async placeProductClicks(args: {
+    siteId: string;
+    placeId: string;
+    fromDay: Date;
+    lang: string;
+  }) {
+    const products = await this.prisma.product.findMany({
+      where: { siteId: args.siteId, placeId: args.placeId },
+      select: { id: true, translations: { select: { lang: true, name: true } } },
+    });
+    const totals = new Map<string, number>();
+    if (products.length > 0) {
+      try {
+        const sums = await this.prisma.productClickDaily.groupBy({
+          by: ["productId"],
+          where: {
+            siteId: args.siteId,
+            placeId: args.placeId,
+            productId: { in: products.map((product) => product.id) },
+            day: { gte: args.fromDay },
+          },
+          _sum: { clicks: true },
+        });
+        for (const row of sums) totals.set(row.productId, row._sum.clicks ?? 0);
+      } catch (error) {
+        if (!isMissingProductClickTable(error)) throw error;
+      }
+    }
+    return products
+      .map((product) => ({
+        productId: product.id,
+        name: pickProductName(product.translations, args.lang),
+        clicks: totals.get(product.id) ?? 0,
+      }))
+      .sort((a, b) => b.clicks - a.clicks || a.name.localeCompare(b.name, args.lang));
+  }
+}
+
+function pickProductName(translations: { lang: string; name: string }[], lang: string) {
+  return (
+    translations.find((row) => row.lang === lang)?.name ||
+    translations.find((row) => row.lang === "hu")?.name ||
+    translations[0]?.name ||
+    ""
+  );
 }

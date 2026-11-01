@@ -25,3 +25,7 @@ api.devel.hello-local.io {
 	encode gzip
 	reverse_proxy api-devel:3002
 }
+
+# Beta site blocks are copied to this directory by deploy/remote-deploy-beta.sh.
+# Zero matches is not an error, and these names are not wired until that file exists.
+import /etc/caddy/imports/*.caddy

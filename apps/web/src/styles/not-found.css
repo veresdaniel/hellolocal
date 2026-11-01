@@ -1,0 +1,125 @@
+.not-found {
+  --ink: #1c1612;
+  --muted: #5c4638;
+  --paper: #fff6ee;
+  --accent: #c45c26;
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  text-align: center;
+}
+
+.not-found__sky {
+  position: absolute;
+  z-index: 0;
+  inset: -20vh 0 auto;
+  height: 140vh;
+  pointer-events: none;
+  background:
+    radial-gradient(720px 420px at 12% 18%, rgba(232, 146, 78, 0.42), transparent 60%),
+    radial-gradient(640px 380px at 88% 8%, rgba(124, 86, 176, 0.16), transparent 54%),
+    radial-gradient(560px 420px at 70% 80%, rgba(214, 164, 86, 0.28), transparent 50%);
+}
+
+.not-found__card {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  animation: not-found-rise 0.7s ease both;
+}
+
+.not-found__mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(28, 22, 18, 0.12);
+}
+
+.not-found h1 {
+  margin: 12px 0 0;
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.not-found p {
+  max-width: 36rem;
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.not-found p.not-found__code {
+  margin: 0;
+  max-width: none;
+  font-family: var(--font-heading);
+  font-size: clamp(96px, 18vw, 168px);
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+  background: linear-gradient(180deg, #1c1612 20%, #c45c26 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.not-found__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.not-found__actions a,
+.not-found__actions button {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.not-found__actions a {
+  display: inline-flex;
+  align-items: center;
+  background: var(--ink);
+  color: #fff6ee;
+  text-decoration: none;
+}
+
+.not-found__actions button {
+  border: 1px solid rgba(28, 22, 18, 0.18);
+  background: transparent;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found__card {
+    animation: none;
+  }
+}
+
+@keyframes not-found-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

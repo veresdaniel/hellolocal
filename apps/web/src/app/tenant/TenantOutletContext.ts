@@ -9,6 +9,10 @@ export type PlatformSettings = {
     name: string;
     shortDescription?: string | null;
     description?: string | null;
+    heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
   };
 
   brand: {
@@ -46,6 +50,10 @@ export type PlatformSettings = {
     blog: boolean;
     knowledgeBase: boolean;
     cookieConsent: boolean;
+  };
+
+  analytics?: {
+    gaMeasurementId?: string | null;
   };
 };
 

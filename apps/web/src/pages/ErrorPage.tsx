@@ -9,14 +9,13 @@ import {
 } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../app/config";
+import {  DEFAULT_LANG, type Lang, isLang} from "../app/config";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG } from "../app/config";
 import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 import { isTokenExpired } from "../utils/tokenUtils";
+import { NotFoundPage } from "./NotFoundPage";
+import { devLog } from "../lib/devLog";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function ErrorPage() {
   const { t } = useTranslation();
@@ -25,6 +24,12 @@ export function ErrorPage() {
   const { lang: langParam } = useParams<{ lang?: string }>();
   const { data: sitesCountData } = useActiveSitesCount();
   const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      devLog.error("[ErrorPage] route error", error);
+    }
+  }, [error]);
 
   // Get language from URL or use default
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
@@ -124,8 +129,16 @@ export function ErrorPage() {
 
   // For 5xx errors, only show backend errors, not client-side JS errors
   if (statusCode >= 500 && !isBackendError) {
-    errorMessage = t("error.internalServerError");
+    errorMessage = t("error.serverErrorDescription");
     errorDetails = null; // Don't show JS error details for 5xx
+  } else if (statusCode >= 500) {
+    // Prefer a stable user-facing description; keep raw message in DEV details only
+    errorMessage = t("error.serverErrorDescription");
+  }
+
+  // 404 must use the dedicated NotFoundPage — not this server-error chrome
+  if (statusCode === 404) {
+    return <NotFoundPage />;
   }
 
   // Get error title based on status code
@@ -137,8 +150,6 @@ export function ErrorPage() {
         return t("error.unauthorized");
       case 403:
         return t("error.forbidden");
-      case 404:
-        return t("error.notFound");
       case 500:
         return t("error.internalServerError");
       case 502:
@@ -162,7 +173,7 @@ export function ErrorPage() {
       };
     } else if (code === 404) {
       return {
-        gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        gradient: "#1b1730",
         accentColor: "rgba(255, 255, 255, 0.2)",
         textColor: "white",
       };
@@ -174,7 +185,7 @@ export function ErrorPage() {
       };
     } else {
       return {
-        gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        gradient: "#1b1730",
         accentColor: "rgba(255, 255, 255, 0.2)",
         textColor: "white",
       };
@@ -365,7 +376,7 @@ export function ErrorPage() {
             style={{
               padding: "14px 32px",
               background: "white",
-              color: statusCode === 404 ? "#667eea" : "#667eea",
+              color: statusCode === 404 ? "#c45c26" : "#c45c26",
               textDecoration: "none",
               borderRadius: "12px",
               fontWeight: 600,

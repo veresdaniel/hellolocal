@@ -23,6 +23,7 @@ import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { RequestWithSite } from "../common/middleware/site-resolve.middleware";
+import { langFromPath } from "../common/lang";
 
 /**
  * Authentication controller.
@@ -146,7 +147,7 @@ export class AuthController {
     try {
       const authResponse = await this.authService.googleLogin(googleUser);
 
-      // Encode tokens for URL (use hash to avoid server logs)
+      // Encode tokens in the URL hash so they are not sent to servers / access logs
       const tokens = encodeURIComponent(
         JSON.stringify({
           accessToken: authResponse.accessToken,
@@ -155,8 +156,10 @@ export class AuthController {
         })
       );
 
-      // Redirect to frontend callback handler
-      return res.redirect(`${frontendUrl}/${lang}/admin/login?googleAuth=success&tokens=${tokens}`);
+      // Hash fragment only — never query string (referrer / proxy / browser history leakage)
+      return res.redirect(
+        `${frontendUrl}/${lang}/admin/login#googleAuth=success&tokens=${tokens}`
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Google authentication failed";
       return res.redirect(
@@ -169,8 +172,6 @@ export class AuthController {
    * Extract language from request (from referer or default)
    */
   private extractLanguageFromRequest(req: Request): string | null {
-    const referer = req.headers.referer || "";
-    const langMatch = referer.match(/\/(hu|en|de)(\/|$)/);
-    return langMatch ? langMatch[1] : null;
+    return langFromPath(req.headers.referer || "");
   }
 }

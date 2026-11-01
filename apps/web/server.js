@@ -1,11 +1,12 @@
 // Simple Node.js server for Render.com to handle SPA routing
 // This server serves static files and rewrites all routes to index.html
-// Also handles SEO meta tag injection for bot/crawler requests
+// Public HTML responses include Open Graph and Twitter card tags.
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { overviewLang, renderOverviewDocument } from './ssr/renderOverview.js';
+import { applySocialMeta, publicOrigin, resolvePublicShare } from './ssr/socialMeta.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,7 +41,6 @@ const botUserAgents = [
 
 // API URL for fetching SEO data
 const API_URL = process.env.API_URL || process.env.VITE_API_URL || 'http://localhost:3002';
-const FRONTEND_URL = process.env.FRONTEND_URL || process.env.VITE_FRONTEND_URL || 'http://localhost:3000';
 
 // Helper to check if user agent is a bot
 function isBot(userAgent) {
@@ -49,194 +49,49 @@ function isBot(userAgent) {
   return botUserAgents.some(bot => ua.includes(bot.toLowerCase()));
 }
 
-// Helper to escape HTML entities
-function escapeHtml(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+function readShell() {
+  const candidates = [path.join(__dirname, 'dist', 'index.html'), path.join(__dirname, 'index.html')];
+  for (const file of candidates) {
+    try {
+      return readFileSync(file, 'utf-8');
+    } catch {
+      // try the next shell
+    }
+  }
+  throw new Error('index.html missing');
 }
 
-// Helper to inject meta tags into HTML
-function injectMetaTags(html, seoData) {
-  const title = escapeHtml(seoData.title);
-  const description = escapeHtml(seoData.description);
-  const image = escapeHtml(seoData.image);
-  const url = escapeHtml(seoData.url);
-  const siteName = escapeHtml(seoData.siteName);
-
-  // Default image dimensions (Facebook recommended: 1200x630px)
-  // If image dimensions are provided in seoData, use them; otherwise use defaults
-  const imageWidth = seoData.imageWidth || '1200';
-  const imageHeight = seoData.imageHeight || '630';
-
-  // Format keywords as comma-separated string if array is provided
-  const keywordsContent = Array.isArray(seoData.keywords) && seoData.keywords.length > 0
-    ? escapeHtml(seoData.keywords.join(", "))
-    : seoData.keywords || "";
-
-  const metaTags = `
-    <!-- SEO Meta Tags (injected by server middleware) -->
-    <title>${title}</title>
-    <meta name="description" content="${description}">
-    ${keywordsContent ? `<meta name="keywords" content="${keywordsContent}">` : ''}
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${description}">
-    <meta property="og:type" content="${seoData.type || 'website'}">
-    <meta property="og:url" content="${url}">
-    <meta property="og:site_name" content="${siteName}">
-    ${image ? `<meta property="og:image" content="${image}">` : ''}
-    ${image ? `<meta property="og:image:width" content="${imageWidth}">` : ''}
-    ${image ? `<meta property="og:image:height" content="${imageHeight}">` : ''}
-    <meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">
-    <meta name="twitter:title" content="${title}">
-    <meta name="twitter:description" content="${description}">
-    ${image ? `<meta name="twitter:image" content="${image}">` : ''}
-    <link rel="canonical" href="${url}">
-    <!-- End SEO Meta Tags -->`;
-
-  // Generate Schema.org JSON-LD if schemaOrg data is provided
-  let jsonLdScript = '';
-  if (seoData.schemaOrg) {
-    const jsonLd = JSON.stringify(seoData.schemaOrg, null, 2);
-    jsonLdScript = `
-    <!-- Schema.org JSON-LD (injected by server middleware) -->
-    <script type="application/ld+json">${jsonLd}</script>
-    <!-- End Schema.org JSON-LD -->`;
-  }
-
-  // Inject meta tags and JSON-LD into <head>
-  const allTags = metaTags + jsonLdScript;
-  if (html.includes('<head>')) {
-    html = html.replace('<head>', `<head>${allTags}`);
-  } else if (html.includes('</head>')) {
-    html = html.replace('</head>', `${allTags}</head>`);
+async function fetchBotSchema(req) {
+  if (!isBot(req.get('user-agent') || '')) return null;
+  const pathParts = req.path.split('/').filter(Boolean);
+  const lang = pathParts[0] && ['hu', 'en', 'de'].includes(pathParts[0]) ? pathParts[0] : 'hu';
+  const knownRoutes = ['place', 'event', 'blog', 'tudastar', 'infok', 'imprint', 'terms', 'privacy', 'overview', 'pricing', 'tarife', 'preise', 'impresszum', 'aszf', 'adatvedelem', 'admin', 'teruletek', 'regions', 'regionen', 'products', 'collections', 'static-pages', 'static-page', 'offline'];
+  const tenantKey = pathParts[1] && !knownRoutes.includes(pathParts[1]) ? pathParts[1] : undefined;
+  const routeIndex = tenantKey ? 2 : 1;
+  const routeType = pathParts[routeIndex];
+  const slug = pathParts[routeIndex + 1];
+  let seoUrl;
+  if (routeType === 'place' && slug) {
+    seoUrl = `${API_URL}/api/seo/${lang}/place/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
+  } else if (routeType === 'event' && slug) {
+    seoUrl = `${API_URL}/api/seo/${lang}/event/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
   } else {
-    html = `<head>${allTags}</head>${html}`;
+    seoUrl = `${API_URL}/api/seo/${lang}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
   }
-
-  // Update existing title
-  html = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
-
-  return html;
-}
-
-// Middleware to handle bot requests with SEO injection
-async function handleBotRequest(req, res, next) {
-  const userAgent = req.get('user-agent') || '';
-  
-  if (!isBot(userAgent)) {
-    return next();
-  }
-
-  console.log(`[SEO] Bot detected: ${userAgent} - Processing: ${req.path}`);
-
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 1200);
   try {
-    // Parse URL
-    const urlPath = req.path;
-    const pathParts = urlPath.split('/').filter(Boolean);
-
-    // Extract language
-    const lang = pathParts[0] && ['hu', 'en', 'de'].includes(pathParts[0])
-      ? pathParts[0]
-      : 'hu';
-
-    // Extract tenant key
-    const knownRoutes = ['place', 'event', 'blog', 'tudastar', 'infok', 'imprint', 'terms', 'privacy', 'overview'];
-    const tenantKey = pathParts[1] && !knownRoutes.includes(pathParts[1])
-      ? pathParts[1]
-      : undefined;
-
-    // Extract route type and slug
-    const routeIndex = tenantKey ? 2 : 1;
-    const routeType = pathParts[routeIndex];
-    const slug = pathParts[routeIndex + 1];
-
-    // Fetch SEO data
-    let seoData = null;
-    try {
-      let seoUrl;
-      if (routeType === 'place' && slug) {
-        seoUrl = `${API_URL}/api/seo/${lang}/place/${slug}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
-      } else if (routeType === 'event' && slug) {
-        seoUrl = `${API_URL}/api/seo/${lang}/event/${slug}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
-      } else {
-        seoUrl = `${API_URL}/api/seo/${lang}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(seoUrl, {
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const jsonData = await response.json();
-        // Validate response structure
-        if (jsonData && typeof jsonData === 'object' && 'title' in jsonData) {
-          seoData = jsonData;
-          console.log(`[SEO] Successfully fetched SEO data for ${req.path}`);
-        } else {
-          console.warn(`[SEO] Invalid SEO data structure received for ${req.path}`);
-        }
-      } else {
-        console.warn(`[SEO] Failed to fetch SEO data: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.warn(`[SEO] Fetch timeout for ${req.path}`);
-      } else {
-        console.warn(`[SEO] Error fetching SEO data: ${error.message}`);
-      }
-    }
-
-    // Read index.html
-    let html;
-    try {
-      html = readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf-8');
-    } catch (error) {
-      console.error(`[SEO] Could not read index.html: ${error.message}`);
-      return next();
-    }
-
-    // Inject meta tags if SEO data is available
-    if (seoData) {
-      // Override URL if backend returned localhost (backend FRONTEND_URL not set)
-      if (seoData.url && seoData.url.includes('localhost')) {
-        const protocol = req.protocol || 'https';
-        const host = req.get('host') || FRONTEND_URL.replace(/^https?:\/\//, '');
-        const fullUrl = `${protocol}://${host}${req.path}`;
-        seoData.url = fullUrl;
-        console.log(`[SEO] Overriding localhost URL with: ${seoData.url}`);
-      }
-      
-      console.log(`[SEO] Injecting meta tags for ${req.path}:`, {
-        title: seoData.title,
-        description: seoData.description?.substring(0, 50) + '...',
-        image: seoData.image,
-        url: seoData.url,
-      });
-      html = injectMetaTags(html, seoData);
-    } else {
-      console.warn(`[SEO] No SEO data available for ${req.path}`);
-    }
-
-    // Send modified HTML
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
-  } catch (error) {
-    console.error(`[SEO] Error handling bot request: ${error.message}`);
-    // Fallback to normal request
-    next();
+    const response = await fetch(seoUrl, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const json = await response.json();
+    return json?.schemaOrg || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -258,8 +113,59 @@ app.use(express.static(path.join(__dirname, 'dist'), {
   }
 }));
 
+const platformCache = new Map();
+
+const uiCopyCache = new Map();
+
+async function loadUiCopy(lang) {
+  const cached = uiCopyCache.get(lang);
+  if (cached && cached.until > Date.now()) return cached.value;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    const response = await fetch(`${API_URL}/api/public/ui/${lang}`, {
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) return null;
+    const value = await response.json();
+    uiCopyCache.set(lang, { until: Date.now() + 60_000, value });
+    return value;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function loadPlatformForOverview(lang) {
+  const cached = platformCache.get(lang);
+  if (cached && cached.until > Date.now()) return cached.value;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    const response = await fetch(`${API_URL}/api/public/${lang}/default/platform`, {
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) return { landingCopy: null, planOverrides: null };
+    const data = await response.json();
+    const planOverrides = data?.featureMatrix?.planOverrides ?? null;
+    const value = {
+      landingCopy: planOverrides?.landingCopy?.[lang] ?? null,
+      planOverrides,
+    };
+    platformCache.set(lang, { until: Date.now() + 60_000, value });
+    return value;
+  } catch {
+    return { landingCopy: null, planOverrides: null };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Apply SEO middleware before the catch-all route (only for non-static files)
-app.get('*', (req, res, next) => {
+app.get('*', async (req, res, next) => {
   // Skip SEO middleware for static assets (JS, CSS, images, etc.)
   const staticExtensions = ['.js', '.mjs', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map'];
   const isStaticFile = staticExtensions.some(ext => req.path.endsWith(ext));
@@ -272,17 +178,47 @@ app.get('*', (req, res, next) => {
   const overview = overviewLang(req.path);
   if (overview) {
     try {
-      const html = readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf-8');
-      const origin = (process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+      const html = readShell();
+      const origin = publicOrigin(`${req.protocol}://${req.get('host')}`);
+      const [uiCopy, platform] = await Promise.all([
+        loadUiCopy(overview),
+        loadPlatformForOverview(overview),
+      ]);
+      const hasDatabaseCopy = Boolean(uiCopy?.messages && Object.keys(uiCopy.messages).length);
+      const override = hasDatabaseCopy ? null : platform.landingCopy;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.send(renderOverviewDocument(html, { lang: overview, origin }));
+      return res.send(
+        renderOverviewDocument(html, {
+          lang: overview,
+          origin,
+          override,
+          messages: uiCopy?.messages,
+          languages: uiCopy?.languages,
+          planOverrides: platform.planOverrides,
+        })
+      );
     } catch (error) {
       console.error(`[SSR] Overview render failed: ${error.message}`);
     }
   }
   
-  // For non-static files, check if it's a bot request
-  handleBotRequest(req, res, next);
+  try {
+    const requestOrigin = `${req.protocol}://${req.get('host')}`;
+    const [meta, schema] = await Promise.all([
+      resolvePublicShare({ pathname: req.path, apiUrl: API_URL, requestOrigin }),
+      fetchBotSchema(req),
+    ]);
+    let html = applySocialMeta(readShell(), meta);
+    if (schema) {
+      const json = JSON.stringify(schema).replace(/</g, '\\u003c');
+      html = html.replace('</head>', `    <script type="application/ld+json">${json}</script>\n  </head>`);
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  } catch (error) {
+    console.error(`[SEO] HTML meta failed: ${error.message}`);
+    return next();
+  }
 });
 
 // Fallback: Rewrite all routes to index.html for React Router (only if file doesn't exist)
@@ -303,6 +239,6 @@ app.get('*', (req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Frontend server listening on port ${PORT}`);
-  console.log(`✅ SEO injection enabled for bot/crawler requests`);
+  console.log(`✅ Social meta tags are in the first HTML response`);
 });
 

@@ -1,16 +1,7 @@
 // src/app/useRouteCtx.ts
 import { useParams } from "react-router-dom";
-import {
-  APP_LANGS,
-  DEFAULT_LANG,
-  DEFAULT_SITE_SLUG,
-  HAS_MULTIPLE_SITES,
-  type Lang,
-} from "./config";
+import { DEFAULT_LANG, DEFAULT_SITE_SLUG, HAS_MULTIPLE_SITES, type Lang, isLang } from "./config";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function useRouteCtx() {
   const { lang: langParam, siteKey: siteKeyParam } = useParams<{

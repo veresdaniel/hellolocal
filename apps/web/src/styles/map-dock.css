@@ -1,4 +1,5 @@
 .map-dock {
+  --map-ui-font: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   position: absolute;
   z-index: 1200;
   top: 64px;
@@ -8,25 +9,45 @@
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #2c2438;
+  font-family: var(--map-ui-font);
+  color: var(--hl-ink, #1b1730);
+}
+
+.map-dock.is-dragging {
+  z-index: 1300;
 }
 
 .map-dock__bar,
 .map-dock__panel,
 .map-filters-inline {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 253, 249, 0.94);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 10px 32px rgba(24, 16, 40, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16px 40px rgba(27, 23, 48, 0.14);
 }
 
 .map-dock__bar {
   display: flex;
+  align-items: center;
   gap: 4px;
-  padding: 4px;
+  padding: 4px 6px 4px 10px;
   border-radius: 999px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-dock.is-dragging .map-dock__bar {
+  cursor: grabbing;
+}
+
+.map-dock__grip {
+  width: 10px;
+  height: 18px;
+  flex: none;
+  background:
+    radial-gradient(circle, #b7aec8 1.3px, transparent 1.5px) 0 0 / 5px 6px,
+    radial-gradient(circle, #b7aec8 1.3px, transparent 1.5px) 5px 3px / 5px 6px;
 }
 
 .map-dock__tab {
@@ -40,16 +61,24 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #3d3356;
+  color: var(--hl-ink, #1b1730);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
 }
 
 .map-dock__tab[aria-pressed="true"] {
-  background: #2a2438;
-  color: #fff;
+  background: var(--hl-navy, #1b1730);
+  color: var(--hl-on-dark-strong, #ffffff);
+}
+
+.map-dock__tab:focus-visible,
+.map-dock__chip:focus-visible,
+.map-dock__close:focus-visible,
+.map-dock__clear:focus-visible {
+  outline: 3px solid var(--hl-accent, #c45c26);
+  outline-offset: 2px;
 }
 
 .map-dock__count {
@@ -57,8 +86,8 @@
   height: 1.25rem;
   padding: 0 6px;
   border-radius: 999px;
-  background: #efeaf6;
-  color: #3d3356;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.25rem;
@@ -66,7 +95,7 @@
 
 .map-dock__tab[aria-pressed="true"] .map-dock__count {
   background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: var(--hl-on-dark-strong, #ffffff);
 }
 
 .map-dock__panel {
@@ -86,9 +115,12 @@
 
 .map-dock__panel-head h2 {
   margin: 0;
-  font-family: Poppins, system-ui, sans-serif;
-  font-size: 16px;
+  font-family: var(--map-ui-font);
+  font-size: 18px;
   font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--hl-ink, #1b1730);
 }
 
 .map-dock__close,
@@ -96,10 +128,10 @@
 .map-dock__clear {
   border: 0;
   background: transparent;
-  color: #6b6280;
+  color: #3a334c;
   font: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   padding: 4px 2px;
 }
@@ -115,17 +147,19 @@
 }
 
 .map-dock__section {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 
 .map-dock__section h3,
 .map-filters-inline h3 {
   margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #7a718c;
+  font-family: var(--map-ui-font);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-transform: none;
+  color: var(--hl-ink, #1b1730);
 }
 
 .map-dock__chips {
@@ -135,21 +169,24 @@
 }
 
 .map-dock__chip {
-  border: 1px solid #e6e1ee;
+  border: 1px solid rgba(27, 23, 48, 0.18);
   background: #fff;
-  color: #3d3356;
+  color: var(--hl-ink, #1b1730);
   border-radius: 999px;
-  padding: 7px 12px;
-  font: inherit;
-  font-size: 13px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-family: var(--map-ui-font);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.011em;
   cursor: pointer;
   line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .map-dock__chip[aria-pressed="true"] {
-  background: #2a2438;
-  border-color: #2a2438;
+  background: var(--hl-navy, #1b1730);
+  border-color: var(--hl-navy, #1b1730);
   color: #fff;
 }
 
@@ -161,38 +198,44 @@
 
 .map-dock__event {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 8px;
+  padding: 0 12px 0 0;
   border-radius: 14px;
-  background: #f6f4fa;
+  overflow: hidden;
+  background: var(--hl-card, #fffdf9);
   text-decoration: none;
   color: inherit;
   min-width: 0;
 }
 
 .map-dock__event:hover {
-  background: #efeaf6;
+  background: #f3efe8;
 }
 
 .map-dock__photo {
-  width: 72px;
-  height: 72px;
-  border-radius: 10px;
+  display: block;
+  width: 88px;
+  height: 88px;
+  border-radius: 0;
   object-fit: cover;
+  object-position: center top;
   flex: none;
-  background: #e5dfef center / cover no-repeat;
+  margin: 0;
+  padding: 0;
+  background: #e5dfef center top / cover no-repeat;
 }
 
 .map-dock__event-body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  padding: 10px 0;
 }
 
 .map-dock__event-body strong {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 650;
   line-height: 1.3;
 }
@@ -223,36 +266,131 @@
 }
 
 .map-filters-inline {
-  border-radius: 20px;
+  --map-ui-font: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  border-radius: 14px;
   padding: 16px;
-  box-shadow: none;
-  border-color: #ece8f2;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+  border-color: rgba(27, 23, 48, 0.1);
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  font-family: var(--map-ui-font);
+  min-width: 0;
 }
 
 .map-filters-inline__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
+  min-height: 0;
 }
 
 .map-filters-inline__head h2 {
   margin: 0;
-  font-family: Poppins, system-ui, sans-serif;
-  font-size: 18px;
+  font-family: var(--map-ui-font);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--hl-ink, #1b1730);
+}
+
+.map-filters-inline__clear {
+  font-family: var(--map-ui-font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hl-ink, #1b1730);
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+.map-filters-inline .map-dock__section {
+  margin: 0 0 14px;
+}
+
+.map-filters-inline .map-dock__section:last-child {
+  margin-bottom: 0;
+}
+
+.map-filters-inline .map-dock__chips {
+  gap: 8px;
+}
+
+.map-filters-inline .map-dock__chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hl-ink, #1b1730);
 }
 
 @media (max-width: 767px) {
-  .map-dock {
+  .map-dock,
+  .map-dock--mobile {
     top: auto;
-    right: 12px;
-    left: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    right: 8px;
+    left: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
     width: auto;
+    max-width: none;
+  }
+
+  .map-dock__bar {
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .map-dock__tab {
+    min-height: 44px;
+    padding: 8px 8px;
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .map-dock__close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .map-dock__chip,
+  .map-filters-inline .map-dock__chip {
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 15px;
   }
 
   .map-dock__panel {
-    max-height: min(58vh, 520px);
+    max-height: min(46vh, 420px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .map-filters-inline {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .map-filters-inline__head {
+    margin-bottom: 12px;
+  }
+
+  .map-filters-inline__head h2 {
+    font-size: 14px;
+  }
+
+  .map-filters-inline .map-dock__section {
+    margin: 0 0 14px;
+  }
+
+  .map-filters-inline h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .map-filters-inline .map-dock__chips {
+    gap: 8px;
   }
 
   .map-dock__events {
@@ -260,10 +398,11 @@
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .map-dock__event {
-    flex: 0 0 220px;
+    flex: 0 0 min(220px, 70vw);
     scroll-snap-align: start;
     flex-direction: column;
     align-items: stretch;

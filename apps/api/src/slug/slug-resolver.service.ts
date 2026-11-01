@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { Lang, SlugEntityType } from "@prisma/client";
+import { SlugEntityType } from "@prisma/client";
+import { Lang } from "../common/language-code";
 import { PrismaService } from "../prisma/prisma.service";
 import { generateSlug } from "./slug.helper";
 

@@ -1,7 +1,7 @@
 // entitlements.controller.ts
 import { Controller, Get, Query, Param } from "@nestjs/common";
 import { EntitlementsService } from "./entitlements.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 @Controller("/api/:lang/entitlements")
 export class EntitlementsController {

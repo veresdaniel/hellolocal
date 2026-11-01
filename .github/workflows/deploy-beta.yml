@@ -1,0 +1,54 @@
+# Beta deploy. Push to `staging` only. main and devel stay on deploy.yml.
+#
+# Server (135.181.157.111), separate from the hellolocal compose project:
+#   /opt/hellolocal/beta                         checkout of origin/staging
+#   /opt/hellolocal/beta.env                     own POSTGRES_PASSWORD + JWT_SECRET
+#   /opt/hellolocal/caddy-imports/beta.caddy     TLS site blocks for the existing Caddy
+#   compose project hellolocal-beta
+#   volume hellolocal-beta-pgdata                empty database, then prisma migrate deploy
+#
+# Remote commands (deploy/remote-deploy-beta.sh, via the same SSH key as production):
+#   git clone --branch staging OR fetch && reset --hard origin/staging
+#   docker compose --env-file /opt/hellolocal/beta.env \
+#     -f /opt/hellolocal/beta/deploy/docker-compose.beta.yml \
+#     --project-directory /opt/hellolocal/beta -p hellolocal-beta up -d --build
+#   install Caddyfile.beta into /opt/hellolocal/caddy-imports/beta.caddy
+#   docker exec hellolocal-caddy-1 caddy reload   # only after main has the import mount
+#
+# Before the first certificate can issue, add DNS, then deploy main once so Caddy
+# mounts /opt/hellolocal/caddy-imports. This workflow does not start that production deploy.
+name: Deploy beta
+
+on:
+  push:
+    branches: [staging]
+
+concurrency:
+  group: deploy-beta
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy beta to Hetzner
+        env:
+          SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ -z "$SSH_KEY" ]; then
+            echo "A HETZNER_SSH_KEY secret hiányzik. Ugyanaz a kulcs, mint a production deployhoz."
+            exit 1
+          fi
+          if [ "$BRANCH" != "staging" ]; then
+            echo "Ez a workflow csak a staging ágat telepíti."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 135.181.157.111 >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o ServerAliveInterval=30 \
+            root@135.181.157.111 "BRANCH=${BRANCH} bash -s" < deploy/remote-deploy-beta.sh

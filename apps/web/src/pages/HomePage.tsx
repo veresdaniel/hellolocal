@@ -1,28 +1,53 @@
 // src/pages/HomePage.tsx
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
-import { getPlaces, getEvents, getMapSettings, getPlatformSettings } from "../api/places.api";
+import {
+  getPlaces,
+  getEvents,
+  getMapSettings,
+  getPlatformSettings,
+  getPublicTowns,
+  type PublicTown,
+} from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { generateWebSiteSchema } from "../seo/schemaOrg";
-import { MapComponent } from "../components/MapComponent";
 import { MapDock } from "../components/MapDock";
 import { PlacesListView } from "../components/PlacesListView";
 import { Header } from "../ui/layout/Header";
 import { buildUrl } from "../app/urls";
-import { useNavigate } from "react-router-dom";
-import { HAS_MULTIPLE_SITES } from "../app/config";
+import { placeEntityPath, townEntityPath } from "../app/entityPaths";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { BREAKPOINTS } from "../utils/viewport";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
 import { useFiltersStore } from "../stores/useFiltersStore";
 import { useViewStore } from "../stores/useViewStore";
+import { SiteLanding } from "../components/SiteLanding";
+import { RegionTownsIndex } from "../components/RegionTownsIndex";
+import {
+  clearExploreRequest,
+  openSiteExplore,
+  peekExploreRequest,
+  readSiteLanding,
+} from "../utils/siteLanding";
+import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
+
+// MapLibre only when map view is shown — keeps list/landing/overview free of map-vendor
+const MapComponent = lazy(() =>
+  import("../components/MapComponent").then((m) => ({ default: m.MapComponent }))
+);
 
 export function HomePage() {
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
+  const { townSlug: townSlugParam } = useParams<{ townSlug?: string }>();
+  const [searchParams] = useSearchParams();
+  // Prefer path segment (/telepules|:town|:gemeinde/:slug); keep ?town= as legacy alias
+  const townSlug = townSlugParam?.trim() || searchParams.get("town")?.trim() || undefined;
 
   // Use Zustand stores for state management with persistence
   const {
@@ -47,6 +72,13 @@ export function HomePage() {
   const { showMap, mapHeight, mapCenter, setShowMap, setMapHeight, setMapCenter } = useViewStore();
 
   const [isMobile, setIsMobile] = useState(false);
+  const [mapPanel, setMapPanel] = useState<"filters" | "events" | "services" | null>(null);
+  const [landingDismissed, setLandingDismissed] = useState(() => peekExploreRequest() !== null);
+
+  useEffect(() => {
+    setLandingDismissed(peekExploreRequest() !== null);
+    clearExploreRequest();
+  }, [siteKey]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -61,12 +93,21 @@ export function HomePage() {
 
   useEffect(() => {
     const handleShowMapView = () => {
+      clearExploreRequest();
+      setLandingDismissed(true);
       setShowMap(true);
+    };
+    const handleShowListView = () => {
+      clearExploreRequest();
+      setLandingDismissed(true);
+      setShowMap(false);
     };
 
     window.addEventListener("showMapView", handleShowMapView);
+    window.addEventListener("showListView", handleShowListView);
     return () => {
       window.removeEventListener("showMapView", handleShowMapView);
+      window.removeEventListener("showListView", handleShowListView);
     };
   }, [setShowMap]);
 
@@ -88,10 +129,10 @@ export function HomePage() {
     gcTime: 0, // Don't keep in cache (formerly cacheTime)
   });
 
-  // Load site settings for SEO
-  const { data: platformSettings } = useQuery({
+  // Load site settings for SEO + optional opening page
+  const { data: platformSettings, isPending: isLoadingPlatformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
-    queryFn: () => getPlatformSettings(lang, siteKey),
+    queryFn: ({ signal }) => getPlatformSettings(lang, siteKey, { signal }),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -109,19 +150,38 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
+  const { data: townsPayload, isPending: isLoadingTowns } = useQuery({
+    queryKey: ["publicTowns", lang, siteKey],
+    queryFn: () => getPublicTowns(lang, siteKey || "default"),
+    enabled: !!siteKey,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const townGaId = useMemo(() => {
+    if (!townSlug || !townsPayload?.towns?.length) return null;
+    const match = townsPayload.towns.find((t: PublicTown) => t.slug === townSlug);
+    return match?.gaMeasurementId ?? null;
+  }, [townSlug, townsPayload]);
+  usePublicGaOverride(townGaId);
+
   const {
     data: placesData,
     isLoading: isLoadingPlaces,
     isError: isPlacesError,
     error: placesError,
   } = useQuery({
-    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands],
+    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands, townSlug],
     queryFn: () =>
       getPlaces(
         lang,
         siteKey,
         selectedCategories.length > 0 ? selectedCategories : undefined,
-        selectedPriceBands.length > 0 ? selectedPriceBands : undefined
+        selectedPriceBands.length > 0 ? selectedPriceBands : undefined,
+        undefined,
+        undefined,
+        undefined,
+        "place",
+        townSlug
       ),
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes (increased from 60s)
     refetchOnWindowFocus: false, // Don't refetch on window focus (reduce API calls)
@@ -129,6 +189,13 @@ export function HomePage() {
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes in background (increased from 5min)
     retry: false, // Don't retry on error (404 is expected for some languages)
     placeholderData: (previousData) => previousData, // Keep previous data visible while fetching new data (prevents screen flash)
+  });
+
+  const { data: servicePlaces = [] } = useQuery({
+    queryKey: ["places", lang, siteKey, "service"],
+    queryFn: () => getPlaces(lang, siteKey, undefined, undefined, undefined, 200, 0, "service"),
+    enabled: mapPanel === "services" && !!siteKey,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Track if we've ever successfully loaded places data
@@ -380,16 +447,50 @@ export function HomePage() {
 
   // Filter places based on context filters
   // Handle case where placesData is undefined (e.g., 404 error or no data)
+  // Also apply category/price filters client-side so placeholderData cannot keep
+  // unrelated places (or look like a mixed feed) while the query refetches.
   const filteredPlaces = useMemo(() => {
-    if (!placesData || !Array.isArray(placesData)) return [];
-    return placesData.filter((place) => {
+    const source = mapPanel === "services" ? servicePlaces : placesData;
+    if (!source || !Array.isArray(source)) return [];
+    const categorySet = new Set(selectedCategories.map((name) => name.toLowerCase()));
+    const priceSet = new Set(selectedPriceBands.map((id) => id.toLowerCase()));
+    return source.filter((place) => {
+      const kind = place.categoryKind ?? "place";
+      if (mapPanel === "services") {
+        if (kind !== "service") return false;
+      } else if (kind === "service") {
+        return false;
+      }
+      if (
+        mapPanel !== "services" &&
+        categorySet.size > 0 &&
+        !categorySet.has((place.category || "").toLowerCase())
+      ) {
+        return false;
+      }
+      if (priceSet.size > 0) {
+        const priceId = (place.priceBandId || place.priceBand || "").toLowerCase();
+        if (!priceSet.has(priceId)) return false;
+      }
       if (isOpenNow && !isPlaceOpenNow(place)) return false;
       if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
       if (within30Minutes && !isWithin10MinutesWalk(place)) return false;
       if (rainSafe && !isRainSafe(place)) return false;
       return true;
     });
-  }, [placesData, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
+  }, [
+    placesData,
+    servicePlaces,
+    mapPanel,
+    selectedCategories,
+    selectedPriceBands,
+    isOpenNow,
+    hasEventToday,
+    within30Minutes,
+    rainSafe,
+    userLocation,
+    eventsData,
+  ]);
 
   const placesWithCoordinates =
     filteredPlaces?.filter(
@@ -400,9 +501,16 @@ export function HomePage() {
     lat: place.location!.lat!,
     lng: place.location!.lng!,
     name: place.name,
+    category: place.category,
+    mapImage: place.mapImage ?? null,
+    heroImage: place.heroImage ?? null,
     onClick: place.slug
       ? () => {
-          const path = buildUrl({ lang, siteKey: siteKey, path: `place/${place.slug}` });
+          const path = buildUrl({
+            lang,
+            siteKey: siteKey,
+            path: placeEntityPath(lang, place.slug),
+          });
           navigate(path);
         }
       : undefined, // Only allow navigation if slug exists
@@ -616,8 +724,46 @@ export function HomePage() {
   const isCriticalDataLoading =
     isLoadingMapSettings || (isLoadingPlaces && !hasEverLoadedPlaces.current);
 
+  // Wait for platform settings before choosing opening page vs map/list,
+  // so a filled landing does not flash the map while settings load.
+  // Multi-town régió → public region index of települések (only when régió exists).
+  // Single-settlement sites (Szeged) keep current landing / map behavior.
+  if (!landingDismissed) {
+    if (isLoadingPlatformSettings || isLoadingTowns) {
+      return <PublicPageSkeleton withHero label={t("common.loading")} />;
+    }
+    const landing = readSiteLanding(platformSettings?.site);
+    const isRegion = !!townsPayload?.isRegion && (townsPayload.towns?.length || 0) > 1;
+    if (isRegion) {
+      const selectTown = (town: PublicTown) => {
+        openSiteExplore("list");
+        navigate(
+          buildUrl({ lang, siteKey: siteKey || "", path: townEntityPath(lang, town.slug) }),
+          { replace: true }
+        );
+      };
+      return (
+        <RegionTownsIndex
+          lang={lang}
+          siteKey={siteKey || ""}
+          regionName={platformSettings?.site?.name || platformSettings?.siteName || ""}
+          landing={landing}
+          towns={townsPayload!.towns}
+          onSelectTown={selectTown}
+        />
+      );
+    }
+    if (landing) {
+      return <SiteLanding lang={lang} siteKey={siteKey || ""} landing={landing} />;
+    }
+  }
+
   if (isCriticalDataLoading) {
-    return <LoadingSpinner isLoading={true} delay={200} />;
+    return (
+      <div style={{ padding: "clamp(72px, 10vw, 96px) 16px 48px", maxWidth: 1200, margin: "0 auto" }}>
+        <PublicCardSkeletonGrid count={12} variant="places" label={t("common.loading")} />
+      </div>
+    );
   }
 
   // If we have an error loading places, show error state
@@ -667,30 +813,48 @@ export function HomePage() {
             }}
           >
             <Header />
-            <MapComponent
-              latitude={centerLat}
-              longitude={centerLng}
-              markers={markers}
-              userLocation={userLocation || useFiltersStore.getState().userLocation}
-              showRoutes={false}
-              height={isMobile && typeof window !== "undefined" ? window.innerHeight : "100%"}
-              interactive={true}
-              defaultZoom={defaultZoom}
-              mapStyle="default"
-            />
+            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-busy="true"
+                  aria-label={t("common.loading")}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: 320,
+                    background: "var(--hl-bg, #1b1730)",
+                  }}
+                />
+              }
+            >
+              <MapComponent
+                latitude={centerLat}
+                longitude={centerLng}
+                markers={markers}
+                userLocation={userLocation || useFiltersStore.getState().userLocation}
+                showRoutes={false}
+                height={isMobile && typeof window !== "undefined" ? window.innerHeight : "100%"}
+                interactive={true}
+                defaultZoom={defaultZoom}
+                mapStyle="default"
+              />
+            </Suspense>
             {/* Lista nézet gomb - same position as map view button in FloatingHeader */}
             <div
               style={{
                 position: "absolute",
-                top: 16,
-                right: 48,
+                top: isMobile ? 12 : 16,
+                right: isMobile ? 12 : 48,
                 zIndex: 1000,
+                maxWidth: isMobile ? "calc(100% - 24px)" : undefined,
               }}
             >
               <button
                 onClick={() => setShowMap(false)}
                 style={{
-                  padding: "8px 16px",
+                  padding: isMobile ? "10px 14px" : "8px 16px",
+                  minHeight: 44,
                   background: "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(20px)",
                   WebkitBackdropFilter: "blur(20px)",
@@ -705,6 +869,7 @@ export function HomePage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
+                  boxSizing: "border-box",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-1px)";
@@ -724,6 +889,7 @@ export function HomePage() {
               lang={lang}
               selectedCategories={selectedCategories}
               selectedPriceBands={selectedPriceBands}
+              onPanelChange={setMapPanel}
               onCategoriesChange={setSelectedCategories}
               onPriceBandsChange={setSelectedPriceBands}
               isOpenNow={isOpenNow}

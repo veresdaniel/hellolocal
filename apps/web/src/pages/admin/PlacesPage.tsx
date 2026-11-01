@@ -1,5 +1,6 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect, useRef, useContext } from "react";
+import { appendExtraLanguages, mergeTranslations, patchLang, readLang, readLangList } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
@@ -11,6 +12,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import {
   getPlaces,
+  getPlace,
   createPlace,
   updatePlace,
   deletePlace,
@@ -27,6 +29,7 @@ import {
 import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
@@ -36,25 +39,33 @@ import {
   type TableColumn,
   type CardField,
 } from "../../components/AdminResponsiveTable";
+import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
 import { FloorplanEditor } from "../../components/FloorplanEditor";
 import { SlugInput } from "../../components/SlugInput";
+import { DomainInput } from "../../components/DomainInput";
+import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
-import type { UserRole, SiteRole } from "../../types/enums";
-import { buildPublicUrl } from "../../app/urls";
+import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import type { UserRole, SiteRole, Lang} from "../../types/enums";
+import { buildPublicUrl, entityPublicAddress } from "../../app/urls";
 
 interface Place {
   id: string;
   tenantId: string;
   townId: string | null;
   categoryId: string;
+  parentPlaceId?: string | null;
   priceBandId: string | null;
   isActive: boolean;
   plan?: "free" | "basic" | "pro";
   isFeatured?: boolean;
   featuredUntil?: string | null;
   heroImage: string | null;
+  mapImage?: string | null;
+  customDomain?: string | null;
+  gaMeasurementId?: string | null;
   lat: number | null;
   lng: number | null;
   category: { translations: Array<{ lang: string; name: string }> };
@@ -94,6 +105,7 @@ function FloorplanSection({
   refreshTrigger?: number;
   hasActiveSubscription?: boolean;
 }) {
+  const { t } = useTranslation();
   const [entitlement, setEntitlement] = useState<any>(null);
   const [floorplans, setFloorplans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,7 +172,7 @@ function FloorplanSection({
   };
 
   if (isLoading) {
-    return <div style={{ padding: 16, color: "#666" }}>Betöltés...</div>;
+    return <div style={{ padding: 16, color: "var(--hl-muted, #665d78)" }}>{t("common.loading")}</div>;
   }
 
   // Show if entitled (even if no floorplans yet - user can upload)
@@ -192,12 +204,14 @@ export function PlacesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
   const currentSite = sites.find((s) => s.id === selectedSiteId);
+  const hierarchy = useAdminHierarchyFilters();
   const { showToast } = useToast();
   const confirm = useConfirm();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   usePageTitle("admin.places");
   const [places, setPlaces] = useState<Place[]>([]);
+  const [parentChoices, setParentChoices] = useState<Place[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [towns, setTowns] = useState<any[]>([]);
   const [priceBands, setPriceBands] = useState<any[]>([]);
@@ -225,6 +239,7 @@ export function PlacesPage() {
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [formData, setFormData] = useState({
     categoryId: "",
+    parentPlaceId: "",
     townId: "",
     priceBandId: "",
     tagIds: [] as string[],
@@ -265,12 +280,16 @@ export function PlacesPage() {
     seoKeywordsEn: [] as string[],
     seoKeywordsDe: [] as string[],
     heroImage: "",
+    mapImage: "",
     lat: "",
     lng: "",
     isActive: false,
     plan: "free" as "free" | "basic" | "pro",
     isFeatured: false,
     featuredUntil: "",
+    customDomain: "",
+    customDomainEnabled: false,
+    gaMeasurementId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const previousPathnameRef = useRef<string>(location.pathname);
@@ -361,17 +380,18 @@ export function PlacesPage() {
       loadPlaces();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit, hierarchy.townId, hierarchy.placeId]);
 
   const loadData = async () => {
     if (!selectedSiteId) return;
     try {
-      const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse] =
+      const [categoriesResponse, townsResponse, priceBandsResponse, tagsResponse, parentsResponse] =
         await Promise.all([
           getCategories(selectedSiteId),
           getTowns(selectedSiteId),
           getPriceBands(selectedSiteId),
           getTags(selectedSiteId),
+          getPlaces(selectedSiteId, 1, 200),
         ]);
       // Handle paginated responses (used in dropdowns, so we extract the array)
       setCategories(
@@ -386,6 +406,9 @@ export function PlacesPage() {
           : priceBandsResponse?.priceBands || []
       );
       setTags(Array.isArray(tagsResponse) ? tagsResponse : tagsResponse?.tags || []);
+      setParentChoices(
+        Array.isArray(parentsResponse) ? parentsResponse : parentsResponse?.places || []
+      );
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.loadPlacesFailed"), "error");
     }
@@ -395,7 +418,26 @@ export function PlacesPage() {
     if (!selectedSiteId) return;
     setIsLoading(true);
     try {
-      const response = await getPlaces(selectedSiteId, pagination.page, pagination.limit);
+      // Single-place filter: fetch that place directly so pagination cannot hide it.
+      if (hierarchy.placeId) {
+        const place = await getPlace(hierarchy.placeId, selectedSiteId);
+        setPlaces(place ? [place] : []);
+        setPagination((prev) => ({
+          ...prev,
+          page: 1,
+          total: place ? 1 : 0,
+          totalPages: 1,
+        }));
+        return;
+      }
+
+      const townIdFilter = hierarchy.townId || undefined;
+      const response = await getPlaces(
+        selectedSiteId,
+        pagination.page,
+        pagination.limit,
+        townIdFilter
+      );
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -440,6 +482,9 @@ export function PlacesPage() {
     const errors: Record<string, string> = {};
     if (!formData.categoryId) errors.categoryId = t("admin.validation.categoryRequired");
     if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
+    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    }
     // English and German are optional
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -526,16 +571,31 @@ export function PlacesPage() {
           seoKeywords: formData.seoKeywordsDe || [],
         });
       }
+      appendExtraLanguages(
+        translations,
+        formData,
+        "name",
+        ["slug", "shortDescription", "description", "address", "accessibility", "seoTitle", "seoDescription", "seoImage", "seoKeywords"],
+        {
+          phone: formData.phone || null,
+          email: formData.email || null,
+          website: formData.website || null,
+          facebook: formData.facebook || null,
+          whatsapp: formData.whatsapp || null,
+        }
+      );
 
       await createPlace({
         tenantId: selectedSiteId,
         categoryId: formData.categoryId,
+        parentPlaceId: formData.parentPlaceId || null,
         townId: formData.townId || null,
         priceBandId: formData.priceBandId || null,
         tagIds: formData.tagIds,
         translations,
         openingHours: formData.openingHours,
         heroImage: formData.heroImage || null,
+        mapImage: formData.mapImage || null,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
         isActive: formData.isActive,
@@ -543,6 +603,10 @@ export function PlacesPage() {
         isFeatured: formData.isFeatured,
         featuredUntil: formData.featuredUntil
           ? new Date(formData.featuredUntil).toISOString()
+          : null,
+        customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        gaMeasurementId: formData.gaMeasurementId.trim()
+          ? formData.gaMeasurementId.trim().toUpperCase()
           : null,
       });
       setIsCreating(false);
@@ -571,6 +635,7 @@ export function PlacesPage() {
         id,
         {
           categoryId: formData.categoryId,
+          parentPlaceId: formData.parentPlaceId || null,
           townId: formData.townId || null,
           priceBandId: formData.priceBandId || null,
           tagIds: formData.tagIds,
@@ -651,10 +716,24 @@ export function PlacesPage() {
                 seoKeywords: formData.seoKeywordsDe || [],
               });
             }
+            appendExtraLanguages(
+              translations,
+              formData,
+              "name",
+              ["slug", "shortDescription", "description", "address", "accessibility", "seoTitle", "seoDescription", "seoImage", "seoKeywords"],
+              {
+                phone: formData.phone || null,
+                email: formData.email || null,
+                website: formData.website || null,
+                facebook: formData.facebook || null,
+                whatsapp: formData.whatsapp || null,
+              }
+            );
             return translations;
           })(),
           openingHours: formData.openingHours,
           heroImage: formData.heroImage || null,
+          mapImage: formData.mapImage || null,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
@@ -662,6 +741,10 @@ export function PlacesPage() {
           isFeatured: formData.isFeatured,
           featuredUntil: formData.featuredUntil
             ? new Date(formData.featuredUntil).toISOString()
+            : null,
+          customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+          gaMeasurementId: formData.gaMeasurementId.trim()
+            ? formData.gaMeasurementId.trim().toUpperCase()
             : null,
         },
         selectedSiteId || undefined
@@ -686,12 +769,11 @@ export function PlacesPage() {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: t("admin.confirmations.deletePlace") || "Delete Place",
+      title: t("admin.confirmations.deletePlace"),
       message:
-        t("admin.confirmations.deletePlace") ||
-        "Are you sure you want to delete this place? This action cannot be undone.",
-      confirmLabel: t("common.delete") || "Delete",
-      cancelLabel: t("common.cancel") || "Cancel",
+        t("admin.confirmations.deletePlace"),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
       confirmVariant: "danger",
       size: "medium",
     });
@@ -717,6 +799,7 @@ export function PlacesPage() {
     const de = place.translations.find((t) => t.lang === "de");
     setFormData({
       categoryId: place.categoryId,
+      parentPlaceId: place.parentPlaceId || "",
       townId: place.townId || "",
       priceBandId: place.priceBandId || "",
       tagIds: place.tags.map((pt) => pt.tag.id),
@@ -757,6 +840,7 @@ export function PlacesPage() {
       seoKeywordsEn: en?.seoKeywords || [],
       seoKeywordsDe: de?.seoKeywords || [],
       heroImage: place.heroImage || "",
+      mapImage: place.mapImage || "",
       lat: place.lat?.toString() || "",
       lng: place.lng?.toString() || "",
       isActive: place.isActive,
@@ -765,12 +849,30 @@ export function PlacesPage() {
       featuredUntil: place.featuredUntil
         ? new Date(place.featuredUntil).toISOString().split("T")[0]
         : "",
+      customDomain: place.customDomain || "",
+      customDomainEnabled: !!place.customDomain,
+      gaMeasurementId: place.gaMeasurementId || "",
     });
+    setFormData((current) =>
+      mergeTranslations(current, place.translations, [
+        "name",
+        "slug",
+        "shortDescription",
+        "description",
+        "address",
+        "accessibility",
+        "seoTitle",
+        "seoDescription",
+        "seoImage",
+        "seoKeywords",
+      ])
+    );
   };
 
   const resetForm = () => {
     setFormData({
       categoryId: "",
+      parentPlaceId: "",
       townId: "",
       priceBandId: "",
       tagIds: [],
@@ -811,12 +913,16 @@ export function PlacesPage() {
       seoKeywordsEn: [],
       seoKeywordsDe: [],
       heroImage: "",
+      mapImage: "",
       lat: "",
       lng: "",
       isActive: false,
       plan: "free",
       isFeatured: false,
       featuredUntil: "",
+      customDomain: "",
+      customDomainEnabled: false,
+      gaMeasurementId: "",
     });
     setFormErrors({});
   };
@@ -835,6 +941,10 @@ export function PlacesPage() {
       // Use setTimeout to ensure state is updated first
       setTimeout(() => {
         resetForm();
+        const townIdFromUrl = searchParams.get("townId") || "";
+        if (townIdFromUrl) {
+          setFormData((prev) => ({ ...prev, townId: townIdFromUrl }));
+        }
       }, 0);
       // Remove query param from URL
       const newSearchParams = new URLSearchParams(searchParams);
@@ -878,6 +988,7 @@ export function PlacesPage() {
         // Reset form data directly to avoid dependency issues
         setFormData({
           categoryId: "",
+          parentPlaceId: "",
           townId: "",
           priceBandId: "",
           tagIds: [],
@@ -915,12 +1026,16 @@ export function PlacesPage() {
           seoKeywordsEn: [],
           seoKeywordsDe: [],
           heroImage: "",
+          mapImage: "",
           lat: "",
           lng: "",
           isActive: false,
           plan: "free" as "free" | "basic" | "pro",
           isFeatured: false,
           featuredUntil: "",
+          customDomain: "",
+          customDomainEnabled: false,
+          gaMeasurementId: "",
         });
         setFormErrors({});
       }
@@ -943,7 +1058,7 @@ export function PlacesPage() {
     marginBottom: 4,
     fontSize: "clamp(14px, 3.5vw, 16px)",
     fontWeight: 600,
-    color: "#333",
+    color: "var(--hl-ink, #1b1730)",
   };
 
   return (
@@ -1018,6 +1133,40 @@ export function PlacesPage() {
                   required
                   error={formErrors.categoryId}
                 />
+              </div>
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    color: "#667eea",
+                    fontWeight: 600,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                  }}
+                >
+                  {t("admin.parentPlace")}
+                </label>
+                <select
+                  value={formData.parentPlaceId}
+                  onChange={(e) => setFormData({ ...formData, parentPlaceId: e.target.value })}
+                  style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+                >
+                  <option value="">{t("admin.noParentPlace")}</option>
+                  {parentChoices
+                    .filter((place) => place.id !== editingId)
+                    .map((place) => {
+                      const currentLang = (i18n.language || "hu").split("-")[0];
+                      const name =
+                        place.translations.find((item) => item.lang === currentLang)?.name ||
+                        place.translations.find((item) => item.lang === "hu")?.name ||
+                        place.id;
+                      return (
+                        <option key={place.id} value={place.id}>
+                          {name}
+                        </option>
+                      );
+                    })}
+                </select>
               </div>
               <div>
                 <label
@@ -1135,9 +1284,7 @@ export function PlacesPage() {
                           display: "block",
                           marginBottom: 8,
                           color:
-                            (selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe)
+                            readLang(formErrors, "name", selectedLang)
                               ? "#dc2626"
                               : "#333",
                           fontWeight: 600,
@@ -1146,30 +1293,36 @@ export function PlacesPage() {
                       >
                         {t("common.name")} ({selectedLang.toUpperCase()}) *
                       </label>
+                      <AiPostfixField
+                        draft={{
+                          kind: "place",
+                          field: "name",
+                          lang: selectedLang,
+                          siteId: selectedSiteId || undefined,
+                          placeId: editingId || undefined,
+                          name: readLang(formData, "name", selectedLang),
+                          categoryId: formData.categoryId || undefined,
+                          townId: formData.townId || undefined,
+                        }}
+                        value={readLang(formData, "name", selectedLang)}
+                        onApply={(text) =>
+                          setFormData(patchLang(formData, "name", selectedLang, text))
+                        }
+                      >
                       <input
                         type="text"
                         value={
-                          selectedLang === "hu"
-                            ? formData.nameHu
-                            : selectedLang === "en"
-                              ? formData.nameEn
-                              : formData.nameDe
+                          readLang(formData, "name", selectedLang)
                         }
                         onChange={(e) => {
-                          if (selectedLang === "hu")
-                            setFormData({ ...formData, nameHu: e.target.value });
-                          else if (selectedLang === "en")
-                            setFormData({ ...formData, nameEn: e.target.value });
-                          else setFormData({ ...formData, nameDe: e.target.value });
+                          setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                         }}
                         style={{
                           width: "100%",
                           padding: "12px 16px",
                           fontSize: 15,
                           border:
-                            (selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe)
+                            readLang(formErrors, "name", selectedLang)
                               ? "2px solid #fca5a5"
                               : "2px solid #e0e7ff",
                           borderRadius: 8,
@@ -1178,18 +1331,14 @@ export function PlacesPage() {
                           fontFamily:
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           background:
-                            (selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe)
+                            readLang(formErrors, "name", selectedLang)
                               ? "#fef2f2"
                               : "white",
                           boxSizing: "border-box",
                         }}
                         onFocus={(e) => {
                           const hasError =
-                            (selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe);
+                            readLang(formErrors, "name", selectedLang);
                           if (!hasError) {
                             e.target.style.borderColor = "#667eea";
                             e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -1197,16 +1346,13 @@ export function PlacesPage() {
                         }}
                         onBlur={(e) => {
                           const hasError =
-                            (selectedLang === "hu" && formErrors.nameHu) ||
-                            (selectedLang === "en" && formErrors.nameEn) ||
-                            (selectedLang === "de" && formErrors.nameDe);
+                            readLang(formErrors, "name", selectedLang);
                           e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
                           e.target.style.boxShadow = "none";
                         }}
                       />
-                      {((selectedLang === "hu" && formErrors.nameHu) ||
-                        (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe)) && (
+                      </AiPostfixField>
+                      {(readLang(formErrors, "name", selectedLang)) && (
                         <div
                           style={{
                             color: "#dc2626",
@@ -1217,11 +1363,7 @@ export function PlacesPage() {
                               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
-                          {selectedLang === "hu"
-                            ? formErrors.nameHu
-                            : selectedLang === "en"
-                              ? formErrors.nameEn
-                              : formErrors.nameDe}
+                          {readLang(formErrors, "name", selectedLang)}
                         </div>
                       )}
                     </div>
@@ -1238,11 +1380,7 @@ export function PlacesPage() {
                       }}
                     >
                       {t("common.name")}:{" "}
-                      {selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe}
+                      {readLang(formData, "name", selectedLang)}
                       <div
                         style={{
                           marginTop: 4,
@@ -1261,33 +1399,19 @@ export function PlacesPage() {
                   {canModifySeo() ? (
                     <SlugInput
                       value={
-                        selectedLang === "hu"
-                          ? formData.slugHu
-                          : selectedLang === "en"
-                            ? formData.slugEn
-                            : formData.slugDe
+                        readLang(formData, "slug", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
-                        else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
-                        else setFormData({ ...formData, slugDe: value });
+                        setFormData(patchLang(formData, "slug", selectedLang, value));
                       }}
                       sourceName={
-                        selectedLang === "hu"
-                          ? formData.nameHu
-                          : selectedLang === "en"
-                            ? formData.nameEn
-                            : formData.nameDe
+                        readLang(formData, "name", selectedLang)
                       }
                       lang={selectedLang}
-                      label={t("admin.slug") || "Slug"}
+                      label={t("admin.slug")}
                       placeholder="auto-generated-from-name"
                       error={
-                        selectedLang === "hu"
-                          ? formErrors.slugHu
-                          : selectedLang === "en"
-                            ? formErrors.slugEn
-                            : formErrors.slugDe
+                        readLang(formErrors, "slug", selectedLang)
                       }
                     />
                   ) : null}
@@ -1297,22 +1421,24 @@ export function PlacesPage() {
                     <label style={labelStyle}>{t("common.description")}</label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.descriptionHu
-                          : selectedLang === "en"
-                            ? formData.descriptionEn
-                            : formData.descriptionDe
+                        readLang(formData, "description", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, descriptionHu: value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, descriptionEn: value });
-                        else setFormData({ ...formData, descriptionDe: value });
+                        setFormData(patchLang(formData, "description", selectedLang, value));
                       }}
                       placeholder={t("common.description")}
                       height={200}
                       uploadFolder="editor/places"
+                      aiDraft={{
+                        kind: "place",
+                        field: "description",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                        categoryId: formData.categoryId || undefined,
+                        townId: formData.townId || undefined,
+                      }}
                     />
                   </div>
 
@@ -1321,26 +1447,28 @@ export function PlacesPage() {
                     <label style={labelStyle}>{t("admin.shortDescription")}</label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.shortDescriptionHu
-                          : selectedLang === "en"
-                            ? formData.shortDescriptionEn
-                            : formData.shortDescriptionDe
+                        readLang(formData, "shortDescription", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, shortDescriptionHu: value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, shortDescriptionEn: value });
-                        else setFormData({ ...formData, shortDescriptionDe: value });
+                        setFormData(patchLang(formData, "shortDescription", selectedLang, value));
                       }}
                       placeholder={t("admin.shortDescriptionPlaceholder")}
                       height={150}
                       uploadFolder="editor/places"
+                      aiDraft={{
+                        kind: "place",
+                        field: "shortDescription",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                        categoryId: formData.categoryId || undefined,
+                        townId: formData.townId || undefined,
+                      }}
                     />
                     <small
                       style={{
-                        color: "#666",
+                        color: "var(--hl-muted, #665d78)",
                         fontSize: "clamp(13px, 3vw, 15px)",
                         marginTop: 4,
                         display: "block",
@@ -1364,21 +1492,23 @@ export function PlacesPage() {
                     <label style={labelStyle}>{t("public.accessibility")}</label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.accessibilityHu
-                          : selectedLang === "en"
-                            ? formData.accessibilityEn
-                            : formData.accessibilityDe
+                        readLang(formData, "accessibility", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, accessibilityHu: value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, accessibilityEn: value });
-                        else setFormData({ ...formData, accessibilityDe: value });
+                        setFormData(patchLang(formData, "accessibility", selectedLang, value));
                       }}
                       placeholder={t("public.accessibility")}
                       height={150}
+                      aiDraft={{
+                        kind: "place",
+                        field: "accessibility",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                        categoryId: formData.categoryId || undefined,
+                        townId: formData.townId || undefined,
+                      }}
                       uploadFolder="editor/places"
                     />
                   </div>
@@ -1409,21 +1539,27 @@ export function PlacesPage() {
 
                       <div style={{ marginBottom: 16 }}>
                         <label style={labelStyle}>SEO {t("common.title")}</label>
+                        <AiPostfixField
+                          draft={{
+                            kind: "place",
+                            field: "seoTitle",
+                            lang: selectedLang,
+                            siteId: selectedSiteId || undefined,
+                            placeId: editingId || undefined,
+                            name: readLang(formData, "name", selectedLang),
+                          }}
+                          value={readLang(formData, "seoTitle", selectedLang)}
+                          onApply={(text) =>
+                            setFormData(patchLang(formData, "seoTitle", selectedLang, text))
+                          }
+                        >
                         <input
                           type="text"
                           value={
-                            selectedLang === "hu"
-                              ? formData.seoTitleHu
-                              : selectedLang === "en"
-                                ? formData.seoTitleEn
-                                : formData.seoTitleDe
+                            readLang(formData, "seoTitle", selectedLang)
                           }
                           onChange={(e) => {
-                            if (selectedLang === "hu")
-                              setFormData({ ...formData, seoTitleHu: e.target.value });
-                            else if (selectedLang === "en")
-                              setFormData({ ...formData, seoTitleEn: e.target.value });
-                            else setFormData({ ...formData, seoTitleDe: e.target.value });
+                            setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
                           }}
                           placeholder={t("admin.seoTitlePlaceholder")}
                           style={{
@@ -1436,9 +1572,10 @@ export function PlacesPage() {
                               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         />
+                        </AiPostfixField>
                         <small
                           style={{
-                            color: "#666",
+                            color: "var(--hl-muted, #665d78)",
                             fontSize: "clamp(13px, 3vw, 15px)",
                             marginTop: 4,
                             display: "block",
@@ -1452,20 +1589,27 @@ export function PlacesPage() {
 
                       <div style={{ marginBottom: 16 }}>
                         <label style={labelStyle}>SEO {t("common.description")}</label>
+                        <AiPostfixField
+                          draft={{
+                            kind: "place",
+                            field: "seoDescription",
+                            lang: selectedLang,
+                            siteId: selectedSiteId || undefined,
+                            placeId: editingId || undefined,
+                            name: readLang(formData, "name", selectedLang),
+                          }}
+                          value={readLang(formData, "seoDescription", selectedLang)}
+                          onApply={(text) =>
+                            setFormData(patchLang(formData, "seoDescription", selectedLang, text))
+                          }
+                          variant="textarea"
+                        >
                         <textarea
                           value={
-                            selectedLang === "hu"
-                              ? formData.seoDescriptionHu
-                              : selectedLang === "en"
-                                ? formData.seoDescriptionEn
-                                : formData.seoDescriptionDe
+                            readLang(formData, "seoDescription", selectedLang)
                           }
                           onChange={(e) => {
-                            if (selectedLang === "hu")
-                              setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                            else if (selectedLang === "en")
-                              setFormData({ ...formData, seoDescriptionEn: e.target.value });
-                            else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                            setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
                           }}
                           placeholder={t("admin.seoDescriptionPlaceholder")}
                           rows={3}
@@ -1479,8 +1623,9 @@ export function PlacesPage() {
                               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         />
+                        </AiPostfixField>
                         <small
-                          style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}
+                          style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}
                         >
                           {t("admin.seoDescriptionHint")}
                         </small>
@@ -1491,18 +1636,10 @@ export function PlacesPage() {
                         <input
                           type="url"
                           value={
-                            selectedLang === "hu"
-                              ? formData.seoImageHu
-                              : selectedLang === "en"
-                                ? formData.seoImageEn
-                                : formData.seoImageDe
+                            readLang(formData, "seoImage", selectedLang)
                           }
                           onChange={(e) => {
-                            if (selectedLang === "hu")
-                              setFormData({ ...formData, seoImageHu: e.target.value });
-                            else if (selectedLang === "en")
-                              setFormData({ ...formData, seoImageEn: e.target.value });
-                            else setFormData({ ...formData, seoImageDe: e.target.value });
+                            setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
                           }}
                           placeholder={t("admin.seoImagePlaceholder")}
                           style={{
@@ -1516,7 +1653,7 @@ export function PlacesPage() {
                           }}
                         />
                         <small
-                          style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}
+                          style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}
                         >
                           {t("admin.seoImageHint")}
                         </small>
@@ -1527,22 +1664,14 @@ export function PlacesPage() {
                         <input
                           type="text"
                           value={
-                            selectedLang === "hu"
-                              ? formData.seoKeywordsHu.join(", ")
-                              : selectedLang === "en"
-                                ? formData.seoKeywordsEn.join(", ")
-                                : formData.seoKeywordsDe.join(", ")
+                            readLangList(formData, "seoKeywords", selectedLang).join(", ")
                           }
                           onChange={(e) => {
                             const keywords = e.target.value
                               .split(",")
                               .map((k) => k.trim())
                               .filter(Boolean);
-                            if (selectedLang === "hu")
-                              setFormData({ ...formData, seoKeywordsHu: keywords });
-                            else if (selectedLang === "en")
-                              setFormData({ ...formData, seoKeywordsEn: keywords });
-                            else setFormData({ ...formData, seoKeywordsDe: keywords });
+                            setFormData(patchLang(formData, "seoKeywords", selectedLang, keywords));
                           }}
                           placeholder={t("admin.seoKeywordsPlaceholder")}
                           style={{
@@ -1557,7 +1686,7 @@ export function PlacesPage() {
                         />
                         <small
                           style={{
-                            color: "#666",
+                            color: "var(--hl-muted, #665d78)",
                             fontSize: "clamp(13px, 3vw, 15px)",
                             marginTop: 4,
                             display: "block",
@@ -1740,6 +1869,68 @@ export function PlacesPage() {
               </div>
             </div>
 
+            <div style={{ marginBottom: 24 }}>
+              <DomainInput
+                value={formData.customDomain}
+                onChange={(value) => setFormData({ ...formData, customDomain: value })}
+                checked={formData.customDomainEnabled}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, customDomainEnabled: checked })
+                }
+                label={t("admin.customDomain")}
+              />
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  color: "#64748b",
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                }}
+              >
+                {t("admin.customDomainHierarchyHint")}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: 24, maxWidth: 420 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                }}
+              >
+                {t("admin.googleAnalytics.placeLabel")}
+              </label>
+              <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
+                {t("admin.googleAnalytics.placeHelp")}
+              </p>
+              <input
+                type="text"
+                value={formData.gaMeasurementId}
+                onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
+                placeholder="G-XXXXXXXX"
+                autoComplete="off"
+                spellCheck={false}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 14,
+                }}
+              />
+              {formErrors.gaMeasurementId ? (
+                <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
+                  {formErrors.gaMeasurementId}
+                </p>
+              ) : (
+                <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
+                  {t("admin.googleAnalytics.clearHint")}
+                </p>
+              )}
+            </div>
+
             {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
             <div
               style={{
@@ -1761,7 +1952,7 @@ export function PlacesPage() {
                   alignItems: "center",
                   gap: 12,
                   cursor: canModifyPublish() ? "pointer" : "not-allowed",
-                  color: "white",
+                  color: "var(--hl-on-dark-strong, #ffffff)",
                 }}
               >
                 <input
@@ -1827,6 +2018,37 @@ export function PlacesPage() {
               />
             </div>
 
+            {/* Optional map-card image (falls back to hero) */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>{t("admin.mapImageUrl")}</label>
+              <input
+                type="url"
+                value={formData.mapImage}
+                onChange={(e) => setFormData({ ...formData, mapImage: e.target.value })}
+                placeholder={t("admin.mapImagePlaceholder")}
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  fontSize: "clamp(15px, 3.5vw, 16px)",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              />
+              <div
+                style={{
+                  marginTop: 6,
+                  fontSize: 13,
+                  color: "#666",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.mapImageDescription")}
+              </div>
+            </div>
+
             {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
             {editingId && (
               <div style={{ marginBottom: 16 }}>
@@ -1884,8 +2106,44 @@ export function PlacesPage() {
       )}
 
       {!isCreating && !editingId && (
+        <>
+        <div style={{ marginBottom: 16 }}>
+          <AdminHierarchyFilters
+            idPrefix="places-filter"
+            requireSite
+            allowClearSite={hierarchy.canPickSite}
+            siteId={hierarchy.siteId}
+            townId={hierarchy.townId}
+            placeId={hierarchy.placeId}
+            onSiteChange={(next) => {
+              hierarchy.setSiteId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            onTownChange={(next) => {
+              hierarchy.setTownId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            onPlaceChange={(next) => {
+              hierarchy.setPlaceId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            siteOptions={hierarchy.siteOptions}
+            townOptions={hierarchy.townOptions}
+            placeOptions={hierarchy.placeOptions}
+            onClear={() => {
+              hierarchy.clearFilters();
+              setSearchQuery("");
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            clearDisabled={!hierarchy.filtersActive && !searchQuery.trim()}
+          />
+        </div>
         <AdminResponsiveTable<Place>
-          data={places}
+          data={
+            hierarchy.placeId
+              ? places.filter((place) => place.id === hierarchy.placeId)
+              : places
+          }
           getItemId={(place) => place.id}
           searchQuery={searchQuery}
           searchPlaceholder={t("admin.searchPlaceholders.places")}
@@ -1895,16 +2153,16 @@ export function PlacesPage() {
           }}
           filterFn={(place, query) => {
             const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
-              place.translations.find((t) => t.lang === currentLang) ||
-              place.translations.find((t) => t.lang === "hu");
+              place.translations?.find((t) => t.lang === currentLang) ||
+              place.translations?.find((t) => t.lang === "hu");
             const categoryTranslation =
-              place.category.translations.find((t) => t.lang === currentLang) ||
-              place.category.translations.find((t) => t.lang === "hu");
+              place.category?.translations?.find((t) => t.lang === currentLang) ||
+              place.category?.translations?.find((t) => t.lang === "hu");
             const townTranslation =
-              place.town?.translations.find((t) => t.lang === currentLang) ||
-              place.town?.translations.find((t) => t.lang === "hu");
+              place.town?.translations?.find((t) => t.lang === currentLang) ||
+              place.town?.translations?.find((t) => t.lang === "hu");
             return (
               translation?.name.toLowerCase().includes(lowerQuery) ||
               categoryTranslation?.name.toLowerCase().includes(lowerQuery) ||
@@ -1916,7 +2174,7 @@ export function PlacesPage() {
               key: "name",
               label: t("common.name"),
               render: (place) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   place.translations.find((t) => t.lang === currentLang) ||
                   place.translations.find((t) => t.lang === "hu");
@@ -1927,10 +2185,10 @@ export function PlacesPage() {
               key: "category",
               label: t("admin.categories"),
               render: (place) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const categoryTranslation =
-                  place.category.translations.find((t) => t.lang === currentLang) ||
-                  place.category.translations.find((t) => t.lang === "hu");
+                  place.category?.translations?.find((t) => t.lang === currentLang) ||
+                  place.category?.translations?.find((t) => t.lang === "hu");
                 return categoryTranslation?.name || "-";
               },
             },
@@ -1938,7 +2196,7 @@ export function PlacesPage() {
               key: "town",
               label: t("admin.towns"),
               render: (place) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const townTranslation =
                   place.town?.translations.find((t) => t.lang === currentLang) ||
                   place.town?.translations.find((t) => t.lang === "hu");
@@ -1960,7 +2218,7 @@ export function PlacesPage() {
                           background: place.isActive
                             ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                             : "#6c757d",
-                          color: "white",
+                          color: "var(--hl-on-dark-strong, #ffffff)",
                           fontSize: "clamp(14px, 3.5vw, 16px)",
                           fontWeight: 600,
                           fontFamily:
@@ -1986,7 +2244,7 @@ export function PlacesPage() {
                   style={{
                     padding: "6px 12px",
                     background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
                     cursor: "pointer",
@@ -2023,7 +2281,7 @@ export function PlacesPage() {
                   style={{
                     padding: "6px 12px",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
                     cursor: "pointer",
@@ -2050,14 +2308,14 @@ export function PlacesPage() {
             },
           ]}
           cardTitle={(place) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               place.translations.find((t) => t.lang === currentLang) ||
               place.translations.find((t) => t.lang === "hu");
             return translation?.name || "-";
           }}
           cardSubtitle={(place) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const categoryTranslation =
               place.category.translations.find((t) => t.lang === currentLang) ||
               place.category.translations.find((t) => t.lang === "hu");
@@ -2067,14 +2325,14 @@ export function PlacesPage() {
             {
               key: "town",
               render: (place) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const townTranslation =
                   place.town?.translations.find((t) => t.lang === currentLang) ||
                   place.town?.translations.find((t) => t.lang === "hu");
                 return townTranslation ? (
                   <div
                     style={{
-                      color: "#666",
+                      color: "var(--hl-muted, #665d78)",
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       marginBottom: 8,
                       fontFamily:
@@ -2097,7 +2355,7 @@ export function PlacesPage() {
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
@@ -2125,19 +2383,28 @@ export function PlacesPage() {
             {
               key: "view",
               render: (place) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   place.translations.find((t) => t.lang === currentLang) ||
                   place.translations.find((t) => t.lang === "hu");
                 const slug = translation?.slug || "";
                 const publicUrl =
                   slug && currentSite?.slug
-                    ? buildPublicUrl({
-                        lang: i18n.language || "hu",
-                        siteKey: currentSite.slug,
-                        entityType: "place",
-                        slug,
-                      })
+                    ? place.customDomain
+                      ? entityPublicAddress({
+                          lang: i18n.language || "hu",
+                          siteSlug: currentSite.slug,
+                          entityType: "place",
+                          entitySlug: slug,
+                          primaryDomain: currentSite.primaryDomain,
+                          customDomain: place.customDomain,
+                        })
+                      : buildPublicUrl({
+                          lang: i18n.language || "hu",
+                          siteKey: currentSite.slug,
+                          entityType: "place",
+                          slug,
+                        })
                     : null;
                 return publicUrl ? (
                   <button
@@ -2186,7 +2453,7 @@ export function PlacesPage() {
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
-                    {t("admin.viewPublic") || "Megnézem"}
+                    {t("admin.viewPublic")}
                   </button>
                 ) : null;
               },
@@ -2202,7 +2469,7 @@ export function PlacesPage() {
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 8,
                     cursor: "pointer",
@@ -2242,7 +2509,7 @@ export function PlacesPage() {
                           background: place.isActive
                             ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                             : "#6c757d",
-                          color: "white",
+                          color: "var(--hl-on-dark-strong, #ffffff)",
                           fontSize: "clamp(14px, 3.5vw, 16px)",
                           fontWeight: 600,
                           fontFamily:
@@ -2258,14 +2525,14 @@ export function PlacesPage() {
           ]}
           onEdit={startEdit}
           onView={(place) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               place.translations.find((t) => t.lang === currentLang) ||
               place.translations.find((t) => t.lang === "hu");
 
             if (!translation) {
               showToast(
-                t("admin.errors.placeHasNoTranslation") || "A helynek nincs fordítása",
+                t("admin.errors.placeHasNoTranslation"),
                 "error"
               );
               return;
@@ -2273,59 +2540,42 @@ export function PlacesPage() {
 
             if (!currentSite?.slug) {
               showToast(
-                t("admin.errors.siteNotSelected") || "Kérjük, válassz ki egy helyet először",
+                t("admin.errors.siteNotSelected"),
                 "error"
               );
               return;
             }
 
-            // Use slug if available, otherwise use place ID
-            const slug = translation.slug;
-            let publicUrl: string;
-
-            if (slug) {
-              // Use slug-based URL (preferred)
-              publicUrl = buildPublicUrl({
-                lang: i18n.language || "hu",
-                siteKey: currentSite.slug,
-                entityType: "place",
-                slug,
-              });
-            } else {
-              // Fallback: use place ID directly (requires backend support for /place/by-id/:id route)
-              // For now, try to generate slug from name as fallback
-              if (translation.name) {
-                const generatedSlug = translation.name
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "")
-                  .replace(/[^a-z0-9]+/g, "-")
-                  .replace(/^-+|-+$/g, "");
-
-                if (generatedSlug) {
-                  publicUrl = buildPublicUrl({
-                    lang: i18n.language || "hu",
-                    siteKey: currentSite.slug,
-                    entityType: "place",
-                    slug: generatedSlug,
-                  });
-                } else {
-                  showToast(
-                    t("admin.errors.placeHasNoSlug") ||
-                      "A helynek nincs slug-ja, nem lehet megnyitni",
-                    "error"
-                  );
-                  return;
-                }
-              } else {
-                showToast(
-                  t("admin.errors.placeHasNoSlug") ||
-                    "A helynek nincs slug-ja, nem lehet megnyitni",
-                  "error"
-                );
-                return;
-              }
+            // Prefer place customDomain; else region host / platform slug path
+            const slug =
+              translation.slug ||
+              (translation.name
+                ? translation.name
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-+|-+$/g, "")
+                : "");
+            if (!slug) {
+              showToast(t("admin.errors.placeHasNoSlug"), "error");
+              return;
             }
+            const publicUrl = place.customDomain
+              ? entityPublicAddress({
+                  lang: i18n.language || "hu",
+                  siteSlug: currentSite.slug,
+                  entityType: "place",
+                  entitySlug: slug,
+                  primaryDomain: currentSite.primaryDomain,
+                  customDomain: place.customDomain,
+                })
+              : buildPublicUrl({
+                  lang: i18n.language || "hu",
+                  siteKey: currentSite.slug,
+                  entityType: "place",
+                  slug,
+                });
 
             window.open(publicUrl, "_blank");
           }}
@@ -2334,7 +2584,7 @@ export function PlacesPage() {
             // We need to check the role for this specific place
             const checkAndDelete = async () => {
               if (!currentUser?.id) {
-                showToast(t("admin.errors.unauthorized"), "error");
+                showToast(t("admin.errors.notAuthorized"), "error");
                 return;
               }
               // Superadmin and siteadmin can always delete
@@ -2366,6 +2616,7 @@ export function PlacesPage() {
           isLoading={isLoading}
           error={null}
         />
+        </>
       )}
       {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
         <div style={{ marginTop: 16 }}>

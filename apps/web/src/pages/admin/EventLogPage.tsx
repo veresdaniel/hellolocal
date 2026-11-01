@@ -361,7 +361,7 @@ export function EventLogPage() {
             textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
           }}
         >
-          {t("admin.eventLog")}
+          {t("admin.eventLog.title")}
         </h1>
         <p
           style={{

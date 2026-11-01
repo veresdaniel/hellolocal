@@ -1,5 +1,6 @@
 // src/pages/admin/CollectionEditPage.tsx
 import { useState, useEffect, useContext, useRef, useCallback, useMemo } from "react";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -9,6 +10,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
 import {
@@ -57,11 +59,11 @@ export function CollectionEditPage() {
 
     let title: string;
     if (isNew) {
-      title = `${t("admin.collections")} - ${t("common.new")} | ${adminSuffix}`;
+      title = `${t("admin.dashboardCards.collections")} - ${t("common.new")} | ${adminSuffix}`;
     } else if (collectionTitle) {
       title = `${collectionTitle} | ${adminSuffix}`;
     } else {
-      title = `${t("admin.collections")} | ${adminSuffix}`;
+      title = `${t("admin.dashboardCards.collections")} | ${adminSuffix}`;
     }
 
     // Truncate if too long (browser tabs typically show ~30-40 chars)
@@ -178,6 +180,14 @@ export function CollectionEditPage() {
           : [],
       });
     }
+    appendExtraLanguages(translations, formData, "title", [
+      "description",
+      "heroImage",
+      "seoTitle",
+      "seoDescription",
+      "seoImage",
+      "seoKeywords",
+    ]);
 
     return translations;
   }, [formData]);
@@ -855,37 +865,38 @@ function ContentTab({
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   color:
-                    (selectedLang === "hu" && formErrors.titleHu) ||
-                    (selectedLang === "en" && formErrors.titleEn) ||
-                    (selectedLang === "de" && formErrors.titleDe)
+                    readLang(formErrors, "title", selectedLang)
                       ? "#dc3545"
                       : "#374151",
                 }}
               >
                 {t("admin.collections.title")} ({selectedLang.toUpperCase()}) *
               </label>
+              <AiPostfixField
+                draft={{
+                  kind: "collection",
+                  field: "title",
+                  lang: selectedLang,
+                  name: readLang(formData, "title", selectedLang),
+                }}
+                value={readLang(formData, "title", selectedLang)}
+                onApply={(text) =>
+                  setFormData(patchLang(formData, "title", selectedLang, text))
+                }
+              >
               <input
                 type="text"
                 value={
-                  selectedLang === "hu"
-                    ? formData.titleHu
-                    : selectedLang === "en"
-                      ? formData.titleEn
-                      : formData.titleDe
+                  readLang(formData, "title", selectedLang)
                 }
                 onChange={(e) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, titleHu: e.target.value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, titleEn: e.target.value });
-                  else setFormData({ ...formData, titleDe: e.target.value });
+                  setFormData(patchLang(formData, "title", selectedLang, e.target.value));
                 }}
                 style={{
                   width: "100%",
                   padding: "10px 14px",
                   border:
-                    (selectedLang === "hu" && formErrors.titleHu) ||
-                    (selectedLang === "en" && formErrors.titleEn) ||
-                    (selectedLang === "de" && formErrors.titleDe)
+                    readLang(formErrors, "title", selectedLang)
                       ? "1px solid #dc3545"
                       : "1px solid #d1d5db",
                   borderRadius: 6,
@@ -897,9 +908,7 @@ function ContentTab({
                 onFocus={(e) => {
                   if (
                     !(
-                      (selectedLang === "hu" && formErrors.titleHu) ||
-                      (selectedLang === "en" && formErrors.titleEn) ||
-                      (selectedLang === "de" && formErrors.titleDe)
+                      readLang(formErrors, "title", selectedLang)
                     )
                   ) {
                     e.currentTarget.style.borderColor = "#667eea";
@@ -908,18 +917,15 @@ function ContentTab({
                 onBlur={(e) => {
                   if (
                     !(
-                      (selectedLang === "hu" && formErrors.titleHu) ||
-                      (selectedLang === "en" && formErrors.titleEn) ||
-                      (selectedLang === "de" && formErrors.titleDe)
+                      readLang(formErrors, "title", selectedLang)
                     )
                   ) {
                     e.currentTarget.style.borderColor = "#d1d5db";
                   }
                 }}
               />
-              {((selectedLang === "hu" && formErrors.titleHu) ||
-                (selectedLang === "en" && formErrors.titleEn) ||
-                (selectedLang === "de" && formErrors.titleDe)) && (
+              </AiPostfixField>
+              {(readLang(formErrors, "title", selectedLang)) && (
                 <div
                   style={{
                     color: "#dc3545",
@@ -929,11 +935,7 @@ function ContentTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {selectedLang === "hu"
-                    ? formErrors.titleHu
-                    : selectedLang === "en"
-                      ? formErrors.titleEn
-                      : formErrors.titleDe}
+                  {readLang(formErrors, "title", selectedLang)}
                 </div>
               )}
             </div>
@@ -944,11 +946,7 @@ function ContentTab({
                 value={formData.slug}
                 onChange={(value) => setFormData({ ...formData, slug: value })}
                 sourceName={
-                  selectedLang === "hu"
-                    ? formData.titleHu
-                    : selectedLang === "en"
-                      ? formData.titleEn
-                      : formData.titleDe
+                  readLang(formData, "title", selectedLang)
                 }
                 lang={selectedLang}
                 label={t("admin.collections.slug")}
@@ -975,16 +973,16 @@ function ContentTab({
               </label>
               <TipTapEditorWithUpload
                 value={
-                  selectedLang === "hu"
-                    ? formData.descriptionHu || ""
-                    : selectedLang === "en"
-                      ? formData.descriptionEn || ""
-                      : formData.descriptionDe || ""
+                  readLang(formData, "description", selectedLang)
                 }
                 onChange={(html) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: html });
-                  else if (selectedLang === "en") setFormData({ ...formData, descriptionEn: html });
-                  else setFormData({ ...formData, descriptionDe: html });
+                  setFormData(patchLang(formData, "description", selectedLang, html));
+                }}
+                aiDraft={{
+                  kind: "collection",
+                  field: "description",
+                  lang: selectedLang,
+                  name: readLang(formData, "title", selectedLang),
                 }}
               />
             </div>
@@ -1007,18 +1005,10 @@ function ContentTab({
               <input
                 type="text"
                 value={
-                  selectedLang === "hu"
-                    ? formData.heroImageHu || ""
-                    : selectedLang === "en"
-                      ? formData.heroImageEn || ""
-                      : formData.heroImageDe || ""
+                  readLang(formData, "heroImage", selectedLang)
                 }
                 onChange={(e) => {
-                  if (selectedLang === "hu")
-                    setFormData({ ...formData, heroImageHu: e.target.value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, heroImageEn: e.target.value });
-                  else setFormData({ ...formData, heroImageDe: e.target.value });
+                  setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
                 }}
                 placeholder="https://example.com/image.jpg"
                 style={{
@@ -1081,18 +1071,10 @@ function ContentTab({
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.seoTitleHu || ""
-                        : selectedLang === "en"
-                          ? formData.seoTitleEn || ""
-                          : formData.seoTitleDe || ""
+                      readLang(formData, "seoTitle", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, seoTitleHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, seoTitleEn: e.target.value });
-                      else setFormData({ ...formData, seoTitleDe: e.target.value });
+                      setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
@@ -1129,18 +1111,10 @@ function ContentTab({
                   </label>
                   <textarea
                     value={
-                      selectedLang === "hu"
-                        ? formData.seoDescriptionHu || ""
-                        : selectedLang === "en"
-                          ? formData.seoDescriptionEn || ""
-                          : formData.seoDescriptionDe || ""
+                      readLang(formData, "seoDescription", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, seoDescriptionEn: e.target.value });
-                      else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                      setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
                     }}
                     rows={3}
                     style={{
@@ -1180,18 +1154,10 @@ function ContentTab({
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.seoImageHu || ""
-                        : selectedLang === "en"
-                          ? formData.seoImageEn || ""
-                          : formData.seoImageDe || ""
+                      readLang(formData, "seoImage", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, seoImageHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, seoImageEn: e.target.value });
-                      else setFormData({ ...formData, seoImageDe: e.target.value });
+                      setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
                     }}
                     placeholder="https://example.com/seo-image.jpg"
                     style={{
@@ -1230,18 +1196,10 @@ function ContentTab({
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.seoKeywordsHu || ""
-                        : selectedLang === "en"
-                          ? formData.seoKeywordsEn || ""
-                          : formData.seoKeywordsDe || ""
+                      readLang(formData, "seoKeywords", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, seoKeywordsHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, seoKeywordsEn: e.target.value });
-                      else setFormData({ ...formData, seoKeywordsDe: e.target.value });
+                      setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
                     }}
                     placeholder={t("admin.collections.seoKeywordsPlaceholder")}
                     style={{
@@ -1797,7 +1755,7 @@ function ItemsTab({
               margin: 0,
             }}
           >
-            {t("admin.collectionEdit.availableSites") || "Rendelkezésre álló site-ok"} (
+            {t("admin.collectionEdit.availableSites") || "Rendelkezésre álló helyek"} (
             {sortedAvailableSites.length})
           </h3>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1986,7 +1944,7 @@ function ItemsTab({
             textAlign: "center",
           }}
         >
-          {t("admin.collectionEdit.dragToAdd") || "Húzd a site-okat a jobb oldalra a hozzáadáshoz"}
+          {t("admin.collectionEdit.dragToAdd") || "Húzd a helyeket a jobb oldalra a hozzáadáshoz"}
         </div>
       </div>
 
@@ -2066,7 +2024,7 @@ function ItemsTab({
               <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📋</div>
               <div>{t("admin.collectionEdit.noItems")}</div>
               <div style={{ fontSize: 12, marginTop: 8, color: "#9ca3af" }}>
-                {t("admin.collectionEdit.dragSitesHere") || "Húzd ide a site-okat a bal oldalról"}
+                {t("admin.collectionEdit.dragSitesHere") || "Húzd ide a helyeket a bal oldalról"}
               </div>
             </div>
           </div>

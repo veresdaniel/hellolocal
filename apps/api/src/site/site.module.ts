@@ -4,6 +4,7 @@ import { SlugModule } from "../slug/slug.module";
 import { PlacesModule } from "../places/places.module";
 import { EventsModule } from "../events/events.module";
 import { SiteController } from "./site.controller";
+import { DomainResolveController } from "./domain-resolve.controller";
 import { ResolveController } from "./resolve.controller";
 import { SiteResolverService } from "./site-resolver.service";
 import { ResolveService } from "./resolve.service";
@@ -16,7 +17,7 @@ import { SiteKeyResolverService } from "./site-key-resolver.service";
     forwardRef(() => PlacesModule),
     forwardRef(() => EventsModule),
   ],
-  controllers: [SiteController, ResolveController],
+  controllers: [SiteController, ResolveController, DomainResolveController],
   providers: [SiteResolverService, ResolveService, SiteKeyResolverService],
   exports: [SiteResolverService, ResolveService, SiteKeyResolverService],
 })

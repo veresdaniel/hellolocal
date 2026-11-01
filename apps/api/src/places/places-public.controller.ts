@@ -3,12 +3,12 @@ import {
   Get,
   Param,
   Query,
-  BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
 import { PlacesService } from "./places.service";
 import { PlacesPriceListService } from "./places-price-list.service";
 import { AdminFloorplanService } from "../admin/admin-floorplan.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for place-related endpoints.
@@ -28,14 +28,6 @@ export class PlacesPublicController {
     private readonly floorplanService: AdminFloorplanService
   ) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists places with optional filtering.
@@ -56,10 +48,11 @@ export class PlacesPublicController {
     @Query("priceBand") priceBand?: string | string[],
     @Query("town") town?: string,
     @Query("q") q?: string,
+    @Query("kind") kind?: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     // Normalize category and priceBand to arrays
     const categories = Array.isArray(category) ? category : category ? [category] : undefined;
     const priceBands = Array.isArray(priceBand) ? priceBand : priceBand ? [priceBand] : undefined;
@@ -70,6 +63,7 @@ export class PlacesPublicController {
       priceBand: priceBands,
       town,
       q,
+      kind: kind === "service" || kind === "all" ? kind : "place",
       limit: limit ? Number(limit) : 50,
       offset: offset ? Number(offset) : 0,
     });
@@ -89,7 +83,7 @@ export class PlacesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("slug") slug: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     const place = await this.placesService.detail({ lang, siteKey, slug });
     // Add hasPriceList flag
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
@@ -117,7 +111,7 @@ export class PlacesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("placeId") placeId: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     const place = await this.placesService.detailById({ lang, siteKey, placeId });
     // Add hasPriceList flag
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
@@ -142,7 +136,7 @@ export class PlacesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("placeId") placeId: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
     // For public endpoint, requireAuth is false (no authentication check)
     return this.priceListService.getPriceList(placeId, site.siteId, false);
@@ -162,7 +156,7 @@ export class PlacesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("placeId") placeId: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
 
     // Verify place belongs to site
@@ -191,7 +185,7 @@ export class PlacesPublicController {
     @Param("placeId") placeId: string,
     @Param("floorplanId") floorplanId: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     const site = await this.placesService["siteResolver"].resolve({ lang, siteKey });
 
     // Verify place belongs to site

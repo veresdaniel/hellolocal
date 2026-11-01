@@ -1,14 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { canEditCopy } from "../auth/copy-access";
 import { PrismaService } from "../prisma/prisma.service";
 import type { PlatformSettingsDto } from "./platform-settings.dto";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { langOrDefault } from "../common/lang";
 import { sanitizeImageUrl } from "../common/url-validation";
+import { isMissingColumn } from "../common/prisma-column";
+import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { UiCopyService } from "../ui-copy/ui-copy.service";
+import { alignPlanMatrixAndPublicPlans } from "./plan-matrix-sync";
 
-type LangType = "hu" | "en" | "de";
-
-function pickLang(lang: string): LangType {
-  if (lang === "hu" || lang === "en" || lang === "de") return lang;
-  return "hu";
+function pickLang(lang: string): Lang {
+  return langOrDefault(lang);
 }
 
 function deepMerge<T>(base: T, override: any): T {
@@ -26,7 +29,10 @@ function deepMerge<T>(base: T, override: any): T {
 
 @Injectable()
 export class PlatformSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uiCopy: UiCopyService
+  ) {}
 
   async getPlatformSettings(args: {
     lang: string;
@@ -96,42 +102,154 @@ export class PlatformSettingsService {
     }
 
     // 2) SiteInstance (siteId+lang) + Site(+translation) + Brand
-    const site = await this.prisma.site.findUnique({
-      where: { id: siteId },
-      select: {
-        id: true,
-        brand: {
-          select: {
-            name: true,
-            logoUrl: true,
-            faviconUrl: true,
-            theme: true,
-            placeholders: true,
-            mapDefaults: true,
-          },
-        },
-        translations: {
-          where: { lang },
-          take: 1,
-          select: {
-            name: true,
-            shortDescription: true,
-            description: true,
-            seoTitle: true,
-            seoDescription: true,
-          },
-        },
-        siteInstances: {
-          where: { lang },
-          take: 1,
-          select: { isDefault: true, mapConfig: true, features: true },
+    // landingHtml may be absent until the migration runs on live; keep serving the map.
+    const siteSelectBase = {
+      id: true,
+      languages: true,
+      brand: {
+        select: {
+          name: true,
+          logoUrl: true,
+          faviconUrl: true,
+          theme: true,
+          placeholders: true,
+          mapDefaults: true,
         },
       },
-    });
+      translations: {
+        select: {
+          lang: true,
+          name: true,
+          shortDescription: true,
+          description: true,
+          heroImage: true,
+          seoTitle: true,
+          seoDescription: true,
+        },
+      },
+      siteInstances: {
+        select: { lang: true, isDefault: true, mapConfig: true, features: true },
+      },
+      subscription: {
+        select: { ladderSuspended: true },
+      },
+    } as const;
+
+    const siteSelectWithLanding = {
+      ...siteSelectBase,
+      translations: {
+        select: {
+          ...siteSelectBase.translations.select,
+          landingHtml: true,
+          listIntroHtml: true,
+          listIntroImage: true,
+        },
+      },
+    } as const;
+
+    const siteSelectWithLandingOnly = {
+      ...siteSelectBase,
+      translations: {
+        select: {
+          ...siteSelectBase.translations.select,
+          landingHtml: true,
+        },
+      },
+    } as const;
+
+    // Cast select: live DB / generated client may lag migrations (landingHtml, listIntro, ladder).
+    let site: any;
+    try {
+      site = await this.prisma.site.findUnique({
+        where: { id: siteId },
+        select: siteSelectWithLanding as any,
+      });
+    } catch (error) {
+      const listIntroMissing =
+        isMissingColumn(error, "listIntroHtml") || isMissingColumn(error, "listIntroImage");
+      if (
+        !isMissingColumn(error, "landingHtml") &&
+        !listIntroMissing &&
+        !isMissingColumn(error)
+      ) {
+        throw error;
+      }
+      try {
+        site = await this.prisma.site.findUnique({
+          where: { id: siteId },
+          select: (listIntroMissing ? siteSelectWithLandingOnly : siteSelectBase) as any,
+        });
+      } catch (retryError) {
+        // visitor-ladder subscription columns may also be unmigrated on live
+        if (!isMissingColumn(retryError)) throw retryError;
+        const { subscription: _subscription, ...withoutSub } = siteSelectBase;
+        site = await this.prisma.site.findUnique({
+          where: { id: siteId },
+          select: withoutSub as any,
+        });
+      }
+    }
     if (!site) throw new NotFoundException("Site not found");
     if (!site.brand) throw new NotFoundException("Site has no brand assigned");
 
-    const t = site.translations[0];
+    let siteGaMeasurementId: string | null = null;
+    try {
+      const gaRow = await this.prisma.site.findUnique({
+        where: { id: siteId },
+        select: { gaMeasurementId: true } as any,
+      });
+      const raw = (gaRow as { gaMeasurementId?: string | null } | null)?.gaMeasurementId;
+      if (raw) {
+        try {
+          siteGaMeasurementId = normalizeGaMeasurementId(raw);
+        } catch {
+          siteGaMeasurementId = null;
+        }
+      }
+    } catch (error) {
+      if (!isMissingColumn(error, "gaMeasurementId")) throw error;
+    }
+
+    let siteTheme: unknown = null;
+    try {
+      const themeRow = await this.prisma.site.findUnique({
+        where: { id: siteId },
+        select: { theme: true } as any,
+      });
+      siteTheme = (themeRow as { theme?: unknown } | null)?.theme ?? null;
+    } catch (error) {
+      if (!isMissingColumn(error, "theme")) throw error;
+    }
+
+    const published = site.languages?.length ? site.languages : ["hu", "en", "de"];
+    const translations = (site.translations || []) as Array<{
+      lang: string;
+      name?: string | null;
+      shortDescription?: string | null;
+      description?: string | null;
+      heroImage?: string | null;
+      landingHtml?: string | null;
+      listIntroHtml?: string | null;
+      listIntroImage?: string | null;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+    }>;
+    const t =
+      translations.find((item) => item.lang === lang) ||
+      translations.find((item) => item.lang === published[0]) ||
+      translations.find((item) => item.lang === Lang.hu) ||
+      translations[0];
+    const instances = (site.siteInstances || []) as Array<{
+      lang: string;
+      isDefault?: boolean;
+      mapConfig?: unknown;
+      features?: unknown;
+    }>;
+    const instance =
+      instances.find((item) => item.lang === lang) ||
+      instances.find((item) => item.isDefault) ||
+      instances[0] ||
+      null;
 
     // 3) Defaults (app-level hardcoded)
     const appDefaults = {
@@ -164,8 +282,6 @@ export class PlatformSettingsService {
     const brandMapDefaults = (site.brand?.mapDefaults ?? {}) as any;
 
     // Get SiteInstance (default or first one, or null if none exist)
-    const instance =
-      site.siteInstances?.find((si) => si.isDefault) || site.siteInstances?.[0] || null;
     const instanceFeatures = (instance?.features ?? {}) as any;
     const instanceMap = (instance?.mapConfig ?? {}) as any;
 
@@ -196,12 +312,17 @@ export class PlatformSettingsService {
 
     return {
       lang,
+      languages: published,
       siteKey: resolvedSiteKey,
       site: {
         id: site.id,
         name: t?.name ?? "(missing translation)",
         shortDescription: t?.shortDescription ?? null,
         description: t?.description ?? null,
+        heroImage: t?.heroImage ?? null,
+        landingHtml: t?.landingHtml ?? null,
+        listIntroHtml: t?.listIntroHtml ?? null,
+        listIntroImage: t?.listIntroImage ?? null,
       },
       brand: {
         name: site.brand?.name ?? "HelloLocal",
@@ -209,6 +330,7 @@ export class PlatformSettingsService {
         faviconUrl: site.brand?.faviconUrl ?? null,
         theme: site.brand?.theme ?? null,
       },
+      siteTheme,
       seo: {
         defaultTitle: t?.seoTitle ?? null,
         defaultDescription: t?.seoDescription ?? null,
@@ -226,7 +348,11 @@ export class PlatformSettingsService {
         planOverrides: (brand?.planOverrides as any) || null,
         placePlanOverrides: (brand?.placePlanOverrides as any) || null,
       },
+      visitorHold: site.subscription?.ladderSuspended === true,
       platform: await this.getPlatformLocaleSettings(),
+      analytics: {
+        gaMeasurementId: siteGaMeasurementId,
+      },
     };
   }
 
@@ -419,14 +545,10 @@ export class PlatformSettingsService {
     const placeholders = (brand.placeholders as any) || {};
 
     // Initialize with defaults
-    const siteName: { hu: string; en: string; de: string } = {
-      hu: "HelloLocal",
-      en: "HelloLocal",
-      de: "HelloLocal",
-    };
-    const siteDescription: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
-    const seoTitle: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
-    const seoDescription: { hu: string; en: string; de: string } = { hu: "", en: "", de: "" };
+    const siteName: Record<string, string> = { hu: "HelloLocal", en: "HelloLocal", de: "HelloLocal" };
+    const siteDescription: Record<string, string> = { hu: "", en: "", de: "" };
+    const seoTitle: Record<string, string> = { hu: "", en: "", de: "" };
+    const seoDescription: Record<string, string> = { hu: "", en: "", de: "" };
     let isCrawlable = true;
 
     // Get language-specific content from SiteTranslation
@@ -478,10 +600,10 @@ export class PlatformSettingsService {
   async setPlatformSettings(
     siteId: string,
     settings: {
-      siteName?: { hu?: string; en?: string; de?: string };
-      siteDescription?: { hu?: string; en?: string; de?: string };
-      seoTitle?: { hu?: string; en?: string; de?: string };
-      seoDescription?: { hu?: string; en?: string; de?: string };
+      siteName?: Record<string, string | undefined>;
+      siteDescription?: Record<string, string | undefined>;
+      seoTitle?: Record<string, string | undefined>;
+      seoDescription?: Record<string, string | undefined>;
       isCrawlable?: boolean;
       defaultPlaceholderCardImage?: string | null;
       defaultPlaceholderDetailHeroImage?: string | null;
@@ -602,7 +724,7 @@ export class PlatformSettingsService {
     }
 
     // Update SiteTranslation (language-specific content: name, description, SEO)
-    const languages = [Lang.hu, Lang.en, Lang.de];
+    const languages = site.languages?.length ? site.languages : [Lang.hu, Lang.en, Lang.de];
     for (const lang of languages) {
       let translation = site.translations.find((t) => t.lang === lang);
 
@@ -702,9 +824,14 @@ export class PlatformSettingsService {
 
   /**
    * Set feature matrix (plan overrides) - superadmin only
-   * Updates planOverrides in the first Brand (global setting)
+   * Updates planOverrides in the first Brand (global setting).
+   * Finite FREE/BASIC/PRO limits are copied into publicPlans so plan-card
+   * bullets stay in sync; UiMessage names/pitch are left alone.
    */
-  async setFeatureMatrix(planOverrides: any, placePlanOverrides?: any) {
+  async setFeatureMatrix(planOverrides: any, placePlanOverrides?: any, role?: string | null) {
+    if (!canEditCopy({ role }, "platform")) {
+      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+    }
     // Get the first brand (assuming single brand for global settings)
     const brand = await this.prisma.brand.findFirst({
       orderBy: { createdAt: "asc" },
@@ -716,7 +843,8 @@ export class PlatformSettingsService {
 
     const updateData: any = {};
     if (planOverrides !== undefined) {
-      updateData.planOverrides = planOverrides;
+      updateData.planOverrides =
+        planOverrides === null ? null : alignPlanMatrixAndPublicPlans(planOverrides);
     }
     if (placePlanOverrides !== undefined) {
       updateData.placePlanOverrides = placePlanOverrides;
@@ -726,6 +854,10 @@ export class PlatformSettingsService {
       where: { id: brand.id },
       data: updateData,
     });
+
+    // Plan-card {{count}} lines read live numbers; bust ui-copy so SSR/public
+    // copy reloads promptly after a matrix or publicPlans write.
+    this.uiCopy.invalidatePublicCache();
 
     return this.getFeatureMatrix();
   }

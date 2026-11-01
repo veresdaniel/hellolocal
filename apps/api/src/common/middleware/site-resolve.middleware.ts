@@ -8,7 +8,8 @@ import {
 } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { PrismaService } from "../../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../language-code";
+import { requireLang } from "../lang";
 
 /**
  * Site context attached to every request.
@@ -50,71 +51,39 @@ export class SiteResolveMiddleware implements NestMiddleware {
   async use(req: RequestWithSite, res: Response, next: NextFunction) {
     try {
       // Priority 1: Domain-based resolution (highest priority)
-      // This enables multidomain support (custom domains per site)
-      // Step 1: Resolve domain → siteId (+ defaultLang if needed)
+      // SiteDomain first, then Town.customDomain / Place.customDomain → parent Site
       const host = this.normalizeHost(req.headers.host);
       if (host && !this.isLocalhostOrIp(host)) {
-        const siteDomain = await this.prisma.siteDomain.findUnique({
-          where: {
-            domain: host,
-          },
-          select: {
-            id: true,
-            siteId: true,
-            defaultLang: true,
-            isActive: true,
-            site: {
-              select: {
-                id: true,
-                slug: true,
-                isActive: true,
-              },
-            },
-          },
-        });
-
-        if (siteDomain?.site?.isActive && siteDomain.isActive) {
-          // Domain match found - now resolve language from URL path
-          // Step 2: Extract lang from URL path (/:lang/...)
+        const resolved = await this.resolveHostToSite(host);
+        if (resolved) {
           const langParam = (req.params as any)?.lang;
-          let lang: Lang;
+          const lang: Lang = langParam ? requireLang(langParam) : resolved.defaultLang;
 
-          if (langParam) {
-            // URL contains language: /hu/... or /en/...
-            lang = this.normalizeLang(langParam);
-          } else {
-            // No language in URL (e.g., "/" or "/admin") - use domain's defaultLang
-            lang = siteDomain.defaultLang;
-          }
-
-          // Step 3: Load SiteInstance for siteId + lang (features/mapConfig)
           const siteInstance = await this.prisma.siteInstance.findUnique({
             where: {
               siteId_lang: {
-                siteId: siteDomain.siteId,
+                siteId: resolved.siteId,
                 lang,
               },
             },
           });
 
-          if (siteInstance) {
-            req.site = {
-              siteId: siteDomain.siteId,
-              canonicalKey: null, // Domain-based resolution doesn't need canonicalKey (domain is canonical)
-              redirected: false,
-              lang,
-            };
+          req.site = {
+            siteId: resolved.siteId,
+            canonicalKey: resolved.slug,
+            redirected: false,
+            lang,
+          };
 
-            this.logger.debug(
-              `Domain-based site resolved: ${host} → siteId=${siteDomain.siteId}, lang=${lang} (from ${langParam ? "URL" : "defaultLang"})`
-            );
-            return next();
-          } else {
-            // SiteInstance not found for this lang - fall through to URL-based resolution
+          this.logger.debug(
+            `Domain-based site resolved (${resolved.source}): ${host} → siteId=${resolved.siteId}, slug=${resolved.slug}, lang=${lang}`
+          );
+          if (!siteInstance) {
             this.logger.warn(
-              `SiteDomain found for ${host} but SiteInstance not found for siteId=${siteDomain.siteId}, lang=${lang}`
+              `Host ${host} has no SiteInstance for lang=${lang}; the slug ${resolved.slug} stays the fallback`
             );
           }
+          return next();
         }
       }
 
@@ -130,7 +99,7 @@ export class SiteResolveMiddleware implements NestMiddleware {
         return next();
       }
 
-      const lang = this.normalizeLang(langParam);
+      const lang = requireLang(langParam);
       const siteKey = siteKeyParam.trim();
 
       this.logger.debug(
@@ -297,16 +266,80 @@ export class SiteResolveMiddleware implements NestMiddleware {
   }
 
   /**
-   * Normalize and validate language parameter
+   * Resolve hostname → parent Site via SiteDomain (primary + subdomains),
+   * Site.primaryDomain fallback, Town.customDomain, or Place.customDomain.
+   * Standalone towns (no siteId) cannot provide site context and are skipped.
    */
-  private normalizeLang(langParam: string): Lang {
-    if (!langParam) {
-      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
+  private async resolveHostToSite(host: string): Promise<{
+    siteId: string;
+    slug: string;
+    defaultLang: Lang;
+    source: "site" | "town" | "place";
+  } | null> {
+    const siteDomain = await this.prisma.siteDomain.findUnique({
+      where: { domain: host },
+      select: {
+        siteId: true,
+        defaultLang: true,
+        isActive: true,
+        site: { select: { id: true, slug: true, isActive: true } },
+      },
+    });
+    if (siteDomain?.isActive && siteDomain.site?.isActive) {
+      return {
+        siteId: siteDomain.siteId,
+        slug: siteDomain.site.slug,
+        defaultLang: siteDomain.defaultLang as Lang,
+        source: "site",
+      };
     }
-    if (langParam === "hu" || langParam === "en" || langParam === "de") {
-      return langParam;
+
+    const siteByPrimary = await this.prisma.site.findFirst({
+      where: { primaryDomain: host, isActive: true },
+      select: { id: true, slug: true, languages: true },
+    });
+    if (siteByPrimary) {
+      return {
+        siteId: siteByPrimary.id,
+        slug: siteByPrimary.slug,
+        defaultLang: (siteByPrimary.languages?.[0] || "hu") as Lang,
+        source: "site",
+      };
     }
-    throw new BadRequestException(`Invalid lang: "${langParam}". Use hu|en|de.`);
+
+    const town = await this.prisma.town.findUnique({
+      where: { customDomain: host },
+      select: {
+        isActive: true,
+        site: { select: { id: true, slug: true, isActive: true, languages: true } },
+      },
+    });
+    if (town?.isActive && town.site?.isActive) {
+      return {
+        siteId: town.site.id,
+        slug: town.site.slug,
+        defaultLang: (town.site.languages?.[0] || "hu") as Lang,
+        source: "town",
+      };
+    }
+
+    const place = await this.prisma.place.findUnique({
+      where: { customDomain: host },
+      select: {
+        isActive: true,
+        site: { select: { id: true, slug: true, isActive: true, languages: true } },
+      },
+    });
+    if (place?.isActive && place.site?.isActive) {
+      return {
+        siteId: place.site.id,
+        slug: place.site.slug,
+        defaultLang: (place.site.languages?.[0] || "hu") as Lang,
+        source: "place",
+      };
+    }
+
+    return null;
   }
 
   /**

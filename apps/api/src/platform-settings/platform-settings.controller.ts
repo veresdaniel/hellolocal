@@ -5,7 +5,6 @@ import {
   Param,
   Query,
   Body,
-  BadRequestException,
   UseGuards,
   ForbiddenException,
 } from "@nestjs/common";
@@ -16,6 +15,9 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { UserRole } from "@prisma/client";
+import { assertLang } from "../common/lang";
+import { RbacService } from "../auth/rbac.service";
+import { canEditCopy } from "../auth/copy-access";
 
 @Controller("api/:lang/:siteKey/platform-settings")
 @SkipThrottle({ default: true, strict: true })
@@ -42,7 +44,10 @@ export class PlatformSettingsController {
 @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
 @SkipThrottle({ default: true, strict: true })
 export class AdminPlatformSettingsController {
-  constructor(private readonly service: PlatformSettingsService) {}
+  constructor(
+    private readonly service: PlatformSettingsService,
+    private readonly rbac: RbacService
+  ) {}
 
   @Get("map-settings")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
@@ -104,7 +109,7 @@ export class AdminPlatformSettingsController {
   }
 
   @Put()
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async setPlatformSettings(
     @Body()
     dto: {
@@ -120,12 +125,32 @@ export class AdminPlatformSettingsController {
       brandBadgeIcon?: string | null;
       faviconUrl?: string | null;
     },
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     if (!dto.siteId) {
       throw new ForbiddenException("siteId is required");
     }
-    if (!user.siteIds.includes(dto.siteId)) {
+    const touchesCopy =
+      dto.siteName !== undefined ||
+      dto.siteDescription !== undefined ||
+      dto.seoTitle !== undefined ||
+      dto.seoDescription !== undefined;
+    const actor = await this.rbac.copyActor(user.id, user.role, dto.siteId);
+    const owner = canEditCopy(actor, "site");
+    if (touchesCopy && !owner) {
+      throw new ForbiddenException(
+        "Only the site owner or a superadmin can edit these translations"
+      );
+    }
+    if (!owner && !user.siteIds.includes(dto.siteId)) {
+      throw new ForbiddenException("User does not have access to this site");
+    }
+    if (
+      !touchesCopy &&
+      !owner &&
+      user.role !== UserRole.superadmin &&
+      user.role !== UserRole.admin
+    ) {
       throw new ForbiddenException("User does not have access to this site");
     }
     return this.service.setPlatformSettings(dto.siteId, {
@@ -163,11 +188,13 @@ export class AdminPlatformSettingsController {
         basic?: any;
         pro?: any;
       } | null;
-    }
+    },
+    @CurrentUser() user: { role?: string }
   ) {
     return this.service.setFeatureMatrix(
       dto.planOverrides !== undefined ? dto.planOverrides : undefined,
-      dto.placePlanOverrides !== undefined ? dto.placePlanOverrides : undefined
+      dto.placePlanOverrides !== undefined ? dto.placePlanOverrides : undefined,
+      user?.role
     );
   }
 }
@@ -183,10 +210,7 @@ export class PublicPlatformSettingsController {
 
   @Get("platform")
   get(@Param("lang") lang: string, @Param("siteKey") siteKey: string) {
-    // Validate lang
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
+    assertLang(lang);
     // siteKey is optional in service - if "default", use undefined
     const effectiveSiteKey = siteKey && siteKey !== "default" ? siteKey : undefined;
     return this.service.getPlatformSettings({ lang, siteKey: effectiveSiteKey });

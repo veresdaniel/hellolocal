@@ -1,5 +1,6 @@
-import { Controller, Get, Param, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param } from "@nestjs/common";
 import { ResolveService } from "./resolve.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Controller for the general resolver endpoint.
@@ -13,11 +14,6 @@ import { ResolveService } from "./resolve.service";
 export class ResolveController {
   constructor(private readonly resolveService: ResolveService) {}
 
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   @Get(":slug")
   async resolve(
@@ -25,7 +21,7 @@ export class ResolveController {
     @Param("siteKey") siteKey: string,
     @Param("slug") slug: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return await this.resolveService.resolve({ lang, siteKey, slug });
   }
 }

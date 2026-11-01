@@ -1,0 +1,15 @@
+# Imported by the production Caddyfile (import /etc/caddy/imports/*.caddy).
+# Certificates are issued by the already-running Caddy on ports 80 and 443.
+# DNS A records for both names must point at the server before the first reload,
+# otherwise Let's Encrypt cannot validate them.
+# Upstreams are the beta compose aliases on the hellolocal_default network.
+
+beta.hello-local.io {
+	encode gzip
+	reverse_proxy web-beta:3000
+}
+
+api.beta.hello-local.io {
+	encode gzip
+	reverse_proxy api-beta:3002
+}

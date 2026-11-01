@@ -30,6 +30,8 @@ export function ConfirmationModal({
   onButtonClick,
 }: ConfirmationModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const titleId = "confirmation-modal-title";
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   // Prevent body scroll when modal is open
@@ -37,6 +39,20 @@ export function ConfirmationModal({
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
+    };
+  }, []);
+
+  // Initial focus for keyboard / screen-reader users
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusTarget =
+      closeBtnRef.current ||
+      modalRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+    focusTarget?.focus();
+    return () => {
+      previouslyFocused?.focus?.();
     };
   }, []);
 
@@ -166,6 +182,9 @@ export function ConfirmationModal({
       >
         <div
           ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? titleId : undefined}
           style={{
             background: backgroundColor || "white",
             borderRadius: 16,
@@ -196,6 +215,7 @@ export function ConfirmationModal({
             >
               {title && (
                 <h2
+                  id={titleId}
                   style={{
                     margin: 0,
                     fontSize: "clamp(18px, 4vw, 22px)",
@@ -210,6 +230,8 @@ export function ConfirmationModal({
               )}
               {showCloseButton && (
                 <button
+                  ref={closeBtnRef}
+                  type="button"
                   onClick={onClose}
                   style={{
                     background: headerColor ? "rgba(0, 0, 0, 0.1)" : "rgba(255, 255, 255, 0.2)",

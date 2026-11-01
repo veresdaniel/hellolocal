@@ -1,5 +1,5 @@
 // FloorplanFullscreenModal.tsx - Fullscreen modal for floorplan viewing
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { PublicFloorplan } from "../api/places.api";
 import { FloorplanImageViewer, type FloorplanPin } from "./FloorplanImageViewer";
@@ -17,6 +17,8 @@ export function FloorplanFullscreenModal({
 }: FloorplanFullscreenModalProps) {
   const { t } = useTranslation();
   const [selectedFloorplanIndex, setSelectedFloorplanIndex] = useState(0);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const titleId = "floorplan-modal-title";
 
   // Reset to first floorplan when modal opens
   useEffect(() => {
@@ -39,13 +41,20 @@ export function FloorplanFullscreenModal({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open; move focus into dialog
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      const previouslyFocused = document.activeElement as HTMLElement | null;
+      // Defer so the close button exists in the DOM after open
+      const timer = window.setTimeout(() => closeBtnRef.current?.focus(), 0);
+      return () => {
+        window.clearTimeout(timer);
+        document.body.style.overflow = "";
+        previouslyFocused?.focus?.();
+      };
     }
+    document.body.style.overflow = "";
     return () => {
       document.body.style.overflow = "";
     };
@@ -64,6 +73,9 @@ export function FloorplanFullscreenModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
       style={{
         position: "fixed",
         top: 0,
@@ -91,6 +103,7 @@ export function FloorplanFullscreenModal({
       >
         <div style={{ flex: 1 }}>
           <h2
+            id={titleId}
             style={{
               margin: 0,
               fontSize: "clamp(20px, 4vw, 24px)",
@@ -116,6 +129,8 @@ export function FloorplanFullscreenModal({
           </p>
         </div>
         <button
+          ref={closeBtnRef}
+          type="button"
           onClick={onClose}
           style={{
             background: "rgba(255, 255, 255, 0.1)",
@@ -195,9 +210,10 @@ export function FloorplanFullscreenModal({
             flexShrink: 0,
           }}
         >
-          {floorplans.map((_, index) => (
+          {floorplans.map((fp, index) => (
             <button
-              key={index}
+              key={fp.id || index}
+              type="button"
               onClick={() => setSelectedFloorplanIndex(index)}
               style={{
                 width: 8,
@@ -218,7 +234,14 @@ export function FloorplanFullscreenModal({
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
                 }
               }}
-              aria-label={`Floorplan ${index + 1}`}
+              aria-label={
+                fp.title ||
+                t("public.floorplan.page", {
+                  n: index + 1,
+                  defaultValue: `Alaprajz ${index + 1}`,
+                })
+              }
+              aria-current={index === selectedFloorplanIndex ? "true" : undefined}
             />
           ))}
         </div>

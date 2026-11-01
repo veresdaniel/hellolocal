@@ -42,7 +42,7 @@ export function SiteSelector() {
             padding: "8px 16px",
             background: "#f5f5f5",
             borderRadius: 4,
-            color: "#666",
+            color: "var(--hl-muted, #665d78)",
             visibility: "hidden",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -83,9 +83,9 @@ export function SiteSelector() {
   const handleSiteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSiteId = e.target.value || null;
     setSelectedSiteId(newSiteId);
-    
+
     if (newSiteId) {
-      const selectedSite = sites.find(s => s.id === newSiteId);
+      const selectedSite = sites.find((s) => s.id === newSiteId);
       if (selectedSite) {
         showToast(
           t("admin.siteChangedSuccess", { siteName: getSiteName(selectedSite) }),
@@ -110,53 +110,13 @@ export function SiteSelector() {
     window.location.href = publicPath;
   };
 
-  if (sites.length === 1) {
-    return (
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <div
-          style={{
-            padding: "8px 16px",
-            background: "#f5f5f5",
-            borderRadius: 4,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontWeight: 400,
-          }}
-        >
-          {getSiteName(sites[0])}
-        </div>
-        <button
-          onClick={openPublicPage}
-          style={{
-            padding: "8px 16px",
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            borderRadius: 4,
-            border: "1px solid #7c3aed",
-            background: "#7c3aed",
-            color: "white",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            minWidth: isSmallScreen ? "auto" : "fit-content",
-            fontWeight: 500,
-          }}
-          title={t("admin.openPublicPage")}
-        >
-          <span style={{ fontSize: 18 }}>🌐</span>
-          {!isSmallScreen && <span>{t("admin.openPublicPage")}</span>}
-        </button>
-      </div>
-    );
-  }
-
+  // Superadmin-only control: always a select so Régió can be cleared ("Nincs kiválasztva").
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
       <select
         value={selectedSiteId || ""}
         onChange={handleSiteChange}
+        aria-label={t("admin.selectSite")}
         style={{
           padding: "8px 16px",
           fontSize: 16,
@@ -169,6 +129,7 @@ export function SiteSelector() {
           fontWeight: 400,
         }}
       >
+        <option value="">{t("admin.filters.noneSelected")}</option>
         {sites.map((site) => (
           <option key={site.id} value={site.id}>
             {getSiteName(site)}
@@ -176,6 +137,7 @@ export function SiteSelector() {
         ))}
       </select>
       <button
+        type="button"
         onClick={openPublicPage}
         disabled={!currentSite}
         style={{
@@ -195,8 +157,9 @@ export function SiteSelector() {
           fontWeight: 500,
         }}
         title={t("admin.openPublicPage")}
+        aria-label={t("admin.openPublicPage")}
       >
-        <span style={{ fontSize: 18 }}>🌐</span>
+        <span style={{ fontSize: 18 }} aria-hidden="true">🌐</span>
         {!isSmallScreen && <span>{t("admin.openPublicPage")}</span>}
       </button>
     </div>

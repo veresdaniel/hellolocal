@@ -1,5 +1,6 @@
 // src/pages/admin/TownsPage.tsx
 import { useState, useEffect } from "react";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -8,22 +9,23 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { MapComponent } from "../../components/MapComponent";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
-import {
-  AdminResponsiveTable,
-  type TableColumn,
-  type CardField,
-} from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { TownHierarchyList } from "../../components/TownHierarchyList";
+import { DomainInput } from "../../components/DomainInput";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import type { Lang} from "../../types/enums";
 
 interface Town {
   id: string;
-  tenantId: string;
+  siteId: string | null;
+  tenantId?: string;
   isActive: boolean;
+  customDomain?: string | null;
+  gaMeasurementId?: string | null;
   lat: number | null;
   lng: number | null;
   translations: Array<{
@@ -39,26 +41,9 @@ interface Town {
   }>;
 }
 
-export function TownsPage() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
-  const selectedTenantId = selectedSiteId; // Alias for backward compatibility
-  usePageTitle("admin.towns");
-  const [towns, setTowns] = useState<Town[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
+function emptyTownForm(siteId = "") {
+  return {
+    siteId,
     nameHu: "",
     nameEn: "",
     nameDe: "",
@@ -83,8 +68,42 @@ export function TownsPage() {
     lat: "",
     lng: "",
     isActive: true,
+    customDomain: "",
+    customDomainEnabled: false,
+    gaMeasurementId: "",
+  };
+}
+
+export function TownsPage() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { selectedSiteId, sites, isLoading: isSiteLoading } = useAdminSite();
+  const selectedTenantId = selectedSiteId; // Alias for backward compatibility
+  usePageTitle("admin.towns");
+  const [towns, setTowns] = useState<Town[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
   });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState(() => emptyTownForm());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const siteLabel = (site: (typeof sites)[number]) => {
+    const lang = (i18n.language || "hu").slice(0, 2);
+    return (
+      site.translations.find((tr) => tr.lang === lang)?.name ||
+      site.translations.find((tr) => tr.lang === "hu")?.name ||
+      site.slug
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -93,28 +112,25 @@ export function TownsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedTenantId) {
-      // Reset to first page when site changes
-      setPagination((prev) => ({ ...prev, page: 1 }));
-    } else {
-      // Reset loading state if no site
-      setIsLoading(false);
-    }
+    // Reset to first page when site / unassigned-bucket context changes
+    setPagination((prev) => ({ ...prev, page: 1 }));
   }, [selectedTenantId]);
 
   useEffect(() => {
-    if (selectedTenantId) {
-      loadTowns();
-    }
+    loadTowns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId, pagination.page, pagination.limit]);
 
   const loadTowns = async () => {
-    if (!selectedTenantId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getTowns(selectedTenantId, pagination.page, pagination.limit);
+      // Régió selected → only that region’s towns. No régió → unassigned (standalone) bucket.
+      const response = selectedTenantId
+        ? await getTowns(selectedTenantId, pagination.page, pagination.limit)
+        : await getTowns(undefined, pagination.page, pagination.limit, {
+            standaloneOnly: true,
+          });
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -134,18 +150,21 @@ export function TownsPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
+    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    }
     // English and German are optional
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleCreate = async () => {
-    if (!selectedTenantId) return;
+    // Standalone towns are created from the unassigned bucket (no régió selected).
     if (!validateForm()) return;
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         description: string | null;
         heroImage: string | null;
@@ -195,12 +214,24 @@ export function TownsPage() {
             : [],
         });
       }
+      appendExtraLanguages(translations, formData, "name", [
+        "description",
+        "heroImage",
+        "seoTitle",
+        "seoDescription",
+        "seoImage",
+        "seoKeywords",
+      ]);
       await createTown({
-        tenantId: selectedTenantId,
+        siteId: formData.siteId.trim() || null,
         translations,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
         isActive: formData.isActive,
+        customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        gaMeasurementId: formData.gaMeasurementId.trim()
+          ? formData.gaMeasurementId.trim().toUpperCase()
+          : null,
       });
       setIsCreating(false);
       resetForm();
@@ -217,7 +248,7 @@ export function TownsPage() {
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         description: string | null;
         heroImage: string | null;
@@ -267,13 +298,26 @@ export function TownsPage() {
             : [],
         });
       }
+      appendExtraLanguages(translations, formData, "name", [
+        "description",
+        "heroImage",
+        "seoTitle",
+        "seoDescription",
+        "seoImage",
+        "seoKeywords",
+      ]);
       await updateTown(
         id,
         {
+          siteId: formData.siteId.trim() || null,
           translations,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
+          customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+          gaMeasurementId: formData.gaMeasurementId.trim()
+            ? formData.gaMeasurementId.trim().toUpperCase()
+            : null,
         },
         selectedTenantId || undefined
       );
@@ -288,7 +332,7 @@ export function TownsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmDeleteTown"))) return;
+    if (!confirm(t("admin.confirmations.deleteTown"))) return;
 
     try {
       await deleteTown(id, selectedTenantId || undefined);
@@ -305,7 +349,11 @@ export function TownsPage() {
     const hu = findTranslation(town.translations, "hu" as Lang);
     const en = findTranslation(town.translations, "en" as Lang);
     const de = findTranslation(town.translations, "de" as Lang);
+    // Constrained region picker: only header site or empty — never a free multi-site list.
+    const constrainedSiteId =
+      !town.siteId ? "" : selectedSiteId || "";
     setFormData({
+      ...emptyTownForm(constrainedSiteId),
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
       nameDe: de?.name || "",
@@ -330,36 +378,15 @@ export function TownsPage() {
       lat: town.lat?.toString() || "",
       lng: town.lng?.toString() || "",
       isActive: town.isActive,
+      customDomain: town.customDomain || "",
+      customDomainEnabled: !!town.customDomain,
+      gaMeasurementId: town.gaMeasurementId || "",
     });
   };
 
   const resetForm = () => {
-    setFormData({
-      nameHu: "",
-      nameEn: "",
-      nameDe: "",
-      descriptionHu: "",
-      descriptionEn: "",
-      descriptionDe: "",
-      heroImageHu: "",
-      heroImageEn: "",
-      heroImageDe: "",
-      seoTitleHu: "",
-      seoTitleEn: "",
-      seoTitleDe: "",
-      seoDescriptionHu: "",
-      seoDescriptionEn: "",
-      seoDescriptionDe: "",
-      seoImageHu: "",
-      seoImageEn: "",
-      seoImageDe: "",
-      seoKeywordsHu: "",
-      seoKeywordsEn: "",
-      seoKeywordsDe: "",
-      lat: "",
-      lng: "",
-      isActive: true,
-    });
+    // Pre-select current header site; user can clear to "no region".
+    setFormData(emptyTownForm(selectedSiteId || ""));
     setFormErrors({});
   };
 
@@ -368,14 +395,22 @@ export function TownsPage() {
     return null;
   }
 
-  if (!selectedSiteId) {
-    return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
-  }
+  const headerSite = selectedSiteId ? sites.find((s) => s.id === selectedSiteId) : null;
+  const headerSiteLabel = headerSite
+    ? siteLabel(headerSite)
+    : selectedSiteId || t("admin.hierarchy.unassignedTowns");
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       <AdminPageHeader
         title={t("admin.towns")}
+        subtitle={
+          !isCreating && !editingId
+            ? selectedSiteId
+              ? t("admin.hierarchy.subtitle")
+              : t("admin.hierarchy.unassignedTownsHint")
+            : undefined
+        }
         newButtonLabel={t("admin.forms.newTown")}
         onNewClick={() => {
           setEditingId(null);
@@ -437,6 +472,47 @@ export function TownsPage() {
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
           </h2>
 
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 4,
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.region")}{" "}
+              <span style={{ color: "#6b7280", fontWeight: 400 }}>
+                ({t("common.optional")})
+              </span>
+            </label>
+            <select
+              value={formData.siteId || ""}
+              onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
+              style={{
+                width: "100%",
+                padding: 8,
+                fontSize: 16,
+                border: "1px solid #ddd",
+                borderRadius: 4,
+                background: "white",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              <option value="">{t("admin.noRegion")}</option>
+              {selectedSiteId ? (
+                <option value={selectedSiteId}>{headerSiteLabel}</option>
+              ) : (
+                sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {siteLabel(site)}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
           <LanguageAwareForm>
             {(selectedLang) => (
               <>
@@ -451,44 +527,42 @@ export function TownsPage() {
                   >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
+                  <AiPostfixField
+                    draft={{
+                      kind: "town",
+                      field: "name",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
+                    value={readLang(formData, "name", selectedLang)}
+                    onApply={(text) =>
+                      setFormData(patchLang(formData, "name", selectedLang, text))
+                    }
+                  >
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe
+                      readLang(formData, "name", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, nameEn: e.target.value });
-                      else setFormData({ ...formData, nameDe: e.target.value });
+                      setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
                       padding: 8,
                       fontSize: 16,
                       border:
-                        (selectedLang === "hu" && formErrors.nameHu) ||
-                        (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe)
+                        readLang(formErrors, "name", selectedLang)
                           ? "1px solid #dc3545"
                           : "1px solid #ddd",
                       borderRadius: 4,
                     }}
                   />
-                  {(selectedLang === "hu" && formErrors.nameHu) ||
-                  (selectedLang === "en" && formErrors.nameEn) ||
-                  (selectedLang === "de" && formErrors.nameDe) ? (
+                  </AiPostfixField>
+                  {readLang(formErrors, "name", selectedLang) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-                      {selectedLang === "hu"
-                        ? formErrors.nameHu
-                        : selectedLang === "en"
-                          ? formErrors.nameEn
-                          : formErrors.nameDe}
+                      {readLang(formErrors, "name", selectedLang)}
                     </div>
                   ) : null}
                 </div>
@@ -506,21 +580,21 @@ export function TownsPage() {
                   </label>
                   <TipTapEditorWithUpload
                     value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                          ? formData.descriptionEn
-                          : formData.descriptionDe
+                      readLang(formData, "description", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, descriptionEn: value });
-                      else setFormData({ ...formData, descriptionDe: value });
+                      setFormData(patchLang(formData, "description", selectedLang, value));
                     }}
                     placeholder={t("common.description")}
                     height={200}
                     uploadFolder="editor/towns"
+                    aiDraft={{
+                      kind: "town",
+                      field: "description",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
                   />
                 </div>
 
@@ -538,18 +612,10 @@ export function TownsPage() {
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.heroImageHu
-                        : selectedLang === "en"
-                          ? formData.heroImageEn
-                          : formData.heroImageDe
+                      readLang(formData, "heroImage", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, heroImageHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, heroImageEn: e.target.value });
-                      else setFormData({ ...formData, heroImageDe: e.target.value });
+                      setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
@@ -592,6 +658,68 @@ export function TownsPage() {
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <DomainInput
+              value={formData.customDomain}
+              onChange={(value) => setFormData({ ...formData, customDomain: value })}
+              checked={formData.customDomainEnabled}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, customDomainEnabled: checked })
+              }
+              label={t("admin.customDomain")}
+            />
+            <p
+              style={{
+                margin: "8px 0 0",
+                color: "#64748b",
+                fontSize: 12,
+                lineHeight: 1.45,
+              }}
+            >
+              {t("admin.customDomainHierarchyHint")}
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 16, maxWidth: 420 }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: 8,
+                fontWeight: 500,
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+              }}
+            >
+              {t("admin.googleAnalytics.townLabel")}
+            </label>
+            <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
+              {t("admin.googleAnalytics.townHelp")}
+            </p>
+            <input
+              type="text"
+              value={formData.gaMeasurementId}
+              onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
+              placeholder="G-XXXXXXXX"
+              autoComplete="off"
+              spellCheck={false}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
+                borderRadius: 6,
+                fontSize: 14,
+              }}
+            />
+            {formErrors.gaMeasurementId ? (
+              <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
+                {formErrors.gaMeasurementId}
+              </p>
+            ) : (
+              <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
+                {t("admin.googleAnalytics.clearHint")}
+              </p>
+            )}
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -677,105 +805,38 @@ export function TownsPage() {
       )}
 
       {!isCreating && !editingId && (
-        <AdminResponsiveTable<Town>
-          data={towns}
-          getItemId={(town) => town.id}
-          searchQuery={searchQuery}
-          searchPlaceholder={t("admin.searchPlaceholders.towns")}
-          onSearchChange={(query) => {
-            setSearchQuery(query);
-            setPagination((prev) => ({ ...prev, page: 1 }));
-          }}
-          isLoading={isLoading}
-          filterFn={(town, query) => {
-            const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation =
-              town.translations.find((t) => t.lang === currentLang) ||
-              findTranslation(town.translations, "hu" as Lang);
-            return translation?.name.toLowerCase().includes(lowerQuery);
-          }}
-          columns={[
-            {
-              key: "name",
-              label: t("common.name"),
-              render: (town) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-                const translation =
-                  town.translations.find((t) => t.lang === currentLang) ||
-                  findTranslation(town.translations, "hu" as Lang);
-                return translation?.name || "-";
-              },
-            },
-            {
-              key: "status",
-              label: t("admin.table.status"),
-              render: (town) => (
-                <span
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 4,
-                    background: town.isActive
-                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                      : "#6c757d",
-                    color: "white",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {town.isActive ? t("common.active") : t("common.inactive")}
-                </span>
-              ),
-            },
-          ]}
-          cardTitle={(town) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
-            const translation =
-              town.translations.find((t) => t.lang === currentLang) ||
-              findTranslation(town.translations, "hu" as Lang);
-            return translation?.name || "-";
-          }}
-          cardSubtitle={(town) =>
-            town.lat && town.lng ? `📍 ${town.lat.toFixed(4)}, ${town.lng.toFixed(4)}` : ""
-          }
-          cardFields={[
-            {
-              key: "status",
-              render: (town) => (
-                <span
-                  style={{
-                    display: "inline-block",
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    background: town.isActive
-                      ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                      : "#6c757d",
-                    color: "white",
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  {town.isActive ? t("common.active") : t("common.inactive")}
-                </span>
-              ),
-            },
-          ]}
-          onEdit={startEdit}
-          onDelete={(town) => handleDelete(town.id)}
-          error={error}
-        />
-      )}
-      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
+        <>
+          <TownHierarchyList
+            siteId={selectedSiteId}
+            towns={towns}
+            searchQuery={searchQuery}
+            onSearchChange={(query) => {
+              setSearchQuery(query);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            onEditTown={(townId) => {
+              const town = towns.find((item) => item.id === townId);
+              if (town) startEdit(town);
+            }}
+            onDeleteTown={(townId) => handleDelete(townId)}
+            isLoadingTowns={isLoading}
+            error={error}
           />
-        </div>
+          {!isMobile && !isLoading && pagination.total > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                limit={pagination.limit}
+                onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
+                onLimitChange={(limit) =>
+                  setPagination((prev) => ({ ...prev, limit, page: 1 }))
+                }
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

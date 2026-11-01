@@ -1,18 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { requireLang } from "../common/lang";
 
 @Injectable()
 export class SiteResolverService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private normalizeLang(x: string): Lang {
-    if (x === "hu" || x === "en" || x === "de") return x;
-    throw new BadRequestException("Unsupported lang (use hu|en|de)");
-  }
-
   async resolveSite(args: { lang: string; siteKey: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
 
     // Note: Since unique constraint is now [siteId, lang, slug], we use findFirst
     // and prioritize isPrimary=true entries

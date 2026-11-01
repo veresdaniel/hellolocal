@@ -4,7 +4,7 @@ export class NotificationService {
   private static registration: ServiceWorkerRegistration | null = null;
 
   /**
-   * Register service worker and request notification permission
+   * Register the app service worker. Notification permission is requested only when a push subscription is needed.
    */
   static async register(): Promise<boolean> {
     if (!("serviceWorker" in navigator)) {
@@ -18,14 +18,7 @@ export class NotificationService {
         scope: "/",
       });
       this.registration = registration;
-
-      // Request notification permission
-      if ("Notification" in window && Notification.permission === "default") {
-        const permission = await Notification.requestPermission();
-        return permission === "granted";
-      }
-
-      return Notification.permission === "granted";
+      return true;
     } catch (error) {
       console.error("Service Worker registration failed:", error);
       return false;
@@ -102,14 +95,14 @@ export class NotificationService {
 
     if (this.registration) {
       await this.registration.showNotification(title, {
-        icon: "/vite.svg",
-        badge: "/vite.svg",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
         ...options,
       });
     } else {
       // Fallback to browser notification if service worker is not registered
       new Notification(title, {
-        icon: "/vite.svg",
+        icon: "/icons/icon-192.png",
         ...options,
       });
     }

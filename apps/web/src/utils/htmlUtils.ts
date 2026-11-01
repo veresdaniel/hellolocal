@@ -10,12 +10,17 @@
 export function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
 
-  // Create a temporary DOM element to parse HTML
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
+  // Prefer DOMParser text extraction (no live document attachment / script execution)
+  if (typeof DOMParser !== "undefined") {
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return (doc.body.textContent || "").trim();
+    } catch {
+      /* fall through */
+    }
+  }
 
-  // Get text content (automatically strips HTML tags)
-  return tmp.textContent || tmp.innerText || "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /**

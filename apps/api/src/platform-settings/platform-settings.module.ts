@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AuthModule } from "../auth/auth.module";
+import { UiCopyModule } from "../ui-copy/ui-copy.module";
 import {
   PlatformSettingsController,
   PublicPlatformSettingsController,
@@ -9,7 +10,7 @@ import {
 import { PlatformSettingsService } from "./platform-settings.service";
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, UiCopyModule],
   controllers: [
     PlatformSettingsController,
     PublicPlatformSettingsController,

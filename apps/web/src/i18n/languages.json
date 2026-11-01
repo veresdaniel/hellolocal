@@ -1,0 +1,24 @@
+{
+  "fallback": "hu",
+  "international": "en",
+  "languages": [
+    {
+      "code": "hu",
+      "endonym": "Magyar",
+      "flag": "🇭🇺",
+      "timeZones": ["Europe/Budapest"]
+    },
+    {
+      "code": "en",
+      "endonym": "English",
+      "flag": "🇬🇧",
+      "timeZones": []
+    },
+    {
+      "code": "de",
+      "endonym": "Deutsch",
+      "flag": "🇩🇪",
+      "timeZones": ["Europe/Berlin", "Europe/Busingen", "Europe/Vienna", "Europe/Zurich", "Europe/Vaduz"]
+    }
+  ]
+}

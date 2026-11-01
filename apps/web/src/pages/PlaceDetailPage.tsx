@@ -21,23 +21,29 @@ import { createOrUpdateRating, getMyRating } from "../api/rating.api";
 import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
 import { buildUrl } from "../app/urls";
+import { placeEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
+import { NotFoundPage } from "./NotFoundPage";
 import { sanitizeImageUrl } from "../utils/urlValidation";
-import { HAS_MULTIPLE_SITES } from "../app/config";
+import { sanitizeHtml } from "../utils/sanitizeHtml";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { devLog } from "../lib/devLog";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatMoney } from "../utils/formatMoney";
+import { PlaceProductStrip } from "../components/PlaceProductStrip";
 import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
 import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 import { track } from "../lib/analytics/track";
+import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
@@ -82,6 +88,8 @@ export function PlaceDetailPage() {
     },
     enabled: shouldLoadPlace && !!siteKey && !!lang,
   });
+
+  usePublicGaOverride(place?.gaMeasurementId);
 
   const queryClient = useQueryClient();
 
@@ -455,63 +463,67 @@ export function PlaceDetailPage() {
   });
 
   if (!slug) {
-    return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingPlace")}
-        variant="minimal"
-      />
-    );
+    return <NotFoundPage />;
   }
 
   if (resolveQ.isLoading) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
+    return (
+      <>
+        <FloatingHeader />
+        <PublicPageSkeleton label={t("common.loading")} />
+      </>
+    );
   }
 
   if (resolveQ.isError) {
+    const status = (resolveQ.error as { status?: number })?.status;
+    if (status === 404) {
+      return <NotFoundPage />;
+    }
+    devLog.error("[PlaceDetailPage] resolve failed", resolveQ.error);
     return (
       <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingPlace")}
+        title={t("error.internalServerError")}
+        message={t("error.serverErrorDescription")}
         variant="minimal"
+        statusCode={500}
       />
     );
   }
 
   // Check if resolved entity type is place
   if (resolveQ.data && resolveQ.data.entityType !== "place") {
+    return <NotFoundPage />;
+  }
+
+  // Show skeleton while loading place (cream card shell, no blank navy void)
+  if (isLoading) {
     return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingPlace")}
-        variant="minimal"
-      />
+      <>
+        <FloatingHeader />
+        <PublicPageSkeleton label={t("common.loading")} />
+      </>
     );
   }
 
-  // Show loading spinner while loading place
-  if (isLoading) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
-  }
-
   if (isError) {
+    const status = (error as { status?: number } | null)?.status;
+    if (status === 404) {
+      return <NotFoundPage />;
+    }
+    devLog.error("[PlaceDetailPage] place load failed", error);
     return (
       <ErrorState
-        title={t("error.errorOccurred")}
-        message={t("public.errorLoadingPlace")}
+        title={t("error.internalServerError")}
+        message={t("error.serverErrorDescription")}
         variant="minimal"
+        statusCode={500}
       />
     );
   }
 
   if (!place) {
-    return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.noPlacesFound")}
-        variant="minimal"
-      />
-    );
+    return <NotFoundPage />;
   }
 
   // Build edit URL if user can edit
@@ -526,7 +538,7 @@ export function PlaceDetailPage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+          background: "transparent",
           paddingTop: "clamp(72px, 8vw, 88px)",
         }}
       >
@@ -638,7 +650,7 @@ export function PlaceDetailPage() {
                 >
                   <Badge
                     variant="category"
-                    color="#667eea"
+                    color="#c45c26"
                     size="medium"
                     uppercase={true}
                     opacity={0.95}
@@ -700,13 +712,13 @@ export function PlaceDetailPage() {
           {/* Title - directly below image with small offset */}
           <div style={{ margin: "0 16px 16px" }}>
             <h1
+              className="hl-page-title"
               style={{
                 margin: 0,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
                 fontFamily:
                   "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#1a1a1a",
                 lineHeight: 1.2,
                 letterSpacing: "-0.02em",
                 wordWrap: "break-word",
@@ -728,7 +740,7 @@ export function PlaceDetailPage() {
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
-                  background: "#f8f9fa",
+                  background: "var(--hl-card)",
                   borderRadius: "8px",
                   border: "1px solid #e5e7eb",
                   flexWrap: "wrap",
@@ -743,7 +755,7 @@ export function PlaceDetailPage() {
                     minWidth: "200px",
                   }}
                 >
-                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--hl-muted, #665d78)" }}>
                     {!myRating
                       ? lang === "hu"
                         ? "Értékeld a helyet:"
@@ -784,7 +796,7 @@ export function PlaceDetailPage() {
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
-                  background: "#f8f9fa",
+                  background: "var(--hl-card)",
                   borderRadius: "8px",
                   border: "1px solid #e5e7eb",
                   flexWrap: "wrap",
@@ -868,23 +880,41 @@ export function PlaceDetailPage() {
 
                   return hasContact ? (
                     <div
+                      className="hl-content-card hl-contact-panel"
                       style={{
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                         padding: isCompact ? "12px" : "16px",
                         borderRadius: 12,
-                        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)",
-                        color: "white",
                         display: "flex",
                         flexDirection: "column",
                       }}
                     >
+                      <style>{`
+                        .hl-contact-panel .hl-contact-row {
+                          background: rgba(27, 23, 48, 0.04);
+                          border: 1px solid var(--hl-line-on-card);
+                          padding: 10px 12px;
+                          border-radius: 8px;
+                        }
+                        .hl-contact-panel .hl-contact-row strong {
+                          color: var(--hl-muted) !important;
+                        }
+                        .hl-contact-panel .hl-contact-row,
+                        .hl-contact-panel .hl-contact-row div,
+                        .hl-contact-panel .hl-contact-row span,
+                        .hl-contact-panel .hl-contact-row p {
+                          color: var(--hl-ink) !important;
+                        }
+                        .hl-contact-panel .hl-contact-row a {
+                          color: var(--hl-accent) !important;
+                        }
+                      `}</style>
                       <h3
                         style={{
                           fontSize: "clamp(18px, 3vw, 24px)",
                           fontWeight: 600,
                           fontFamily:
                             "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          color: "white",
+                          color: "var(--hl-ink)",
                           marginBottom: isCompact ? "8px" : "clamp(12px, 2vw, 20px)",
                           marginTop: 0,
                         }}
@@ -900,12 +930,10 @@ export function PlaceDetailPage() {
                       >
                         {place.contact.address && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -941,19 +969,17 @@ export function PlaceDetailPage() {
                                 content={place.contact.address}
                                 lang={lang!}
                                 siteKey={siteKey!}
-                                style={{ color: "white" }}
+                                style={{ color: "var(--hl-ink)" }}
                               />
                             </div>
                           </div>
                         )}
                         {place.contact.phone && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -1012,12 +1038,10 @@ export function PlaceDetailPage() {
                         )}
                         {place.contact.email && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -1077,12 +1101,10 @@ export function PlaceDetailPage() {
                         )}
                         {place.contact.website && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -1144,12 +1166,10 @@ export function PlaceDetailPage() {
                         )}
                         {place.contact.facebook && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -1214,12 +1234,10 @@ export function PlaceDetailPage() {
                         )}
                         {place.contact.whatsapp && (
                           <div
+                            className="hl-contact-row"
                             style={{
-                              background: "rgba(255, 255, 255, 0.15)",
-                              backdropFilter: "blur(10px)",
                               padding: "10px 12px",
                               borderRadius: 8,
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             <strong
@@ -1287,7 +1305,7 @@ export function PlaceDetailPage() {
                 {place.openingHours && place.openingHours.length > 0 ? (
                   <div
                     style={{
-                      background: "white",
+                      background: "var(--hl-card)",
                       padding: "16px",
                       borderRadius: 12,
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
@@ -1300,7 +1318,7 @@ export function PlaceDetailPage() {
                         fontWeight: 600,
                         fontFamily:
                           "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        color: "#1a1a1a",
+                        color: "var(--hl-ink, #1b1730)",
                         marginBottom: 12,
                         display: "flex",
                         alignItems: "center",
@@ -1339,7 +1357,7 @@ export function PlaceDetailPage() {
                                 fontWeight: isToday ? 500 : 400,
                                 fontFamily:
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                color: isToday ? "#667eea" : "#333",
+                                color: isToday ? "#c45c26" : "#333",
                                 fontSize: "clamp(14px, 3.5vw, 16px)",
                               }}
                             >
@@ -1349,7 +1367,7 @@ export function PlaceDetailPage() {
                                   style={{
                                     marginLeft: 6,
                                     fontSize: 10,
-                                    color: "#667eea",
+                                    color: "var(--hl-accent, #c45c26)",
                                     fontWeight: 500,
                                     fontFamily:
                                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -1385,7 +1403,7 @@ export function PlaceDetailPage() {
                 hasGallery ? (
                   <div
                     style={{
-                      background: "white",
+                      background: "var(--hl-card)",
                       padding: "12px",
                       borderRadius: 12,
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
@@ -1423,7 +1441,7 @@ export function PlaceDetailPage() {
                 ref={descriptionRef}
                 style={{
                   margin: "0 16px 32px",
-                  background: "white",
+                  background: "var(--hl-card)",
                   padding: "clamp(16px, 4vw, 32px)",
                   borderRadius: 16,
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
@@ -1437,13 +1455,13 @@ export function PlaceDetailPage() {
                     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     font-size: clamp(17px, 3.5vw, 19px);
                     line-height: 1.8;
-                    color: #374151;
+                    color: var(--hl-muted);
                   }
                   .description-content p {
                     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     font-size: clamp(17px, 3.5vw, 19px);
                     line-height: 1.8;
-                    color: #374151;
+                    color: var(--hl-muted);
                     margin: 0 0 1.2em 0;
                   }
                   .description-content p:last-child {
@@ -1456,7 +1474,7 @@ export function PlaceDetailPage() {
                   .description-content h5,
                   .description-content h6 {
                     font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    color: #1a1a1a;
+                    color: var(--hl-ink);
                     margin-top: 1.5em;
                     margin-bottom: 0.8em;
                   }
@@ -1473,7 +1491,7 @@ export function PlaceDetailPage() {
                     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     font-size: clamp(17px, 3.5vw, 19px);
                     line-height: 1.8;
-                    color: #374151;
+                    color: var(--hl-muted);
                     margin: 1.2em 0;
                     padding-left: 1.5em;
                   }
@@ -1481,29 +1499,29 @@ export function PlaceDetailPage() {
                     margin: 0.6em 0;
                   }
                   .description-content a {
-                    color: #667eea;
+                    color: var(--hl-accent);
                     text-decoration: none;
                     transition: color 0.2s;
                   }
                   .description-content a:hover {
-                    color: #764ba2;
+                    color: var(--hl-navy);
                     text-decoration: underline;
                   }
                   .description-content strong,
                   .description-content b {
                     font-weight: 600;
-                    color: #1a1a1a;
+                    color: var(--hl-ink);
                   }
                   .description-content em,
                   .description-content i {
                     font-style: italic;
                   }
                   .description-content blockquote {
-                    border-left: 4px solid #667eea;
+                    border-left: 4px solid #c45c26;
                     padding-left: 1.5em;
                     margin: 1.5em 0;
                     font-style: italic;
-                    color: #4b5563;
+                    color: var(--hl-muted, #665d78);
                   }
                 `}</style>
                 <div className="description-content">
@@ -1529,7 +1547,7 @@ export function PlaceDetailPage() {
                   <div
                     style={{
                       margin: "0 16px 32px",
-                      background: "white",
+                      background: "var(--hl-card)",
                       padding: "clamp(16px, 4vw, 32px)",
                       borderRadius: 16,
                       boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
@@ -1555,7 +1573,7 @@ export function PlaceDetailPage() {
                           fontWeight: 600,
                           fontFamily:
                             "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          color: "#1a1a1a",
+                          color: "var(--hl-ink, #1b1730)",
                           margin: 0,
                         }}
                       >
@@ -1715,7 +1733,7 @@ export function PlaceDetailPage() {
                       style={{
                         width: "100%",
                         padding: "16px 24px",
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        background: "#1b1730",
                         border: "none",
                         borderRadius: 12,
                         color: "white",
@@ -1773,7 +1791,7 @@ export function PlaceDetailPage() {
               <div
                 style={{
                   margin: "0 16px 32px",
-                  background: "white",
+                  background: "var(--hl-card)",
                   padding: "clamp(16px, 4vw, 32px)",
                   borderRadius: 16,
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
@@ -1799,7 +1817,7 @@ export function PlaceDetailPage() {
                       fontWeight: 600,
                       fontFamily:
                         "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      color: "#1a1a1a",
+                      color: "var(--hl-ink, #1b1730)",
                       margin: 0,
                     }}
                   >
@@ -1958,7 +1976,7 @@ export function PlaceDetailPage() {
                   style={{
                     width: "100%",
                     padding: "16px 24px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "#1b1730",
                     border: "none",
                     borderRadius: 12,
                     color: "white",
@@ -2009,7 +2027,7 @@ export function PlaceDetailPage() {
           {place.hasPriceList && priceList && !isLoadingPriceList && (
             <div
               style={{
-                background: "white",
+                background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
@@ -2023,7 +2041,7 @@ export function PlaceDetailPage() {
                   fontWeight: 600,
                   fontFamily:
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#1a1a1a",
+                  color: "var(--hl-ink, #1b1730)",
                   marginBottom: 24,
                   display: "flex",
                   alignItems: "center",
@@ -2039,7 +2057,7 @@ export function PlaceDetailPage() {
                     key={blockIndex}
                     style={{
                       padding: "clamp(16px, 4vw, 20px)",
-                      background: "#f8f9fa",
+                      background: "var(--hl-card)",
                       borderRadius: 12,
                       border: "1px solid #e0e0e0",
                     }}
@@ -2067,7 +2085,7 @@ export function PlaceDetailPage() {
                             gap: 16,
                             alignItems: "center",
                             padding: "12px",
-                            background: "white",
+                            background: "var(--hl-card)",
                             borderRadius: 8,
                             border: "1px solid #e0e0e0",
                           }}
@@ -2087,7 +2105,7 @@ export function PlaceDetailPage() {
                               style={{
                                 fontSize: "clamp(16px, 4vw, 18px)",
                                 fontFamily: "'Inter', system-ui, sans-serif",
-                                color: "#667eea",
+                                color: "var(--hl-accent, #c45c26)",
                                 fontWeight: 600,
                                 textAlign: "right",
                               }}
@@ -2135,10 +2153,52 @@ export function PlaceDetailPage() {
                         lineHeight: 1.6,
                         fontFamily: "'Inter', system-ui, sans-serif",
                       }}
-                      dangerouslySetInnerHTML={{ __html: priceList.note }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(priceList.note) }}
                     />
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          <PlaceProductStrip lang={lang} siteKey={siteKey} placeId={resolveQ.data?.entityId} />
+
+          {place.parentPlaceName && (
+            <p className="hl-page-muted" style={{ margin: "0 16px 16px" }}>
+              {t("public.parentPlace")}: {place.parentPlaceName}
+            </p>
+          )}
+
+          {!!place.services?.length && (
+            <div
+              style={{
+                background: "var(--hl-card)",
+                padding: "clamp(20px, 4vw, 32px)",
+                borderRadius: 16,
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
+                margin: "0 16px 32px",
+              }}
+            >
+              <h3 style={{ marginTop: 0, color: "#1b1730" }}>{t("public.services")}</h3>
+              <div style={{ display: "grid", gap: 10 }}>
+                {place.services.map((service) => {
+                  const label = service.category ? `${service.name} · ${service.category}` : service.name;
+                  const hasSlug = !!service.slug && service.slug !== service.id;
+                  if (!hasSlug || !lang || !siteKey) return <div key={service.id}>{label}</div>;
+                  return (
+                    <Link
+                      key={service.id}
+                      to={buildUrl({
+                        lang: lang as Lang,
+                        siteKey,
+                        path: placeEntityPath(lang as Lang, service.slug),
+                      })}
+                      style={{ color: "var(--hl-accent, #c45c26)", fontWeight: 650, textDecoration: "none" }}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2147,7 +2207,7 @@ export function PlaceDetailPage() {
           {place.accessibility && (
             <div
               style={{
-                background: "white",
+                background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
                 borderRadius: 16,
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
@@ -2161,7 +2221,7 @@ export function PlaceDetailPage() {
                   fontWeight: 600,
                   fontFamily:
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#1a1a1a",
+                  color: "var(--hl-ink, #1b1730)",
                   marginBottom: 16,
                   display: "flex",
                   alignItems: "center",
@@ -2176,13 +2236,13 @@ export function PlaceDetailPage() {
                   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                   font-size: clamp(17px, 3.5vw, 19px);
                   line-height: 1.8;
-                  color: #374151;
+                  color: var(--hl-muted, #665d78);
                 }
                 .accessibility-content p {
                   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                   font-size: clamp(17px, 3.5vw, 19px);
                   line-height: 1.8;
-                  color: #374151;
+                  color: var(--hl-muted, #665d78);
                   margin: 0 0 1.2em 0;
                 }
                 .accessibility-content p:last-child {
@@ -2195,7 +2255,7 @@ export function PlaceDetailPage() {
                 .accessibility-content h5,
                 .accessibility-content h6 {
                   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                  color: #1a1a1a;
+                  color: var(--hl-ink, #1b1730);
                   margin-top: 1.5em;
                   margin-bottom: 0.8em;
                 }
@@ -2212,7 +2272,7 @@ export function PlaceDetailPage() {
                   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                   font-size: clamp(17px, 3.5vw, 19px);
                   line-height: 1.8;
-                  color: #374151;
+                  color: var(--hl-muted, #665d78);
                   margin: 1.2em 0;
                   padding-left: 1.5em;
                 }
@@ -2220,29 +2280,29 @@ export function PlaceDetailPage() {
                   margin: 0.6em 0;
                 }
                 .accessibility-content a {
-                  color: #667eea;
+                  color: var(--hl-accent, #c45c26);
                   text-decoration: none;
                   transition: color 0.2s;
                 }
                 .accessibility-content a:hover {
-                  color: #764ba2;
+                  color: var(--hl-navy, #1b1730);
                   text-decoration: underline;
                 }
                 .accessibility-content strong,
                 .accessibility-content b {
                   font-weight: 600;
-                  color: #1a1a1a;
+                  color: var(--hl-ink, #1b1730);
                 }
                 .accessibility-content em,
                 .accessibility-content i {
                   font-style: italic;
                 }
                 .accessibility-content blockquote {
-                  border-left: 4px solid #667eea;
+                  border-left: 4px solid var(--hl-accent, #c45c26);
                   padding-left: 1.5em;
                   margin: 1.5em 0;
                   font-style: italic;
-                  color: #4b5563;
+                  color: var(--hl-muted, #665d78);
                 }
               `}</style>
               <div ref={accessibilityRef} className="accessibility-content">
@@ -2252,26 +2312,24 @@ export function PlaceDetailPage() {
           )}
 
           {/* Back Link */}
-          <div style={{ margin: "48px 16px 0", paddingTop: 32, borderTop: "1px solid #e0e0e0" }}>
+          <div
+            style={{
+              margin: "48px 16px 0",
+              paddingTop: 32,
+              borderTop: "1px solid var(--hl-line)",
+            }}
+          >
             <Link
-              to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: "" })}
+              to={buildUrl({ lang: lang as Lang, siteKey, path: "" })}
+              className="hl-page-link"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                color: "#667eea",
-                textDecoration: "none",
                 fontSize: 16,
-                fontWeight: 400,
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#764ba2";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#667eea";
+                minHeight: 44,
               }}
             >
               ← {t("public.backToList")}

@@ -6,6 +6,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useEffect, useState } from "react";
 import { getPlace } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import type { Lang } from "../../types/enums";
 
 export function PlaceAnalyticsPage() {
   const { placeId, lang } = useParams<{ placeId: string; lang?: string }>();
@@ -20,7 +21,7 @@ export function PlaceAnalyticsPage() {
     if (placeId) {
       getPlace(placeId)
         .then((place) => {
-          const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+          const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
           const translation =
             place.translations.find((t) => t.lang === currentLang) || place.translations[0];
           setPlaceName(translation?.name || placeId);

@@ -5,7 +5,6 @@ import {
   Param,
   Query,
   Body,
-  BadRequestException,
   UseGuards,
   NotFoundException,
   ConflictException,
@@ -17,6 +16,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import { SiteResolverService } from "../site/site-resolver.service";
 import { AdminEventLogService } from "../event-log/admin-eventlog.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Controller for site-related public endpoints.
@@ -37,14 +37,6 @@ export class SitesController {
     private readonly eventLogService?: AdminEventLogService
   ) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists active sites with optional filtering.
@@ -63,7 +55,7 @@ export class SitesController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.sitesService.list({
       lang,
       siteKey,
@@ -89,7 +81,7 @@ export class SitesController {
     @Param("slug") slug: string,
     @Query("siteKey") siteKey?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.sitesService.detail({ lang, siteKey, slug });
   }
 
@@ -105,7 +97,7 @@ export class SitesController {
    * - If siteKey is provided, uses that site (the one the user is currently viewing)
    * - Otherwise, uses the first assigned site or default site
    * - Sets the user's activeSiteId to the selected site
-   * - Creates a SiteSubscription with BASIC plan if it doesn't exist
+   * - Creates a SiteSubscription with the free plan if it doesn't exist
    */
   @Post("activate-free")
   @UseGuards(JwtAuthGuard)
@@ -114,7 +106,7 @@ export class SitesController {
     @Body() body: { siteKey?: string },
     @CurrentUser() user: { id: string; activeSiteId: string | null; role: string }
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
 
     // Check if user is already active (not a visitor)
     if (user.activeSiteId !== null) {
@@ -229,45 +221,45 @@ export class SitesController {
       data: { activeSiteId: targetSiteId },
     });
 
-    // Create SiteSubscription with BASIC plan if it doesn't exist
-    const subscription = await this.prisma.siteSubscription.upsert({
+    // Free plan only when the site does not already have a subscription.
+    let subscription = await this.prisma.siteSubscription.findUnique({
       where: { siteId: targetSiteId },
-      create: {
-        siteId: targetSiteId,
-        plan: "BASIC",
-        status: "ACTIVE",
-        validUntil: null,
-      },
-      update: {
-        plan: "BASIC",
-        status: "ACTIVE",
-      },
     });
-
-    // Create history entry for visitor -> free activation
-    try {
-      await this.prisma.subscriptionHistory.create({
+    let createdFree = false;
+    if (!subscription) {
+      createdFree = true;
+      subscription = await this.prisma.siteSubscription.create({
         data: {
-          scope: "site",
-          subscriptionId: subscription.id,
-          changeType: "CREATED",
-          oldPlan: null,
-          newPlan: "BASIC",
-          oldStatus: null,
-          newStatus: "ACTIVE",
-          oldValidUntil: null,
-          newValidUntil: null,
-          note: "Visitor activated free site plan",
-          changedBy: user.id,
+          siteId: targetSiteId,
+          plan: "FREE",
+          status: "ACTIVE",
+          validUntil: null,
+          manualOverride: false,
         },
       });
-    } catch (error) {
-      console.error("Error creating subscription history entry:", error);
-      // Don't throw - history logging should not break the main operation
+      try {
+        await this.prisma.subscriptionHistory.create({
+          data: {
+            scope: "site",
+            subscriptionId: subscription.id,
+            changeType: "CREATED",
+            oldPlan: null,
+            newPlan: "FREE",
+            oldStatus: null,
+            newStatus: "ACTIVE",
+            oldValidUntil: null,
+            newValidUntil: null,
+            note: "Visitor activated free site plan",
+            changedBy: user.id,
+          },
+        });
+      } catch (error) {
+        console.error("Error creating subscription history entry:", error);
+      }
     }
 
     // Log event to event log
-    if (this.eventLogService) {
+    if (this.eventLogService && createdFree && subscription) {
       try {
         await this.eventLogService.create({
           siteId: targetSiteId,
@@ -275,9 +267,9 @@ export class SitesController {
           action: "create",
           entityType: "subscription",
           entityId: subscription.id,
-          description: "Visitor activated free site plan (BASIC)",
+          description: "Visitor activated free site plan",
           metadata: {
-            plan: "BASIC",
+            plan: "FREE",
             status: "ACTIVE",
             scope: "site",
           },

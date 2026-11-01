@@ -17,7 +17,9 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { UserRole, Lang, FeatureSubscriptionScope } from "@prisma/client";
+import { UserRole, FeatureSubscriptionScope } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { requireUiLang } from "../common/lang";
 import {
   AdminCategoryService,
   CreateCategoryDto,
@@ -91,8 +93,10 @@ import {
   UpdateFloorplanPinDto,
 } from "./admin-floorplan-pin.service";
 import { RbacService } from "../auth/rbac.service";
+import { canEditCopy, siteSettingBlockedForOwner, SITE_OWNER_STRIPPED_FIELDS } from "../auth/copy-access";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import {
   generateCreateDescription,
@@ -140,7 +144,8 @@ export class AdminController {
     private readonly entitlementsService: EntitlementsService,
     private readonly rbacService: RbacService,
     private readonly twoFactorService: TwoFactorService,
-    private readonly platformSettingsService: PlatformSettingsService
+    private readonly platformSettingsService: PlatformSettingsService,
+    private readonly visitorLadderService: VisitorLadderService
   ) {}
 
   // ==================== Categories ====================
@@ -603,18 +608,30 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
+    @Query("includeStandalone") includeStandaloneParam: string | undefined,
+    @Query("standaloneOnly") standaloneOnlyParam: string | undefined,
     @CurrentUser() user: { siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
+    const standaloneOnly =
+      standaloneOnlyParam === "1" || standaloneOnlyParam === "true";
+    const includeStandalone =
+      includeStandaloneParam === "1" || includeStandaloneParam === "true";
+    const siteId = standaloneOnly ? null : siteIdParam || user.siteIds[0];
+    if (!standaloneOnly) {
+      if (!siteId) {
+        throw new Error("User has no associated site");
+      }
+      if (!user.siteIds.includes(siteId)) {
+        throw new Error("User does not have access to this site");
+      }
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.townService.findAll(siteId, page, limit);
+    // Default: only towns for the selected régió (standalone towns stay in the unassigned bucket).
+    return this.townService.findAll(siteId, page, limit, {
+      includeStandalone,
+      standaloneOnly,
+    });
   }
 
   @Get("/towns/:id")
@@ -623,11 +640,8 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
+    const siteId = siteIdParam || user.siteIds[0] || null;
+    if (siteId && !user.siteIds.includes(siteId)) {
       throw new Error("User does not have access to this site");
     }
     return this.townService.findOne(id, siteId);
@@ -639,26 +653,27 @@ export class AdminController {
     @Body() dto: CreateTownDto,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.siteId) {
-      dto.siteId = user.siteIds[0];
-    }
-    if (!user.siteIds.includes(dto.siteId)) {
+    // Region (siteId) is optional. Empty string → null (standalone town).
+    const regionId = dto.siteId && String(dto.siteId).trim() ? dto.siteId : null;
+    if (regionId && !user.siteIds.includes(regionId)) {
       throw new Error("User does not have access to this site");
     }
+    dto.siteId = regionId;
     const result = await this.townService.create(dto);
 
-    // Log the action with detailed description
     const description = generateCreateDescription("town", result.translations);
-    await this.eventLogService
-      .create({
-        siteId: dto.siteId,
-        userId: user.id,
-        action: "create",
-        entityType: "town",
-        entityId: result.id,
-        description,
-      })
-      .catch((err) => console.error("Failed to log:", err));
+    if (regionId) {
+      await this.eventLogService
+        .create({
+          siteId: regionId,
+          userId: user.id,
+          action: "create",
+          entityType: "town",
+          entityId: result.id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
+    }
 
     return result;
   }
@@ -671,18 +686,22 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
+    const contextSiteId = siteIdParam || user.siteIds[0] || null;
+    if (contextSiteId && !user.siteIds.includes(contextSiteId)) {
       throw new Error("User does not have access to this site");
     }
-    // Get old data for comparison
-    const oldTown = await this.townService.findOne(id, siteId);
-    const result = await this.townService.update(id, siteId, dto);
+    if (dto.siteId !== undefined) {
+      const nextRegion =
+        dto.siteId && String(dto.siteId).trim() ? dto.siteId : null;
+      if (nextRegion && !user.siteIds.includes(nextRegion)) {
+        throw new Error("User does not have access to this site");
+      }
+      dto.siteId = nextRegion;
+    }
 
-    // Log the action with detailed description
+    const oldTown = await this.townService.findOne(id, contextSiteId);
+    const result = await this.townService.update(id, contextSiteId, dto);
+
     const description = generateUpdateDescription(
       "town",
       result.translations,
@@ -693,16 +712,19 @@ export class AdminController {
         translations: result.translations,
       }
     );
-    await this.eventLogService
-      .create({
-        siteId,
-        userId: user.id,
-        action: "update",
-        entityType: "town",
-        entityId: id,
-        description,
-      })
-      .catch((err) => console.error("Failed to log:", err));
+    const logSiteId = result.siteId || contextSiteId;
+    if (logSiteId) {
+      await this.eventLogService
+        .create({
+          siteId: logSiteId,
+          userId: user.id,
+          action: "update",
+          entityType: "town",
+          entityId: id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
+    }
 
     return result;
   }
@@ -714,29 +736,27 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
+    const contextSiteId = siteIdParam || user.siteIds[0] || null;
+    if (contextSiteId && !user.siteIds.includes(contextSiteId)) {
       throw new Error("User does not have access to this site");
     }
-    // Get town data before deletion for logging
-    const town = await this.townService.findOne(id, siteId);
-    const result = await this.townService.remove(id, siteId);
+    const town = await this.townService.findOne(id, contextSiteId);
+    const result = await this.townService.remove(id, contextSiteId);
 
-    // Log the action with detailed description
     const description = generateDeleteDescription("town", town.translations);
-    await this.eventLogService
-      .create({
-        siteId,
-        userId: user.id,
-        action: "delete",
-        entityType: "town",
-        entityId: id,
-        description,
-      })
-      .catch((err) => console.error("Failed to log:", err));
+    const logSiteId = town.siteId || contextSiteId;
+    if (logSiteId) {
+      await this.eventLogService
+        .create({
+          siteId: logSiteId,
+          userId: user.id,
+          action: "delete",
+          entityType: "town",
+          entityId: id,
+          description,
+        })
+        .catch((err) => console.error("Failed to log:", err));
+    }
 
     return result;
   }
@@ -748,6 +768,7 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
+    @Query("townId") townIdParam: string | undefined,
     @CurrentUser() user: { siteIds: string[] }
   ) {
     const siteId = siteIdParam || user.siteIds[0];
@@ -759,7 +780,7 @@ export class AdminController {
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.placeService.findAll(siteId, page, limit);
+    return this.placeService.findAll(siteId, page, limit, townIdParam || undefined);
   }
 
   @Get("/places/:id")
@@ -1317,7 +1338,7 @@ export class AdminController {
   // ==================== Users ====================
 
   @Get("/users")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async getUsers(
     @Query("siteId") siteId?: string,
     @CurrentUser() user?: { role: UserRole; siteIds: string[] }
@@ -1532,12 +1553,30 @@ export class AdminController {
   }
 
   @Put("/sites/:id")
-  @Roles(UserRole.superadmin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async updateSite(
     @Param("id") id: string,
     @Body() dto: UpdateSiteDto,
-    @CurrentUser() user: { id: string; siteIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
+    if (user.role !== UserRole.superadmin) {
+      const actor = await this.rbacService.copyActor(user.id, user.role, id);
+      this.rbacService.assertCopyEditor(actor, "site");
+      const current = await this.siteService.findOne(id);
+      if (
+        siteSettingBlockedForOwner(
+          current as unknown as Record<string, unknown>,
+          dto as unknown as Record<string, unknown>
+        )
+      ) {
+        throw new ForbiddenException(
+          "Only a superadmin can change site settings that are not translations"
+        );
+      }
+      for (const key of SITE_OWNER_STRIPPED_FIELDS) {
+        delete (dto as unknown as Record<string, unknown>)[key];
+      }
+    }
     // Get old data for comparison
     const oldSite = await this.siteService.findOne(id);
     const result = await this.siteService.update(id, dto);
@@ -1608,7 +1647,9 @@ export class AdminController {
     @CurrentUser() user: { siteIds: string[] },
     @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
-    @Query("limit") limit?: string
+    @Query("limit") limit?: string,
+    @Query("placeId") placeIdParam?: string,
+    @Query("townId") townIdParam?: string
   ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
@@ -1619,7 +1660,13 @@ export class AdminController {
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return this.eventService.findAll(siteId, pageNum, limitNum);
+    return this.eventService.findAll(
+      siteId,
+      pageNum,
+      limitNum,
+      placeIdParam || undefined,
+      townIdParam || undefined
+    );
   }
 
   @Get("/events/:id")
@@ -1772,10 +1819,7 @@ export class AdminController {
   @Put("/app-settings/default-language")
   @Roles(UserRole.superadmin, UserRole.admin)
   async setDefaultLanguage(@Body() dto: { language: string }) {
-    if (dto.language !== "hu" && dto.language !== "en" && dto.language !== "de") {
-      throw new ForbiddenException("Invalid language. Use hu, en, or de.");
-    }
-    return this.appSettingsService.setDefaultLanguage(dto.language as Lang);
+    return this.appSettingsService.setDefaultLanguage(requireUiLang(dto.language));
   }
 
   @Get("/app-settings/global-crawlability")
@@ -1805,13 +1849,23 @@ export class AdminController {
 
   @Post("/app-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async createAppSetting(@Body() dto: AppSettingDto) {
+  async createAppSetting(@Body() dto: AppSettingDto, @CurrentUser() user: { role: UserRole }) {
+    if (!canEditCopy({ role: user.role }, "platform")) {
+      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+    }
     return this.appSettingsService.upsert(dto.key, dto);
   }
 
   @Put("/app-settings/:key")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async updateAppSetting(@Param("key") key: string, @Body() dto: Omit<AppSettingDto, "key">) {
+  async updateAppSetting(
+    @Param("key") key: string,
+    @Body() dto: Omit<AppSettingDto, "key">,
+    @CurrentUser() user: { role: UserRole }
+  ) {
+    if (!canEditCopy({ role: user.role }, "platform")) {
+      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+    }
     return this.appSettingsService.upsert(key, dto);
   }
 
@@ -2014,49 +2068,57 @@ export class AdminController {
   }
 
   // ==================== Site Memberships ====================
+  // Editor allowed so régióadmin (siteadmin SiteRole) can manage tagság; service enforces RBAC.
 
   @Get("/site-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async getSiteMemberships(@Query("siteId") siteId?: string, @Query("userId") userId?: string) {
     return this.siteMembershipService.findAll(siteId, userId);
   }
 
   @Get("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async getSiteMembership(@Param("id") id: string) {
     return this.siteMembershipService.findOne(id);
   }
 
   @Post("/site-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async createSiteMembership(@Body() dto: CreateSiteMembershipDto) {
-    return this.siteMembershipService.create(dto);
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async createSiteMembership(
+    @Body() dto: CreateSiteMembershipDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.siteMembershipService.create(dto, user.id);
   }
 
   @Put("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async updateSiteMembership(@Param("id") id: string, @Body() dto: UpdateSiteMembershipDto) {
-    return this.siteMembershipService.update(id, dto);
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async updateSiteMembership(
+    @Param("id") id: string,
+    @Body() dto: UpdateSiteMembershipDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.siteMembershipService.update(id, dto, user.id);
   }
 
   @Delete("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async deleteSiteMembership(@Param("id") id: string) {
-    return this.siteMembershipService.delete(id);
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async deleteSiteMembership(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    return this.siteMembershipService.delete(id, user.id);
   }
 
   // ==================== Place Memberships ====================
+  // Editor allowed so régióadmin (siteadmin SiteRole) can manage; service enforces RBAC.
 
   @Get("/place-memberships")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async getPlaceMemberships(
     @Query("placeId") placeId?: string,
-    @Query("userId") userId?: string,
-    @CurrentUser() user?: { id: string; siteIds: string[] }
+    @Query("userId") userId?: string
   ) {
-    // If userId not provided, use current user's ID
-    const resolvedUserId = userId || user?.id;
-    return this.placeMembershipService.findAll(placeId, resolvedUserId);
+    // Do not default userId to the actor — admins need the full list for a place/region.
+    // Clients that want "my memberships" must pass userId explicitly (or use /my-places).
+    return this.placeMembershipService.findAll(placeId, userId);
   }
 
   @Get("/place-memberships/my-places")
@@ -2078,7 +2140,7 @@ export class AdminController {
   }
 
   @Post("/place-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async createPlaceMembership(
     @Body() dto: CreatePlaceMembershipDto,
     @CurrentUser() user: { id: string }
@@ -2087,7 +2149,7 @@ export class AdminController {
   }
 
   @Put("/place-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async updatePlaceMembership(
     @Param("id") id: string,
     @Body() dto: UpdatePlaceMembershipDto,
@@ -2097,9 +2159,23 @@ export class AdminController {
   }
 
   @Delete("/place-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
   async deletePlaceMembership(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.placeMembershipService.delete(id, user.id);
+  }
+
+  // ==================== Visitor ladder ====================
+
+  @Get("/visitor-ladder")
+  @Roles(UserRole.superadmin)
+  getVisitorLadder() {
+    return this.visitorLadderService.getConfig();
+  }
+
+  @Put("/visitor-ladder")
+  @Roles(UserRole.superadmin)
+  saveVisitorLadder(@Body() body: unknown) {
+    return this.visitorLadderService.saveConfig(body);
   }
 
   // ==================== Subscriptions ====================
@@ -2280,10 +2356,32 @@ export class AdminController {
   }
 
   // ==================== Site Status & Statistics ====================
+  // Content-scoped: superadmin sees all regions; admin/régióadmin (editor + siteadmin) only assigned sites.
+  // Cache invalidation stays superadmin-only below.
 
   @Get("/site-status")
-  @Roles(UserRole.superadmin)
-  async getSiteStatus() {
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async getSiteStatus(
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
+  ) {
+    const isSuperadmin = user.role === UserRole.superadmin;
+    const siteIds = user.siteIds ?? [];
+
+    if (!isSuperadmin && siteIds.length === 0) {
+      throw new ForbiddenException("User has no associated region");
+    }
+
+    const siteFilter = isSuperadmin ? undefined : { id: { in: siteIds } };
+    const scoped = isSuperadmin ? {} : { siteId: { in: siteIds } };
+    const userScoped = isSuperadmin
+      ? {}
+      : {
+          OR: [
+            { sites: { some: { siteId: { in: siteIds } } } },
+            { siteMemberships: { some: { siteId: { in: siteIds } } } },
+          ],
+        };
+
     const [
       totalSites,
       activeSites,
@@ -2301,27 +2399,28 @@ export class AdminController {
       totalSubscriptions,
       activeSubscriptions,
     ] = await Promise.all([
-      this.prisma.site.count(),
-      this.prisma.site.count({ where: { isActive: true } }),
-      this.prisma.place.count(),
-      this.prisma.place.count({ where: { isActive: true } }),
-      this.prisma.event.count(),
-      this.prisma.event.count({ where: { isActive: true } }),
+      this.prisma.site.count({ where: siteFilter }),
+      this.prisma.site.count({ where: { ...siteFilter, isActive: true } }),
+      this.prisma.place.count({ where: scoped }),
+      this.prisma.place.count({ where: { ...scoped, isActive: true } }),
+      this.prisma.event.count({ where: scoped }),
+      this.prisma.event.count({ where: { ...scoped, isActive: true } }),
       this.prisma.event.count({
         where: {
+          ...scoped,
           isActive: true,
           startDate: { gte: new Date() },
         },
       }),
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { isActive: true } }),
-      this.prisma.category.count(),
-      this.prisma.tag.count(),
-      this.prisma.town.count(),
-      this.prisma.gallery.count({ where: { isActive: true } }),
-      this.prisma.siteSubscription.count(),
+      this.prisma.user.count({ where: userScoped }),
+      this.prisma.user.count({ where: { ...userScoped, isActive: true } }),
+      this.prisma.category.count({ where: scoped }),
+      this.prisma.tag.count({ where: scoped }),
+      this.prisma.town.count({ where: scoped }),
+      this.prisma.gallery.count({ where: { ...scoped, isActive: true } }),
+      this.prisma.siteSubscription.count({ where: scoped }),
       this.prisma.siteSubscription.count({
-        where: { status: "ACTIVE" },
+        where: { ...scoped, status: "ACTIVE" },
       }),
     ]);
 
@@ -2331,22 +2430,23 @@ export class AdminController {
 
     const [recentPlaces, recentEvents, recentUsers, recentEventLogs] = await Promise.all([
       this.prisma.place.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
+        where: { ...scoped, createdAt: { gte: sevenDaysAgo } },
       }),
       this.prisma.event.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
+        where: { ...scoped, createdAt: { gte: sevenDaysAgo } },
       }),
       this.prisma.user.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
+        where: { ...userScoped, createdAt: { gte: sevenDaysAgo } },
       }),
       this.prisma.eventLog.count({
-        where: { createdAt: { gte: sevenDaysAgo } },
+        where: { ...scoped, createdAt: { gte: sevenDaysAgo } },
       }),
     ]);
 
-    // Get sites by plan
+    // Get sites by plan (scoped for non-superadmin)
     const sitesByPlan = await this.prisma.site.groupBy({
       by: ["plan"],
+      where: siteFilter,
       _count: true,
     });
 

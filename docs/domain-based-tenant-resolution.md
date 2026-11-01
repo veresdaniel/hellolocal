@@ -1,185 +1,55 @@
-# Domain-based Tenant Resolution
+# Domain-based site (tenant) resolution
 
-Ez a dokumentum leírja, hogyan működik a domain-alapú tenant feloldás és hogyan lehet lokális fejlesztői környezetben tesztelni.
+How HelloLocal resolves a request host to a **Site** (régió), and optionally to a **Town** or **Place** custom domain.
 
-## Hogyan működik?
+## Resolution order
 
-A tenant feloldás sorrendje:
+Implemented in `SiteResolveMiddleware` (`apps/api/src/common/middleware/site-resolve.middleware.ts`) and mirrored for the SPA bootstrap by `GET /api/domain/:host` (`DomainResolveController`).
 
-1. **Host header (domain)** → `SiteInstance.domain` match
-2. Ha nincs match → **URL `/:tenantKey`** alapján
-3. Ha az sincs → **default tenant**
+1. **Custom hostname (highest priority)** — skip localhost / bare IPs
+   - `SiteDomain.domain` (primary + aliases) → parent Site
+   - Fallback: `Site.primaryDomain` when no `SiteDomain` row exists yet
+   - `Town.customDomain` → parent Site (+ town entity slug)
+   - `Place.customDomain` → parent Site (+ place entity slug)
+2. **URL path** — `/:lang/:siteKey/...` via `SiteKey` (primary preferred)
+3. **No match** — request continues without `req.site` (public routes that do not need a site, or 404 later)
 
-### Implementáció
+`Event` has no `customDomain` (N/A).
 
-A `DomainTenantResolverMiddleware` fut minden request előtt és:
+## Entity model
 
-1. Kinyeri a `Host` header-t a request-ből
-2. Keresi a `SiteInstance` táblában a `domain` mező alapján
-3. Ha talál match-et, beállítja a `request.resolvedTenantFromDomain` property-t
-4. Ha nincs match, a request továbbhalad, és a `TenantKeyResolverService` kezeli a URL alapú feloldást
+| Entity | Domain storage | Notes |
+|--------|----------------|-------|
+| Site (régió) | `SiteDomain` rows + optional `Site.primaryDomain` | Plan-gated: Basic blocked; Pro may use aliases via `domainAliasesMax`; Business/Municipal enable `customDomainEnabled` |
+| Town | single `Town.customDomain` | Requires `Town.siteId` (region). Inherits the parent Site plan entitlement |
+| Place | single `Place.customDomain` | Requires `Place.siteId`. Inherits the parent Site plan entitlement |
 
-A `TenantKeyResolverService.resolve()` metódus prioritása:
+Cross-entity hostname uniqueness is enforced in app code (`assertHostnameAvailable`), not only by DB unique indexes.
 
-1. **Domain alapú feloldás** (ha `domainResolvedTenant` paraméter van)
-2. **URL alapú feloldás** (ha `tenantKey` paraméter van)
-3. **Default tenant** (ha egyik sincs)
+## Town region vs Place.siteId
 
-## Lokális fejlesztés
+- `Town.siteId` is **optional** (`null` = standalone település).
+- `Place.siteId` (and denormalized `Event.siteId`) is **required** for tenant scoping.
+- Assigning/moving a town to a region **cascades** `Place.siteId` / `Event.siteId` to that region.
+- Detaching a town (`siteId → null`) **keeps** existing Place/Event `siteId` values (cannot clear a required FK) and clears `Town.customDomain`.
 
-A lokális fejlesztői környezetben több domain-t is be lehet állítani a `/etc/hosts` fájlban.
+Standalone towns appear only in the admin **unassigned** bucket (`standaloneOnly`), not under every régió list.
 
-### macOS / Linux
+## Local development
 
-Szerkeszd a `/etc/hosts` fájlt (sudo szükséges):
-
-```bash
-sudo nano /etc/hosts
-```
-
-Adj hozzá sorokat, pl.:
-
-```
-127.0.0.1 etyek.local
-127.0.0.1 budai.local
-127.0.0.1 test.local
-```
-
-Mentés után a domain-ek azonnal elérhetők lesznek a böngészőben.
-
-### Windows
-
-Szerkeszd a `C:\Windows\System32\drivers\etc\hosts` fájlt (adminisztrátori jogosultság szükséges):
+Add hosts (sudo):
 
 ```
 127.0.0.1 etyek.local
 127.0.0.1 budai.local
-127.0.0.1 test.local
 ```
 
-### SiteInstance beállítás
+Create matching `SiteDomain` / `primaryDomain` / town-or-place `customDomain` via admin, then open e.g. `http://etyek.local:5173`. Platform slug path still works: `http://localhost:5173/hu/etyek-budai`.
 
-A domain-ek működéséhez létre kell hozni `SiteInstance` rekordokat az adatbázisban:
+## SPA host bootstrap
 
-```sql
--- Példa: Etyek tenant domain beállítása
-INSERT INTO "SiteInstance" (id, "tenantId", domain, lang, "isDefault", "createdAt", "updatedAt")
-VALUES (
-  'site-instance-1',
-  'tenant-id-etyek',  -- Etyek tenant ID
-  'etyek.local',
-  'hu',
-  true,
-  NOW(),
-  NOW()
-);
-
--- Példa: Budai tenant domain beállítása
-INSERT INTO "SiteInstance" (id, "tenantId", domain, lang, "isDefault", "createdAt", "updatedAt")
-VALUES (
-  'site-instance-2',
-  'tenant-id-budai',  -- Budai tenant ID
-  'budai.local',
-  'hu',
-  true,
-  NOW(),
-  NOW()
-);
-```
-
-Vagy használd az admin felületet a `SiteInstance` létrehozásához.
-
-### Tesztelés
-
-1. Indítsd el az API szervert (pl. `http://localhost:3002`)
-2. Indítsd el a frontend-et (pl. `http://localhost:5173`)
-3. Böngészőben nyisd meg:
-   - `http://etyek.local:5173` → Etyek tenant
-   - `http://budai.local:5173` → Budai tenant
-   - `http://localhost:5173/hu/etyek-budai` → URL alapú feloldás (ha nincs domain match)
-
-### Fontos megjegyzések
-
-- A middleware **kihagyja** a `localhost` és IP címeket (pl. `127.0.0.1`, `localhost:3002`)
-- Csak **valódi domain neveket** használ feloldásra (pl. `etyek.local`, `budai.local`)
-- Ha a domain nem található a `SiteInstance` táblában, a rendszer automatikusan a URL alapú feloldásra vált
-- A domain alapú feloldás **prioritást élvez** a URL alapú feloldással szemben
-
-## Használat a kódban
-
-### Service-ekben
-
-Ha a service hozzáfér a request objektumhoz, használd a `resolveFromRequest()` metódust:
-
-```typescript
-import { TenantKeyResolverService } from "../tenant/tenant-key-resolver.service";
-import { Request } from "express";
-
-@Injectable()
-export class MyService {
-  constructor(
-    private readonly tenantResolver: TenantKeyResolverService
-  ) {}
-
-  async myMethod(request: Request, lang: string, tenantKey?: string) {
-    // Automatikusan kezeli a domain alapú feloldást
-    const tenant = await this.tenantResolver.resolveFromRequest(request, {
-      lang,
-      tenantKey,
-    });
-    
-    // tenant.tenantId, tenant.lang, stb.
-  }
-}
-```
-
-### Controller-ekben
-
-A controller-ekben ugyanúgy használható:
-
-```typescript
-@Controller("/api/public/:lang/:tenantKey")
-export class MyController {
-  constructor(
-    private readonly tenantResolver: TenantKeyResolverService
-  ) {}
-
-  @Get("something")
-  async getSomething(
-    @Req() request: Request,
-    @Param("lang") lang: string,
-    @Param("tenantKey") tenantKey: string
-  ) {
-    const tenant = await this.tenantResolver.resolveFromRequest(request, {
-      lang,
-      tenantKey,
-    });
-    
-    // tenant.tenantId, tenant.lang, stb.
-  }
-}
-```
-
-### Ha nincs hozzáférés a request-hez
-
-Ha a service nem fér hozzá a request-hez, használd a `resolve()` metódust közvetlenül:
-
-```typescript
-const tenant = await this.tenantResolver.resolve({
-  lang,
-  tenantKey,
-  // domainResolvedTenant opcionális, ha van
-});
-```
+Frontend `pathForHostResolve` / `entityPublicAddress` prefer an entity `customDomain` root over the region slug path when present. See `tests/critical/domain-and-slug.test.ts`.
 
 ## Debugging
 
-A middleware logolja a domain feloldást. A log szintjét beállíthatod a `NestJS` logger konfigurációjában.
-
-Példa log üzenetek:
-
-```
-[DomainTenantResolverMiddleware] Domain-based tenant resolved: etyek.local → tenantId=xxx, lang=hu
-[DomainTenantResolverMiddleware] No SiteInstance found for domain: unknown.local
-[DomainTenantResolverMiddleware] Skipping domain resolution for localhost/IP: localhost
-```
+Middleware logs domain matches at debug level. `GET /api/domain/:host` returns `{ kind, slug, defaultLang, domain, entitySlug? }` or 404.

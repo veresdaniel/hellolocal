@@ -24,6 +24,10 @@ services:
       - "443:443"
     volumes:
       - ${PROD_SRC}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Host directory outside the git checkout. A glob import of an empty
+      # directory does nothing, so beta routes appear only after staging deploy
+      # copies deploy/Caddyfile.beta here. Does not attach beta to this project's DB.
+      - /opt/hellolocal/caddy-imports:/etc/caddy/imports:ro
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped

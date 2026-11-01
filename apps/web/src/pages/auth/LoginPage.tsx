@@ -3,20 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import {
-  APP_LANGS,
+import { 
   DEFAULT_LANG,
   HAS_MULTIPLE_SITES,
   DEFAULT_SITE_SLUG,
-  type Lang,
-} from "../../app/config";
+  type Lang, isLang} from "../../app/config";
 import { buildUrl } from "../../app/urls";
 import { ROLE_VIEWER } from "../../types/enums";
 import { useSeo } from "../../seo/useSeo";
+import { safeInternalPath } from "../../utils/safeInternalPath";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,6 +27,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
+  const googleAuthHandledRef = useRef(false);
   const { t, i18n } = useTranslation();
   const { lang: langParam } = useParams<{ lang?: string }>();
 
@@ -108,24 +105,53 @@ export function LoginPage() {
     }
   }, []);
 
-  // Handle Google OAuth callback - must be before redirect check
+  // Handle Google OAuth callback - prefer hash (no server logs); legacy query still cleared
   useEffect(() => {
-    const googleAuth = searchParams.get("googleAuth");
-    const tokensParam = searchParams.get("tokens");
-    const errorParam = searchParams.get("error");
+    const hashParams = new URLSearchParams(
+      typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : ""
+    );
+    const googleAuth = hashParams.get("googleAuth") || searchParams.get("googleAuth");
+    const tokensParam = hashParams.get("tokens") || searchParams.get("tokens");
+    const errorParam = hashParams.get("error") || searchParams.get("error");
+
+    const clearAuthFragment = () => {
+      setSearchParams({});
+      if (typeof window !== "undefined" && window.location.hash) {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}${window.location.search}`
+        );
+      }
+    };
 
     if (googleAuth === "success" && tokensParam) {
+      if (googleAuthHandledRef.current) return;
+      googleAuthHandledRef.current = true;
       const processGoogleAuth = async () => {
         try {
-          const tokens = JSON.parse(decodeURIComponent(tokensParam));
+          const tokens = JSON.parse(decodeURIComponent(tokensParam)) as {
+            accessToken?: unknown;
+            refreshToken?: unknown;
+            user?: unknown;
+          };
+
+          if (
+            typeof tokens.accessToken !== "string" ||
+            typeof tokens.refreshToken !== "string" ||
+            !tokens.user ||
+            typeof tokens.user !== "object"
+          ) {
+            throw new Error("Invalid Google authentication payload");
+          }
 
           // Store tokens and user data
           localStorage.setItem("accessToken", tokens.accessToken);
           localStorage.setItem("refreshToken", tokens.refreshToken);
           localStorage.setItem("user", JSON.stringify(tokens.user));
 
-          // Clear URL params immediately
-          setSearchParams({});
+          // Clear tokens from the address bar immediately
+          clearAuthFragment();
 
           // Trigger both custom event and direct refresh
           window.dispatchEvent(new Event("auth:storage-update"));
@@ -136,14 +162,14 @@ export function LoginPage() {
           // Redirect will happen automatically via the redirect effect below
         } catch (err) {
           setError(err instanceof Error ? err.message : "Failed to process Google authentication");
-          setSearchParams({});
+          clearAuthFragment();
         }
       };
 
-      processGoogleAuth();
+      void processGoogleAuth();
     } else if (errorParam) {
       setError(decodeURIComponent(errorParam));
-      setSearchParams({});
+      clearAuthFragment();
     }
   }, [searchParams, setSearchParams, refreshUser]);
 
@@ -152,8 +178,11 @@ export function LoginPage() {
     if (!authIsLoading && user) {
       // Check if user is viewer - viewers should not access admin
       if (user.role === ROLE_VIEWER) {
-        // Get return URL from sessionStorage or use home page
-        const returnUrl = sessionStorage.getItem("authReturnUrl") || `/${lang}`;
+        // Get return URL from sessionStorage or use home page (same-origin path only)
+        const returnUrl = safeInternalPath(
+          sessionStorage.getItem("authReturnUrl"),
+          `/${lang}`
+        );
         sessionStorage.removeItem("authReturnUrl");
 
         // If we're already on the return URL (public page), don't navigate - just update state
@@ -171,7 +200,8 @@ export function LoginPage() {
 
       // For admin/editor/superadmin, always redirect to dashboard (ignore activeSiteId check)
       // Check if we have a return URL
-      const returnUrl = sessionStorage.getItem("authReturnUrl");
+      const rawReturnUrl = sessionStorage.getItem("authReturnUrl");
+      const returnUrl = safeInternalPath(rawReturnUrl, "");
       if (returnUrl && !returnUrl.includes("/admin/login")) {
         // If return URL is a public page, ignore it for admin users - always go to dashboard
         // Only use return URL if it's an admin page
@@ -191,6 +221,8 @@ export function LoginPage() {
           // Public return URL - clear it and go to dashboard instead
           sessionStorage.removeItem("authReturnUrl");
         }
+      } else if (rawReturnUrl) {
+        sessionStorage.removeItem("authReturnUrl");
       }
 
       // Default: redirect to admin dashboard for non-viewer users
@@ -217,8 +249,8 @@ export function LoginPage() {
     try {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
       // Clear any public return URL - admin users should always go to dashboard
-      const returnUrl = sessionStorage.getItem("authReturnUrl");
-      if (returnUrl && !returnUrl.includes("/admin")) {
+      const returnUrl = safeInternalPath(sessionStorage.getItem("authReturnUrl"), "");
+      if (!returnUrl || !returnUrl.includes("/admin")) {
         sessionStorage.removeItem("authReturnUrl");
       }
       // Navigate after login completes - React will re-render when AuthContext updates
@@ -279,7 +311,7 @@ export function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "#f3efe8",
         padding: "16px",
         margin: 0,
         boxSizing: "border-box",
@@ -587,26 +619,26 @@ export function LoginPage() {
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               background: isLoading
-                ? "#a5b4fc"
+                ? "#8d88a3"
                 : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               color: "white",
               border: "none",
               borderRadius: 8,
               cursor: isLoading ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
-              boxShadow: isLoading ? "none" : "0 4px 12px rgba(102, 126, 234, 0.4)",
+              boxShadow: isLoading ? "none" : "0 4px 12px rgba(27, 23, 48, 0.28)",
               boxSizing: "border-box",
             }}
             onMouseEnter={(e) => {
               if (!isLoading) {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.5)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(27, 23, 48, 0.36)";
               }
             }}
             onMouseLeave={(e) => {
               if (!isLoading) {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(27, 23, 48, 0.28)";
               }
             }}
           >

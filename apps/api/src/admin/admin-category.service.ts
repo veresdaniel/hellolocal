@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateCategoryDto {
@@ -14,6 +14,7 @@ export interface CreateCategoryDto {
   isActive?: boolean;
   color?: string | null;
   order?: number;
+  kind?: "place" | "service";
 }
 
 export interface UpdateCategoryDto {
@@ -26,6 +27,7 @@ export interface UpdateCategoryDto {
   isActive?: boolean;
   color?: string | null;
   order?: number;
+  kind?: "place" | "service";
 }
 
 @Injectable()
@@ -131,6 +133,7 @@ export class AdminCategoryService {
         parentId: dto.parentId || null,
         isActive: dto.isActive ?? true,
         color: dto.color ?? null,
+        kind: dto.kind === "service" ? "service" : "place",
         order: newOrder,
         translations: {
           create: dto.translations.map((t) => ({
@@ -195,6 +198,9 @@ export class AdminCategoryService {
     }
     if (dto.order !== undefined) {
       updateData.order = dto.order;
+    }
+    if (dto.kind !== undefined) {
+      updateData.kind = dto.kind === "service" ? "service" : "place";
     }
 
     await this.prisma.category.update({

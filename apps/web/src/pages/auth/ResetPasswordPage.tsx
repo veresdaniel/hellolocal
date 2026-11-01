@@ -3,12 +3,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
 import { resetPassword } from "../../api/auth.api";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -113,7 +110,7 @@ export function ResetPasswordPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#f3efe8",
           padding: "16px",
           margin: 0,
           boxSizing: "border-box",
@@ -168,7 +165,7 @@ export function ResetPasswordPage() {
               fontWeight: 600,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "#1b1730",
               color: "white",
               textDecoration: "none",
               borderRadius: 8,
@@ -199,7 +196,7 @@ export function ResetPasswordPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "#f3efe8",
         padding: "16px",
         margin: 0,
         boxSizing: "border-box",
@@ -423,7 +420,7 @@ export function ResetPasswordPage() {
               background:
                 isLoading || !token
                   ? "#a5b4fc"
-                  : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  : "#1b1730",
               color: "white",
               border: "none",
               borderRadius: 8,

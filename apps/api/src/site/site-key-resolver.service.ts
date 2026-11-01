@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { requireLang } from "../common/lang";
 import { PrismaService } from "../prisma/prisma.service";
 import { Request } from "express";
 
@@ -49,7 +50,7 @@ export class SiteKeyResolverService {
   /**
    * Resolves the site ID from the request with the following priority:
    * 1. URL-based siteKey resolution (if siteKey is provided)
-   * 2. Default site (if siteKey is not provided)
+    const lang = requireLang(args.lang);
    *
    * This service supports both single-site (implicit) and multi-site (explicit) modes.
    * In multi-site mode, the siteKey is a public-facing slug that maps to an internal site.

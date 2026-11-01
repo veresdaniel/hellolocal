@@ -1,7 +1,12 @@
 // src/admin/admin-site-membership.service.ts
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { SiteRole } from "@prisma/client";
+import { SiteRole, UserRole } from "@prisma/client";
 
 export interface CreateSiteMembershipDto {
   siteId: string;
@@ -62,7 +67,9 @@ export class AdminSiteMembershipService {
     return membership;
   }
 
-  async create(dto: CreateSiteMembershipDto) {
+  async create(dto: CreateSiteMembershipDto, actorUserId: string) {
+    await this.assertCanManageMemberships(actorUserId, dto.siteId);
+
     // Check if site exists
     const site = await this.prisma.site.findUnique({
       where: { id: dto.siteId },
@@ -110,8 +117,9 @@ export class AdminSiteMembershipService {
     });
   }
 
-  async update(id: string, dto: UpdateSiteMembershipDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateSiteMembershipDto, actorUserId: string) {
+    const membership = await this.findOne(id);
+    await this.assertCanManageMemberships(actorUserId, membership.siteId);
 
     const updateData: any = {};
     if (dto.role !== undefined) {
@@ -128,11 +136,46 @@ export class AdminSiteMembershipService {
     });
   }
 
-  async delete(id: string) {
-    await this.findOne(id);
+  async delete(id: string, actorUserId: string) {
+    const membership = await this.findOne(id);
+    await this.assertCanManageMemberships(actorUserId, membership.siteId);
 
     return this.prisma.siteMembership.delete({
       where: { id },
     });
+  }
+
+  /**
+   * Superadmin / global admin / régióadmin (siteadmin) may manage memberships for a site.
+   * Region CRUD remains superadmin-only on separate endpoints.
+   */
+  private async assertCanManageMemberships(actorUserId: string, siteId: string): Promise<void> {
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorUserId },
+      select: { role: true },
+    });
+
+    if (!actor) {
+      throw new ForbiddenException("Actor not found");
+    }
+
+    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
+      return;
+    }
+
+    const siteMembership = await this.prisma.siteMembership.findUnique({
+      where: {
+        siteId_userId: {
+          siteId,
+          userId: actorUserId,
+        },
+      },
+    });
+
+    if (siteMembership?.role === SiteRole.siteadmin) {
+      return;
+    }
+
+    throw new ForbiddenException("Only superadmin, admin, or siteadmin can manage region memberships");
   }
 }

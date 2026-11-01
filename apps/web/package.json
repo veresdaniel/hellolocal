@@ -6,6 +6,8 @@
   "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
     "dev": "vite",
+    "staging": "VITE_API_URL=http://localhost:3003 vite --mode staging --port 5174 --strictPort",
+    "live": "vite --mode live --port 5175 --strictPort",
     "build": "vite build",
     "build:check": "tsc -b && vite build",
     "lint": "eslint .",

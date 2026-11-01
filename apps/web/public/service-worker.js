@@ -1,166 +1,111 @@
-// public/service-worker.js
-// Cache name includes version to force cache invalidation on version change
-let CACHE_NAME = "hellolocal-v1";
+// App shell for HelloLocal. Push handlers stay so existing notifications keep working.
+const CACHE = "hellolocal-app-v3";
 
-// Fetch version and set cache name
-fetch("/version.json?t=" + Date.now())
-  .then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error("Failed to fetch version");
-  })
-  .then((data) => {
-    if (data && data.version && data.buildHash) {
-      CACHE_NAME = `hellolocal-${data.version}-${data.buildHash.substring(0, 7)}`;
-    }
-  })
-  .catch((e) => {
-    // Failed to fetch version, using default cache name
-    console.warn("[ServiceWorker] Failed to fetch version.json, using default cache name:", e);
-  });
-const urlsToCache = [
-  "/",
-  "/index.html",
-  "/src/main.tsx",
-];
-
-// Install event - cache resources
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches
+      .open(CACHE)
+      .then((cache) => cache.add(new Request("/", { cache: "reload" })).catch(() => undefined))
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => !cacheName.startsWith("hellolocal-") || cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names
+            .filter((name) => name.startsWith("hellolocal-") && name !== CACHE)
+            .map((name) => caches.delete(name))
+        )
+      )
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  
-  // Don't cache version.json - always fetch fresh
-  if (url.pathname.includes("/version.json")) {
-    event.respondWith(
-      fetch(event.request).catch((error) => {
-        // If version.json fetch fails, return a basic response
-        console.warn("[ServiceWorker] Failed to fetch version.json:", error);
-        return new Response(JSON.stringify({ version: "unknown", buildHash: "unknown" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      })
-    );
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (url.pathname === "/version.json" || url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request));
     return;
   }
-  
-  // Don't cache API requests - always fetch fresh from network
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        // If network fails, return offline response
-        // For API requests, return JSON error
-        return new Response(JSON.stringify({ error: "Offline", message: "No internet connection" }), { 
-          status: 503,
-          headers: { "Content-Type": "application/json" }
-        });
-      })
-    );
+
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirstNavigation(request));
     return;
   }
-  
-  // Don't cache auth pages (login, register) - always fetch fresh from network
-  // This ensures Google login button and other dynamic content always appears
-  if (url.pathname.includes("/login") || url.pathname.includes("/register") || url.pathname.includes("/admin/login") || url.pathname.includes("/admin/register")) {
-    event.respondWith(
-      fetch(event.request).then((fetchResponse) => {
-        // Return fresh response without caching
-        return fetchResponse;
-      }).catch(() => {
-        // If network fails, try cache as fallback
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // If no cache and it's an HTML request, redirect to offline page
-          if (event.request.headers.get("accept")?.includes("text/html")) {
-            return new Response(
-              `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/offline"></head><body>Redirecting to offline page...</body></html>`,
-              { 
-                status: 503,
-                headers: { "Content-Type": "text/html" }
-              }
-            );
-          }
-          return new Response("Offline", { status: 503 });
-        });
-      })
-    );
+
+  if (url.pathname.startsWith("/assets/")) {
+    event.respondWith(cacheFirst(request));
     return;
   }
-  
-  // Don't cache chrome-extension, chrome, or other non-http(s) schemes
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    event.respondWith(fetch(event.request));
-    return;
+
+  if (isStaticAsset(url.pathname)) {
+    event.respondWith(networkFirstAsset(request));
   }
-  
-  // For other requests, use cache-first strategy
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((fetchResponse) => {
-        // Cache successful responses (only for non-API requests and http(s) schemes)
-        if (fetchResponse.ok && (url.protocol === "http:" || url.protocol === "https:")) {
-          const responseClone = fetchResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone).catch((err) => {
-              // Ignore cache errors (e.g., chrome-extension requests)
-            });
-          });
-        }
-        return fetchResponse;
-      });
-    })
-    .catch(() => {
-      // If both cache and network fail, return offline page for HTML requests
-      if (event.request.headers.get("accept")?.includes("text/html")) {
-        return new Response(
-          `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/offline"></head><body>Redirecting to offline page...</body></html>`,
-          { 
-            status: 503,
-            headers: { "Content-Type": "text/html" }
-          }
-        );
-      }
-      // For non-HTML requests, return plain text
-      return new Response("Offline", { status: 503 });
-    })
-  );
 });
 
-// Push event - handle push notifications
+function isStaticAsset(pathname) {
+  return /\.(?:js|css|png|jpe?g|webp|svg|ico|woff2?)$/.test(pathname);
+}
+
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE);
+      await cache.put("/index.html", response.clone());
+    }
+    return response;
+  } catch {
+    return (
+      (await caches.match("/index.html")) ||
+      (await caches.match("/")) ||
+      new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" } })
+    );
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(CACHE);
+    await cache.put(request, response.clone());
+  }
+  return response;
+}
+
+async function networkFirstAsset(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response("Offline", { status: 503 });
+  }
+}
+
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "";
+  const title = data.title || "HelloLocal";
   const options = {
-    body: data.body || "Új esemény érkezett!",
-    icon: data.icon || "/vite.svg",
-    badge: data.badge || "/vite.svg",
+    body: data.body || "",
+    icon: data.icon || "/icons/icon-192.png",
+    badge: data.badge || "/icons/icon-192.png",
     image: data.image,
     data: data.data || {},
     tag: data.tag || "default",
@@ -168,31 +113,23 @@ self.addEventListener("push", (event) => {
     actions: data.actions || [],
   };
 
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Notification click event
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
-  const urlToOpen = event.notification.data.url || "/";
+  const urlToOpen = event.notification.data?.url || "/";
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already a window/tab open with the target URL
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
+      for (const client of clientList) {
         if (client.url === urlToOpen && "focus" in client) {
           return client.focus();
         }
       }
-      // If not, open a new window/tab
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
     })
   );
 });
-

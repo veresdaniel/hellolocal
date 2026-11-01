@@ -5,104 +5,224 @@
   },
   "explore": {
     "title": "Entdecken",
+    "siteTitle": "{{name}} entdecken",
     "description": "Lokale Erlebnisse: Weingut, Gastronomie, Unterkunft, Handwerk."
   },
   "listView": "Listenansicht",
   "mapView": "Kartenansicht",
+  "region": {
+    "eyebrow": "Region",
+    "lead": "Wähle einen Ort, oder sieh die ganze Region auf der Karte.",
+    "townsHeading": "Orte",
+    "searchTowns": "Orte durchsuchen…",
+    "noTowns": "Keine Treffer",
+    "placeCount": "{{count}} Standorte",
+    "openTown": "Öffnen"
+  },
   "overview": {
     "menu": "Überblick",
-    "eyebrow": "Für Gemeinden und Tourismusbüros",
-    "title": "Die Stadt, die ein Besucher auf einer Karte findet",
-    "lead": "HelloLocal legt lokale Orte, Veranstaltungen und die Karte auf eine Seite. Auf Ungarisch, Englisch und Deutsch. Die Redaktion veröffentlicht, der Gast öffnet es am Telefon. Ohne eigene App.",
-    "seoTitle": "HelloLocal | Karte, Programm und Orte einer Stadt",
-    "seoDescription": "Orte, Veranstaltungen und eine gemeinsame Karte auf Ungarisch, Englisch und Deutsch. Für Gemeinden, Tourismusbüros und Destinationen.",
-    "keywords": "lokaler Tourismus, Stadtkarte, Veranstaltungskalender, Tourismusbüro, Destination, HelloLocal",
+    "eyebrow": "Für Gemeinden, Tourismusbüros und lokale Betriebe",
+    "title": "Der Gast findet auf einer Karte, was es bei euch gibt",
+    "lead": "Orte, Termine und die Karte stehen auf einer Seite. Der Gast öffnet sie auf dem Handy und geht los.",
+    "differenceKicker": "Warum es anders ist",
+    "differenceTitle": "Auch der weniger bekannte Ort bekommt Gäste",
+    "differenceLead": "Werkstatt, Keller und Seitengasse stehen auf der Karte. Wer den Ort führt, schreibt die eigene Seite. Gemeinde oder Büro gibt sie mit einem Link weiter.",
+    "seoTitle": "HelloLocal | Lokale Orte, Handwerk und Gegenden auf einer Karte",
+    "seoDescription": "Handwerk, lokale Dienste und die weniger sichtbaren Orte auf einer Karte. Für Gemeinden, Tourismusbüros und die, die nicht an der Hauptstraße liegen.",
+    "keywords": "lokaler Betrieb, Handwerk, Dienstleistung, Gemeinde, Region, Tourismusbüro, HelloLocal",
     "cta": "Live ansehen",
     "ctaSecondary": "So funktioniert es",
     "shotCaption": "Szeged auf der Karte: Orte, Filter und die nächsten Veranstaltungen auf einem Bildschirm.",
     "shotLabel": "Live-Karte",
-    "statsLanguages": "Sprachen, jede mit eigener Adresse",
+    "statsLanguagesValue": "Mehr",
+    "statsLanguages": "Sprachen, jede unter eigener Adresse",
     "statsMap": "Karte für Orte und Veranstaltungen",
     "statsApp": "Download für den Gast",
-    "featuresTitle": "Was den Gast auf der Seite hält",
-    "featuresLead": "Keine weitere Broschüre. Eine Seite, auf der jemand entscheidet, wohin er heute Nachmittag geht.",
-    "stepsTitle": "Drei Schritte, und schon wird geblättert",
-    "audienceTitle": "Für wen es sich lohnt",
+    "featuresTitle": "Was der Gast benutzen kann",
+    "featuresLead": "Öffnungszeiten, das Programm von heute, und der Ort abseits des Hauptplatzes.",
+    "stepsTitle": "Drei Schritte bis zum Gast",
+    "difference": {
+      "hidden": {
+        "title": "Was bisher nur die Einheimischen kannten",
+        "text": "Hof, Werkstatt, Marktstand, Keller, eine Ecke weiter. Es kommt auf die Karte, und der Gast findet hin."
+      },
+      "traffic": {
+        "title": "Gäste aus einem kleinen Werbebudget",
+        "text": "Der Link der Gemeinde oder des Büros bringt die Besucher. Das Werbebudget kann klein bleiben."
+      },
+      "region": {
+        "title": "Eine Region, getrennte Karten",
+        "text": "Mehrere Orte stehen nebeneinander, jeder mit eigenem Publikum. Das Handwerk bleibt in der eigenen Gegend."
+      }
+    },
+    "storiesTitle": "Für wen",
+    "storiesLead": "Für das Handwerk, den Dienst und für die Gemeinde oder das Büro, das sie dem Gast mit einem Link weitergibt.",
     "faqTitle": "Was meistens gefragt wird",
-    "closingTitle": "Der nächste Gast sucht schon auf dem Telefon.",
-    "closingText": "Öffne die Karte, schau dir das Programm an, und stell dir die Orte deiner eigenen Stadt an diesen Punkten vor.",
+    "closingTitle": "Der nächste Gast startet von der Karte.",
+    "closingText": "Öffne sie und stell dir deine eigenen Orte an diesen Punkten vor: die Werkstatt, den Keller, den Dienst oder die ganze Gegend.",
     "steps": {
       "collect": {
-        "title": "Du sammelst die Orte",
-        "text": "Weingut, Promenade, Museum, Markt. Kategorie, Öffnungszeiten, ein Foto und ein kurzer Text. Jeder Ort hat eine Adresse, die man schicken kann."
+        "title": "Wer bisher fehlte, kommt drauf",
+        "text": "Werkstatt, Laden, Keller, Dienst. Foto, Öffnungszeiten und eine Seite, die der Gast weiterleiten kann."
       },
       "publish": {
-        "title": "Du veröffentlichst das Programm",
-        "text": "Die kommenden Wochen stehen neben der Karte. Eine hervorgehobene Veranstaltung bleibt oben. Was vorbei ist, verschwindet."
+        "title": "Das Programm bleibt aktuell",
+        "text": "Die kommenden Wochen stehen neben der Karte. Was vorbei ist, fällt weg, was an diesem Wochenende ist, bleibt vorn."
       },
       "share": {
-        "title": "Du gibst sie dem Gast",
-        "text": "Ein Link auf Ungarisch, Englisch oder Deutsch. Der Gast filtert, zoomt und geht los. Kein App-Store, kein Konto."
+        "title": "Ein Link für den Gast",
+        "text": "Er öffnet ihn in seiner Sprache, filtert und geht los. Es läuft im Browser des Telefons."
       }
     },
     "faq": {
       "app": {
         "q": "Muss der Gast eine App laden?",
-        "a": "Nein. Karte und Programm öffnen sich im Browser, auf dem Telefon und am Computer."
+        "a": "Karte und Programm öffnen sich im Browser, auf dem Telefon und am Computer."
       },
       "languages": {
         "q": "Gibt es für jede Sprache eine eigene Seite?",
-        "a": "Inhalte können ungarisch, englisch und deutsch sein, jeder mit eigener Adresse. Die Suche findet sie dann in der passenden Sprache."
+        "a": "Für jede Sprache, in der der Gast ankommt, gibt es eine eigene Adresse. Die Suche findet die Seite dann in dieser Sprache."
       },
       "editors": {
-        "q": "Wer kann den Text aktualisieren?",
-        "a": "Redaktion und Gastgeber arbeiten mit eigenen Rechten. Beschreibungen nutzen einen Editor, und die Anmeldung kann einen zweiten Schritt verlangen."
+        "q": "Wer schreibt den Text?",
+        "a": "Wer den Ort führt: das Handwerk, der Dienst oder jemand aus der Gemeinde oder dem Büro. Jeder pflegt seinen Teil."
       },
       "towns": {
         "q": "Können mehrere Orte ein System teilen?",
-        "a": "Ja. Jede Gemeinde oder Destination bekommt eigene Inhalte, eine eigene Karte und eigene Redakteure. Der Gast sieht nur den Ort, den er geöffnet hat."
+        "a": "Ja. Eine Region kann mehrere Orte tragen. Jeder hat eine eigene Karte und ein eigenes Programm, der Gast bleibt bei dem, den er geöffnet hat."
       }
     },
     "features": {
       "places": {
-        "title": "Orte, die sich zu öffnen lohnen",
-        "text": "Kategorie, Preis, Öffnungszeiten und eine Seite, die der Gast der Gruppe schicken kann. Keine Tabelle: eine Adresse, ein Foto, ein Grund hinzugehen."
+        "title": "Die Werkstatt ist auch zu finden",
+        "text": "Sie kommt mit Öffnungszeiten und einer Seite auf die Karte, die der Gast weiterleiten kann. Auch der weniger bekannte Ort ist sichtbar."
       },
       "events": {
-        "title": "Das nächste Programm, nicht das Plakat von letztem Jahr",
-        "text": "Veranstaltungen stehen zeitlich sortiert neben der Karte. Was vorbei ist, fällt weg. Was hervorgehoben ist, bleibt vorn."
+        "title": "Das Wochenendprogramm bleibt vorn",
+        "text": "Was vorbei ist, fällt weg. Was jetzt ansteht, sieht der Gast zuerst."
       },
       "map": {
-        "title": "Eine Karte, von der man losgehen kann",
-        "text": "Die Punkte sind die Orte. Der Filter zeigt, was offen ist, was bei Regen taugt und wo heute etwas stattfindet. Auf dem Telefon kommt das Panel von unten, die Karte bleibt sichtbar."
+        "title": "Von dieser Karte kann man losgehen",
+        "text": "Der Gast sieht, was offen ist, was bei Regen taugt und wo heute etwas stattfindet. Auf dem Telefon bleibt die Karte benutzbar."
       },
       "languages": {
-        "title": "Die Sprache, in der der Gast sucht",
-        "text": "Ungarische, englische und deutsche Inhalte, jede unter eigener Adresse. Der Gast bekommt dieselbe Karte, kein übersetztes Faltblatt."
+        "title": "Der Gast liest in seiner Sprache",
+        "text": "Die Inhalte entstehen in der Sprache des Gastes, unter der Adresse dieser Sprache. Er bekommt dieselbe Karte."
       },
       "sites": {
-        "title": "Mehrere Orte, klar getrennt",
-        "text": "Eine Destination kann mehrere Standorte tragen. Jeder hat eigene Inhalte, eine eigene Karte und eigene Redakteure, damit niemand im Programm einer anderen Stadt landet."
+        "title": "Mehrere Orte, getrennte Programme",
+        "text": "Eine Region kann mehrere Standorte zusammenfassen. Karte und Programm bleiben getrennt, der Gast rutscht nicht zum Nachbarn hinüber."
       },
       "editors": {
-        "title": "Die lokale Redaktion, keine Agentur",
-        "text": "Den Text schreibt, wer den Ort kennt. Rollen trennen die Stadtredaktion vom Gastgeber. Die Änderung erscheint auf der öffentlichen Seite."
+        "title": "Wer den Ort führt, schreibt ihn",
+        "text": "Handwerk, Dienst oder jemand aus dem Ort pflegt den eigenen Text. Der Gast sieht, was gerade stimmt."
       }
     },
-    "audience": {
-      "municipality": {
-        "title": "Gemeinde",
-        "text": "Stadtprogramm, Promenade und Markt leben endlich auf einem Link, nicht in drei einzelnen Beiträgen."
+    "stories": {
+      "maker": {
+        "kicker": "Handwerk",
+        "title": "Die Werkstatt bekommt eine eigene Seite",
+        "text": "Keramik, Leinen, Marmelade, Honig. Foto, Öffnungszeiten und einen Punkt, den der Gast weiterleiten kann.",
+        "alt": "Handgemachte Keramikschalen auf einem Werkstatttisch"
       },
-      "office": {
-        "title": "Tourismusbüro",
-        "text": "Der Gast aus dem Ausland bekommt dieselbe Karte auf Englisch oder Deutsch, die Einheimische auf Ungarisch nutzen."
+      "service": {
+        "kicker": "Ein lokaler Dienst",
+        "title": "Der eigene Name steht vorn",
+        "text": "Friseur, Schneider, Fahrradwerkstatt, Massage. Der Gast schaut sich die Gegend an und sieht ihren Namen und ihre Adresse.",
+        "alt": "Eine kleine Fahrradwerkstatt mit Werkzeug und einem Rad auf der Bank"
       },
-      "destination": {
-        "title": "Destination und Weinregion",
-        "text": "Mehrere Orte in einem System, jeder mit eigenen Plätzen. Der Gast durchquert die Region, keine vermischte Liste."
+      "quiet": {
+        "kicker": "Abseits der Hauptstraße",
+        "title": "Eine Ecke weiter",
+        "text": "Hof, Werkstatt, Marktstand, eine Abbiegung von der Hauptstraße. Auch das kommt auf die Karte, was bisher nur die Einheimischen kannten.",
+        "alt": "Ein offenes Hoftor in einer ruhigen Seitengasse"
+      },
+      "town": {
+        "kicker": "Gemeinde und Tourismusbüro",
+        "title": "Wer sie sammeln kann",
+        "text": "Sie sammelt die lokalen Betriebe und gibt dem Gast einen Link, in der Sprache des Gastes.",
+        "alt": "Eine lebendige Karte mit lokalen Orten und Veranstaltungen"
+      }
+    },
+    "plansTitle": "Drei Pakete",
+    "plansLead": "Monatlich, in Forint. Für eine Werkstatt, einen Dienst oder eine ganze Gegend.",
+    "plans": {
+      "priceUnit": "Ft / Monat",
+      "freePrice": "Kostenlos",
+      "freeForever": "dauerhaft, ohne Rechnung",
+      "places": "{{count}} Orte auf der Karte",
+      "eventsNone": "Noch ohne Programm, solange Sie es ausprobieren",
+      "events": "{{count}} Veranstaltungen im Monat",
+      "languagesOne": "Ungarisch, unter eigener Adresse",
+      "languages": "{{count}} Sprachen, jede unter eigener Adresse",
+      "adminNote": "Orte / Termine / Sprachen werden mit der Rechtematrix gespeichert und füllen die {{count}}-Vorlagen auf den Karten. Namen und Pitch bleiben manuell. Das Gemeinde-Paket hat keinen Matrix-Limit-Sync.",
+      "save": "Pakete speichern",
+      "saving": "Speichern…",
+      "fields": {
+        "priceHuf": "Monatspreis (Ft)",
+        "places": "Orte",
+        "events": "Veranstaltungen im Monat",
+        "languages": "Sprachen"
+      },
+      "free": {
+        "name": "Kostenlos",
+        "kicker": "Ausprobieren",
+        "pitch": "Ein paar Orte, auf Ungarisch. Du siehst die Karte, bevor irgendjemand eine Rechnung bekommt.",
+        "cta": "Kostenlos"
+      },
+      "basic": {
+        "name": "Basis",
+        "kicker": "Für einen Ort und seine Betriebe",
+        "badge": "Die übliche Wahl",
+        "pitch": "Werkstatt, Dienst und das Wochenendprogramm, auf einem Link. Der Betrieb füllt die eigene Seite aus, die Gemeinde schickt den Link weiter.",
+        "cta": "Mit Basis"
+      },
+      "premium": {
+        "name": "Premium",
+        "kicker": "Für eine ganze Region",
+        "pitch": "Mehr Sprachen und hervorgehobene Orte. Handwerk und Gemeinde stehen auf einer Karte, auch auf Englisch und auf Deutsch.",
+        "cta": "Mit Premium"
+      },
+      "municipal": {
+        "name": "Gemeinde",
+        "kicker": "Individuelles Angebot",
+        "pitch": "So viele Orte, wie die Gemeinde braucht. Der Preis gilt für diese Gemeinde, nicht als fester Tarif.",
+        "cta": "Angebot anfragen",
+        "places": "Beliebig viele Orte auf der Karte",
+        "events": "Das Programm ist Teil des Angebots",
+        "languages": "Die Sprachen sind Teil des Angebots"
+      },
+      "quote": {
+        "organization": "Organisation",
+        "contactName": "Ansprechperson",
+        "email": "E-Mail",
+        "message": "Kurze Nachricht",
+        "submit": "Angebot anfragen",
+        "sending": "Senden…",
+        "sent": "Wir haben die Anfrage geschickt. Wir melden uns.",
+        "stored": "Wir haben die Anfrage gespeichert. Es ging keine E-Mail raus, der Versand ist nicht eingerichtet.",
+        "noRecipient": "Wir haben die Anfrage gespeichert. Es ist kein Empfänger hinterlegt, deshalb ging keine E-Mail raus.",
+        "failed": "Die Anfrage konnte nicht gespeichert werden. Bitte noch einmal versuchen.",
+        "required": "Bitte Organisation, Name, E-Mail und Nachricht ausfüllen.",
+        "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
+      },
+      "recipient": {
+        "label": "E-Mail für Angebotsanfragen",
+        "help": "Gemeinde-Anfragen gehen an diese Adresse. Wenn das Feld leer bleibt, speichern wir die Anfrage und senden keine E-Mail.",
+        "save": "Empfänger speichern",
+        "saved": "Empfänger gespeichert."
       }
     }
+  },
+  "catalog": {
+    "title": "Produktkatalog",
+    "lead": "Preise und Fotos, ohne Kauf. Das Angebot als filterbare Karten.",
+    "search": "Produkte suchen",
+    "all": "Alle",
+    "empty": "Keine Produkte für diesen Filter.",
+    "error": "Der Katalog kann gerade nicht geladen werden.",
+    "prev": "Zurück",
+    "next": "Weiter"
   },
   "place": {
     "title": "Ortsdetails",
@@ -158,7 +278,7 @@
       "heroImage": "Hero-Bild",
       "contacts": "Kontakte (Tel/E-Mail/Web)",
       "extraFields": "Zusätzliche Felder (Extras JSON)",
-      "galleriesMax": "Anzahl der Galerien (Site Admin + Retail User)",
+      "galleriesMax": "Anzahl der Galerien (Standort Admin + Retail User)",
       "imagesPerGalleryMax": "Bilder pro Galerie",
       "galleriesPerPlaceMax": "Galerien pro Ort (Retail User)",
       "galleriesPerEventMax": "Galerien pro Veranstaltung (Retail User)",
@@ -166,21 +286,22 @@
       "featuredBoost": "Hervorgehobener Boost (Ranking-Gewicht)",
       "eventsEnabled": "Veranstaltungen aktiviert",
       "eventsPerMonth": "Veranstaltungen pro Monat",
-      "siteSeo": "Site SEO (Titel/Beschreibung/Bild)",
+      "siteSeo": "Standort SEO (Titel/Beschreibung/Bild)",
       "placeSeo": "Place SEO-Felder",
       "canonicalSupport": "Canonical/Redirect-Unterstützung",
       "customDomain": "Benutzerdefinierte Domain",
       "multipleDomainAliases": "Mehrere Domain-Aliase",
       "max5": "✓ (max. 5)",
       "additionalLanguages": "Zusätzliche Sprachen (hu+en+de)",
-      "siteMembers": "Site-Mitglieder (Mitgliedschaften)",
+      "siteMembers": "Standort-Mitglieder (Mitgliedschaften)",
       "eventLog": "Event-Log",
       "pushSubscription": "PushSubscription",
       "optionalAddon": "optionales Add-on",
       "placeImages": "Anzahl der Bilder",
       "featuredPlacement": "Hervorgehobene Platzierung",
       "placeTitle": "Standort-Pakete",
-      "placeSubtitle": "Wählen Sie ein Paket für Ihren Standort"
+      "placeSubtitle": "Wählen Sie ein Paket für Ihren Standort",
+      "eventsPerPlace": "{{count}} Ereignisse / Ort"
     },
     "featureMatrix": {
       "feature": "Funktion"
@@ -201,8 +322,8 @@
   "errorLoadingPlaces": "Fehler beim Laden der Orte",
   "noPlacesFound": "Keine Orte gefunden",
   "sites": {
-    "title": "Sites",
-    "description": "Sites entdecken"
+    "title": "Regionen",
+    "description": "Regionen entdecken"
   },
   "collections": {
     "title": "Kuratierte Sammlungen",
@@ -213,9 +334,9 @@
     "noItems": "Noch keine Elemente in dieser Liste",
     "highlighted": "Hervorgehoben"
   },
-  "searchSites": "Sites suchen...",
-  "errorLoadingSites": "Fehler beim Laden der Sites",
-  "noSitesFound": "Keine Sites gefunden",
+  "searchSites": "Regionen suchen...",
+  "errorLoadingSites": "Fehler beim Laden der Regionen",
+  "noSitesFound": "Keine Regionen gefunden",
   "staticPages": {
     "title": "Statische Seiten",
     "noStaticPagesFound": "Keine Seiten verfügbar",
@@ -240,23 +361,33 @@
     "description": "Veranstaltungen entdecken"
   },
   "events": "Veranstaltungen",
+  "services": "Lokale Dienste",
+  "servicesTab": "Dienste",
+  "parentPlace": "Ort",
+  "noServices": "Noch keine lokalen Dienste.",
+  "placesTab": "Orte",
   "noEvents": "Keine Veranstaltungen",
   "contact": "Kontakt",
   "menu": "Menü",
   "close": "Schließen",
   "noResults": "Keine Ergebnisse gefunden",
+  "emptyResultsSearchHint": "Keine Treffer für deine Suche. Versuche ein anderes Stichwort oder Filter.",
+  "emptyResultsDefaultHint": "Derzeit gibt es nichts anzuzeigen.",
+  "emptySitesSearchHint": "Keine Regionen entsprechen deiner Suche.",
+  "emptySitesDefaultHint": "Derzeit sind keine Regionen verfügbar.",
+  "tryAgainLater": "Bitte versuche es später erneut.",
   "filtersTitle": "Filter",
   "placeSlugMissing": "Details in Kürze...",
   "featured": "Hervorgehoben",
   "filters": {
     "all": "Alle",
     "openNow": "Jetzt geöffnet",
-    "eventToday": "Heute Veranstaltung",
+    "eventToday": "Programm heute",
     "within10MinutesWalk": "10 Minuten zu Fuß",
-    "rainSafe": "Regensicheres Programm",
+    "rainSafe": "Auch bei Regen",
     "contextFilters": "Kontextbasierte Filter",
-    "categories": "Kategorien",
-    "price": "Preis",
+    "categories": "Art des Ortes",
+    "price": "Preisklasse",
     "clear": "Zurücksetzen"
   },
   "yourLocation": "Hier bin ich jetzt.",
@@ -267,7 +398,7 @@
   "routeDistance": "Route",
   "walkingTime": "Gehzeit",
   "calculatingRoute": "Route wird berechnet...",
-  "clickAgainToNavigate": "Nochmal klicken zum Navigieren",
+  "startNavigation": "Navigation",
   "tooFarAway": "Zu weit entfernt (mehr als {{distance}} km)",
   "hour": "Stunde",
   "hours": "Stunden",
@@ -296,5 +427,16 @@
     "title": "Standort-Grundriss",
     "subtitle": "Klicken Sie auf die Punkte, um die Räume anzuzeigen",
     "openFullscreen": "Vollbild öffnen"
+  },
+  "location": "Standort",
+  "activateFree": {
+    "cta": "Kostenlos aktivieren",
+    "error": "Aktivierung fehlgeschlagen",
+    "success": "Erfolgreich aktiviert",
+    "modal": {
+      "title": "Kostenlosen Plan aktivieren",
+      "description": "Möchten Sie den kostenlosen Plan wirklich aktivieren?",
+      "confirm": "Aktivieren"
+    }
   }
 }

@@ -1,7 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SitePlan } from "@prisma/client";
+import { SitePlan } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { normalizeLanguageCode, normalizeLanguageList } from "../common/language-code";
+import { PLAN_DEFS } from "../entitlements/entitlements.config";
+import { sitePlanAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
+import { EntitlementsService } from "../entitlements/entitlements.service";
 import { generateSlug } from "../slug/slug.helper";
+import { normalizeDomainHost } from "../common/domain-host";
+import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { isMissingColumn } from "../common/prisma-column";
+import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { sanitizeSiteTheme } from "../common/public-theme-colors";
 
 export interface CreateSiteDto {
   slug: string;
@@ -12,6 +22,9 @@ export interface CreateSiteDto {
     shortDescription?: string | null;
     description?: string | null;
     heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
     seoImage?: string | null;
@@ -19,6 +32,15 @@ export interface CreateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
+  languages?: string[];
+  domains?: SiteDomainInput[];
+  plan?: SitePlan;
+}
+
+export interface SiteDomainInput {
+  domain: string;
+  defaultLang?: string | null;
+  isPrimary?: boolean;
 }
 
 export interface UpdateSiteDto {
@@ -30,6 +52,9 @@ export interface UpdateSiteDto {
     shortDescription?: string | null;
     description?: string | null;
     heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
     seoImage?: string | null;
@@ -47,13 +72,236 @@ export interface UpdateSiteDto {
   // If false, only site owner (siteadmin/superadmin) can create users and places
   // Only available for pro/business plans (basic always allows public registration)
   allowPublicRegistration?: boolean;
+  languages?: string[];
+  domains?: SiteDomainInput[];
+  /** GA4 measurement ID (G-…). Empty string or null disables site analytics. */
+  gaMeasurementId?: string | null;
+  /** Public theme colors JSON. Null clears site override (falls back to Brand). */
+  theme?: Record<string, unknown> | null;
 }
 
 @Injectable()
 export class AdminSiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly entitlements: EntitlementsService
+  ) {}
+
+  /**
+   * Several hosts can belong to one region: one primary (apex) plus subdomains.
+   * Each may set its own default language; empty language uses the site default.
+   * The primary host is mirrored to Site.primaryDomain; all hosts live in SiteDomain.
+   * Without any domain the public address remains /:lang/:slug.
+   */
+  private async syncDomains(siteId: string, rawEntries: SiteDomainInput[], siteLanguages: string[]) {
+    const siteDefault = siteLanguages[0] || "hu";
+    const allowed = new Set(siteLanguages.length ? siteLanguages : [siteDefault]);
+    const normalized: { domain: string; defaultLang: string; isPrimary: boolean }[] = [];
+    const seen = new Set<string>();
+
+    for (const entry of rawEntries) {
+      const raw = entry?.domain?.trim() ?? "";
+      if (!raw) continue;
+      const domain = normalizeDomainHost(raw);
+      if (!domain) {
+        throw new BadRequestException(`Érvénytelen domain: „${raw}”. Példa: pelda.hu`);
+      }
+      if (seen.has(domain)) {
+        throw new BadRequestException(`A(z) ${domain} domain kétszer szerepel.`);
+      }
+      seen.add(domain);
+
+      const requested = entry.defaultLang?.trim() || "";
+      let defaultLang = siteDefault;
+      if (requested) {
+        const code = normalizeLanguageCode(requested);
+        if (!code || !allowed.has(code)) {
+          throw new BadRequestException(`A(z) ${domain} nyelve nem tartozik a régió nyelvei közé.`);
+        }
+        defaultLang = code;
+      }
+      normalized.push({ domain, defaultLang, isPrimary: !!entry.isPrimary });
+    }
+
+    if (normalized.length) {
+      const primaryIndex = normalized.findIndex((row) => row.isPrimary);
+      const chosen = primaryIndex === -1 ? 0 : primaryIndex;
+      normalized.forEach((row, index) => {
+        row.isPrimary = index === chosen;
+      });
+      await this.assertCanSaveDomains(siteId, normalized.length);
+      for (const row of normalized) {
+        await assertHostnameAvailable(this.prisma, row.domain, { kind: "site", siteId });
+      }
+    }
+
+    const primary = normalized.find((row) => row.isPrimary)?.domain ?? null;
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.siteDomain.findMany({
+        where: { siteId },
+        select: { id: true, domain: true },
+      });
+      const keep = new Set(normalized.map((row) => row.domain));
+      const removeIds = existing.filter((row) => !keep.has(row.domain)).map((row) => row.id);
+      if (removeIds.length) {
+        await tx.siteDomain.deleteMany({ where: { id: { in: removeIds } } });
+      }
+      for (const row of normalized) {
+        await tx.siteDomain.upsert({
+          where: { domain: row.domain },
+          create: {
+            siteId,
+            domain: row.domain,
+            isPrimary: row.isPrimary,
+            isActive: true,
+            defaultLang: row.defaultLang,
+          },
+          update: {
+            siteId,
+            isPrimary: row.isPrimary,
+            isActive: true,
+            defaultLang: row.defaultLang,
+          },
+        });
+      }
+      await tx.site.update({ where: { id: siteId }, data: { primaryDomain: primary } });
+    });
+  }
+
+  /** The list form sends one primary host. Aliases already stored on the region stay. */
+  private async syncPrimaryKeepingAliases(
+    siteId: string,
+    raw: string | null,
+    siteLanguages: string[]
+  ) {
+    const existing = await this.prisma.siteDomain.findMany({
+      where: { siteId },
+      select: { domain: true, defaultLang: true, isPrimary: true },
+    });
+    const primaryHost = raw?.trim() ? normalizeDomainHost(raw) : null;
+    if (raw?.trim() && !primaryHost) {
+      throw new BadRequestException(`Érvénytelen domain: „${raw.trim()}”. Példa: pelda.hu`);
+    }
+    const aliases = existing.filter((row) => !row.isPrimary && row.domain !== primaryHost);
+    await this.syncDomains(
+      siteId,
+      [
+        ...(primaryHost
+          ? [{ domain: primaryHost, defaultLang: siteLanguages[0] || "hu", isPrimary: true }]
+          : []),
+        ...aliases.map((row) => ({
+          domain: row.domain,
+          defaultLang: row.defaultLang,
+          isPrimary: false,
+        })),
+      ],
+      siteLanguages
+    );
+  }
+
+  /**
+   * Basic cannot store a domain. Pro may store one primary host plus aliases up to domainAliasesMax,
+   * even while customDomainEnabled is false. Business follows the same alias ceiling.
+   */
+  private async assertCanSaveDomains(siteId: string, count: number) {
+    const allowance = await this.domainAllowance(siteId);
+    if (
+      !sitePlanAllowsCustomDomain({
+        features: { customDomainEnabled: allowance.customDomainEnabled },
+        limits: { domainAliasesMax: allowance.domainAliasesMax },
+      })
+    ) {
+      throw new BadRequestException("A Basic csomagban nem lehet saját domaint beállítani.");
+    }
+    const aliases = Math.max(count - 1, 0);
+    if (Number.isFinite(allowance.domainAliasesMax) && aliases > allowance.domainAliasesMax) {
+      const planLabel =
+        allowance.plan === "PRO" ? "Pro" : allowance.plan === "BUSINESS" ? "Business" : "Basic";
+      throw new BadRequestException(
+        `A ${planLabel} csomagban a saját domain mellé legfeljebb ${allowance.domainAliasesMax} további domain adható meg.`
+      );
+    }
+  }
+
+  private asPlanKey(value: string | null | undefined): "BASIC" | "PRO" | "BUSINESS" {
+    const key = (value || "").toUpperCase();
+    if (key === "PRO" || key === "BUSINESS") return key;
+    return "BASIC";
+  }
+
+  private async domainAllowance(siteId: string) {
+    const [site, subscription, brand] = await Promise.all([
+      this.prisma.site.findUnique({ where: { id: siteId }, select: { plan: true } }),
+      this.prisma.siteSubscription.findUnique({
+        where: { siteId },
+        select: { plan: true, status: true, validUntil: true },
+      }),
+      this.prisma.brand.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { planOverrides: true },
+      }),
+    ]);
+    const fromSite = this.asPlanKey(site?.plan);
+    let fromSub: "BASIC" | "PRO" | "BUSINESS" = "BASIC";
+    if (subscription?.status === "ACTIVE") {
+      const expired = subscription.validUntil ? subscription.validUntil.getTime() < Date.now() : false;
+      if (!expired) fromSub = this.asPlanKey(subscription.plan);
+    }
+    const rank = { BASIC: 0, PRO: 1, BUSINESS: 2 };
+    const plan = rank[fromSub] > rank[fromSite] ? fromSub : fromSite;
+    const override = ((brand?.planOverrides as any)?.[plan] || {}) as {
+      limits?: { domainAliasesMax?: number };
+      features?: { customDomainEnabled?: boolean };
+    };
+    const base = PLAN_DEFS[plan];
+    return {
+      plan,
+      domainAliasesMax: override.limits?.domainAliasesMax ?? base.limits.domainAliasesMax,
+      customDomainEnabled: override.features?.customDomainEnabled ?? base.features.customDomainEnabled,
+    };
+  }
+
+  private async assertCanGrowLanguages(siteId: string, current: string[], next: string[]) {
+    if (next.length <= current.length) return;
+    const max = (await this.entitlements.getBySiteId(siteId)).limits.languagesMax;
+    if (Number.isFinite(max) && next.length > max) {
+      throw new BadRequestException(`Ebben a csomagban legfeljebb ${max} nyelv használható.`);
+    }
+  }
+
+  private async ensureSiteKeys(siteId: string, slug: string, languages: string[]) {
+    for (const lang of languages) {
+      const existingKey = await this.prisma.siteKey.findFirst({
+        where: { siteId, lang, slug },
+      });
+      if (!existingKey) {
+        await this.prisma.siteKey.create({
+          data: { siteId, lang, slug, isPrimary: true, isActive: true },
+        });
+      } else if (!existingKey.isActive || !existingKey.isPrimary) {
+        await this.prisma.siteKey.update({
+          where: { id: existingKey.id },
+          data: { isActive: true, isPrimary: true },
+        });
+      }
+    }
+  }
 
   async findAll() {
+    const sortDomains = <T extends { siteDomains?: Array<{ isPrimary: boolean; domain: string }> }>(
+      sites: T[]
+    ) =>
+      sites.map((site) => ({
+        ...site,
+        // Sort siteDomains in memory to avoid database schema dependency issues
+        siteDomains: (site.siteDomains || []).sort((a, b) => {
+          if (a.isPrimary === b.isPrimary) {
+            return a.domain.localeCompare(b.domain);
+          }
+          return a.isPrimary ? -1 : 1;
+        }),
+      }));
+
     try {
       const sites = await this.prisma.site.findMany({
         include: {
@@ -70,34 +318,85 @@ export class AdminSiteService {
         },
         orderBy: { createdAt: "desc" },
       });
-
-      // Sort siteDomains in memory to avoid database schema dependency issues
-      return sites.map((site) => ({
-        ...site,
-        siteDomains: (site.siteDomains || []).sort((a, b) => {
-          // Sort by isPrimary (true first), then by domain
-          if (a.isPrimary === b.isPrimary) {
-            return a.domain.localeCompare(b.domain);
-          }
-          return a.isPrimary ? -1 : 1;
-        }),
-      }));
-    } catch (error: any) {
+      return sortDomains(sites);
+    } catch (error: unknown) {
       console.error("Error in AdminSiteService.findAll:", error);
-      // If the error is about missing table/column, provide helpful message
-      // P2021: Table does not exist
-      // P2022: Column does not exist
-      if (
-        error?.message?.includes("does not exist") ||
-        error?.code === "P2021" ||
-        error?.code === "P2022" ||
-        error?.meta?.driverAdapterError?.name === "ColumnNotFound"
-      ) {
-        throw new Error(
-          "Database schema is out of sync. Please run migrations: npx prisma migrate deploy"
-        );
+      // Optional columns (theme, listIntro*, gaMeasurementId, landingHtml) may lag migrate/generate.
+      // Retry with a conservative select so /admin/places and the rest of the admin shell stay up.
+      if (!isMissingColumn(error)) {
+        throw error;
       }
-      throw error;
+      try {
+        const sites = await this.prisma.site.findMany({
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            slug: true,
+            isActive: true,
+            languages: true,
+            primaryDomain: true,
+            plan: true,
+            planStatus: true,
+            planValidUntil: true,
+            planLimits: true,
+            billingEmail: true,
+            billingMeta: true,
+            allowPublicRegistration: true,
+            brandId: true,
+            createdAt: true,
+            updatedAt: true,
+            translations: {
+              select: {
+                id: true,
+                siteId: true,
+                lang: true,
+                name: true,
+                shortDescription: true,
+                description: true,
+                heroImage: true,
+                seoTitle: true,
+                seoDescription: true,
+                seoImage: true,
+                seoKeywords: true,
+              },
+            },
+            brand: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            siteDomains: {
+              where: { isActive: true },
+            },
+          },
+        } as any);
+        return sortDomains(
+          (sites as any[]).map((site) => ({
+            ...site,
+            gaMeasurementId: null,
+            theme: null,
+            translations: (site.translations || []).map((translation: Record<string, unknown>) => ({
+              ...translation,
+              landingHtml: null,
+              listIntroHtml: null,
+              listIntroImage: null,
+            })),
+          }))
+        );
+      } catch (retryError: any) {
+        if (
+          retryError?.message?.includes("does not exist") ||
+          retryError?.code === "P2021" ||
+          retryError?.code === "P2022" ||
+          retryError?.meta?.driverAdapterError?.name === "ColumnNotFound"
+        ) {
+          throw new Error(
+            "Database schema is out of sync. Please run migrations: npx prisma migrate deploy"
+          );
+        }
+        throw retryError;
+      }
     }
   }
 
@@ -187,40 +486,70 @@ export class AdminSiteService {
     // Note: SiteKey unique constraint is now [siteId, lang, slug], so multiple sites
     // can have the same slug for the same language. No need to check for global uniqueness.
 
-    // Create site with translations
-    const site = await this.prisma.site.create({
-      data: {
-        slug: normalizedSlug, // Use normalized slug (accent-free)
-        brandId: dto.brandId,
-        isActive: dto.isActive ?? true,
-        primaryDomain: dto.primaryDomain ?? null,
-        translations: {
-          create: dto.translations.map((t) => ({
-            lang: t.lang,
-            name: t.name,
-            shortDescription: t.shortDescription ?? null,
-            description: t.description ?? null,
-            heroImage: t.heroImage ?? null,
-            seoTitle: t.seoTitle ?? null,
-            seoDescription: t.seoDescription ?? null,
-            seoImage: t.seoImage ?? null,
-            seoKeywords: t.seoKeywords ?? [],
-          })),
-        },
-      },
-      include: {
-        translations: true,
-        brand: true,
-      },
-    });
+    const publishedLanguages =
+      normalizeLanguageList(
+        dto.languages?.length ? dto.languages : dto.translations.map((item) => item.lang)
+      ) || [];
+    const languages = publishedLanguages.length ? publishedLanguages : ["hu", "en", "de"];
 
-    // Create SiteKey records for ALL languages (hu, en, de)
-    // This ensures the site is accessible via any language route, even if translation doesn't exist yet
-    // The middleware will fallback to Site.slug if SiteKey is not found, but it's better to have all SiteKeys
-    const allLanguages: Lang[] = ["hu", "en", "de"];
+    // Create site with translations. landing/listIntro columns optional until migrated.
+    const translationRows = dto.translations.map((t) => ({
+      lang: t.lang,
+      name: t.name,
+      shortDescription: t.shortDescription ?? null,
+      description: t.description ?? null,
+      heroImage: t.heroImage ?? null,
+      landingHtml: t.landingHtml ?? null,
+      listIntroHtml: t.listIntroHtml ?? null,
+      listIntroImage: t.listIntroImage ?? null,
+      seoTitle: t.seoTitle ?? null,
+      seoDescription: t.seoDescription ?? null,
+      seoImage: t.seoImage ?? null,
+      seoKeywords: t.seoKeywords ?? [],
+    }));
+    const createPayload = {
+      slug: normalizedSlug, // Use normalized slug (accent-free)
+      brandId: dto.brandId,
+      isActive: dto.isActive ?? true,
+      primaryDomain: null as string | null,
+      languages,
+      translations: { create: translationRows },
+    };
+    let site;
+    try {
+      site = await this.prisma.site.create({
+        data: createPayload,
+        include: { translations: true, brand: true },
+      });
+    } catch (error) {
+      const optionalMissing =
+        isMissingColumn(error, "landingHtml") ||
+        isMissingColumn(error, "listIntroHtml") ||
+        isMissingColumn(error, "listIntroImage") ||
+        isMissingColumn(error);
+      if (!optionalMissing) throw error;
+      site = await this.prisma.site.create({
+        data: {
+          ...createPayload,
+          translations: {
+            create: translationRows.map(
+              ({
+                landingHtml: _landingHtml,
+                listIntroHtml: _listIntroHtml,
+                listIntroImage: _listIntroImage,
+                ...rest
+              }) => rest
+            ),
+          },
+        },
+        include: { translations: true, brand: true },
+      });
+    }
+
+    // A site key per published language keeps /:lang/:siteKey resolvable.
     const createdSiteKeys: string[] = [];
 
-    for (const lang of allLanguages) {
+    for (const lang of languages) {
       try {
         // Check if SiteKey already exists (shouldn't happen, but just in case)
         const existingKey = await this.prisma.siteKey.findFirst({
@@ -276,9 +605,9 @@ export class AdminSiteService {
       console.warn(
         `   This will cause "Site not found" errors. Please run: pnpm db:ensure-site-keys`
       );
-    } else if (createdSiteKeys.length < allLanguages.length) {
+    } else if (createdSiteKeys.length < languages.length) {
       console.warn(
-        `⚠️  WARNING: Only ${createdSiteKeys.length}/${allLanguages.length} SiteKeys were created for site ${site.id}`
+        `⚠️  WARNING: Only ${createdSiteKeys.length}/${languages.length} SiteKeys were created for site ${site.id}`
       );
       console.warn(`   Created: ${createdSiteKeys.join(", ")}`);
       console.warn(`   Please run: pnpm db:ensure-site-keys to fix missing SiteKeys`);
@@ -331,6 +660,37 @@ export class AdminSiteService {
         isFirstInstance = false;
       }
     }
+
+    const createdLanguages = languages.length ? languages : ["hu"];
+    if (dto.domains !== undefined) {
+      await this.syncDomains(site.id, dto.domains, createdLanguages);
+    } else if (dto.primaryDomain !== undefined) {
+      await this.syncDomains(
+        site.id,
+        dto.primaryDomain ? [{ domain: dto.primaryDomain, isPrimary: true }] : [],
+        createdLanguages
+      );
+    }
+
+    const requestedPlan = dto.plan;
+    const subscriptionPlan =
+      requestedPlan === "pro"
+        ? "PRO"
+        : requestedPlan === "business"
+          ? "BUSINESS"
+          : requestedPlan === "municipal"
+            ? "MUNICIPAL"
+            : requestedPlan
+              ? "BASIC"
+              : "FREE";
+    await this.prisma.siteSubscription.create({
+      data: {
+        siteId: site.id,
+        plan: subscriptionPlan,
+        status: "ACTIVE",
+        manualOverride: Boolean(requestedPlan),
+      },
+    });
 
     if (createdInstances.length === 0 && site.translations.length > 0) {
       console.warn(
@@ -403,7 +763,13 @@ export class AdminSiteService {
     if (dto.slug !== undefined) updateData.slug = dto.slug;
     if (dto.brandId !== undefined) updateData.brandId = dto.brandId;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
-    if (dto.primaryDomain !== undefined) updateData.primaryDomain = dto.primaryDomain;
+    const siteLanguages = normalizeLanguageList(site.languages ?? []);
+    const languageList = siteLanguages.length ? siteLanguages : ["hu"];
+    if (dto.domains !== undefined) {
+      await this.syncDomains(id, dto.domains, languageList);
+    } else if (dto.primaryDomain !== undefined) {
+      await this.syncPrimaryKeepingAliases(id, dto.primaryDomain, languageList);
+    }
 
     // Billing/subscription fields
     if (dto.plan !== undefined) updateData.plan = dto.plan;
@@ -417,6 +783,16 @@ export class AdminSiteService {
     }
     if (dto.planLimits !== undefined) updateData.planLimits = dto.planLimits;
     if (dto.billingEmail !== undefined) updateData.billingEmail = dto.billingEmail;
+    if (dto.languages !== undefined) {
+      const next = normalizeLanguageList(dto.languages);
+      if (!next.length) {
+        throw new BadRequestException("A településnek legalább egy nyelve kell.");
+      }
+      const current = normalizeLanguageList(site.languages ?? []);
+      await this.assertCanGrowLanguages(id, current, next);
+      updateData.languages = next;
+    }
+
     if (dto.allowPublicRegistration !== undefined) {
       // Only allow setting this for pro/business plans
       // Basic plan always allows public registration
@@ -429,13 +805,82 @@ export class AdminSiteService {
       updateData.allowPublicRegistration = dto.allowPublicRegistration;
     }
 
-    await this.prisma.site.update({
-      where: { id },
-      data: updateData,
-    });
+    if (dto.gaMeasurementId !== undefined) {
+      try {
+        updateData.gaMeasurementId = normalizeGaMeasurementId(dto.gaMeasurementId);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
+
+    if (dto.theme !== undefined) {
+      try {
+        updateData.theme = sanitizeSiteTheme(dto.theme);
+      } catch (err) {
+        throw new BadRequestException(
+          err instanceof Error ? err.message : "Invalid theme colors. Use #RRGGBB hex values."
+        );
+      }
+    }
+
+    try {
+      await this.prisma.site.update({
+        where: { id },
+        data: updateData,
+      });
+    } catch (error) {
+      if (
+        updateData.gaMeasurementId !== undefined &&
+        isMissingColumn(error, "gaMeasurementId")
+      ) {
+        throw new BadRequestException(
+          "Google Analytics field is not available yet. Run the database migration first."
+        );
+      }
+      if (updateData.theme !== undefined && isMissingColumn(error, "theme")) {
+        throw new BadRequestException(
+          "Site theme field is not available yet. Run the database migration first."
+        );
+      }
+      throw error;
+    }
+
+    if (dto.plan) {
+      const subscriptionPlan =
+        dto.plan === "pro"
+          ? "PRO"
+          : dto.plan === "business"
+            ? "BUSINESS"
+            : dto.plan === "municipal"
+              ? "MUNICIPAL"
+              : "BASIC";
+      await this.prisma.siteSubscription.upsert({
+        where: { siteId: id },
+        update: { plan: subscriptionPlan, manualOverride: true, ladderSuspended: false },
+        create: {
+          siteId: id,
+          plan: subscriptionPlan,
+          status: "ACTIVE",
+          manualOverride: true,
+          ladderSuspended: false,
+        },
+      });
+    }
+
+    if (updateData.languages) {
+      const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
+      await this.ensureSiteKeys(id, siteSlug, updateData.languages);
+    }
 
     if (dto.translations) {
       for (const translation of dto.translations) {
+        const code = normalizeLanguageCode(translation.lang);
+        if (!code) {
+          throw new BadRequestException(`Érvénytelen nyelvkód: "${translation.lang}".`);
+        }
+        translation.lang = code;
         // Check if translation already exists
         const existingTranslation = await this.prisma.siteTranslation.findUnique({
           where: {
@@ -446,36 +891,89 @@ export class AdminSiteService {
           },
         });
 
-        await this.prisma.siteTranslation.upsert({
-          where: {
-            siteId_lang: {
+        const translationBase = {
+          name: translation.name,
+          shortDescription: translation.shortDescription ?? null,
+          description: translation.description ?? null,
+          heroImage: translation.heroImage ?? null,
+          seoTitle: translation.seoTitle ?? null,
+          seoDescription: translation.seoDescription ?? null,
+          seoImage: translation.seoImage ?? null,
+          seoKeywords: translation.seoKeywords ?? [],
+        };
+        const landingPatch =
+          translation.landingHtml !== undefined
+            ? { landingHtml: translation.landingHtml || null }
+            : {};
+        const listIntroPatch = {
+          ...(translation.listIntroHtml !== undefined
+            ? { listIntroHtml: translation.listIntroHtml || null }
+            : {}),
+          ...(translation.listIntroImage !== undefined
+            ? { listIntroImage: translation.listIntroImage || null }
+            : {}),
+        };
+        try {
+          await this.prisma.siteTranslation.upsert({
+            where: {
+              siteId_lang: {
+                siteId: id,
+                lang: translation.lang,
+              },
+            },
+            update: { ...translationBase, ...landingPatch, ...listIntroPatch },
+            create: {
               siteId: id,
               lang: translation.lang,
+              ...translationBase,
+              landingHtml: translation.landingHtml || null,
+              listIntroHtml: translation.listIntroHtml || null,
+              listIntroImage: translation.listIntroImage || null,
             },
-          },
-          update: {
-            name: translation.name,
-            shortDescription: translation.shortDescription ?? null,
-            description: translation.description ?? null,
-            heroImage: translation.heroImage ?? null,
-            seoTitle: translation.seoTitle ?? null,
-            seoDescription: translation.seoDescription ?? null,
-            seoImage: translation.seoImage ?? null,
-            seoKeywords: translation.seoKeywords ?? [],
-          },
-          create: {
-            siteId: id,
-            lang: translation.lang,
-            name: translation.name,
-            shortDescription: translation.shortDescription ?? null,
-            description: translation.description ?? null,
-            heroImage: translation.heroImage ?? null,
-            seoTitle: translation.seoTitle ?? null,
-            seoDescription: translation.seoDescription ?? null,
-            seoImage: translation.seoImage ?? null,
-            seoKeywords: translation.seoKeywords ?? [],
-          },
-        });
+          });
+        } catch (error) {
+          const optionalMissing =
+            isMissingColumn(error, "landingHtml") ||
+            isMissingColumn(error, "listIntroHtml") ||
+            isMissingColumn(error, "listIntroImage") ||
+            isMissingColumn(error);
+          if (!optionalMissing) throw error;
+          try {
+            await this.prisma.siteTranslation.upsert({
+              where: {
+                siteId_lang: {
+                  siteId: id,
+                  lang: translation.lang,
+                },
+              },
+              update: { ...translationBase, ...landingPatch },
+              create: {
+                siteId: id,
+                lang: translation.lang,
+                ...translationBase,
+                landingHtml: translation.landingHtml || null,
+              },
+            });
+          } catch (retryError) {
+            if (!isMissingColumn(retryError, "landingHtml") && !isMissingColumn(retryError)) {
+              throw retryError;
+            }
+            await this.prisma.siteTranslation.upsert({
+              where: {
+                siteId_lang: {
+                  siteId: id,
+                  lang: translation.lang,
+                },
+              },
+              update: translationBase,
+              create: {
+                siteId: id,
+                lang: translation.lang,
+                ...translationBase,
+              },
+            });
+          }
+        }
 
         // If this is a new translation (didn't exist before), ensure SiteKey exists for this language
         // Note: We should ensure SiteKey exists for ALL languages, not just when translation is added
@@ -507,36 +1005,20 @@ export class AdminSiteService {
         }
       }
 
-      // After processing translations, ensure SiteKey exists for ALL languages
-      // This ensures the site is accessible via any language route
       const siteSlug = dto.slug ? generateSlug(dto.slug) : generateSlug(site.slug);
-      const allLanguages: Lang[] = ["hu", "en", "de"];
-      for (const lang of allLanguages) {
-        const existingKey = await this.prisma.siteKey.findFirst({
-          where: {
-            siteId: id,
-            lang,
-            slug: siteSlug,
-          },
-        });
-
-        if (!existingKey) {
-          await this.prisma.siteKey.create({
-            data: {
-              siteId: id,
-              lang,
-              slug: siteSlug,
-              isPrimary: true,
-              isActive: true,
-            },
-          });
-        } else if (!existingKey.isActive || !existingKey.isPrimary) {
-          // Ensure existing SiteKey is active and primary
-          await this.prisma.siteKey.update({
-            where: { id: existingKey.id },
-            data: { isActive: true, isPrimary: true },
-          });
+      const stored = await this.prisma.site.findUnique({
+        where: { id },
+        select: { languages: true },
+      });
+      const fromTranslations = dto.translations.map((item) => item.lang);
+      const published = normalizeLanguageList([...(stored?.languages ?? []), ...fromTranslations]);
+      if (published.length) {
+        const current = normalizeLanguageList(stored?.languages ?? []);
+        await this.assertCanGrowLanguages(id, current, published);
+        if (published.join() !== current.join()) {
+          await this.prisma.site.update({ where: { id }, data: { languages: published } });
         }
+        await this.ensureSiteKeys(id, siteSlug, published);
       }
     }
 

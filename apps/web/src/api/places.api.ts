@@ -46,29 +46,34 @@ export interface PlatformSettings extends PlatformSettingsDto {
 }
 
 // Legacy function - maps to new API endpoint
-export function getPlatformSettings(lang: string, siteKey?: string): Promise<PlatformSettings> {
+export function getPlatformSettings(
+  lang: string,
+  siteKey?: string,
+  options?: { signal?: AbortSignal }
+): Promise<PlatformSettings> {
   // Use new unified platform-settings endpoint with path parameters
   // If siteKey is not provided, use "default" as fallback
   const effectiveSiteKey = siteKey || "default";
-  return apiGetPublic<PlatformSettingsDto>(`/public/${lang}/${effectiveSiteKey}/platform`).then(
-    (dto) => ({
-      ...dto, // Include all PlatformSettingsDto fields
-      // Legacy fields for backward compatibility
-      siteName: dto.site.name,
-      siteDescription: dto.site.description || "",
-      seoTitle: dto.seo.defaultTitle || "",
-      seoDescription: dto.seo.defaultDescription || "",
-      defaultPlaceholderCardImage: dto.placeholders.placeCard || null,
-      defaultPlaceholderDetailHeroImage: dto.placeholders.placeHero || null,
-      defaultEventPlaceholderCardImage: dto.placeholders.eventCard || null,
-      brandBadgeIcon: dto.placeholders.avatar || null,
-      faviconUrl: dto.brand.faviconUrl || null,
-      // Additional fields
-      seoImage: dto.seoImage || null,
-      isCrawlable: dto.seo.indexable,
-      featureMatrix: dto.featureMatrix,
-    })
-  );
+  return apiGetPublic<PlatformSettingsDto>(
+    `/public/${lang}/${effectiveSiteKey}/platform`,
+    options
+  ).then((dto) => ({
+    ...dto, // Include all PlatformSettingsDto fields
+    // Legacy fields for backward compatibility
+    siteName: dto.site.name,
+    siteDescription: dto.site.description || "",
+    seoTitle: dto.seo.defaultTitle || "",
+    seoDescription: dto.seo.defaultDescription || "",
+    defaultPlaceholderCardImage: dto.placeholders.placeCard || null,
+    defaultPlaceholderDetailHeroImage: dto.placeholders.placeHero || null,
+    defaultEventPlaceholderCardImage: dto.placeholders.eventCard || null,
+    brandBadgeIcon: dto.placeholders.avatar || null,
+    faviconUrl: dto.brand.faviconUrl || null,
+    // Additional fields
+    seoImage: dto.seoImage || null,
+    isCrawlable: dto.seo.indexable,
+    featureMatrix: dto.featureMatrix,
+  }));
 }
 
 // Import new DTO type
@@ -81,7 +86,9 @@ export function getPlaces(
   priceBand?: string | string[],
   searchQuery?: string,
   limit?: number,
-  offset?: number
+  offset?: number,
+  kind?: "place" | "service" | "all",
+  town?: string
 ) {
   const effectiveSiteKey = siteKey || "default";
   const params = new URLSearchParams();
@@ -95,11 +102,41 @@ export function getPlaces(
     priceBands.forEach((pb) => params.append("priceBand", pb));
   }
   if (searchQuery) params.append("q", searchQuery);
+  if (kind) params.append("kind", kind);
+  if (town) params.append("town", town);
   if (limit) params.append("limit", limit.toString());
   if (offset) params.append("offset", offset.toString());
   const queryString = params.toString();
   return apiGetPublic<Place[]>(
     `/public/${lang}/${effectiveSiteKey}/places${queryString ? `?${queryString}` : ""}`
+  );
+}
+
+export interface PublicTown {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  heroImage: string | null;
+  lat: number | null;
+  lng: number | null;
+  /** Resolved GA4 ID for this town (Town > Site). */
+  gaMeasurementId?: string | null;
+  placeCount: number;
+}
+
+export interface PublicTownsResponse {
+  isRegion: boolean;
+  towns: PublicTown[];
+}
+
+export function getPublicTowns(lang: string, siteKey: string, searchQuery?: string) {
+  const effectiveSiteKey = siteKey || "default";
+  const params = new URLSearchParams();
+  if (searchQuery) params.append("q", searchQuery);
+  const queryString = params.toString();
+  return apiGetPublic<PublicTownsResponse>(
+    `/public/${lang}/${effectiveSiteKey}/towns${queryString ? `?${queryString}` : ""}`
   );
 }
 
@@ -387,6 +424,8 @@ export interface Event {
     avg: number | null; // Average rating (1-5)
     count: number | null; // Number of ratings
   };
+  /** Resolved GA4 ID for this page (Event > Place > Town > Site). Null = none. */
+  gaMeasurementId?: string | null;
   seo: {
     title: string | null;
     description: string | null;
@@ -436,6 +475,7 @@ export function getEventById(lang: string, siteKey: string, eventId: string) {
 export interface Site {
   id: string;
   slug: string;
+  primaryDomain?: string | null;
   name: string;
   shortDescription: string | null;
   description: string | null;

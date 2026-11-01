@@ -1,6 +1,10 @@
 // src/components/ErrorBoundary.tsx
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { ErrorPage } from "../pages/ErrorPage";
+import { useTranslation } from "react-i18next";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { DEFAULT_LANG, DEFAULT_SITE_SLUG, HAS_MULTIPLE_SITES, type Lang, isLang } from "../app/config";
+import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
+import { devLog } from "../lib/devLog";
 
 interface Props {
   children: ReactNode;
@@ -9,51 +13,51 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    this.setState({ errorInfo });
+    devLog.error("[ErrorBoundary] caught error:", error, errorInfo);
   }
 
   render() {
-    if (this.state.hasError && this.state.error) {
-      // Create a route error response-like object for ErrorPage
-      const routeError = {
-        status: 500,
-        statusText: "Internal Error",
-        data: {
-          message: this.state.error.message || "An unexpected error occurred",
-          error: this.state.error.name || "Error",
-          stack: import.meta.env.DEV ? this.state.error.stack : undefined,
-        },
-      };
-
-      // We need to render ErrorPage, but it uses useRouteError hook
-      // So we'll create a wrapper that provides the error via context or props
-      return <ErrorPageWrapper error={routeError} />;
+    if (this.state.hasError) {
+      return (
+        <ServerErrorFallback
+          stack={import.meta.env.DEV ? this.state.error?.stack : undefined}
+        />
+      );
     }
 
     return this.props.children;
   }
 }
 
-// Wrapper component to provide error to ErrorPage
-// Uses the same blue theme as ErrorPage for 500 errors
-function ErrorPageWrapper({ error }: { error: any }) {
-  // Use the same blue gradient theme as ErrorPage for 500 errors
+/** Dedicated 500 experience — distinct from NotFoundPage (404) and EmptyResults. */
+function ServerErrorFallback({ stack }: { stack?: string }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  const { data: sitesCountData } = useActiveSitesCount();
+
+  const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
+  const siteSlug = shouldShowSiteSlug ? DEFAULT_SITE_SLUG : undefined;
+  const homePath = siteSlug ? `/${lang}/${siteSlug}` : `/${lang}`;
+
   const theme = {
     gradient: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-    accentColor: "rgba(255, 255, 255, 0.2)",
     textColor: "white",
   };
 
@@ -72,7 +76,6 @@ function ErrorPageWrapper({ error }: { error: any }) {
         overflow: "hidden",
       }}
     >
-      {/* Animated background elements - same as ErrorPage */}
       <div
         style={{
           position: "absolute",
@@ -86,33 +89,6 @@ function ErrorPageWrapper({ error }: { error: any }) {
           pointerEvents: "none",
         }}
       />
-      <div
-        style={{
-          position: "absolute",
-          top: "20%",
-          right: "10%",
-          width: "300px",
-          height: "300px",
-          background: "rgba(255, 255, 255, 0.1)",
-          borderRadius: "50%",
-          filter: "blur(40px)",
-          animation: "pulse 4s infinite ease-in-out",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: "10%",
-          left: "10%",
-          width: "200px",
-          height: "200px",
-          background: "rgba(255, 255, 255, 0.1)",
-          borderRadius: "50%",
-          filter: "blur(30px)",
-          animation: "pulse 6s infinite ease-in-out",
-          animationDelay: "2s",
-        }}
-      />
 
       <style>
         {`
@@ -120,19 +96,9 @@ function ErrorPageWrapper({ error }: { error: any }) {
             0% { transform: translate(0, 0) rotate(0deg); }
             100% { transform: translate(-50px, -50px) rotate(360deg); }
           }
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.8; }
-          }
           @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
           }
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -176,7 +142,7 @@ function ErrorPageWrapper({ error }: { error: any }) {
             textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
           }}
         >
-          Internal Error
+          {t("error.internalServerError")}
         </h2>
         <p
           style={{
@@ -187,9 +153,9 @@ function ErrorPageWrapper({ error }: { error: any }) {
             textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
           }}
         >
-          {error.data?.message || "An unexpected error occurred"}
+          {t("error.serverErrorDescription")}
         </p>
-        {import.meta.env.DEV && error.data?.stack && (
+        {import.meta.env.DEV && stack && (
           <details
             style={{
               marginBottom: 32,
@@ -211,7 +177,7 @@ function ErrorPageWrapper({ error }: { error: any }) {
                 marginBottom: 8,
               }}
             >
-              Error Details
+              {t("error.errorDetails")}
             </summary>
             <pre
               style={{
@@ -223,37 +189,61 @@ function ErrorPageWrapper({ error }: { error: any }) {
                 margin: 0,
               }}
             >
-              {error.data.stack}
+              {stack}
             </pre>
           </details>
         )}
-        <button
-          onClick={() => window.location.reload()}
-          style={{
-            padding: "14px 32px",
-            background: "white",
-            color: "#6366f1",
-            border: "none",
-            borderRadius: "12px",
-            fontWeight: 600,
-            fontSize: 16,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
-          }}
-        >
-          Reload Page
-        </button>
+        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+          <Link
+            to={homePath}
+            style={{
+              padding: "14px 32px",
+              background: "white",
+              color: "#6366f1",
+              textDecoration: "none",
+              borderRadius: "12px",
+              fontWeight: 600,
+              fontSize: 16,
+              display: "inline-block",
+            }}
+          >
+            {t("error.goHome")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              padding: "14px 32px",
+              background: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              border: "2px solid rgba(255, 255, 255, 0.5)",
+              borderRadius: "12px",
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: "pointer",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            {t("error.goBack")}
+          </button>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "14px 32px",
+              background: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              border: "2px solid rgba(255, 255, 255, 0.5)",
+              borderRadius: "12px",
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: "pointer",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            {t("error.reload")}
+          </button>
+        </div>
       </div>
     </div>
   );

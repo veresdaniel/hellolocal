@@ -5,104 +5,224 @@
   },
   "explore": {
     "title": "Felfedezés",
+    "siteTitle": "{{name}} felfedezése",
     "description": "Helyi élmények: borászat, gasztro, szállás, kézműves."
   },
   "listView": "Lista nézet",
   "mapView": "Térkép nézet",
+  "region": {
+    "eyebrow": "Régió",
+    "lead": "Válassz települést, vagy nézd meg az egész régiót a térképen.",
+    "townsHeading": "Települések",
+    "searchTowns": "Keresés települések között…",
+    "noTowns": "Nincs találat",
+    "placeCount": "{{count}} hely",
+    "openTown": "Megnyitás"
+  },
   "overview": {
     "menu": "Áttekintés",
-    "eyebrow": "Önkormányzatoknak és turisztikai irodáknak",
-    "title": "A város, amit a látogató egy térképen talál meg",
-    "lead": "A HelloLocal a helyi helyek, a programok és a térkép egy oldalon. Magyarul, angolul és németül. A szerkesztő feltölti, a vendég a telefonján nyitja meg. Külön alkalmazás nélkül.",
-    "seoTitle": "HelloLocal | Települési térkép, programok és helyek",
-    "seoDescription": "Helyek, események és egy közös térkép magyarul, angolul és németül. Önkormányzatoknak, turisztikai irodáknak és desztinációknak.",
-    "keywords": "települési turizmus, helyi térkép, programnaptár, turisztikai iroda, desztináció, HelloLocal",
+    "eyebrow": "Önkormányzatoknak, turisztikai irodáknak és helyi vállalkozóknak",
+    "title": "A látogató egy térképen találja meg, ami nálatok van",
+    "lead": "Helyek, programok és a térkép egy oldalon vannak. A vendég a telefonján nyitja meg, és elindul.",
+    "differenceKicker": "Miért más",
+    "differenceTitle": "A kevésbé ismert hely is kap vendéget",
+    "differenceLead": "A műhely, a pince és a mellékutca is fent van a térképen. Aki a helyet viszi, a saját lapját írja. A hivatal vagy az iroda egy linken adja tovább a vendégnek.",
+    "seoTitle": "HelloLocal | Helyi helyek, kézművesek és környékek egy térképen",
+    "seoDescription": "Kézművesek, helyi szolgáltatások és a kevésbé látható helyek egy térképen. Hivataloknak, turisztikai irodáknak és azoknak, akik nincsenek a főutcán.",
+    "keywords": "helyi vállalkozás, kézműves, helyi szolgáltatás, település, régió, önkormányzat, turisztikai iroda, HelloLocal",
     "cta": "Nézd meg élőben",
     "ctaSecondary": "Hogyan működik",
     "shotCaption": "Szeged a térképen: a helyek, a szűrők és a következő programok egy képernyőn.",
     "shotLabel": "Élő térkép",
-    "statsLanguages": "nyelv, saját címmel",
+    "statsLanguagesValue": "Több",
+    "statsLanguages": "nyelv, mindegyik a saját címén",
     "statsMap": "térkép a helyeknek és a programoknak",
     "statsApp": "letöltés a vendégnek",
-    "featuresTitle": "Ami a vendéget ott tartja",
-    "featuresLead": "Nem egy újabb brosúra. Egy oldal, amin a látogató eldönti, hova menjen ma délután.",
-    "stepsTitle": "Három lépés, és már böngészik",
-    "audienceTitle": "Kinek éri meg",
+    "featuresTitle": "Amit a vendég használni tud",
+    "featuresLead": "Nyitvatartás, a mai program, és az a hely is, amelyik nincs a főtéren.",
+    "stepsTitle": "Három lépés a vendégig",
+    "difference": {
+      "hidden": {
+        "title": "Amit eddig csak a helyiek ismertek",
+        "text": "Udvar, műhely, piaci asztal, pince, egy sarokkal beljebb. Felkerül a térképre, és a vendég odatalál."
+      },
+      "traffic": {
+        "title": "Vendég, kis hirdetési keretből",
+        "text": "A hivatal vagy az iroda linkje hozza a látogatót. A hirdetési keret kicsi maradhat."
+      },
+      "region": {
+        "title": "Egy régió, külön térképekkel",
+        "text": "Több település elfér egymás mellett, mindegyik a saját közönségével. A kézműves megmarad a saját környékén."
+      }
+    },
+    "storiesTitle": "Kinek szól",
+    "storiesLead": "A kézművesnek, a szolgáltatónak, és annak a hivatalnak vagy irodának, amelyik egy linken adja tovább őket a vendégnek.",
     "faqTitle": "Amit általában megkérdeznek",
-    "closingTitle": "A következő vendég már a telefonján keres.",
-    "closingText": "Nyisd meg a térképet, nézd meg a programokat, és képzeld a saját településed helyeit a pontok helyére.",
+    "closingTitle": "A következő vendég a térképről indul.",
+    "closingText": "Nyisd meg, és képzeld a saját helyeidet a pontok helyére: a műhelyt, a pincét, a szolgáltatást vagy az egész környéket.",
     "steps": {
       "collect": {
-        "title": "Összegyűjtöd a helyeket",
-        "text": "Borászat, sétány, múzeum, piac. Kategória, nyitvatartás, kép és egy rövid szöveg. Mindegyiknek saját címe van, amit el lehet küldeni."
+        "title": "Felkerül, aki eddig kimaradt",
+        "text": "Műhely, bolt, pince, szolgáltatás. Kép, nyitvatartás, és egy oldal, amit a vendég továbbküldhet."
       },
       "publish": {
-        "title": "Kirakod a programokat",
-        "text": "A következő hetek eseményei a térkép mellett jelennek meg. A kiemelt program feljebb kerül, a lejárt pedig eltűnik."
+        "title": "A programok naprakészek maradnak",
+        "text": "A következő hetek a térkép mellett vannak. Ami véget ért, lekerül, ami ezen a hétvégén van, elöl marad."
       },
       "share": {
-        "title": "Átadod a látogatónak",
-        "text": "Egy link magyarul, angolul vagy németül. A vendég szűr, ráközelít, és elindul. Nincs áruház, nincs regisztráció."
+        "title": "Egy link a vendégnek",
+        "text": "A saját nyelvén nyitja meg, szűr, és elindul. A telefon böngészőjében működik."
       }
     },
     "faq": {
       "app": {
         "q": "Kell a vendégnek alkalmazást letöltenie?",
-        "a": "Nem. A térkép és a programok a böngészőben nyílnak, telefonon és számítógépen is."
+        "a": "A térkép és a programok a böngészőben nyílnak, telefonon és számítógépen is."
       },
       "languages": {
         "q": "Külön oldal készül minden nyelvhez?",
-        "a": "A tartalom magyar, angol és német lehet, mindegyiknek saját webcíme van. A kereső így a megfelelő nyelven találja meg."
+        "a": "Ahány nyelven a vendég érkezik, annyi külön cím készül. A kereső a megfelelő nyelven találja meg."
       },
       "editors": {
-        "q": "Ki tudja frissíteni a szöveget?",
-        "a": "A szerkesztők és a helyek gazdái a saját jogosultságukkal dolgoznak. A szövegszerkesztő a leírásokhoz van, a belépéshez kétlépcsős azonosítás is bekapcsolható."
+        "q": "Ki írja a szöveget?",
+        "a": "Aki a helyet viszi: a kézműves, a szolgáltató, vagy a hivatal és az iroda munkatársa. Mindenki a saját részét gondozza."
       },
       "towns": {
         "q": "Egy rendszerben elfér több település?",
-        "a": "Igen. Minden település vagy desztináció saját tartalmat, térképet és szerkesztőket kap, a látogató pedig csak a sajátját látja."
+        "a": "Igen. Egy régió több települést is vihet. Mindegyiknek saját térképe és programja van, a vendég a megnyitott helyszínnél marad."
       }
     },
     "features": {
       "places": {
-        "title": "Helyek, amiket érdemes megnyitni",
-        "text": "Kategória, ár, nyitvatartás és egy oldal, amit a vendég elküldhet a társaságnak. Nem egy táblázat: egy cím, egy kép, egy ok, hogy odamenjen."
+        "title": "A műhely is megtalálható",
+        "text": "Nyitvatartással és egy oldallal kerül a térképre, amit a vendég továbbküldhet. A kevésbé ismert hely is látszik."
       },
       "events": {
-        "title": "A következő program, nem a tavalyi plakát",
-        "text": "Az események a térkép szélén sorakoznak, időrendben. Ami véget ért, lekerül. Ami kiemelt, elöl marad."
+        "title": "A hétvégi program elöl marad",
+        "text": "Ami véget ért, lekerül. Ami most van soron, azt látja a vendég először."
       },
       "map": {
-        "title": "Egy térkép, amin el lehet indulni",
-        "text": "A pontok a helyek. A szűrő megmondja, mi van nyitva, mi esőbiztos, és hol van ma program. Mobilon a panel alulról nyílik, a térkép közben látható marad."
+        "title": "Erről a térképről el lehet indulni",
+        "text": "A vendég látja, mi van nyitva, mi jó esőben, és hol van ma program. Telefonon is használható marad."
       },
       "languages": {
-        "title": "Az a nyelv, amin a vendég keres",
-        "text": "Magyar, angol és német tartalom, külön webcímen. A külföldi látogató nem egy lefordított szórólapot kap, hanem ugyanazt a térképet a saját nyelvén."
+        "title": "A vendég a saját nyelvén olvassa",
+        "text": "A tartalom a vendég nyelvén készül, azon a címen, amin keres. Ugyanazt a térképet kapja."
       },
       "sites": {
-        "title": "Több település, tiszta határokkal",
-        "text": "Egy desztináció több helyszínt vihet. Mindegyiknek saját tartalma, térképe és szerkesztői vannak, a látogató pedig nem keveredik el egy másik város programjai között."
+        "title": "Több település, külön programokkal",
+        "text": "Egy régió több helyszínt is összefoghat. Mindegyik térképe és programja külön marad, a vendég nem csúszik át a szomszédba."
       },
       "editors": {
-        "title": "A helyi szerkesztő, nem egy ügynökség",
-        "text": "A szöveget az írja, aki ismeri a helyet. Szerepkörök választják el a városi szerkesztőt a hely tulajdonosától. A változás a nyilvános oldalon jelenik meg."
+        "title": "Aki a helyet viszi, az írja",
+        "text": "A kézműves, a szolgáltató vagy a település munkatársa a saját szövegét gondozza. A vendég azt látja, ami éppen igaz."
       }
     },
-    "audience": {
-      "municipality": {
-        "title": "Önkormányzat",
-        "text": "A városi programok, a sétány és a piac végre egy linken élnek, nem három külön Facebook-eseményben."
+    "stories": {
+      "maker": {
+        "kicker": "Kézműves",
+        "title": "A műhely saját oldalt kap",
+        "text": "Kerámia, textil, lekvár, méz. Kép, nyitvatartás, és egy pont, amit a vendég továbbküldhet.",
+        "alt": "Kézzel készült kerámiatálak egy műhelyasztalon"
       },
-      "office": {
-        "title": "Turisztikai iroda",
-        "text": "A külföldi vendég angolul vagy németül kapja ugyanazt a térképet, amit a helyiek magyarul használnak."
+      "service": {
+        "kicker": "Helyi szolgáltatás",
+        "title": "A saját neve van elöl",
+        "text": "Fodrász, szabó, biciklis, masszőr. A vendég a környéket nézi, és az ő nevüket, az ő címüket látja.",
+        "alt": "Kis biciklis műhely, szerszámokkal és egy kerékkel a padon"
       },
-      "destination": {
-        "title": "Desztináció és borvidék",
-        "text": "Több település egy rendszerben, mindegyik a saját helyeivel. A látogató a borvidéket járja, nem egy közös, kevert listát."
+      "quiet": {
+        "kicker": "Ami nincs szem előtt",
+        "title": "Egy sarokkal beljebb",
+        "text": "Udvar, műhely, piaci asztal, a főutcától elfordulva. Felkerül az is, akit eddig csak a helyiek ismertek.",
+        "alt": "Nyitott udvar kapuja egy csendes mellékutcában"
+      },
+      "town": {
+        "kicker": "Hivatal és turisztikai iroda",
+        "title": "Aki össze tudja gyűjteni őket",
+        "text": "Összegyűjti a helyi vállalkozókat, és egy linken adja tovább a látogatónak, a vendég nyelvén.",
+        "alt": "Élő térkép a helyi helyekkel és programokkal"
+      }
+    },
+    "plansTitle": "Három csomag",
+    "plansLead": "Havonta, forintban. Szólhat egy műhelynek, egy szolgáltatónak vagy egy egész környéknek.",
+    "plans": {
+      "priceUnit": "Ft / hó",
+      "freePrice": "Ingyenes",
+      "freeForever": "örökre, számla nélkül",
+      "places": "{{count}} hely a térképen",
+      "eventsNone": "Programok nélkül, amíg kipróbálod",
+      "events": "{{count}} program havonta",
+      "languagesOne": "Magyar nyelv, saját címmel",
+      "languages": "{{count}} nyelv, mindegyik saját címmel",
+      "adminNote": "A hely / program / nyelv számok a jogosultsági mátrixszal együtt mentődnek, és a kártyákon a {{count}} sablonokba kerülnek. A nevek és a pitch kézzel szerkeszthető. Az önkormányzati csomagnak nincs mátrix-limit syncje.",
+      "save": "Csomagok mentése",
+      "saving": "Mentés…",
+      "fields": {
+        "priceHuf": "Havi díj (Ft)",
+        "places": "Helyek",
+        "events": "Programok havonta",
+        "languages": "Nyelvek"
+      },
+      "free": {
+        "name": "Ingyenes",
+        "kicker": "Kipróbálás",
+        "pitch": "Pár hely, magyarul. Megnézheted a térképet, mielőtt bárki számlát kapna.",
+        "cta": "Ingyenesen"
+      },
+      "basic": {
+        "name": "Alap",
+        "kicker": "Egy településnek és a vállalkozóinak",
+        "badge": "A szokásos választás",
+        "pitch": "Műhely, szolgáltatás és a hétvégi program, egy linken. A vállalkozó kitölti a saját oldalát, a település pedig továbbküldi a linket.",
+        "cta": "Alapcsomaggal"
+      },
+      "premium": {
+        "name": "Prémium",
+        "kicker": "Egy egész régiónak",
+        "pitch": "Több nyelv, kiemelt helyek. A kézműves és a település egy térképen várja a vendéget, angolul és németül is.",
+        "cta": "Prémiummal"
+      },
+      "municipal": {
+        "name": "Önkormányzati",
+        "kicker": "Egyedi ajánlat",
+        "pitch": "Akárhány hely a térképen. Az árat a településhez írjuk, nincs fix díj.",
+        "cta": "Egyedi árat kérek",
+        "places": "Akárhány hely a térképen",
+        "events": "A programkeret az ajánlat része",
+        "languages": "A nyelvek az ajánlat része"
+      },
+      "quote": {
+        "organization": "Szervezet",
+        "contactName": "Kapcsolattartó",
+        "email": "Email",
+        "message": "Rövid üzenet",
+        "submit": "Ajánlatot kérek",
+        "sending": "Küldés…",
+        "sent": "Elküldtük a kérést. Jelentkezünk.",
+        "stored": "Rögzítettük a kérést. Email még nem ment ki, a levélküldés nincs beállítva.",
+        "noRecipient": "Rögzítettük a kérést. Nincs beállítva címzett, ezért email nem ment ki.",
+        "failed": "A kérést nem sikerült rögzíteni. Próbáld újra.",
+        "required": "Töltsd ki a szervezetet, a nevet, az emailt és az üzenetet.",
+        "invalidEmail": "Ez nem tűnik email címnek."
+      },
+      "recipient": {
+        "label": "Ajánlatkérések email címe",
+        "help": "Az önkormányzati ajánlatkérés ide érkezik. Ha üresen mented, a kérést rögzítjük, de nem küldünk levelet.",
+        "save": "Címzett mentése",
+        "saved": "A címzett elmentve."
       }
     }
+  },
+  "catalog": {
+    "title": "Termékkatalógus",
+    "lead": "Árak és képek, vásárlás nélkül. A hely kínálata kártyákon, szűrhetően.",
+    "search": "Keresés a termékek között",
+    "all": "Összes",
+    "empty": "Ehhez a szűréshez nincs termék.",
+    "error": "A katalógus most nem tölthető.",
+    "prev": "Előző",
+    "next": "Következő"
   },
   "place": {
     "title": "Hely részletei",
@@ -158,7 +278,7 @@
       "heroImage": "Hero kép",
       "contacts": "Kapcsolatok (tel/email/web)",
       "extraFields": "Extra mezők (extras JSON)",
-      "galleriesMax": "Galériák száma (site admin + retail user)",
+      "galleriesMax": "Galériák száma (hely admin + retail user)",
       "imagesPerGalleryMax": "Képek / galéria",
       "galleriesPerPlaceMax": "Galériák / hely (retail user)",
       "galleriesPerEventMax": "Galériák / esemény (retail user)",
@@ -166,21 +286,22 @@
       "featuredBoost": "Kiemelt boost (ranking weight)",
       "eventsEnabled": "Események engedélyezve",
       "eventsPerMonth": "Események száma / hó",
-      "siteSeo": "Site SEO (title/desc/image)",
+      "siteSeo": "Hely SEO (title/desc/image)",
       "placeSeo": "Place SEO mezők",
       "canonicalSupport": "Canonical/redirect támogatás",
       "customDomain": "Custom domain",
       "multipleDomainAliases": "Több domain alias",
       "max5": "✓ (max 5)",
       "additionalLanguages": "További nyelvek (hu+en+de)",
-      "siteMembers": "Site tagok (memberships)",
+      "siteMembers": "Hely tagok (memberships)",
       "eventLog": "Event log",
       "pushSubscription": "PushSubscription",
       "optionalAddon": "optional add-on",
       "placeImages": "Képek száma",
       "featuredPlacement": "Kiemelt megjelenés",
       "placeTitle": "Helyszín csomagok",
-      "placeSubtitle": "Válassz egy csomagot a helyszíned számára"
+      "placeSubtitle": "Válassz egy csomagot a helyszíned számára",
+      "eventsPerPlace": "{{count}} esemény / hely"
     },
     "featureMatrix": {
       "feature": "Funkció"
@@ -211,8 +332,8 @@
   "errorLoadingPlaces": "Hiba a helyek betöltésekor",
   "noPlacesFound": "Nincs találat",
   "sites": {
-    "title": "Site-ok",
-    "description": "Fedezd fel a site-okat"
+    "title": "Régiók",
+    "description": "Fedezd fel a régiókat"
   },
   "collections": {
     "title": "Kurátori listák",
@@ -223,8 +344,8 @@
     "noItems": "Még nincs elem ebben a listában",
     "highlighted": "Kiemelt"
   },
-  "searchSites": "Keresés site-ok között...",
-  "errorLoadingSites": "Hiba a site-ok betöltésekor",
+  "searchSites": "Keresés régiók között...",
+  "errorLoadingSites": "Hiba a régiók betöltésekor",
   "noSitesFound": "Nincs találat",
   "staticPages": {
     "title": "Statikus Oldalak",
@@ -250,10 +371,20 @@
     "description": "Fedezd fel az eseményeket"
   },
   "events": "Események",
+  "services": "Helyi szolgáltatások",
+  "servicesTab": "Szolgáltatások",
+  "parentPlace": "Település",
+  "noServices": "Még nincs helyi szolgáltatás.",
+  "placesTab": "Helyek",
   "noEvents": "Nincs esemény",
   "contact": "Kapcsolat",
   "menu": "Menü",
   "noResults": "Nincs találat",
+  "emptyResultsSearchHint": "Nincs találat a keresési feltételekre. Próbálj más kulcsszót vagy szűrőt.",
+  "emptyResultsDefaultHint": "Jelenleg nincs megjeleníthető elem.",
+  "emptySitesSearchHint": "Nincs régió, ami megfelelne a keresési feltételeknek.",
+  "emptySitesDefaultHint": "Jelenleg nincs elérhető régió.",
+  "tryAgainLater": "Kérjük, próbáld újra később.",
   "filtersTitle": "Szűrők",
   "placeSlugMissing": "Részletek hamarosan...",
   "close": "Bezárás",
@@ -261,12 +392,12 @@
   "filters": {
     "all": "Összes",
     "openNow": "Most nyitva",
-    "eventToday": "Ma van esemény",
-    "within10MinutesWalk": "10 perc séta ide",
-    "rainSafe": "Esőbiztos program",
+    "eventToday": "Mai program",
+    "within10MinutesWalk": "10 perc sétára",
+    "rainSafe": "Esőben is jó",
     "contextFilters": "Kontextus alapú szűrők",
-    "categories": "Kategóriák",
-    "price": "Ár",
+    "categories": "Hely típusa",
+    "price": "Árkategória",
     "clear": "Törlés"
   },
   "yourLocation": "Itt vagy most.",
@@ -277,7 +408,7 @@
   "routeDistance": "útvonal",
   "walkingTime": "Sétálási idő",
   "calculatingRoute": "Útvonal számítása...",
-  "clickAgainToNavigate": "Kattints újra a navigációhoz",
+  "startNavigation": "Navigáció",
   "tooFarAway": "Túl messze ({{distance}} km-nél távolabb)",
   "hour": "óra",
   "hours": "óra",
@@ -306,5 +437,6 @@
     "title": "Helyszín alaprajza",
     "subtitle": "Kattints a pontokra a helyiségek megtekintéséhez",
     "openFullscreen": "Megnyitás teljes képernyőn"
-  }
+  },
+  "location": "Helyszín"
 }

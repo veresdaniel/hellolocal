@@ -13,21 +13,18 @@ import { LanguageSelector } from "./LanguageSelector";
 import { ToastContainer } from "./Toast";
 import { VersionDisplay } from "./VersionDisplay";
 import { Link, useLocation, useParams, useNavigation, useNavigate } from "react-router-dom";
-import { buildUrl } from "../app/urls";
 import {
-  APP_LANGS,
   DEFAULT_LANG,
   HAS_MULTIPLE_SITES,
-  DEFAULT_SITE_SLUG,
   type Lang,
+  isLang,
 } from "../app/config";
 import { AdminPageSkeleton } from "./AdminPageSkeleton";
+import { isSuperadmin } from "../utils/roleHelpers";
+import type { UserRole } from "../types/enums";
 import "../styles/sessionWarning.css";
 import "../styles/admin-inputs.css";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -137,10 +134,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Get selected site from AdminSiteContext
   const siteContext = useContext(AdminSiteContext);
-  const selectedSiteId = siteContext?.selectedSiteId;
-  const sites = siteContext?.sites ?? [];
   const siteError = siteContext?.error ?? null;
-  const currentSite = sites.find((s) => s.id === selectedSiteId);
 
   const { showWarning, secondsRemaining } = useSessionWarning();
 
@@ -220,18 +214,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     await logout(true); // Manual logout - will be redirected to admin login
   };
 
-  const isActive = (path: string) => location.pathname === path;
-
   // Helper to build admin paths with language
   const adminPath = (subPath: string) => `/${lang}/admin${subPath}`;
 
-  // Build public page path based on selected site
-  const publicPagePath = currentSite
-    ? buildUrl({ siteKey: currentSite.slug, lang, path: "" })
-    : buildUrl({ siteKey: DEFAULT_SITE_SLUG, lang, path: "" });
-
-  // Navigation links removed - now displayed as cards on the dashboard
-  const navLinks: Array<{ path: string; label: string; icon: string; color: string }> = [];
+  // Primary header chrome only (language, Régió, user/logout). Destinations live on dashboard cards.
+  const userRole = (user?.role ?? null) as UserRole | null;
+  const userIsSuperadmin = userRole ? isSuperadmin(userRole) : false;
 
   return (
     <div
@@ -278,8 +266,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }
       `}</style>
 
+      <a href="#admin-main" className="hl-skip-link">
+        {t("common.skipToContent", { defaultValue: "Ugrás a tartalomra" })}
+      </a>
+
       {/* Header */}
       <nav
+        aria-label={t("admin.header.title") || "Adminisztrációs felület"}
         style={{
           background: "white",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
@@ -314,7 +307,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               to={adminPath("")}
               style={{
                 textDecoration: "none",
-                color: "#667eea",
+                color: "var(--hl-ink, #1b1730)",
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
@@ -341,73 +334,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
             {/* Note: Dynamic logo/siteName removed - always show fixed "Adminisztrációs felület" title in admin */}
             {/* Public pages (FloatingHeader, Header) still use dynamic logo from platformSettings */}
-
-            {/* Desktop Navigation - Tile Menu */}
-            {!isMobile && (
-              <div
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  flexWrap: "nowrap",
-                  alignItems: "center",
-                  pointerEvents: "auto",
-                  position: "relative",
-                  zIndex: 1001,
-                  alignSelf: "center",
-                }}
-              >
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={adminPath(link.path)}
-                    style={{
-                      textDecoration: "none",
-                      color: isActive(adminPath(link.path)) ? link.color || "#667eea" : "#666",
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      padding: "8px 14px",
-                      borderRadius: 8,
-                      background: isActive(adminPath(link.path))
-                        ? `${link.color || "#667eea"}15`
-                        : "rgba(0, 0, 0, 0.03)",
-                      border: isActive(adminPath(link.path))
-                        ? `2px solid ${link.color || "#667eea"}40`
-                        : "2px solid transparent",
-                      transition: "all 0.2s ease",
-                      whiteSpace: "nowrap",
-                      pointerEvents: "auto",
-                      position: "relative",
-                      zIndex: 1002,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      boxShadow: isActive(adminPath(link.path))
-                        ? `0 2px 8px ${link.color || "#667eea"}20`
-                        : "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive(adminPath(link.path))) {
-                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive(adminPath(link.path))) {
-                        e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)";
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }
-                    }}
-                  >
-                    <span style={{ fontSize: 16 }}>{link.icon}</span>
-                    <span>{link.label}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Right section - Actions */}
@@ -446,8 +372,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Language Selector */}
             {!isMobile && <LanguageSelector />}
 
-            {/* Site Selector */}
-            {!isMobile && HAS_MULTIPLE_SITES && <SiteSelector />}
+            {/* Site / Régió selector — superadmin only; region-bound users keep assigned site via context */}
+            {!isMobile && HAS_MULTIPLE_SITES && userIsSuperadmin && <SiteSelector />}
 
             {/* User Dropdown */}
             {!isMobile && <UserInfoDropdown />}
@@ -455,6 +381,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Logout Button (Desktop) */}
             {!isMobile && (
               <button
+                type="button"
                 onClick={handleLogout}
                 style={{
                   padding: "8px 12px",
@@ -481,6 +408,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
                 title={t("admin.logout")}
+                aria-label={t("admin.logout")}
               >
                 <svg
                   width="20"
@@ -491,6 +419,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  aria-hidden="true"
                 >
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
@@ -499,10 +428,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </button>
             )}
 
-            {/* Mobile Menu Button - only show if there are nav links */}
-            {isMobile && navLinks.length > 0 && (
+            {/* Mobile Menu Button — language / Régió / user / logout */}
+            {isMobile && (
               <button
+                type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="admin-mobile-menu"
+                aria-label={
+                  isMobileMenuOpen
+                    ? t("common.close")
+                    : t("public.menu", { defaultValue: "Menü" })
+                }
                 style={{
                   padding: 8,
                   background: isMobileMenuOpen ? "#667eea" : "#f0f0ff",
@@ -561,6 +498,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Mobile Menu */}
         {isMobile && isMobileMenuOpen && (
           <div
+            id="admin-mobile-menu"
             style={{
               position: "absolute",
               top: "100%",
@@ -597,62 +535,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             )}
 
-            {/* Mobile Nav Links - Tile Grid */}
-            <div
-              style={{
-                marginBottom: 16,
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 12,
-              }}
-            >
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={adminPath(link.path)}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "20px 16px",
-                    color: isActive(adminPath(link.path)) ? link.color || "#667eea" : "#333",
-                    textDecoration: "none",
-                    fontSize: 14,
-                    fontWeight: isActive(adminPath(link.path)) ? 600 : 500,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: isActive(adminPath(link.path))
-                      ? `${link.color || "#667eea"}15`
-                      : "rgba(0, 0, 0, 0.03)",
-                    border: isActive(adminPath(link.path))
-                      ? `2px solid ${link.color || "#667eea"}40`
-                      : "2px solid rgba(0, 0, 0, 0.08)",
-                    borderRadius: 12,
-                    transition: "all 0.2s ease",
-                    textAlign: "center",
-                    boxShadow: isActive(adminPath(link.path))
-                      ? `0 4px 12px ${link.color || "#667eea"}20`
-                      : "0 2px 4px rgba(0, 0, 0, 0.05)",
-                  }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  onTouchStart={(e) => {
-                    e.currentTarget.style.transform = "scale(0.98)";
-                  }}
-                  onTouchEnd={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <span style={{ fontSize: 32, marginBottom: 8, display: "block" }}>
-                    {link.icon}
-                  </span>
-                  <span style={{ lineHeight: 1.3 }}>{link.label}</span>
-                </Link>
-              ))}
-            </div>
-
-            <hr style={{ margin: "16px 0", border: "none", borderTop: "2px solid #f0f0f0" }} />
-
             {/* Mobile Actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div
@@ -678,7 +560,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <LanguageSelector />
               </div>
 
-              {HAS_MULTIPLE_SITES && (
+              {HAS_MULTIPLE_SITES && userIsSuperadmin && (
                 <div
                   style={{
                     padding: "10px 14px",
@@ -726,56 +608,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <UserInfoDropdown />
               </div>
 
-              <Link
-                to={publicPagePath}
-                style={{
-                  padding: "14px 16px",
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  width: "100%",
-                  transition: "all 0.2s ease",
-                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  textDecoration: "none",
-                }}
-                onTouchStart={(e) => {
-                  e.currentTarget.style.transform = "scale(0.98)";
-                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(102, 126, 234, 0.3)";
-                }}
-                onTouchEnd={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.2)";
-                }}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                  <line x1="2" y1="12" x2="22" y2="12" />
-                </svg>
-                {t("admin.backToPublicSite")}
-              </Link>
-
               <button
+                type="button"
                 onClick={handleLogout}
                 style={{
                   padding: "14px 16px",
@@ -804,6 +638,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   e.currentTarget.style.boxShadow = "0 2px 8px rgba(220, 53, 69, 0.2)";
                 }}
                 title={t("admin.logout")}
+                aria-label={t("admin.logout")}
               >
                 <svg
                   width="28"
@@ -814,6 +649,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  aria-hidden="true"
                 >
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
@@ -852,6 +688,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <main
+        id="admin-main"
+        tabIndex={-1}
         style={{
           padding: isMobile ? "16px" : "clamp(16px, 4vw, 24px)",
           margin: 0,

@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
-import { Lang } from "@prisma/client";
+import { langOrDefault } from "../common/lang";
 
 @Injectable()
 export class StaticPagesService {
@@ -9,13 +9,6 @@ export class StaticPagesService {
     private readonly prisma: PrismaService,
     private readonly siteResolver: SiteKeyResolverService
   ) {}
-
-  private normalizeLang(lang: string | undefined): Lang {
-    if (lang === "hu" || lang === "en" || lang === "de") {
-      return lang;
-    }
-    return "hu";
-  }
 
   /**
    * Lists static pages with optional category filtering.
@@ -27,7 +20,7 @@ export class StaticPagesService {
    * @returns Array of static pages with translations
    */
   async list(args: { lang: string; siteKey?: string; category?: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = langOrDefault(args.lang);
 
     // Resolve site (either default or from siteKey parameter)
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
@@ -81,7 +74,7 @@ export class StaticPagesService {
    * @returns Static page data with translation and SEO
    */
   async detail(args: { lang: string; id: string; siteKey?: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = langOrDefault(args.lang);
 
     // Resolve site (either default or from siteKey parameter)
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });

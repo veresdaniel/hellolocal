@@ -9,7 +9,12 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { ToastContainer } from "./components/Toast";
 import { ConfirmationModalProvider } from "./contexts/ConfirmationModalContext";
 import { router } from "./app/routes";
+import "./styles/public-tokens.css";
+import "./styles/public-surfaces.css";
+import "./styles/admin-surfaces.css";
+import "./styles/fonts.css";
 import "./i18n/config";
+import "./i18n/loadUiCopy";
 import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
 import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -41,14 +46,23 @@ if (typeof window !== "undefined" && typeof console !== "undefined") {
 function AppInitializer({ children }: { children: ReactNode }) {
   useDefaultLanguage();
 
-  // Register service worker on mount
+  // Register service worker on mount (production only — SW can pin stale Vite modules in dev).
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      NotificationService.register().then((registered) => {
-        if (registered) {
-        }
+    if (typeof window === "undefined") return;
+
+    if (import.meta.env.DEV) {
+      void navigator.serviceWorker?.getRegistrations?.().then((regs) => {
+        regs.forEach((reg) => void reg.unregister());
       });
+      void caches?.keys?.().then((keys) => {
+        keys
+          .filter((key) => key.startsWith("hellolocal-"))
+          .forEach((key) => void caches.delete(key));
+      });
+      return;
     }
+
+    void NotificationService.register();
   }, []);
 
   return <>{children}</>;

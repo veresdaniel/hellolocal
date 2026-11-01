@@ -90,7 +90,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       const pathParts = urlPath.split("/").filter(Boolean);
 
       // Extract language (first part, should be hu/en/de)
-      const lang = pathParts[0] && ["hu", "en", "de"].includes(pathParts[0]) ? pathParts[0] : "hu";
+      const lang = pathParts[0]?.match(/^[a-z]{2,3}$/) ? pathParts[0] : "hu";
 
       // Extract tenant key (second part, if exists and not a known route)
       const knownRoutes = [

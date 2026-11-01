@@ -1,12 +1,13 @@
 import { apiGetPublic } from "./client";
+import type { Lang } from "../types/enums";
 
 export type ResolveResponse = {
   siteId: string;
-  lang: "hu" | "en" | "de";
+  lang: Lang;
   entityType: "place" | "event" | "town" | "page" | "region" | "placeType";
   entityId: string;
   canonical: {
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     siteKey: string;
     slug: string;
   };

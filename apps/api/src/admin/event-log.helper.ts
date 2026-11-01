@@ -1,6 +1,6 @@
 // src/admin/event-log.helper.ts
 import { AdminEventLogService } from "../event-log/admin-eventlog.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 /**
  * Helper function to log admin actions with detailed descriptions
@@ -47,17 +47,11 @@ export function getEntityName(
     return defaultName || "Unknown";
   }
 
-  // Try to get Hungarian first, then English, then German, then any
-  const langPriority = [Lang.hu, Lang.en, Lang.de];
-  for (const lang of langPriority) {
-    const translation = translations.find((t) => t.lang === lang);
-    if (translation?.name) {
-      return translation.name;
-    }
-  }
-
-  // Fallback to first available translation
-  return translations[0]?.name || defaultName || "Unknown";
+  const ordered = [
+    ...[Lang.hu, Lang.en, Lang.de].flatMap((lang) => translations.filter((item) => item.lang === lang)),
+    ...translations,
+  ];
+  return ordered.find((item) => item.name)?.name || defaultName || "Unknown";
 }
 
 /**

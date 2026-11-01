@@ -6,7 +6,7 @@ import { useAdminSite } from "../contexts/useAdminSite";
 import { getSiteMemberships } from "../api/admin.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { DEFAULT_LANG, APP_LANGS, type Lang } from "../app/config";
+import { DEFAULT_LANG,  type Lang, isLang} from "../app/config";
 import { isSuperadmin, isAdmin } from "../utils/roleHelpers";
 import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 import type { UserRole } from "../types/enums";
@@ -17,9 +17,6 @@ interface ProtectedRouteProps {
   considerSiteRole?: boolean; // If true, also check site-level role (siteadmin)
 }
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function ProtectedRoute({
   children,

@@ -1,0 +1,86 @@
+# Beta stack. Compose project: hellolocal-beta.
+# Directory on the server: /opt/hellolocal/beta (git checkout of origin/staging).
+# Env file: /opt/hellolocal/beta.env — own POSTGRES_PASSWORD and JWT_SECRET.
+# Do not use /opt/hellolocal/stack.env and do not mount the production pgdata volume.
+#
+# Postgres lives only on the internal network, under the DNS name beta-db.
+# The first boot of the empty volume hellolocal-beta-pgdata creates a new
+# database. The API then runs `prisma migrate deploy` (schema only, no seed).
+# Do not restore a production dump here unless someone asks for an anonymized copy.
+#
+# TLS stays on the production Caddy (ports 80 and 443). api-beta and web-beta
+# join the existing hellolocal_default network so that Caddy can proxy to them.
+# They do not join the production database. Site blocks: deploy/Caddyfile.beta.
+
+name: hellolocal-beta
+
+services:
+  beta-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hellolocal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hellolocal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hellolocal -d hellolocal"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - internal
+
+  api-beta:
+    build:
+      context: ${BETA_SRC:-/opt/hellolocal/beta}
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      DATABASE_URL: postgresql://hellolocal:${POSTGRES_PASSWORD}@beta-db:5432/hellolocal
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: https://beta.hello-local.io
+      CORS_ORIGIN: https://beta.hello-local.io
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]
+    depends_on:
+      beta-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      internal:
+      edge:
+        aliases:
+          - api-beta
+
+  web-beta:
+    build:
+      context: ${BETA_SRC:-/opt/hellolocal/beta}
+      dockerfile: apps/web/Dockerfile.prod
+      args:
+        VITE_API_URL: https://api.beta.hello-local.io
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_URL: http://api-beta:3002
+      FRONTEND_URL: https://beta.hello-local.io
+    depends_on:
+      - api-beta
+    restart: unless-stopped
+    networks:
+      edge:
+        aliases:
+          - web-beta
+
+networks:
+  internal:
+    name: hellolocal-beta-internal
+  edge:
+    external: true
+    name: hellolocal_default
+
+volumes:
+  pgdata:
+    name: hellolocal-beta-pgdata

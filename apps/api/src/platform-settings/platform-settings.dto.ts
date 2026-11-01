@@ -1,5 +1,8 @@
+import { Lang } from "../common/language-code";
+
 export type PlatformSettingsDto = {
-  lang: "hu" | "en" | "de";
+  lang: Lang;
+  languages: string[];
   siteKey: string;
 
   site: {
@@ -7,6 +10,10 @@ export type PlatformSettingsDto = {
     name: string;
     shortDescription?: string | null;
     description?: string | null;
+    heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
   };
 
   brand: {
@@ -15,6 +22,9 @@ export type PlatformSettingsDto = {
     faviconUrl?: string | null;
     theme?: any; // Json
   };
+
+  /** Per-site theme colors override (JSON). Null = use brand / defaults. */
+  siteTheme?: any | null;
 
   seo: {
     defaultTitle?: string | null;
@@ -53,11 +63,22 @@ export type PlatformSettingsDto = {
     placePlanOverrides?: any;
   };
 
+  // Public map hidden by the visitor ladder. Places are not deleted.
+  visitorHold?: boolean;
+
   // Platform settings (global)
   platform: {
     locale: string; // e.g., "hu-HU"
     currency: string; // e.g., "HUF"
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
+  };
+
+  /**
+   * Per-site GA4 ID for this site's public pages only.
+   * Platform-wide ID is served from GET /api/app-settings/platform-ga (no fallback here).
+   */
+  analytics?: {
+    gaMeasurementId?: string | null;
   };
 };

@@ -1,83 +1,57 @@
 // src/i18n/config.ts
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
+import { DEFAULT_LANG, LANG_VALUES } from "../app/config";
+import { I18N_STORAGE_KEY, normalizeLang, preferredLang} from "../app/browserLang";
+import catalog from "./languages.json";
 
-// Import split translation files
-import huCommon from "./locales/hu/common.json";
-import huPublic from "./locales/hu/public.json";
-import huAdmin from "./locales/hu/admin.json";
-import huValidation from "./locales/hu/validation.json";
-import huError from "./locales/hu/error.json";
-import huOffline from "./locales/hu/offline.json";
-import huCookieConsent from "./locales/hu/cookieConsent.json";
+const catalogCodes = catalog.languages.map((language) => language.code);
+if (
+  catalog.fallback !== DEFAULT_LANG ||
+  catalogCodes.length !== LANG_VALUES.length ||
+  LANG_VALUES.some((code, index) => catalogCodes[index] !== code)
+) {
+  throw new Error("src/i18n/languages.json must list the same codes, in the same order, as LANG_VALUES");
+}
 
-import enCommon from "./locales/en/common.json";
-import enPublic from "./locales/en/public.json";
-import enAdmin from "./locales/en/admin.json";
-import enValidation from "./locales/en/validation.json";
-import enError from "./locales/en/error.json";
-import enOffline from "./locales/en/offline.json";
-import enCookieConsent from "./locales/en/cookieConsent.json";
+type LocaleModule = Record<string, unknown>;
+const localeModules = import.meta.glob("./locales/*/*.json", {
+  eager: true,
+  import: "default",
+}) as Record<string, LocaleModule>;
 
-import deCommon from "./locales/de/common.json";
-import dePublic from "./locales/de/public.json";
-import deAdmin from "./locales/de/admin.json";
-import deValidation from "./locales/de/validation.json";
-import deError from "./locales/de/error.json";
-import deOffline from "./locales/de/offline.json";
-import deCookieConsent from "./locales/de/cookieConsent.json";
-
-// Merge all translation files for each language
-const hu = {
-  common: huCommon,
-  public: huPublic,
-  admin: huAdmin,
-  validation: huValidation,
-  error: huError,
-  offline: huOffline,
-  cookieConsent: huCookieConsent,
-};
-
-const en = {
-  common: enCommon,
-  public: enPublic,
-  admin: enAdmin,
-  validation: enValidation,
-  error: enError,
-  offline: enOffline,
-  cookieConsent: enCookieConsent,
-};
-
-const de = {
-  common: deCommon,
-  public: dePublic,
-  admin: deAdmin,
-  validation: deValidation,
-  error: deError,
-  offline: deOffline,
-  cookieConsent: deCookieConsent,
-};
+const resources: Record<string, { translation: Record<string, LocaleModule> }> = {};
+for (const [path, data] of Object.entries(localeModules)) {
+  const match = path.match(/\.\/locales\/([^/]+)\/([^/]+)\.json$/);
+  if (!match) continue;
+  const [, lang, namespace] = match;
+  resources[lang] ??= { translation: {} };
+  resources[lang].translation[namespace] = data;
+}
 
 i18n
-  .use(LanguageDetector)
+  .use({
+    type: "languageDetector",
+    async: false,
+    detect: () => preferredLang(),
+    init: () => undefined,
+    cacheUserLanguage: (lng: string) => {
+      const normalized = normalizeLang(lng);
+      if (!normalized) return;
+      try {
+        window.localStorage.setItem(I18N_STORAGE_KEY, normalized);
+      } catch {
+        /* ignore */
+      }
+    },
+  })
   .use(initReactI18next)
   .init({
-    resources: {
-      hu: { translation: hu },
-      en: { translation: en },
-      de: { translation: de },
-    },
-    fallbackLng: "hu",
+    resources,
+    fallbackLng: ["en", DEFAULT_LANG],
     defaultNS: "translation",
     interpolation: {
       escapeValue: false, // React already escapes values
-    },
-    detection: {
-      order: ["path", "localStorage", "navigator", "htmlTag"],
-      caches: ["localStorage"],
-      lookupLocalStorage: "i18nextLng",
-      lookupFromPathIndex: 0, // First segment in path is language
     },
   });
 

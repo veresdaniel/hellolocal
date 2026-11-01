@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Lang } from "@prisma/client";
+import { requireLang } from "../common/lang";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 
@@ -17,14 +17,6 @@ export class LegalService {
     private readonly siteResolver: SiteKeyResolverService
   ) {}
 
-  private normalizeLang(lang: string | undefined): Lang {
-    if (!lang) {
-      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
-    }
-    if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
-  }
-
   /**
    * Gets a legal page by key (imprint, terms, or privacy).
    *
@@ -35,7 +27,7 @@ export class LegalService {
    * @returns Legal page data with translations and SEO
    */
   async getPage(args: { lang: string; page: string; siteKey?: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
 
     if (!ALLOWED_PAGES.has(args.page as any)) {
       throw new BadRequestException("Unsupported legal page. Use imprint|terms|privacy.");

@@ -5,19 +5,23 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { Lang } from "../common/language-code";
 import { NotificationsService } from "../notifications/notifications.service";
 import { RbacService } from "../auth/rbac.service";
 import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
 import { generateSlug } from "../slug/slug.helper";
+import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 
 export interface CreateEventDto {
   siteId: string;
-  placeId?: string | null;
+  placeId: string;
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   createdByUserId?: string | null; // User who created the event (for audit trail)
+  /** GA4 measurement ID (G-…). Empty string or null inherits Place/Town/Site. */
+  gaMeasurementId?: string | null;
   translations: Array<{
     lang: Lang;
     title: string;
@@ -47,10 +51,12 @@ export interface CreateEventDto {
 }
 
 export interface UpdateEventDto {
-  placeId?: string | null;
+  placeId?: string;
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Place/Town/Site. */
+  gaMeasurementId?: string | null;
   translations?: Array<{
     lang: Lang;
     title: string;
@@ -414,13 +420,44 @@ export class AdminEventService {
     }
   }
 
-  async findAll(siteId: string, page?: number, limit?: number) {
+  async findAll(
+    siteId: string,
+    page?: number,
+    limit?: number,
+    placeId?: string,
+    townId?: string
+  ) {
     try {
       // Default pagination values
       const pageNum = page ? parseInt(String(page)) : 1;
       const limitNum = limit ? parseInt(String(limit)) : 10;
 
-      const where = { siteId };
+      const where: {
+        siteId: string;
+        placeId?: string | { in: string[] };
+      } = { siteId };
+      if (placeId) {
+        where.placeId = placeId;
+      } else if (townId) {
+        // Server-side town filter avoids client under-fetch (wide window + client slice).
+        const places = await this.prisma.place.findMany({
+          where: { siteId, townId },
+          select: { id: true },
+        });
+        const placeIds = places.map((p) => p.id);
+        if (placeIds.length === 0) {
+          return {
+            events: [],
+            pagination: {
+              page: pageNum,
+              limit: limitNum,
+              total: 0,
+              totalPages: 1,
+            },
+          };
+        }
+        where.placeId = { in: placeIds };
+      }
 
       // Get total count
       const total = await this.prisma.event.count({ where });
@@ -518,7 +555,14 @@ export class AdminEventService {
   }
 
   async create(dto: CreateEventDto) {
-    const { tagIds = [], categoryIds = [], translations, isPublished, ...eventData } = dto;
+    const {
+      tagIds = [],
+      categoryIds = [],
+      translations,
+      isPublished,
+      gaMeasurementId: gaMeasurementIdRaw,
+      ...eventData
+    } = dto;
 
     // Validate that at least one translation is provided
     if (!translations || translations.length === 0) {
@@ -530,34 +574,48 @@ export class AdminEventService {
       throw new BadRequestException("startDate is required");
     }
 
-    // Validate event limit based on place plan (if placeId is provided)
-    if (dto.placeId) {
-      const place = await this.prisma.place.findUnique({
-        where: { id: dto.placeId },
-        select: { id: true, plan: true },
-      });
+    if (!dto.placeId) {
+      throw new BadRequestException("placeId is required (events belong to a place)");
+    }
 
-      if (place) {
-        const plan: PlacePlan = (place.plan as PlacePlan) || "free";
-        // Count existing active events for this place
-        const eventCount = await this.prisma.event.count({
-          where: {
-            placeId: dto.placeId,
-            isActive: true,
-          },
-        });
+    const place = await this.prisma.place.findFirst({
+      where: { id: dto.placeId, siteId: dto.siteId },
+      select: { id: true, plan: true },
+    });
+    if (!place) {
+      throw new BadRequestException("placeId must belong to the same site");
+    }
 
-        if (!canAddEvent(plan, eventCount)) {
-          throw new BadRequestException(
-            `Plan "${plan}" allows maximum ${plan === "free" ? 0 : 3} events per place. This place already has ${eventCount} events.`
-          );
-        }
+    const plan: PlacePlan = (place.plan as PlacePlan) || "free";
+    const eventCount = await this.prisma.event.count({
+      where: {
+        placeId: dto.placeId,
+        isActive: true,
+      },
+    });
+
+    if (!canAddEvent(plan, eventCount)) {
+      throw new BadRequestException(
+        `Plan "${plan}" allows maximum ${plan === "free" ? 0 : 3} events per place. This place already has ${eventCount} events.`
+      );
+    }
+
+    let gaMeasurementId: string | null = null;
+    if (gaMeasurementIdRaw !== undefined) {
+      try {
+        gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
       }
     }
 
     const event = await this.prisma.event.create({
       data: {
         ...eventData,
+        gaMeasurementId,
+        placeId: dto.placeId,
         ...(dto.createdByUserId ? { createdByUserId: dto.createdByUserId } : {}),
         startDate: typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate,
         endDate: dto.endDate
@@ -743,7 +801,34 @@ export class AdminEventService {
     }
 
     // Update event data
-    const updateData: any = { ...eventData };
+    const { placeId: nextPlaceId, gaMeasurementId: gaMeasurementIdRaw, ...restEventData } =
+      eventData;
+    const updateData: any = { ...restEventData };
+
+    if (nextPlaceId !== undefined) {
+      if (!nextPlaceId) {
+        throw new BadRequestException("placeId is required (events belong to a place)");
+      }
+      const place = await this.prisma.place.findFirst({
+        where: { id: nextPlaceId, siteId },
+        select: { id: true },
+      });
+      if (!place) {
+        throw new BadRequestException("placeId must belong to the same site");
+      }
+      updateData.placeId = nextPlaceId;
+    }
+
+    if (gaMeasurementIdRaw !== undefined) {
+      try {
+        updateData.gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
+
     if (dto.startDate !== undefined) {
       updateData.startDate =
         typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate;

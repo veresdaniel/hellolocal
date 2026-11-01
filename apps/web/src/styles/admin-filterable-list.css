@@ -1,0 +1,293 @@
+.admin-flist {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--hl-ink, #1b1730);
+}
+
+.admin-flist__filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: clamp(16px, 3vw, 20px);
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+  border-radius: 16px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  box-shadow: 0 4px 16px rgba(27, 23, 48, 0.08);
+}
+
+@media (min-width: 720px) {
+  .admin-flist__filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-flist__filters .admin-flist__filter--span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1040px) {
+  .admin-flist__filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .admin-flist__filters .admin-flist__filter--span-2 {
+    grid-column: span 1;
+  }
+}
+
+.admin-flist__filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-flist__filter label {
+  margin: 0;
+  color: var(--hl-muted, #665d78);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-flist__filter input,
+.admin-flist__filter select {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.14));
+  border-radius: 10px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-flist__filter input::placeholder {
+  color: var(--hl-muted, #665d78);
+  opacity: 1;
+}
+
+.admin-flist__filter input:focus,
+.admin-flist__filter select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.admin-flist__filter-actions {
+  display: flex;
+  align-items: end;
+}
+
+.admin-flist__clear {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid rgba(102, 126, 234, 0.28);
+  border-radius: 10px;
+  background: rgba(102, 126, 234, 0.08);
+  color: var(--hl-ink, #1b1730);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-flist__clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.admin-flist__count {
+  margin: 0;
+  color: var(--hl-muted, #665d78);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-flist__empty {
+  margin: 0;
+  padding: 36px 20px;
+  border: 1px dashed var(--hl-line-on-card, rgba(27, 23, 48, 0.18));
+  border-radius: 16px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-muted, #665d78);
+  text-align: center;
+  font-size: 15px;
+}
+
+.admin-flist__table-wrap {
+  overflow: hidden;
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+  border-radius: 16px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  box-shadow: 0 4px 16px rgba(27, 23, 48, 0.08);
+}
+
+.admin-flist__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.admin-flist__table thead tr {
+  background: rgba(27, 23, 48, 0.03);
+}
+
+.admin-flist__table th {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.12));
+  color: var(--hl-ink, #1b1730);
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.admin-flist__table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.08));
+  color: var(--hl-ink, #1b1730);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.admin-flist__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-flist__table tbody tr.is-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-flist__table tbody tr.is-clickable:hover {
+  background: rgba(27, 23, 48, 0.03);
+}
+
+.admin-flist__actions-col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.admin-flist__action {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--hl-ink, #1b1730);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-flist__action--danger {
+  color: #c2410c;
+}
+
+.admin-flist__cards {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-flist__card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+  border-radius: 14px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  box-shadow: 0 4px 14px rgba(27, 23, 48, 0.06);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .admin-flist__card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .admin-flist__card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.admin-flist__card-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-flist__card-main:disabled {
+  cursor: default;
+}
+
+.admin-flist__card-title {
+  display: block;
+  color: var(--hl-ink, #1b1730);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-flist__card-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 6px;
+  color: var(--hl-muted, #665d78);
+  font-size: 13px;
+}
+
+.admin-flist__card-meta:not(:last-child)::after {
+  content: "·";
+  margin-left: 10px;
+  color: var(--hl-muted, #665d78);
+  opacity: 0.55;
+}
+
+.admin-flist__card-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.admin-flist__pagination {
+  overflow: hidden;
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+  border-radius: 16px;
+  background: var(--hl-card, #fffdf9);
+  color: var(--hl-ink, #1b1730);
+  box-shadow: 0 4px 16px rgba(27, 23, 48, 0.06);
+}
+
+.admin-flist__pagination > div {
+  border-top: 0 !important;
+  border-radius: 16px;
+}

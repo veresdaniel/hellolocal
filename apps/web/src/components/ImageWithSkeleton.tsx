@@ -49,8 +49,17 @@ export function ImageWithSkeleton({
     transition: "opacity 0.3s ease-in-out",
   };
 
+  const fillBox = style?.height === "100%";
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div
+      style={{
+        position: fillBox ? "absolute" : "relative",
+        inset: fillBox ? 0 : undefined,
+        width: "100%",
+        height: "100%",
+      }}
+    >
       {/* Skeleton Loader */}
       {isLoading && (
         <div
@@ -60,7 +69,8 @@ export function ImageWithSkeleton({
             left: 0,
             width: "100%",
             height: "100%",
-            background: "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)",
+            background:
+              "linear-gradient(90deg, rgba(27, 23, 48, 0.06) 25%, rgba(27, 23, 48, 0.12) 50%, rgba(27, 23, 48, 0.06) 75%)",
             backgroundSize: "200% 100%",
             animation: "skeleton-loading 1.5s ease-in-out infinite",
             ...skeletonStyle,
@@ -75,12 +85,26 @@ export function ImageWithSkeleton({
         className={className}
         style={{
           ...combinedStyle,
-          maxWidth: "100%",
-          height: style?.height || "auto",
-          width: style?.width || "100%",
+          ...(fillBox
+            ? {
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                maxWidth: "none",
+                objectFit: (style?.objectFit as React.CSSProperties["objectFit"]) || "cover",
+                objectPosition:
+                  (style?.objectPosition as React.CSSProperties["objectPosition"]) || "center top",
+              }
+            : {
+                maxWidth: "100%",
+                height: style?.height || "auto",
+                width: style?.width || "100%",
+              }),
           display: "block",
         }}
         loading="lazy"
+        decoding="async"
         onLoad={handleLoad}
         onError={handleError}
         onMouseEnter={onMouseEnter}

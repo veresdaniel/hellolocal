@@ -1,12 +1,14 @@
 // src/pages/admin/SiteStatusPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { useToast } from "../../contexts/ToastContext";
+import { AuthContext } from "../../contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSiteStatus, invalidateCache, type SiteStatusResponse } from "../../api/admin.api";
+import { isSuperadmin } from "../../utils/roleHelpers";
+import type { UserRole } from "../../types/enums";
 
 type TabId = "overview" | "cache";
 
@@ -14,6 +16,9 @@ export function SiteStatusPage() {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
+  const userIsSuperadmin = user?.role ? isSuperadmin(user.role as UserRole) : false;
   usePageTitle("admin.siteStatus");
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -39,6 +44,10 @@ export function SiteStatusPage() {
   };
 
   const handleInvalidateCache = async (cacheType: string) => {
+    if (!userIsSuperadmin) {
+      showToast(t("admin.siteStatus.cache.error") || "Failed to invalidate cache", "error");
+      return;
+    }
     try {
       setInvalidatingCache(cacheType);
       await invalidateCache(cacheType);
@@ -118,10 +127,22 @@ export function SiteStatusPage() {
     }
   };
 
-  const tabs: Array<{ id: TabId; label: string }> = [
-    { id: "overview", label: t("admin.siteStatus.tabs.overview") || "Áttekintés" },
-    { id: "cache", label: t("admin.siteStatus.tabs.cache") || "Cache kezelés" },
-  ];
+  // Cache mutations remain superadmin-only (API + UI)
+  const tabs = useMemo((): Array<{ id: TabId; label: string }> => {
+    const items: Array<{ id: TabId; label: string }> = [
+      { id: "overview", label: t("admin.siteStatus.tabs.overview") || "Áttekintés" },
+    ];
+    if (userIsSuperadmin) {
+      items.push({ id: "cache", label: t("admin.siteStatus.tabs.cache") || "Cache kezelés" });
+    }
+    return items;
+  }, [t, userIsSuperadmin]);
+
+  useEffect(() => {
+    if (!userIsSuperadmin && activeTab === "cache") {
+      setActiveTab("overview");
+    }
+  }, [userIsSuperadmin, activeTab]);
 
   if (isLoading) {
     return null;

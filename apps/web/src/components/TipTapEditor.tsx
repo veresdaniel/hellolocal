@@ -152,6 +152,8 @@ export function TipTapEditor({ value, onChange, placeholder, height = 300 }: Tip
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
+      aria-pressed={typeof isActive === "boolean" ? isActive : undefined}
       style={{
         padding: "6px 10px",
         border: "1px solid #ddd",

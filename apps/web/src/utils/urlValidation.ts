@@ -1,14 +1,20 @@
 /**
- * Validates if a string is a valid HTTP/HTTPS URL
- * Prevents javascript: and data: protocol injection
+ * Validates if a string is a valid HTTP/HTTPS URL, or a same-origin relative path.
+ * Prevents javascript: and data: protocol injection.
  */
 export function isValidImageUrl(url: string | null | undefined): boolean {
   if (!url || url.trim() === "") {
     return false;
   }
 
+  const trimmed = url.trim();
+  // Same-origin public assets (e.g. /marketing/side-street.jpg)
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//") && !trimmed.includes("\\")) {
+    return !trimmed.toLowerCase().startsWith("/\\") && !/:/.test(trimmed);
+  }
+
   try {
-    const parsedUrl = new URL(url);
+    const parsedUrl = new URL(trimmed);
 
     // Only allow http and https protocols
     const allowedProtocols = ["http:", "https:"];

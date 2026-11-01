@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { PlacesService } from "./places.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Controller for place-related endpoints.
@@ -14,14 +15,6 @@ import { PlacesService } from "./places.service";
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists places with optional filtering.
@@ -43,10 +36,11 @@ export class PlacesController {
     @Query("priceBand") priceBand?: string | string[],
     @Query("town") town?: string,
     @Query("q") q?: string,
+    @Query("kind") kind?: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     // Normalize category and priceBand to arrays
     const categories = Array.isArray(category) ? category : category ? [category] : undefined;
     const priceBands = Array.isArray(priceBand) ? priceBand : priceBand ? [priceBand] : undefined;
@@ -57,6 +51,7 @@ export class PlacesController {
       priceBand: priceBands,
       town,
       q,
+      kind: kind === "service" || kind === "all" ? kind : "place",
       limit: limit ? Number(limit) : 50,
       offset: offset ? Number(offset) : 0,
     });
@@ -78,7 +73,7 @@ export class PlacesController {
     @Param("slug") slug: string,
     @Query("siteKey") siteKey?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.placesService.detail({ lang, siteKey, slug });
   }
 }

@@ -1,6 +1,7 @@
-import { Controller, Get, Param, Query, BadRequestException, Req } from "@nestjs/common";
+import { Controller, Get, Param, Query, Req } from "@nestjs/common";
 import { CollectionsService } from "./collections.service";
 import type { Request } from "express";
+import { langFromPath, requireLang, langOrDefault } from "../common/lang";
 
 /**
  * Public controller for collection endpoints.
@@ -19,14 +20,6 @@ import type { Request } from "express";
 export class CollectionsPublicController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Gets a collection by domain.
@@ -43,20 +36,8 @@ export class CollectionsPublicController {
     @Query("lang") langParam?: string,
     @Req() req?: Request
   ) {
-    // Determine language: query param > URL path > fallback
-    let lang = langParam;
-    if (!lang && req) {
-      // Try to extract from URL path (e.g., /hu/collections/...)
-      const pathMatch = req.path.match(/^\/(hu|en|de)\//);
-      if (pathMatch) {
-        lang = pathMatch[1];
-      }
-    }
-    if (!lang) {
-      lang = "hu"; // Fallback
-    }
-
-    this.validateLang(lang);
+    const detected = langParam || langFromPath(req?.path);
+    const lang = detected ? requireLang(detected) : langOrDefault(undefined);
     return this.collectionsService.getCollectionView({ lang, domain });
   }
 
@@ -75,20 +56,8 @@ export class CollectionsPublicController {
     @Query("lang") langParam?: string,
     @Req() req?: Request
   ) {
-    // Determine language: query param > URL path > fallback
-    let lang = langParam;
-    if (!lang && req) {
-      // Try to extract from URL path (e.g., /hu/collections/...)
-      const pathMatch = req.path.match(/^\/(hu|en|de)\//);
-      if (pathMatch) {
-        lang = pathMatch[1];
-      }
-    }
-    if (!lang) {
-      lang = "hu"; // Fallback
-    }
-
-    this.validateLang(lang);
+    const detected = langParam || langFromPath(req?.path);
+    const lang = detected ? requireLang(detected) : langOrDefault(undefined);
     return this.collectionsService.getCollectionView({ lang, slug });
   }
 }

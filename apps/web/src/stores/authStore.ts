@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
+import { preferredLang } from "../app/browserLang";
 
 interface AuthState {
   user: User | null;
@@ -54,16 +55,7 @@ function isValidUser(user: unknown): user is User {
  * Helper to extract language code from URL or localStorage
  */
 function getLanguageCode(): string {
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
-  const pathMatch = currentPath.match(/^\/(hu|en|de)(\/|$)/);
-  if (pathMatch && ["hu", "en", "de"].includes(pathMatch[1])) {
-    return pathMatch[1];
-  }
-  if (typeof localStorage !== "undefined") {
-    const stored = localStorage.getItem("i18nextLng");
-    if (stored && ["hu", "en", "de"].includes(stored)) return stored;
-  }
-  return "en";
+  return preferredLang();
 }
 
 /**

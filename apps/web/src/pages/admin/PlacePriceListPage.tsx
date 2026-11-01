@@ -18,6 +18,7 @@ import {
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { formatMoney } from "../../utils/formatMoney";
 import { usePlatformSettings } from "../../app/site/usePlatformSettings";
+import type { Lang } from "../../types/enums";
 import { useSiteContext } from "../../app/site/useSiteContext";
 
 export function PlacePriceListPage() {
@@ -175,7 +176,7 @@ export function PlacePriceListPage() {
 
   const getPlaceName = () => {
     if (!place) return "";
-    const currentLang = (lang || "hu").split("-")[0] as "hu" | "en" | "de";
+    const currentLang = (lang || "hu").split("-")[0] as Lang;
     const translation =
       place.translations?.find((t) => t.lang === currentLang) ||
       place.translations?.find((t) => t.lang === "hu");
@@ -664,6 +665,15 @@ export function PlacePriceListPage() {
                 setHasUnsavedChanges(true);
               }}
               placeholder={t("admin.notePlaceholder")}
+              aiDraft={{
+                kind: "place",
+                field: "description",
+                lang: lang || "hu",
+                siteId: selectedSiteId || undefined,
+                placeId: placeId || undefined,
+                name: getPlaceName() || placeId,
+                contextHints: "Price list note for visitors",
+              }}
             />
           </div>
         </div>

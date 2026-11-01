@@ -1,8 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Lang, SlugEntityType } from "@prisma/client";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { SlugEntityType } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { requireLang } from "../common/lang";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
+import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 
 type ListArgs = {
@@ -23,19 +26,11 @@ export class EventsService {
     private readonly slugResolver: SlugResolverService
   ) {}
 
-  private normalizeLang(lang: string | undefined): Lang {
-    if (!lang) {
-      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
-    }
-    if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
-  }
-
   /**
    * Lists events with optional filtering.
    */
   async list(args: ListArgs) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     const now = new Date();
@@ -247,7 +242,7 @@ export class EventsService {
    * Uses resolve → by-id pattern for consistency.
    */
   async detail(args: { lang: string; siteKey?: string; slug: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     // Resolve slug to get the eventId
@@ -283,16 +278,18 @@ export class EventsService {
    * This method is used after slug resolution to fetch event data by ID.
    */
   async detailById(args: { lang: string; siteKey?: string; eventId: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
 
     // Fetch event by ID
     const event = await this.prisma.event.findUnique({
       where: { id: args.eventId },
       include: {
+        site: { select: { gaMeasurementId: true } },
         place: {
           include: {
             translations: true,
+            town: { select: { gaMeasurementId: true } },
           },
         },
         category: {
@@ -411,6 +408,13 @@ export class EventsService {
       isRainSafe: event.isRainSafe ?? false,
       tags: tagNames,
       rating: { avg: event.ratingAvg ?? null, count: event.ratingCount ?? null },
+      // Most specific GA wins: Event > Place > Town > Site (no platform fallback).
+      gaMeasurementId: resolveGaMeasurementId(
+        event.gaMeasurementId,
+        event.place?.gaMeasurementId,
+        event.place?.town?.gaMeasurementId,
+        event.site?.gaMeasurementId
+      ),
       seo: {
         title: eventTranslation?.seoTitle ?? null,
         description: eventTranslation?.seoDescription ?? null,

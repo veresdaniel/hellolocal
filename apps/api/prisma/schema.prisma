@@ -8,10 +8,9 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Lang {
-  hu
-  en
-  de
+enum CategoryKind {
+  place
+  service
 }
 
 enum SlugEntityType {
@@ -53,6 +52,7 @@ enum SitePlan {
   basic
   pro
   business
+  municipal
 }
 
 enum SubscriptionPlan {
@@ -60,6 +60,7 @@ enum SubscriptionPlan {
   BASIC
   PRO
   BUSINESS
+  MUNICIPAL
 }
 
 enum SubscriptionStatus {
@@ -91,8 +92,8 @@ enum FeatureKey {
 
 // Removed PlaceCategory and PriceBand enums - now they are entities
 
-// Brand: Visual identity and branding assets
-// Represents who is speaking, visual style, default assets
+// Brand (UI label: Domain / Domainek): platform-level visual identity & default assets
+// Superadmin concept; sites belong to a Brand. Table name kept for migration safety.
 model Brand {
   id         String  @id @default(cuid())
   name       String
@@ -116,7 +117,11 @@ model Site {
   slug     String  @unique
   isActive Boolean @default(false)
 
-  // optional: for domain/whitelabel later
+  // Languages this site publishes. ISO 639-1 or 639-2 codes, in display order.
+  languages String[] @default(["hu", "en", "de"])
+
+  // Canonical apex / main host for this region. Mirrored by SiteDomain.isPrimary = true.
+  // Additional hosts (subdomains / language aliases) live in SiteDomain with isPrimary = false.
   primaryDomain String? @unique
 
   // Subscription/billing fields
@@ -131,6 +136,14 @@ model Site {
   // If false, only site owner (siteadmin/superadmin) can create users and places
   // Only available for pro/business plans (basic always allows public registration)
   allowPublicRegistration Boolean @default(true)
+
+  // GA4 measurement ID for this site's public pages (G-…). Null = disabled at Site level.
+  // More specific Town/Place/Event IDs override when set. Platform ID is separate (no fallback).
+  // Platform-wide ID lives in AppSetting key platformGaMeasurementId.
+  gaMeasurementId String?
+
+  // Optional public theme colors (JSON). Null = inherit Brand.theme / code defaults.
+  theme Json?
 
   // Brand relationship - site belongs to a brand
   brandId String
@@ -161,8 +174,10 @@ model Site {
   galleries            Gallery[]
   activeUsers          User[]                @relation("UserActiveSite")
   analyticsDaily       AnalyticsDaily[]
+  productClickDaily    ProductClickDaily[]
   collectionItems      CollectionItem[]
   featureSubscriptions FeatureSubscription[]
+  products             Product[]
 
   @@index([brandId])
   @@index([plan])
@@ -172,12 +187,15 @@ model Site {
 model SiteTranslation {
   id     String @id @default(cuid())
   siteId String
-  lang   Lang
+  lang   String @db.VarChar(8)
 
   name             String
   shortDescription String? // HTML
   description      String? // HTML
   heroImage        String?
+  landingHtml      String? @db.Text // Opening page HTML. Empty keeps the map.
+  listIntroHtml    String? @db.Text // Optional discovery-list intro (TipTap HTML).
+  listIntroImage   String? // Optional image beside/above the list intro.
 
   // SEO (per language)
   seoTitle       String?
@@ -194,7 +212,7 @@ model SiteTranslation {
 model SiteKey {
   id     String @id @default(cuid())
   siteId String
-  lang   Lang
+  lang   String @db.VarChar(8)
   slug   String
 
   isPrimary Boolean @default(true)
@@ -217,7 +235,7 @@ model SiteKey {
 model Slug {
   id     String @id @default(cuid())
   siteId String
-  lang   Lang
+  lang   String @db.VarChar(8)
   slug   String
 
   entityType SlugEntityType
@@ -242,8 +260,16 @@ model Slug {
 
 model Town {
   id       String  @id @default(cuid())
-  siteId   String
+  // Optional parent region (Site). Null = standalone town (település régió nélkül).
+  siteId   String?
   isActive Boolean @default(true)
+
+  // Single primary custom hostname for this town (no SiteDomain-style subdomain list).
+  // Cross-entity uniqueness vs SiteDomain / Place.customDomain / Collection.domain is enforced in app code.
+  customDomain String? @unique
+
+  // GA4 measurement ID for this town's public pages (G-…). Null = inherit Site / disabled.
+  gaMeasurementId String?
 
   // Map coordinates
   lat Float?
@@ -252,7 +278,7 @@ model Town {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  site         Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  site         Site?             @relation(fields: [siteId], references: [id], onDelete: SetNull)
   places       Place[]
   translations TownTranslation[]
 
@@ -262,7 +288,7 @@ model Town {
 model TownTranslation {
   id     String @id @default(cuid())
   townId String
-  lang   Lang
+  lang   String @db.VarChar(8)
 
   name        String
   description String? // HTML
@@ -284,6 +310,7 @@ model Category {
   id       String  @id @default(cuid())
   siteId   String
   parentId String? // Parent category for hierarchy
+  kind     CategoryKind @default(place)
   isActive Boolean @default(true)
   color    String? // Hex color code for card border (e.g., "#667eea")
   order    Int     @default(0) // Sort order within parent (or root level)
@@ -307,7 +334,7 @@ model Category {
 model CategoryTranslation {
   id         String @id @default(cuid())
   categoryId String
-  lang       Lang
+  lang       String @db.VarChar(8)
 
   name        String
   description String? // HTML
@@ -318,6 +345,7 @@ model CategoryTranslation {
   @@index([lang])
 }
 
+// Site (régió) tag catalog; assignment under Place/Event via PlaceTag / EventTag (not a geo child).
 model Tag {
   id       String  @id @default(cuid())
   siteId   String
@@ -337,7 +365,7 @@ model Tag {
 model TagTranslation {
   id    String @id @default(cuid())
   tagId String
-  lang  Lang
+  lang  String @db.VarChar(8)
 
   name        String
   description String? // HTML
@@ -366,7 +394,7 @@ model PriceBand {
 model PriceBandTranslation {
   id          String @id @default(cuid())
   priceBandId String
-  lang        Lang
+  lang        String @db.VarChar(8)
 
   name        String
   description String? // HTML
@@ -379,11 +407,16 @@ model PriceBandTranslation {
 
 model Place {
   id      String  @id @default(cuid())
+  // Denormalized tenant/region FK for scoping (REQUIRED). Geo parent is townId (required).
+  // Intentional asymmetry: Town.siteId is optional (standalone település), but Place.siteId
+  // cannot be null — admin/public queries are site-scoped. When a town is moved to a region,
+  // Place/Event.siteId are cascaded; when a town is detached, Place.siteId is kept (last region).
   siteId  String
-  townId  String?
+  townId  String // Required: Place belongs under a Town (település)
   ownerId String?
 
   categoryId String
+  parentPlaceId String?
   isActive   Boolean @default(false)
 
   // Subscription/upsell fields
@@ -394,6 +427,15 @@ model Place {
 
   // Media + discoverability
   heroImage String?
+  // Optional image for map marker popovers; falls back to heroImage when null.
+  mapImage String?
+
+  // Single primary custom hostname for this place (no SiteDomain-style subdomain list).
+  // Cross-entity uniqueness vs SiteDomain / Town.customDomain / Collection.domain is enforced in app code.
+  customDomain String? @unique
+
+  // GA4 measurement ID for this place's public pages (G-…). Null = inherit Town/Site.
+  gaMeasurementId String?
 
   // Map
   lat Float?
@@ -412,8 +454,10 @@ model Place {
   updatedAt DateTime @updatedAt
 
   site                 Site                  @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  town                 Town?                 @relation(fields: [townId], references: [id], onDelete: SetNull)
+  town                 Town                  @relation(fields: [townId], references: [id], onDelete: Restrict)
   category             Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  parentPlace          Place?                @relation("PlaceServices", fields: [parentPlaceId], references: [id], onDelete: SetNull)
+  services             Place[]               @relation("PlaceServices")
   priceBand            PriceBand?            @relation(fields: [priceBandId], references: [id], onDelete: SetNull)
   owner                User?                 @relation("PlaceOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   translations         PlaceTranslation[]
@@ -425,15 +469,56 @@ model Place {
   galleries            Gallery[]
   ratings              PlaceRating[]
   priceList            PlacePriceList?
+  products             Product[]
   analyticsDaily       AnalyticsDaily[]
+  productClickDaily    ProductClickDaily[]
   floorplans           PlaceFloorplan[]
   featureSubscriptions FeatureSubscription[]
 
   @@index([siteId, categoryId])
+  @@index([parentPlaceId])
   @@index([townId])
   @@index([siteId, isFeatured])
   @@index([featuredUntil])
   @@index([plan])
+}
+
+// Site catalog under a Place. Prices and photos only: there is no cart or checkout.
+model Product {
+  id        String  @id @default(cuid())
+  siteId    String // Denormalized tenant FK; geo parent is placeId
+  placeId   String // Required: products belong to a Place (hely)
+  price     Int     @default(0)
+  currency  String  @default("HUF")
+  imageUrl  String?
+  category  String  @default("")
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site         Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  place        Place                @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  translations ProductTranslation[]
+  clickDaily   ProductClickDaily[]
+
+  @@index([siteId, isActive, sortOrder])
+  @@index([siteId, category])
+  @@index([placeId])
+}
+
+model ProductTranslation {
+  id          String  @id @default(cuid())
+  productId   String
+  lang        String @db.VarChar(8)
+  name        String
+  description String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, lang])
+  @@index([productId])
 }
 
 // Price list for places
@@ -494,7 +579,7 @@ model PlaceTag {
 model PlaceTranslation {
   id      String @id @default(cuid())
   placeId String
-  lang    Lang
+  lang    String @db.VarChar(8)
 
   name             String
   // HTML content
@@ -543,7 +628,7 @@ model LegalPage {
 model LegalPageTranslation {
   id          String @id @default(cuid())
   legalPageId String
-  lang        Lang
+  lang        String @db.VarChar(8)
 
   title            String
   shortDescription String? // HTML - for list view cards
@@ -580,7 +665,7 @@ model StaticPage {
 model StaticPageTranslation {
   id           String @id @default(cuid())
   staticPageId String
-  lang         Lang
+  lang         String @db.VarChar(8)
 
   title            String
   shortDescription String? // HTML - for list view cards
@@ -765,10 +850,24 @@ model AppSetting {
   @@index([key])
 }
 
+// Custom-offer requests from the public municipal plan. Stored even when mail is not sent.
+model QuoteRequest {
+  id           String   @id @default(cuid())
+  organization String
+  contactName  String
+  email        String
+  message      String   @db.Text
+  plan         String
+  emailed      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Event {
   id              String    @id @default(cuid())
-  siteId          String
-  placeId         String? // Optional: event can be linked to a place
+  siteId          String // Denormalized tenant FK; geo parent is placeId
+  placeId         String // Required: events belong to a Place (hely)
   categoryId      String? // Optional: event can have a category
   createdByUserId String? // User who created the event (for audit trail)
   isActive        Boolean   @default(true)
@@ -781,6 +880,9 @@ model Event {
   lat             Float? // Optional latitude for map display
   lng             Float? // Optional longitude for map display
 
+  // GA4 measurement ID for this event's public page (G-…). Null = inherit Place/Town/Site.
+  gaMeasurementId String?
+
   // Aggregated rating (read-only in v1; write later)
   ratingAvg   Float? // e.g. 4.6
   ratingCount Int? // e.g. 18
@@ -789,7 +891,7 @@ model Event {
   updatedAt DateTime @updatedAt
 
   site         Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  place        Place?             @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  place        Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
   category     Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull) // Legacy: kept for backward compatibility
   createdBy    User?              @relation("EventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   translations EventTranslation[]
@@ -807,7 +909,7 @@ model Event {
 model EventTranslation {
   id      String @id @default(cuid())
   eventId String
-  lang    Lang
+  lang    String @db.VarChar(8)
 
   title            String
   shortDescription String? // 2-line description
@@ -907,19 +1009,20 @@ model EventLog {
   @@index([siteId, createdAt])
 }
 
-// SiteDomain: Domain-to-site mapping (supports multi-language domains)
-// Example: example.com can serve /hu/... and /en/... for the same site
+// SiteDomain: region hostnames — primary (apex) + additional subdomains / language hosts.
+// Example: example.com (primary) and hu.example.com / en.example.com (subdomains).
 model SiteDomain {
   id       String  @id @default(cuid())
   siteId   String
-  domain   String  @unique // example.com, etyek.localo.app
+  domain   String  @unique // example.com, hu.example.com
   isActive Boolean @default(true)
 
-  // Optional: mark one domain as primary (canonical)
+  // Exactly one active primary per site is enforced in AdminSiteService.syncDomains
+  // and mirrored onto Site.primaryDomain.
   isPrimary Boolean @default(false)
 
-  // Optional: default language for this domain (used when "/" or "/admin" is accessed)
-  defaultLang Lang @default(hu)
+  // Default language when this host is opened at "/" (empty/region default on save uses site languages[0])
+  defaultLang String @default("hu") @db.VarChar(8)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -938,7 +1041,7 @@ model SiteInstance {
   siteId String
   site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  lang      Lang
+  lang      String @db.VarChar(8)
   isDefault Boolean @default(false)
 
   mapConfig        Json? // instance-specific map settings (overrides brand defaults)
@@ -968,6 +1071,14 @@ model SiteSubscription {
   currency        String? // "HUF"
   statusChangedAt DateTime? // mikor váltott státuszt (churn tracking)
   note            String? // manuális admin megjegyzés (pl. "2026 Q1 promo")
+
+  // Visitor ladder. manualOverride stays on when a human saves the subscription.
+  manualOverride    Boolean   @default(true)
+  ladderStep        Int       @default(0)
+  ladderSuspended   Boolean   @default(false)
+  belowFloorSince   DateTime?
+  ladderEvaluatedAt DateTime?
+  lastNotifiedStep  Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1029,12 +1140,12 @@ model SubscriptionHistory {
   @@index([paymentDueDate])
 }
 
-// Gallery: Reusable image galleries that can be embedded in content
+// Gallery: image galleries under a Place (optional event scope within that place)
 model Gallery {
   id       String  @id @default(cuid())
-  siteId   String
-  placeId  String? // Optional: gallery linked to a place
-  eventId  String? // Optional: gallery linked to an event
+  siteId   String // Denormalized tenant FK; geo parent is placeId
+  placeId  String // Required: galleries belong to a Place (hely)
+  eventId  String? // Optional: further scope to an Event of the same place
   name     String? // Optional name for admin identification
   images   Json // Array of GalleryImage objects: [{id, src, thumbSrc?, width?, height?, alt?, caption?}]
   layout   String? @default("grid") // grid | masonry | carousel
@@ -1046,7 +1157,7 @@ model Gallery {
   updatedAt DateTime @updatedAt
 
   site  Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  place Place? @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  place Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
   event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([siteId])
@@ -1082,6 +1193,28 @@ model AnalyticsDaily {
   @@index([placeId, day])
 }
 
+// Daily product clicks. AnalyticsDaily has no productId, so clicks live here.
+model ProductClickDaily {
+  id        String   @id @default(cuid())
+  day       DateTime
+  siteId    String
+  productId String
+  placeId   String // Required: same place as the product
+  clicks    Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site    Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  place   Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([day, siteId, productId, placeId])
+  @@index([siteId, day])
+  @@index([productId, day])
+  @@index([placeId, day])
+}
+
 // Curated Collections: Superadmin által összeválogatott site-listák
 model Collection {
   id          String  @id @default(cuid())
@@ -1104,7 +1237,7 @@ model Collection {
 model CollectionTranslation {
   id           String @id @default(cuid())
   collectionId String
-  lang         Lang
+  lang         String @db.VarChar(8)
 
   title       String
   description String? // HTML
@@ -1141,8 +1274,7 @@ model CollectionItem {
 model CollectionItemTranslation {
   id               String @id @default(cuid())
   collectionItemId String
-  lang             Lang
-
+  lang             String @db.VarChar(8)
   titleOverride       String? // opcionális override a site nevéhez
   descriptionOverride String? // HTML / rövid
   imageOverride       String?
@@ -1198,6 +1330,29 @@ model PlaceFloorplan {
 
   @@index([placeId])
   @@index([placeId, sortOrder])
+}
+
+// FloorplanPin: Pins/markers on floorplans
+// UiLanguage: languages the public interface can be shown in.
+// The strings themselves live in UiMessage, one row per key and language.
+model UiLanguage {
+  code      String   @id @db.VarChar(8)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  messages UiMessage[]
+}
+
+// UiMessage: one public interface string. key is a dotted path such as public.overview.lead.
+model UiMessage {
+  lang  String @db.VarChar(8)
+  key   String @db.VarChar(180)
+  value String @db.Text
+
+  language UiLanguage @relation(fields: [lang], references: [code], onDelete: Cascade)
+
+  @@id([lang, key])
+  @@index([key])
 }
 
 // FloorplanPin: Pins/markers on floorplans

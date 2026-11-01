@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionPlan, SubscriptionStatus, BillingPeriod } from "@prisma/client";
+import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
+import { ladderPlanToSitePlan, stepForMeter } from "../visitor-ladder/visitor-ladder";
 
 export interface SubscriptionListItem {
   scope: "site" | "place";
@@ -17,6 +19,11 @@ export interface SubscriptionListItem {
   };
   adminUrl: string;
   publicUrl?: string;
+  visitorMeter?: number;
+  visitorMeterSource?: "uniqueVisitors" | "pageViews";
+  visitorWouldStep?: 0 | 1 | 2;
+  manualOverride?: boolean;
+  ladderSuspended?: boolean;
 }
 
 export interface SubscriptionSummary {
@@ -43,11 +50,15 @@ export interface UpdateSubscriptionDto {
   priceCents?: number | null;
   currency?: string | null;
   note?: string | null;
+  manualOverride?: boolean;
 }
 
 @Injectable()
 export class AdminSubscriptionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly visitorLadder: VisitorLadderService
+  ) {}
 
   /**
    * Get subscriptions list with filters
@@ -148,8 +159,10 @@ export class AdminSubscriptionService {
               email: admin?.email || "",
               phone: null,
             },
-            adminUrl: `/admin/sites/${site.id}/edit`,
+            adminUrl: `/admin/sites/${site.id}/edit?tab=subscription`,
             publicUrl: site.primaryDomain || undefined,
+            manualOverride: sub.manualOverride,
+            ladderSuspended: sub.ladderSuspended,
           });
         }
 
@@ -295,12 +308,15 @@ export class AdminSubscriptionService {
           if (!b.validUntil) return -1;
           return new Date(a.validUntil).getTime() - new Date(b.validUntil).getTime();
         });
+        const page = sorted.slice(skip, skip + take);
+        await this.attachVisitorMeters(page);
         return {
-          items: sorted.slice(skip, skip + take),
+          items: page,
           total: sorted.length,
         };
       }
 
+      await this.attachVisitorMeters(items);
       return { items, total };
     } catch (error) {
       console.error("Error in findAll subscriptions:", error);
@@ -539,6 +555,25 @@ export class AdminSubscriptionService {
     }
   }
 
+  private async attachVisitorMeters(items: SubscriptionListItem[]) {
+    const sites = items.filter((item) => item.scope === "site");
+    if (!sites.length) return;
+    try {
+      const [config, meters] = await Promise.all([
+        this.visitorLadder.getConfig(),
+        this.visitorLadder.metersFor(sites.map((item) => item.entityId)),
+      ]);
+      for (const item of sites) {
+        const meter = meters.get(item.entityId);
+        item.visitorMeter = meter?.value ?? 0;
+        item.visitorMeterSource = meter?.source ?? "uniqueVisitors";
+        item.visitorWouldStep = stepForMeter(item.visitorMeter, config);
+      }
+    } catch (error) {
+      console.error("Error attaching visitor meters:", error);
+    }
+  }
+
   /**
    * Helper method to create history entry
    */
@@ -612,6 +647,16 @@ export class AdminSubscriptionService {
         ...(dto.note !== undefined && { note: dto.note }),
       };
 
+      if (scope === "site") {
+        if (dto.manualOverride !== undefined) {
+          updateData.manualOverride = dto.manualOverride;
+          if (dto.manualOverride) updateData.ladderSuspended = false;
+        } else if (dto.plan !== undefined || dto.status !== undefined) {
+          updateData.manualOverride = true;
+          updateData.ladderSuspended = false;
+        }
+      }
+
       // Handle validUntil: if explicitly set, use it; otherwise handle based on status/plan changes
       if (dto.validUntil !== undefined) {
         updateData.validUntil = dto.validUntil ? new Date(dto.validUntil) : null;
@@ -671,6 +716,13 @@ export class AdminSubscriptionService {
             },
           },
         });
+
+        if (dto.plan) {
+          await this.prisma.site.update({
+            where: { id: subscription.siteId },
+            data: { plan: ladderPlanToSitePlan(dto.plan) },
+          });
+        }
 
         // Create history entry
         await this.createHistoryEntry({

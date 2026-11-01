@@ -10,10 +10,10 @@ export function SiteAnalyticsPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <AdminPageHeader
-        title={t("admin.analyticsLabel") || "Analytics"}
+        title={t("admin.hierarchy.regionAnalytics") || "Régió analitika"}
         subtitle={
-          t("admin.dashboardCards.analyticsDesc") ||
-          "View site and place analytics, page views, and CTA clicks"
+          t("admin.hierarchy.regionAnalyticsHint") ||
+          "A kiválasztott régió / site összesített mutatói"
         }
         showNewButton={false}
       />

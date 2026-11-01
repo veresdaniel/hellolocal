@@ -1115,7 +1115,7 @@ export function PricingPage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#1b1730",
           paddingTop: "clamp(80px, 12vw, 100px)",
           paddingBottom: "clamp(40px, 8vw, 80px)",
           position: "relative",
@@ -1247,12 +1247,15 @@ export function PricingPage() {
                     ? "3px solid #667eea"
                     : "2px solid rgba(255, 255, 255, 0.3)",
                   position: "relative",
-                  transform: plan.highlight ? "scale(1.05)" : "scale(1)",
+                  transform: "none",
                   transition: "transform 0.3s ease, box-shadow 0.3s ease",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   textAlign: "center",
+                  width: "100%",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
                 }}
                 onMouseEnter={(e) => {
                   if (!plan.highlight && window.innerWidth >= 768) {
@@ -1262,7 +1265,7 @@ export function PricingPage() {
                 }}
                 onMouseLeave={(e) => {
                   if (!plan.highlight) {
-                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.transform = "none";
                     e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.15)";
                   }
                 }}
@@ -1341,7 +1344,7 @@ export function PricingPage() {
                 display: "grid",
                 gridTemplateColumns:
                   "minmax(200px, 2.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "#1b1730",
                 padding: "clamp(20px, 3vw, 28px) clamp(20px, 3vw, 32px)",
                 gap: "clamp(16px, 2.5vw, 24px)",
                 alignItems: "center",

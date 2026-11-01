@@ -5,17 +5,47 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../hooks/useConfirm";
 import {
   getDefaultLanguage,
   setDefaultLanguage,
   getFeatureMatrix,
   setFeatureMatrix,
+  getAppSetting,
+  createAppSetting,
+  getContentDraftStatus,
+  saveContentDraftSettings,
+  getBrands,
+  updateBrand,
+  type ContentDraftProvider,
   type FeatureMatrix,
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { HAS_MULTIPLE_SITES } from "../../app/config";
+import { PublicPlansEditor } from "../../components/PublicPlansEditor";
+import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
+import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
+import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
+import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
-import type { UserRole } from "../../types/enums";
+import type { UserRole, Lang } from "../../types/enums";
+import { Link, useParams } from "react-router-dom";
+import {
+  DEFAULT_BODY_FONT,
+  DEFAULT_HEADING_FONT,
+  PUBLIC_FONT_IDS,
+  readPublicFonts,
+  type PublicFontId,
+} from "../../styles/publicFonts";
+import {
+  DEFAULT_PUBLIC_THEME_COLORS,
+  isValidHexColor,
+  resolvePublicThemeColors,
+  type PublicThemeColors,
+} from "../../styles/publicThemeColors";
+import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
+import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+
+const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
@@ -23,8 +53,9 @@ export function AppSettingsPage() {
   const user = authContext?.user ?? null;
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   usePageTitle("admin.appSettings");
-  const [defaultLang, setDefaultLangState] = useState<"hu" | "en" | "de">("hu");
+  const [defaultLang, setDefaultLangState] = useState<Lang>("hu");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -32,11 +63,37 @@ export function AppSettingsPage() {
   const [languageOpen, setLanguageOpen] = useState(false);
   const [featureMatrixOpen, setFeatureMatrixOpen] = useState(false);
   const [placeFeatureMatrixOpen, setPlaceFeatureMatrixOpen] = useState(false);
+  const [publicPlansOpen, setPublicPlansOpen] = useState(false);
+  const [visitorLadderOpen, setVisitorLadderOpen] = useState(false);
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  const adminLang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
   // Feature matrix state
   const [featureMatrix, setFeatureMatrixState] = useState<FeatureMatrix | null>(null);
   const [isLoadingFeatureMatrix, setIsLoadingFeatureMatrix] = useState(false);
   const [isSavingFeatureMatrix, setIsSavingFeatureMatrix] = useState(false);
+  const [isSavingPublicPlans, setIsSavingPublicPlans] = useState(false);
+  const [quoteRecipient, setQuoteRecipient] = useState("");
+  const [isSavingRecipient, setIsSavingRecipient] = useState(false);
+  const [platformGaId, setPlatformGaId] = useState("");
+  const [platformGaError, setPlatformGaError] = useState("");
+  const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
+  const [contentDraftKeyConfigured, setContentDraftKeyConfigured] = useState(false);
+  const [contentDraftEnabled, setContentDraftEnabled] = useState(false);
+  const [contentDraftProvider, setContentDraftProvider] = useState<ContentDraftProvider>("gemini");
+  const [contentDraftApiKey, setContentDraftApiKey] = useState("");
+  const [isSavingContentDraft, setIsSavingContentDraft] = useState(false);
+  const [typographyOpen, setTypographyOpen] = useState(false);
+  const [themeColorsOpen, setThemeColorsOpen] = useState(false);
+  const [brandId, setBrandId] = useState<string | null>(null);
+  const [brandTheme, setBrandTheme] = useState<Record<string, unknown>>({});
+  const [headingFont, setHeadingFont] = useState<PublicFontId>(DEFAULT_HEADING_FONT);
+  const [bodyFont, setBodyFont] = useState<PublicFontId>(DEFAULT_BODY_FONT);
+  const [isSavingTypography, setIsSavingTypography] = useState(false);
+  const [themeColors, setThemeColors] = useState<PublicThemeColors>({
+    ...DEFAULT_PUBLIC_THEME_COLORS,
+  });
+  const [isSavingThemeColors, setIsSavingThemeColors] = useState(false);
 
   useEffect(() => {
     const loadDefaultLanguage = async () => {
@@ -78,12 +135,199 @@ export function AppSettingsPage() {
   const userIsAdmin = user ? isAdmin(user.role as UserRole) : false;
   const userIsSuperadmin = user ? isSuperadmin(user.role) : false;
 
+  useEffect(() => {
+    if (!userIsSuperadmin) return;
+    let cancelled = false;
+    getAppSetting("quoteRequestRecipient")
+      .then((row) => {
+        if (!cancelled) setQuoteRecipient(row?.value ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) setQuoteRecipient("");
+      });
+    getAppSetting(PLATFORM_GA_SETTING_KEY)
+      .then((row) => {
+        if (!cancelled) setPlatformGaId(row?.value ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) setPlatformGaId("");
+      });
+    getContentDraftStatus()
+      .then((status) => {
+        if (cancelled) return;
+        setContentDraftEnabled(Boolean(status.enabled));
+        setContentDraftKeyConfigured(Boolean(status.keyConfigured));
+        if (
+          status.provider === "gemini" ||
+          status.provider === "groq" ||
+          status.provider === "openrouter"
+        ) {
+          setContentDraftProvider(status.provider);
+        } else {
+          setContentDraftProvider("gemini");
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setContentDraftEnabled(false);
+        setContentDraftKeyConfigured(false);
+        setContentDraftProvider("gemini");
+      });
+    getBrands()
+      .then((brands) => {
+        if (cancelled) return;
+        const brand = brands[0];
+        if (!brand) {
+          setBrandId(null);
+          return;
+        }
+        setBrandId(brand.id);
+        const theme =
+          brand.theme && typeof brand.theme === "object" && !Array.isArray(brand.theme)
+            ? { ...(brand.theme as Record<string, unknown>) }
+            : {};
+        setBrandTheme(theme);
+        const fonts = readPublicFonts(theme);
+        setHeadingFont(fonts.headingFont);
+        setBodyFont(fonts.bodyFont);
+        setThemeColors(resolvePublicThemeColors(undefined, theme));
+      })
+      .catch(() => {
+        if (!cancelled) setBrandId(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userIsSuperadmin]);
+
+  const handleSaveTypography = async () => {
+    if (!brandId) {
+      showToast(t("admin.errors.updateFailed"), "error");
+      return;
+    }
+    try {
+      setIsSavingTypography(true);
+      const nextTheme = { ...brandTheme, headingFont, bodyFont };
+      await updateBrand(brandId, { theme: nextTheme });
+      setBrandTheme(nextTheme);
+      showToast(t("admin.typography.saved"), "success");
+      window.dispatchEvent(new Event("admin:platformSettings:changed"));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingTypography(false);
+    }
+  };
+
+  const handleSaveThemeColors = async () => {
+    if (!brandId) {
+      showToast(t("admin.errors.updateFailed"), "error");
+      return;
+    }
+    for (const value of Object.values(themeColors)) {
+      if (!isValidHexColor(value)) {
+        showToast(t("admin.themeColors.invalidHex"), "error");
+        return;
+      }
+    }
+    try {
+      setIsSavingThemeColors(true);
+      const nextTheme = { ...brandTheme, headingFont, bodyFont, colors: themeColors };
+      await updateBrand(brandId, { theme: nextTheme });
+      setBrandTheme(nextTheme);
+      showToast(t("admin.themeColors.saved"), "success");
+      window.dispatchEvent(new Event("admin:platformSettings:changed"));
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingThemeColors(false);
+    }
+  };
+
+  const handleSaveContentDraft = async (clearKey = false) => {
+    if (clearKey) {
+      const ok = await confirm({
+        title: t("admin.contentDraft.clearKey"),
+        message: t("admin.contentDraft.apiKeyClearHelp"),
+        confirmLabel: t("admin.contentDraft.clearKey"),
+        cancelLabel: t("common.cancel"),
+        confirmVariant: "danger",
+      });
+      if (!ok) return;
+    }
+    try {
+      setIsSavingContentDraft(true);
+      const trimmed = contentDraftApiKey.trim();
+      const status = await saveContentDraftSettings({
+        provider: contentDraftProvider,
+        ...(clearKey ? { apiKey: "" } : trimmed ? { apiKey: trimmed } : {}),
+      });
+      setContentDraftEnabled(Boolean(status.enabled));
+      setContentDraftKeyConfigured(Boolean(status.keyConfigured));
+      if (
+        status.provider === "gemini" ||
+        status.provider === "groq" ||
+        status.provider === "openrouter"
+      ) {
+        setContentDraftProvider(status.provider);
+      }
+      setContentDraftApiKey("");
+      showToast(t("admin.contentDraft.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingContentDraft(false);
+    }
+  };
+
+  const handleSaveQuoteRecipient = async () => {
+    try {
+      setIsSavingRecipient(true);
+      await createAppSetting({
+        key: "quoteRequestRecipient",
+        value: quoteRecipient.trim(),
+        type: "string",
+        description: t("admin.quoteRecipientDescription"),
+      });
+      showToast(t("public.overview.plans.recipient.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("public.overview.plans.quote.failed"), "error");
+    } finally {
+      setIsSavingRecipient(false);
+    }
+  };
+
+  const handleSavePlatformGa = async () => {
+    if (!isValidGaMeasurementIdInput(platformGaId)) {
+      setPlatformGaError(t("admin.googleAnalytics.invalidId"));
+      showToast(t("admin.googleAnalytics.invalidId"), "error");
+      return;
+    }
+    setPlatformGaError("");
+    try {
+      setIsSavingPlatformGa(true);
+      const normalized = platformGaId.trim() ? platformGaId.trim().toUpperCase() : "";
+      await createAppSetting({
+        key: PLATFORM_GA_SETTING_KEY,
+        value: normalized,
+        type: "string",
+        description: t("admin.googleAnalytics.platformDescription"),
+      });
+      setPlatformGaId(normalized);
+      showToast(t("admin.googleAnalytics.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingPlatformGa(false);
+    }
+  };
+
   // Load feature matrix
   useEffect(() => {
-    if (userIsSuperadmin && (featureMatrixOpen || placeFeatureMatrixOpen)) {
+    if (userIsSuperadmin && (featureMatrixOpen || placeFeatureMatrixOpen || publicPlansOpen)) {
       loadFeatureMatrix();
     }
-  }, [userIsSuperadmin, featureMatrixOpen, placeFeatureMatrixOpen]);
+  }, [userIsSuperadmin, featureMatrixOpen, placeFeatureMatrixOpen, publicPlansOpen]);
 
   const loadFeatureMatrix = async () => {
     try {
@@ -100,15 +344,67 @@ export function AppSettingsPage() {
   const handleSaveFeatureMatrix = async () => {
     try {
       setIsSavingFeatureMatrix(true);
-      await setFeatureMatrix({
-        planOverrides: featureMatrix?.planOverrides || null,
+      const { syncPublicPlansFromMatrixLimits } = await import("../../components/publicPlans");
+      const planOverrides = featureMatrix?.planOverrides
+        ? syncPublicPlansFromMatrixLimits(featureMatrix.planOverrides)
+        : null;
+      const saved = await setFeatureMatrix({
+        planOverrides,
         placePlanOverrides: featureMatrix?.placePlanOverrides || null,
       });
-      showToast(t("admin.platformSettingsUpdated") || "Feature matrix updated", "success");
+      setFeatureMatrixState(saved);
+      try {
+        const { invalidateUiCopy } = await import("../../i18n/loadUiCopy");
+        invalidateUiCopy();
+      } catch {
+        /* optional client cache */
+      }
+      showToast(t("admin.platformSettingsUpdated"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
     } finally {
       setIsSavingFeatureMatrix(false);
+    }
+  };
+
+  const handleSavePublicPlans = async (
+    plans: Record<PublicPlanId, PublicPlanNumbers>,
+    copyDrafts?: import("../../components/publicPlans").PlanCopyDrafts
+  ) => {
+    try {
+      setIsSavingPublicPlans(true);
+      if (copyDrafts) {
+        try {
+          const { saveUiMessages } = await import("../../api/uiCopy.api");
+          const { planCopyEntriesFromDraft } = await import("../../components/publicPlans");
+          const { applyUiCopy, invalidateUiCopy } = await import("../../i18n/loadUiCopy");
+          for (const [code, fields] of Object.entries(copyDrafts)) {
+            const entries = planCopyEntriesFromDraft(fields);
+            if (Object.keys(entries).length) await saveUiMessages(code, entries);
+            invalidateUiCopy(code);
+            void applyUiCopy(code);
+          }
+        } catch {
+          /* Numbers still save below; UiMessage may be unavailable until migration. */
+        }
+      }
+      const { syncMatrixLimitsFromPublicPlans, syncPublicPlansFromMatrixLimits } = await import(
+        "../../components/publicPlans"
+      );
+      const current = featureMatrix?.planOverrides || {};
+      const next = syncPublicPlansFromMatrixLimits(
+        syncMatrixLimitsFromPublicPlans({ ...current, publicPlans: plans })
+      );
+      const saved = await setFeatureMatrix({
+        planOverrides: next,
+        placePlanOverrides: featureMatrix?.placePlanOverrides || null,
+      });
+      setFeatureMatrixState(saved);
+      showToast(t("public.overview.plans.save"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingPublicPlans(false);
     }
   };
 
@@ -224,7 +520,7 @@ export function AppSettingsPage() {
                   </label>
                   <select
                     value={defaultLang}
-                    onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
+                    onChange={(e) => setDefaultLangState(e.target.value as Lang)}
                     disabled={!userIsAdmin || isSaving}
                     style={{
                       padding: "10px 16px",
@@ -238,9 +534,7 @@ export function AppSettingsPage() {
                       minWidth: 200,
                     }}
                   >
-                    <option value="hu">🇭🇺 {t("admin.languageNames.hu")}</option>
-                    <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
-                    <option value="de">🇩🇪 {t("admin.languageNames.de")}</option>
+                    <LanguageSelectOptions variant="translated" />
                   </select>
                   {userIsAdmin && (
                     <button
@@ -398,7 +692,7 @@ export function AppSettingsPage() {
                 </label>
                 <select
                   value={defaultLang}
-                  onChange={(e) => setDefaultLangState(e.target.value as "hu" | "en" | "de")}
+                  onChange={(e) => setDefaultLangState(e.target.value as Lang)}
                   disabled={!isAdmin || isSaving}
                   style={{
                     padding: "12px 16px",
@@ -413,9 +707,7 @@ export function AppSettingsPage() {
                     outline: "none",
                   }}
                 >
-                  <option value="hu">🇭🇺 {t("admin.languageNames.hu")}</option>
-                  <option value="en">🇬🇧 {t("admin.languageNames.en")}</option>
-                  <option value="de">🇩🇪 {t("admin.languageNames.de")}</option>
+                  <LanguageSelectOptions variant="translated" />
                 </select>
                 {isAdmin && (
                   <button
@@ -458,6 +750,571 @@ export function AppSettingsPage() {
         )}
       </div>
 
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setTypographyOpen(!typographyOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: typographyOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 600,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.typography.title")}
+            </h2>
+            <span>{typographyOpen ? "▾" : "▸"}</span>
+          </button>
+          {typographyOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              <p
+                style={{
+                  color: "#666",
+                  marginBottom: 24,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.typography.help")}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 16,
+                  alignItems: "flex-end",
+                  marginBottom: 16,
+                }}
+              >
+                <label style={{ display: "grid", gap: 8, minWidth: 220 }}>
+                  <span style={{ fontWeight: 500 }}>{t("admin.typography.headingFont")}</span>
+                  <select
+                    value={headingFont}
+                    onChange={(e) => setHeadingFont(e.target.value as PublicFontId)}
+                    disabled={isSavingTypography || !brandId}
+                    style={{
+                      padding: "10px 16px",
+                      fontSize: 16,
+                      borderRadius: 6,
+                      border: "1px solid #ddd",
+                      background: "white",
+                      minWidth: 220,
+                    }}
+                  >
+                    {PUBLIC_FONT_IDS.map((id) => (
+                      <option key={id} value={id}>
+                        {t(`admin.typography.fonts.${id}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 8, minWidth: 220 }}>
+                  <span style={{ fontWeight: 500 }}>{t("admin.typography.bodyFont")}</span>
+                  <select
+                    value={bodyFont}
+                    onChange={(e) => setBodyFont(e.target.value as PublicFontId)}
+                    disabled={isSavingTypography || !brandId}
+                    style={{
+                      padding: "10px 16px",
+                      fontSize: 16,
+                      borderRadius: 6,
+                      border: "1px solid #ddd",
+                      background: "white",
+                      minWidth: 220,
+                    }}
+                  >
+                    {PUBLIC_FONT_IDS.map((id) => (
+                      <option key={id} value={id}>
+                        {t(`admin.typography.fonts.${id}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSaveTypography}
+                  disabled={isSavingTypography || !brandId}
+                  style={{
+                    padding: "10px 24px",
+                    fontSize: 16,
+                    fontWeight: 500,
+                    background: isSavingTypography || !brandId ? "#999" : "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: isSavingTypography || !brandId ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isSavingTypography ? t("common.loading") : t("admin.typography.save")}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setThemeColorsOpen(!themeColorsOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: themeColorsOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 600,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.themeColors.title")}
+            </h2>
+            <span>{themeColorsOpen ? "▾" : "▸"}</span>
+          </button>
+          {themeColorsOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              <p
+                style={{
+                  color: "#666",
+                  marginBottom: 24,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.themeColors.helpGlobal")}
+              </p>
+              <PublicThemeColorsEditor
+                value={themeColors}
+                onChange={setThemeColors}
+                disabled={isSavingThemeColors || !brandId}
+              />
+              <button
+                type="button"
+                onClick={handleSaveThemeColors}
+                disabled={isSavingThemeColors || !brandId}
+                style={{
+                  marginTop: 20,
+                  padding: "10px 24px",
+                  fontSize: 16,
+                  fontWeight: 500,
+                  background: isSavingThemeColors || !brandId ? "#999" : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: isSavingThemeColors || !brandId ? "not-allowed" : "pointer",
+                }}
+              >
+                {isSavingThemeColors ? t("common.loading") : t("admin.themeColors.save")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            padding: 24,
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 8px",
+              fontSize: 20,
+              fontWeight: 600,
+              fontFamily:
+                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.i18n.landingMovedTitle")}
+          </h2>
+          <p style={{ margin: "0 0 12px", color: "#666", lineHeight: 1.5 }}>
+            {t("admin.i18n.landingMovedHint")}
+          </p>
+          <Link
+            to={`/${adminLang}/admin/i18n?section=overview`}
+            style={{ color: "#0f766e", fontWeight: 600 }}
+          >
+            {t("admin.i18n.openOverview")}
+          </Link>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("admin.contentDraft.settingsTitle")}
+          </h2>
+          <p style={{ margin: "0 0 8px", color: "#666" }}>{t("admin.contentDraft.settingsHelp")}</p>
+          <p style={{ margin: "0 0 16px", color: contentDraftEnabled ? "#166534" : "#6b7280", fontWeight: 600 }}>
+            {contentDraftEnabled
+              ? t("admin.contentDraft.statusOn")
+              : t("admin.contentDraft.statusOff")}
+          </p>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+            {t("admin.contentDraft.provider")}
+          </label>
+          <select
+            value={contentDraftProvider}
+            onChange={(event) =>
+              setContentDraftProvider(event.target.value as ContentDraftProvider)
+            }
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              minHeight: 42,
+              marginBottom: 16,
+              padding: "0 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+              background: "#fff",
+            }}
+          >
+            <option value="gemini">{t("admin.contentDraft.providerGemini")}</option>
+            <option value="groq">{t("admin.contentDraft.providerGroq")}</option>
+            <option value="openrouter">{t("admin.contentDraft.providerOpenRouter")}</option>
+          </select>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+            {t("admin.contentDraft.apiKey")}
+          </label>
+          {contentDraftKeyConfigured ? (
+            <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 14 }}>
+              {t("admin.contentDraft.apiKeyConfigured")}
+            </p>
+          ) : null}
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={contentDraftApiKey}
+            onChange={(event) => setContentDraftApiKey(event.target.value)}
+            placeholder={t("admin.contentDraft.apiKeyPlaceholder")}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              minHeight: 42,
+              padding: "0 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+            }}
+          />
+          <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 13 }}>
+            {t("admin.contentDraft.apiKeyClearHelp")}
+          </p>
+          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => void handleSaveContentDraft(false)}
+              disabled={isSavingContentDraft}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "#16131f",
+                color: "#fffdf8",
+                fontWeight: 600,
+                cursor: isSavingContentDraft ? "wait" : "pointer",
+              }}
+            >
+              {t("admin.contentDraft.save")}
+            </button>
+            {contentDraftKeyConfigured ? (
+              <button
+                type="button"
+                onClick={() => void handleSaveContentDraft(true)}
+                disabled={isSavingContentDraft}
+                style={{
+                  minHeight: 42,
+                  padding: "0 16px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 999,
+                  background: "#fff",
+                  color: "#374151",
+                  fontWeight: 600,
+                  cursor: isSavingContentDraft ? "wait" : "pointer",
+                }}
+              >
+                {t("admin.contentDraft.clearKey")}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("admin.googleAnalytics.platformTitle")}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "#666" }}>
+            {t("admin.googleAnalytics.platformHelp")}
+          </p>
+          <input
+            type="text"
+            value={platformGaId}
+            onChange={(event) => {
+              setPlatformGaId(event.target.value);
+              if (platformGaError) setPlatformGaError("");
+            }}
+            placeholder="G-XXXXXXXX"
+            autoComplete="off"
+            spellCheck={false}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              minHeight: 42,
+              padding: "0 12px",
+              border: platformGaError ? "1px solid #dc2626" : "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+            }}
+          />
+          {platformGaError ? (
+            <p style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}>{platformGaError}</p>
+          ) : (
+            <p style={{ margin: "8px 0 0", color: "#9ca3af", fontSize: 12 }}>
+              {t("admin.googleAnalytics.clearHint")}
+            </p>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => void handleSavePlatformGa()}
+              disabled={isSavingPlatformGa}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "#16131f",
+                color: "#fffdf8",
+                fontWeight: 600,
+                cursor: isSavingPlatformGa ? "wait" : "pointer",
+              }}
+            >
+              {isSavingPlatformGa ? t("common.loading") : t("admin.googleAnalytics.save")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("public.overview.plans.recipient.label")}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "#666" }}>
+            {t("public.overview.plans.recipient.help")}
+          </p>
+          <input
+            type="email"
+            value={quoteRecipient}
+            onChange={(event) => setQuoteRecipient(event.target.value)}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              minHeight: 42,
+              padding: "0 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+            }}
+          />
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={handleSaveQuoteRecipient}
+              disabled={isSavingRecipient}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "#16131f",
+                color: "#fffdf8",
+                fontWeight: 600,
+                cursor: isSavingRecipient ? "wait" : "pointer",
+              }}
+            >
+              {isSavingRecipient
+                ? t("public.overview.plans.saving")
+                : t("public.overview.plans.recipient.save")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPublicPlansOpen(!publicPlansOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: publicPlansOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 600,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("public.overview.plansTitle")}
+            </h2>
+            <span>{publicPlansOpen ? "▾" : "▸"}</span>
+          </button>
+          {publicPlansOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              {isLoadingFeatureMatrix && !featureMatrix ? (
+                <LoadingSpinner />
+              ) : (
+                <PublicPlansEditor
+                  planOverrides={featureMatrix?.planOverrides}
+                  saving={isSavingPublicPlans}
+                  onSave={handleSavePublicPlans}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "white",
+            borderRadius: 12,
+            border: "1px solid #e0e0e0",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setVisitorLadderOpen(!visitorLadderOpen)}
+            style={{
+              width: "100%",
+              padding: 24,
+              background: visitorLadderOpen ? "#f8f9fa" : "white",
+              border: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 600,
+                fontFamily:
+                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              {t("admin.visitorLadder.title")}
+            </h2>
+            <span>{visitorLadderOpen ? "▾" : "▸"}</span>
+          </button>
+          {visitorLadderOpen && (
+            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+              <VisitorLadderSettings />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Feature Matrix Configuration Section - Superadmin only */}
       {userIsSuperadmin && (
         <div
@@ -494,7 +1351,7 @@ export function AppSettingsPage() {
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.featureMatrix") || "Feature Matrix Configuration"}
+                {t("admin.featureMatrix")}
               </h2>
             </div>
             <span
@@ -519,8 +1376,7 @@ export function AppSettingsPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.featureMatrixDescription") ||
-                  "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values."}
+                {t("admin.featureMatrixDescription")}
               </p>
 
               {!isLoadingFeatureMatrix && featureMatrix && (
@@ -573,7 +1429,7 @@ export function AppSettingsPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("admin.resetToDefaults") || "Reset to Defaults"}
+                  {t("admin.resetToDefaults")}
                 </button>
               </div>
             </div>
@@ -617,7 +1473,7 @@ export function AppSettingsPage() {
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.placeFeatureMatrix") || "Place Subscription Matrix Configuration"}
+                {t("admin.placeFeatureMatrix")}
               </h2>
             </div>
             <span
@@ -642,8 +1498,7 @@ export function AppSettingsPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.placeFeatureMatrixDescription") ||
-                  "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values."}
+                {t("admin.placeFeatureMatrixDescription")}
               </p>
 
               {!isLoadingFeatureMatrix && featureMatrix && (
@@ -696,7 +1551,7 @@ export function AppSettingsPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("admin.resetToDefaults") || "Reset to Defaults"}
+                  {t("admin.resetToDefaults")}
                 </button>
               </div>
             </div>
@@ -1044,13 +1899,13 @@ function FeatureMatrixEditor({
                 zIndex: 10,
               }}
             >
-              {t("public.pricing.featureMatrix.feature") || "Feature"}
+              {t("public.pricing.featureMatrix.feature")}
             </th>
             {plans.map((plan) => {
               const planLabels: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
-                BASIC: t("admin.planBasic") || "Basic",
-                PRO: t("admin.planPro") || "Pro",
-                BUSINESS: t("admin.planBusiness") || "Business",
+                BASIC: t("admin.planBasic"),
+                PRO: t("admin.planPro"),
+                BUSINESS: t("admin.planBusiness"),
               };
               return (
                 <th
@@ -1260,7 +2115,7 @@ function FeatureMatrixEditor({
                               fontWeight: 500,
                             }}
                           >
-                            {t("admin.overridden") || "Overridden"}
+                            {t("admin.overridden")}
                           </div>
                         )}
                       </div>
@@ -1348,17 +2203,17 @@ function PlaceFeatureMatrixEditor({
 
   const features = [
     {
-      name: t("public.pricing.features.placeImages") || "Képek száma",
+      name: t("public.pricing.features.placeImages"),
       field: "images",
       type: "number",
     },
     {
-      name: t("public.pricing.features.eventsPerPlace") || "Események száma",
+      name: t("public.pricing.features.eventsPerPlace"),
       field: "events",
       type: "number",
     },
     {
-      name: t("public.pricing.features.featuredPlacement") || "Kiemelt megjelenés",
+      name: t("public.pricing.features.featuredPlacement"),
       field: "featured",
       type: "boolean",
     },
@@ -1403,13 +2258,13 @@ function PlaceFeatureMatrixEditor({
                 zIndex: 10,
               }}
             >
-              {t("public.pricing.featureMatrix.feature") || "Feature"}
+              {t("public.pricing.featureMatrix.feature")}
             </th>
             {plans.map((plan) => {
               const planLabels: Record<"free" | "basic" | "pro", string> = {
-                free: t("admin.planFree") || "Free",
-                basic: t("admin.planBasic") || "Basic",
-                pro: t("admin.planPro") || "Pro",
+                free: t("admin.planFree"),
+                basic: t("admin.planBasic"),
+                pro: t("admin.planPro"),
               };
               return (
                 <th
@@ -1550,7 +2405,7 @@ function PlaceFeatureMatrixEditor({
                               fontWeight: 500,
                             }}
                           >
-                            {t("admin.overridden") || "Overridden"}
+                            {t("admin.overridden")}
                           </div>
                         )}
                       </div>

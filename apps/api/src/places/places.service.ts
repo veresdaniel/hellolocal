@@ -1,8 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Lang, SlugEntityType } from "@prisma/client";
+import { SlugEntityType } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { requireLang } from "../common/lang";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
+import { assignMissingSlugs, fallbackSlug } from "../slug/slug.helper";
+import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 
 type ListArgs = {
@@ -12,6 +16,7 @@ type ListArgs = {
   priceBand?: string | string[]; // Filter by price band (name or ID) - can be multiple (OR logic)
   town?: string; // Filter by town using public town slug
   q?: string; // Search query (searches in place names)
+  kind?: "place" | "service" | "all";
   limit: number; // Maximum number of results (1-200)
   offset: number; // Pagination offset
 };
@@ -24,20 +29,12 @@ export class PlacesService {
     private readonly slugResolver: SlugResolverService
   ) {}
 
-  private normalizeLang(lang: string | undefined): Lang {
-    if (!lang) {
-      throw new BadRequestException("Language parameter is required. Use hu|en|de.");
-    }
-    if (lang === "hu" || lang === "en" || lang === "de") return lang;
-    throw new BadRequestException(`Unsupported lang: "${lang}". Use hu|en|de.`);
-  }
-
   /**
    * Lists places with optional filtering by category, town, and search query.
    * Returns places with their canonical slugs and related data.
    */
   async list(args: ListArgs) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
 
     // Step 1: Resolve site (either default or from siteKey parameter)
     // This determines which site's data we're querying
@@ -247,6 +244,12 @@ export class PlacesService {
       where.townId = townResolved.entityId;
     }
 
+    if (args.kind === "service") {
+      where.category = { kind: "service" };
+    } else if (args.kind !== "all") {
+      where.category = { kind: "place" };
+    }
+
     // Filter by search query (searches in place names)
     if (args.q) {
       // NestJS automatically decodes URL parameters
@@ -273,6 +276,7 @@ export class PlacesService {
             translations: true, // Get all translations for fallback
           },
         },
+        parentPlace: { include: { translations: true } },
         priceBand: {
           include: {
             translations: true, // Get all translations for fallback (id is automatically included)
@@ -334,12 +338,23 @@ export class PlacesService {
           select: { entityId: true, slug: true },
         });
         // Add fallback slugs to the map
-        fallbackSlugs.forEach((s) => {
-          if (!placeSlugById.has(s.entityId)) {
-            placeSlugById.set(s.entityId, s.slug);
-          }
-        });
+        assignMissingSlugs(placeSlugById, fallbackSlugs);
       }
+    }
+
+    const stillMissingPlaceIds = placeIds.filter((id) => !placeSlugById.has(id));
+    if (stillMissingPlaceIds.length > 0) {
+      const anySlugs = await this.prisma.slug.findMany({
+        where: {
+          siteId: site.siteId,
+          entityType: SlugEntityType.place,
+          entityId: { in: stillMissingPlaceIds },
+          isPrimary: true,
+          isActive: true,
+        },
+        select: { entityId: true, slug: true },
+      });
+      assignMissingSlugs(placeSlugById, anySlugs);
     }
 
     // Step 6: Load canonical town slugs (if needed for the list response)
@@ -378,12 +393,23 @@ export class PlacesService {
           },
           select: { entityId: true, slug: true },
         });
-        fallbackTownSlugs.forEach((s) => {
-          if (!townSlugById.has(s.entityId)) {
-            townSlugById.set(s.entityId, s.slug);
-          }
-        });
+        assignMissingSlugs(townSlugById, fallbackTownSlugs);
       }
+    }
+
+    const stillMissingTownIds = townIds.filter((id) => !townSlugById.has(id));
+    if (stillMissingTownIds.length > 0) {
+      const anyTownSlugs = await this.prisma.slug.findMany({
+        where: {
+          siteId: site.siteId,
+          entityType: SlugEntityType.town,
+          entityId: { in: stillMissingTownIds },
+          isPrimary: true,
+          isActive: true,
+        },
+        select: { entityId: true, slug: true },
+      });
+      assignMissingSlugs(townSlugById, anyTownSlugs);
     }
 
     // Helper function to get translation with fallback to Hungarian
@@ -445,10 +471,16 @@ export class PlacesService {
         townSlug: canonicalTownSlug,
         category: categoryName,
         categoryColor: categoryColor,
+        categoryKind: p.category?.kind ?? "place",
+        parentPlaceId: p.parentPlaceId ?? null,
+        parentPlaceName: p.parentPlace?.translations
+          ? getTranslation(p.parentPlace.translations, "name")
+          : null,
         name: placeTranslation?.name ?? "(missing translation)",
         shortDescription: placeTranslation?.shortDescription ?? null, // HTML - for list view cards
         description: placeTranslation?.description ?? null,
         heroImage: p.heroImage ?? null,
+        mapImage: p.mapImage ?? null,
         gallery: galleryImages,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
         priceBand: priceBandName,
@@ -471,7 +503,7 @@ export class PlacesService {
    * Returns full place details including contact information and SEO data.
    */
   async detail(args: { lang: string; siteKey?: string; slug: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
 
     // Step 1: Resolve site (either default or from siteKey parameter)
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
@@ -510,8 +542,44 @@ export class PlacesService {
    * Returns full place details including contact information and SEO data.
    * This method is used after slug resolution to fetch place data by ID.
    */
+  private async localServices(siteId: string, lang: Lang, placeId: string) {
+    const rows = await this.prisma.place.findMany({
+      where: { siteId, parentPlaceId: placeId, isActive: true },
+      include: {
+        translations: true,
+        category: { include: { translations: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (rows.length === 0) return [];
+    const slugs = await this.prisma.slug.findMany({
+      where: {
+        siteId,
+        lang,
+        entityType: SlugEntityType.place,
+        entityId: { in: rows.map((row) => row.id) },
+        isPrimary: true,
+        isActive: true,
+      },
+      select: { entityId: true, slug: true },
+    });
+    const slugById = new Map(slugs.map((row) => [row.entityId, row.slug]));
+    return rows.map((row) => {
+      const copy = row.translations.find((item) => item.lang === lang) || row.translations.find((item) => item.lang === Lang.hu);
+      const category =
+        row.category?.translations.find((item) => item.lang === lang) ||
+        row.category?.translations.find((item) => item.lang === Lang.hu);
+      return {
+        id: row.id,
+        slug: slugById.get(row.id) || null,
+        name: copy?.name || "",
+        category: category?.name || null,
+      };
+    });
+  }
+
   async detailById(args: { lang: string; siteKey?: string; placeId: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = requireLang(args.lang);
 
     // Step 1: Resolve site (either default or from siteKey parameter)
     const site = await this.siteResolver.resolve({ lang, siteKey: args.siteKey });
@@ -520,12 +588,14 @@ export class PlacesService {
     const place = await this.prisma.place.findUnique({
       where: { id: args.placeId },
       include: {
-        town: { select: { id: true } },
+        town: { select: { id: true, gaMeasurementId: true } },
+        site: { select: { gaMeasurementId: true } },
         category: {
           include: {
             translations: true, // Get all translations for fallback
           },
         },
+        parentPlace: { include: { translations: true } },
         priceBand: {
           include: {
             translations: true, // Get all translations for fallback (id is automatically included)
@@ -566,7 +636,7 @@ export class PlacesService {
       select: { slug: true },
     });
 
-    const canonicalSlug = canonicalSlugRecord?.slug ?? args.placeId;
+    const canonicalSlug = fallbackSlug(canonicalSlugRecord?.slug, args.placeId) ?? args.placeId;
 
     // Step 4: Get town public slug (if place belongs to a town)
     const townSlug = place.town?.id
@@ -621,6 +691,12 @@ export class PlacesService {
       .filter((name: string | null): name is string => name !== null);
 
     return {
+      categoryKind: place.category?.kind ?? "place",
+      parentPlaceId: place.parentPlaceId ?? null,
+      parentPlaceName: place.parentPlace?.translations
+        ? getTranslation(place.parentPlace.translations, "name")
+        : null,
+      services: await this.localServices(site.siteId, site.lang, place.id),
       id: place.id,
       slug: canonicalSlug, // canonical place slug
       redirected: false, // No redirect when fetching by ID
@@ -633,6 +709,7 @@ export class PlacesService {
       shortDescription: placeTranslation?.shortDescription ?? null,
       description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,
+      mapImage: place.mapImage ?? null,
       location: { lat: place.lat ?? null, lng: place.lng ?? null },
       contact: {
         phone: placeTranslation?.phone ?? null,
@@ -652,6 +729,12 @@ export class PlacesService {
       tags: tagNames,
       extras: place.extras ?? null,
       rating: { avg: place.ratingAvg ?? null, count: place.ratingCount ?? null },
+      // Most specific GA wins: Place > Town > Site (no platform fallback on site routes).
+      gaMeasurementId: resolveGaMeasurementId(
+        place.gaMeasurementId,
+        place.town?.gaMeasurementId,
+        place.site?.gaMeasurementId
+      ),
       seo: {
         title: placeTranslation?.seoTitle ?? null,
         description: placeTranslation?.seoDescription

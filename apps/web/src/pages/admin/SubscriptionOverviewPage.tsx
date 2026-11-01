@@ -14,7 +14,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { useToast } from "../../contexts/ToastContext";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import type { Lang} from "../../types/enums";
 
 interface SiteSubscriptionSummary extends Site {
   subscription?: {
@@ -69,16 +69,16 @@ export function SubscriptionOverviewPage() {
       setSites(sitesWithData);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadSitesFailed"));
-      showToast(t("admin.errors.loadSitesFailed") || "Failed to load sites", "error");
+      showToast(t("admin.errors.loadSitesFailed"), "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   const planLabels: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
-    BASIC: t("admin.planBasic") || "Basic",
-    PRO: t("admin.planPro") || "Pro",
-    BUSINESS: t("admin.planBusiness") || "Business",
+    BASIC: t("admin.planBasic"),
+    PRO: t("admin.planPro"),
+    BUSINESS: t("admin.planBusiness"),
   };
 
   const planColors: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
@@ -94,9 +94,9 @@ export function SubscriptionOverviewPage() {
   };
 
   const statusLabels: Record<"ACTIVE" | "SUSPENDED" | "EXPIRED", string> = {
-    ACTIVE: t("admin.statusActive") || "Aktív",
-    SUSPENDED: t("admin.statusSuspended") || "Felfüggesztve",
-    EXPIRED: t("admin.statusExpired") || "Lejárt",
+    ACTIVE: t("admin.statusActive"),
+    SUSPENDED: t("admin.statusSuspended"),
+    EXPIRED: t("admin.statusExpired"),
   };
 
   const handleEditSite = (siteId: string) => {
@@ -110,9 +110,9 @@ export function SubscriptionOverviewPage() {
   return (
     <div style={{ padding: "clamp(24px, 5vw, 32px)" }}>
       <AdminPageHeader
-        title={t("admin.subscriptionOverview") || "Előfizetések áttekintése"}
+        title={t("admin.subscriptionOverview")}
         subtitle={
-          t("admin.subscriptionOverviewSubtitle") || "Site-ok előfizetései és használati adatai"
+          t("admin.subscriptionOverviewSubtitle")
         }
       />
 
@@ -132,7 +132,7 @@ export function SubscriptionOverviewPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {sites.map((site) => {
-          const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+          const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
           const translation =
             site.translations.find((t) => t.lang === currentLang) ||
             findTranslation(site.translations, "hu" as Lang);
@@ -197,7 +197,7 @@ export function SubscriptionOverviewPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("admin.edit") || "Szerkesztés"}
+                  {t("admin.edit")}
                 </button>
               </div>
 
@@ -220,7 +220,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.plan") || "Csomag"}
+                      {t("admin.plan")}
                     </div>
                     <div
                       style={{
@@ -252,7 +252,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.status") || "Státusz"}
+                      {t("admin.status")}
                     </div>
                     <div
                       style={{
@@ -284,7 +284,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.validUntil") || "Érvényes"}
+                      {t("admin.validUntil")}
                     </div>
                     <div
                       style={{
@@ -311,7 +311,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.places") || "Helyek"}
+                      {t("admin.places")}
                     </div>
                     <div
                       style={{
@@ -341,7 +341,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.featured") || "Kiemelt"}
+                      {t("admin.featured")}
                     </div>
                     <div
                       style={{
@@ -371,7 +371,7 @@ export function SubscriptionOverviewPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.events") || "Események"}
+                      {t("admin.events")}
                     </div>
                     <div
                       style={{
@@ -403,7 +403,7 @@ export function SubscriptionOverviewPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  <strong>{t("admin.note") || "Megjegyzés"}:</strong> {site.subscription.note}
+                  <strong>{t("admin.note")}:</strong> {site.subscription.note}
                 </div>
               )}
             </div>

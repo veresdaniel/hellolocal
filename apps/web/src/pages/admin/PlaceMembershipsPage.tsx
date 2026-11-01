@@ -1,8 +1,7 @@
 // src/pages/admin/PlaceMembershipsPage.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import {
@@ -17,22 +16,27 @@ import {
   type UpdatePlaceMembershipDto,
   type User,
 } from "../../api/admin.api";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
   AdminResponsiveTable,
   type TableColumn,
   type CardField,
 } from "../../components/AdminResponsiveTable";
+import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
+import { isSuperadmin as checkIsSuperadmin } from "../../utils/roleHelpers";
 import type { Place } from "../../types/place";
 
 export function PlaceMembershipsPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
+  const hierarchy = useAdminHierarchyFilters();
   usePageTitle("admin.placeMemberships");
+  const isSuperadmin = currentUser?.role ? checkIsSuperadmin(currentUser.role) : false;
+  // Region-bound users (siteadmin/editor tied to a régió): no Régió switcher — same as header SiteSelector.
+  const canPickRegion = isSuperadmin;
   const [memberships, setMemberships] = useState<PlaceMembership[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -59,7 +63,12 @@ export function PlaceMembershipsPage() {
     if (selectedSiteId) {
       loadPlaces();
       loadMemberships();
+      return;
     }
+    // No régió selected → no place options (region-bound "or none")
+    setPlaces([]);
+    setMemberships([]);
+    setIsLoading(false);
   }, [selectedSiteId]);
 
   // Check current user's place role when placeId changes
@@ -97,7 +106,9 @@ export function PlaceMembershipsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getPlaceMemberships(undefined, currentUser?.id);
+      // Full list for the region; client filters by hierarchy.matchingPlaceIds.
+      // Pass userId only when checking the actor's own role (checkCurrentUserPlaceRole).
+      const data = await getPlaceMemberships();
       setMemberships(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadPlaceMembershipsFailed"));
@@ -205,7 +216,15 @@ export function PlaceMembershipsPage() {
     }
   };
 
+  // Scope list to places in the selected régió (town/place further narrow matchingPlaceIds).
+  // Superadmin can change régió; region-bound users stay on their assigned site.
+  // Skip while options load so the list does not flash empty.
+  const placeIdSet = useMemo(() => {
+    if (!selectedSiteId || hierarchy.isLoadingOptions) return null;
+    return new Set(hierarchy.matchingPlaceIds);
+  }, [selectedSiteId, hierarchy.isLoadingOptions, hierarchy.matchingPlaceIds]);
   const filteredMemberships = memberships.filter((membership) => {
+    if (placeIdSet && !placeIdSet.has(membership.placeId)) return false;
     const placeName = membership.place?.translations?.[0]?.name || "";
     const userName = membership.user
       ? `${membership.user.firstName} ${membership.user.lastName}`
@@ -295,11 +314,8 @@ export function PlaceMembershipsPage() {
     },
   ];
 
-  const isSuperadmin = currentUser?.role === "superadmin";
-
-  if (!isSuperadmin && currentUser?.role !== "admin") {
-    return <div style={{ padding: 24 }}>{t("admin.accessDenied")}</div>;
-  }
+  // Access: ProtectedRoute (ROLE_ADMIN + considerSiteRole) — superadmin / admin / siteadmin.
+  // Place options are always loaded for selectedSiteId (régió); empty/"none" remains selectable.
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
@@ -525,35 +541,59 @@ export function PlaceMembershipsPage() {
       )}
 
       {!isCreating && !editingId && (
-        <AdminResponsiveTable<PlaceMembership>
-          data={filteredMemberships}
-          getItemId={(membership) => membership.id}
-          searchQuery={searchQuery}
-          searchPlaceholder={t("admin.searchPlaceholders.placeMemberships")}
-          onSearchChange={setSearchQuery}
-          isLoading={isLoading}
-          filterFn={(membership, query) => {
-            const lowerQuery = query.toLowerCase();
-            const placeName = membership.place?.translations?.[0]?.name || "";
-            const userName = membership.user
-              ? `${membership.user.firstName} ${membership.user.lastName}`
-              : "";
-            const userEmail = membership.user?.email || "";
-            return (
-              placeName.toLowerCase().includes(lowerQuery) ||
-              userName.toLowerCase().includes(lowerQuery) ||
-              userEmail.toLowerCase().includes(lowerQuery) ||
-              membership.role.toLowerCase().includes(lowerQuery)
-            );
-          }}
-          columns={columns}
-          cardTitle={(membership) =>
-            `${membership.place?.translations?.[0]?.name || membership.placeId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`
-          }
-          cardFields={cardFields}
-          onEdit={startEdit}
-          onDelete={(membership) => handleDelete(membership.id)}
-        />
+        <>
+          <div style={{ marginBottom: 16 }}>
+            <AdminHierarchyFilters
+              idPrefix="place-memberships-filter"
+              requireSite
+              allowClearSite={canPickRegion}
+              showSite={canPickRegion}
+              siteId={hierarchy.siteId}
+              townId={hierarchy.townId}
+              placeId={hierarchy.placeId}
+              onSiteChange={canPickRegion ? hierarchy.setSiteId : undefined}
+              onTownChange={hierarchy.setTownId}
+              onPlaceChange={hierarchy.setPlaceId}
+              siteOptions={hierarchy.siteOptions}
+              townOptions={hierarchy.townOptions}
+              placeOptions={hierarchy.placeOptions}
+              onClear={() => {
+                hierarchy.clearFilters();
+                setSearchQuery("");
+              }}
+              clearDisabled={!hierarchy.filtersActive && !searchQuery.trim()}
+            />
+          </div>
+          <AdminResponsiveTable<PlaceMembership>
+            data={filteredMemberships}
+            getItemId={(membership) => membership.id}
+            searchQuery={searchQuery}
+            searchPlaceholder={t("admin.searchPlaceholders.placeMemberships")}
+            onSearchChange={setSearchQuery}
+            isLoading={isLoading}
+            filterFn={(membership, query) => {
+              const lowerQuery = query.toLowerCase();
+              const placeName = membership.place?.translations?.[0]?.name || "";
+              const userName = membership.user
+                ? `${membership.user.firstName} ${membership.user.lastName}`
+                : "";
+              const userEmail = membership.user?.email || "";
+              return (
+                placeName.toLowerCase().includes(lowerQuery) ||
+                userName.toLowerCase().includes(lowerQuery) ||
+                userEmail.toLowerCase().includes(lowerQuery) ||
+                membership.role.toLowerCase().includes(lowerQuery)
+              );
+            }}
+            columns={columns}
+            cardTitle={(membership) =>
+              `${membership.place?.translations?.[0]?.name || membership.placeId} - ${membership.user ? `${membership.user.firstName} ${membership.user.lastName}` : membership.userId}`
+            }
+            cardFields={cardFields}
+            onEdit={startEdit}
+            onDelete={(membership) => handleDelete(membership.id)}
+          />
+        </>
       )}
     </div>
   );

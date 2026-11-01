@@ -13,7 +13,7 @@ export function useFavicon() {
     if (!platformSettings?.brand?.faviconUrl) {
       // Remove any existing custom favicons if faviconUrl is cleared
       const existingFavicons = document.querySelectorAll(
-        'link[rel="icon"]:not([href="/vite.svg"]), link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
+        'link[rel="icon"][id="dynamic-favicon"], link[rel="apple-touch-icon"][id="dynamic-apple-touch-icon"]'
       );
       existingFavicons.forEach((link) => link.remove());
       return;

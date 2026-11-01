@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { StaticPagesService } from "./static-pages.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for static page endpoints.
@@ -14,14 +15,6 @@ import { StaticPagesService } from "./static-pages.service";
 export class StaticPagesPublicController {
   constructor(private readonly staticPagesService: StaticPagesService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists static pages with optional category filtering.
@@ -35,7 +28,7 @@ export class StaticPagesPublicController {
     @Param("siteKey") siteKey: string,
     @Query("category") category?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.staticPagesService.list({ lang, siteKey, category });
   }
 
@@ -49,7 +42,7 @@ export class StaticPagesPublicController {
    */
   @Get("/:id")
   detail(@Param("lang") lang: string, @Param("siteKey") siteKey: string, @Param("id") id: string) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.staticPagesService.detail({ lang, siteKey, id });
   }
 
@@ -69,7 +62,7 @@ export class StaticPagesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("id") id: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.staticPagesService.detail({ lang, siteKey, id });
   }
 }

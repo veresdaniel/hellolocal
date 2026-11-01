@@ -1,5 +1,6 @@
 // src/pages/admin/TagsPage.tsx
 import { useState, useEffect } from "react";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -10,6 +11,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { getTags, createTag, updateTag, deleteTag } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import {
@@ -19,7 +21,7 @@ import {
 } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import type { Lang} from "../../types/enums";
 
 interface Tag {
   id: string;
@@ -121,7 +123,7 @@ export function TagsPage() {
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         description: string | null;
       }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
@@ -160,7 +162,7 @@ export function TagsPage() {
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         description: string | null;
       }> = [{ lang: "hu", name: formData.nameHu, description: formData.descriptionHu || null }];
@@ -331,7 +333,7 @@ export function TagsPage() {
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
               />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+              <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
 
@@ -349,44 +351,42 @@ export function TagsPage() {
                   >
                     {t("common.name")} ({selectedLang.toUpperCase()}) *
                   </label>
+                  <AiPostfixField
+                    draft={{
+                      kind: "tag",
+                      field: "name",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
+                    value={readLang(formData, "name", selectedLang)}
+                    onApply={(text) =>
+                      setFormData(patchLang(formData, "name", selectedLang, text))
+                    }
+                  >
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.nameHu
-                        : selectedLang === "en"
-                          ? formData.nameEn
-                          : formData.nameDe
+                      readLang(formData, "name", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, nameHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, nameEn: e.target.value });
-                      else setFormData({ ...formData, nameDe: e.target.value });
+                      setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
                       padding: 8,
                       fontSize: 16,
                       border:
-                        (selectedLang === "hu" && formErrors.nameHu) ||
-                        (selectedLang === "en" && formErrors.nameEn) ||
-                        (selectedLang === "de" && formErrors.nameDe)
+                        readLang(formErrors, "name", selectedLang)
                           ? "1px solid #dc3545"
                           : "1px solid #ddd",
                       borderRadius: 4,
                     }}
                   />
-                  {(selectedLang === "hu" && formErrors.nameHu) ||
-                  (selectedLang === "en" && formErrors.nameEn) ||
-                  (selectedLang === "de" && formErrors.nameDe) ? (
+                  </AiPostfixField>
+                  {readLang(formErrors, "name", selectedLang) ? (
                     <div style={{ color: "#dc3545", fontSize: 12, marginTop: 4 }}>
-                      {selectedLang === "hu"
-                        ? formErrors.nameHu
-                        : selectedLang === "en"
-                          ? formErrors.nameEn
-                          : formErrors.nameDe}
+                      {readLang(formErrors, "name", selectedLang)}
                     </div>
                   ) : null}
                 </div>
@@ -404,21 +404,21 @@ export function TagsPage() {
                   </label>
                   <TipTapEditorWithUpload
                     value={
-                      selectedLang === "hu"
-                        ? formData.descriptionHu
-                        : selectedLang === "en"
-                          ? formData.descriptionEn
-                          : formData.descriptionDe
+                      readLang(formData, "description", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, descriptionEn: value });
-                      else setFormData({ ...formData, descriptionDe: value });
+                      setFormData(patchLang(formData, "description", selectedLang, value));
                     }}
                     placeholder={t("common.description")}
                     height={200}
                     uploadFolder="editor/tags"
+                    aiDraft={{
+                      kind: "tag",
+                      field: "description",
+                      lang: selectedLang,
+                      siteId: selectedSiteId || undefined,
+                      name: readLang(formData, "name", selectedLang),
+                    }}
                   />
                 </div>
               </>
@@ -451,7 +451,7 @@ export function TagsPage() {
               key: "name",
               label: t("common.name"),
               render: (tag) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   tag.translations.find((t) => t.lang === currentLang) ||
                   tag.translations.find((t) => t.lang === "hu");
@@ -469,7 +469,7 @@ export function TagsPage() {
                     background: tag.isActive
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     fontSize: 12,
                     fontWeight: 600,
                   }}
@@ -499,7 +499,7 @@ export function TagsPage() {
                     background: tag.isActive
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "#6c757d",
-                    color: "white",
+                    color: "var(--hl-on-dark-strong, #ffffff)",
                     fontSize: 13,
                     fontWeight: 600,
                   }}

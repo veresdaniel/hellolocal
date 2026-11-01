@@ -1,3 +1,23 @@
+/* Compact AI postfix button sits inside content fields */
+.admin-layout .ai-postfix-field--input > input,
+.admin-layout .ai-postfix-field--input > textarea,
+.ai-postfix-field--input > input,
+.ai-postfix-field--input > textarea {
+  padding-right: 44px !important;
+  box-sizing: border-box;
+}
+
+.admin-layout .ai-postfix-field--textarea > textarea,
+.ai-postfix-field--textarea > textarea {
+  padding-right: 48px !important;
+  padding-top: 10px;
+  box-sizing: border-box;
+}
+
+.catalog-admin__field .ai-postfix-field {
+  width: 100%;
+}
+
 /* Admin input fields - unified Inter font for body text readability */
 /* Apply to all input, textarea, select elements in admin pages */
 .admin-layout input[type="text"],
@@ -16,7 +36,7 @@
     "Segoe UI",
     sans-serif !important;
   font-size: 15px !important;
-  color: #333 !important;
+  color: var(--hl-ink, #1b1730) !important;
 }
 
 /* Label styling - unified Inter font */
@@ -33,7 +53,7 @@
 /* Placeholder styling - unified color and Inter font */
 .admin-layout input::placeholder,
 .admin-layout textarea::placeholder {
-  color: #999 !important;
+  color: var(--hl-muted, #665d78) !important;
   font-family:
     "Inter",
     system-ui,
@@ -53,7 +73,7 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif !important;
-  color: #333 !important;
+  color: var(--hl-ink, #1b1730) !important;
 }
 
 /* Table header styling - Poppins font - override EVERYTHING with maximum specificity */

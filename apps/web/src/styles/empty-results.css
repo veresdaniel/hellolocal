@@ -1,0 +1,23 @@
+/* In-list empty results — not a full-page 404/500 */
+.empty-results {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--hl-muted-on-dark, #8a7f74);
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.empty-results__title {
+  margin: 0;
+  font-size: clamp(16px, 2.4vw, 18px);
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.4;
+}
+
+.empty-results__description {
+  margin: 8px auto 0;
+  max-width: 28rem;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.85;
+}

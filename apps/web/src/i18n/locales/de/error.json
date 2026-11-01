@@ -8,13 +8,15 @@
   "forbidden": "Zugriff verweigert",
   "notFound": "Nicht gefunden",
   "internalServerError": "Interner Serverfehler",
+  "serverErrorDescription": "Auf dem Server ist etwas schiefgelaufen. Bitte versuche es später erneut.",
   "badGateway": "Ungültiges Gateway",
   "serviceUnavailable": "Dienst nicht verfügbar",
   "goHome": "Zur Startseite",
   "goBack": "Zurück",
   "reload": "Seite neu laden",
   "errorDetails": "Fehlerdetails",
-  "siteNotFound": "Site nicht gefunden",
-  "siteNotFoundMessage": "Die angegebene Site existiert nicht oder ist nicht aktiviert.",
-  "backToSites": "Zurück zu den Sites"
+  "siteNotFound": "Standort nicht gefunden",
+  "siteNotFoundMessage": "Der angegebene Standort existiert nicht oder ist nicht freigeschaltet.",
+  "backToSites": "Zurück zu den Standorten",
+  "visitorHold": "Die öffentliche Karte ist derzeit nicht erreichbar. Die Orte bleiben erhalten."
 }

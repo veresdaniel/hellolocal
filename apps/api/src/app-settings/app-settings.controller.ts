@@ -36,4 +36,14 @@ export class AppSettingsController {
     });
     return { count };
   }
+
+  /**
+   * Platform-wide GA4 measurement ID for platform public routes (overview, pricing,
+   * multi-site list, login). Site routes use Site.gaMeasurementId instead — no fallback.
+   */
+  @Get("/app-settings/platform-ga")
+  async getPlatformGa() {
+    const gaMeasurementId = await this.appSettingsService.getPlatformGaMeasurementId();
+    return { gaMeasurementId };
+  }
 }

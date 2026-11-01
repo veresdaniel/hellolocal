@@ -4,14 +4,15 @@ import {
   Get,
   Param,
   Query,
-  BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 import { SlugEntityType } from "@prisma/client";
+import { Lang } from "../common/language-code";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Removes HTML tags from a string and normalizes whitespace
@@ -45,10 +46,7 @@ export class SeoController {
     @Param("slug") slug: string,
     @Query("tenantKey") tenantKey?: string
   ) {
-    // Validate lang
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
+    assertLang(lang);
 
     // Resolve site
     const site = await this.siteResolver.resolve({ lang, siteKey: tenantKey });
@@ -99,7 +97,7 @@ export class SeoController {
         place.category?.translations.find((t) => t.lang === site.lang)?.name ||
         place.category?.translations.find((t) => t.lang === "hu")?.name;
 
-      const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
+      const siteName = platformSettings.siteName[site.lang as Lang];
       const title = translation?.seoTitle || translation?.name || place.id;
       const rawDescription = translation?.seoDescription || translation?.description || "";
       const description = stripHtml(rawDescription);
@@ -223,7 +221,7 @@ export class SeoController {
         event.translations.find((t) => t.lang === site.lang) ||
         event.translations.find((t) => t.lang === "hu");
 
-      const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
+      const siteName = platformSettings.siteName[site.lang as Lang];
       const title = translation?.seoTitle || translation?.title || event.id;
       const rawDescription =
         translation?.seoDescription ||
@@ -343,10 +341,7 @@ export class SeoController {
    */
   @Get("/:lang")
   async getHomepageSeo(@Param("lang") lang: string, @Query("tenantKey") tenantKey?: string) {
-    // Validate lang
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
+    assertLang(lang);
 
     // Resolve site
     const site = await this.siteResolver.resolve({ lang, siteKey: tenantKey });
@@ -355,10 +350,10 @@ export class SeoController {
     const platformSettings = await this.platformSettingsService.getPlatformSettingsForAdmin(
       site.siteId
     );
-    const siteName = platformSettings.siteName[site.lang as "hu" | "en" | "de"];
-    const seoTitle = platformSettings.seoTitle[site.lang as "hu" | "en" | "de"] || siteName;
+    const siteName = platformSettings.siteName[site.lang as Lang];
+    const seoTitle = platformSettings.seoTitle[site.lang as Lang] || siteName;
     const rawSeoDescription =
-      platformSettings.seoDescription[site.lang as "hu" | "en" | "de"] || "";
+      platformSettings.seoDescription[site.lang as Lang] || "";
     const seoDescription = stripHtml(rawSeoDescription);
     const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}`;
 

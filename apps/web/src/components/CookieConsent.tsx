@@ -1,14 +1,15 @@
 // src/components/CookieConsent.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-
-const COOKIE_CONSENT_KEY = "hellolocal_cookie_consent";
+import { acceptCookieConsent, hasCookieConsent } from "../lib/cookieConsent";
 
 export function CookieConsent() {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -19,25 +20,20 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
-    // Check if user has already accepted cookies
-    const hasConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (hasCookieConsent()) return;
 
-    if (!hasConsent) {
-      // Show with delay for smooth animation
-      setTimeout(() => {
-        setIsVisible(true);
-        setTimeout(() => setIsAnimatingIn(true), 50);
-      }, 1000);
-    }
+    const showTimer = window.setTimeout(() => {
+      setIsVisible(true);
+      window.setTimeout(() => setIsAnimatingIn(true), 50);
+    }, 1000);
+
+    return () => window.clearTimeout(showTimer);
   }, []);
 
   const handleAccept = () => {
-    // Save consent to localStorage
-    localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
-
-    // Animate out
+    acceptCookieConsent();
     setIsAnimatingIn(false);
-    setTimeout(() => setIsVisible(false), 300);
+    window.setTimeout(() => setIsVisible(false), 300);
   };
 
   if (!isVisible) return null;

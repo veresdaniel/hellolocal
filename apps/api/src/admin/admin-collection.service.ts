@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { assertHostnameAvailable } from "../common/assert-hostname-available";
 
 export interface CreateCollectionDto {
   slug: string;
@@ -174,20 +176,18 @@ export class AdminCollectionService {
       throw new BadRequestException(`Collection with slug "${dto.slug}" already exists`);
     }
 
-    // Validate domain uniqueness if provided
-    if (dto.domain) {
-      const existingDomain = await this.prisma.collection.findUnique({
-        where: { domain: dto.domain },
-      });
-      if (existingDomain) {
-        throw new BadRequestException(`Collection with domain "${dto.domain}" already exists`);
-      }
-    }
+    const domain =
+      dto.domain !== undefined
+        ? await assertHostnameAvailable(this.prisma, dto.domain, {
+            kind: "collection",
+            collectionId: "__new__",
+          })
+        : null;
 
     return this.prisma.collection.create({
       data: {
         slug: dto.slug,
-        domain: dto.domain || null,
+        domain,
         isActive: dto.isActive ?? false,
         isCrawlable: dto.isCrawlable ?? true,
         order: dto.order ?? 0,
@@ -224,22 +224,15 @@ export class AdminCollectionService {
       }
     }
 
-    // Validate domain uniqueness if changed
-    if (dto.domain !== undefined && dto.domain !== collection.domain) {
-      if (dto.domain) {
-        const existingDomain = await this.prisma.collection.findUnique({
-          where: { domain: dto.domain },
-        });
-        if (existingDomain) {
-          throw new BadRequestException(`Collection with domain "${dto.domain}" already exists`);
-        }
-      }
-    }
-
     // Update main fields
     const updateData: Prisma.CollectionUpdateInput = {};
     if (dto.slug !== undefined) updateData.slug = dto.slug;
-    if (dto.domain !== undefined) updateData.domain = dto.domain || null;
+    if (dto.domain !== undefined) {
+      updateData.domain = await assertHostnameAvailable(this.prisma, dto.domain, {
+        kind: "collection",
+        collectionId: id,
+      });
+    }
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.isCrawlable !== undefined) updateData.isCrawlable = dto.isCrawlable;
     if (dto.order !== undefined) updateData.order = dto.order;

@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { getSites, getSite, type Site } from "../api/admin.api";
 import { ROLE_SUPERADMIN, ROLE_ADMIN } from "../types/enums";
+import { devLog } from "../lib/devLog";
 
 // Input validation helpers
 const isValidSiteId = (id: unknown): id is string => {
@@ -46,12 +47,13 @@ export const useAdminSiteStore = create<AdminSiteState>()(
             if (siteId) {
               localStorage.setItem("adminSelectedSiteId", siteId);
             } else {
-              localStorage.removeItem("adminSelectedSiteId");
+              // Empty string = explicit “none selected” (superadmin cleared Régió).
+              localStorage.setItem("adminSelectedSiteId", "");
             }
           } else {
-            console.warn("[AdminSiteStore] Invalid siteId provided", siteId);
+            devLog.warn("[AdminSiteStore] Invalid siteId provided", siteId);
             set({ selectedSiteId: null });
-            localStorage.removeItem("adminSelectedSiteId");
+            localStorage.setItem("adminSelectedSiteId", "");
           }
         },
 
@@ -79,7 +81,7 @@ export const useAdminSiteStore = create<AdminSiteState>()(
               // Regular users see only their assigned sites (validate siteIds)
               const sitePromises = user.siteIds.map((siteId: string) =>
                 getSite(siteId).catch((err: unknown) => {
-                  console.error(`Failed to load site ${siteId}`, err);
+                  devLog.error(`[AdminSiteStore] Failed to load site ${siteId}`, err);
                   return null;
                 })
               );
@@ -89,7 +91,7 @@ export const useAdminSiteStore = create<AdminSiteState>()(
               // Fallback to tenantIds for backward compatibility (validate tenantIds)
               const sitePromises = user.tenantIds.map((siteId: string) =>
                 getSite(siteId).catch((err: unknown) => {
-                  console.error(`Failed to load site ${siteId}`, err);
+                  devLog.error(`[AdminSiteStore] Failed to load site ${siteId}`, err);
                   return null;
                 })
               );
@@ -102,7 +104,10 @@ export const useAdminSiteStore = create<AdminSiteState>()(
             let computedSelectedSiteId: string | null = null;
 
             if (loadedSites.length > 0) {
-              if (isValidSiteId(stored) && loadedSites.some((s) => s.id === stored)) {
+              if (stored === "" && user.role === ROLE_SUPERADMIN) {
+                // Superadmin explicitly cleared Régió — keep none selected.
+                computedSelectedSiteId = null;
+              } else if (isValidSiteId(stored) && loadedSites.some((s) => s.id === stored)) {
                 computedSelectedSiteId = stored;
               } else {
                 const firstSiteId = loadedSites[0]?.id;
@@ -119,6 +124,8 @@ export const useAdminSiteStore = create<AdminSiteState>()(
 
             if (computedSelectedSiteId) {
               localStorage.setItem("adminSelectedSiteId", computedSelectedSiteId);
+            } else if (stored === "") {
+              localStorage.setItem("adminSelectedSiteId", "");
             }
           } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -129,10 +136,10 @@ export const useAdminSiteStore = create<AdminSiteState>()(
               errorMessage.includes("migrations");
 
             if (!isNetworkError) {
-              console.error("[AdminSiteStore] Failed to load sites", err);
+              devLog.error("[AdminSiteStore] Failed to load sites", err);
 
               if (isSchemaError) {
-                console.warn(
+                devLog.warn(
                   "[AdminSiteStore] Database schema is out of sync. Please run migrations on the server."
                 );
                 set({
@@ -142,7 +149,7 @@ export const useAdminSiteStore = create<AdminSiteState>()(
                 set({ error: "Failed to load sites. Please try again later." });
               }
             } else {
-              console.debug("[AdminSiteStore] Backend not available, skipping site load");
+              devLog.debug("[AdminSiteStore] Backend not available, skipping site load");
               set({ error: null });
             }
             set({ sites: [], isSitesLoaded: true });

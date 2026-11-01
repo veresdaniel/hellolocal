@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
-import type { Lang } from "../../app/config";
+import type { Lang} from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
 import { buildUrl } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
@@ -27,7 +27,8 @@ export function Footer({
   // Check if there are any static pages
   const { data: staticPages = [] } = useQuery({
     queryKey: ["staticPages", lang, effectiveSiteSlug, "all"],
-    queryFn: () => getStaticPages(lang, effectiveSiteSlug),
+    queryFn: () => getStaticPages(lang, effectiveSiteSlug ?? ""),
+    enabled: Boolean(effectiveSiteSlug),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -53,21 +54,27 @@ export function Footer({
   if (compact) {
     return (
       <footer
+        className="hl-public"
         style={{
           marginTop: 0,
           marginBottom: 0,
           marginLeft: 0,
           marginRight: 0,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#1b1730",
           color: "white",
           borderTop: "none",
         }}
       >
         <div
+          className="hl-public-pad-x"
           style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: isMobile ? "12px 16px" : "16px 24px",
+            paddingTop: isMobile ? 12 : 16,
+            paddingBottom: isMobile ? 12 : 16,
+          }}
+        >
+        <div
+          className="hl-public-width"
+          style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -81,7 +88,9 @@ export function Footer({
               {brandBadgeIcon && !logoError && (
                 <img
                   src={brandBadgeIcon}
-                  alt={siteName || ""}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     height: isMobile ? 23 : 28,
                     width: "auto",
@@ -150,6 +159,20 @@ export function Footer({
                   {t("admin.dashboardCards.staticPages")}
                 </Link>
               )}
+              {effectiveSiteSlug ? (
+                <Link
+                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" })}
+                  style={{
+                    color: "white",
+                    textDecoration: "none",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    opacity: 0.9,
+                  }}
+                >
+                  {t("public.catalog.title")}
+                </Link>
+              ) : null}
               <Link
                 to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "impresszum" })}
                 style={{
@@ -237,7 +260,6 @@ export function Footer({
               <Link
                 to={buildUrl({
                   lang,
-                  siteKey: effectiveSiteSlug,
                   path: lang === "de" ? "preise" : "pricing",
                 })}
                 style={{
@@ -276,6 +298,7 @@ export function Footer({
             © {currentYear}
           </div>
         </div>
+        </div>
       </footer>
     );
   }
@@ -283,20 +306,22 @@ export function Footer({
   // Full version for other pages
   return (
     <footer
+      className="hl-public"
       style={{
         marginTop: "auto",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "#1b1730",
         color: "white",
         borderTop: "none",
       }}
     >
       <div
+        className="hl-public-pad-x"
         style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "48px 24px 32px",
+          paddingTop: 48,
+          paddingBottom: 32,
         }}
       >
+      <div className="hl-public-width">
         {/* Main Footer Content */}
         <div
           style={{
@@ -324,7 +349,9 @@ export function Footer({
                 {brandBadgeIcon && !logoError && (
                   <img
                     src={brandBadgeIcon}
-                    alt={siteName || ""}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
                     style={{
                       height: 32,
                       width: "auto",
@@ -537,10 +564,23 @@ export function Footer({
                   {t("public.staticPages.title")}
                 </Link>
               )}
+              {effectiveSiteSlug ? (
+                <Link
+                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" })}
+                  style={{
+                    color: "white",
+                    textDecoration: "none",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    opacity: 0.9,
+                  }}
+                >
+                  {t("public.catalog.title")}
+                </Link>
+              ) : null}
               <Link
                 to={buildUrl({
                   lang,
-                  siteKey: effectiveSiteSlug,
                   path: lang === "de" ? "preise" : "pricing",
                 })}
                 style={{
@@ -584,6 +624,7 @@ export function Footer({
           © {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}.{" "}
           {t("public.footer.rights") || "Minden jog fenntartva."}
         </div>
+      </div>
       </div>
     </footer>
   );

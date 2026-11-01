@@ -20,7 +20,7 @@ export interface GalleryImage {
 
 export interface CreateGalleryDto {
   siteId: string;
-  placeId?: string | null;
+  placeId: string;
   eventId?: string | null;
   name?: string | null;
   images: GalleryImage[];
@@ -31,7 +31,7 @@ export interface CreateGalleryDto {
 }
 
 export interface UpdateGalleryDto {
-  placeId?: string | null;
+  placeId?: string;
   eventId?: string | null;
   name?: string | null;
   images?: GalleryImage[];
@@ -130,17 +130,44 @@ export class AdminGalleryService {
       );
     }
 
-    // Check place-specific limits if placeId is provided
-    if (dto.placeId) {
-      const placeGalleriesCount = await this.prisma.gallery.count({
-        where: { siteId: dto.siteId, placeId: dto.placeId, isActive: true },
+    let placeId = typeof dto.placeId === "string" ? dto.placeId.trim() : "";
+    if (!placeId && dto.eventId) {
+      const event = await this.prisma.event.findFirst({
+        where: { id: dto.eventId, siteId: dto.siteId },
+        select: { placeId: true },
       });
+      placeId = event?.placeId || "";
+    }
+    if (!placeId) {
+      throw new BadRequestException("placeId is required (galleries belong to a place)");
+    }
 
-      if (placeGalleriesCount >= entitlements.limits.galleriesPerPlaceMax) {
-        throw new ForbiddenException(
-          `Place gallery limit reached. Maximum ${entitlements.limits.galleriesPerPlaceMax} galleries per place allowed for ${entitlements.plan} plan.`
-        );
+    const place = await this.prisma.place.findFirst({
+      where: { id: placeId, siteId: dto.siteId },
+      select: { id: true },
+    });
+    if (!place) {
+      throw new BadRequestException("placeId must belong to the same site");
+    }
+
+    if (dto.eventId) {
+      const event = await this.prisma.event.findFirst({
+        where: { id: dto.eventId, siteId: dto.siteId, placeId },
+        select: { id: true },
+      });
+      if (!event) {
+        throw new BadRequestException("eventId must belong to the same place and site");
       }
+    }
+
+    const placeGalleriesCount = await this.prisma.gallery.count({
+      where: { siteId: dto.siteId, placeId, isActive: true },
+    });
+
+    if (placeGalleriesCount >= entitlements.limits.galleriesPerPlaceMax) {
+      throw new ForbiddenException(
+        `Place gallery limit reached. Maximum ${entitlements.limits.galleriesPerPlaceMax} galleries per place allowed for ${entitlements.plan} plan.`
+      );
     }
 
     // Check event-specific limits if eventId is provided
@@ -159,7 +186,7 @@ export class AdminGalleryService {
     return this.prisma.gallery.create({
       data: {
         siteId: dto.siteId,
-        placeId: dto.placeId ?? null,
+        placeId,
         eventId: dto.eventId ?? null,
         name: dto.name ?? null,
         images: dto.images as any,
@@ -188,13 +215,30 @@ export class AdminGalleryService {
       }
     }
 
-    // Check place-specific limits if placeId is being changed
-    if (dto.placeId !== undefined && dto.placeId !== gallery.placeId) {
+    const nextPlaceId =
+      dto.placeId !== undefined
+        ? typeof dto.placeId === "string"
+          ? dto.placeId.trim()
+          : ""
+        : gallery.placeId;
+    if (dto.placeId !== undefined && !nextPlaceId) {
+      throw new BadRequestException("placeId is required (galleries belong to a place)");
+    }
+
+    if (dto.placeId !== undefined && nextPlaceId !== gallery.placeId) {
+      const place = await this.prisma.place.findFirst({
+        where: { id: nextPlaceId, siteId },
+        select: { id: true },
+      });
+      if (!place) {
+        throw new BadRequestException("placeId must belong to the same site");
+      }
+
       const entitlements = await this.entitlementsService.getBySiteId(siteId);
       const placeGalleriesCount = await this.prisma.gallery.count({
         where: {
           siteId,
-          placeId: dto.placeId,
+          placeId: nextPlaceId,
           isActive: true,
           NOT: { id }, // Exclude current gallery
         },
@@ -209,25 +253,48 @@ export class AdminGalleryService {
 
     // Check event-specific limits if eventId is being changed
     if (dto.eventId !== undefined && dto.eventId !== gallery.eventId) {
-      const entitlements = await this.entitlementsService.getBySiteId(siteId);
-      const eventGalleriesCount = await this.prisma.gallery.count({
-        where: {
-          siteId,
-          eventId: dto.eventId,
-          isActive: true,
-          NOT: { id }, // Exclude current gallery
-        },
-      });
+      if (dto.eventId) {
+        const event = await this.prisma.event.findFirst({
+          where: { id: dto.eventId, siteId, placeId: nextPlaceId },
+          select: { id: true },
+        });
+        if (!event) {
+          throw new BadRequestException("eventId must belong to the same place and site");
+        }
 
-      if (eventGalleriesCount >= entitlements.limits.galleriesPerEventMax) {
-        throw new ForbiddenException(
-          `Event gallery limit reached. Maximum ${entitlements.limits.galleriesPerEventMax} galleries per event allowed for ${entitlements.plan} plan.`
+        const entitlements = await this.entitlementsService.getBySiteId(siteId);
+        const eventGalleriesCount = await this.prisma.gallery.count({
+          where: {
+            siteId,
+            eventId: dto.eventId,
+            isActive: true,
+            NOT: { id }, // Exclude current gallery
+          },
+        });
+
+        if (eventGalleriesCount >= entitlements.limits.galleriesPerEventMax) {
+          throw new ForbiddenException(
+            `Event gallery limit reached. Maximum ${entitlements.limits.galleriesPerEventMax} galleries per event allowed for ${entitlements.plan} plan.`
+          );
+        }
+      }
+    } else if (dto.placeId !== undefined && gallery.eventId) {
+      // Place changed while keeping an event — ensure event still matches place
+      const event = await this.prisma.event.findFirst({
+        where: { id: gallery.eventId, siteId, placeId: nextPlaceId },
+        select: { id: true },
+      });
+      if (!event) {
+        throw new BadRequestException(
+          "Existing eventId does not belong to the new place; clear or update eventId"
         );
       }
     }
 
     const updateData: any = {};
-    if (dto.placeId !== undefined) updateData.placeId = dto.placeId;
+    if (dto.placeId !== undefined) {
+      updateData.placeId = nextPlaceId;
+    }
     if (dto.eventId !== undefined) updateData.eventId = dto.eventId;
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.images !== undefined) updateData.images = dto.images as any;

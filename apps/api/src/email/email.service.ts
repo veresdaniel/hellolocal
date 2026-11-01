@@ -83,6 +83,47 @@ export class EmailService {
   }
 
   /**
+   * Real delivery only when SMTP_HOST and EMAIL_FROM are set and nodemailer is installed.
+   * Returns false without logging the recipient when mail cannot be sent.
+   */
+  async deliverIfConfigured(to: string, subject: string, text: string): Promise<boolean> {
+    const host = this.configService.get<string>("SMTP_HOST")?.trim();
+    const from = this.configService.get<string>("EMAIL_FROM")?.trim();
+    const recipient = to.trim();
+    if (!host || !from || !recipient) return false;
+
+    try {
+      // Optional. The repo has no mail package; if SMTP_HOST is set and this import fails, we store the lead and do not claim it was sent.
+      // @ts-expect-error nodemailer is not a dependency until a real SMTP transport is installed
+      const nodemailer = (await import("nodemailer")) as {
+        createTransport: (options: Record<string, unknown>) => {
+          sendMail: (message: Record<string, string>) => Promise<unknown>;
+        };
+      };
+      const port = Number(this.configService.get<string>("SMTP_PORT") || 587);
+      const user = this.configService.get<string>("SMTP_USER")?.trim();
+      const pass = this.configService.get<string>("SMTP_PASS");
+      const transport = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: user ? { user, pass: pass ?? "" } : undefined,
+      });
+      await transport.sendMail({ from, to: recipient, subject, text });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Sends a short operational notice. Does not create an invoice.
+   */
+  async sendNotice(to: string, subject: string, html: string): Promise<void> {
+    await this.sendEmail(to, subject, html);
+  }
+
+  /**
    * Sends an email. In development, logs to console.
    * In production, integrate with an email provider.
    */

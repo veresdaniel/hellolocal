@@ -1,6 +1,7 @@
-import { Controller, Get, Param, BadRequestException, NotFoundException } from "@nestjs/common";
+import { Controller, Get, Param, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteResolverService } from "./site-resolver.service";
+import { assertLang } from "../common/lang";
 
 @Controller("/api/public/:lang/:siteKey")
 export class SiteController {
@@ -11,9 +12,7 @@ export class SiteController {
 
   @Get("site")
   async site(@Param("lang") lang: string, @Param("siteKey") siteKey: string) {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
+    assertLang(lang);
 
     const r = await this.resolver.resolveSite({ lang, siteKey });
 

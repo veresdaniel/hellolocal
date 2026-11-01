@@ -4,8 +4,16 @@ import { PrismaService } from "../prisma/prisma.service";
 import { PlacePlan, SitePlan, SubscriptionPlan } from "@prisma/client";
 import { getPlaceLimits, type PlaceLimits } from "../config/place-limits.config";
 import { getSiteLimits, type SiteLimits } from "../config/site-limits.config";
+import { VisitorLadderService, type VisitorLadderSnapshot } from "../visitor-ladder/visitor-ladder.service";
 
 // Helper function to convert PlacePlan to SubscriptionPlan
+function sitePlanToSubscriptionPlan(plan: SitePlan): SubscriptionPlan {
+  if (plan === "pro") return SubscriptionPlan.PRO;
+  if (plan === "business") return SubscriptionPlan.BUSINESS;
+  if (plan === "municipal") return SubscriptionPlan.MUNICIPAL;
+  return SubscriptionPlan.BASIC;
+}
+
 function placePlanToSubscriptionPlan(plan: PlacePlan): SubscriptionPlan {
   switch (plan) {
     case "free":
@@ -55,6 +63,8 @@ export interface SiteSubscriptionDto {
   planLimits: Record<string, any> | null;
   billingEmail: string | null;
   allowPublicRegistration: boolean;
+  visitorLadderManual?: boolean;
+  visitorLadder?: VisitorLadderSnapshot;
 }
 
 export interface PlaceEntitlementsDto {
@@ -86,7 +96,10 @@ export interface SiteEntitlementsDto {
 
 @Injectable()
 export class BillingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly visitorLadder: VisitorLadderService
+  ) {}
 
   /**
    * Get place plan overrides from Brand
@@ -439,7 +452,7 @@ export class BillingService {
       throw new NotFoundException(`Site with ID ${siteId} not found`);
     }
 
-    return {
+    return this.withVisitorLadder({
       siteId: site.id,
       plan: site.plan,
       planStatus: site.planStatus,
@@ -447,7 +460,7 @@ export class BillingService {
       planLimits: site.planLimits as Record<string, any> | null,
       billingEmail: site.billingEmail,
       allowPublicRegistration: site.allowPublicRegistration ?? true,
-    };
+    });
   }
 
   /**
@@ -486,7 +499,27 @@ export class BillingService {
       },
     });
 
-    return {
+    if (data.visitorLadderManual !== undefined || data.plan) {
+      const manual = data.visitorLadderManual !== undefined ? data.visitorLadderManual : true;
+      const subscriptionPlan = data.plan ? sitePlanToSubscriptionPlan(data.plan) : undefined;
+      await this.prisma.siteSubscription.upsert({
+        where: { siteId },
+        create: {
+          siteId,
+          plan: subscriptionPlan ?? "FREE",
+          status: "ACTIVE",
+          manualOverride: manual,
+          ladderSuspended: false,
+        },
+        update: {
+          ...(subscriptionPlan ? { plan: subscriptionPlan } : {}),
+          manualOverride: manual,
+          ...(manual ? { ladderSuspended: false } : {}),
+        },
+      });
+    }
+
+    return this.withVisitorLadder({
       siteId: updated.id,
       plan: updated.plan,
       planStatus: updated.planStatus,
@@ -494,7 +527,16 @@ export class BillingService {
       planLimits: updated.planLimits as Record<string, any> | null,
       billingEmail: updated.billingEmail,
       allowPublicRegistration: updated.allowPublicRegistration ?? true,
-    };
+    });
+  }
+
+  private async withVisitorLadder(dto: SiteSubscriptionDto): Promise<SiteSubscriptionDto> {
+    try {
+      const visitorLadder = await this.visitorLadder.snapshot(dto.siteId);
+      return { ...dto, visitorLadder, visitorLadderManual: visitorLadder.manualOverride };
+    } catch {
+      return dto;
+    }
   }
 
   /**

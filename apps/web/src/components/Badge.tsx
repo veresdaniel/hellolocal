@@ -29,8 +29,8 @@ export function Badge({
   // Size configurations
   const sizeConfig = {
     small: {
-      fontSize: 11,
-      padding: "4px 10px",
+      fontSize: 12,
+      padding: "5px 11px",
     },
     medium: {
       fontSize: "clamp(13px, 3vw, 15px)",

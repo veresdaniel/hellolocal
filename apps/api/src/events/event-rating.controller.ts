@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Param, Body, BadRequestException, UseGuards } from "@nestjs/common";
+import { Controller, Post, Get, Param, Body, UseGuards } from "@nestjs/common";
 import { EventRatingService } from "./event-rating.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { assertLang } from "../common/lang";
 
 interface CreateEventRatingDto {
   value: number;
@@ -12,14 +13,6 @@ interface CreateEventRatingDto {
 export class EventRatingController {
   constructor(private readonly eventRatingService: EventRatingService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Creates or updates a rating for an event.
@@ -35,7 +28,7 @@ export class EventRatingController {
     @Body() dto: CreateEventRatingDto,
     @CurrentUser() user: { id: string }
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.eventRatingService.upsertRating({
       eventId,
       userId: user.id,
@@ -55,7 +48,7 @@ export class EventRatingController {
     @Param("eventId") eventId: string,
     @CurrentUser() user: { id: string }
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.eventRatingService.getMyRating({
       eventId,
       userId: user.id,

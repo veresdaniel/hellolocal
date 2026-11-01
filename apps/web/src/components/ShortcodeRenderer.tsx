@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getGallery, type PublicGallery } from "../api/places.api";
 import { GalleryViewer } from "./GalleryViewer";
+import { sanitizeHtml } from "../utils/sanitizeHtml";
 
 interface ShortcodeRendererProps {
   content: string;
@@ -104,7 +105,10 @@ export function ShortcodeRenderer({
     <div className={className} style={style}>
       {/* Render text content without galleries */}
       {hasTextContent && (
-        <div dangerouslySetInnerHTML={{ __html: textContent }} className="shortcode-content" />
+        <div
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(textContent) }}
+          className="shortcode-content"
+        />
       )}
 
       {/* Render all galleries at the bottom (unless hidden) */}

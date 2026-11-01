@@ -1,5 +1,6 @@
 // src/pages/admin/SiteEditPage.tsx
 import { useState, useEffect, useContext, useRef } from "react";
+import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -9,7 +10,12 @@ import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
+import { SiteLanguagesEditor } from "../../components/SiteLanguagesEditor";
+import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { LANG_VALUES, type Lang } from "../../types/enums";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { uploadService } from "../../services/upload/uploadService";
 import { MapComponent } from "../../components/MapComponent";
 import {
   getSite,
@@ -18,6 +24,7 @@ import {
   getSiteInstances,
   createSiteInstance,
   updateSiteInstance,
+  deleteSiteInstance,
   getTowns,
   type Site,
   type Brand,
@@ -26,20 +33,47 @@ import {
 import {
   getSiteSubscription,
   getSiteEntitlements,
+  updateSiteSubscription,
   cancelSubscription,
+  resumeSubscription,
   type SiteSubscription,
   type SiteEntitlements,
 } from "../../api/admin.api";
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
+import { regionAddress } from "../../app/urls";
+import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import {
+  DEFAULT_PUBLIC_THEME_COLORS,
+  isValidHexColor,
+  resolvePublicThemeColors,
+  type PublicThemeColors,
+} from "../../styles/publicThemeColors";
+import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 
 type TabId =
   | "overview"
   | "domain"
+  | "instances"
   | "appearance"
   | "map"
   | "features"
   | "subscription"
   | "analytics";
+
+const SITE_EDIT_TABS: TabId[] = [
+  "overview",
+  "domain",
+  "instances",
+  "appearance",
+  "map",
+  "features",
+  "subscription",
+  "analytics",
+];
+
+function isSiteEditTab(value: string | null): value is TabId {
+  return !!value && (SITE_EDIT_TABS as string[]).includes(value);
+}
 
 export function SiteEditPage() {
   const { t, i18n } = useTranslation();
@@ -59,26 +93,28 @@ export function SiteEditPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize activeTab from URL query param or default to "overview"
-  const tabFromUrl = searchParams.get("tab") as TabId | null;
+  const tabFromUrl = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<TabId>(
-    tabFromUrl &&
-      ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(
-        tabFromUrl
-      )
-      ? tabFromUrl
-      : "overview"
+    isSiteEditTab(tabFromUrl) ? tabFromUrl : "overview"
   );
+
+  const selectTab = (tab: TabId) => {
+    setActiveTab(tab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", tab);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   // Update tab when URL changes
   useEffect(() => {
-    const tabFromUrl = searchParams.get("tab") as TabId | null;
-    if (
-      tabFromUrl &&
-      ["overview", "domain", "appearance", "map", "features", "subscription", "analytics"].includes(
-        tabFromUrl
-      )
-    ) {
-      setActiveTab(tabFromUrl);
+    const nextTab = searchParams.get("tab");
+    if (isSiteEditTab(nextTab)) {
+      setActiveTab(nextTab);
     }
   }, [searchParams]);
   const [formData, setFormData] = useState({
@@ -95,14 +131,25 @@ export function SiteEditPage() {
     heroImageHu: "",
     heroImageEn: "",
     heroImageDe: "",
+    landingHtmlHu: "",
+    landingHtmlEn: "",
+    landingHtmlDe: "",
+    listIntroHtmlHu: "",
+    listIntroHtmlEn: "",
+    listIntroHtmlDe: "",
+    listIntroImageHu: "",
+    listIntroImageEn: "",
+    listIntroImageDe: "",
     isActive: true,
     brandId: "",
     // Subscription tab
-    plan: "basic" as "basic" | "pro" | "business",
+    plan: "basic" as "basic" | "pro" | "business" | "municipal",
     planStatus: "active",
     planValidUntil: "",
     allowPublicRegistration: true,
     showAdvanced: false,
+    gaMeasurementId: "",
+    themeColors: { ...DEFAULT_PUBLIC_THEME_COLORS } as PublicThemeColors,
     // Domain tab - will be handled separately
     // Appearance tab - will be handled via SiteInstance
     // Map tab - will be handled via SiteInstance
@@ -141,7 +188,7 @@ export function SiteEditPage() {
           try {
             const newInstance = await createSiteInstance({
               siteId: data.id,
-              lang: translation.lang as "hu" | "en" | "de",
+              lang: translation.lang as Lang,
               isDefault: isFirst,
               features: {
                 isCrawlable: true,
@@ -164,8 +211,7 @@ export function SiteEditPage() {
         if (createdInstances.length > 0) {
           setSiteInstances(createdInstances);
           showToast(
-            t("admin.siteEdit.siteInstancesCreated") ||
-              `${createdInstances.length} SiteInstance létrehozva`,
+            t("admin.siteEdit.siteInstancesCreated", { n: createdInstances.length }),
             "success"
           );
         }
@@ -176,7 +222,7 @@ export function SiteEditPage() {
       const translationEn = data.translations.find((t) => t.lang === "en");
       const translationDe = data.translations.find((t) => t.lang === "de");
 
-      setFormData({
+      setFormData(mergeTranslations({
         nameHu: translationHu?.name || "",
         nameEn: translationEn?.name || "",
         nameDe: translationDe?.name || "",
@@ -189,6 +235,15 @@ export function SiteEditPage() {
         heroImageHu: translationHu?.heroImage || "",
         heroImageEn: translationEn?.heroImage || "",
         heroImageDe: translationDe?.heroImage || "",
+        landingHtmlHu: translationHu?.landingHtml || "",
+        landingHtmlEn: translationEn?.landingHtml || "",
+        landingHtmlDe: translationDe?.landingHtml || "",
+        listIntroHtmlHu: translationHu?.listIntroHtml || "",
+        listIntroHtmlEn: translationEn?.listIntroHtml || "",
+        listIntroHtmlDe: translationDe?.listIntroHtml || "",
+        listIntroImageHu: translationHu?.listIntroImage || "",
+        listIntroImageEn: translationEn?.listIntroImage || "",
+        listIntroImageDe: translationDe?.listIntroImage || "",
         isActive: data.isActive,
         brandId: data.brandId,
         plan: data.plan || "basic",
@@ -198,7 +253,17 @@ export function SiteEditPage() {
           : "",
         allowPublicRegistration: data.allowPublicRegistration ?? true,
         showAdvanced: false,
-      });
+        gaMeasurementId: data.gaMeasurementId ?? "",
+        themeColors: resolvePublicThemeColors(data.theme, data.brand?.theme),
+      }, data.translations, [
+        "name",
+        "shortDescription",
+        "description",
+        "heroImage",
+        "landingHtml",
+        "listIntroHtml",
+        "listIntroImage",
+      ]));
     } catch (err) {
       showToast(t("admin.errors.loadSiteFailed"), "error");
       console.error("Failed to load site", err);
@@ -249,6 +314,23 @@ export function SiteEditPage() {
     setFormErrors({});
 
     try {
+      if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+        setFormErrors({ gaMeasurementId: t("admin.googleAnalytics.invalidId") });
+        showToast(t("admin.googleAnalytics.invalidId"), "error");
+        setIsSaving(false);
+        return;
+      }
+
+      const colors = formData.themeColors as PublicThemeColors;
+      for (const value of Object.values(colors || {})) {
+        if (!isValidHexColor(value)) {
+          setFormErrors({ themeColors: t("admin.themeColors.invalidHex") });
+          showToast(t("admin.themeColors.invalidHex"), "error");
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const translations = [];
       if (formData.nameHu) {
         translations.push({
@@ -257,6 +339,9 @@ export function SiteEditPage() {
           shortDescription: formData.shortDescriptionHu || null,
           description: formData.descriptionHu || null,
           heroImage: formData.heroImageHu || null,
+          landingHtml: formData.landingHtmlHu || null,
+          listIntroHtml: formData.listIntroHtmlHu || null,
+          listIntroImage: formData.listIntroImageHu || null,
         });
       }
       if (formData.nameEn) {
@@ -266,6 +351,9 @@ export function SiteEditPage() {
           shortDescription: formData.shortDescriptionEn || null,
           description: formData.descriptionEn || null,
           heroImage: formData.heroImageEn || null,
+          landingHtml: formData.landingHtmlEn || null,
+          listIntroHtml: formData.listIntroHtmlEn || null,
+          listIntroImage: formData.listIntroImageEn || null,
         });
       }
       if (formData.nameDe) {
@@ -275,8 +363,19 @@ export function SiteEditPage() {
           shortDescription: formData.shortDescriptionDe || null,
           description: formData.descriptionDe || null,
           heroImage: formData.heroImageDe || null,
+          landingHtml: formData.landingHtmlDe || null,
+          listIntroHtml: formData.listIntroHtmlDe || null,
+          listIntroImage: formData.listIntroImageDe || null,
         });
       }
+      appendExtraLanguages(translations, formData, "name", [
+        "shortDescription",
+        "description",
+        "heroImage",
+        "landingHtml",
+        "listIntroHtml",
+        "listIntroImage",
+      ]);
 
       const updateData = {
         brandId: formData.brandId,
@@ -287,6 +386,10 @@ export function SiteEditPage() {
         planValidUntil: formData.planValidUntil
           ? new Date(formData.planValidUntil).toISOString()
           : null,
+        gaMeasurementId: formData.gaMeasurementId.trim()
+          ? formData.gaMeasurementId.trim().toUpperCase()
+          : null,
+        theme: { colors },
       };
 
       await updateSite(id, updateData);
@@ -312,18 +415,19 @@ export function SiteEditPage() {
     return <div>{t("admin.siteNotFound")}</div>;
   }
 
-  const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+  const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
   const currentTranslation =
     site.translations.find((t) => t.lang === currentLang) || site.translations[0];
 
   const tabs: Array<{ id: TabId; label: string }> = [
-    { id: "overview", label: t("admin.siteEdit.tabs.overview") || "Áttekintés" },
-    { id: "domain", label: t("admin.siteEdit.tabs.domain") || "Domain & URL" },
-    { id: "appearance", label: t("admin.siteEdit.tabs.appearance") || "Megjelenés" },
-    { id: "map", label: t("admin.siteEdit.tabs.map") || "Térkép" },
-    { id: "features", label: t("admin.siteEdit.tabs.features") || "Funkciók" },
-    { id: "subscription", label: t("admin.siteEdit.tabs.subscription") || "Előfizetés" },
-    { id: "analytics", label: t("admin.siteEdit.tabs.analytics") || "Analytics" },
+    { id: "overview", label: t("admin.siteEdit.tabs.overview") },
+    { id: "domain", label: t("admin.siteEdit.tabs.domain") },
+    { id: "instances", label: t("admin.siteEdit.tabs.instances") },
+    { id: "appearance", label: t("admin.siteEdit.tabs.appearance") },
+    { id: "map", label: t("admin.siteEdit.tabs.map") },
+    { id: "features", label: t("admin.siteEdit.tabs.features") },
+    { id: "subscription", label: t("admin.siteEdit.tabs.subscription") },
+    { id: "analytics", label: t("admin.siteEdit.tabs.analytics") },
   ];
 
   return (
@@ -369,7 +473,9 @@ export function SiteEditPage() {
         >
           {t("admin.plan")}: {formData.plan}
         </span>
-        {site.siteDomains && site.siteDomains.length > 0 && (
+        {(site.primaryDomain ||
+          site.siteDomains?.find((item) => item.isPrimary)?.domain ||
+          site.siteDomains?.[0]?.domain) && (
           <span
             style={{
               padding: "6px 12px",
@@ -382,10 +488,18 @@ export function SiteEditPage() {
               fontWeight: 600,
             }}
           >
-            {site.siteDomains[0].domain}
+            {site.primaryDomain ||
+              site.siteDomains?.find((item) => item.isPrimary)?.domain ||
+              site.siteDomains?.[0]?.domain}
           </span>
         )}
       </div>
+
+      <SiteLanguagesEditor
+        siteId={site.id}
+        languages={site.languages ?? []}
+        onChanged={loadSite}
+      />
 
       {/* Tabs */}
       <div
@@ -409,7 +523,7 @@ export function SiteEditPage() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               style={{
                 padding: "16px 24px",
                 border: "none",
@@ -461,12 +575,22 @@ export function SiteEditPage() {
           {activeTab === "domain" && (
             <DomainTab site={site} onUpdate={loadSite} showToast={showToast} t={t} />
           )}
+          {activeTab === "instances" && (
+            <InstancesTab
+              site={site}
+              siteInstances={siteInstances}
+              onUpdate={loadSiteInstances}
+              showToast={showToast}
+              t={t}
+            />
+          )}
           {activeTab === "appearance" && (
             <AppearanceTab
               site={site}
               siteInstances={siteInstances}
               brands={brands}
               onUpdate={loadSiteInstances}
+              onGoToInstances={() => selectTab("instances")}
               showToast={showToast}
               t={t}
             />
@@ -477,6 +601,7 @@ export function SiteEditPage() {
               siteInstances={siteInstances}
               towns={towns}
               onUpdate={loadSiteInstances}
+              onGoToInstances={() => selectTab("instances")}
               showToast={showToast}
               t={t}
             />
@@ -486,6 +611,7 @@ export function SiteEditPage() {
               site={site}
               siteInstances={siteInstances}
               onUpdate={loadSiteInstances}
+              onGoToInstances={() => selectTab("instances")}
               showToast={showToast}
               t={t}
             />
@@ -528,6 +654,11 @@ function OverviewTab({
   formErrors: Record<string, string>;
 }) {
   const { t } = useTranslation();
+  const { showToast } = useToast();
+  const heroFileRef = useRef<HTMLInputElement>(null);
+  const listIntroFileRef = useRef<HTMLInputElement>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [listIntroUploading, setListIntroUploading] = useState(false);
 
   return (
     <div>
@@ -541,7 +672,7 @@ function OverviewTab({
           color: "#667eea",
         }}
       >
-        {t("admin.siteEdit.overview.title") || "Alap adatok"}
+        {t("admin.siteEdit.overview.title")}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
@@ -555,7 +686,7 @@ function OverviewTab({
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          {t("admin.brand")}
+          {t("admin.domain")}
         </label>
         <select
           value={formData.brandId}
@@ -571,7 +702,7 @@ function OverviewTab({
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          <option value="">{t("admin.selectBrand")}</option>
+          <option value="">{t("admin.selectDomain")}</option>
           {brands.map((brand) => (
             <option key={brand.id} value={brand.id}>
               {brand.name}
@@ -596,20 +727,24 @@ function OverviewTab({
               >
                 {t("common.name")} ({selectedLang.toUpperCase()}) *
               </label>
+              <AiPostfixField
+                draft={{
+                  kind: "site",
+                  field: "name",
+                  lang: selectedLang,
+                  siteId: id,
+                  name: readLang(formData, "name", selectedLang),
+                }}
+                value={readLang(formData, "name", selectedLang)}
+                onApply={(text) => setFormData(patchLang(formData, "name", selectedLang, text))}
+              >
               <input
                 type="text"
                 value={
-                  selectedLang === "hu"
-                    ? formData.nameHu
-                    : selectedLang === "en"
-                      ? formData.nameEn
-                      : formData.nameDe
+                  readLang(formData, "name", selectedLang)
                 }
                 onChange={(e) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, nameHu: e.target.value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, nameEn: e.target.value });
-                  else setFormData({ ...formData, nameDe: e.target.value });
+                  setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                 }}
                 style={{
                   width: "100%",
@@ -621,6 +756,7 @@ function OverviewTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               />
+              </AiPostfixField>
             </div>
 
             <div>
@@ -638,18 +774,17 @@ function OverviewTab({
               </label>
               <TipTapEditorWithUpload
                 value={
-                  selectedLang === "hu"
-                    ? formData.shortDescriptionHu
-                    : selectedLang === "en"
-                      ? formData.shortDescriptionEn
-                      : formData.shortDescriptionDe
+                  readLang(formData, "shortDescription", selectedLang)
                 }
                 onChange={(value) => {
-                  if (selectedLang === "hu")
-                    setFormData({ ...formData, shortDescriptionHu: value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, shortDescriptionEn: value });
-                  else setFormData({ ...formData, shortDescriptionDe: value });
+                  setFormData(patchLang(formData, "shortDescription", selectedLang, value));
+                }}
+                aiDraft={{
+                  kind: "site",
+                  field: "shortDescription",
+                  lang: selectedLang,
+                  siteId: id,
+                  name: readLang(formData, "name", selectedLang),
                 }}
               />
             </div>
@@ -669,22 +804,54 @@ function OverviewTab({
               </label>
               <TipTapEditorWithUpload
                 value={
-                  selectedLang === "hu"
-                    ? formData.descriptionHu
-                    : selectedLang === "en"
-                      ? formData.descriptionEn
-                      : formData.descriptionDe
+                  readLang(formData, "description", selectedLang)
                 }
                 onChange={(value) => {
-                  if (selectedLang === "hu") setFormData({ ...formData, descriptionHu: value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, descriptionEn: value });
-                  else setFormData({ ...formData, descriptionDe: value });
+                  setFormData(patchLang(formData, "description", selectedLang, value));
+                }}
+                aiDraft={{
+                  kind: "site",
+                  field: "description",
+                  lang: selectedLang,
+                  siteId: id,
+                  name: readLang(formData, "name", selectedLang),
                 }}
               />
             </div>
 
-            <div>
+            <div
+              style={{
+                marginTop: 8,
+                padding: 16,
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                background: "#f9fafb",
+              }}
+            >
+              <h4
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "#374151",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.landingTitle")} ({selectedLang.toUpperCase()})
+              </h4>
+              <p
+                style={{
+                  margin: "0 0 16px",
+                  color: "#6b7280",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.landingHint")}
+              </p>
               <label
                 style={{
                   display: "block",
@@ -699,19 +866,9 @@ function OverviewTab({
               </label>
               <input
                 type="text"
-                value={
-                  selectedLang === "hu"
-                    ? formData.heroImageHu
-                    : selectedLang === "en"
-                      ? formData.heroImageEn
-                      : formData.heroImageDe
-                }
+                value={readLang(formData, "heroImage", selectedLang)}
                 onChange={(e) => {
-                  if (selectedLang === "hu")
-                    setFormData({ ...formData, heroImageHu: e.target.value });
-                  else if (selectedLang === "en")
-                    setFormData({ ...formData, heroImageEn: e.target.value });
-                  else setFormData({ ...formData, heroImageDe: e.target.value });
+                  setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
                 }}
                 placeholder="https://..."
                 style={{
@@ -722,25 +879,232 @@ function OverviewTab({
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  boxSizing: "border-box",
                 }}
               />
-              {(selectedLang === "hu"
-                ? formData.heroImageHu
-                : selectedLang === "en"
-                  ? formData.heroImageEn
-                  : formData.heroImageDe) && (
-                <img
-                  src={
-                    selectedLang === "hu"
-                      ? formData.heroImageHu
-                      : selectedLang === "en"
-                        ? formData.heroImageEn
-                        : formData.heroImageDe
+              <input
+                ref={heroFileRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  setHeroUploading(true);
+                  try {
+                    const url = await uploadService.uploadImage(file, { folder: "sites/hero" });
+                    setFormData((current: typeof formData) =>
+                      patchLang(current, "heroImage", selectedLang, url)
+                    );
+                  } catch (error) {
+                    showToast(
+                      error instanceof Error ? error.message : t("admin.errors.updateSiteFailed"),
+                      "error"
+                    );
+                  } finally {
+                    setHeroUploading(false);
                   }
-                  alt="Hero"
-                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6 }}
+                }}
+              />
+              <button
+                type="button"
+                disabled={heroUploading}
+                onClick={() => heroFileRef.current?.click()}
+                style={{
+                  marginTop: 8,
+                  padding: "8px 16px",
+                  background: "#667eea",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: heroUploading ? "not-allowed" : "pointer",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {heroUploading ? t("admin.common.uploading") : t("admin.siteEdit.overview.uploadHero")}
+              </button>
+              {readLang(formData, "heroImage", selectedLang) ? (
+                <img
+                  src={readLang(formData, "heroImage", selectedLang)}
+                  alt=""
+                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6, display: "block" }}
                 />
-              )}
+              ) : null}
+              <label
+                style={{
+                  display: "block",
+                  margin: "16px 0 8px",
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.landingBody")} ({selectedLang.toUpperCase()})
+              </label>
+              <TipTapEditorWithUpload
+                value={readLang(formData, "landingHtml", selectedLang)}
+                onChange={(value) => {
+                  setFormData(patchLang(formData, "landingHtml", selectedLang, value));
+                }}
+                uploadFolder="sites/landing"
+                aiDraft={{
+                  kind: "site",
+                  field: "content",
+                  lang: selectedLang,
+                  siteId: id,
+                  name: readLang(formData, "name", selectedLang),
+                  contextHints: "Landing page body",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                padding: 16,
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                background: "#f9fafb",
+              }}
+            >
+              <h4
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "#374151",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.listIntroTitle")} ({selectedLang.toUpperCase()})
+              </h4>
+              <p
+                style={{
+                  margin: "0 0 16px",
+                  color: "#6b7280",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.listIntroHint")}
+              </p>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.listIntroImage")} ({selectedLang.toUpperCase()})
+              </label>
+              <input
+                type="text"
+                value={readLang(formData, "listIntroImage", selectedLang)}
+                onChange={(e) => {
+                  setFormData(patchLang(formData, "listIntroImage", selectedLang, e.target.value));
+                }}
+                placeholder="https://..."
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  boxSizing: "border-box",
+                }}
+              />
+              <input
+                ref={listIntroFileRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  setListIntroUploading(true);
+                  try {
+                    const url = await uploadService.uploadImage(file, { folder: "sites/list-intro" });
+                    setFormData((current: typeof formData) =>
+                      patchLang(current, "listIntroImage", selectedLang, url)
+                    );
+                  } catch (error) {
+                    showToast(
+                      error instanceof Error ? error.message : t("admin.errors.updateSiteFailed"),
+                      "error"
+                    );
+                  } finally {
+                    setListIntroUploading(false);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                disabled={listIntroUploading}
+                onClick={() => listIntroFileRef.current?.click()}
+                style={{
+                  marginTop: 8,
+                  padding: "8px 16px",
+                  background: "#667eea",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: listIntroUploading ? "not-allowed" : "pointer",
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {listIntroUploading
+                  ? t("admin.common.uploading")
+                  : t("admin.siteEdit.overview.uploadListIntroImage")}
+              </button>
+              {readLang(formData, "listIntroImage", selectedLang) ? (
+                <img
+                  src={readLang(formData, "listIntroImage", selectedLang)}
+                  alt=""
+                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6, display: "block" }}
+                />
+              ) : null}
+              <label
+                style={{
+                  display: "block",
+                  margin: "16px 0 8px",
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.listIntroBody")} ({selectedLang.toUpperCase()})
+              </label>
+              <TipTapEditorWithUpload
+                value={readLang(formData, "listIntroHtml", selectedLang)}
+                onChange={(value) => {
+                  setFormData(patchLang(formData, "listIntroHtml", selectedLang, value));
+                }}
+                uploadFolder="sites/list-intro"
+                aiDraft={{
+                  kind: "site",
+                  field: "intro",
+                  lang: selectedLang,
+                  siteId: id,
+                  name: readLang(formData, "name", selectedLang),
+                  contextHints: "Places list intro",
+                }}
+              />
             </div>
           </div>
         )}
@@ -767,6 +1131,92 @@ function OverviewTab({
         </label>
       </div>
 
+      <div style={{ marginTop: 24, maxWidth: 420 }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.googleAnalytics.siteLabel")}
+        </label>
+        <p
+          style={{
+            margin: "0 0 8px",
+            color: "#6b7280",
+            fontSize: 13,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.googleAnalytics.siteHelp")}
+        </p>
+        <input
+          type="text"
+          value={formData.gaMeasurementId}
+          onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
+          placeholder="G-XXXXXXXX"
+          autoComplete="off"
+          spellCheck={false}
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
+            borderRadius: 6,
+            fontSize: 14,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        />
+        {formErrors.gaMeasurementId ? (
+          <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
+            {formErrors.gaMeasurementId}
+          </p>
+        ) : (
+          <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
+            {t("admin.googleAnalytics.clearHint")}
+          </p>
+        )}
+      </div>
+
+      <div style={{ marginTop: 32 }}>
+        <h3
+          style={{
+            margin: "0 0 8px",
+            fontSize: 18,
+            fontWeight: 600,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.themeColors.title")}
+        </h3>
+        <p
+          style={{
+            margin: "0 0 16px",
+            color: "#6b7280",
+            fontSize: 13,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.themeColors.helpSite")}
+        </p>
+        <PublicThemeColorsEditor
+          value={(formData.themeColors as PublicThemeColors) || DEFAULT_PUBLIC_THEME_COLORS}
+          onChange={(next) => setFormData({ ...formData, themeColors: next })}
+        />
+        {formErrors.themeColors ? (
+          <p style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}>
+            {formErrors.themeColors}
+          </p>
+        ) : null}
+      </div>
+
       {/* Quick actions */}
       <div
         style={{
@@ -787,11 +1237,20 @@ function OverviewTab({
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          {t("admin.siteEdit.quickActions") || "Gyors műveletek"}
+          {t("admin.siteEdit.quickActions")}
         </h4>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <button
-            onClick={() => window.open(`/${site.slug}`, "_blank")}
+            onClick={() =>
+              window.open(
+                regionAddress({
+                  lang: site.languages?.[0] || "hu",
+                  slug: site.slug,
+                  primaryDomain: site.primaryDomain || site.siteDomains?.find((item) => item.isPrimary)?.domain,
+                }),
+                "_blank"
+              )
+            }
             style={{
               padding: "10px 20px",
               border: "1px solid #d1d5db",
@@ -814,12 +1273,40 @@ function OverviewTab({
               e.currentTarget.style.borderColor = "#d1d5db";
             }}
           >
-            {t("admin.siteEdit.openPublicPage") || "Publikus oldal megnyitása"}
+            {t("admin.siteEdit.openPublicPage")}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+type DomainRow = { key: string; domain: string; defaultLang: string; isPrimary: boolean };
+
+function domainRowsFromSite(site: Site, siteDefault: string): DomainRow[] {
+  const stored = [...(site.siteDomains ?? [])].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+  if (!stored.length && site.primaryDomain) {
+    return [
+      { key: "primary", domain: site.primaryDomain, defaultLang: "", isPrimary: true },
+      blankDomainRow(false),
+    ];
+  }
+  if (!stored.length) return [blankDomainRow(true), blankDomainRow(false)];
+  const rows = stored.map((item) => ({
+    key: item.id,
+    domain: item.domain,
+    defaultLang: item.defaultLang && item.defaultLang !== siteDefault ? item.defaultLang : "",
+    isPrimary: item.isPrimary,
+  }));
+  // Always offer an empty subdomain slot so primary vs additional hosts stay obvious.
+  if (!rows.some((row) => !row.domain.trim())) {
+    rows.push(blankDomainRow(false));
+  }
+  return rows;
+}
+
+function blankDomainRow(isPrimary: boolean): DomainRow {
+  return { key: Math.random().toString(36).slice(2), domain: "", defaultLang: "", isPrimary };
 }
 
 // Domain Tab Component
@@ -832,24 +1319,70 @@ function DomainTab({
   site: Site;
   onUpdate: () => void;
   showToast: (message: string, type: "success" | "error") => void;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
-  const [editingDomainId, setEditingDomainId] = useState<string | null>(null);
-  const [newDomain, setNewDomain] = useState({
-    domain: "",
-    defaultLang: "hu" as "hu" | "en" | "de",
-    isPrimary: false,
-  });
+  const contentLanguages = (
+    site.languages?.length ? site.languages : site.translations?.map((item) => item.lang) || ["hu"]
+  ).filter((code, index, list) => list.indexOf(code) === index);
+  const siteDefault = contentLanguages[0] || "hu";
+  const [rows, setRows] = useState(() => domainRowsFromSite(site, siteDefault));
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleAddDomain = async () => {
-    if (!newDomain.domain.trim()) {
-      showToast(t("admin.siteEdit.domain.domainRequired") || "Domain megadása kötelező", "error");
+  useEffect(() => {
+    setRows(domainRowsFromSite(site, siteDefault));
+  }, [site.id, site.primaryDomain, site.siteDomains, siteDefault]);
+
+  const filled = rows.filter((row) => row.domain.trim());
+  const addresses = filled.map((row) =>
+    regionAddress({
+      lang: row.defaultLang || siteDefault,
+      slug: site.slug,
+      primaryDomain: row.domain,
+    })
+  );
+  const slugAddress = regionAddress({ lang: siteDefault, slug: site.slug, primaryDomain: null });
+
+  const updateRow = (key: string, patch: Partial<DomainRow>) => {
+    setRows((current) => {
+      if (patch.isPrimary) {
+        return current.map((row) => ({
+          ...row,
+          isPrimary: row.key === key,
+        }));
+      }
+      return current.map((row) => (row.key === key ? { ...row, ...patch } : row));
+    });
+  };
+
+  const handleSaveDomains = async () => {
+    const hosts = filled.map((row) =>
+      row.domain.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0]
+    );
+    const duplicate = hosts.find((host, index) => hosts.indexOf(host) !== index);
+    if (duplicate) {
+      showToast(t("admin.siteEdit.domain.duplicateDomain", { domain: duplicate }), "error");
       return;
     }
-    // TODO: Implement domain creation API
-    showToast(t("admin.siteEdit.domain.domainAdded") || "Domain hozzáadva", "success");
-    setNewDomain({ domain: "", defaultLang: "hu", isPrimary: false });
-    onUpdate();
+    const withPrimary = filled.some((row) => row.isPrimary)
+      ? filled
+      : filled.map((row, index) => ({ ...row, isPrimary: index === 0 }));
+    setIsSaving(true);
+    try {
+      await updateSite(site.id, {
+        domains: withPrimary.map((row) => ({
+          domain: row.domain.trim(),
+          defaultLang: row.defaultLang || null,
+          isPrimary: row.isPrimary,
+        })),
+      });
+      showToast(t("admin.siteEdit.domain.domainAdded"), "success");
+      onUpdate();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : t("admin.siteEdit.domain.saveDomainsFailed");
+      showToast(message, "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -864,233 +1397,150 @@ function DomainTab({
           color: "#667eea",
         }}
       >
-        {t("admin.siteEdit.domain.title") || "Domain & URL"}
+        {t("admin.siteEdit.domain.title")}
       </h3>
-
-      {/* Domains list */}
-      <div style={{ marginBottom: 32 }}>
-        <h4
-          style={{
-            marginBottom: 16,
-            fontSize: "clamp(16px, 3.5vw, 18px)",
-            fontWeight: 600,
-            color: "#374151",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.siteEdit.domain.domains") || "Domain-ek"}
-        </h4>
-        {site.siteDomains && site.siteDomains.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {site.siteDomains.map((domain) => (
-              <div
-                key={domain.id}
-                style={{
-                  padding: 16,
-                  background: "#f9fafb",
-                  borderRadius: 8,
-                  border: "1px solid #e5e7eb",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      marginBottom: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {domain.domain}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "clamp(13px, 3vw, 15px)",
-                      color: "#6b7280",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.siteEdit.domain.defaultLang") || "Alapértelmezett nyelv"}:{" "}
-                    {domain.defaultLang.toUpperCase()}
-                    {domain.isPrimary && (
-                      <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>
-                        ({t("admin.siteEdit.domain.primary") || "Primary"})
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {!domain.isPrimary && (
-                    <button
-                      onClick={() => {
-                        // TODO: Set as primary
-                        showToast(
-                          t("admin.siteEdit.domain.setAsPrimary") || "Primary domain beállítva",
-                          "success"
-                        );
-                        onUpdate();
-                      }}
-                      style={{
-                        padding: "6px 12px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: 6,
-                        background: "white",
-                        color: "#374151",
-                        cursor: "pointer",
-                        fontSize: 12,
-                      }}
-                    >
-                      {t("admin.siteEdit.domain.setPrimary") || "Set Primary"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p
-            style={{
-              color: "#6b7280",
-              fontSize: 14,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            {t("admin.siteEdit.domain.noDomains") || "Nincs domain hozzáadva"}
-          </p>
-        )}
-      </div>
-
-      {/* Add new domain */}
-      <div
+      <p
         style={{
-          padding: 20,
-          background: "#f9fafb",
-          borderRadius: 12,
-          border: "1px solid #e5e7eb",
+          marginTop: -12,
+          marginBottom: 24,
+          color: "#6b7280",
+          fontSize: 14,
+          lineHeight: 1.5,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
-        <h4
-          style={{
-            marginBottom: 16,
-            fontSize: "clamp(16px, 3.5vw, 18px)",
-            fontWeight: 600,
-            color: "#374151",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.siteEdit.domain.addDomain") || "Új domain hozzáadása"}
-        </h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 500,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.siteEdit.domain.domain") || "Domain"}
-            </label>
-            <input
-              type="text"
-              value={newDomain.domain}
-              onChange={(e) => setNewDomain({ ...newDomain, domain: e.target.value })}
-              placeholder="example.com"
-              style={{
-                width: "100%",
-                maxWidth: 400,
-                padding: "8px 12px",
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 500,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.siteEdit.domain.defaultLang") || "Alapértelmezett nyelv"}
-            </label>
-            <select
-              value={newDomain.defaultLang}
-              onChange={(e) =>
-                setNewDomain({ ...newDomain, defaultLang: e.target.value as "hu" | "en" | "de" })
-              }
-              style={{
-                width: "100%",
-                maxWidth: 400,
-                padding: "8px 12px",
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              <option value="hu">Magyar</option>
-              <option value="en">English</option>
-              <option value="de">Deutsch</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-              <input
-                type="checkbox"
-                checked={newDomain.isPrimary}
-                onChange={(e) => setNewDomain({ ...newDomain, isPrimary: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
-              />
-              <span
-                style={{
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {t("admin.siteEdit.domain.setAsPrimary") || "Beállítás primary domain-ként"}
-              </span>
-            </label>
-          </div>
-          <button
-            onClick={handleAddDomain}
+        {t("admin.siteEdit.domain.primarySubdomainHint")}{" "}
+        {addresses.length
+          ? t("admin.siteEdit.domain.publicAddresses", {
+              addresses: addresses.join(", "),
+              lang: siteDefault,
+            })
+          : t("admin.siteEdit.domain.slugAddress", { address: slugAddress })}{" "}
+        {t("admin.siteEdit.domain.dnsHint")}
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+        {rows.map((row) => (
+          <div
+            key={row.key}
             style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: 8,
-              background: "#667eea",
-              color: "white",
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: 500,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              maxWidth: 200,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 12,
+              alignItems: "end",
+              padding: 16,
+              background: row.isPrimary ? "#eef2ff" : "#f9fafb",
+              borderRadius: 12,
+              border: row.isPrimary ? "1px solid #c7d2fe" : "1px solid #e5e7eb",
             }}
           >
-            {t("admin.siteEdit.domain.add") || "Hozzáadás"}
-          </button>
-        </div>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 220px" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                {row.isPrimary
+                  ? t("admin.siteEdit.domain.primaryDomainLabel")
+                  : t("admin.siteEdit.domain.subdomainLabel")}
+              </span>
+              <input
+                type="text"
+                value={row.domain}
+                onChange={(e) => updateRow(row.key, { domain: e.target.value })}
+                placeholder={row.isPrimary ? "pelda.hu" : "hu.pelda.hu"}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 15,
+                }}
+              />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 180px" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                {t("admin.siteEdit.domain.defaultLang")}
+              </span>
+              <select
+                value={row.defaultLang}
+                onChange={(e) => updateRow(row.key, { defaultLang: e.target.value })}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 15,
+                }}
+              >
+                <option value="">{t("admin.siteEdit.domain.regionDefaultLang")}</option>
+                <LanguageSelectOptions variant="endonym" codes={contentLanguages} />
+              </select>
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, cursor: "pointer" }}>
+              <input
+                type="radio"
+                name={`primary-domain-${site.id}`}
+                checked={row.isPrimary}
+                onChange={() => updateRow(row.key, { isPrimary: true })}
+              />
+              <span style={{ fontSize: 13, color: "#374151" }}>
+                {t("admin.siteEdit.domain.setAsPrimary")}
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                setRows((current) => {
+                  const next = current.filter((item) => item.key !== row.key);
+                  if (!next.length) return [blankDomainRow(true), blankDomainRow(false)];
+                  if (!next.some((item) => item.isPrimary)) next[0] = { ...next[0], isPrimary: true };
+                  if (!next.some((item) => !item.isPrimary)) next.push(blankDomainRow(false));
+                  return next;
+                })
+              }
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #d1d5db",
+                borderRadius: 6,
+                background: "white",
+                cursor: "pointer",
+                marginBottom: 1,
+              }}
+            >
+              {t("common.delete")}
+            </button>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={() => setRows((current) => [...current, blankDomainRow(current.length === 0)])}
+          style={{
+            padding: "10px 16px",
+            border: "1px solid #d1d5db",
+            borderRadius: 8,
+            background: "white",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          {t("admin.siteEdit.domain.addSubdomain")}
+        </button>
+        <button
+          type="button"
+          onClick={handleSaveDomains}
+          disabled={isSaving}
+          style={{
+            padding: "10px 16px",
+            border: "none",
+            borderRadius: 8,
+            background: "#667eea",
+            color: "white",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          {isSaving ? t("admin.saving") : t("admin.siteEdit.domain.saveDomains")}
+        </button>
       </div>
 
       {/* SiteKeys */}
@@ -1105,11 +1555,11 @@ function DomainTab({
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          {t("admin.siteEdit.domain.siteKeys") || "SiteKey-ek"}
+          {t("admin.siteEdit.domain.siteKeys")}
         </h4>
         {site.siteKeys && site.siteKeys.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {["hu", "en", "de"].map((lang) => {
+            {LANG_VALUES.map((lang) => {
               const keysForLang = site.siteKeys?.filter((k) => k.lang === lang) || [];
               const primaryKey = keysForLang.find((k) => k.isPrimary);
               const aliases = keysForLang.filter((k) => !k.isPrimary);
@@ -1149,7 +1599,7 @@ function DomainTab({
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.siteEdit.domain.primary") || "Primary"}:
+                        {t("admin.siteEdit.domain.primary")}:
                       </span>
                       <span style={{ fontWeight: 600 }}>{primaryKey.slug}</span>
                     </div>
@@ -1165,7 +1615,7 @@ function DomainTab({
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.siteEdit.domain.aliases") || "Aliasok"}:
+                        {t("admin.siteEdit.domain.aliases")}:
                       </span>
                       {aliases.map((alias) => (
                         <span key={alias.id} style={{ marginRight: 8 }}>
@@ -1187,10 +1637,365 @@ function DomainTab({
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.siteEdit.domain.noSiteKeys") || "Nincs SiteKey"}
+            {t("admin.siteEdit.domain.noSiteKeys")}
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+// Language instances for this region (formerly global Site Instances CRUD)
+function InstancesTab({
+  site,
+  siteInstances,
+  onUpdate,
+  showToast,
+  t,
+}: {
+  site: Site;
+  siteInstances: SiteInstance[];
+  onUpdate: () => void | Promise<void>;
+  showToast: (message: string, type: "success" | "error") => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [newLang, setNewLang] = useState<Lang>("hu");
+  const [newIsDefault, setNewIsDefault] = useState(false);
+
+  const usedLangs = new Set(siteInstances.map((si) => si.lang));
+  const availableLangs = (site.languages?.length ? site.languages : LANG_VALUES).filter(
+    (lang) => !usedLangs.has(lang)
+  );
+
+  const handleCreate = async () => {
+    if (!newLang) return;
+    setBusyId("create");
+    try {
+      await createSiteInstance({
+        siteId: site.id,
+        lang: newLang,
+        isDefault: newIsDefault || siteInstances.length === 0,
+        features: {
+          isCrawlable: true,
+          enableEvents: true,
+          enableBlog: false,
+          enableStaticPages: true,
+        },
+      });
+      showToast(t("admin.siteEdit.instances.created"), "success");
+      setIsCreating(false);
+      setNewIsDefault(false);
+      await onUpdate();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.createSiteInstanceFailed"),
+        "error"
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleSetDefault = async (instance: SiteInstance) => {
+    if (instance.isDefault) return;
+    setBusyId(instance.id);
+    try {
+      await updateSiteInstance(instance.id, { isDefault: true });
+      showToast(t("admin.siteEdit.instances.defaultSaved"), "success");
+      await onUpdate();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.updateSiteInstanceFailed"),
+        "error"
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (instance: SiteInstance) => {
+    if (!confirm(t("admin.confirmations.deleteSiteInstance"))) return;
+    setBusyId(instance.id);
+    try {
+      await deleteSiteInstance(instance.id);
+      showToast(t("admin.siteEdit.instances.deleted"), "success");
+      await onUpdate();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : t("admin.errors.deleteSiteInstanceFailed"),
+        "error"
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div>
+      <h3
+        style={{
+          marginBottom: 8,
+          fontSize: "clamp(20px, 5vw, 24px)",
+          fontWeight: 700,
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          color: "#667eea",
+        }}
+      >
+        {t("admin.siteEdit.instances.title")}
+      </h3>
+      <p
+        style={{
+          marginBottom: 24,
+          color: "#64748b",
+          fontSize: "clamp(14px, 3.5vw, 15px)",
+          lineHeight: 1.5,
+          maxWidth: 640,
+        }}
+      >
+        {t("admin.siteEdit.instances.hint")}
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+        {siteInstances.length === 0 && (
+          <div
+            style={{
+              padding: 16,
+              background: "#f8fafc",
+              borderRadius: 8,
+              color: "#64748b",
+              border: "1px dashed #cbd5e1",
+            }}
+          >
+            {t("admin.siteEdit.instances.empty")}
+          </div>
+        )}
+        {siteInstances.map((instance) => (
+          <div
+            key={instance.id}
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "14px 16px",
+              background: "#fff",
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <strong style={{ fontSize: 15 }}>{instance.lang.toUpperCase()}</strong>
+              {instance.isDefault && (
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    background: "#eef2ff",
+                    color: "#4338ca",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {t("admin.isDefault")}
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {!instance.isDefault && (
+                <button
+                  type="button"
+                  disabled={busyId === instance.id}
+                  onClick={() => handleSetDefault(instance)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #c7d2fe",
+                    background: "#eef2ff",
+                    color: "#4338ca",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  {t("admin.siteEdit.instances.setDefault")}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={busyId === instance.id}
+                onClick={() => handleDelete(instance)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #fecaca",
+                  background: "#fef2f2",
+                  color: "#b91c1c",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                {t("common.delete")}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isCreating ? (
+        <div
+          style={{
+            padding: 20,
+            background: "#f8fafc",
+            borderRadius: 12,
+            border: "1px solid #e2e8f0",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            maxWidth: 480,
+          }}
+        >
+          <div>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+              {t("common.language")} *
+            </label>
+            <select
+              value={newLang}
+              onChange={(e) => setNewLang(e.target.value as Lang)}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 8,
+                border: "1px solid #d1d5db",
+              }}
+            >
+              <LanguageSelectOptions variant="translated" />
+            </select>
+            {usedLangs.has(newLang) && (
+              <p style={{ color: "#b91c1c", fontSize: 12, marginTop: 6 }}>
+                {t("admin.siteEdit.instances.langExists")}
+              </p>
+            )}
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={newIsDefault}
+              onChange={(e) => setNewIsDefault(e.target.checked)}
+              style={{ width: 18, height: 18 }}
+            />
+            <span>{t("admin.isDefault")}</span>
+          </label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              disabled={busyId === "create" || usedLangs.has(newLang)}
+              onClick={handleCreate}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 8,
+                border: "none",
+                background: "#667eea",
+                color: "white",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t("common.create")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCreating(false)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 8,
+                border: "1px solid #d1d5db",
+                background: "white",
+                cursor: "pointer",
+              }}
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={availableLangs.length === 0}
+          onClick={() => {
+            setNewLang((availableLangs[0] as Lang) || "hu");
+            setNewIsDefault(siteInstances.length === 0);
+            setIsCreating(true);
+          }}
+          style={{
+            padding: "10px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: availableLangs.length === 0 ? "#cbd5e1" : "#667eea",
+            color: "white",
+            fontWeight: 600,
+            cursor: availableLangs.length === 0 ? "not-allowed" : "pointer",
+          }}
+        >
+          {t("admin.forms.newSiteInstance")}
+        </button>
+      )}
+      {availableLangs.length === 0 && !isCreating && siteInstances.length > 0 && (
+        <p style={{ marginTop: 12, color: "#64748b", fontSize: 13 }}>
+          {t("admin.siteEdit.instances.allLanguagesCovered")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function MissingInstanceBanner({
+  message,
+  onGoToInstances,
+  t,
+}: {
+  message: string;
+  onGoToInstances?: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div
+      style={{
+        padding: 16,
+        background: "#fef3c7",
+        borderRadius: 8,
+        marginBottom: 24,
+        color: "#92400e",
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 12,
+        justifyContent: "space-between",
+      }}
+    >
+      <span>{message}</span>
+      {onGoToInstances && (
+        <button
+          type="button"
+          onClick={onGoToInstances}
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "none",
+            background: "#f59e0b",
+            color: "#111827",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontSize: 13,
+          }}
+        >
+          {t("admin.siteEdit.tabs.instances")}
+        </button>
+      )}
     </div>
   );
 }
@@ -1201,6 +2006,7 @@ function AppearanceTab({
   siteInstances,
   brands,
   onUpdate,
+  onGoToInstances,
   showToast,
   t,
 }: {
@@ -1208,11 +2014,12 @@ function AppearanceTab({
   siteInstances: SiteInstance[];
   brands: Brand[];
   onUpdate: () => void;
+  onGoToInstances?: () => void;
   showToast: (message: string, type: "success" | "error") => void;
   t: (key: string) => string;
 }) {
   const brand = brands.find((b) => b.id === site.brandId);
-  const [selectedLang, setSelectedLang] = useState<"hu" | "en" | "de">("hu");
+  const [selectedLang, setSelectedLang] = useState<Lang>("hu");
   const instance = siteInstances.find((si) => si.lang === selectedLang);
   const [formData, setFormData] = useState({
     logoUrl: instance?.logoUrl || "",
@@ -1236,7 +2043,7 @@ function AppearanceTab({
   const handleSave = async () => {
     if (!instance) {
       showToast(
-        t("admin.siteEdit.appearance.instanceNotFound") || "SiteInstance nem található",
+        t("admin.siteEdit.appearance.instanceNotFound"),
         "error"
       );
       return;
@@ -1252,10 +2059,10 @@ function AppearanceTab({
           eventCard: formData.placeholderEventCard || null,
         },
       });
-      showToast(t("admin.siteEdit.appearance.saved") || "Megjelenés mentve", "success");
+      showToast(t("admin.siteEdit.appearance.saved"), "success");
       onUpdate();
     } catch (err) {
-      showToast(t("admin.errors.updateSiteInstanceFailed") || "Mentés sikertelen", "error");
+      showToast(t("admin.errors.updateSiteInstanceFailed"), "error");
     }
   };
 
@@ -1271,7 +2078,7 @@ function AppearanceTab({
           color: "#667eea",
         }}
       >
-        {t("admin.siteEdit.appearance.title") || "Megjelenés"}
+        {t("admin.siteEdit.appearance.title")}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
@@ -1289,7 +2096,7 @@ function AppearanceTab({
         </label>
         <select
           value={selectedLang}
-          onChange={(e) => setSelectedLang(e.target.value as "hu" | "en" | "de")}
+          onChange={(e) => setSelectedLang(e.target.value as Lang)}
           style={{
             width: "100%",
             maxWidth: 400,
@@ -1299,30 +2106,21 @@ function AppearanceTab({
             fontSize: 14,
           }}
         >
-          <option value="hu">Magyar</option>
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
+          <LanguageSelectOptions variant="endonym" />
         </select>
       </div>
 
       {!instance && (
-        <div
-          style={{
-            padding: 16,
-            background: "#fef3c7",
-            borderRadius: 8,
-            marginBottom: 24,
-            color: "#92400e",
-          }}
-        >
-          {t("admin.siteEdit.appearance.createInstanceFirst") ||
-            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
-        </div>
+        <MissingInstanceBanner
+          message={t("admin.siteEdit.appearance.createInstanceFirst")}
+          onGoToInstances={onGoToInstances}
+          t={t}
+        />
       )}
 
       {instance && (
         <>
-          {/* Brand info */}
+          {/* Domain defaults */}
           {brand && (
             <div style={{ marginBottom: 24, padding: 16, background: "#f9fafb", borderRadius: 8 }}>
               <h4
@@ -1334,7 +2132,7 @@ function AppearanceTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.appearance.brandDefaults") || "Brand alapértelmezések"}
+                {t("admin.siteEdit.appearance.domainDefaults")}
               </h4>
               <div
                 style={{
@@ -1346,11 +2144,11 @@ function AppearanceTab({
               >
                 <div>
                   Logo:{" "}
-                  {brand.logoUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}
+                  {brand.logoUrl || t("admin.siteEdit.appearance.notSet")}
                 </div>
                 <div>
                   Favicon:{" "}
-                  {brand.faviconUrl || t("admin.siteEdit.appearance.notSet") || "Nincs beállítva"}
+                  {brand.faviconUrl || t("admin.siteEdit.appearance.notSet")}
                 </div>
               </div>
             </div>
@@ -1368,8 +2166,8 @@ function AppearanceTab({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.siteEdit.appearance.logoUrl") || "Logo URL"} (
-              {t("admin.siteEdit.appearance.override") || "override"})
+              {t("admin.siteEdit.appearance.logoUrl")} (
+              {t("admin.siteEdit.appearance.override")})
             </label>
             <input
               type="text"
@@ -1411,8 +2209,8 @@ function AppearanceTab({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.siteEdit.appearance.faviconUrl") || "Favicon URL"} (
-              {t("admin.siteEdit.appearance.override") || "override"})
+              {t("admin.siteEdit.appearance.faviconUrl")} (
+              {t("admin.siteEdit.appearance.override")})
             </label>
             <input
               type="text"
@@ -1444,7 +2242,7 @@ function AppearanceTab({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.siteEdit.appearance.placeholders") || "Placeholder képek"}
+              {t("admin.siteEdit.appearance.placeholders")}
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
@@ -1458,7 +2256,7 @@ function AppearanceTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.siteEdit.appearance.placeholderCard") || "Card placeholder"}
+                  {t("admin.siteEdit.appearance.placeholderCard")}
                 </label>
                 <input
                   type="text"
@@ -1488,7 +2286,7 @@ function AppearanceTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.siteEdit.appearance.placeholderHero") || "Hero placeholder"}
+                  {t("admin.siteEdit.appearance.placeholderHero")}
                 </label>
                 <input
                   type="text"
@@ -1518,7 +2316,7 @@ function AppearanceTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.siteEdit.appearance.placeholderEventCard") || "Event card placeholder"}
+                  {t("admin.siteEdit.appearance.placeholderEventCard")}
                 </label>
                 <input
                   type="text"
@@ -1570,6 +2368,7 @@ function MapTab({
   siteInstances,
   towns,
   onUpdate,
+  onGoToInstances,
   showToast,
   t,
 }: {
@@ -1577,10 +2376,11 @@ function MapTab({
   siteInstances: SiteInstance[];
   towns: any[];
   onUpdate: () => void;
+  onGoToInstances?: () => void;
   showToast: (message: string, type: "success" | "error") => void;
   t: (key: string) => string;
 }) {
-  const [selectedLang, setSelectedLang] = useState<"hu" | "en" | "de">("hu");
+  const [selectedLang, setSelectedLang] = useState<Lang>("hu");
   const instance = siteInstances.find((si) => si.lang === selectedLang);
   const [formData, setFormData] = useState({
     lat: instance?.mapConfig?.lat?.toString() || "",
@@ -1601,7 +2401,7 @@ function MapTab({
 
   const handleSave = async () => {
     if (!instance) {
-      showToast(t("admin.siteEdit.map.instanceNotFound") || "SiteInstance nem található", "error");
+      showToast(t("admin.siteEdit.map.instanceNotFound"), "error");
       return;
     }
 
@@ -1614,10 +2414,10 @@ function MapTab({
           zoom: formData.zoom ? parseFloat(formData.zoom) : null,
         },
       });
-      showToast(t("admin.siteEdit.map.saved") || "Térkép beállítások mentve", "success");
+      showToast(t("admin.siteEdit.map.saved"), "success");
       onUpdate();
     } catch (err) {
-      showToast(t("admin.errors.updateSiteInstanceFailed") || "Mentés sikertelen", "error");
+      showToast(t("admin.errors.updateSiteInstanceFailed"), "error");
     }
   };
 
@@ -1633,7 +2433,7 @@ function MapTab({
           color: "#667eea",
         }}
       >
-        {t("admin.siteEdit.map.title") || "Térkép"}
+        {t("admin.siteEdit.map.title")}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
@@ -1651,7 +2451,7 @@ function MapTab({
         </label>
         <select
           value={selectedLang}
-          onChange={(e) => setSelectedLang(e.target.value as "hu" | "en" | "de")}
+          onChange={(e) => setSelectedLang(e.target.value as Lang)}
           style={{
             width: "100%",
             maxWidth: 400,
@@ -1661,31 +2461,27 @@ function MapTab({
             fontSize: 14,
           }}
         >
-          <option value="hu">Magyar</option>
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
+          <LanguageSelectOptions variant="endonym" />
         </select>
       </div>
 
       {!instance && (
-        <div
-          style={{
-            padding: 16,
-            background: "#fef3c7",
-            borderRadius: 8,
-            marginBottom: 24,
-            color: "#92400e",
-          }}
-        >
-          {t("admin.siteEdit.map.createInstanceFirst") ||
-            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
-        </div>
+        <MissingInstanceBanner
+          message={t("admin.siteEdit.map.createInstanceFirst")}
+          onGoToInstances={onGoToInstances}
+          t={t}
+        />
       )}
 
       {instance && (
         <>
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+              gap: 24,
+              marginBottom: 24,
+            }}
           >
             {/* Map */}
             <div>
@@ -1699,7 +2495,7 @@ function MapTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.map.map") || "Térkép"}
+                {t("admin.siteEdit.map.map")}
               </label>
               <div
                 style={{
@@ -1739,7 +2535,7 @@ function MapTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.siteEdit.map.defaultTown") || "Alapértelmezett település"}
+                  {t("admin.siteEdit.map.defaultTown")}
                 </label>
                 <select
                   value={formData.townId}
@@ -1754,7 +2550,7 @@ function MapTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  <option value="">{t("admin.siteEdit.map.noTown") || "Nincs település"}</option>
+                  <option value="">{t("admin.siteEdit.map.noTown")}</option>
                   {towns.map((town) => {
                     const translation =
                       town.translations?.find((t: any) => t.lang === selectedLang) ||
@@ -1839,7 +2635,7 @@ function MapTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.mapZoom") || "Nagyítás"}
+                  {t("admin.mapZoom")}
                 </label>
                 <input
                   type="number"
@@ -1867,7 +2663,7 @@ function MapTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.mapZoomHint") || "1 = legkisebb, 20 = legnagyobb. Ajánlott: 10-15."}
+                  {t("admin.mapZoomHint")}
                 </div>
               </div>
             </div>
@@ -1899,16 +2695,18 @@ function FeaturesTab({
   site,
   siteInstances,
   onUpdate,
+  onGoToInstances,
   showToast,
   t,
 }: {
   site: Site;
   siteInstances: SiteInstance[];
   onUpdate: () => void;
+  onGoToInstances?: () => void;
   showToast: (message: string, type: "success" | "error") => void;
   t: (key: string) => string;
 }) {
-  const [selectedLang, setSelectedLang] = useState<"hu" | "en" | "de">("hu");
+  const [selectedLang, setSelectedLang] = useState<Lang>("hu");
   const instance = siteInstances.find((si) => si.lang === selectedLang);
   const [formData, setFormData] = useState({
     enableEvents: instance?.features?.enableEvents ?? true,
@@ -1930,7 +2728,7 @@ function FeaturesTab({
   const handleSave = async () => {
     if (!instance) {
       showToast(
-        t("admin.siteEdit.features.instanceNotFound") || "SiteInstance nem található",
+        t("admin.siteEdit.features.instanceNotFound"),
         "error"
       );
       return;
@@ -1945,10 +2743,10 @@ function FeaturesTab({
           isCrawlable: formData.isCrawlable,
         },
       });
-      showToast(t("admin.siteEdit.features.saved") || "Funkciók mentve", "success");
+      showToast(t("admin.siteEdit.features.saved"), "success");
       onUpdate();
     } catch (err) {
-      showToast(t("admin.errors.updateSiteInstanceFailed") || "Mentés sikertelen", "error");
+      showToast(t("admin.errors.updateSiteInstanceFailed"), "error");
     }
   };
 
@@ -1964,7 +2762,7 @@ function FeaturesTab({
           color: "#667eea",
         }}
       >
-        {t("admin.siteEdit.features.title") || "Funkciók"}
+        {t("admin.siteEdit.features.title")}
       </h3>
 
       <div style={{ marginBottom: 24 }}>
@@ -1982,7 +2780,7 @@ function FeaturesTab({
         </label>
         <select
           value={selectedLang}
-          onChange={(e) => setSelectedLang(e.target.value as "hu" | "en" | "de")}
+          onChange={(e) => setSelectedLang(e.target.value as Lang)}
           style={{
             width: "100%",
             maxWidth: 400,
@@ -1999,18 +2797,11 @@ function FeaturesTab({
       </div>
 
       {!instance && (
-        <div
-          style={{
-            padding: 16,
-            background: "#fef3c7",
-            borderRadius: 8,
-            marginBottom: 24,
-            color: "#92400e",
-          }}
-        >
-          {t("admin.siteEdit.features.createInstanceFirst") ||
-            "Először hozz létre egy SiteInstance-t ezen a nyelven"}
-        </div>
+        <MissingInstanceBanner
+          message={t("admin.siteEdit.features.createInstanceFirst")}
+          onGoToInstances={onGoToInstances}
+          t={t}
+        />
       )}
 
       {instance && (
@@ -2031,7 +2822,7 @@ function FeaturesTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.features.enableEvents") || "Események engedélyezése"}
+                {t("admin.siteEdit.features.enableEvents")}
               </span>
             </label>
 
@@ -2050,7 +2841,7 @@ function FeaturesTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.features.enableBlog") || "Blog / Statikus oldalak engedélyezése"}
+                {t("admin.siteEdit.features.enableBlog")}
               </span>
             </label>
 
@@ -2069,7 +2860,7 @@ function FeaturesTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.features.enableStaticPages") || "Statikus oldalak engedélyezése"}
+                {t("admin.siteEdit.features.enableStaticPages")}
               </span>
             </label>
 
@@ -2089,7 +2880,7 @@ function FeaturesTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.siteEdit.features.isCrawlable") || "Indexelhető (SEO)"}
+                  {t("admin.siteEdit.features.isCrawlable")}
                 </span>
               </label>
               <div
@@ -2101,8 +2892,7 @@ function FeaturesTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.isCrawlableDescription") ||
-                  "Ha be van kapcsolva, a keresőmotorok (Google, Bing, stb.) indexelhetik az oldalt. Ha ki van kapcsolva, a robots.txt és meta tag-ek megakadályozzák az indexelést."}
+                {t("admin.isCrawlableDescription")}
               </div>
             </div>
           </div>
@@ -2163,6 +2953,10 @@ function SubscriptionTab({
   const isSuperAdmin = currentUser?.role === "superadmin";
   const isAdmin = currentUser?.role === "admin";
   const canEditPlan = isSuperAdmin;
+  // Siteadmin (UserRole.admin) and superadmin may set this site's GA ID.
+  const canEditGa = isSuperAdmin || isAdmin;
+  const [gaError, setGaError] = useState<string | null>(null);
+  const [isSavingGa, setIsSavingGa] = useState(false);
 
   // Load subscription and entitlements data
   useEffect(() => {
@@ -2202,7 +2996,7 @@ function SubscriptionTab({
     } catch (error) {
       console.error("Failed to load subscription data:", error);
       showToast(
-        t("admin.errorLoadingBilling") || "Failed to load subscription information",
+        t("admin.errorLoadingBilling"),
         "error"
       );
     } finally {
@@ -2231,32 +3025,32 @@ function SubscriptionTab({
       active: {
         color: "#10b981",
         bg: "#d1fae5",
-        label: t("admin.siteEdit.subscription.statusActive") || "Aktív",
+        label: t("admin.siteEdit.subscription.statusActive"),
       },
       trial: {
         color: "#f59e0b",
         bg: "#fef3c7",
-        label: t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak",
+        label: t("admin.siteEdit.subscription.statusTrial"),
       },
       past_due: {
         color: "#ef4444",
         bg: "#fee2e2",
-        label: t("admin.siteEdit.subscription.statusPastDue") || "Lejárt",
+        label: t("admin.siteEdit.subscription.statusPastDue"),
       },
       canceled: {
         color: "#6b7280",
         bg: "#f3f4f6",
-        label: t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva",
+        label: t("admin.siteEdit.subscription.statusCanceled"),
       },
       suspended: {
         color: "#ef4444",
         bg: "#fee2e2",
-        label: t("admin.siteEdit.subscription.statusSuspended") || "Felfüggesztve",
+        label: t("admin.siteEdit.subscription.statusSuspended"),
       },
       expired: {
         color: "#6b7280",
         bg: "#f3f4f6",
-        label: t("admin.siteEdit.subscription.statusExpired") || "Lejárt",
+        label: t("admin.siteEdit.subscription.statusExpired"),
       },
     };
     const statusInfo = statusMap[status || "active"] || statusMap.active;
@@ -2286,31 +3080,32 @@ function SubscriptionTab({
 
   // Plan labels and colors
   const planLabels: Record<string, string> = {
-    basic: t("admin.planBasic") || "Basic",
-    pro: t("admin.planPro") || "Pro",
-    business: t("admin.planBusiness") || "Business",
+    basic: t("admin.planBasic"),
+    pro: t("admin.planPro"),
+    business: t("admin.planBusiness"),
+    municipal: t("public.overview.plans.municipal.name"),
   };
 
   // Plan descriptions
   const planDescriptions: Record<string, string> = {
     basic:
-      t("admin.planBasicDescription") ||
-      "Korlátlan hely (default), nincs: domain, seo, események, push, kiemelt",
-    pro: t("admin.planProDescription") || "Korlátlan hely, kiemelések, események",
-    business: t("admin.planBusinessDescription") || "Minden funkció, egyedi domain, prioritás",
+      t("admin.planBasicDescription"),
+    pro: t("admin.planProDescription"),
+    business: t("admin.planBusinessDescription"),
+    municipal: t("public.overview.plans.municipal.pitch"),
   };
 
   const planColors: Record<string, string> = {
     basic: "#3b82f6",
     pro: "#667eea",
     business: "#8b5cf6",
+    municipal: "#1b1730",
   };
 
-  const handlePlanChange = async (newPlan: "basic" | "pro" | "business") => {
+  const handlePlanChange = async (newPlan: "basic" | "pro" | "business" | "municipal") => {
     if (!canEditPlan) {
       showToast(
-        t("admin.siteEdit.subscription.contactToUpgrade") ||
-          "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel.",
+        t("admin.siteEdit.subscription.contactToUpgrade"),
         "error"
       );
       return;
@@ -2321,10 +3116,10 @@ function SubscriptionTab({
       await updateSite(site.id, { plan: newPlan });
       // Reload subscription data to get updated entitlements
       await loadSubscriptionData();
-      showToast(t("admin.siteEdit.subscription.planUpdated") || "Csomag frissítve", "success");
+      showToast(t("admin.siteEdit.subscription.planUpdated"), "success");
       setShowPlanSwitcher(false);
     } catch (err) {
-      showToast(t("admin.errors.updateSiteFailed") || "Frissítés sikertelen", "error");
+      showToast(t("admin.errors.updateSiteFailed"), "error");
     } finally {
       setIsSaving(false);
     }
@@ -2342,11 +3137,49 @@ function SubscriptionTab({
         allowPublicRegistration: formData.allowPublicRegistration,
       });
       await loadSubscriptionData();
-      showToast(t("admin.siteEdit.subscription.saved") || "Mentve", "success");
+      showToast(t("admin.siteEdit.subscription.saved"), "success");
     } catch (err) {
-      showToast(t("admin.errors.updateSiteFailed") || "Mentés sikertelen", "error");
+      showToast(t("admin.errors.updateSiteFailed"), "error");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleToggleVisitorOverride = async (manual: boolean) => {
+    if (!isSuperAdmin) return;
+    setIsSaving(true);
+    try {
+      await updateSiteSubscription(site.id, { visitorLadderManual: manual });
+      await loadSubscriptionData();
+      showToast(t("admin.siteEdit.subscription.saved"), "success");
+    } catch (err) {
+      showToast(t("admin.errors.updateSiteFailed"), "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveGa = async () => {
+    if (!canEditGa) return;
+    setGaError(null);
+    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+      setGaError(t("admin.googleAnalytics.invalidId"));
+      showToast(t("admin.googleAnalytics.invalidId"), "error");
+      return;
+    }
+    setIsSavingGa(true);
+    try {
+      const nextId = formData.gaMeasurementId.trim()
+        ? formData.gaMeasurementId.trim().toUpperCase()
+        : null;
+      await updateSite(site.id, { gaMeasurementId: nextId });
+      setFormData((prev: any) => ({ ...prev, gaMeasurementId: nextId ?? "" }));
+      await onUpdate();
+      showToast(t("admin.googleAnalytics.saved"), "success");
+    } catch (err) {
+      showToast(t("admin.errors.updateSiteFailed"), "error");
+    } finally {
+      setIsSavingGa(false);
     }
   };
 
@@ -2357,6 +3190,7 @@ function SubscriptionTab({
   const currentPlan = subscription.plan;
   const limits = entitlements.limits;
   const usage = entitlements.currentUsage;
+  const ladder = subscription.visitorLadder;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -2376,6 +3210,106 @@ function SubscriptionTab({
           }
         }
       `}</style>
+
+      {/* Per-subscriber Google Analytics (Site.gaMeasurementId) */}
+      <div
+        style={{
+          padding: "16px 24px",
+          background: "#fff",
+          borderRadius: 12,
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          maxWidth: 520,
+        }}
+      >
+        <h4
+          style={{
+            margin: "0 0 8px",
+            fontSize: "clamp(16px, 3.5vw, 18px)",
+            fontWeight: 600,
+            color: "#334155",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.googleAnalytics.subscriberTitle")}
+        </h4>
+        <p
+          style={{
+            margin: "0 0 12px",
+            color: "#6b7280",
+            fontSize: 13,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.googleAnalytics.subscriberHelp")}
+        </p>
+        <label
+          style={{
+            display: "block",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          {t("admin.googleAnalytics.subscriberLabel")}
+        </label>
+        <input
+          type="text"
+          value={formData.gaMeasurementId}
+          onChange={(e) => {
+            setGaError(null);
+            setFormData({ ...formData, gaMeasurementId: e.target.value });
+          }}
+          placeholder="G-XXXXXXXX"
+          autoComplete="off"
+          spellCheck={false}
+          disabled={!canEditGa || isSavingGa}
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            border: gaError ? "1px solid #dc2626" : "1px solid #d1d5db",
+            borderRadius: 6,
+            fontSize: 14,
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            background: canEditGa ? "white" : "#f9fafb",
+          }}
+        />
+        {gaError ? (
+          <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>{gaError}</p>
+        ) : (
+          <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
+            {t("admin.googleAnalytics.clearHint")}
+          </p>
+        )}
+        {canEditGa && (
+          <button
+            type="button"
+            onClick={handleSaveGa}
+            disabled={isSavingGa}
+            style={{
+              marginTop: 12,
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: 6,
+              background: "#667eea",
+              color: "white",
+              cursor: isSavingGa ? "not-allowed" : "pointer",
+              fontSize: 14,
+              fontWeight: 600,
+              opacity: isSavingGa ? 0.6 : 1,
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {isSavingGa ? t("common.loading") : t("admin.googleAnalytics.save")}
+          </button>
+        )}
+      </div>
 
       {/* A. Hero Blokk - Aktuális csomag (kompakt) */}
       <div
@@ -2406,7 +3340,7 @@ function SubscriptionTab({
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.siteEdit.subscription.currentPlan") || "Jelenlegi csomag"}
+            {t("admin.siteEdit.subscription.currentPlan")}
           </h4>
           {getStatusBadge(subscription.planStatus)}
         </div>
@@ -2476,7 +3410,7 @@ function SubscriptionTab({
                     }}
                   >
                     <span style={{ fontSize: 16 }}>⚙️</span>
-                    {t("admin.siteEdit.subscription.changePlan") || "Csomag módosítása"}
+                    {t("admin.siteEdit.subscription.changePlan")}
                   </button>
                 )}
               </div>
@@ -2491,8 +3425,8 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.siteEdit.subscription.validUntil") || "Érvényes"}:{" "}
-                {new Date(subscription.planValidUntil).toLocaleDateString("hu-HU", {
+                {t("admin.siteEdit.subscription.validUntil")}:{" "}
+                {new Date(subscription.planValidUntil).toLocaleDateString(i18n.language, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
@@ -2507,19 +3441,18 @@ function SubscriptionTab({
                 <button
                   onClick={async () => {
                     const confirmed = await confirm({
-                      title: t("admin.subscription.cancel") || "Előfizetés lemondása",
+                      title: t("admin.subscription.cancel"),
                       message:
-                        t("admin.subscription.cancelConfirm") ||
-                        "Biztosan le szeretnéd mondani az előfizetést? Az aktuális hó végéig lesz elérésed.",
-                      confirmLabel: t("admin.subscription.cancelButton") || "Lemondom",
-                      cancelLabel: t("common.cancel") || "Mégse",
+                        t("admin.subscription.cancelConfirm"),
+                      confirmLabel: t("admin.subscription.cancelButton"),
+                      cancelLabel: t("common.cancel"),
                       confirmVariant: "danger",
                     });
                     if (confirmed) {
                       try {
                         await cancelSubscription("site", subscription.id, site.id);
                         showToast(
-                          t("admin.subscription.cancelled") || "Előfizetés lemondva",
+                          t("admin.subscription.cancelled"),
                           "success"
                         );
                         await loadSubscriptionData();
@@ -2527,7 +3460,7 @@ function SubscriptionTab({
                       } catch (error) {
                         console.error("Failed to cancel subscription:", error);
                         showToast(
-                          t("admin.errors.updateFailed") || "Hiba a lemondás során",
+                          t("admin.errors.updateFailed"),
                           "error"
                         );
                       }
@@ -2555,7 +3488,7 @@ function SubscriptionTab({
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  {t("admin.subscription.cancelButton") || "Lemondom"}
+                  {t("admin.subscription.cancelButton")}
                 </button>
               ) : subscription.status === "CANCELLED" || subscription.planStatus === "canceled" ? (
                 <button
@@ -2563,7 +3496,7 @@ function SubscriptionTab({
                     try {
                       await resumeSubscription("site", subscription.id, site.id);
                       showToast(
-                        t("admin.subscription.resumed") || "Előfizetés folytatva",
+                        t("admin.subscription.resumed"),
                         "success"
                       );
                       await loadSubscriptionData();
@@ -2571,7 +3504,7 @@ function SubscriptionTab({
                     } catch (error) {
                       console.error("Failed to resume subscription:", error);
                       showToast(
-                        t("admin.errors.updateFailed") || "Hiba a folytatás során",
+                        t("admin.errors.updateFailed"),
                         "error"
                       );
                     }
@@ -2598,13 +3531,57 @@ function SubscriptionTab({
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  {t("admin.subscription.resume") || "Előfizetés folytatása"}
+                  {t("admin.subscription.resume")}
                 </button>
               ) : null}
             </div>
           )}
         </div>
       </div>
+
+      {ladder && (
+        <div
+          style={{
+            padding: 20,
+            background: "#f8fafc",
+            borderRadius: 12,
+            border: "1px solid #e2e8f0",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: 16 }}>
+            {t("admin.visitorLadder.meterTitle")}
+          </div>
+          <div style={{ fontSize: 14, color: "#444" }}>
+            {ladder.meter.toLocaleString()}{" "}
+            {ladder.meterSource === "pageViews"
+              ? t("admin.visitorLadder.pageViews")
+              : t("admin.visitorLadder.uniqueVisitors")}
+            {" · "}
+            X={ladder.freeUntil.toLocaleString()} / Y={ladder.stepTwoFrom.toLocaleString()} / Z=
+            {ladder.stepThreeFrom.toLocaleString()}
+            {" · "}
+            {t("admin.visitorLadder.stepLabel")}: {ladder.appliedStep + 1}
+            {ladder.wouldStep !== ladder.appliedStep
+              ? ` → ${ladder.wouldStep + 1}`
+              : ""}
+            {ladder.ladderSuspended ? ` · ${t("admin.visitorLadder.held")}` : ""}
+          </div>
+          {isSuperAdmin && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+              <input
+                type="checkbox"
+                checked={subscription.visitorLadderManual ?? ladder.manualOverride}
+                disabled={isSaving}
+                onChange={(e) => handleToggleVisitorOverride(e.target.checked)}
+              />
+              {t("admin.visitorLadder.overrideHelp")}
+            </label>
+          )}
+        </div>
+      )}
 
       {/* D. Plan Switcher - Only for superadmin, közvetlenül a hero blokk alatt */}
       {canEditPlan && showPlanSwitcher && (
@@ -2648,7 +3625,7 @@ function SubscriptionTab({
               }}
             >
               <span style={{ fontSize: 24 }}>✨</span>
-              {t("admin.siteEdit.subscription.availablePlans") || "Elérhető csomagok"}
+              {t("admin.siteEdit.subscription.availablePlans")}
             </h4>
             <div
               style={{
@@ -2658,7 +3635,7 @@ function SubscriptionTab({
                 marginBottom: 24,
               }}
             >
-              {(["basic", "pro", "business"] as const).map((plan) => (
+              {(["basic", "pro", "business", "municipal"] as const).map((plan) => (
                 <div
                   key={plan}
                   onClick={() => !isSaving && handlePlanChange(plan)}
@@ -2719,7 +3696,7 @@ function SubscriptionTab({
                         boxShadow: `0 2px 8px ${planColors[plan]}40`,
                       }}
                     >
-                      {t("admin.current") || "Jelenlegi"}
+                      {t("admin.current")}
                     </div>
                   )}
 
@@ -2787,7 +3764,7 @@ function SubscriptionTab({
                         }
                       }}
                     >
-                      {t("admin.selectPlan") || "Kiválasztás"}
+                      {t("admin.selectPlan")}
                     </button>
                   )}
 
@@ -2808,7 +3785,7 @@ function SubscriptionTab({
                         marginTop: "auto",
                       }}
                     >
-                      {t("admin.current") || "Jelenlegi"}
+                      {t("admin.current")}
                     </div>
                   )}
                 </div>
@@ -2857,8 +3834,10 @@ function SubscriptionTab({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
           gap: 24,
+          width: "100%",
+          maxWidth: "100%",
         }}
       >
         {/* B. Feature Matrix - Read-only */}
@@ -2888,7 +3867,7 @@ function SubscriptionTab({
             }}
           >
             <span style={{ fontSize: 24 }}>📦</span>
-            {t("admin.siteEdit.subscription.planContents") || "Csomag tartalma"}
+            {t("admin.siteEdit.subscription.planContents")}
           </h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
             <div
@@ -2911,7 +3890,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.placesCount") || "Helyek száma"}
+                {t("admin.placesCount")}
               </span>
               <span
                 style={{
@@ -2946,7 +3925,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.featuredPlacesCount") || "Kiemelt helyek"}
+                {t("admin.featuredPlacesCount")}
               </span>
               <span
                 style={{
@@ -3013,7 +3992,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.multiLanguage") || "Több nyelv"}
+                {t("admin.multiLanguage")}
               </span>
               <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
             </div>
@@ -3037,7 +4016,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.customDomain") || "Egyedi domain"}
+                {t("admin.customDomain")}
               </span>
               <span
                 style={{
@@ -3069,7 +4048,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.seoSettings") || "SEO beállítások"}
+                {t("admin.seoSettings")}
               </span>
               <span style={{ fontSize: 24, color: "#10b981", fontWeight: 700 }}>✓</span>
             </div>
@@ -3093,7 +4072,7 @@ function SubscriptionTab({
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.pushNotifications") || "Push értesítés"}
+                {t("admin.pushNotifications")}
               </span>
               <span style={{ fontSize: 24, color: "#dc2626", fontWeight: 700 }}>✗</span>
             </div>
@@ -3127,7 +4106,7 @@ function SubscriptionTab({
             }}
           >
             <span style={{ fontSize: 24 }}>📊</span>
-            {t("admin.siteEdit.subscription.usage") || "Használat"}
+            {t("admin.siteEdit.subscription.usage")}
           </h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1 }}>
             {/* Places */}
@@ -3222,7 +4201,7 @@ function SubscriptionTab({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.featuredPlaces") || "Kiemelések"}
+                  {t("admin.featuredPlaces")}
                 </span>
                 <span
                   style={{
@@ -3273,7 +4252,7 @@ function SubscriptionTab({
                 >
                   <span style={{ fontSize: 20 }}>🔒</span>
                   <span>
-                    {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
+                    {t("admin.siteEdit.subscription.lockedInPro")}
                   </span>
                 </div>
               ) : limits.featuredSlots !== Infinity ? (
@@ -3368,7 +4347,7 @@ function SubscriptionTab({
                 >
                   <span style={{ fontSize: 20 }}>🔒</span>
                   <span>
-                    {t("admin.siteEdit.subscription.lockedInPro") || "Pro csomagban elérhető"}
+                    {t("admin.siteEdit.subscription.lockedInPro")}
                   </span>
                 </div>
               ) : limits.events !== Infinity ? (
@@ -3423,8 +4402,7 @@ function SubscriptionTab({
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.siteEdit.subscription.contactToUpgrade") ||
-              "A csomag módosításához vedd fel a kapcsolatot az üzemeltetővel."}
+            {t("admin.siteEdit.subscription.contactToUpgrade")}
           </div>
         </div>
       )}
@@ -3445,7 +4423,7 @@ function SubscriptionTab({
             }}
           >
             {showAdvanced ? "▼" : "▶"}{" "}
-            {t("admin.siteEdit.subscription.advancedSettings") || "Haladó beállítások"}
+            {t("admin.siteEdit.subscription.advancedSettings")}
           </button>
 
           {showAdvanced && (
@@ -3453,8 +4431,10 @@ function SubscriptionTab({
               style={{
                 marginTop: 16,
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
                 gap: 24,
+                width: "100%",
+                maxWidth: "100%",
               }}
             >
               {/* Dropdown mezők bal oldalon */}
@@ -3494,16 +4474,16 @@ function SubscriptionTab({
                     }}
                   >
                     <option value="trial">
-                      {t("admin.siteEdit.subscription.statusTrial") || "Próbaidőszak"}
+                      {t("admin.siteEdit.subscription.statusTrial")}
                     </option>
                     <option value="active">
-                      {t("admin.siteEdit.subscription.statusActive") || "Aktív"}
+                      {t("admin.siteEdit.subscription.statusActive")}
                     </option>
                     <option value="past_due">
-                      {t("admin.siteEdit.subscription.statusPastDue") || "Lejárt"}
+                      {t("admin.siteEdit.subscription.statusPastDue")}
                     </option>
                     <option value="canceled">
-                      {t("admin.siteEdit.subscription.statusCanceled") || "Megszakítva"}
+                      {t("admin.siteEdit.subscription.statusCanceled")}
                     </option>
                   </select>
                 </div>
@@ -3573,7 +4553,7 @@ function SubscriptionTab({
                         e.currentTarget.style.borderColor = "#10b981";
                       }}
                     >
-                      +30 {t("admin.days") || "nap"}
+                      +30 {t("admin.days")}
                     </button>
                   </div>
                 </div>
@@ -3626,8 +4606,7 @@ function SubscriptionTab({
                             marginBottom: 4,
                           }}
                         >
-                          {t("admin.siteEdit.subscription.allowPublicRegistration") ||
-                            "Publikus regisztráció engedélyezése"}
+                          {t("admin.siteEdit.subscription.allowPublicRegistration")}
                         </div>
                         <div
                           style={{
@@ -3637,8 +4616,7 @@ function SubscriptionTab({
                             color: "#6b7280",
                           }}
                         >
-                          {t("admin.siteEdit.subscription.allowPublicRegistrationDescription") ||
-                            "Ha kikapcsolva, csak a site tulaj hozhat létre felhasználókat és helyeket."}
+                          {t("admin.siteEdit.subscription.allowPublicRegistrationDescription")}
                         </div>
                       </div>
                     </label>
@@ -3700,7 +4678,7 @@ function SubscriptionTab({
                   }}
                 >
                   <span style={{ fontSize: 24 }}>📊</span>
-                  {t("admin.limits") || "Korlátok"}
+                  {t("admin.limits")}
                 </h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <div
@@ -3716,7 +4694,7 @@ function SubscriptionTab({
                     }}
                   >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
-                      {t("admin.places") || "Helyek"}
+                      {t("admin.places")}
                     </span>
                     <span
                       style={{
@@ -3754,7 +4732,7 @@ function SubscriptionTab({
                     }}
                   >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
-                      {t("admin.featuredPlaces") || "Kiemelt helyek"}
+                      {t("admin.featuredPlaces")}
                     </span>
                     <span
                       style={{
@@ -3792,7 +4770,7 @@ function SubscriptionTab({
                     }}
                   >
                     <span style={{ fontSize: 16, fontWeight: 600, color: "#334155" }}>
-                      {t("admin.events") || "Események"}
+                      {t("admin.events")}
                     </span>
                     <span
                       style={{

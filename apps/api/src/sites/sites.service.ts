@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { langOrDefault } from "../common/lang";
 
 type ListArgs = {
   lang: string;
@@ -14,22 +15,11 @@ export class SitesService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Normalizes language code to ensure it's valid.
-   */
-  private normalizeLang(lang: string): "hu" | "en" | "de" {
-    const normalized = lang.toLowerCase();
-    if (normalized === "hu" || normalized === "en" || normalized === "de") {
-      return normalized;
-    }
-    return "hu"; // Default to Hungarian
-  }
-
-  /**
    * Lists active sites with optional filtering by search query.
    * Returns sites with their translations for the requested language.
    */
   async list(args: ListArgs) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = langOrDefault(args.lang, { lower: true });
 
     // Build Prisma where clause for filtering sites
     const baseWhere: any = {
@@ -59,6 +49,7 @@ export class SitesService {
       select: {
         id: true,
         slug: true,
+        primaryDomain: true,
         createdAt: true,
         updatedAt: true,
         translations: {
@@ -112,6 +103,7 @@ export class SitesService {
       return {
         id: site.id,
         slug: site.slug,
+        primaryDomain: site.primaryDomain,
         name: translation?.name || `Site ${site.id}`,
         shortDescription: translation?.shortDescription || null,
         description: translation?.description || null,
@@ -130,7 +122,7 @@ export class SitesService {
    * Gets a single site by its slug.
    */
   async detail(args: { lang: string; siteKey?: string; slug: string }) {
-    const lang = this.normalizeLang(args.lang);
+    const lang = langOrDefault(args.lang, { lower: true });
 
     // Find site by slug (slug is unique, but we also need to check isActive)
     const site = await this.prisma.site.findFirst({
@@ -156,6 +148,7 @@ export class SitesService {
     return {
       id: site.id,
       slug: site.slug,
+      primaryDomain: site.primaryDomain,
       name: translation?.name || `Site ${site.id}`,
       shortDescription: translation?.shortDescription || null,
       description: translation?.description || null,

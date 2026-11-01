@@ -201,7 +201,7 @@ export function SubscriptionsDashboardPage() {
         setTotal(subscriptionsResult.value.total);
       } else {
         errors.push(
-          t("admin.errors.loadSubscriptionsFailed") || "Előfizetések betöltése sikertelen"
+          t("admin.errors.loadSubscriptionsFailed")
         );
         console.error("Failed to load subscriptions:", subscriptionsResult.reason);
       }
@@ -212,8 +212,7 @@ export function SubscriptionsDashboardPage() {
         setFeatureSubscriptionsTotal(featureSubscriptionsResult.value.total);
       } else {
         errors.push(
-          t("admin.errors.loadFeatureSubscriptionsFailed") ||
-            "Funkció előfizetések betöltése sikertelen"
+          t("admin.errors.loadFeatureSubscriptionsFailed")
         );
         console.error("Failed to load feature subscriptions:", featureSubscriptionsResult.reason);
       }
@@ -251,6 +250,7 @@ export function SubscriptionsDashboardPage() {
       plan: item.plan,
       status: item.status,
       validUntil: item.validUntil || null,
+      manualOverride: item.manualOverride,
     });
   };
 
@@ -271,7 +271,7 @@ export function SubscriptionsDashboardPage() {
       showToast(t("admin.subscriptions.extended"), "success");
       loadData();
     } catch (err) {
-      showToast(t("admin.errors.updateFailed") || "Failed to extend", "error");
+      showToast(t("admin.errors.updateFailed"), "error");
     }
   };
 
@@ -281,7 +281,7 @@ export function SubscriptionsDashboardPage() {
       showToast(t("admin.subscriptions.suspended"), "success");
       loadData();
     } catch (err) {
-      showToast(t("admin.errors.updateFailed") || "Failed to suspend", "error");
+      showToast(t("admin.errors.updateFailed"), "error");
     }
   };
 
@@ -396,7 +396,7 @@ export function SubscriptionsDashboardPage() {
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          {t("admin.noData") || "Nincs adat"}
+          {t("admin.noData")}
         </div>
       );
     }
@@ -445,7 +445,7 @@ export function SubscriptionsDashboardPage() {
               strokeWidth={3}
               dot={{ fill: "#3b82f6", r: 5 }}
               activeDot={{ r: 7 }}
-              name={t("admin.subscriptions.new7d") || "Új"}
+              name={t("admin.subscriptions.new7d")}
             />
             <Line
               type="monotone"
@@ -454,7 +454,7 @@ export function SubscriptionsDashboardPage() {
               strokeWidth={3}
               dot={{ fill: "#dc2626", r: 5 }}
               activeDot={{ r: 7 }}
-              name={t("admin.subscriptions.churn7d") || "Churn"}
+              name={t("admin.subscriptions.churn7d")}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -470,8 +470,8 @@ export function SubscriptionsDashboardPage() {
   return (
     <div style={{ padding: "clamp(24px, 5vw, 32px)" }}>
       <AdminPageHeader
-        title={t("admin.subscriptionsDashboard") || "Előfizetések Dashboard"}
-        subtitle={t("admin.subscriptionsDashboardSubtitle") || "Superadmin előfizetés kezelés"}
+        title={t("admin.subscriptionsDashboard")}
+        subtitle={t("admin.subscriptionsDashboardSubtitle")}
       />
 
       {/* Scope and Status Filters */}
@@ -506,10 +506,10 @@ export function SubscriptionsDashboardPage() {
               }}
             >
               {s === "all"
-                ? t("admin.all") || "Mind"
+                ? t("admin.all")
                 : s === "site"
-                  ? t("admin.sites") || "Site"
-                  : t("admin.places") || "Place"}
+                  ? t("admin.sites")
+                  : t("admin.places")}
             </button>
           ))}
         </div>
@@ -535,14 +535,14 @@ export function SubscriptionsDashboardPage() {
               }}
             >
               {s === "all"
-                ? t("admin.all") || "Mind"
+                ? t("admin.all")
                 : s === "ACTIVE"
-                  ? t("admin.statusActive") || "Aktív"
+                  ? t("admin.statusActive")
                   : s === "EXPIRING"
-                    ? t("admin.expiring") || "Lejáró"
+                    ? t("admin.expiring")
                     : s === "EXPIRED"
-                      ? t("admin.statusExpired") || "Lejárt"
-                      : t("admin.statusSuspended") || "Felfüggesztve"}
+                      ? t("admin.statusExpired")
+                      : t("admin.statusSuspended")}
             </button>
           ))}
         </div>
@@ -577,7 +577,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.activeCount") || "Aktív"}
+              {t("admin.subscriptions.activeCount")}
             </div>
             <div
               style={{
@@ -608,7 +608,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.mrr") || "MRR"}
+              {t("admin.subscriptions.mrr")}
             </div>
             <div
               style={{
@@ -639,7 +639,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.new7d") || "Új (7 nap)"}
+              {t("admin.subscriptions.new7d")}
             </div>
             <div
               style={{
@@ -670,7 +670,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.churn7d") || "Churn (7 nap)"}
+              {t("admin.subscriptions.churn7d")}
             </div>
             <div
               style={{
@@ -701,7 +701,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.netChange") || "Nettó változás"}
+              {t("admin.subscriptions.netChange")}
             </div>
             <div
               style={{
@@ -733,7 +733,7 @@ export function SubscriptionsDashboardPage() {
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               }}
             >
-              {t("admin.subscriptions.expiring7d") || "Lejár 7 napon belül"}
+              {t("admin.subscriptions.expiring7d")}
             </div>
             <div
               style={{
@@ -777,7 +777,7 @@ export function SubscriptionsDashboardPage() {
                 "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.subscriptions.expiring7d") || "Lejár 7 napon belül"}
+            {t("admin.subscriptions.expiring7d")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {expiring.length === 0 ? (
@@ -790,7 +790,7 @@ export function SubscriptionsDashboardPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.noData") || "Nincs adat"}
+                {t("admin.noData")}
               </div>
             ) : (
               expiring.slice(0, 10).map((item) => (
@@ -830,10 +830,29 @@ export function SubscriptionsDashboardPage() {
                         }}
                       >
                         {item.scope === "site"
-                          ? t("admin.site") || "Site"
-                          : t("admin.place") || "Place"}{" "}
+                          ? t("admin.site")
+                          : t("admin.place")}{" "}
                         • {item.plan} • {formatDate(item.validUntil)}
                       </div>
+                      {item.scope === "site" && (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            marginTop: 4,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {(item.visitorMeter ?? 0).toLocaleString()} / 30d
+                          {item.manualOverride
+                            ? ` · ${t("admin.visitorLadder.overrideOn")}`
+                            : ` · ${t("admin.visitorLadder.overrideOff")}`}
+                          {item.ladderSuspended
+                            ? ` · ${t("admin.visitorLadder.held")}`
+                            : ""}
+                        </div>
+                      )}
                       <div
                         style={{
                           fontSize: 12,
@@ -848,7 +867,7 @@ export function SubscriptionsDashboardPage() {
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <a
-                        href={`mailto:${item.owner.email}?subject=${encodeURIComponent(t("admin.subscriptions.expiringEmailSubject") || "Előfizetés lejár")}&body=${encodeURIComponent(t("admin.subscriptions.expiringEmailBody") || `Szia ${item.owner.name}, az előfizetésed ${formatDate(item.validUntil)}-án lejár.`)}`}
+                        href={`mailto:${item.owner.email}?subject=${encodeURIComponent(t("admin.subscriptions.expiringEmailSubject"))}&body=${encodeURIComponent(t("admin.subscriptions.expiringEmailBody", { name: item.owner.name, date: formatDate(item.validUntil) }))}`}
                         style={{
                           padding: "4px 8px",
                           background: "#3b82f6",
@@ -860,7 +879,7 @@ export function SubscriptionsDashboardPage() {
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.email") || "Email"}
+                        {t("admin.email")}
                       </a>
                       <button
                         onClick={() => navigate(`/${lang}${item.adminUrl}`)}
@@ -876,7 +895,7 @@ export function SubscriptionsDashboardPage() {
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.open") || "Megnyit"}
+                        {t("admin.open")}
                       </button>
                     </div>
                   </div>
@@ -905,7 +924,7 @@ export function SubscriptionsDashboardPage() {
                 "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.subscriptions.trends") || "Tendencia (12 hét)"}
+            {t("admin.subscriptions.trends")}
           </h3>
           <TrendChart data={trends} isMobileChart={isMobile} />
         </div>
@@ -923,7 +942,7 @@ export function SubscriptionsDashboardPage() {
       >
         <input
           type="text"
-          placeholder={t("admin.search") || "Keresés..."}
+          placeholder={t("admin.search")}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -957,10 +976,10 @@ export function SubscriptionsDashboardPage() {
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          <option value="all">{t("admin.allPlans") || "Minden csomag"}</option>
-          <option value="BASIC">{t("admin.planBasic") || "Basic"}</option>
-          <option value="PRO">{t("admin.planPro") || "Pro"}</option>
-          <option value="BUSINESS">{t("admin.planBusiness") || "Business"}</option>
+          <option value="all">{t("admin.allPlans")}</option>
+          <option value="BASIC">{t("admin.planBasic")}</option>
+          <option value="PRO">{t("admin.planPro")}</option>
+          <option value="BUSINESS">{t("admin.planBusiness")}</option>
         </select>
         <select
           value={expiresWithinDays || ""}
@@ -978,10 +997,10 @@ export function SubscriptionsDashboardPage() {
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
-          <option value="">{t("admin.allExpiry") || "Minden lejárat"}</option>
-          <option value="7">{t("admin.expires7d") || "Lejár 7 napon belül"}</option>
-          <option value="14">{t("admin.expires14d") || "Lejár 14 napon belül"}</option>
-          <option value="30">{t("admin.expires30d") || "Lejár 30 napon belül"}</option>
+          <option value="">{t("admin.allExpiry")}</option>
+          <option value="7">{t("admin.expires7d")}</option>
+          <option value="14">{t("admin.expires14d")}</option>
+          <option value="30">{t("admin.expires30d")}</option>
         </select>
       </div>
 
@@ -1012,7 +1031,7 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.entity") || "Entitás"}
+                  {t("admin.entity")}
                 </th>
                 <th
                   style={{
@@ -1025,7 +1044,7 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.plan") || "Csomag"}
+                  {t("admin.plan")}
                 </th>
                 <th
                   style={{
@@ -1038,7 +1057,7 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.status") || "Státusz"}
+                  {t("admin.status")}
                 </th>
                 <th
                   style={{
@@ -1051,7 +1070,7 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.validUntil") || "Érvényes"}
+                  {t("admin.validUntil")}
                 </th>
                 <th
                   style={{
@@ -1064,7 +1083,7 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.owner") || "Tulajdonos"}
+                  {t("admin.owner")}
                 </th>
                 <th
                   style={{
@@ -1077,7 +1096,20 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.actions") || "Akciók"}
+                  {t("admin.visitorLadder.meterShort")}
+                </th>
+                <th
+                  style={{
+                    padding: isMobile ? 8 : 12,
+                    textAlign: "left",
+                    fontSize: isMobile ? 11 : 12,
+                    fontWeight: 600,
+                    color: "#666",
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {t("admin.actions")}
                 </th>
               </tr>
             </thead>
@@ -1085,7 +1117,7 @@ export function SubscriptionsDashboardPage() {
               {subscriptions.length === 0 && featureSubscriptions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     style={{
                       padding: 48,
                       textAlign: "center",
@@ -1094,7 +1126,7 @@ export function SubscriptionsDashboardPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
-                    {t("admin.noData") || "Nincs adat"}
+                    {t("admin.noData")}
                   </td>
                 </tr>
               ) : (
@@ -1120,8 +1152,8 @@ export function SubscriptionsDashboardPage() {
                           }}
                         >
                           {item.scope === "site"
-                            ? t("admin.site") || "Site"
-                            : t("admin.place") || "Place"}
+                            ? t("admin.site")
+                            : t("admin.place")}
                         </div>
                       </div>
                     </td>
@@ -1189,6 +1221,38 @@ export function SubscriptionsDashboardPage() {
                           {item.owner.email}
                         </div>
                       </div>
+                    </td>
+                    <td style={{ padding: isMobile ? 8 : 12, fontSize: 12, color: "#444" }}>
+                      {item.scope === "site" ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <span>
+                            {(item.visitorMeter ?? 0).toLocaleString()} / 30d
+                            {item.visitorMeterSource === "pageViews" ? " (pv)" : ""}
+                          </span>
+                          <span>
+                            {item.manualOverride
+                              ? t("admin.visitorLadder.overrideOn")
+                              : t("admin.visitorLadder.overrideOff")}
+                            {item.ladderSuspended
+                              ? ` · ${t("admin.visitorLadder.held")}`
+                              : ""}
+                          </span>
+                          {isEditing === item.id && (
+                            <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <input
+                                type="checkbox"
+                                checked={editData.manualOverride ?? item.manualOverride ?? true}
+                                onChange={(e) =>
+                                  setEditData({ ...editData, manualOverride: e.target.checked })
+                                }
+                              />
+                              {t("admin.visitorLadder.override")}
+                            </label>
+                          )}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td style={{ padding: isMobile ? 8 : 12 }}>
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -1307,7 +1371,7 @@ export function SubscriptionsDashboardPage() {
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.edit") || "Szerkesztés"}
+                              {t("admin.edit")}
                             </button>
                             <button
                               onClick={() => handleExtend(item)}
@@ -1323,7 +1387,7 @@ export function SubscriptionsDashboardPage() {
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.extend30d") || "+30 nap"}
+                              {t("admin.extend30d")}
                             </button>
                             {item.status === "ACTIVE" && (
                               <button
@@ -1340,7 +1404,7 @@ export function SubscriptionsDashboardPage() {
                                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                 }}
                               >
-                                {t("admin.suspend") || "Felfüggeszt"}
+                                {t("admin.suspend")}
                               </button>
                             )}
                             <button
@@ -1357,7 +1421,7 @@ export function SubscriptionsDashboardPage() {
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.history") || "Előzmények"}
+                              {t("admin.history")}
                             </button>
                             <button
                               onClick={() => navigate(`/${lang}${item.adminUrl}`)}
@@ -1373,7 +1437,7 @@ export function SubscriptionsDashboardPage() {
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.open") || "Megnyit"}
+                              {t("admin.open")}
                             </button>
                           </>
                         )}
@@ -1417,8 +1481,8 @@ export function SubscriptionsDashboardPage() {
                           }}
                         >
                           {item.scope === "place"
-                            ? t("admin.floorplan.subscription.thisPlace") || "Ez a hely"
-                            : t("admin.floorplan.subscription.allPlaces") || "Összes hely"}{" "}
+                            ? t("admin.floorplan.subscription.thisPlace")
+                            : t("admin.floorplan.subscription.allPlaces")}{" "}
                           • {item.featureKey}
                         </div>
                       </div>
@@ -1437,12 +1501,12 @@ export function SubscriptionsDashboardPage() {
                         }}
                       >
                         {item.planKey === "FP_1"
-                          ? t("admin.floorplan.subscription.plan1") || "1 alaprajz"
+                          ? t("admin.floorplan.subscription.plan1")
                           : item.planKey}{" "}
                         (
                         {item.billingPeriod === "MONTHLY"
-                          ? t("admin.monthly") || "Havi"
-                          : t("admin.yearly") || "Éves"}
+                          ? t("admin.monthly")
+                          : t("admin.yearly")}
                         )
                       </span>
                     </td>
@@ -1467,13 +1531,13 @@ export function SubscriptionsDashboardPage() {
                         }}
                       >
                         {status === "active"
-                          ? t("admin.statusActive") || "Aktív"
+                          ? t("admin.statusActive")
                           : status === "past_due"
-                            ? t("admin.statusPastDue") || "Lejárt"
+                            ? t("admin.statusPastDue")
                             : status === "suspended"
-                              ? t("admin.statusSuspended") || "Felfüggesztve"
+                              ? t("admin.statusSuspended")
                               : status === "canceled"
-                                ? t("admin.statusCanceled") || "Megszakítva"
+                                ? t("admin.statusCanceled")
                                 : status}
                       </span>
                     </td>
@@ -1497,8 +1561,8 @@ export function SubscriptionsDashboardPage() {
                         }}
                       >
                         {item.scope === "place"
-                          ? t("admin.floorplan.subscription.thisPlace") || "Ez a hely"
-                          : t("admin.floorplan.subscription.allPlaces") || "Összes hely"}
+                          ? t("admin.floorplan.subscription.thisPlace")
+                          : t("admin.floorplan.subscription.allPlaces")}
                       </div>
                     </td>
                     <td style={{ padding: isMobile ? 8 : 12 }}>
@@ -1525,10 +1589,10 @@ export function SubscriptionsDashboardPage() {
                               }}
                             >
                               <option value="place">
-                                {t("admin.floorplan.subscription.thisPlace") || "Ez a hely"}
+                                {t("admin.floorplan.subscription.thisPlace")}
                               </option>
                               <option value="site">
-                                {t("admin.floorplan.subscription.allPlaces") || "Összes hely"}
+                                {t("admin.floorplan.subscription.allPlaces")}
                               </option>
                             </select>
                             <select
@@ -1647,7 +1711,7 @@ export function SubscriptionsDashboardPage() {
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               }}
                             >
-                              {t("admin.edit") || "Szerkesztés"}
+                              {t("admin.edit")}
                             </button>
                             {item.status === "active" && (
                               <>
@@ -1655,15 +1719,13 @@ export function SubscriptionsDashboardPage() {
                                   onClick={async () => {
                                     if (
                                       confirm(
-                                        t("admin.subscription.suspendConfirm") ||
-                                          "Biztosan felfüggeszted az előfizetést?"
+                                        t("admin.subscription.suspendConfirm")
                                       )
                                     ) {
                                       try {
                                         await suspendFeatureSubscription(item.id);
                                         showToast(
-                                          t("admin.subscription.suspended") ||
-                                            "Előfizetés felfüggesztve",
+                                          t("admin.subscription.suspended"),
                                           "success"
                                         );
                                         loadData();
@@ -1684,21 +1746,19 @@ export function SubscriptionsDashboardPage() {
                                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                   }}
                                 >
-                                  {t("admin.suspend") || "Felfüggeszt"}
+                                  {t("admin.suspend")}
                                 </button>
                                 <button
                                   onClick={async () => {
                                     if (
                                       confirm(
-                                        t("admin.subscription.cancelConfirm") ||
-                                          "Biztosan le szeretnéd mondani az előfizetést?"
+                                        t("admin.subscription.cancelConfirm")
                                       )
                                     ) {
                                       try {
                                         await cancelFeatureSubscription(item.id);
                                         showToast(
-                                          t("admin.subscription.cancelled") ||
-                                            "Előfizetés lemondva",
+                                          t("admin.subscription.cancelled"),
                                           "success"
                                         );
                                         loadData();
@@ -1719,7 +1779,7 @@ export function SubscriptionsDashboardPage() {
                                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                   }}
                                 >
-                                  {t("admin.subscription.cancelButton") || "Lemondom"}
+                                  {t("admin.subscription.cancelButton")}
                                 </button>
                               </>
                             )}
@@ -1729,7 +1789,7 @@ export function SubscriptionsDashboardPage() {
                                   try {
                                     await resumeFeatureSubscription(item.id);
                                     showToast(
-                                      t("admin.subscription.resumed") || "Előfizetés folytatva",
+                                      t("admin.subscription.resumed"),
                                       "success"
                                     );
                                     loadData();
@@ -1749,7 +1809,7 @@ export function SubscriptionsDashboardPage() {
                                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                 }}
                               >
-                                {t("admin.subscription.resume") || "Folytatás"}
+                                {t("admin.subscription.resume")}
                               </button>
                             )}
                           </>
@@ -1782,9 +1842,9 @@ export function SubscriptionsDashboardPage() {
                 textAlign: isMobile ? "center" : "left",
               }}
             >
-              {t("admin.showing") || "Megjelenítve"} {page * pageSize + 1}-
+              {t("admin.showing")} {page * pageSize + 1}-
               {Math.min((page + 1) * pageSize, total + featureSubscriptionsTotal)}{" "}
-              {t("admin.of") || "összesen"} {total + featureSubscriptionsTotal}
+              {t("admin.of")} {total + featureSubscriptionsTotal}
             </div>
             <div
               style={{ display: "flex", gap: 8, justifyContent: isMobile ? "center" : "flex-end" }}
@@ -1804,7 +1864,7 @@ export function SubscriptionsDashboardPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.previous") || "Előző"}
+                {t("admin.previous")}
               </button>
               <button
                 onClick={() => setPage(page + 1)}
@@ -1821,7 +1881,7 @@ export function SubscriptionsDashboardPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.next") || "Következő"}
+                {t("admin.next")}
               </button>
             </div>
           </div>
@@ -1881,7 +1941,7 @@ export function SubscriptionsDashboardPage() {
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.subscriptionHistory") || "Előfizetés előzmények"}
+                {t("admin.subscriptionHistory")}
               </h2>
               <button
                 onClick={() => {
@@ -1917,7 +1977,7 @@ export function SubscriptionsDashboardPage() {
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
               >
-                {t("admin.noHistory") || "Nincs előzmény"}
+                {t("admin.noHistory")}
               </div>
             ) : (
               <>
@@ -1950,14 +2010,14 @@ export function SubscriptionsDashboardPage() {
                             }}
                           >
                             {item.changeType === "PLAN_CHANGE" &&
-                              (t("admin.planChange") || "Csomagváltás")}
+                              (t("admin.planChange"))}
                             {item.changeType === "STATUS_CHANGE" &&
-                              (t("admin.statusChange") || "Státusz változás")}
-                            {item.changeType === "PAYMENT" && (t("admin.payment") || "Fizetés")}
+                              (t("admin.statusChange"))}
+                            {item.changeType === "PAYMENT" && (t("admin.payment"))}
                             {item.changeType === "EXTENSION" &&
-                              (t("admin.extension") || "Hosszabbítás")}
-                            {item.changeType === "CREATED" && (t("admin.created") || "Létrehozva")}
-                            {item.changeType === "UPDATE" && (t("admin.update") || "Frissítve")}
+                              (t("admin.extension"))}
+                            {item.changeType === "CREATED" && (t("admin.created"))}
+                            {item.changeType === "UPDATE" && (t("admin.update"))}
                           </div>
                           <div
                             style={{
@@ -1981,10 +2041,10 @@ export function SubscriptionsDashboardPage() {
                           }}
                         >
                           <div style={{ fontSize: 14, marginBottom: 4 }}>
-                            <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                            <span style={{ color: "#666" }}>{t("admin.from")}: </span>
                             <span style={{ fontWeight: 600 }}>{item.oldPlan || "N/A"}</span>
                             <span style={{ margin: "0 8px", color: "#999" }}>→</span>
-                            <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                            <span style={{ color: "#666" }}>{t("admin.to")}: </span>
                             <span style={{ fontWeight: 600 }}>{item.newPlan || "N/A"}</span>
                           </div>
                         </div>
@@ -1999,10 +2059,10 @@ export function SubscriptionsDashboardPage() {
                           }}
                         >
                           <div style={{ fontSize: 14, marginBottom: 4 }}>
-                            <span style={{ color: "#666" }}>{t("admin.from") || "Ról"}: </span>
+                            <span style={{ color: "#666" }}>{t("admin.from")}: </span>
                             <span style={{ fontWeight: 600 }}>{item.oldStatus || "N/A"}</span>
                             <span style={{ margin: "0 8px", color: "#999" }}>→</span>
-                            <span style={{ color: "#666" }}>{t("admin.to") || "Re"}: </span>
+                            <span style={{ color: "#666" }}>{t("admin.to")}: </span>
                             <span style={{ fontWeight: 600 }}>{item.newStatus || "N/A"}</span>
                           </div>
                         </div>
@@ -2018,7 +2078,7 @@ export function SubscriptionsDashboardPage() {
                           }}
                         >
                           <span style={{ color: "#666" }}>
-                            {t("admin.paymentDue") || "Fizetési határidő"}:{" "}
+                            {t("admin.paymentDue")}:{" "}
                           </span>
                           <span style={{ fontWeight: 600, color: "#f59e0b" }}>
                             {new Date(item.paymentDueDate).toLocaleDateString("hu-HU")}
@@ -2035,7 +2095,7 @@ export function SubscriptionsDashboardPage() {
                               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                           }}
                         >
-                          <span style={{ color: "#666" }}>{t("admin.amount") || "Összeg"}: </span>
+                          <span style={{ color: "#666" }}>{t("admin.amount")}: </span>
                           <span style={{ fontWeight: 600 }}>
                             {formatCurrency(item.amountCents)} {item.currency || "HUF"}
                           </span>
@@ -2084,9 +2144,9 @@ export function SubscriptionsDashboardPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.showing") || "Showing"} {historyPage * historyPageSize + 1}-
+                      {t("admin.showing")} {historyPage * historyPageSize + 1}-
                       {Math.min((historyPage + 1) * historyPageSize, historyTotal)}{" "}
-                      {t("admin.of") || "of"} {historyTotal}
+                      {t("admin.of")} {historyTotal}
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
@@ -2108,7 +2168,7 @@ export function SubscriptionsDashboardPage() {
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.previous") || "Előző"}
+                        {t("admin.previous")}
                       </button>
                       <button
                         onClick={() => {
@@ -2139,7 +2199,7 @@ export function SubscriptionsDashboardPage() {
                             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         }}
                       >
-                        {t("admin.next") || "Következő"}
+                        {t("admin.next")}
                       </button>
                     </div>
                   </div>
@@ -2171,7 +2231,7 @@ export function SubscriptionsDashboardPage() {
             color: "#333",
           }}
         >
-          {t("admin.eventLog.title") || "Subscription Events"}
+          {t("admin.eventLog.title")}
         </h2>
 
         {isLoadingEventLogs ? null : eventLogs.length === 0 ? (
@@ -2184,7 +2244,7 @@ export function SubscriptionsDashboardPage() {
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
           >
-            {t("admin.eventLog.noLogs") || "No events found"}
+            {t("admin.eventLog.noLogs")}
           </div>
         ) : (
           <>
@@ -2203,7 +2263,7 @@ export function SubscriptionsDashboardPage() {
                         color: "#374151",
                       }}
                     >
-                      {t("admin.eventLog.date") || "Date"}
+                      {t("admin.eventLog.date")}
                     </th>
                     <th
                       style={{
@@ -2216,7 +2276,7 @@ export function SubscriptionsDashboardPage() {
                         color: "#374151",
                       }}
                     >
-                      {t("admin.eventLog.user") || "User"}
+                      {t("admin.eventLog.user")}
                     </th>
                     <th
                       style={{
@@ -2229,7 +2289,7 @@ export function SubscriptionsDashboardPage() {
                         color: "#374151",
                       }}
                     >
-                      {t("admin.eventLog.action") || "Action"}
+                      {t("admin.eventLog.action")}
                     </th>
                     <th
                       style={{
@@ -2242,7 +2302,7 @@ export function SubscriptionsDashboardPage() {
                         color: "#374151",
                       }}
                     >
-                      {t("admin.eventLog.description") || "Description"}
+                      {t("admin.eventLog.description")}
                     </th>
                   </tr>
                 </thead>
@@ -2339,9 +2399,9 @@ export function SubscriptionsDashboardPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.showing") || "Showing"} {eventLogPage * eventLogPageSize + 1}-
+                  {t("admin.showing")} {eventLogPage * eventLogPageSize + 1}-
                   {Math.min((eventLogPage + 1) * eventLogPageSize, eventLogTotal)}{" "}
-                  {t("admin.of") || "of"} {eventLogTotal}
+                  {t("admin.of")} {eventLogTotal}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -2359,7 +2419,7 @@ export function SubscriptionsDashboardPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
-                    {t("admin.previous") || "Előző"}
+                    {t("admin.previous")}
                   </button>
                   <button
                     onClick={() => setEventLogPage(eventLogPage + 1)}
@@ -2383,7 +2443,7 @@ export function SubscriptionsDashboardPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
-                    {t("admin.next") || "Következő"}
+                    {t("admin.next")}
                   </button>
                 </div>
               </div>

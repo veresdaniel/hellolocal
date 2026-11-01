@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { PLAN_DEFS, type Entitlements } from "./entitlements.config";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
 
 @Injectable()
 export class EntitlementsService {
@@ -34,7 +34,7 @@ export class EntitlementsService {
     const isExpired = sub.validUntil ? sub.validUntil.getTime() < now.getTime() : false;
     const status = isExpired ? "EXPIRED" : sub.status;
 
-    const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
+    const plan = await this.resolvePlan(siteId, sub.plan);
 
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({
@@ -121,7 +121,7 @@ export class EntitlementsService {
     const isExpired = sub.validUntil ? sub.validUntil.getTime() < now.getTime() : false;
     const status = isExpired ? "EXPIRED" : sub.status;
 
-    const plan = sub.plan as "BASIC" | "PRO" | "BUSINESS";
+    const plan = await this.resolvePlan(siteId, sub.plan);
 
     // Get plan overrides from Brand (global setting)
     const brand = await this.prisma.brand.findFirst({
@@ -191,6 +191,29 @@ export class EntitlementsService {
   }
 
   /**
+   * Site.plan municipal wins, so a town is not capped by a BASIC marketing override.
+   * BASIC, PRO and BUSINESS stay on their own definitions.
+   */
+  private async resolvePlan(
+    siteId: string,
+    subscriptionPlan: string
+  ): Promise<"BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL"> {
+    const site = await this.prisma.site.findUnique({
+      where: { id: siteId },
+      select: { plan: true },
+    });
+    if (site?.plan === "municipal") return "MUNICIPAL";
+    if (
+      subscriptionPlan === "PRO" ||
+      subscriptionPlan === "BUSINESS" ||
+      subscriptionPlan === "MUNICIPAL"
+    ) {
+      return subscriptionPlan;
+    }
+    return "BASIC";
+  }
+
+  /**
    * Deep merge plan definition with override
    */
   private deepMergePlanDef(base: any, override: any): any {
@@ -223,10 +246,10 @@ export class EntitlementsService {
   }
 
   private async countLanguages(siteId: string): Promise<number> {
-    const siteInstances = await this.prisma.siteInstance.findMany({
-      where: { siteId },
-      select: { lang: true },
+    const site = await this.prisma.site.findUnique({
+      where: { id: siteId },
+      select: { languages: true },
     });
-    return new Set(siteInstances.map((x) => x.lang)).size;
+    return site?.languages?.length ?? 0;
   }
 }

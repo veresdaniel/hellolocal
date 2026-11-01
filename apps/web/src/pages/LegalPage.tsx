@@ -1,18 +1,23 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { DEFAULT_SITE_SLUG, type Lang} from "../app/config";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
 import { generateWebPageSchema } from "../seo/schemaOrg";
 import { getPlatformSettings } from "../api/places.api";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { useAuth } from "../contexts/AuthContext";
-import { getSiteMemberships } from "../api/admin.api";
-import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
+import { isSuperadmin } from "../utils/roleHelpers";
+import { hasVisibleHtml } from "../utils/hasVisibleHtml";
+import { NotFoundPage } from "./NotFoundPage";
+import { useApplyPublicFonts } from "../hooks/useApplyPublicFonts";
+import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTheme";
+import { publicFontCssVars } from "../styles/publicFonts";
+import "../styles/story.css";
 
 type Props = {
   pageKey: "imprint" | "terms" | "privacy";
@@ -22,17 +27,28 @@ export function LegalPage({ pageKey }: Props) {
   const { t } = useTranslation();
   const { lang, siteKey } = useSiteContext();
   const safeLang = lang ?? "hu";
-  const safeSiteKey = siteKey || "default";
+  const reservedSiteKey = new Set([
+    "impresszum",
+    "aszf",
+    "adatvedelem",
+    "pricing",
+    "preise",
+    "tarife",
+    "overview",
+  ]);
+  const safeSiteKey = !siteKey || reservedSiteKey.has(siteKey) ? DEFAULT_SITE_SLUG : siteKey;
   const { isAuthenticated, user } = useAuth();
 
   const { data, isLoading, error } = useLegalPage(safeLang, safeSiteKey, pageKey);
 
   // Load site settings for SEO
   const { data: platformSettings } = useQuery({
-    queryKey: ["platformSettings", safeLang, siteKey],
-    queryFn: () => getPlatformSettings(safeLang, siteKey),
+    queryKey: ["platformSettings", safeLang, safeSiteKey],
+    queryFn: () => getPlatformSettings(safeLang, safeSiteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+  useApplyPublicFonts(platformSettings?.brand?.theme);
+  useApplyPublicTheme(platformSettings?.siteTheme, platformSettings?.brand?.theme);
 
   // Helper to strip HTML
   const stripHtml = (html: string | null | undefined): string => {
@@ -235,48 +251,21 @@ export function LegalPage({ pageKey }: Props) {
     }
   }, [data?.content]);
 
-  // Check if user can edit this legal page (site admin permissions)
-  // For legal pages, we need to resolve siteKey to siteId
-  // Since we're on a public page, we'll use a simplified check based on siteKey
-  const [canEditLegalPage, setCanEditLegalPage] = useState(false);
+  // Legal pages admin is superadmin-only
+  const canEditLegalPage =
+    isAuthenticated && !!user && isSuperadmin(user.role);
 
-  // Check legal page permissions
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!isAuthenticated || !user || !safeSiteKey) {
-        setCanEditLegalPage(false);
-        return;
-      }
-
-      try {
-        // Check global role (superadmin, admin, editor can edit)
-        if (isSuperadmin(user.role) || isAdmin(user.role) || canEdit(user.role)) {
-          setCanEditLegalPage(true);
-          return;
-        }
-
-        // For site-level role check, we need siteId
-        // Since we only have siteKey, we'll try to find the siteId from user's sites
-        // This is a simplified approach - in a real scenario, we'd need to resolve siteKey to siteId
-        // For now, we'll check if user has any site admin role
-        // Note: This is a limitation - we can't check specific site without siteId
-        // But for legal pages, if user is editor+ globally or has any site admin role, they can edit
-        setCanEditLegalPage(false);
-      } catch (err) {
-        console.error("Failed to check legal page permissions", err);
-        setCanEditLegalPage(false);
-      }
-    };
-
-    checkPermissions();
-  }, [isAuthenticated, user, safeSiteKey]);
-
-  if (error || !data) {
+  if (isLoading) {
     return (
-      <div style={{ padding: 64, textAlign: "center", color: "#c00" }}>
-        <p>{t("public.errorLoadingPlace")}</p>
+      <div className="hl-public">
+        <FloatingHeader />
+        <PublicPageSkeleton withHero={false} label={t("common.loading")} />
       </div>
     );
+  }
+
+  if (error || !data || !hasVisibleHtml(data.content)) {
+    return <NotFoundPage />;
   }
 
   // Build edit URL if user can edit
@@ -284,48 +273,26 @@ export function LegalPage({ pageKey }: Props) {
   const editUrl = canEditLegalPage ? `/${lang}/admin/legal-pages?edit=${pageKey}` : undefined;
 
   return (
-    <>
-      <LoadingSpinner isLoading={isLoading} />
+    <div
+      className="hl-public"
+      style={{
+        ...publicFontCssVars(platformSettings?.brand?.theme),
+        ...publicThemeStyle(platformSettings?.siteTheme, platformSettings?.brand?.theme),
+      }}
+    >
       <FloatingHeader editUrl={editUrl} showEditButton={canEditLegalPage} />
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          paddingTop: "clamp(72px, 8vw, 88px)",
-        }}
-      >
-        <article
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "0 16px 64px",
-            width: "100%",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "clamp(24px, 5vw, 36px)",
-              fontWeight: 700,
-              marginTop: 0,
-              marginBottom: 24,
-              color: "#1a1a1a",
-              lineHeight: 1.3,
-            }}
-          >
-            {data.title}
-          </h1>
-          <div
-            ref={contentRef}
-            style={{
-              fontSize: 16,
-              lineHeight: 1.8,
-              color: "#333",
-            }}
-          >
+      <div className="story">
+        <div className="story__sky" aria-hidden="true" />
+        <article className="story__sheet">
+          {platformSettings?.siteName ? (
+            <p className="story__eyebrow">{platformSettings.siteName}</p>
+          ) : null}
+          <h1>{data.title}</h1>
+          <div className="story__body" ref={contentRef}>
             <ShortcodeRenderer content={data.content} lang={safeLang} siteKey={safeSiteKey} />
           </div>
         </article>
       </div>
-    </>
+    </div>
   );
 }

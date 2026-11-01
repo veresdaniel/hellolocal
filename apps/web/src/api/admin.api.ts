@@ -1,6 +1,6 @@
 // src/api/admin.api.ts
 import { apiGet, apiPost, apiPut, apiDelete } from "./client";
-import type { UserRole, SiteRole } from "../types/enums";
+import type { UserRole, SiteRole, Lang} from "../types/enums";
 
 export interface User {
   id: string;
@@ -194,9 +194,19 @@ export function deletePriceBand(id: string, tenantId?: string) {
 }
 
 // Towns
-export function getTowns(siteId?: string, page?: number, limit?: number) {
+export function getTowns(
+  siteId?: string,
+  page?: number,
+  limit?: number,
+  options?: { includeStandalone?: boolean; standaloneOnly?: boolean }
+) {
   const params = new URLSearchParams();
-  if (siteId) params.append("siteId", siteId);
+  if (options?.standaloneOnly) {
+    params.append("standaloneOnly", "true");
+  } else if (siteId) {
+    params.append("siteId", siteId);
+  }
+  if (options?.includeStandalone) params.append("includeStandalone", "true");
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
   const queryString = params.toString();
@@ -229,11 +239,12 @@ export function deleteTown(id: string, tenantId?: string) {
 }
 
 // Places
-export function getPlaces(siteId?: string, page?: number, limit?: number) {
+export function getPlaces(siteId?: string, page?: number, limit?: number, townId?: string) {
   const params = new URLSearchParams();
   if (siteId) params.append("siteId", siteId);
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
+  if (townId) params.append("townId", townId);
   const queryString = params.toString();
   return apiGet<
     | any[]
@@ -418,12 +429,90 @@ export function deleteAppSetting(key: string) {
   return apiDelete<{ message: string }>(`/admin/app-settings/${key}`);
 }
 
-export function getDefaultLanguage() {
-  return apiGet<{ defaultLanguage: "hu" | "en" | "de" }>("/admin/app-settings/default-language");
+export type ContentDraftProvider = "gemini" | "groq" | "openrouter";
+
+export type ContentDraftKind =
+  | "site"
+  | "place"
+  | "town"
+  | "event"
+  | "category"
+  | "tag"
+  | "product"
+  | "staticPage"
+  | "legalPage"
+  | "collection"
+  | "gallery"
+  | "priceBand"
+  | "generic";
+
+export type ContentDraftField =
+  | "name"
+  | "title"
+  | "shortDescription"
+  | "description"
+  | "seoTitle"
+  | "seoDescription"
+  | "accessibility"
+  | "content"
+  | "caption"
+  | "intro";
+
+export interface ContentDraftStatus {
+  enabled: boolean;
+  allowed: boolean;
+  provider?: ContentDraftProvider | null;
+  defaultProvider?: ContentDraftProvider;
+  keyConfigured?: boolean;
 }
 
-export function setDefaultLanguage(language: "hu" | "en" | "de") {
-  return apiPut<{ defaultLanguage: "hu" | "en" | "de" }>("/admin/app-settings/default-language", {
+export interface ContentDraftRequest {
+  kind: ContentDraftKind;
+  field?: ContentDraftField;
+  siteId?: string;
+  placeId?: string;
+  lang: string;
+  name?: string;
+  contextHints?: string;
+  categoryId?: string;
+  townId?: string;
+  existingValue?: string;
+  shortDescription?: string;
+  description?: string;
+}
+
+export interface ContentDraftResult {
+  shortDescription?: string;
+  description?: string;
+  text?: string;
+  field?: ContentDraftField;
+}
+
+export function getContentDraftStatus(siteId?: string, placeId?: string) {
+  const params = new URLSearchParams();
+  if (siteId) params.set("siteId", siteId);
+  if (placeId) params.set("placeId", placeId);
+  const query = params.toString();
+  return apiGet<ContentDraftStatus>(`/admin/content-draft/status${query ? `?${query}` : ""}`);
+}
+
+export function saveContentDraftSettings(data: {
+  provider: ContentDraftProvider;
+  apiKey?: string;
+}) {
+  return apiPut<ContentDraftStatus>("/admin/content-draft/settings", data);
+}
+
+export function requestContentDraft(data: ContentDraftRequest) {
+  return apiPost<ContentDraftResult>("/admin/content-draft", data);
+}
+
+export function getDefaultLanguage() {
+  return apiGet<{ defaultLanguage: Lang}>("/admin/app-settings/default-language");
+}
+
+export function setDefaultLanguage(language: Lang) {
+  return apiPut<{ defaultLanguage: Lang}>("/admin/app-settings/default-language", {
     language,
   });
 }
@@ -438,7 +527,7 @@ export function setGlobalCrawlability(isCrawlable: boolean) {
   });
 }
 
-// Brands (admin only)
+// Domains (admin UI). Prisma/API entity remains Brand; REST path stays /admin/brands.
 export interface Brand {
   id: string;
   name: string;
@@ -508,7 +597,7 @@ export interface UpdateBrandDto {
 export interface SiteInstance {
   id: string;
   siteId: string;
-  lang: "hu" | "en" | "de";
+  lang: Lang;
   isDefault: boolean;
   mapConfig: {
     townId?: string | null;
@@ -546,7 +635,7 @@ export interface SiteInstance {
 
 export interface CreateSiteInstanceDto {
   siteId: string;
-  lang: "hu" | "en" | "de";
+  lang: Lang;
   isDefault?: boolean;
   mapConfig?: {
     townId?: string | null;
@@ -571,7 +660,7 @@ export interface CreateSiteInstanceDto {
 }
 
 export interface UpdateSiteInstanceDto {
-  lang?: "hu" | "en" | "de";
+  lang?: Lang;
   isDefault?: boolean;
   mapConfig?: {
     townId?: string | null;
@@ -603,12 +692,17 @@ export interface Site {
   primaryDomain?: string | null;
   brandId: string;
   brand?: Brand;
-  plan?: "basic" | "pro" | "business";
+  plan?: "basic" | "pro" | "business" | "municipal";
   planStatus?: string | null;
   planValidUntil?: string | null;
   planLimits?: Record<string, any> | null;
   billingEmail?: string | null;
   allowPublicRegistration?: boolean; // If false, only site owner can create users and places (pro/business only)
+  /** GA4 measurement ID (G-…). Null/empty disables site analytics. */
+  gaMeasurementId?: string | null;
+  /** Public theme colors override. Null = inherit Brand.theme. */
+  theme?: Record<string, unknown> | null;
+  languages?: string[];
   translations: Array<{
     id: string;
     lang: string;
@@ -616,6 +710,9 @@ export interface Site {
     shortDescription: string | null;
     description: string | null;
     heroImage: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
     seoTitle: string | null;
     seoDescription: string | null;
     seoImage: string | null;
@@ -626,14 +723,14 @@ export interface Site {
     domain: string;
     isActive: boolean;
     isPrimary: boolean;
-    defaultLang: "hu" | "en" | "de";
+    defaultLang: Lang;
     createdAt: string;
     updatedAt: string;
   }>;
   siteKeys?: Array<{
     id: string;
     siteId: string;
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     slug: string;
     isPrimary: boolean;
     isActive: boolean;
@@ -655,7 +752,7 @@ export interface CreateSiteDto {
   slug: string;
   brandId: string; // Required: site must belong to a brand
   translations: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     name: string;
     shortDescription?: string | null;
     description?: string | null;
@@ -667,17 +764,21 @@ export interface CreateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
+  domains?: SiteDomainInput[];
 }
 
 export interface UpdateSiteDto {
   slug?: string;
   brandId?: string;
   translations?: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     name: string;
     shortDescription?: string | null;
     description?: string | null;
     heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
     seoTitle?: string | null;
     seoDescription?: string | null;
     seoImage?: string | null;
@@ -685,12 +786,24 @@ export interface UpdateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
-  plan?: "basic" | "pro" | "business";
+  plan?: "basic" | "pro" | "business" | "municipal";
   planStatus?: string;
   planValidUntil?: string | Date | null;
   planLimits?: Record<string, any> | null;
   billingEmail?: string | null;
   allowPublicRegistration?: boolean; // If false, only site owner can create users and places (pro/business only)
+  languages?: string[];
+  domains?: SiteDomainInput[];
+  /** GA4 measurement ID (G-…). Empty string or null disables site analytics. */
+  gaMeasurementId?: string | null;
+  /** Public theme colors. Null clears site override. */
+  theme?: Record<string, unknown> | null;
+}
+
+export interface SiteDomainInput {
+  domain: string;
+  defaultLang?: string | null;
+  isPrimary?: boolean;
 }
 
 export function getSites() {
@@ -713,7 +826,7 @@ export function deleteSite(id: string) {
   return apiDelete<{ message: string }>(`/admin/sites/${id}`);
 }
 
-// Brands (admin only)
+// Domains — API still /admin/brands (Brand model)
 export function getBrands() {
   return apiGet<Brand[]>("/admin/brands");
 }
@@ -1083,6 +1196,11 @@ export interface FeatureMatrix {
         pushSubscription?: boolean | "optional add-on";
       };
     };
+    publicPlans?: {
+      free?: { priceHuf?: number; places?: number; events?: number; languages?: number };
+      basic?: { priceHuf?: number; places?: number; events?: number; languages?: number };
+      premium?: { priceHuf?: number; places?: number; events?: number; languages?: number };
+    };
   } | null;
   placePlanOverrides?: {
     free?: {
@@ -1129,6 +1247,8 @@ export interface Event {
   heroImage: string | null;
   lat: number | null;
   lng: number | null;
+  /** GA4 measurement ID (G-…). Null = inherit Place/Town/Site. */
+  gaMeasurementId?: string | null;
   place?: {
     id: string;
     translations: Array<{ lang: string; name: string }>;
@@ -1169,8 +1289,10 @@ export interface CreateEventDto {
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  /** GA4 measurement ID (G-…). Empty/null inherits Place/Town/Site. */
+  gaMeasurementId?: string | null;
   translations: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     title: string;
     shortDescription?: string | null;
     description?: string | null;
@@ -1196,8 +1318,10 @@ export interface UpdateEventDto {
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  /** GA4 measurement ID (G-…). Empty/null clears / inherits Place/Town/Site. */
+  gaMeasurementId?: string | null;
   translations?: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     title: string;
     shortDescription?: string | null;
     description?: string | null;
@@ -1218,11 +1342,19 @@ export interface UpdateEventDto {
   lng?: number | null;
 }
 
-export function getEvents(siteId?: string, page?: number, limit?: number) {
+export function getEvents(
+  siteId?: string,
+  page?: number,
+  limit?: number,
+  placeId?: string,
+  townId?: string
+) {
   const params = new URLSearchParams();
   if (siteId) params.append("siteId", siteId);
   if (page !== undefined) params.append("page", String(page));
   if (limit !== undefined) params.append("limit", String(limit));
+  if (placeId) params.append("placeId", placeId);
+  else if (townId) params.append("townId", townId);
   const queryString = params.toString();
   return apiGet<{
     events: Event[];
@@ -1405,21 +1537,59 @@ export interface PlaceEntitlements {
   canDowngrade: boolean;
 }
 
+export type LadderAction = "notify" | "apply-plan" | "suspend";
+export type LadderPlan = "FREE" | "BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL";
+
+export type VisitorLadderConfig = {
+  freeUntil: number;
+  stepTwoFrom: number;
+  stepThreeFrom: number;
+  steps: [
+    { action: LadderAction; plan: LadderPlan },
+    { action: LadderAction; plan: LadderPlan },
+    { action: LadderAction; plan: LadderPlan },
+  ];
+};
+
+export type VisitorLadderSnapshot = {
+  meter: number;
+  meterSource: "uniqueVisitors" | "pageViews";
+  windowDays: number;
+  wouldStep: 0 | 1 | 2;
+  appliedStep: number;
+  manualOverride: boolean;
+  ladderSuspended: boolean;
+  subscriptionPlan: string;
+  freeUntil: number;
+  stepTwoFrom: number;
+  stepThreeFrom: number;
+};
+
+export function getVisitorLadder() {
+  return apiGet<VisitorLadderConfig>("/admin/visitor-ladder");
+}
+
+export function saveVisitorLadder(data: VisitorLadderConfig) {
+  return apiPut<VisitorLadderConfig>("/admin/visitor-ladder", data);
+}
+
 export interface SiteSubscription {
   id?: string; // Subscription ID (from SiteSubscription table, may not be present if using billing service)
   siteId: string;
-  plan: "basic" | "pro" | "business";
+  plan: "basic" | "pro" | "business" | "municipal";
   planStatus: string | null;
   planValidUntil: string | null;
   planLimits: Record<string, any> | null;
   billingEmail: string | null;
   allowPublicRegistration: boolean; // If false, only site owner can create users and places (pro/business only)
   status?: "ACTIVE" | "CANCELLED" | "SUSPENDED" | "EXPIRED"; // Status from SiteSubscription table
+  visitorLadderManual?: boolean;
+  visitorLadder?: VisitorLadderSnapshot;
 }
 
 export interface SiteEntitlements {
   siteId: string;
-  plan: "basic" | "pro" | "business";
+  plan: "basic" | "pro" | "business" | "municipal";
   limits: {
     places: number;
     featuredSlots: number;
@@ -1508,6 +1678,11 @@ export interface SubscriptionListItem {
   };
   adminUrl: string;
   publicUrl?: string;
+  visitorMeter?: number;
+  visitorMeterSource?: "uniqueVisitors" | "pageViews";
+  visitorWouldStep?: 0 | 1 | 2;
+  manualOverride?: boolean;
+  ladderSuspended?: boolean;
 }
 
 export interface SubscriptionSummary {
@@ -1534,6 +1709,7 @@ export interface UpdateSubscriptionDto {
   priceCents?: number | null;
   currency?: string | null;
   note?: string | null;
+  manualOverride?: boolean;
 }
 
 export function getSubscriptions(params?: {
@@ -1863,7 +2039,7 @@ export interface Collection {
   updatedAt: string;
   translations: Array<{
     id: string;
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     title: string;
     description?: string | null;
     heroImage?: string | null;
@@ -1882,7 +2058,7 @@ export interface Collection {
       id: string;
       slug: string;
       translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         shortDescription?: string | null;
         heroImage?: string | null;
@@ -1890,7 +2066,7 @@ export interface Collection {
     };
     translations: Array<{
       id: string;
-      lang: "hu" | "en" | "de";
+      lang: Lang;
       titleOverride?: string | null;
       descriptionOverride?: string | null;
       imageOverride?: string | null;
@@ -1906,7 +2082,7 @@ export interface CreateCollectionDto {
   isCrawlable?: boolean;
   order?: number;
   translations: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     title: string;
     description?: string | null;
     heroImage?: string | null;
@@ -1924,7 +2100,7 @@ export interface UpdateCollectionDto {
   isCrawlable?: boolean;
   order?: number;
   translations?: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     title: string;
     description?: string | null;
     heroImage?: string | null;
@@ -1941,7 +2117,7 @@ export interface CreateCollectionItemDto {
   order?: number;
   isHighlighted?: boolean;
   translations?: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     titleOverride?: string | null;
     descriptionOverride?: string | null;
     imageOverride?: string | null;
@@ -1952,7 +2128,7 @@ export interface UpdateCollectionItemDto {
   order?: number;
   isHighlighted?: boolean;
   translations?: Array<{
-    lang: "hu" | "en" | "de";
+    lang: Lang;
     titleOverride?: string | null;
     descriptionOverride?: string | null;
     imageOverride?: string | null;

@@ -1,5 +1,6 @@
 // src/pages/admin/LegalPagesPage.tsx
 import { useTranslation } from "react-i18next";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import {
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import {
@@ -20,7 +22,7 @@ import {
   type CardField,
 } from "../../components/AdminResponsiveTable";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import type { Lang} from "../../types/enums";
 import { buildUrl } from "../../app/urls";
 
 interface LegalPage {
@@ -200,6 +202,14 @@ export function LegalPagesPage() {
                 : [],
             });
           }
+          appendExtraLanguages(translations, formData, "title", [
+            "shortDescription",
+            "content",
+            "seoTitle",
+            "seoDescription",
+            "seoImage",
+            "seoKeywords",
+          ]);
           return translations;
         })(),
         isActive: formData.isActive,
@@ -273,6 +283,14 @@ export function LegalPagesPage() {
                   : [],
               });
             }
+            appendExtraLanguages(translations, formData, "title", [
+              "shortDescription",
+              "content",
+              "seoTitle",
+              "seoDescription",
+              "seoImage",
+              "seoKeywords",
+            ]);
             return translations;
           })(),
           isActive: formData.isActive,
@@ -555,38 +573,39 @@ export function LegalPagesPage() {
                   >
                     {t("common.title")} ({selectedLang.toUpperCase()}) *
                   </label>
+                  <AiPostfixField
+                    draft={{
+                      kind: "legalPage",
+                      field: "title",
+                      lang: selectedLang,
+                      name: readLang(formData, "title", selectedLang),
+                    }}
+                    value={readLang(formData, "title", selectedLang)}
+                    onApply={(text) =>
+                      setFormData(patchLang(formData, "title", selectedLang, text))
+                    }
+                  >
                   <input
                     type="text"
                     value={
-                      selectedLang === "hu"
-                        ? formData.titleHu
-                        : selectedLang === "en"
-                          ? formData.titleEn
-                          : formData.titleDe
+                      readLang(formData, "title", selectedLang)
                     }
                     onChange={(e) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, titleHu: e.target.value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, titleEn: e.target.value });
-                      else setFormData({ ...formData, titleDe: e.target.value });
+                      setFormData(patchLang(formData, "title", selectedLang, e.target.value));
                     }}
                     style={{
                       width: "100%",
                       padding: 8,
                       fontSize: 16,
                       border:
-                        (selectedLang === "hu" && formErrors.titleHu) ||
-                        (selectedLang === "en" && formErrors.titleEn) ||
-                        (selectedLang === "de" && formErrors.titleDe)
+                        readLang(formErrors, "title", selectedLang)
                           ? "1px solid #dc3545"
                           : "1px solid #ddd",
                       borderRadius: 4,
                     }}
                   />
-                  {(selectedLang === "hu" && formErrors.titleHu) ||
-                  (selectedLang === "en" && formErrors.titleEn) ||
-                  (selectedLang === "de" && formErrors.titleDe) ? (
+                  </AiPostfixField>
+                  {readLang(formErrors, "title", selectedLang) ? (
                     <div
                       style={{
                         color: "#dc3545",
@@ -596,11 +615,7 @@ export function LegalPagesPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {selectedLang === "hu"
-                        ? formErrors.titleHu
-                        : selectedLang === "en"
-                          ? formErrors.titleEn
-                          : formErrors.titleDe}
+                      {readLang(formErrors, "title", selectedLang)}
                     </div>
                   ) : null}
                 </div>
@@ -618,18 +633,10 @@ export function LegalPagesPage() {
                   </label>
                   <TipTapEditorWithUpload
                     value={
-                      selectedLang === "hu"
-                        ? formData.shortDescriptionHu
-                        : selectedLang === "en"
-                          ? formData.shortDescriptionEn
-                          : formData.shortDescriptionDe
+                      readLang(formData, "shortDescription", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu")
-                        setFormData({ ...formData, shortDescriptionHu: value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, shortDescriptionEn: value });
-                      else setFormData({ ...formData, shortDescriptionDe: value });
+                      setFormData(patchLang(formData, "shortDescription", selectedLang, value));
                     }}
                     placeholder={
                       t("admin.shortDescriptionPlaceholder") ||
@@ -637,6 +644,12 @@ export function LegalPagesPage() {
                     }
                     height={150}
                     uploadFolder="editor/legal"
+                    aiDraft={{
+                      kind: "legalPage",
+                      field: "shortDescription",
+                      lang: selectedLang,
+                      name: readLang(formData, "title", selectedLang),
+                    }}
                   />
                   <small
                     style={{
@@ -666,21 +679,20 @@ export function LegalPagesPage() {
                   </label>
                   <TipTapEditorWithUpload
                     value={
-                      selectedLang === "hu"
-                        ? formData.contentHu
-                        : selectedLang === "en"
-                          ? formData.contentEn
-                          : formData.contentDe
+                      readLang(formData, "content", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, contentHu: value });
-                      else if (selectedLang === "en")
-                        setFormData({ ...formData, contentEn: value });
-                      else setFormData({ ...formData, contentDe: value });
+                      setFormData(patchLang(formData, "content", selectedLang, value));
                     }}
                     placeholder={t("admin.content")}
                     height={300}
                     uploadFolder="editor/legal"
+                    aiDraft={{
+                      kind: "legalPage",
+                      field: "content",
+                      lang: selectedLang,
+                      name: readLang(formData, "title", selectedLang),
+                    }}
                   />
                 </div>
 
@@ -718,21 +730,25 @@ export function LegalPagesPage() {
                     >
                       SEO {t("common.title")}
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "legalPage",
+                        field: "seoTitle",
+                        lang: selectedLang,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoTitle", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "seoTitle", selectedLang, text))
+                      }
+                    >
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoTitleHu
-                          : selectedLang === "en"
-                            ? formData.seoTitleEn
-                            : formData.seoTitleDe
+                        readLang(formData, "seoTitle", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoTitleHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoTitleEn: e.target.value });
-                        else setFormData({ ...formData, seoTitleDe: e.target.value });
+                        setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
@@ -745,6 +761,7 @@ export function LegalPagesPage() {
                         borderRadius: 4,
                       }}
                     />
+                    </AiPostfixField>
                     <small
                       style={{
                         color: "#666",
@@ -770,20 +787,25 @@ export function LegalPagesPage() {
                     >
                       SEO {t("common.description")}
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "legalPage",
+                        field: "seoDescription",
+                        lang: selectedLang,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoDescription", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "seoDescription", selectedLang, text))
+                      }
+                      variant="textarea"
+                    >
                     <textarea
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoDescriptionHu
-                          : selectedLang === "en"
-                            ? formData.seoDescriptionEn
-                            : formData.seoDescriptionDe
+                        readLang(formData, "seoDescription", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoDescriptionEn: e.target.value });
-                        else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                        setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoDescriptionPlaceholder") ||
@@ -798,6 +820,7 @@ export function LegalPagesPage() {
                         borderRadius: 4,
                       }}
                     />
+                    </AiPostfixField>
                     <small
                       style={{
                         color: "#666",
@@ -827,18 +850,10 @@ export function LegalPagesPage() {
                     <input
                       type="url"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoImageHu
-                          : selectedLang === "en"
-                            ? formData.seoImageEn
-                            : formData.seoImageDe
+                        readLang(formData, "seoImage", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoImageHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoImageEn: e.target.value });
-                        else setFormData({ ...formData, seoImageDe: e.target.value });
+                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
                       }}
                       placeholder={t("admin.seoImagePlaceholder") || "SEO image URL"}
                       style={{
@@ -865,18 +880,10 @@ export function LegalPagesPage() {
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoKeywordsHu
-                          : selectedLang === "en"
-                            ? formData.seoKeywordsEn
-                            : formData.seoKeywordsDe
+                        readLang(formData, "seoKeywords", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoKeywordsHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoKeywordsEn: e.target.value });
-                        else setFormData({ ...formData, seoKeywordsDe: e.target.value });
+                        setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
@@ -955,7 +962,7 @@ export function LegalPagesPage() {
           isLoading={isLoading}
           filterFn={(legalPage, query) => {
             const lowerQuery = query.toLowerCase();
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               legalPage.translations.find((t) => t.lang === currentLang) ||
               findTranslation(legalPage.translations, "hu" as Lang);
@@ -975,7 +982,7 @@ export function LegalPagesPage() {
               key: "title",
               label: t("common.title"),
               render: (legalPage) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   legalPage.translations.find((t) => t.lang === currentLang) ||
                   findTranslation(legalPage.translations, "hu" as Lang);
@@ -1006,7 +1013,7 @@ export function LegalPagesPage() {
             },
           ]}
           cardTitle={(legalPage) => {
-            const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
             const translation =
               legalPage.translations.find((t) => t.lang === currentLang) ||
               findTranslation(legalPage.translations, "hu" as Lang);

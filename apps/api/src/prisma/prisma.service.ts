@@ -7,7 +7,11 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor() {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
-      throw new Error("DATABASE_URL is missing (apps/api/.env)");
+      throw new Error(
+        process.env.ENV_FILE
+          ? "DATABASE_URL is missing (apps/api/.env.staging)"
+          : "DATABASE_URL is missing (apps/api/.env)"
+      );
     }
 
     super({

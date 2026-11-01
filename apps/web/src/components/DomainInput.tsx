@@ -5,7 +5,7 @@
  * - Includes placeholder with explanation
  */
 
-import React from "react";
+import React, { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 export interface DomainInputProps {
@@ -33,6 +33,12 @@ export function DomainInput({
 }: DomainInputProps) {
   const { t } = useTranslation();
   const hasError = !!error;
+  const reactId = useId();
+  const checkboxId = `${reactId}-domain-checkbox`;
+  const inputId = `${reactId}-domain-input`;
+  const errorId = `${reactId}-domain-error`;
+  const hintId = `${reactId}-domain-hint`;
+  const fieldLabel = label || t("admin.domainInput.label") || "Custom domain";
 
   const defaultPlaceholder =
     t("admin.domainInput.placeholder") || "example.com (opcionális egyedi domain)";
@@ -42,7 +48,7 @@ export function DomainInput({
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
         <input
           type="checkbox"
-          id="custom-domain-checkbox"
+          id={checkboxId}
           checked={checked}
           onChange={(e) => onCheckedChange(e.target.checked)}
           style={{
@@ -53,7 +59,7 @@ export function DomainInput({
           }}
         />
         <label
-          htmlFor="custom-domain-checkbox"
+          htmlFor={checkboxId}
           style={{
             cursor: "pointer",
             fontWeight: 600,
@@ -64,16 +70,24 @@ export function DomainInput({
             userSelect: "none",
           }}
         >
-          {label || t("admin.domainInput.label") || "Custom domain"}
+          {fieldLabel}
         </label>
       </div>
+      <label htmlFor={inputId} className="hl-visually-hidden">
+        {fieldLabel}
+      </label>
       <input
+        id={inputId}
         type="text"
         value={checked ? value : ""}
         onChange={(e) => onChange(e.target.value)}
         disabled={!checked}
         placeholder={checked ? placeholder || defaultPlaceholder : defaultPlaceholder}
         required={required && checked}
+        aria-invalid={hasError || undefined}
+        aria-describedby={
+          hasError ? errorId : !checked ? hintId : undefined
+        }
         style={{
           width: "100%",
           padding: "10px 14px",
@@ -101,6 +115,8 @@ export function DomainInput({
       />
       {error && (
         <div
+          id={errorId}
+          role="alert"
           style={{
             color: "#dc3545",
             fontSize: 12,
@@ -114,6 +130,7 @@ export function DomainInput({
       )}
       {!error && !checked && (
         <div
+          id={hintId}
           style={{
             color: "#6b7280",
             fontSize: 12,

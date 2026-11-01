@@ -105,7 +105,7 @@ export class NotificationsService {
       const payload = JSON.stringify({
         title: notification.title,
         body: notification.body,
-        icon: notification.icon || "/vite.svg",
+        icon: notification.icon || "/icons/icon-192.png",
         data: notification.data,
       });
 

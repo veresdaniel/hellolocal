@@ -1,7 +1,7 @@
 // src/app/config.ts
 // Re-export from centralized enums
-import { LANG_VALUES, type Lang } from "../types/enums";
-export { LANG_VALUES as APP_LANGS, type Lang };
+import { LANG_VALUES, type Lang, type UiLang, isLang, isUiLang } from "../types/enums";
+export { LANG_VALUES, LANG_VALUES as APP_LANGS, type Lang, type UiLang, isLang, isUiLang };
 export const DEFAULT_LANG: Lang = "hu";
 
 // most 1 site van:

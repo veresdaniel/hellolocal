@@ -8,7 +8,8 @@
  */
 
 import "dotenv/config";
-import { PrismaClient, Lang } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import { Lang } from "../src/common/language-code";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const LANGUAGES: Lang[] = ["hu", "en", "de"];

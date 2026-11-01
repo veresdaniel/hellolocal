@@ -357,6 +357,7 @@ export class SubscriptionService {
           canBeFeatured: true,
         };
       case "BUSINESS":
+      case "MUNICIPAL":
         return {
           canCreateEvent: true,
           maxImages: Infinity,

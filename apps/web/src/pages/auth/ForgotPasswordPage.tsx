@@ -3,12 +3,9 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { forgotPassword } from "../../api/auth.api";
 import { useTranslation } from "react-i18next";
-import { APP_LANGS, DEFAULT_LANG, type Lang } from "../../app/config";
+import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function ForgotPasswordPage() {
   const { lang: langParam } = useParams<{ lang?: string }>();
@@ -89,7 +86,7 @@ export function ForgotPasswordPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "#f3efe8",
         padding: "16px",
         margin: 0,
         boxSizing: "border-box",
@@ -109,7 +106,7 @@ export function ForgotPasswordPage() {
           style={{
             marginBottom: 8,
             textAlign: "center",
-            color: "#667eea",
+            color: "#1b1730",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
             fontFamily:
@@ -180,7 +177,7 @@ export function ForgotPasswordPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: emailError ? "#dc2626" : "#667eea",
+                color: emailError ? "#dc2626" : "#1b1730",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -210,7 +207,7 @@ export function ForgotPasswordPage() {
               }}
               onFocus={(e) => {
                 if (!emailError) {
-                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.borderColor = "#1b1730";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }
               }}
@@ -249,7 +246,7 @@ export function ForgotPasswordPage() {
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               background: isLoading
                 ? "#a5b4fc"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                : "#1b1730",
               color: "white",
               border: "none",
               borderRadius: 8,
@@ -279,7 +276,7 @@ export function ForgotPasswordPage() {
           <Link
             to={`/${lang}/admin/login`}
             style={{
-              color: "#667eea",
+              color: "#1b1730",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
-import { LANG_VALUES, type Lang } from "../types/enums";
+import { type Lang } from "../types/enums";
+import { useContentLanguages } from "../hooks/useContentLanguages";
+import { languageLabel } from "../utils/langFields";
 
 interface LanguageAwareEditorProps {
   values: {
@@ -57,18 +59,20 @@ export function LanguageAwareEditor({
             background: "white",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {LANG_VALUES.map((lang) => (
+          {languages.map((lang) => (
+            <option key={lang} value={lang}>
+              {t(`admin.languageNames.${lang}`, { defaultValue: languageLabel(lang, i18n.language) })}
             <option key={lang} value={lang}>
               {t(`admin.languageNames.${lang}`)}
             </option>
           ))}
         </select>
-      </div>
-      <TipTapEditorWithUpload
-        value={values[selectedLang]}
-        onChange={(value) => onChange(selectedLang, value)}
+        value={values[activeLang] || ""}
+        onChange={(value) => onChange(activeLang, value)}
+        placeholder={
+          placeholder
+            ? `${placeholder} (${t(`admin.languageNames.${activeLang}`, { defaultValue: languageLabel(activeLang, i18n.language) })})`
+            : undefined
         placeholder={
           placeholder ? `${placeholder} (${t(`admin.languageNames.${selectedLang}`)})` : undefined
         }

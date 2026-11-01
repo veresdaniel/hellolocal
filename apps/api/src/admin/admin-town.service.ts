@@ -1,10 +1,26 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { SlugEntityType } from "@prisma/client";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
-import { Lang } from "@prisma/client";
+import { Lang } from "../common/language-code";
+import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { generateSlug } from "../slug/slug.helper";
+import { EntitlementsService } from "../entitlements/entitlements.service";
+import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 
 export interface CreateTownDto {
-  siteId: string;
+  /**
+   * Optional region (Site). Null/omitted = standalone town.
+   * Places under a town still require Place.siteId (tenant scope) — that denormalized
+   * FK is independent of Town.siteId and is rewritten only when the town is assigned
+   * to a (new) region, not cleared when the town becomes standalone.
+   */
+  siteId?: string | null;
+  /** Optional custom hostname for this town. */
+  customDomain?: string | null;
+  /** GA4 measurement ID (G-…). Empty string or null disables / inherits Site. */
+  gaMeasurementId?: string | null;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -21,6 +37,12 @@ export interface CreateTownDto {
 }
 
 export interface UpdateTownDto {
+  /** Optional region (Site). Pass null to clear region assignment. */
+  siteId?: string | null;
+  /** Optional custom hostname for this town. Pass null/empty to clear. */
+  customDomain?: string | null;
+  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Site. */
+  gaMeasurementId?: string | null;
   translations?: Array<{
     lang: Lang;
     name: string;
@@ -36,21 +58,54 @@ export interface UpdateTownDto {
   isActive?: boolean;
 }
 
+export type FindTownsOptions = {
+  /**
+   * When true with a siteId, also include standalone towns (siteId null).
+   * Default false so standalone towns do not appear under every régió list.
+   */
+  includeStandalone?: boolean;
+  /** When true, return only standalone towns (ignores siteId). Unassigned bucket. */
+  standaloneOnly?: boolean;
+};
+
 @Injectable()
 export class AdminTownService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly entitlementsService: EntitlementsService
+  ) {}
 
-  async findAll(siteId: string, page?: number, limit?: number) {
-    // Default pagination values
+  /**
+   * List towns for admin.
+   * - Normal régió context: only towns with that siteId (no standalone leakage).
+   * - Unassigned bucket: standaloneOnly → siteId null.
+   * - Optional includeStandalone: region towns + standalones (explicit opt-in).
+   */
+  async findAll(
+    siteId: string | null | undefined,
+    page?: number,
+    limit?: number,
+    options: FindTownsOptions = {}
+  ) {
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
+    const { includeStandalone = false, standaloneOnly = false } = options;
 
-    const where = { siteId };
+    let where: { siteId?: string | null; OR?: Array<{ siteId: string | null }> };
+    if (standaloneOnly) {
+      where = { siteId: null };
+    } else if (!siteId) {
+      throw new BadRequestException(
+        "siteId is required unless standaloneOnly=true (unassigned towns)"
+      );
+    } else if (includeStandalone) {
+      where = { OR: [{ siteId }, { siteId: null }] };
+    } else {
+      where = { siteId };
+    }
 
-    // Get total count
     const total = await this.prisma.town.count({ where });
 
-    // Get paginated results
     const towns = await this.prisma.town.findMany({
       where,
       include: {
@@ -61,7 +116,6 @@ export class AdminTownService {
       take: limitNum,
     });
 
-    // Always return paginated response
     return {
       towns,
       pagination: {
@@ -73,9 +127,12 @@ export class AdminTownService {
     };
   }
 
-  async findOne(id: string, siteId: string) {
+  async findOne(id: string, siteId?: string | null) {
+    // Lookup by id; optional siteId scopes to that region or standalone (for edit access).
     const town = await this.prisma.town.findFirst({
-      where: { id, siteId },
+      where: siteId
+        ? { id, OR: [{ siteId }, { siteId: null }] }
+        : { id },
       include: {
         translations: true,
       },
@@ -89,9 +146,51 @@ export class AdminTownService {
   }
 
   async create(dto: CreateTownDto) {
-    return this.prisma.town.create({
+    const siteId = dto.siteId || null;
+
+    if (siteId) {
+      const site = await this.prisma.site.findUnique({ where: { id: siteId } });
+      if (!site) {
+        throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_SITE ?? "Site not found");
+      }
+    }
+
+    // Custom domain needs a parent region so /api/domain and site-resolve can attach site context.
+    if (dto.customDomain !== undefined && String(dto.customDomain).trim() && !siteId) {
+      throw new BadRequestException(
+        "Egyedi domain csak régióhoz rendelt településhez adható meg."
+      );
+    }
+    if (dto.customDomain !== undefined && String(dto.customDomain).trim() && siteId) {
+      await this.assertTownDomainEntitlement(siteId);
+    }
+
+    // Placeholder owner id until create returns the real town id — uniqueness checked after create via pre-check with empty owner.
+    // Use a temporary id that cannot collide; assertHostnameAvailable only skips match when owner.kind+id match.
+    const customDomain =
+      dto.customDomain !== undefined
+        ? await assertHostnameAvailable(this.prisma, dto.customDomain, {
+            kind: "town",
+            townId: "__new__",
+          })
+        : null;
+
+    let gaMeasurementId: string | null = null;
+    if (dto.gaMeasurementId !== undefined) {
+      try {
+        gaMeasurementId = normalizeGaMeasurementId(dto.gaMeasurementId);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
+
+    const town = await this.prisma.town.create({
       data: {
-        siteId: dto.siteId,
+        siteId,
+        customDomain,
+        gaMeasurementId,
         isActive: dto.isActive ?? true,
         lat: dto.lat ?? null,
         lng: dto.lng ?? null,
@@ -112,12 +211,30 @@ export class AdminTownService {
         translations: true,
       },
     });
+
+    if (siteId) {
+      await this.ensureTownSlugs(
+        siteId,
+        town.id,
+        town.translations.map((t) => ({ lang: t.lang, name: t.name }))
+      );
+    }
+
+    return town;
   }
 
-  async update(id: string, siteId: string, dto: UpdateTownDto) {
-    const town = await this.findOne(id, siteId);
+  async update(id: string, contextSiteId: string | null | undefined, dto: UpdateTownDto) {
+    const existing = await this.findOne(id, contextSiteId);
 
-    const updateData: any = {};
+    const updateData: {
+      isActive?: boolean;
+      lat?: number | null;
+      lng?: number | null;
+      siteId?: string | null;
+      customDomain?: string | null;
+      gaMeasurementId?: string | null;
+    } = {};
+
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
     }
@@ -127,10 +244,79 @@ export class AdminTownService {
     if (dto.lng !== undefined) {
       updateData.lng = dto.lng;
     }
+    if (dto.gaMeasurementId !== undefined) {
+      try {
+        updateData.gaMeasurementId = normalizeGaMeasurementId(dto.gaMeasurementId);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
+    if (dto.siteId !== undefined) {
+      if (dto.siteId) {
+        const site = await this.prisma.site.findUnique({ where: { id: dto.siteId } });
+        if (!site) {
+          throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_SITE ?? "Site not found");
+        }
+        updateData.siteId = dto.siteId;
+      } else {
+        updateData.siteId = null;
+      }
+    }
 
-    await this.prisma.town.update({
-      where: { id },
-      data: updateData,
+    const nextSiteId =
+      dto.siteId !== undefined ? updateData.siteId ?? null : existing.siteId;
+    if (dto.customDomain !== undefined) {
+      const wantsDomain = String(dto.customDomain ?? "").trim();
+      if (wantsDomain && !nextSiteId) {
+        throw new BadRequestException(
+          "Egyedi domain csak régióhoz rendelt településhez adható meg."
+        );
+      }
+      if (wantsDomain && nextSiteId) {
+        await this.assertTownDomainEntitlement(nextSiteId);
+      }
+      updateData.customDomain = await assertHostnameAvailable(this.prisma, dto.customDomain, {
+        kind: "town",
+        townId: id,
+      });
+    }
+    // Clearing the region also clears a domain that would no longer resolve.
+    if (dto.siteId !== undefined && !nextSiteId && existing.customDomain) {
+      updateData.customDomain = null;
+    }
+
+    const regionChanged =
+      dto.siteId !== undefined && (existing.siteId ?? null) !== (nextSiteId ?? null);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.town.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // Cascade denormalized Place/Event.siteId when town is assigned/moved to a region.
+      // Detach (siteId → null): Place.siteId stays required — keep last region FK (tenant scope).
+      // Places remain queryable under that site; geo parent is still townId.
+      if (regionChanged && nextSiteId) {
+        const placeIds = (
+          await tx.place.findMany({
+            where: { townId: id },
+            select: { id: true },
+          })
+        ).map((p) => p.id);
+        if (placeIds.length > 0) {
+          await tx.place.updateMany({
+            where: { id: { in: placeIds } },
+            data: { siteId: nextSiteId },
+          });
+          await tx.event.updateMany({
+            where: { placeId: { in: placeIds } },
+            data: { siteId: nextSiteId },
+          });
+        }
+      }
     });
 
     if (dto.translations) {
@@ -166,13 +352,80 @@ export class AdminTownService {
       }
     }
 
-    return this.findOne(id, siteId);
+    const updated = await this.findOne(id);
+    if (updated.siteId) {
+      await this.ensureTownSlugs(
+        updated.siteId,
+        updated.id,
+        updated.translations.map((t) => ({ lang: t.lang, name: t.name }))
+      );
+    }
+
+    return updated;
   }
 
-  async remove(id: string, siteId: string) {
-    const town = await this.findOne(id, siteId);
+  /** Town customDomain inherits the parent Site's plan domain entitlement. */
+  private async assertTownDomainEntitlement(siteId: string) {
+    const ent = await this.entitlementsService.getBySiteId(siteId);
+    assertSiteAllowsCustomDomain(
+      ent,
+      "A régió csomagja nem engedi a saját domaint (település domain a régió jogosultságát örökli)."
+    );
+  }
 
-    // Check if town is used by any places
+  /**
+   * Ensure each translation language has a primary public Slug for the town.
+   * Required for /telepules/:slug filtering and town custom-domain redirects.
+   */
+  private async ensureTownSlugs(
+    siteId: string,
+    townId: string,
+    translations: Array<{ lang: string; name: string }>
+  ) {
+    const fallbackName =
+      translations.find((t) => t.lang === "hu")?.name || translations[0]?.name || townId;
+
+    for (const translation of translations) {
+      const lang = translation.lang;
+      const existingSlug = await this.prisma.slug.findFirst({
+        where: {
+          siteId,
+          lang,
+          entityType: SlugEntityType.town,
+          entityId: townId,
+        },
+      });
+      if (existingSlug) continue;
+
+      const baseSlug = generateSlug(translation.name || fallbackName) || `town-${townId}`;
+      let slug = baseSlug;
+      let counter = 1;
+      while (true) {
+        const conflict = await this.prisma.slug.findFirst({
+          where: { siteId, lang, slug },
+        });
+        if (!conflict) break;
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
+      await this.prisma.slug.create({
+        data: {
+          siteId,
+          lang,
+          slug,
+          entityType: SlugEntityType.town,
+          entityId: townId,
+          isPrimary: true,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  async remove(id: string, siteId?: string | null) {
+    await this.findOne(id, siteId);
+
     const placesCount = await this.prisma.place.count({
       where: { townId: id },
     });

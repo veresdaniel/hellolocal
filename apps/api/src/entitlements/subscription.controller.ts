@@ -39,12 +39,16 @@ export class AdminSiteSubscriptionController {
         status: body.status,
         validUntil: body.validUntil ? new Date(body.validUntil) : null,
         note: body.note ?? null,
+        manualOverride: true,
+        ladderSuspended: false,
       },
       update: {
         plan: body.plan,
         status: body.status,
         validUntil: body.validUntil ? new Date(body.validUntil) : null,
         note: body.note ?? null,
+        manualOverride: true,
+        ladderSuspended: false,
       },
     });
   }

@@ -18,6 +18,10 @@ export type Place = {
 
   category: PlaceCategory | null; // Localized category name
   categoryColor?: string | null; // Category color for card border
+  categoryKind?: "place" | "service" | null;
+  parentPlaceId?: string | null;
+  parentPlaceName?: string | null;
+  services?: Array<{ id: string; slug: string | null; name: string; category: string | null }>;
   subcategory?: string;
 
   name: string;
@@ -27,6 +31,8 @@ export type Place = {
   description?: string;
 
   heroImage?: string;
+  /** Optional map popup image; UI falls back to heroImage when unset. */
+  mapImage?: string;
   gallery?: string[];
 
   location?: GeoPoint;
@@ -64,6 +70,9 @@ export type Place = {
 
   // Price list
   hasPriceList?: boolean; // Whether place has a price list
+
+  /** Resolved GA4 ID for this page (Place > Town > Site). Null = none. */
+  gaMeasurementId?: string | null;
 
   // category-specifikus, szabad struktúra
   extras?: Record<string, unknown>;

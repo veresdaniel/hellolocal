@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { HAS_MULTIPLE_SITES, type Lang } from "../app/config";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { getPlaces } from "../api/places.api";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { comparePriceLabels, visitorPriceLabel } from "../utils/priceLabel";
 
 export interface FilterControlProps {
   lang: Lang;
@@ -64,6 +65,7 @@ export function FilterControls(props: FilterControlProps) {
     if (!places || !Array.isArray(places)) return [];
     const names = new Set<string>();
     places.forEach((place) => {
+      if (place.categoryKind === "service") return;
       if (place.category) names.add(place.category);
     });
     return Array.from(names).map((name) => ({ id: name, name }));
@@ -75,9 +77,9 @@ export function FilterControls(props: FilterControlProps) {
     places.forEach((place) => {
       if (!place.priceBand) return;
       const id = place.priceBandId || place.priceBand;
-      if (!bands.has(id)) bands.set(id, { id, name: place.priceBand });
+      if (!bands.has(id)) bands.set(id, { id, name: visitorPriceLabel(place.priceBand) });
     });
-    return Array.from(bands.values());
+    return Array.from(bands.values()).sort((a, b) => comparePriceLabels(a.name, b.name));
   }, [places]);
 
   const quick = [

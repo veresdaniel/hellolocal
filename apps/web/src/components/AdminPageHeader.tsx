@@ -102,7 +102,7 @@ export function AdminPageHeader({
             style={{
               padding: "8px 16px",
               background: "rgba(255, 255, 255, 0.2)",
-              color: "white",
+              color: "var(--hl-on-dark-strong, #ffffff)",
               border: "1px solid rgba(255, 255, 255, 0.3)",
               borderRadius: 8,
               cursor: "pointer",
@@ -130,12 +130,13 @@ export function AdminPageHeader({
         )}
         <div style={{ flex: 1 }}>
           <h1
+            className="admin-page-title"
             style={{
               fontSize: "clamp(20px, 4vw, 28px)",
               fontWeight: 700,
               fontFamily:
                 "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "white",
+              color: "var(--hl-on-dark-strong, #ffffff)",
               margin: 0,
               marginBottom: subtitle ? 8 : 0,
               textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
@@ -149,12 +150,13 @@ export function AdminPageHeader({
           </h1>
           {subtitle && (
             <div
+              className="admin-page-muted"
               style={{
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
-                color: "#c0c0d0",
+                color: "var(--hl-muted-on-dark, #a8b0c8)",
                 margin: 0,
                 textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
               }}
@@ -174,7 +176,7 @@ export function AdminPageHeader({
                 style={{
                   padding: "10px 20px",
                   background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
-                  color: "white",
+                  color: "var(--hl-on-dark-strong, #ffffff)",
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",
@@ -203,7 +205,7 @@ export function AdminPageHeader({
                 style={{
                   padding: "10px 20px",
                   background: "#6c757d",
-                  color: "white",
+                  color: "var(--hl-on-dark-strong, #ffffff)",
                   border: "none",
                   borderRadius: 8,
                   cursor: "pointer",
@@ -237,8 +239,8 @@ export function AdminPageHeader({
               style={{
                 padding: "10px 20px",
                 background: "#4a90e2",
-                color: "white",
-                border: "2px solid white",
+                color: "var(--hl-on-dark-strong, #ffffff)",
+                border: "2px solid var(--hl-on-dark-strong, #ffffff)",
                 borderRadius: 8,
                 cursor: "pointer",
                 fontSize: "clamp(14px, 3.5vw, 16px)",

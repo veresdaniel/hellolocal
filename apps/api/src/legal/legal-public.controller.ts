@@ -1,5 +1,6 @@
-import { Controller, Get, Param, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param } from "@nestjs/common";
 import { LegalService } from "./legal.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for legal page endpoints.
@@ -13,14 +14,6 @@ import { LegalService } from "./legal.service";
 export class LegalPublicController {
   constructor(private readonly legalService: LegalService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Gets a legal page by key.
@@ -36,7 +29,7 @@ export class LegalPublicController {
     @Param("siteKey") siteKey: string,
     @Param("page") page: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.legalService.getPage({ lang, siteKey, page });
   }
 
@@ -57,7 +50,7 @@ export class LegalPublicController {
     @Param("siteKey") siteKey: string,
     @Param("pageId") pageId: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.legalService.getPage({ lang, siteKey, page: pageId });
   }
 }

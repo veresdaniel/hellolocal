@@ -8,13 +8,15 @@
   "forbidden": "Hozzáférés megtagadva",
   "notFound": "Nem található",
   "internalServerError": "Belső szerver hiba",
+  "serverErrorDescription": "Valami hiba történt a szerveren. Kérjük, próbáld újra később.",
   "badGateway": "Hibás átjáró",
   "serviceUnavailable": "Szolgáltatás nem elérhető",
   "goHome": "Vissza a főoldalra",
   "goBack": "Vissza",
   "reload": "Oldal újratöltése",
   "errorDetails": "Hiba részletei",
-  "siteNotFound": "Nem található site",
-  "siteNotFoundMessage": "A megadott site nem létezik vagy nincs engedélyezve.",
-  "backToSites": "Vissza a site-okhoz"
+  "siteNotFound": "Nem található hely",
+  "siteNotFoundMessage": "A megadott hely nem létezik vagy nincs engedélyezve.",
+  "backToSites": "Vissza a helyekhez",
+  "visitorHold": "A nyilvános térkép jelenleg nem elérhető. A helyek megmaradtak."
 }

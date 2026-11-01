@@ -5,104 +5,224 @@
   },
   "explore": {
     "title": "Explore",
+    "siteTitle": "Explore {{name}}",
     "description": "Local experiences: winery, gastronomy, accommodation, crafts."
   },
   "listView": "List View",
   "mapView": "Map View",
+  "region": {
+    "eyebrow": "Region",
+    "lead": "Pick a settlement, or explore the whole region on the map.",
+    "townsHeading": "Settlements",
+    "searchTowns": "Search settlements…",
+    "noTowns": "No matches",
+    "placeCount": "{{count}} places",
+    "openTown": "Open"
+  },
   "overview": {
     "menu": "Overview",
-    "eyebrow": "For municipalities and tourist offices",
-    "title": "The town a visitor can find on one map",
-    "lead": "HelloLocal puts local places, events and the map on a single page. In Hungarian, English and German. An editor publishes it, a guest opens it on a phone. No separate app.",
-    "seoTitle": "HelloLocal | A town map, its events and its places",
-    "seoDescription": "Places, events and one shared map in Hungarian, English and German. For municipalities, tourist offices and destinations.",
-    "keywords": "local tourism, town map, event calendar, tourist office, destination, HelloLocal",
+    "eyebrow": "For councils, tourist offices and local businesses",
+    "title": "A visitor finds what you have on one map",
+    "lead": "Places, events and the map sit on one page. The guest opens it on a phone and sets off.",
+    "differenceKicker": "Why it is different",
+    "differenceTitle": "The lesser-known place gets visitors too",
+    "differenceLead": "The workshop, the cellar and the side street are on the map. Whoever runs the place writes their own page. The council or the office passes it on with one link.",
+    "seoTitle": "HelloLocal | Local places, makers and areas on one map",
+    "seoDescription": "Makers, local services and the less visible places, on one map. For councils, tourist offices and the people who are not on the main street.",
+    "keywords": "local business, maker, local service, village, region, municipality, tourist office, HelloLocal",
     "cta": "See it live",
     "ctaSecondary": "How it works",
     "shotCaption": "Szeged on the map: places, filters and the next events on one screen.",
     "shotLabel": "Live map",
-    "statsLanguages": "languages, each with its own address",
+    "statsLanguagesValue": "More",
+    "statsLanguages": "languages, each on its own address",
     "statsMap": "map for places and events",
     "statsApp": "download for the guest",
-    "featuresTitle": "What keeps a visitor on the page",
-    "featuresLead": "Not another brochure. A page where someone decides where to go this afternoon.",
-    "stepsTitle": "Three steps, and they are already browsing",
-    "audienceTitle": "Who it pays off for",
+    "featuresTitle": "What the guest can use",
+    "featuresLead": "Opening hours, what is on today, and the place that sits off the main square.",
+    "stepsTitle": "Three steps to the guest",
+    "difference": {
+      "hidden": {
+        "title": "What only locals used to know",
+        "text": "A courtyard, a workshop, a market table, a cellar, one corner further in. It goes on the map, and the guest can find it."
+      },
+      "traffic": {
+        "title": "Visitors from a small ad budget",
+        "text": "The council or the office link brings people in. The advertising budget can stay small."
+      },
+      "region": {
+        "title": "One region, separate maps",
+        "text": "Several settlements can sit side by side, each with its own audience. A maker stays with their own area."
+      }
+    },
+    "storiesTitle": "Who it is for",
+    "storiesLead": "For the maker, the local service, and the council or office that passes them on to the guest with one link.",
     "faqTitle": "What people usually ask",
-    "closingTitle": "The next guest is already searching on a phone.",
-    "closingText": "Open the map, look at the events, and picture your own town's places on those dots.",
+    "closingTitle": "The next guest starts from the map.",
+    "closingText": "Open it and picture your own places on those dots: the workshop, the cellar, the service, or the whole area.",
     "steps": {
       "collect": {
-        "title": "You gather the places",
-        "text": "A winery, a promenade, a museum, a market. Category, opening hours, a photo and a short text. Each one has an address you can send."
+        "title": "Whoever was missing gets a place",
+        "text": "A workshop, a shop, a cellar, a service. A photo, opening hours, and a page the guest can forward."
       },
       "publish": {
-        "title": "You publish the programme",
-        "text": "The coming weeks sit beside the map. A featured event stays at the top. One that has ended drops off."
+        "title": "The programme stays current",
+        "text": "The coming weeks sit beside the map. What has ended drops off, and this weekend stays in front."
       },
       "share": {
-        "title": "You hand it to the visitor",
-        "text": "One link in Hungarian, English or German. The guest filters, zooms in and sets off. No app store, no account."
+        "title": "One link for the guest",
+        "text": "They open it in their own language, filter, and set off. It works in the phone's browser."
       }
     },
     "faq": {
       "app": {
         "q": "Does a guest have to download an app?",
-        "a": "No. The map and the events open in the browser, on a phone and on a computer."
+        "a": "The map and the events open in the browser, on a phone and on a computer."
       },
       "languages": {
-        "q": "Is there a separate site for each language?",
-        "a": "Content can be Hungarian, English and German, each with its own address. Search engines can then find it in the right language."
+        "q": "Is there a separate page for each language?",
+        "a": "Each language the guest arrives in gets its own address. Search can then find the page in that language."
       },
       "editors": {
-        "q": "Who can update the text?",
-        "a": "Editors and place owners work with their own permissions. Descriptions use a text editor, and sign-in can require a second step."
+        "q": "Who writes the text?",
+        "a": "Whoever runs the place: the maker, the service, or someone at the council or the office. Each looks after their own part."
       },
       "towns": {
-        "q": "Can several towns share one system?",
-        "a": "Yes. Each town or destination gets its own content, map and editors. A visitor only sees the one they opened."
+        "q": "Can several settlements share one system?",
+        "a": "Yes. A region can hold several settlements. Each has its own map and programme, and the guest stays with the one they opened."
       }
     },
     "features": {
       "places": {
-        "title": "Places worth opening",
-        "text": "Category, price, opening hours and a page a guest can send to the group. Not a spreadsheet: an address, a photo, a reason to go."
+        "title": "The workshop can be found too",
+        "text": "It goes on the map with opening hours and a page the guest can forward. The lesser-known place shows up as well."
       },
       "events": {
-        "title": "The next event, not last year's poster",
-        "text": "Events line up beside the map, in time order. What has finished comes off. What is featured stays in front."
+        "title": "This weekend stays in front",
+        "text": "What has ended comes off. What is on now is what the guest sees first."
       },
       "map": {
-        "title": "A map you can actually leave from",
-        "text": "The dots are the places. Filters show what is open, what is fine in the rain, and where something happens today. On a phone the panel rises from the bottom and the map stays visible."
+        "title": "A map you can set off from",
+        "text": "The guest sees what is open, what works in the rain, and what is on today. The map stays usable on a phone."
       },
       "languages": {
-        "title": "The language the guest searches in",
-        "text": "Hungarian, English and German content, each on its own address. A foreign visitor gets the same map, not a translated leaflet."
+        "title": "The guest reads it in their own language",
+        "text": "The content is written in the guest's language, on that language's address. They get the same map."
       },
       "sites": {
-        "title": "Several towns, with clear edges",
-        "text": "A destination can carry more than one place. Each has its own content, map and editors, so a visitor does not wander into another town's programme."
+        "title": "Several settlements, separate programmes",
+        "text": "A region can hold more than one place. Each map and programme stays separate, so the guest does not slip into the next village."
       },
       "editors": {
-        "title": "A local editor, not an agency",
-        "text": "The text is written by someone who knows the place. Roles separate the town editor from the owner of a venue. The change shows up on the public page."
+        "title": "Whoever runs the place writes it",
+        "text": "The maker, the service or the local staff looks after their own text. The guest sees what is true right now."
       }
     },
-    "audience": {
-      "municipality": {
-        "title": "Municipality",
-        "text": "The town's events, the promenade and the market finally live on one link, not in three separate social posts."
+    "stories": {
+      "maker": {
+        "kicker": "Handmade",
+        "title": "The workshop gets its own page",
+        "text": "Ceramics, linen, jam, honey. A photo, opening hours, and a pin the guest can forward.",
+        "alt": "Handmade ceramic bowls on a workshop table"
       },
-      "office": {
-        "title": "Tourist office",
-        "text": "A foreign guest gets the same map in English or German that locals use in Hungarian."
+      "service": {
+        "kicker": "A local service",
+        "title": "Their own name comes first",
+        "text": "A hairdresser, a tailor, a bicycle workshop, a massage. The guest looks at the area and sees their name and their address.",
+        "alt": "A small bicycle workshop with tools and a wheel on the bench"
       },
-      "destination": {
-        "title": "Destination and wine region",
-        "text": "Several towns in one system, each with its own places. The visitor tours the region instead of a mixed list."
+      "quiet": {
+        "kicker": "Off the main street",
+        "title": "One corner further in",
+        "text": "A courtyard, a workshop, a market table, a turn off the main street. The places only locals used to know go on the map too.",
+        "alt": "An open courtyard gate on a quiet side street"
+      },
+      "town": {
+        "kicker": "Council and tourist office",
+        "title": "The one that can gather them",
+        "text": "It gathers the local businesses and hands the visitor one link, in the visitor's language.",
+        "alt": "A live map of local places and events"
+      }
+    },
+    "plansTitle": "Three plans",
+    "plansLead": "A monthly price in forints. It can be a workshop, a service, or a whole area.",
+    "plans": {
+      "priceUnit": "HUF / month",
+      "freePrice": "Free",
+      "freeForever": "for good, no invoice",
+      "places": "{{count}} places on the map",
+      "eventsNone": "No events while you try it",
+      "events": "{{count}} events a month",
+      "languagesOne": "Hungarian, on its own address",
+      "languages": "{{count}} languages, each on its own address",
+      "adminNote": "Place / event / language numbers save with the entitlement matrix and fill the {{count}} templates on the cards. Names and pitch stay manually editable. The municipal plan has no matrix-limit sync.",
+      "save": "Save plans",
+      "saving": "Saving…",
+      "fields": {
+        "priceHuf": "Monthly price (HUF)",
+        "places": "Places",
+        "events": "Events per month",
+        "languages": "Languages"
+      },
+      "free": {
+        "name": "Free",
+        "kicker": "A trial",
+        "pitch": "A few places, in Hungarian. You can look at the map before anyone gets a bill.",
+        "cta": "Register free"
+      },
+      "basic": {
+        "name": "Basic",
+        "kicker": "For a settlement and its businesses",
+        "badge": "The usual choice",
+        "pitch": "The workshop, the service and the weekend event, on one link. The business fills in their own page, and the town sends the link on.",
+        "cta": "Get Basic"
+      },
+      "premium": {
+        "name": "Premium",
+        "kicker": "For a whole region",
+        "pitch": "More languages and featured places. The maker and the town share one map, in English and German too.",
+        "cta": "Get Premium"
+      },
+      "municipal": {
+        "name": "Municipal",
+        "kicker": "A custom offer",
+        "pitch": "As many places as the town needs. The price is written for that town, not a fixed fee.",
+        "cta": "Custom quote",
+        "places": "As many places as you need",
+        "events": "Events are part of the offer",
+        "languages": "Languages are part of the offer"
+      },
+      "quote": {
+        "organization": "Organization",
+        "contactName": "Contact name",
+        "email": "Email",
+        "message": "Short message",
+        "submit": "Request an offer",
+        "sending": "Sending…",
+        "sent": "We sent the request. We'll be in touch.",
+        "stored": "We saved the request. No email went out, because mail is not set up.",
+        "noRecipient": "We saved the request. No recipient is set, so no email went out.",
+        "failed": "We could not save the request. Try again.",
+        "required": "Fill in the organization, the name, the email and the message.",
+        "invalidEmail": "That does not look like an email address."
+      },
+      "recipient": {
+        "label": "Quote request email",
+        "help": "Municipal quote requests are sent here. If you save this empty, we keep the request and do not send mail.",
+        "save": "Save recipient",
+        "saved": "Recipient saved."
       }
     }
+  },
+  "catalog": {
+    "title": "Product catalog",
+    "lead": "Prices and photos, without checkout. The place's offer as filterable cards.",
+    "search": "Search products",
+    "all": "All",
+    "empty": "No products match this filter.",
+    "error": "The catalog cannot be loaded right now.",
+    "prev": "Previous",
+    "next": "Next"
   },
   "place": {
     "title": "Place Details",
@@ -158,7 +278,7 @@
       "heroImage": "Hero image",
       "contacts": "Contacts (tel/email/web)",
       "extraFields": "Extra fields (extras JSON)",
-      "galleriesMax": "Number of galleries (site admin + retail user)",
+      "galleriesMax": "Number of galleries (place admin + retail user)",
       "imagesPerGalleryMax": "Images per gallery",
       "galleriesPerPlaceMax": "Galleries per place (retail user)",
       "galleriesPerEventMax": "Galleries per event (retail user)",
@@ -166,21 +286,22 @@
       "featuredBoost": "Featured boost (ranking weight)",
       "eventsEnabled": "Events enabled",
       "eventsPerMonth": "Events per month",
-      "siteSeo": "Site SEO (title/desc/image)",
+      "siteSeo": "Place SEO (title/desc/image)",
       "placeSeo": "Place SEO fields",
       "canonicalSupport": "Canonical/redirect support",
       "customDomain": "Custom domain",
       "multipleDomainAliases": "Multiple domain aliases",
       "max5": "✓ (max 5)",
       "additionalLanguages": "Additional languages (hu+en+de)",
-      "siteMembers": "Site members (memberships)",
+      "siteMembers": "Place members (memberships)",
       "eventLog": "Event log",
       "pushSubscription": "PushSubscription",
       "optionalAddon": "optional add-on",
       "placeImages": "Number of images",
       "featuredPlacement": "Featured placement",
       "placeTitle": "Location Plans",
-      "placeSubtitle": "Choose a plan for your location"
+      "placeSubtitle": "Choose a plan for your location",
+      "eventsPerPlace": "{{count}} events / place"
     },
     "featureMatrix": {
       "feature": "Feature"
@@ -190,12 +311,12 @@
   "readMore": "Read more",
   "category": "Category",
   "activateFree": {
-    "cta": "Activate Free Site",
-    "success": "Free site activated successfully!",
-    "error": "Failed to activate site.",
+    "cta": "Activate Free Place",
+    "success": "Free place activated successfully!",
+    "error": "Failed to activate place.",
     "modal": {
-      "title": "Activate Free Site",
-      "description": "Are you sure you want to activate the free site? This will give you access to the dashboard and allow you to start working on your site.",
+      "title": "Activate Free Place",
+      "description": "Are you sure you want to activate the free place? This will give you access to the dashboard and allow you to start working on your place.",
       "confirm": "Activate"
     }
   },
@@ -211,8 +332,8 @@
   "errorLoadingPlaces": "Error loading places",
   "noPlacesFound": "No places found",
   "sites": {
-    "title": "Sites",
-    "description": "Discover sites"
+    "title": "Regions",
+    "description": "Discover regions"
   },
   "collections": {
     "title": "Curated Collections",
@@ -223,9 +344,9 @@
     "noItems": "No items in this list yet",
     "highlighted": "Highlighted"
   },
-  "searchSites": "Search sites...",
-  "errorLoadingSites": "Error loading sites",
-  "noSitesFound": "No sites found",
+  "searchSites": "Search regions...",
+  "errorLoadingSites": "Error loading regions",
+  "noSitesFound": "No regions found",
   "staticPages": {
     "title": "Static Pages",
     "noStaticPagesFound": "No pages available",
@@ -250,23 +371,33 @@
     "description": "Discover events"
   },
   "events": "Events",
+  "services": "Local services",
+  "servicesTab": "Services",
+  "parentPlace": "Town",
+  "noServices": "No local services yet.",
+  "placesTab": "Places",
   "noEvents": "No events",
   "contact": "Contact",
   "menu": "Menu",
   "close": "Close",
   "noResults": "No results found",
+  "emptyResultsSearchHint": "Nothing matches your search. Try a different keyword or filter.",
+  "emptyResultsDefaultHint": "There is nothing to show right now.",
+  "emptySitesSearchHint": "No regions match your search.",
+  "emptySitesDefaultHint": "There are no regions available right now.",
+  "tryAgainLater": "Please try again later.",
   "filtersTitle": "Filters",
   "placeSlugMissing": "Details coming soon...",
   "featured": "Featured",
   "filters": {
     "all": "All",
     "openNow": "Open now",
-    "eventToday": "Event today",
-    "within10MinutesWalk": "10 minutes walk",
-    "rainSafe": "Rain-safe program",
+    "eventToday": "Today's events",
+    "within10MinutesWalk": "A 10-minute walk",
+    "rainSafe": "Good in the rain",
     "contextFilters": "Context-based filters",
-    "categories": "Categories",
-    "price": "Price",
+    "categories": "Type of place",
+    "price": "Price range",
     "clear": "Clear"
   },
   "yourLocation": "I'm here now.",
@@ -277,7 +408,7 @@
   "routeDistance": "route",
   "walkingTime": "Walking time",
   "calculatingRoute": "Calculating route...",
-  "clickAgainToNavigate": "Click again to navigate",
+  "startNavigation": "Directions",
   "tooFarAway": "Too far away (more than {{distance}} km)",
   "hour": "hour",
   "hours": "hours",
@@ -306,5 +437,6 @@
     "title": "Location Floorplan",
     "subtitle": "Click on the points to view the rooms",
     "openFullscreen": "Open in Fullscreen"
-  }
+  },
+  "location": "Location"
 }

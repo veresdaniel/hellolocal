@@ -3,9 +3,14 @@
  * These should match the Prisma schema enums
  */
 
-// Language enum - matches Prisma Lang enum
+/** Interface languages that ship with translated UI strings. */
 export const LANG_VALUES = ["hu", "en", "de"] as const;
-export type Lang = (typeof LANG_VALUES)[number];
+export type UiLang = (typeof LANG_VALUES)[number];
+/** A published language. Any ISO 639-1 or 639-2 code, not only hu/en/de. */
+export type Lang = string;
+
+const LANGUAGE_CODE = /^[a-z]{2,3}$/;
+const RESERVED_LANGUAGE_CODES = new Set(["api", "assets", "static", "src", "www", "app", "css", "img"]);
 
 // User roles - matches Prisma UserRole enum
 export const USER_ROLES = ["superadmin", "admin", "editor", "viewer"] as const;
@@ -77,6 +82,10 @@ export function isSubscriptionPlan(value: string): value is SubscriptionPlan {
   return SUBSCRIPTION_PLANS.includes(value as SubscriptionPlan);
 }
 
-export function isLang(value: string): value is Lang {
-  return LANG_VALUES.includes(value as Lang);
+export function isLang(value: unknown): value is Lang {
+  return typeof value === "string" && LANGUAGE_CODE.test(value) && !RESERVED_LANGUAGE_CODES.has(value);
+}
+
+export function isUiLang(value: unknown): value is UiLang {
+  return typeof value === "string" && (LANG_VALUES as readonly string[]).includes(value);
 }

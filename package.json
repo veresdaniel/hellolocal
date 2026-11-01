@@ -8,9 +8,20 @@
   "scripts": {
     "dev:web": "pnpm -C apps/web dev",
     "dev:api": "pnpm -C apps/api start:dev",
+    "local:dev": "node scripts/local-dev.cjs",
+    "local:staging": "node scripts/staging.cjs",
+    "local:live": "node scripts/local-live.cjs",
+    "staging": "node scripts/staging.cjs",
+    "staging:web": "pnpm -C apps/web staging",
+    "staging:api": "pnpm -C apps/api start:staging",
     "build": "pnpm -C apps/api build && pnpm -C apps/web build",
     "start:api": "pnpm -C apps/api start",
     "start:web": "pnpm -C apps/web preview",
+    "test": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:critical": "vitest run --config vitest.critical.config.ts",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:report": "vitest run --config vitest.report.config.ts",
     "lint": "pnpm -C apps/api lint && pnpm -C apps/web lint",
     "lint:fix": "pnpm -C apps/api lint:fix && pnpm -C apps/web lint:fix",
     "format": "pnpm -C apps/api format && pnpm -C apps/web format",
@@ -37,5 +48,13 @@
       "brace-expansion@1": "1.1.21",
       "brace-expansion@2": "2.1.7"
     }
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.2.8",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/ui": "5.0.5",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.5"
   }
 }

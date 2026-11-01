@@ -28,3 +28,25 @@ export async function track(payload: TrackPayload): Promise<void> {
     console.debug("Analytics track failed:", error);
   }
 }
+
+export async function trackProductClick(payload: {
+  productId: string;
+  placeId?: string | null;
+}): Promise<void> {
+  try {
+    const lang = window.location.pathname.split("/")[1] || "hu";
+    const body: { productId: string; placeId?: string } = { productId: payload.productId };
+    if (payload.placeId) body.placeId = payload.placeId;
+    await fetch(`/api/${lang}/analytics/product-click`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Visitor-Id": getVisitorId(),
+      },
+      body: JSON.stringify(body),
+      keepalive: true,
+    });
+  } catch (error) {
+    console.debug("Product click track failed:", error);
+  }
+}

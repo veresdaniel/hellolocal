@@ -1,0 +1,83 @@
+/* Public type, self-hosted where possible.
+   Default: Source Sans 3 for headings and body (no serif).
+   Admin can override via Brand.theme → --font-heading / --font-body.
+   Latin Extended carries Hungarian ő and ű. Admin stays on Inter and Poppins. */
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600 800;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600 800;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/source-sans-3-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/source-sans-3-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Defaults on :root so nested .hl-public (headers, footers) inherit admin overrides. */
+:root {
+  --font-body: "Source Sans 3", sans-serif;
+  --font-heading: "Source Sans 3", sans-serif;
+}
+
+/* Beats inline Inter/Poppins on public pages. Admin is outside .hl-public. */
+.hl-public,
+.hl-public * {
+  font-family: var(--font-body) !important;
+}
+
+.hl-public :is(h1, h2, h3, h4, h5, h6),
+.hl-public :is(h1, h2, h3, h4, h5, h6) *,
+.hl-public .overview__stats strong,
+.hl-public .overview__step > span,
+.hl-public .list-card__title,
+.hl-public .plan-picker__price,
+.hl-public .plan-picker__price span,
+.hl-public .story-card h3,
+.hl-public .not-found__code {
+  font-family: var(--font-heading) !important;
+  font-optical-sizing: auto;
+}
+
+/*
+ * Filter / map-dock controls are UI chrome — never display/serif heading face
+ * (brand may set --font-heading or even --font-body to Fraunces).
+ */
+.hl-public .map-filters-inline,
+.hl-public .map-filters-inline *,
+.hl-public .map-dock,
+.hl-public .map-dock * {
+  font-family: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-optical-sizing: auto;
+}

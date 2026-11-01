@@ -6,13 +6,13 @@ import { getEvents, getPlatformSettings, type Event } from "../api/places.api";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { buildUrl } from "../app/urls";
 import { Link } from "react-router-dom";
-import { HAS_MULTIPLE_SITES } from "../app/config";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { BREAKPOINTS } from "../utils/viewport";
 import { useActiveBoxStore } from "../stores/useActiveBoxStore";
 import { Badge } from "./Badge";
 
 interface EventsListProps {
-  lang: "hu" | "en" | "de";
+  lang: Lang;
 }
 
 export function EventsList({ lang }: EventsListProps) {
@@ -546,45 +546,64 @@ export function EventsList({ lang }: EventsListProps) {
                     to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
                     style={{
                       display: "block",
-                      background:
-                        "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)",
+                      background: "var(--hl-card, #fffdf9)",
                       borderRadius: 12,
                       textDecoration: "none",
                       color: "#3d2952",
                       transition: "all 0.2s",
-                      backdropFilter: "blur(10px)",
                       border: "1px solid rgba(102, 126, 234, 0.25)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       overflow: "hidden",
                       maxWidth: "100%",
                       minWidth: 0,
+                      padding: 0,
+                      margin: 0,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)";
                       e.currentTarget.style.transform = "translateY(-2px)";
                       e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)";
                       e.currentTarget.style.transform = "translateY(0)";
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    {/* Event Image */}
+                    {/* Event Image — flush to card top/sides */}
                     {hasImage && (
                       <div
                         style={{
                           width: "100%",
                           height: 120,
-                          backgroundImage: `url(${imageUrl})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
+                          margin: 0,
+                          padding: 0,
                           position: "relative",
+                          overflow: "hidden",
+                          lineHeight: 0,
+                          borderRadius: "12px 12px 0 0",
+                          background: "var(--hl-card, #fffdf9)",
                         }}
                       >
+                        <img
+                          src={imageUrl!}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            maxWidth: "none",
+                            objectFit: "cover",
+                            objectPosition: "center top",
+                            display: "block",
+                            margin: 0,
+                            padding: 0,
+                            border: 0,
+                            borderRadius: 0,
+                          }}
+                        />
                         {event.isPinned && (
                           <div
                             style={{

@@ -1,6 +1,6 @@
 // entitlements.config.ts
 export type Entitlements = {
-  plan: "BASIC" | "PRO" | "BUSINESS";
+  plan: "BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL";
   status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
   validUntil?: string | null;
 
@@ -83,6 +83,28 @@ export const PLAN_DEFS = {
     },
   },
   BUSINESS: {
+    limits: {
+      placesMax: Infinity,
+      featuredPlacesMax: Infinity,
+      galleryImagesPerPlaceMax: Infinity,
+      eventsPerMonthMax: Infinity,
+      siteMembersMax: Infinity,
+      domainAliasesMax: Infinity,
+      languagesMax: Infinity,
+      galleriesMax: Infinity,
+      imagesPerGalleryMax: Infinity,
+      galleriesPerPlaceMax: Infinity,
+      galleriesPerEventMax: Infinity,
+    },
+    features: {
+      eventsEnabled: true,
+      placeSeoEnabled: true,
+      extrasEnabled: true,
+      customDomainEnabled: true,
+      eventLogEnabled: true,
+    },
+  },
+  MUNICIPAL: {
     limits: {
       placesMax: Infinity,
       featuredPlacesMax: Infinity,

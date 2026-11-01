@@ -5,16 +5,15 @@ import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSeo } from "../seo/useSeo";
 import { getCollectionByDomain, getCollectionBySlug, getPlatformSettings } from "../api/places.api";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
 import { SiteCard } from "../ui/site/SiteCard";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { DEFAULT_LANG, DEFAULT_SITE_SLUG, type Lang } from "../app/config";
+import { DEFAULT_LANG, DEFAULT_SITE_SLUG, type Lang, isLang} from "../app/config";
 import { buildUrl } from "../app/urls";
+import { sanitizeHtml } from "../utils/sanitizeHtml";
+import { sanitizeImageUrl } from "../utils/urlValidation";
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (x === "hu" || x === "en" || x === "de");
-}
 
 export function CollectionDetailPage() {
   const { t, i18n } = useTranslation();
@@ -30,9 +29,16 @@ export function CollectionDetailPage() {
   // Reserved paths that should not be treated as siteKey
   const RESERVED_PATHS = [
     "sites",
+    "regiok",
     "teruletek",
     "regions",
     "regionen",
+    "hely",
+    "place",
+    "ort",
+    "telepules",
+    "town",
+    "gemeinde",
     "admin",
     "static-pages",
     "static-page",
@@ -153,7 +159,15 @@ export function CollectionDetailPage() {
   });
 
   if (isLoading) {
-    return <LoadingSpinner isLoading={true} />;
+    return (
+      <>
+        <FloatingHeader hideMapViewButton={true} />
+        <PublicPageSkeleton withHero label={t("common.loading")} />
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 48px" }}>
+          <PublicCardSkeletonGrid count={6} variant="sites" label={t("common.loading")} />
+        </div>
+      </>
+    );
   }
 
   if (error || !collection) {
@@ -203,17 +217,21 @@ export function CollectionDetailPage() {
 
         {/* Title and description */}
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 700, marginBottom: 16 }}>
+          <h1
+            className="hl-page-title"
+            style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 700, marginBottom: 16 }}
+          >
             {collection.title}
           </h1>
           {collection.description && (
             <div
+              className="hl-content-card"
               style={{
                 fontSize: "1.1em",
                 lineHeight: 1.6,
-                color: "#4b5563",
+                padding: "clamp(16px, 4vw, 24px)",
               }}
-              dangerouslySetInnerHTML={{ __html: collection.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(collection.description) }}
             />
           )}
         </div>
@@ -221,7 +239,7 @@ export function CollectionDetailPage() {
         {/* Items grid */}
         {collection.items.length > 0 && (
           <div>
-            <h2 style={{ fontSize: "1.5em", fontWeight: 600, marginBottom: 24 }}>
+            <h2 className="hl-page-title" style={{ fontSize: "1.5em", fontWeight: 600, marginBottom: 24 }}>
               {t("public.collections.items")}
             </h2>
             <div
@@ -237,16 +255,18 @@ export function CollectionDetailPage() {
                   siteKey: item.siteSlug,
                   path: "",
                 });
+                const itemImage = sanitizeImageUrl(item.image);
 
                 return (
                   <div
                     key={item.id}
+                    className="hl-content-card"
                     onClick={() => navigate(siteUrl)}
                     style={{
                       cursor: "pointer",
                       borderRadius: 12,
                       overflow: "hidden",
-                      border: "1px solid #e5e7eb",
+                      padding: 0,
                       transition: "transform 0.2s, box-shadow 0.2s",
                     }}
                     onMouseEnter={(e) => {
@@ -258,29 +278,36 @@ export function CollectionDetailPage() {
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    {item.image && (
+                    {itemImage && (
                       <div
                         style={{
                           width: "100%",
                           height: 200,
-                          backgroundImage: `url(${item.image})`,
+                          backgroundImage: `url(${itemImage})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }}
                       />
                     )}
                     <div style={{ padding: 16 }}>
-                      <h3 style={{ fontSize: "1.2em", fontWeight: 600, marginBottom: 8 }}>
+                      <h3
+                        style={{
+                          fontSize: "1.2em",
+                          fontWeight: 600,
+                          marginBottom: 8,
+                          color: "var(--hl-ink)",
+                        }}
+                      >
                         {item.title}
                       </h3>
                       {item.description && (
                         <p
                           style={{
                             fontSize: "0.9em",
-                            color: "#6b7280",
+                            color: "var(--hl-muted-on-card)",
                             lineHeight: 1.5,
                           }}
-                          dangerouslySetInnerHTML={{ __html: item.description }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.description) }}
                         />
                       )}
                       {item.isHighlighted && (
@@ -307,7 +334,7 @@ export function CollectionDetailPage() {
         )}
 
         {collection.items.length === 0 && (
-          <div style={{ padding: 48, textAlign: "center", color: "#6b7280" }}>
+          <div className="hl-page-muted" style={{ padding: 48, textAlign: "center" }}>
             <p>{t("public.collections.noItems")}</p>
           </div>
         )}

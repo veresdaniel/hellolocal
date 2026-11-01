@@ -14,14 +14,17 @@ import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
 import { buildUrl } from "../app/urls";
+import { placeEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
-import { HAS_MULTIPLE_SITES } from "../app/config";
+import { NotFoundPage } from "./NotFoundPage";
+import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { devLog } from "../lib/devLog";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
@@ -29,6 +32,7 @@ import { useToast } from "../contexts/ToastContext";
 import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
 import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 import { GalleryViewer } from "../components/GalleryViewer";
+import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
@@ -61,6 +65,8 @@ export function EventDetailPage() {
     },
     enabled: shouldLoadEvent && !!siteKey && !!lang,
   });
+
+  usePublicGaOverride(event?.gaMeasurementId);
 
   const queryClient = useQueryClient();
 
@@ -463,59 +469,66 @@ export function EventDetailPage() {
   });
 
   if (!slug) {
-    return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingEvent")}
-        variant="minimal"
-      />
-    );
+    return <NotFoundPage />;
   }
 
   if (resolveQ.isLoading) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
+    return (
+      <>
+        <FloatingHeader />
+        <PublicPageSkeleton label={t("common.loading")} />
+      </>
+    );
   }
 
   if (resolveQ.isError) {
+    const status = (resolveQ.error as { status?: number })?.status;
+    if (status === 404) {
+      return <NotFoundPage />;
+    }
+    devLog.error("[EventDetailPage] resolve failed", resolveQ.error);
     return (
       <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingEvent")}
+        title={t("error.internalServerError")}
+        message={t("error.serverErrorDescription")}
         variant="minimal"
+        statusCode={500}
       />
     );
   }
 
   // Check if resolved entity type is event
   if (resolveQ.data && resolveQ.data.entityType !== "event") {
+    return <NotFoundPage />;
+  }
+
+  if (isLoading) {
     return (
-      <ErrorState
-        title={t("error.notFound")}
-        message={t("public.errorLoadingEvent")}
-        variant="minimal"
-      />
+      <>
+        <FloatingHeader />
+        <PublicPageSkeleton label={t("common.loading")} />
+      </>
     );
   }
 
-  // Show loading spinner while loading event
-  if (isLoading) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
-  }
-
   if (isError) {
+    const status = (error as { status?: number } | null)?.status;
+    if (status === 404) {
+      return <NotFoundPage />;
+    }
+    devLog.error("[EventDetailPage] event load failed", error);
     return (
       <ErrorState
-        title={t("error.errorOccurred")}
-        message={t("public.errorLoadingEvent")}
+        title={t("error.internalServerError")}
+        message={t("error.serverErrorDescription")}
         variant="minimal"
+        statusCode={500}
       />
     );
   }
 
   if (!event) {
-    return (
-      <ErrorState title={t("error.notFound")} message={t("public.noEvents")} variant="minimal" />
-    );
+    return <NotFoundPage />;
   }
 
   // Build edit URL if user can edit
@@ -530,7 +543,7 @@ export function EventDetailPage() {
       <div
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
+          background: "transparent",
           paddingTop: "clamp(72px, 8vw, 88px)",
         }}
       >
@@ -559,6 +572,9 @@ export function EventDetailPage() {
               <img
                 src={event.heroImage}
                 alt={event.name}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 style={{
                   width: "100%",
                   height: "100%",
@@ -651,40 +667,32 @@ export function EventDetailPage() {
           {/* Back Link */}
           <div style={{ margin: "0 16px 16px" }}>
             <Link
-              to={buildUrl({ lang: lang as "hu" | "en" | "de", siteKey, path: "" })}
+              to={buildUrl({ lang: lang as Lang, siteKey, path: "" })}
+              className="hl-page-link"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                color: "#667eea",
-                textDecoration: "none",
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 500,
-                transition: "color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#764ba2";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#667eea";
+                minHeight: 44,
               }}
             >
               ← {t("public.backToHome")}
             </Link>
           </div>
 
-          {/* Title - directly below image with small offset */}
+          {/* Title - light on navy page backdrop */}
           <div style={{ margin: "0 16px 16px" }}>
             <h1
+              className="hl-page-title"
               style={{
                 margin: 0,
                 fontSize: "clamp(28px, 5vw, 42px)",
                 fontWeight: 700,
                 fontFamily:
                   "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                color: "#1a1a1a",
                 letterSpacing: "-0.02em",
                 lineHeight: 1.2,
                 wordWrap: "break-word",
@@ -707,9 +715,9 @@ export function EventDetailPage() {
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
-                  background: "#f8f9fa",
+                  background: "var(--hl-card)",
                   borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid var(--hl-line-on-card)",
                   flexWrap: "wrap",
                 }}
               >
@@ -722,7 +730,13 @@ export function EventDetailPage() {
                     minWidth: "200px",
                   }}
                 >
-                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "var(--hl-ink)",
+                    }}
+                  >
                     {!myRating
                       ? lang === "hu"
                         ? "Értékeld az eseményt:"
@@ -763,9 +777,9 @@ export function EventDetailPage() {
                   justifyContent: "space-between",
                   gap: "12px",
                   padding: "12px",
-                  background: "#f8f9fa",
+                  background: "var(--hl-card)",
                   borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
+                  border: "1px solid var(--hl-line-on-card)",
                   flexWrap: "wrap",
                 }}
               >
@@ -952,9 +966,9 @@ export function EventDetailPage() {
                         </strong>
                         <Link
                           to={buildUrl({
-                            lang: lang as "hu" | "en" | "de",
+                            lang: lang as Lang,
                             siteKey,
-                            path: `place/${event.placeSlug}`,
+                            path: placeEntityPath(lang as Lang, event.placeSlug),
                           })}
                           style={{
                             color: "#1a1a1a",
@@ -1038,46 +1052,53 @@ export function EventDetailPage() {
             )}
           </div>
 
-          {/* Short Description */}
-          {event.shortDescription && (
+          {/* Short + long description in cream card for readable body copy */}
+          {(event.shortDescription || event.description) && (
             <div
+              className="hl-content-card"
               style={{
-                fontSize: 18,
-                lineHeight: 1.8,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                color: "#333",
                 margin: "0 16px 32px",
+                padding: "clamp(16px, 4vw, 28px)",
+                width: "calc(100% - 32px)",
               }}
             >
-              {event.shortDescription}
-            </div>
-          )}
-
-          {/* Description with shortcode support */}
-          {event.description && (
-            <div
-              ref={descriptionRef}
-              style={{
-                fontSize: 16,
-                lineHeight: 1.8,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                color: "#555",
-                margin: "0 16px 32px",
-              }}
-            >
-              <ShortcodeRenderer
-                content={event.description}
-                lang={lang!}
-                siteKey={siteKey!}
-                hideGalleries={
-                  // Hide galleries in description if they're shown in opening hours position
-                  galleryIds.length > 0 && Object.keys(galleries).length > 0
-                }
-              />
+              {event.shortDescription && (
+                <div
+                  style={{
+                    fontSize: 18,
+                    lineHeight: 1.8,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 500,
+                    color: "var(--hl-ink)",
+                    marginBottom: event.description ? 16 : 0,
+                  }}
+                >
+                  {event.shortDescription}
+                </div>
+              )}
+              {event.description && (
+                <div
+                  ref={descriptionRef}
+                  className="hl-richtext"
+                  style={{
+                    fontSize: 16,
+                    lineHeight: 1.8,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontWeight: 400,
+                  }}
+                >
+                  <ShortcodeRenderer
+                    content={event.description}
+                    lang={lang!}
+                    siteKey={siteKey!}
+                    hideGalleries={
+                      galleryIds.length > 0 && Object.keys(galleries).length > 0
+                    }
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1085,24 +1106,25 @@ export function EventDetailPage() {
           {event.location && (
             <div style={{ margin: "0 16px 32px" }}>
               <h2
+                className="hl-page-title"
                 style={{
                   fontSize: 24,
                   fontWeight: 700,
                   fontFamily:
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   marginBottom: 16,
-                  color: "#1a1a1a",
                 }}
               >
                 {t("public.location")}
               </h2>
               <div
+                className="hl-content-card"
                 style={{
                   width: "100%",
                   height: 300,
                   borderRadius: 12,
                   overflow: "hidden",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                  padding: 0,
                 }}
               >
                 <iframe

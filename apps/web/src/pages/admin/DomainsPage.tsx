@@ -1,4 +1,5 @@
-// src/pages/admin/BrandsPage.tsx
+// src/pages/admin/DomainsPage.tsx
+// UI: Domains (hu: Domainek). Internal Brand API/types unchanged.
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
@@ -21,10 +22,10 @@ import {
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { isValidImageUrl } from "../../utils/urlValidation";
 
-export function BrandsPage() {
+export function DomainsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  usePageTitle("admin.brands");
+  usePageTitle("admin.domains");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export function BrandsPage() {
       const data = await getBrands();
       setBrands(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.loadBrandsFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.loadDomainsFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -139,7 +140,7 @@ export function BrandsPage() {
       resetForm();
       await loadBrands();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.createBrandFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.createDomainFailed"));
     }
   };
 
@@ -171,18 +172,18 @@ export function BrandsPage() {
       resetForm();
       await loadBrands();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.updateBrandFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.updateDomainFailed"));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deleteBrand"))) return;
+    if (!confirm(t("admin.confirmations.deleteDomain"))) return;
 
     try {
       await deleteBrand(id);
       await loadBrands();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deleteBrandFailed"));
+      setError(err instanceof Error ? err.message : t("admin.errors.deleteDomainFailed"));
     }
   };
 
@@ -246,8 +247,8 @@ export function BrandsPage() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
       <AdminPageHeader
-        title={t("admin.brands")}
-        newButtonLabel={t("admin.forms.newBrand")}
+        title={t("admin.domains")}
+        newButtonLabel={t("admin.forms.newDomain")}
         onNewClick={() => setIsCreating(true)}
         showNewButton={!isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
@@ -293,7 +294,7 @@ export function BrandsPage() {
               fontWeight: 700,
             }}
           >
-            {editingId ? t("admin.forms.editBrand") : t("admin.forms.newBrand")}
+            {editingId ? t("admin.forms.editDomain") : t("admin.forms.newDomain")}
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -538,7 +539,7 @@ export function BrandsPage() {
 
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                    {t("admin.brandBadgeIcon")}
+                    {t("admin.domainBadgeIcon")}
                   </label>
                   <input
                     type="text"
@@ -730,7 +731,7 @@ export function BrandsPage() {
           data={filteredBrands}
           getItemId={(brand) => brand.id}
           searchQuery={searchQuery}
-          searchPlaceholder={t("admin.searchPlaceholders.brands")}
+          searchPlaceholder={t("admin.searchPlaceholders.domains")}
           onSearchChange={setSearchQuery}
           isLoading={isLoading}
           filterFn={(brand, query) => brand.name.toLowerCase().includes(query.toLowerCase())}

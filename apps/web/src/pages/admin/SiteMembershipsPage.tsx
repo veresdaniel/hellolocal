@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import {
@@ -18,22 +18,22 @@ import {
   type Site,
   type User,
 } from "../../api/admin.api";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
   AdminResponsiveTable,
   type TableColumn,
   type CardField,
 } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { HAS_MULTIPLE_SITES } from "../../app/config";
 import { isSuperadmin } from "../../utils/roleHelpers";
 
 export function SiteMembershipsPage() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
-  usePageTitle("admin.tenantMemberships");
+  const userIsSuperadmin = currentUser ? isSuperadmin(currentUser.role) : false;
+  usePageTitle("admin.dashboardCards.regionAndMemberships");
   const [memberships, setMemberships] = useState<SiteMembership[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -50,15 +50,24 @@ export function SiteMembershipsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadSites();
+    if (userIsSuperadmin) {
+      loadSites();
+    }
     loadUsers();
-  }, []);
+  }, [userIsSuperadmin]);
 
   useEffect(() => {
     if (selectedSiteId) {
       setFormData((prev) => ({ ...prev, siteId: selectedSiteId }));
+      loadMemberships();
+    } else {
+      // Safer empty state: never dump all sites' memberships when no régió is selected.
+      setMemberships([]);
+      setIsLoading(false);
+      setError(null);
+      setIsCreating(false);
+      setEditingId(null);
     }
-    loadMemberships();
   }, [selectedSiteId]);
 
   const loadSites = async () => {
@@ -80,10 +89,15 @@ export function SiteMembershipsPage() {
   };
 
   const loadMemberships = async () => {
+    if (!selectedSiteId) {
+      setMemberships([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getSiteMemberships(selectedSiteId || undefined);
+      const data = await getSiteMemberships(selectedSiteId);
       setMemberships(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadTenantMembershipsFailed"));
@@ -242,29 +256,42 @@ export function SiteMembershipsPage() {
     { key: "role", render: (m) => t(`admin.roles.${m.role}`) },
   ];
 
-  const userIsSuperadmin = currentUser ? isSuperadmin(currentUser.role) : false;
-
-  if (!userIsSuperadmin) {
-    return <div style={{ padding: 24 }}>{t("admin.accessDenied")}</div>;
-  }
+  const langPrefix = `/${i18n.language || "hu"}`;
+  const siteSelectLocked = !userIsSuperadmin || !!selectedSiteId || !!editingId;
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
       <AdminPageHeader
-        title={t("admin.tenantMemberships")}
+        title={t("admin.dashboardCards.regionAndMemberships")}
+        subtitle={t("admin.dashboardCards.regionAndMembershipsDesc")}
         newButtonLabel={t("admin.forms.newTenantMembership")}
         onNewClick={() => setIsCreating(true)}
-        showNewButton={!isCreating && !editingId}
+        showNewButton={!isCreating && !editingId && !!selectedSiteId}
         isCreatingOrEditing={isCreating || !!editingId}
         onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-          // Back button will handle navigation
         }}
         saveLabel={editingId ? t("common.update") : t("common.create")}
+        backTo={`${langPrefix}/admin`}
       />
+
+      {!selectedSiteId && (
+        <div
+          style={{
+            padding: 16,
+            background: "#fff3cd",
+            color: "#856404",
+            borderRadius: 8,
+            marginBottom: 24,
+            border: "1px solid #ffeeba",
+          }}
+        >
+          {t("admin.selectSiteFirst")}
+        </div>
+      )}
 
       {error && (
         <div
@@ -278,6 +305,90 @@ export function SiteMembershipsPage() {
         >
           {error}
         </div>
+      )}
+
+      {/* Region CRUD — superadmin only */}
+      {userIsSuperadmin && HAS_MULTIPLE_SITES && !isCreating && !editingId && (
+        <section
+          style={{
+            padding: "clamp(16px, 4vw, 24px)",
+            background: "white",
+            borderRadius: 16,
+            marginBottom: 24,
+            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.12)",
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 8px 0",
+              color: "#667eea",
+              fontSize: "clamp(18px, 4vw, 20px)",
+              fontWeight: 700,
+            }}
+          >
+            {t("admin.dashboardCards.manageRegions")}
+          </h2>
+          <p
+            style={{
+              margin: "0 0 16px 0",
+              color: "#64748b",
+              fontSize: "clamp(14px, 3vw, 15px)",
+            }}
+          >
+            {t("admin.dashboardCards.manageRegionsHint")}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            <Link
+              to={`${langPrefix}/admin/sites`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 16px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "#fff",
+                borderRadius: 8,
+                textDecoration: "none",
+                fontWeight: 600,
+                fontSize: 14,
+              }}
+            >
+              🗺️ {t("admin.dashboardCards.manageRegions")}
+            </Link>
+            {selectedSiteId && (
+              <Link
+                to={`${langPrefix}/admin/sites/${selectedSiteId}/edit`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 16px",
+                  background: "#f1f5f9",
+                  color: "#334155",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                {t("admin.forms.editSite")}
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
+      {!isCreating && !editingId && (
+        <h2
+          style={{
+            margin: "0 0 16px 0",
+            color: "#667eea",
+            fontSize: "clamp(18px, 4vw, 20px)",
+            fontWeight: 700,
+          }}
+        >
+          {t("admin.dashboardCards.membershipsSection")}
+        </h2>
       )}
 
       {(isCreating || editingId) && (
@@ -311,7 +422,7 @@ export function SiteMembershipsPage() {
               <select
                 value={formData.siteId}
                 onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
-                disabled={!!selectedSiteId || !!editingId}
+                disabled={siteSelectLocked}
                 style={{
                   width: "100%",
                   padding: "12px 16px",
@@ -324,11 +435,17 @@ export function SiteMembershipsPage() {
                 }}
               >
                 <option value="">{t("admin.selectSite")}</option>
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.translations.find((t) => t.lang === "hu")?.name || site.slug}
-                  </option>
-                ))}
+                {userIsSuperadmin
+                  ? sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.translations.find((tr) => tr.lang === "hu")?.name || site.slug}
+                      </option>
+                    ))
+                  : selectedSiteId && (
+                      <option value={selectedSiteId}>
+                        {sites.find((s) => s.id === selectedSiteId)?.slug || selectedSiteId}
+                      </option>
+                    )}
               </select>
               {formErrors.siteId && (
                 <p
@@ -431,7 +548,7 @@ export function SiteMembershipsPage() {
         </div>
       )}
 
-      {!isCreating && !editingId && (
+      {!isCreating && !editingId && selectedSiteId && (
         <AdminResponsiveTable<SiteMembership>
           data={filteredMemberships}
           getItemId={(membership) => membership.id}

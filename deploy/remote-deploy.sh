@@ -4,6 +4,12 @@ set -euo pipefail
 BRANCH="${BRANCH:-main}"
 REPO="https://github.com/veresdaniel/hellolocal.git"
 
+if [ "$BRANCH" = "staging" ]; then
+  echo "A staging ág a beta környezet. Használd a deploy/remote-deploy-beta.sh szkriptet."
+  echo "Ez a szkript a hellolocal production Postgresre telepítene, ezért megáll."
+  exit 1
+fi
+
 update_checkout() {
   local dir="$1"
   local branch="$2"

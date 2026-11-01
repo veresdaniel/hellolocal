@@ -1,5 +1,6 @@
 // src/pages/admin/TenantsPage.tsx
 import { useTranslation } from "react-i18next";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,7 @@ import {
 } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import {
   AdminResponsiveTable,
@@ -26,7 +28,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
 import { findTranslation } from "../../utils/langHelpers";
-import type { Lang } from "../../types/enums";
+import type { Lang} from "../../types/enums";
 
 export function SitesPage() {
   const { t, i18n } = useTranslation();
@@ -85,7 +87,7 @@ export function SitesPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!formData.slug.trim()) errors.slug = t("admin.validation.slugRequired");
-    if (!formData.brandId.trim()) errors.brandId = t("admin.validation.brandRequired");
+    if (!formData.brandId.trim()) errors.brandId = t("admin.validation.domainRequired");
     if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -96,7 +98,7 @@ export function SitesPage() {
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         shortDescription: string | null;
         description: string | null;
@@ -128,6 +130,11 @@ export function SitesPage() {
           heroImage: formData.heroImageDe || null,
         });
       }
+      appendExtraLanguages(translations, formData, "name", [
+        "shortDescription",
+        "description",
+        "heroImage",
+      ]);
       await createSite({
         slug: formData.slug,
         brandId: formData.brandId,
@@ -148,7 +155,7 @@ export function SitesPage() {
 
     try {
       const translations: Array<{
-        lang: "hu" | "en" | "de";
+        lang: Lang;
         name: string;
         shortDescription: string | null;
         description: string | null;
@@ -180,6 +187,11 @@ export function SitesPage() {
           heroImage: formData.heroImageDe || null,
         });
       }
+      appendExtraLanguages(translations, formData, "name", [
+        "shortDescription",
+        "description",
+        "heroImage",
+      ]);
       await updateSite(id, {
         slug: formData.slug,
         brandId: formData.brandId,
@@ -346,9 +358,7 @@ export function SitesPage() {
                         display: "block",
                         marginBottom: 8,
                         color:
-                          (selectedLang === "hu" && formErrors.nameHu) ||
-                          (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe)
+                          readLang(formErrors, "name", selectedLang)
                             ? "#dc2626"
                             : "#667eea",
                         fontWeight: 600,
@@ -359,21 +369,26 @@ export function SitesPage() {
                     >
                       {t("common.name")} ({selectedLang.toUpperCase()}) *
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "site",
+                        field: "name",
+                        lang: selectedLang,
+                        siteId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                      }}
+                      value={readLang(formData, "name", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "name", selectedLang, text))
+                      }
+                    >
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.nameHu
-                          : selectedLang === "en"
-                            ? formData.nameEn
-                            : formData.nameDe
+                        readLang(formData, "name", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, nameHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, nameEn: e.target.value });
-                        else setFormData({ ...formData, nameDe: e.target.value });
+                        setFormData(patchLang(formData, "name", selectedLang, e.target.value));
                       }}
                       style={{
                         width: "100%",
@@ -382,27 +397,21 @@ export function SitesPage() {
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         border:
-                          (selectedLang === "hu" && formErrors.nameHu) ||
-                          (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe)
+                          readLang(formErrors, "name", selectedLang)
                             ? "2px solid #fca5a5"
                             : "2px solid #e0e7ff",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
                         background:
-                          (selectedLang === "hu" && formErrors.nameHu) ||
-                          (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe)
+                          readLang(formErrors, "name", selectedLang)
                             ? "#fef2f2"
                             : "white",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
                         const hasError =
-                          (selectedLang === "hu" && formErrors.nameHu) ||
-                          (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe);
+                          readLang(formErrors, "name", selectedLang);
                         if (!hasError) {
                           e.target.style.borderColor = "#667eea";
                           e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -410,24 +419,17 @@ export function SitesPage() {
                       }}
                       onBlur={(e) => {
                         const hasError =
-                          (selectedLang === "hu" && formErrors.nameHu) ||
-                          (selectedLang === "en" && formErrors.nameEn) ||
-                          (selectedLang === "de" && formErrors.nameDe);
+                          readLang(formErrors, "name", selectedLang);
                         e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
                         e.target.style.boxShadow = "none";
                       }}
                     />
-                    {((selectedLang === "hu" && formErrors.nameHu) ||
-                      (selectedLang === "en" && formErrors.nameEn) ||
-                      (selectedLang === "de" && formErrors.nameDe)) && (
+                    </AiPostfixField>
+                    {(readLang(formErrors, "name", selectedLang)) && (
                       <div
                         style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}
                       >
-                        {selectedLang === "hu"
-                          ? formErrors.nameHu
-                          : selectedLang === "en"
-                            ? formErrors.nameEn
-                            : formErrors.nameDe}
+                        {readLang(formErrors, "name", selectedLang)}
                       </div>
                     )}
                   </div>
@@ -447,21 +449,30 @@ export function SitesPage() {
                     >
                       {t("admin.shortDescription")} ({selectedLang.toUpperCase()})
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "site",
+                        field: "shortDescription",
+                        lang: selectedLang,
+                        siteId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                      }}
+                      value={readLang(formData, "shortDescription", selectedLang)}
+                      onApply={(text) => {
+                        const plain = text
+                          .replace(/<[^>]*>/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim();
+                        setFormData(patchLang(formData, "shortDescription", selectedLang, plain));
+                      }}
+                    >
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.shortDescriptionHu
-                          : selectedLang === "en"
-                            ? formData.shortDescriptionEn
-                            : formData.shortDescriptionDe
+                        readLang(formData, "shortDescription", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, shortDescriptionHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, shortDescriptionEn: e.target.value });
-                        else setFormData({ ...formData, shortDescriptionDe: e.target.value });
+                        setFormData(patchLang(formData, "shortDescription", selectedLang, e.target.value));
                       }}
                       style={{
                         width: "100%",
@@ -484,6 +495,7 @@ export function SitesPage() {
                         e.target.style.boxShadow = "none";
                       }}
                     />
+                    </AiPostfixField>
                   </div>
 
                   {/* Description (TipTap Editor) */}
@@ -503,22 +515,21 @@ export function SitesPage() {
                     </label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.descriptionHu
-                          : selectedLang === "en"
-                            ? formData.descriptionEn
-                            : formData.descriptionDe
+                        readLang(formData, "description", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, descriptionHu: value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, descriptionEn: value });
-                        else setFormData({ ...formData, descriptionDe: value });
+                        setFormData(patchLang(formData, "description", selectedLang, value));
                       }}
                       placeholder={t("common.description")}
                       height={200}
                       uploadFolder="editor/sites"
+                      aiDraft={{
+                        kind: "site",
+                        field: "description",
+                        lang: selectedLang,
+                        siteId: editingId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                      }}
                     />
                   </div>
 
@@ -540,18 +551,10 @@ export function SitesPage() {
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.heroImageHu
-                          : selectedLang === "en"
-                            ? formData.heroImageEn
-                            : formData.heroImageDe
+                        readLang(formData, "heroImage", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, heroImageHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, heroImageEn: e.target.value });
-                        else setFormData({ ...formData, heroImageDe: e.target.value });
+                        setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
                       }}
                       placeholder="https://example.com/image.jpg"
                       style={{
@@ -591,7 +594,7 @@ export function SitesPage() {
               )}
             </LanguageAwareForm>
 
-            {/* Other fields - Brand, Domain, Active - after Name, Slug, Description */}
+            {/* Other fields - Domain, DNS Domain, Active - after Name, Slug, Description */}
             <div
               style={{
                 display: "grid",
@@ -611,7 +614,7 @@ export function SitesPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.brand")} *
+                  {t("admin.domain")} *
                 </label>
                 <select
                   value={formData.brandId}
@@ -640,7 +643,7 @@ export function SitesPage() {
                     e.target.style.boxShadow = "none";
                   }}
                 >
-                  <option value="">{t("admin.selectBrand")}</option>
+                  <option value="">{t("admin.selectDomain")}</option>
                   {brands.map((brand) => (
                     <option key={brand.id} value={brand.id}>
                       {brand.name}
@@ -672,6 +675,9 @@ export function SitesPage() {
                   }
                   label={t("admin.primaryDomain")}
                 />
+                <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 13, lineHeight: 1.45 }}>
+                  {t("admin.siteEdit.domain.severalDomains")}
+                </p>
               </div>
             </div>
 
@@ -736,7 +742,7 @@ export function SitesPage() {
               key: "name",
               label: t("common.name"),
               render: (site) => {
-                const currentLang = (i18n.language || "hu").split("-")[0] as "hu" | "en" | "de";
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                 const translation =
                   site.translations.find((t) => t.lang === currentLang) ||
                   findTranslation(site.translations, "hu" as Lang);

@@ -1,7 +1,6 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { Site } from "../../api/places.api";
-import { buildUrl } from "../../app/urls";
+import { regionAddress } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../../api/places.api";
@@ -32,7 +31,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
 
   // Default gradient colors for site cards
   const gradients = [
-    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "linear-gradient(160deg, #1b1730 0%, #322b52 100%)",
     "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
@@ -40,13 +39,11 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
     "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
   ];
   const gradient = gradients[index % gradients.length];
+  const siteUrl = regionAddress({ lang, slug: site.slug, primaryDomain: site.primaryDomain });
 
   return (
     <div
       style={{
-        opacity: 0,
-        transform: "translateY(30px)",
-        animation: `fadeInUp 0.6s ease-out ${index * 0.08}s forwards`,
         width: "100%",
         maxWidth: "100%",
         minWidth: 0,
@@ -56,12 +53,6 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
       }}
     >
       <style>{`
-        @keyframes fadeInUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
         .site-card:hover .card-read-more span:last-child {
           transform: translateX(6px);
         }
@@ -69,8 +60,8 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
           transform: scale(1.05);
         }
       `}</style>
-      <Link
-        to={buildUrl({ lang, siteKey: site.slug, path: "" })}
+      <a
+        href={siteUrl}
         style={{
           textDecoration: "none",
           color: "inherit",
@@ -85,10 +76,10 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
         <article
           className="site-card"
           style={{
-            background: "white",
-            borderRadius: 20,
+            background: "#fffdf9",
+            borderRadius: 22,
             overflow: "hidden",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 16px 40px rgba(28, 22, 18, 0.08)",
             transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
             cursor: "pointer",
             height: "100%",
@@ -192,7 +183,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
                   margin: 0,
                   fontSize: "clamp(18px, 2vw, 22px)",
                   fontWeight: 700,
-                  color: "#1a1a1a",
+                  color: "#1b1730",
                   lineHeight: 1.3,
                   marginBottom: 8,
                   minWidth: 0,
@@ -237,7 +228,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  color: "#667eea",
+                  color: "#c45c26",
                   fontSize: 15,
                   fontWeight: 600,
                   transition: "all 0.3s ease",
@@ -258,7 +249,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
             </div>
           </div>
         </article>
-      </Link>
+      </a>
     </div>
   );
 }

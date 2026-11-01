@@ -1,6 +1,14 @@
 
 import "dotenv/config";
-import { PrismaClient, Prisma, Lang, UserRole, SiteRole, PlaceRole, SlugEntityType, SubscriptionPlan, SubscriptionStatus, BillingPeriod, SitePlan, PlacePlan } from "@prisma/client";
+import {
+  ETYEK_EVENTS,
+  ETYEK_PLACES,
+  applyEtyekHours,
+  applyEtyekSample,
+  upcomingSaturday,
+} from "./etyek-sample";
+import { PrismaClient, Prisma, UserRole, SiteRole, PlaceRole, SlugEntityType, SubscriptionPlan, SubscriptionStatus, BillingPeriod, SitePlan, PlacePlan } from "@prisma/client";
+import { Lang } from "../src/common/language-code";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
 
@@ -102,7 +110,19 @@ async function ensureSite(args: {
   brandId: string;
   isActive?: boolean;
   plan?: SitePlan;
-  translations: Array<{ lang: Lang; name: string; shortDescription?: string | null; description?: string | null; heroImage?: string | null; seoTitle?: string | null; seoDescription?: string | null; seoKeywords?: string[] }>;
+  translations: Array<{
+    lang: Lang;
+    name: string;
+    shortDescription?: string | null;
+    description?: string | null;
+    heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
+    seoTitle?: string | null;
+    seoDescription?: string | null;
+    seoKeywords?: string[];
+  }>;
 }) {
   const { slug, brandId, isActive = true, plan, translations } = args;
 
@@ -122,6 +142,9 @@ async function ensureSite(args: {
             shortDescription: t.shortDescription ?? null,
             description: t.description ?? null,
             heroImage: t.heroImage ?? null,
+            landingHtml: t.landingHtml ?? null,
+            listIntroHtml: t.listIntroHtml ?? null,
+            listIntroImage: t.listIntroImage ?? null,
             seoTitle: t.seoTitle ?? null,
             seoDescription: t.seoDescription ?? null,
             seoKeywords: t.seoKeywords ?? [],
@@ -143,6 +166,9 @@ async function ensureSite(args: {
         shortDescription: t.shortDescription ?? null,
         description: t.description ?? null,
         heroImage: t.heroImage ?? null,
+        landingHtml: t.landingHtml ?? null,
+        listIntroHtml: t.listIntroHtml ?? null,
+        listIntroImage: t.listIntroImage ?? null,
         seoTitle: t.seoTitle ?? null,
         seoDescription: t.seoDescription ?? null,
         seoKeywords: t.seoKeywords ?? [],
@@ -154,6 +180,9 @@ async function ensureSite(args: {
         shortDescription: t.shortDescription ?? null,
         description: t.description ?? null,
         heroImage: t.heroImage ?? null,
+        landingHtml: t.landingHtml ?? null,
+        listIntroHtml: t.listIntroHtml ?? null,
+        listIntroImage: t.listIntroImage ?? null,
         seoTitle: t.seoTitle ?? null,
         seoDescription: t.seoDescription ?? null,
         seoKeywords: t.seoKeywords ?? [],
@@ -795,6 +824,11 @@ async function ensureSubscriptionForPlace(placeId: string, plan: SubscriptionPla
 
 // -------------------- seed content --------------------
 
+type TownSeed = {
+  name: string;
+  center: { lat: number; lng: number };
+};
+
 type SiteSeed = {
   key: string;
   slug: string;
@@ -803,6 +837,8 @@ type SiteSeed = {
   center: { lat: number; lng: number };
   townName: string;
   townCenter: { lat: number; lng: number };
+  /** Extra settlements under a multi-town régió (e.g. Etyek–Budai). */
+  towns?: TownSeed[];
   placeCount: number;
 };
 
@@ -819,6 +855,11 @@ const SITES: SiteSeed[] = [
     center: { lat: 47.4470, lng: 18.7480 },
     townName: "Etyek",
     townCenter: { lat: 47.4470, lng: 18.7480 },
+    towns: [
+      { name: "Etyek", center: { lat: 47.4470, lng: 18.7480 } },
+      { name: "Budajenő", center: { lat: 47.5550, lng: 18.8040 } },
+      { name: "Tök", center: { lat: 47.5480, lng: 18.7380 } },
+    ],
     placeCount: 15,
   },
   {
@@ -871,32 +912,13 @@ const TAG_SETS = [
 ];
 
 const PRICE_BANDS = [
-  { hu: "Költségvetési", en: "Budget", de: "Budget" },
-  { hu: "Középkategória", en: "Mid-range", de: "Mittelklasse" },
+  { hu: "Megfizethető", en: "Affordable", de: "Günstig" },
+  { hu: "Közepes", en: "Moderate", de: "Mittel" },
   { hu: "Prémium", en: "Premium", de: "Premium" },
   { hu: "Luxus", en: "Luxury", de: "Luxus" },
 ];
 
 function placeTemplates(siteKey: string) {
-  if (siteKey === "etyek") {
-    return [
-      ["Hernák Estate", "Borászat"],
-      ["Etyeki SajtMűhely", "Kézműves"],
-      ["Budai Csokoládé Manufaktúra", "Kézműves"],
-      ["Sonkás Porta", "Élelmiszer termelő"],
-      ["Etyeki Termelői Piac", "Piac"],
-      ["Füge & Levendula Kávézó", "Vendéglátás"],
-      ["Pezsgő Terasz", "Vendéglátás"],
-      ["Etyek Panorama Kilátó", "Látnivaló"],
-      ["Bikavér Pince", "Borászat"],
-      ["Szőlőskert Vendégház", "Szállás"],
-      ["Gasztro Workshop Ház", "Kézműves"],
-      ["Kerékpár Szerviz Etyek", "Szolgáltatás"],
-      ["Helyi Mézesház", "Élelmiszer termelő"],
-      ["Etyek Barber", "Szolgáltatás"],
-      ["Piknik Réten", "Vendéglátás"],
-    ];
-  }
   if (siteKey === "balaton") {
     return [
       ["Tihanyi Apátság", "Látnivaló"],
@@ -1145,6 +1167,12 @@ async function main() {
     // Determine site plan based on subscription
     const sitePlan: SitePlan = s.key === "szeged" ? "basic" : s.key === "balaton" ? "pro" : "business";
 
+    const szegedListIntroHtml =
+      "<p><strong>Szeged a napfény városa.</strong> A Tisza partján, a belváros tágas tereinek árnyékában és a paprikaillatú konyhákban mindig van mit felfedezni.</p><p>Böngéssz helyek és programok között — kávézók, múzeumok, teraszok és esti események egy helyen.</p>";
+
+    const etyekLandingHtml =
+      "<p><strong>Etyek–Budai borvidék.</strong> Pincék, manufaktúrák és falusi asztalok a budai hegyek nyugati oldalán.</p><p>Válassz települést, vagy nézd meg az egész régiót a térképen.</p>";
+
     const site = await ensureSite({
       slug: s.slug,
       brandId: brand.id,
@@ -1155,6 +1183,20 @@ async function main() {
         shortDescription: `<p>${s.nameByLang[lang]} – seedelt demo tartalom.</p>`,
         description: `<p>Demo site a fejlesztéshez. Lokációk, események és analitika mintákkal.</p>`,
         heroImage: picsum(`${s.slug}-hero`, 1800, 900),
+        ...(s.key === "szeged"
+          ? {
+              listIntroHtml: szegedListIntroHtml,
+              listIntroImage: "/marketing/side-street.jpg",
+            }
+          : {}),
+        ...(s.key === "etyek"
+          ? {
+              landingHtml:
+                lang === "hu"
+                  ? etyekLandingHtml
+                  : `<p><strong>${s.nameByLang[lang]}.</strong> Cellars, workshops and village tables west of Buda.</p><p>Pick a settlement, or explore the whole region on the map.</p>`,
+            }
+          : {}),
         seoTitle: s.nameByLang[lang],
         seoDescription: `${s.nameByLang[lang]} – helyi felfedezés és programok.`,
         seoKeywords: [s.slug, "local", "places", "events"],
@@ -1225,29 +1267,50 @@ async function main() {
       isFirstInstance = false;
     }
 
-    // town (1 per site for MVP)
-    const townId = await ensureTown({
-      siteId: site.id,
-      huName: s.townName,
-      lat: s.townCenter.lat,
-      lng: s.townCenter.lng,
-      translations: s.langs.map((lang) => ({
-        lang,
-        name: s.townName,
-        description:
-          lang === "hu"
-            ? `<p>${s.townName} – demó leírás, látnivalók és szolgáltatások.</p>`
-            : `<p>${s.townName} – demo description.</p>`,
-        heroImage: picsum(`${s.slug}-${lang}-town`, 1600, 900),
-        seoTitle: s.townName,
-        seoDescription: `${s.townName} – település oldal.`,
-      })),
-    });
-
-    // Town slug
-    for (const lang of s.langs) {
-      await upsertSlug({ siteId: site.id, lang, slug: slugify(s.townName), entityType: "town", entityId: townId });
+    // Towns: multi-town régió (etyek) gets several settlements; Szeged-like sites stay single-town.
+    const townSeeds: TownSeed[] = s.towns?.length
+      ? s.towns
+      : [{ name: s.townName, center: s.townCenter }];
+    const townIdByName = new Map<string, string>();
+    for (const townSeed of townSeeds) {
+      const townId = await ensureTown({
+        siteId: site.id,
+        huName: townSeed.name,
+        lat: townSeed.center.lat,
+        lng: townSeed.center.lng,
+        translations: s.langs.map((lang) => ({
+          lang,
+          name: townSeed.name,
+          description:
+            lang === "hu"
+              ? `<p>${townSeed.name} – demó leírás, látnivalók és szolgáltatások.</p>`
+              : `<p>${townSeed.name} – demo description.</p>`,
+          heroImage: picsum(`${s.slug}-${slugify(townSeed.name)}-${lang}-town`, 1600, 900),
+          seoTitle: townSeed.name,
+          seoDescription: `${townSeed.name} – település oldal.`,
+        })),
+      });
+      townIdByName.set(townSeed.name, townId);
+      for (const lang of s.langs) {
+        await upsertSlug({
+          siteId: site.id,
+          lang,
+          slug: slugify(townSeed.name),
+          entityType: "town",
+          entityId: townId,
+        });
+      }
     }
+    const defaultTownId = townIdByName.get(s.townName) || [...townIdByName.values()][0];
+
+    const resolveTownIdForPlace = (addressHu?: string | null): string => {
+      if (!addressHu || townIdByName.size <= 1) return defaultTownId;
+      if (/Budajenő/i.test(addressHu)) return townIdByName.get("Budajenő") || defaultTownId;
+      if (/\bTök\b/i.test(addressHu) || /Tökön/i.test(addressHu)) {
+        return townIdByName.get("Tök") || defaultTownId;
+      }
+      return townIdByName.get("Etyek") || defaultTownId;
+    };
 
     // categories / tags / pricebands
     const categories: Record<string, string> = {};
@@ -1285,30 +1348,36 @@ async function main() {
     await ensureSubscriptionForSite(site.id, s.key === "szeged" ? "BASIC" : s.key === "balaton" ? "PRO" : "BUSINESS", 5000 + sIdx);
 
     // places
-    const templates = placeTemplates(s.key);
+    const etyekPlaces = s.key === "etyek" ? ETYEK_PLACES : null;
+    const templates = etyekPlaces
+      ? etyekPlaces.map((place) => [place.hu.name, place.category] as [string, string])
+      : placeTemplates(s.key);
     const placeIds: string[] = [];
+    const placeIdByName = new Map<string, string>();
 
     for (let i = 0; i < templates.length; i++) {
       const [name, cat] = templates[i];
+      const demo = etyekPlaces?.[i];
       const catKey = resolveCategoryKey(cat);
       const categoryId = categories[catKey] ?? categories["Szolgáltatás"];
       const bandId = priceBands[Math.floor(rand() * priceBands.length)];
 
-      const pos = jitterLatLng(s.center.lat, s.center.lng, s.key === "balaton" ? 35 : 6, rand);
+      const pos = demo
+        ? { lat: demo.lat, lng: demo.lng }
+        : jitterLatLng(s.center.lat, s.center.lng, s.key === "balaton" ? 35 : 6, rand);
 
       const baseDescHu =
-        s.key === "etyek"
-          ? "helyi kézműves és gasztro élmény, barátságos hangulattal."
-          : s.key === "balaton"
+        s.key === "balaton"
           ? "balatoni kirándulóhely, panorámával és jó programokkal."
           : "szegedi ajánlott hely, hasznos információkkal és elérhetőségekkel.";
 
       // Determine place plan (randomly assign some places to basic/pro)
       const placePlan: PlacePlan = rand() > 0.7 ? (rand() > 0.5 ? "pro" : "basic") : "free";
 
+      const placeTownId = resolveTownIdForPlace(demo?.hu?.address);
       const placeId = await ensurePlace({
         siteId: site.id,
-        townId,
+        townId: placeTownId,
         huName: name,
         categoryId,
         isActive: true,
@@ -1320,6 +1389,25 @@ async function main() {
         ratingAvg: Math.round((3.6 + rand() * 1.4) * 10) / 10,
         ratingCount: Math.floor(5 + rand() * 120),
         tagIds: sample(tags, Math.floor(2 + rand() * 3), rand),
+        translations: demo
+          ? s.langs.map((lang) => {
+              const copy = demo[lang];
+              return {
+                lang,
+                name: copy.name,
+                shortDescription: `<p>${copy.short}</p>`,
+                description: copy.body,
+                address: `<p>${copy.address}</p>`,
+                phone: null,
+                email: null,
+                website: null,
+                openingHours: `<p>${copy.hoursLabel}</p>`,
+                seoTitle: copy.name,
+                seoDescription: copy.short,
+                seoKeywords: [copy.name, "Etyek", "Etyek-Buda"],
+              };
+            })
+          : buildTranslations(s.langs, name, baseDescHu),
         extras: {
           capacity: Math.floor(10 + rand() * 140),
           foodAvailable: rand() > 0.5,
@@ -1330,12 +1418,15 @@ async function main() {
             rand
           ),
         },
-        translations: buildTranslations(s.langs, name, baseDescHu),
       });
+
+      if (demo) await applyEtyekHours(prisma, placeId, demo.hours);
+      placeIdByName.set(name, placeId);
 
       // slug per lang
       for (const lang of s.langs) {
-        await upsertSlug({ siteId: site.id, lang, slug: slugify(name), entityType: "place", entityId: placeId });
+        const slugName = demo ? demo[lang].name : name;
+        await upsertSlug({ siteId: site.id, lang, slug: slugify(slugName), entityType: "place", entityId: placeId });
       }
 
       // owner membership for place
@@ -1362,7 +1453,7 @@ async function main() {
       });
 
       // price list on some places
-      if (rand() > 0.55) {
+      if (!demo && rand() > 0.55) {
         await ensurePriceList({
           placeId,
           currency: "HUF",
@@ -1402,9 +1493,104 @@ async function main() {
       placeIds.push(placeId);
     }
 
-    // Seed some events (5-10 per site)
-    const eventCount = s.key === "etyek" ? 10 : s.key === "balaton" ? 12 : 8;
-    for (let e = 0; e < eventCount; e++) {
+    // Seed some events (5-10 per site). Etyek uses the curated Saturday programme.
+    const eventCount = s.key === "balaton" ? 12 : 8;
+    if (s.key === "etyek") {
+      for (let e = 0; e < ETYEK_EVENTS.length; e++) {
+        const programme = ETYEK_EVENTS[e];
+        const placeId = placeIdByName.get(programme.place) ?? null;
+        const { start, end } = upcomingSaturday(programme.week, programme.hour, programme.duration);
+        const existingEvent = await prisma.event.findFirst({
+          where: {
+            siteId: site.id,
+            translations: { some: { lang: "hu", title: programme.hu.title } },
+          },
+          select: { id: true },
+        });
+        const eventId =
+          existingEvent?.id ??
+          (
+            await prisma.event.create({
+              data: {
+                siteId: site.id,
+                placeId,
+                isActive: true,
+                isPinned: Boolean(programme.pinned),
+                isRainSafe: Boolean(programme.rainSafe),
+                showOnMap: true,
+                startDate: start,
+                endDate: end,
+                heroImage: picsum(`${s.slug}-event-${slugify(programme.hu.title)}`, 1600, 900),
+                translations: {
+                  create: s.langs.map((lang) => {
+                    const copy = programme[lang];
+                    return {
+                      lang,
+                      title: copy.title,
+                      shortDescription: copy.short,
+                      description: copy.body,
+                      seoTitle: copy.title,
+                      seoDescription: copy.short,
+                      seoKeywords: [],
+                    };
+                  }),
+                },
+              },
+              select: { id: true },
+            })
+          ).id;
+        if (existingEvent) {
+          await prisma.event.update({
+            where: { id: eventId },
+            data: {
+              placeId,
+              isActive: true,
+              isPinned: Boolean(programme.pinned),
+              isRainSafe: Boolean(programme.rainSafe),
+              showOnMap: true,
+              startDate: start,
+              endDate: end,
+            },
+          });
+          for (const lang of s.langs) {
+            const copy = programme[lang];
+            await prisma.eventTranslation.upsert({
+              where: { eventId_lang: { eventId, lang } },
+              update: {
+                title: copy.title,
+                shortDescription: copy.short,
+                description: copy.body,
+                seoTitle: copy.title,
+                seoDescription: copy.short,
+              },
+              create: {
+                eventId,
+                lang,
+                title: copy.title,
+                shortDescription: copy.short,
+                description: copy.body,
+                seoTitle: copy.title,
+                seoDescription: copy.short,
+                seoKeywords: [],
+              },
+            });
+          }
+        }
+        for (const lang of s.langs) {
+          await upsertSlug({
+            siteId: site.id,
+            lang,
+            slug: slugify(programme[lang].title),
+            entityType: "event",
+            entityId: eventId,
+          });
+        }
+        if (!existingEvent) {
+          await log(site.id, owner.id, "create", "event", eventId, `Event created: ${programme.hu.title}`, { placeId });
+        }
+      }
+    }
+    for (let e = 0; e < eventCount && s.key !== "etyek"; e++) {
       const placeId = placeIds[Math.floor(rand() * placeIds.length)];
       const startsInDays = Math.floor(-20 + rand() * 60);
       const startDate = new Date();
@@ -1478,6 +1664,10 @@ async function main() {
       if (!existingEvent) {
         await log(site.id, owner.id, "create", "event", eventId, `Event created: ${eventTitle}`, { placeId });
       }
+    }
+
+    if (s.key === "etyek") {
+      await applyEtyekSample(prisma);
     }
 
     // analytics

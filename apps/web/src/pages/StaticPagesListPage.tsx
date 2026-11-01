@@ -7,8 +7,10 @@ import { getStaticPages } from "../api/static-pages.api";
 import { StaticPageCard } from "../ui/static-page/StaticPageCard";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { HAS_MULTIPLE_SITES } from "../app/config";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { PublicCardSkeletonGrid } from "../components/PublicSkeleton";
+import { EmptyResults } from "../components/EmptyResults";
 import { useSeo } from "../seo/useSeo";
+import "../styles/story.css";
 
 export function StaticPagesListPage() {
   const { t } = useTranslation();
@@ -88,264 +90,62 @@ export function StaticPagesListPage() {
     return t("public.staticPages.noStaticPagesFound");
   };
 
+  const categories = [
+    { id: "all" as const, label: t("public.filters.all") },
+    { id: "blog" as const, label: t("admin.categoryBlog") },
+    { id: "tudastar" as const, label: t("admin.categoryTudastar") },
+    { id: "infok" as const, label: t("admin.categoryInfok") },
+  ];
+
   return (
     <>
       <FloatingHeader />
-      <style>{`
-        .static-pages-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 20px;
-          margin-bottom: 32px;
-          width: 100%;
-          max-width: 100%;
-        }
-        @media (min-width: 640px) {
-          .static-pages-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            max-width: 100%;
-          }
-        }
-        @media (min-width: 900px) {
-          .static-pages-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
-          }
-        }
-        .static-pages-grid > * {
-          width: 100%;
-          max-width: 100%;
-          min-width: 0;
-        }
-        .static-pages-grid > * > article {
-          max-width: 100%;
-          min-width: 0;
-        }
-      `}</style>
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          padding: "clamp(72px, 8vw, 88px) 12px 24px",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
-          <h1
-            style={{
-              margin: 0,
-              marginTop: 0,
-              marginBottom: 24,
-              fontSize: "clamp(24px, 5vw, 36px)",
-              fontWeight: 700,
-              color: "#1a1a1a",
-              letterSpacing: "-0.02em",
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-            }}
-          >
-            {t("public.staticPages.title")}
-          </h1>
-
-          {/* Search Bar */}
-          <div style={{ marginBottom: 24 }}>
+      <div className="story">
+        <div className="story__sky" aria-hidden="true" />
+        <div className="story__wrap">
+          {platformSettings?.siteName ? (
+            <p className="story__eyebrow">{platformSettings.siteName}</p>
+          ) : null}
+          <h1>{t("public.staticPages.title")}</h1>
+          <div className="story__tools">
             <input
+              className="story__search"
               type="text"
               placeholder={t("public.searchPlaces") || "Keresés..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                maxWidth: "100%",
-                padding: "14px 20px",
-                fontSize: 16,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                border: "2px solid #e0e0e0",
-                borderRadius: 12,
-                background: "white",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                transition: "all 0.2s",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#667eea";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e0e0e0";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04)";
-              }}
             />
-          </div>
-
-          {/* Category Filter */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button
-                onClick={() => setSelectedCategory("all")}
-                style={{
-                  padding: "10px 20px",
-                  background: selectedCategory === "all" ? "#667eea" : "white",
-                  color: selectedCategory === "all" ? "white" : "#666",
-                  border: selectedCategory === "all" ? "none" : "2px solid #e0e0e0",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                  boxShadow:
-                    selectedCategory === "all" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== "all") {
-                    e.currentTarget.style.borderColor = "#667eea";
-                    e.currentTarget.style.color = "#667eea";
+            <div className="story__chips">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={
+                    selectedCategory === category.id ? "story__chip story__chip--on" : "story__chip"
                   }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== "all") {
-                    e.currentTarget.style.borderColor = "#e0e0e0";
-                    e.currentTarget.style.color = "#666";
-                  }
-                }}
-              >
-                {t("public.filters.all")}
-              </button>
-              <button
-                onClick={() => setSelectedCategory("blog")}
-                style={{
-                  padding: "10px 20px",
-                  background: selectedCategory === "blog" ? "#667eea" : "white",
-                  color: selectedCategory === "blog" ? "white" : "#666",
-                  border: selectedCategory === "blog" ? "none" : "2px solid #e0e0e0",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                  boxShadow:
-                    selectedCategory === "blog" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== "blog") {
-                    e.currentTarget.style.borderColor = "#667eea";
-                    e.currentTarget.style.color = "#667eea";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== "blog") {
-                    e.currentTarget.style.borderColor = "#e0e0e0";
-                    e.currentTarget.style.color = "#666";
-                  }
-                }}
-              >
-                {t("admin.categoryBlog")}
-              </button>
-              <button
-                onClick={() => setSelectedCategory("tudastar")}
-                style={{
-                  padding: "10px 20px",
-                  background: selectedCategory === "tudastar" ? "#667eea" : "white",
-                  color: selectedCategory === "tudastar" ? "white" : "#666",
-                  border: selectedCategory === "tudastar" ? "none" : "2px solid #e0e0e0",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                  boxShadow:
-                    selectedCategory === "tudastar" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== "tudastar") {
-                    e.currentTarget.style.borderColor = "#667eea";
-                    e.currentTarget.style.color = "#667eea";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== "tudastar") {
-                    e.currentTarget.style.borderColor = "#e0e0e0";
-                    e.currentTarget.style.color = "#666";
-                  }
-                }}
-              >
-                {t("admin.categoryTudastar")}
-              </button>
-              <button
-                onClick={() => setSelectedCategory("infok")}
-                style={{
-                  padding: "10px 20px",
-                  background: selectedCategory === "infok" ? "#667eea" : "white",
-                  color: selectedCategory === "infok" ? "white" : "#666",
-                  border: selectedCategory === "infok" ? "none" : "2px solid #e0e0e0",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                  boxShadow:
-                    selectedCategory === "infok" ? "0 2px 8px rgba(102, 126, 234, 0.2)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedCategory !== "infok") {
-                    e.currentTarget.style.borderColor = "#667eea";
-                    e.currentTarget.style.color = "#667eea";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedCategory !== "infok") {
-                    e.currentTarget.style.borderColor = "#e0e0e0";
-                    e.currentTarget.style.color = "#666";
-                  }
-                }}
-              >
-                {t("admin.categoryInfok")}
-              </button>
+                  onClick={() => setSelectedCategory(category.id)}
+                >
+                  {category.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Static Pages Grid */}
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
-          <LoadingSpinner isLoading={isLoading && staticPages.length === 0} />
           {!isLoading && isError ? (
-            <div style={{ textAlign: "center", padding: "64px 0", color: "#c00" }}>
-              {t("public.errorLoadingPlaces") || "Hiba a statikus oldalak betöltésekor"}
-            </div>
+            <p className="story__empty">{t("public.errorLoadingPlaces")}</p>
+          ) : isLoading && staticPages.length === 0 ? (
+            <PublicCardSkeletonGrid count={6} variant="story" label={t("common.loading")} />
           ) : !isLoading && filteredStaticPages.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "64px 0", color: "#666" }}>
-              {searchQuery ? t("public.noResults") || "Nincs találat" : getNoResultsMessage()}
-            </div>
-          ) : isLoading && staticPages.length === 0 ? null : (
-            <div className="static-pages-grid">
-              {filteredStaticPages.map((staticPage, index) => (
-                <StaticPageCard key={staticPage.id} staticPage={staticPage} index={index} />
+            <EmptyResults
+              className="story__empty"
+              title={searchQuery ? t("public.noResults") : getNoResultsMessage()}
+              description={
+                searchQuery ? t("public.emptyResultsSearchHint") : t("public.emptyResultsDefaultHint")
+              }
+            />
+          ) : (
+            <div className="story__grid">
+              {filteredStaticPages.map((staticPage) => (
+                <StaticPageCard key={staticPage.id} staticPage={staticPage} />
               ))}
             </div>
           )}

@@ -1,0 +1,119 @@
+/**
+ * Shared public-page design tokens (overview + list + place + static).
+ * Page backdrop = navy/blue wash. Cards / forms stay cream — never blue.
+ * Admin color pickers override the same --hl-* names.
+ */
+:root,
+.hl-public {
+  /* Page atmosphere (editable: bg) */
+  --hl-bg: #1b1730;
+  --hl-bg-mid: #1f2140;
+  --hl-bg-deep: #16132a;
+  /* Light surfaces for cards / inputs / panels (editable: card) — not blue */
+  --hl-card: #fffdf9;
+  --hl-surface: #fffdf9;
+  --hl-surface-solid: #fffdf9;
+  /* Text on light cards (editable: ink, muted) */
+  --hl-ink: #1b1730;
+  --hl-muted: #665d78;
+  --hl-ink-on-card: var(--hl-ink);
+  --hl-muted-on-card: var(--hl-muted);
+  /* Text on blue backdrop / headers (editable: onDark) */
+  --hl-on-dark: #f2f4fb;
+  --hl-on-dark-strong: #ffffff;
+  --hl-ink-strong: var(--hl-on-dark);
+  --hl-muted-on-dark: #a8b0c8;
+  /* Accent (editable) */
+  --hl-accent: #c45c26;
+  --hl-on-accent: #fffdf9;
+  --hl-header: #1b1730;
+  --hl-navy: #1b1730;
+  --hl-blue: #3d5a9a;
+  --hl-mist: #7a92c8;
+  --hl-line: rgba(242, 244, 251, 0.14);
+  --hl-line-on-card: rgba(27, 23, 48, 0.1);
+  --hl-bg-image:
+    radial-gradient(980px 560px at 8% -4%, rgba(61, 90, 154, 0.55), transparent 58%),
+    radial-gradient(820px 520px at 100% 8%, rgba(122, 146, 200, 0.28), transparent 52%),
+    radial-gradient(700px 480px at 70% 55%, rgba(196, 92, 38, 0.08), transparent 60%),
+    radial-gradient(640px 400px at 20% 90%, rgba(45, 58, 110, 0.5), transparent 55%),
+    linear-gradient(180deg, var(--hl-bg) 0%, var(--hl-bg-mid) 38%, var(--hl-bg) 72%, var(--hl-bg-deep) 100%);
+  /* Legacy aliases */
+  --paper: var(--hl-bg);
+  --card: var(--hl-card);
+  --ink: var(--hl-on-dark);
+  --ink-strong: var(--hl-on-dark-strong);
+  --muted: var(--hl-muted-on-dark);
+  --line: var(--hl-line);
+  --panel: var(--hl-card);
+  --panel-solid: var(--hl-card);
+  --accent: var(--hl-accent);
+  --navy: var(--hl-navy);
+  --blue: var(--hl-blue);
+  --mist: var(--hl-mist);
+  /* Horizontal inset shared by list cards + footer content */
+  --hl-public-pad-x: 16px;
+}
+
+.hl-public {
+  color: var(--hl-on-dark);
+  background-color: var(--hl-bg);
+  background-image: var(--hl-bg-image);
+}
+
+.hl-public a:not([class]) {
+  color: var(--hl-mist);
+}
+
+.hl-public a:not([class]):hover {
+  color: var(--hl-on-dark-strong);
+}
+
+/* Shared public content column — same horizontal bounds as the places card grid. */
+.hl-public-width {
+  width: 100%;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1280px) {
+  .hl-public-width {
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .hl-public-width {
+    max-width: 1480px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .hl-public-width {
+    max-width: 1760px;
+  }
+}
+
+/* Outer horizontal inset that pairs with .hl-public-width (matches .places-discover). */
+.hl-public-pad-x {
+  padding-left: var(--hl-public-pad-x);
+  padding-right: var(--hl-public-pad-x);
+}
+
+/* Page-level discover title on navy backdrop. */
+.hl-public .places-discover__title {
+  color: var(--hl-on-dark-strong);
+}
+
+/* Cream surfaces keep dark ink even when nested under .hl-public. */
+.hl-content-card,
+.hl-public .list-card,
+.hl-public .map-filters-inline,
+.hl-public .story__sheet,
+.hl-public .overview__card,
+.hl-public .overview__step,
+.hl-public .overview__faq article,
+.hl-public .overview__difference li {
+  color: var(--hl-ink);
+}

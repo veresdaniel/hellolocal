@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { SitesService } from "./sites.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for site-related endpoints.
@@ -14,14 +15,6 @@ import { SitesService } from "./sites.service";
 export class SitesPublicController {
   constructor(private readonly sitesService: SitesService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists active sites with optional filtering.
@@ -39,7 +32,7 @@ export class SitesPublicController {
     @Query("limit") limit?: string,
     @Query("offset") offset?: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.sitesService.list({
       lang,
       siteKey,
@@ -63,7 +56,7 @@ export class SitesPublicController {
     @Param("siteKey") siteKey: string,
     @Param("slug") slug: string
   ) {
-    this.validateLang(lang);
+    assertLang(lang);
     return this.sitesService.detail({ lang, siteKey, slug });
   }
 }

@@ -173,7 +173,7 @@ export function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmDeleteUser"))) return;
+    if (!confirm(t("admin.confirmations.deleteUser"))) return;
 
     try {
       await deleteUser(id);
@@ -184,7 +184,7 @@ export function UsersPage() {
   };
 
   const handleRoleChange = async (userId: string, newRole: UpdateUserRoleDto["role"]) => {
-    if (!confirm(t("admin.confirmChangeRole", { role: newRole }))) {
+    if (!confirm(t("admin.confirmations.changeRole", { role: newRole }))) {
       return;
     }
 
@@ -652,7 +652,7 @@ export function UsersPage() {
                     </div>
                     <button
                       onClick={async () => {
-                        if (!confirm(t("admin.confirmDisable2FA"))) return;
+                        if (!confirm(t("admin.confirmations.disable2FA"))) return;
                         try {
                           await disableTwoFactorForUser(editingId);
                           await loadData();

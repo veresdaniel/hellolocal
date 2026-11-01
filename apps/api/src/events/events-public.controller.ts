@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query, BadRequestException, Logger } from "@nestjs/common";
+import { Controller, Get, Param, Query, Logger } from "@nestjs/common";
 import { EventsService } from "./events.service";
+import { assertLang } from "../common/lang";
 
 /**
  * Public controller for event-related endpoints.
@@ -17,14 +18,6 @@ export class EventsPublicController {
 
   constructor(private readonly eventsService: EventsService) {}
 
-  /**
-   * Validates that the lang parameter is a valid language code.
-   */
-  private validateLang(lang: string): void {
-    if (lang !== "hu" && lang !== "en" && lang !== "de") {
-      throw new BadRequestException(`Invalid language code: "${lang}". Use hu, en, or de.`);
-    }
-  }
 
   /**
    * Lists events with optional filtering.
@@ -45,7 +38,7 @@ export class EventsPublicController {
     @Query("offset") offset?: string
   ) {
     try {
-      this.validateLang(lang);
+      assertLang(lang);
       return await this.eventsService.list({
         lang,
         siteKey,
@@ -78,7 +71,7 @@ export class EventsPublicController {
     @Param("slug") slug: string
   ) {
     try {
-      this.validateLang(lang);
+      assertLang(lang);
       return await this.eventsService.detail({ lang, siteKey, slug });
     } catch (error) {
       this.logger.error(
@@ -107,7 +100,7 @@ export class EventsPublicController {
     @Param("eventId") eventId: string
   ) {
     try {
-      this.validateLang(lang);
+      assertLang(lang);
       return await this.eventsService.detailById({ lang, siteKey, eventId });
     } catch (error) {
       this.logger.error(

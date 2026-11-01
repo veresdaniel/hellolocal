@@ -231,7 +231,7 @@ export function SocialShareButtons({ url, title, description, image }: SocialSha
           justifyContent: "center",
           width: 32,
           height: 32,
-          background: "#667eea",
+          background: "#1b1730",
           color: "white",
           border: "none",
           borderRadius: "50%",

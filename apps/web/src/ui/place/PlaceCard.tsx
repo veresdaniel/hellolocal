@@ -2,17 +2,21 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { Place } from "../../types/place";
 import { buildUrl } from "../../app/urls";
+import { placeEntityPath } from "../../app/entityPaths";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
+import { SafeHtml } from "../../components/SafeHtml";
 import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import { StarRating } from "../../components/StarRating";
+import { visitorPriceLabel } from "../../utils/priceLabel";
+import "../../styles/list-card.css";
 
 // Function to get color for category
 function getCategoryColor(categoryName: string | null | undefined): string {
-  if (!categoryName) return "#667eea";
+  if (!categoryName) return "#c45c26";
 
   const normalized = categoryName.toLowerCase();
 
@@ -74,7 +78,7 @@ interface PlaceCardProps {
   index?: number;
 }
 
-export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
+export function PlaceCard({ place }: PlaceCardProps) {
   const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
   const categoryName = place.category || null;
@@ -99,46 +103,46 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
   // Common article content
   const articleContent = (
     <>
-      {imageUrl && (
-        <div
-          style={{
-            width: "100%",
-            height: 240,
-            overflow: "hidden",
-            background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`,
-            position: "relative",
-          }}
-        >
-          <ImageWithSkeleton
-            src={imageUrl}
-            alt={place.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-              transition: "transform 0.4s ease",
-            }}
-            skeletonStyle={{
-              borderRadius: 0,
-            }}
-            onMouseEnter={
-              hasSlug
-                ? (e) => {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                  }
-                : undefined
-            }
-            onMouseLeave={
-              hasSlug
-                ? (e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                  }
-                : undefined
-            }
-          />
-          {/* Category badge overlay on image */}
-          {categoryName && (
+      <div
+        className="list-card__media"
+        style={{
+          background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`,
+        }}
+      >
+        {imageUrl && (
+          <div className="list-card__media-fill">
+            <ImageWithSkeleton
+              src={imageUrl}
+              alt={place.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center top",
+                display: "block",
+                transition: "transform 0.4s ease",
+              }}
+              skeletonStyle={{
+                borderRadius: 0,
+              }}
+              onMouseEnter={
+                hasSlug
+                  ? (e) => {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }
+                  : undefined
+              }
+              onMouseLeave={
+                hasSlug
+                  ? (e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        )}
+        {categoryName && (
             <div
               style={{
                 position: "absolute",
@@ -163,82 +167,31 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               </Badge>
             </div>
           )}
-        </div>
-      )}
+      </div>
 
-      <div
-        style={{
-          padding: 24,
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 12,
-            minWidth: 0,
-          }}
-        >
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 20,
-              fontWeight: 600,
-              fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "#1a1a1a",
-              lineHeight: 1.3,
-              flex: 1,
-              transition: "color 0.3s ease",
-              minWidth: 0,
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-            }}
-          >
-            {place.name}
-          </h3>
-        </div>
+      <div className="list-card__body">
+        <h3 className="list-card__title">{place.name}</h3>
 
-        {place.shortDescription && (
-          <div
-            style={{
-              fontSize: 14,
-              color: "#666",
-              lineHeight: 1.6,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontWeight: 400,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              minWidth: 0,
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-            }}
-            dangerouslySetInnerHTML={{ __html: place.shortDescription }}
-          />
-        )}
-
-        {/* Rating */}
-        {place.rating && (place.rating.avg !== null || place.rating.count !== null) && (
-          <div style={{ marginTop: 8 }}>
+        <div className="list-card__meta">
+          {place.rating && (place.rating.avg !== null || place.rating.count !== null) ? (
             <StarRating
               avg={place.rating.avg}
               count={place.rating.count}
               interactive={false}
               size="sm"
             />
-          </div>
+          ) : (
+            "\u00a0"
+          )}
+        </div>
+
+        {place.shortDescription ? (
+          <SafeHtml html={place.shortDescription} className="list-card__copy" />
+        ) : (
+          <div className="list-card__copy">&nbsp;</div>
         )}
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "auto" }}>
+        <div className="list-card__extra">
           {place.priceBand && (
             <Badge
               variant="priceBand"
@@ -249,7 +202,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 border: "1px solid rgba(118, 75, 162, 0.2)",
               }}
             >
-              {place.priceBand || ""}
+              {visitorPriceLabel(place.priceBand || "")}
             </Badge>
           )}
           {place.tags?.slice(0, 3).map((tag) => (
@@ -260,13 +213,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
         </div>
 
         {/* Footer: Link button or info message */}
-        <div
-          style={{
-            marginTop: 16,
-            paddingTop: 16,
-            borderTop: "1px solid #e0e0e0",
-          }}
-        >
+        <div className="list-card__footer">
           {hasSlug ? (
             <div
               className="card-read-more"
@@ -275,7 +222,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 alignItems: "center",
                 gap: 8,
                 color: categoryColor,
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: 500,
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -299,7 +246,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
                 alignItems: "center",
                 gap: 8,
                 color: "#999",
-                fontSize: 14,
+                fontSize: 15,
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 fontWeight: 400,
@@ -314,86 +261,54 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
     </>
   );
 
+  // Cards stay visible as soon as they mount — no opacity:0 stagger that
+  // reserves empty grid holes while later items "wait" to animate in.
+  // Hover arrow nudge lives in list-card.css (do not inject <style> into the
+  // grid: flex/grid children make style tag text visible and steal slots).
+  if (!hasSlug) {
+    return (
+      <article
+        className="list-card"
+        style={{
+          cursor: "default",
+          borderBottom: `3px solid ${categoryColor}`,
+          opacity: 0.8,
+        }}
+      >
+        {articleContent}
+      </article>
+    );
+  }
+
   return (
-    <div
+    <Link
+      to={buildUrl({ lang, siteKey, path: placeEntityPath(lang, place.slug) })}
       style={{
-        opacity: 0,
-        transform: "translateY(20px)",
-        animation: `fadeInUp 0.6s ease-out ${index * 0.1}s forwards`,
+        textDecoration: "none",
+        color: "inherit",
+        display: "flex",
+        flex: 1,
+        minWidth: 0,
       }}
     >
-      <style>{`
-        @keyframes fadeInUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        article:hover .card-read-more span:last-child {
-          transform: translateX(4px);
-        }
-      `}</style>
-      {hasSlug ? (
-        <Link
-          to={buildUrl({ lang, siteKey, path: `place/${place.slug}` })}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-          }}
-        >
-          <article
-            style={{
-              background: "white",
-              borderRadius: 16,
-              overflow: "hidden",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-              transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-              cursor: "pointer",
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              borderBottom: `3px solid ${categoryColor}`,
-              position: "relative",
-              maxWidth: "100%",
-              minWidth: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.15)";
-              e.currentTarget.style.borderBottomWidth = "4px";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0) scale(1)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
-              e.currentTarget.style.borderBottomWidth = "3px";
-            }}
-          >
-            {articleContent}
-          </article>
-        </Link>
-      ) : (
-        <article
-          style={{
-            background: "white",
-            borderRadius: 16,
-            overflow: "hidden",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-            cursor: "default",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            borderBottom: `3px solid ${categoryColor}`,
-            position: "relative",
-            opacity: 0.8,
-            maxWidth: "100%",
-            minWidth: 0,
-          }}
-        >
-          {articleContent}
-        </article>
-      )}
-    </div>
+      <article
+        className="list-card"
+        style={{
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          cursor: "pointer",
+          borderBottom: `3px solid ${categoryColor}`,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
+          e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.15)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0) scale(1)";
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+        }}
+      >
+        {articleContent}
+      </article>
+    </Link>
   );
 }

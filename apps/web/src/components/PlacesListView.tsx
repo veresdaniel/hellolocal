@@ -6,14 +6,16 @@ import { useRouteCtx } from "../app/useRouteCtx";
 import { getPlaces, getEvents, type Event, getPlatformSettings } from "../api/places.api";
 import type { Place } from "../types/place";
 import { PlaceCard } from "../ui/place/PlaceCard";
+import { EventGridCard } from "../ui/event/EventGridCard";
+import "../styles/list-card.css";
 import { MapFilters } from "./MapFilters";
 import { FloatingHeader } from "./FloatingHeader";
 import { HAS_MULTIPLE_SITES } from "../app/config";
-import { buildUrl } from "../app/urls";
-import { Link } from "react-router-dom";
-import { LoadingSpinner } from "./LoadingSpinner";
+import { PublicCardSkeletonGrid } from "./PublicSkeleton";
+import { EmptyResults } from "./EmptyResults";
+import { SafeHtml } from "./SafeHtml";
 import { useFiltersStore } from "../stores/useFiltersStore";
-import { Badge } from "./Badge";
+import { hasVisibleHtml } from "../utils/hasVisibleHtml";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 
 interface PlacesListViewProps {
@@ -69,6 +71,7 @@ export function PlacesListView({
   const setRainSafe = propOnRainSafeChange ?? storeFilters.setRainSafe;
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [section, setSection] = useState<"places" | "services">("places");
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Fetch places with infinite scroll
@@ -81,7 +84,7 @@ export function PlacesListView({
     isError,
     // error, // unused for now
   } = useInfiniteQuery({
-    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands, searchQuery],
+    queryKey: ["places", lang, siteKey, selectedCategories, selectedPriceBands, searchQuery, section],
     queryFn: async ({ pageParam = 0 }) => {
       // Note: getPlaces now accepts arrays for OR logic filtering
       const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
@@ -94,7 +97,8 @@ export function PlacesListView({
         priceBandParam,
         searchQuery || undefined,
         ITEMS_PER_PAGE,
-        pageParam as number
+        pageParam as number,
+        section === "services" ? "service" : "place"
       );
 
       return {
@@ -116,10 +120,10 @@ export function PlacesListView({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch site settings for placeholder image
+  // Fetch site settings for placeholder image (shares cache with SiteLayout)
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
-    queryFn: () => getPlatformSettings(lang, siteKey),
+    queryFn: ({ signal }) => getPlatformSettings(lang, siteKey, { signal }),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -223,16 +227,41 @@ export function PlacesListView({
     });
   };
 
-  // Filter places based on context filters
+  // Filter places based on context filters. Category/price are also applied
+  // client-side so a stale page cache cannot mix other categories into the list.
   const places = useMemo(() => {
+    const categorySet = new Set(selectedCategories.map((name) => name.toLowerCase()));
+    const priceSet = new Set(selectedPriceBands.map((id) => id.toLowerCase()));
     return allPlaces.filter((place) => {
+      if (
+        section !== "services" &&
+        categorySet.size > 0 &&
+        !categorySet.has((place.category || "").toLowerCase())
+      ) {
+        return false;
+      }
+      if (priceSet.size > 0) {
+        const priceId = (place.priceBandId || place.priceBand || "").toLowerCase();
+        if (!priceSet.has(priceId)) return false;
+      }
       if (isOpenNow && !isPlaceOpenNow(place)) return false;
       if (hasEventToday && !hasEventTodayForPlace(place.id)) return false;
       if (within30Minutes && !isWithin10MinutesWalk(place)) return false;
       if (rainSafe && !isRainSafe(place)) return false;
       return true;
     });
-  }, [allPlaces, isOpenNow, hasEventToday, within30Minutes, rainSafe, userLocation, eventsData]);
+  }, [
+    allPlaces,
+    section,
+    selectedCategories,
+    selectedPriceBands,
+    isOpenNow,
+    hasEventToday,
+    within30Minutes,
+    rainSafe,
+    userLocation,
+    eventsData,
+  ]);
 
   // Fetch events (filtered and deduplicated)
   const events = useMemo(() => {
@@ -314,10 +343,22 @@ export function PlacesListView({
 
     // Use a fixed date for places (far in the past) so events are sorted by date and appear first
     const placesDefaultDate = new Date(2000, 0, 1);
+    const visiblePlaces = places.filter((place) =>
+      section === "services" ? place.categoryKind === "service" : (place.categoryKind ?? "place") !== "service"
+    );
+    // A place category (for example Szállás) is a place filter. Events stay on the
+    // unfiltered places list and on the events tab, and must not be merged back in.
+    if (section === "services" || selectedCategories.length > 0) {
+      return visiblePlaces.map((place) => ({
+        type: "place" as const,
+        data: place,
+        sortDate: placesDefaultDate,
+      }));
+    }
 
     // Create a combined array with type information
     const items: Array<{ type: "place" | "event"; data: Place | Event; sortDate: Date }> = [
-      ...places.map((place) => ({
+      ...visiblePlaces.map((place) => ({
         type: "place" as const,
         data: place,
         sortDate: placesDefaultDate,
@@ -341,7 +382,11 @@ export function PlacesListView({
       })),
       ...items,
     ];
-  }, [places, events]);
+  }, [places, events, section, selectedCategories]);
+
+  const listIntroHtml = platformSettings?.site?.listIntroHtml;
+  const listIntroImage = sanitizeImageUrl(platformSettings?.site?.listIntroImage);
+  const showListIntro = hasVisibleHtml(listIntroHtml);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -366,33 +411,270 @@ export function PlacesListView({
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  const renderDiscoverControls = (inIntro: boolean) => (
+    <div
+      className={`places-discover__controls${inIntro ? " is-in-intro" : ""}`}
+    >
+      <div
+        className="places-discover__tabs"
+        role="tablist"
+        aria-label={t("public.explore.title", { defaultValue: "Felfedezés" })}
+      >
+        {(["places", "services"] as const).map((key) => {
+          const active = section === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setSection(key)}
+              className={`places-section-tab${active ? " is-active" : ""}`}
+            >
+              {t(key === "places" ? "public.placesTab" : "public.servicesTab")}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="places-discover__form">
+        <label htmlFor="places-discover-search" className="hl-visually-hidden">
+          {t("public.searchPlaces") || t("common.search")}
+        </label>
+        <input
+          id="places-discover-search"
+          type="search"
+          className="places-discover__search"
+          placeholder={t("public.searchPlaces") || "Keresés..."}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label={t("public.searchPlaces") || t("common.search")}
+        />
+        <div className="places-discover__filters">
+          <MapFilters
+            selectedCategories={selectedCategories}
+            selectedPriceBands={selectedPriceBands}
+            onCategoriesChange={setSelectedCategories}
+            onPriceBandsChange={setSelectedPriceBands}
+            isOpenNow={isOpenNow}
+            hasEventToday={hasEventToday}
+            within30Minutes={within30Minutes}
+            rainSafe={rainSafe}
+            onOpenNowChange={setIsOpenNow}
+            onHasEventTodayChange={setHasEventToday}
+            onWithin30MinutesChange={setWithin30Minutes}
+            onRainSafeChange={setRainSafe}
+            lang={lang}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <FloatingHeader onMapViewClick={onMapViewClick} />
       <style>{`
+        /* Spacing scale: 8 / 12 / 16 / 24 */
+        .places-discover {
+          --pd-1: 8px;
+          --pd-2: 12px;
+          --pd-3: var(--hl-public-pad-x, 16px);
+          --pd-4: 24px;
+          --pd-5: 32px;
+          min-height: 100vh;
+          background: transparent;
+          padding: clamp(68px, 7vw, 80px) var(--pd-3) var(--pd-5);
+        }
+        .places-discover__title {
+          margin: 0 0 var(--pd-3);
+          font-size: clamp(22px, 4.5vw, 30px);
+          font-weight: 700;
+          font-family: var(--font-heading);
+          color: var(--hl-ink-strong);
+          letter-spacing: -0.02em;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+        .places-discover__intro {
+          display: grid;
+          gap: var(--pd-3);
+          margin: 0 0 clamp(28px, 4vw, 40px);
+          padding: var(--pd-3);
+          border-radius: 14px;
+          background: var(--hl-card);
+          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+          color: var(--hl-ink-on-card, var(--hl-ink, #1b1730));
+        }
+        .places-discover__intro-media {
+          margin: 0;
+          border-radius: 10px;
+          overflow: hidden;
+          aspect-ratio: 16 / 9;
+          background: rgba(27, 23, 48, 0.06);
+        }
+        .places-discover__intro-media img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .places-discover__intro-main {
+          display: flex;
+          flex-direction: column;
+          gap: var(--pd-3);
+          min-width: 0;
+        }
+        .places-discover__intro-copy {
+          font-family: var(--font-body);
+          font-size: clamp(17px, 2.4vw, 19px);
+          line-height: 1.6;
+          color: var(--hl-ink-on-card, var(--hl-ink, #1b1730));
+        }
+        .places-discover__intro-copy :is(p, ul, ol) {
+          margin: 0 0 0.75em;
+        }
+        .places-discover__intro-copy :is(p, ul, ol):last-child {
+          margin-bottom: 0;
+        }
+        .places-discover__intro-copy a {
+          color: var(--hl-accent, #c45c26);
+        }
+        @media (min-width: 720px) {
+          .places-discover__intro.has-image {
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            align-items: start;
+          }
+          .places-discover__intro.has-image .places-discover__intro-media {
+            aspect-ratio: 4 / 3;
+          }
+        }
+        .places-discover__tabs {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--pd-2);
+        }
+        .places-section-tab {
+          min-height: 44px;
+          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.14));
+          border-radius: 999px;
+          padding: 0 var(--pd-3);
+          cursor: pointer;
+          font-weight: 650;
+          font-size: 14px;
+          font-family: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+          background: rgba(27, 23, 48, 0.04);
+          color: var(--hl-ink-on-card);
+          box-sizing: border-box;
+        }
+        .places-section-tab.is-active {
+          border-color: transparent;
+          background: var(--hl-accent);
+          color: var(--hl-on-accent, #fffdf9);
+        }
+        .places-section-tab:focus-visible {
+          outline: 3px solid var(--hl-accent, #c45c26);
+          outline-offset: 2px;
+        }
+        .places-discover__form {
+          display: flex;
+          flex-direction: column;
+          gap: var(--pd-3);
+        }
+        .places-discover__controls {
+          display: flex;
+          flex-direction: column;
+          gap: var(--pd-3);
+        }
+        .places-discover__controls:not(.is-in-intro) {
+          margin-bottom: clamp(28px, 4vw, 40px);
+        }
+        .places-discover__controls:not(.is-in-intro) .places-section-tab:not(.is-active) {
+          background: var(--hl-card);
+          border-color: var(--hl-line);
+        }
+        .places-discover__intro .places-discover__controls {
+          margin-top: var(--pd-1);
+          padding-top: var(--pd-3);
+          border-top: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+        }
+        .places-discover__search {
+          display: block;
+          width: 100%;
+          min-height: 44px;
+          padding: var(--pd-2) var(--pd-3);
+          font-size: 16px;
+          font-family: var(--font-body);
+          border: 1px solid var(--hl-line-on-card);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.72);
+          color: var(--hl-ink-on-card);
+          box-sizing: border-box;
+        }
+        .places-discover__search::placeholder {
+          color: var(--hl-muted-on-card);
+        }
+        .places-discover__search:focus {
+          outline: none;
+          border-color: var(--hl-accent);
+          box-shadow: 0 0 0 3px rgba(196, 92, 38, 0.22);
+        }
+        .places-discover__filters {
+          min-width: 0;
+          width: 100%;
+        }
+        .places-discover__filters .map-filters-inline {
+          padding: var(--pd-3);
+          border-radius: 14px;
+          box-shadow: none;
+          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+          background: rgba(255, 255, 255, 0.55);
+        }
+        .places-discover__controls:not(.is-in-intro) .places-discover__search,
+        .places-discover__controls:not(.is-in-intro) .places-discover__filters .map-filters-inline {
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+          background: var(--hl-card);
+        }
+        .places-discover__filters .map-filters-inline__head {
+          margin-bottom: var(--pd-2);
+          min-height: 0;
+        }
+        .places-discover__filters .map-dock__section {
+          margin: 0 0 var(--pd-3);
+        }
+        .places-discover__filters .map-dock__section:last-child {
+          margin-bottom: 0;
+        }
+        .places-discover__filters .map-filters-inline,
+        .places-discover__filters .map-filters-inline * {
+          font-family: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+        }
+        .places-discover__filters .map-filters-inline__head h2,
+        .places-discover__filters .map-filters-inline h3,
+        .places-discover__filters .map-dock__section h3 {
+          margin: 0 0 var(--pd-1);
+          font-size: 14px;
+          font-weight: 650;
+          color: var(--hl-ink, #1b1730);
+        }
+        .places-discover__filters .map-dock__chips {
+          gap: var(--pd-2);
+        }
+        .places-discover__filters .map-dock__chip {
+          min-height: 44px;
+          padding: 8px 14px;
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--hl-ink, #1b1730);
+        }
         .places-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 20px;
-          margin-bottom: 32px;
+          gap: var(--pd-4, 20px);
+          margin-bottom: var(--pd-5);
           width: 100%;
           max-width: 100%;
-        }
-        @media (min-width: 640px) {
-          .places-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            max-width: 100%;
-          }
-        }
-        @media (min-width: 900px) {
-          .places-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
-          }
         }
         .places-grid > * {
           width: 100%;
@@ -403,471 +685,108 @@ export function PlacesListView({
           max-width: 100%;
           min-width: 0;
         }
+        @media (min-width: 640px) {
+          .places-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+        /* Wider cards: fewer columns until larger viewports */
+        @media (min-width: 1100px) {
+          .places-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+        @media (min-width: 1920px) {
+          .places-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+        }
       `}</style>
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)",
-          padding: "clamp(72px, 8vw, 88px) 12px 24px",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
-          <h1
-            style={{
-              margin: 0,
-              marginTop: 0,
-              marginBottom: 24,
-              fontSize: "clamp(24px, 5vw, 36px)",
-              fontWeight: 700,
-              fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "#1a1a1a",
-              letterSpacing: "-0.02em",
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-            }}
-          >
-            {t("public.explore.title")}
+      <div className="places-discover">
+        <div className="places-list hl-public-width">
+          <h1 className="places-discover__title">
+            {platformSettings?.siteName
+              ? t("public.explore.siteTitle", {
+                  name: platformSettings.siteName,
+                  defaultValue: "{{name}} felfedezése",
+                })
+              : t("public.explore.title")}
           </h1>
+          {showListIntro ? (
+            <section
+              className={`places-discover__intro${listIntroImage ? " has-image" : ""}`}
+              aria-label={t("public.explore.introLabel", { defaultValue: "Bevezető" })}
+            >
+              {listIntroImage ? (
+                <figure className="places-discover__intro-media">
+                  <img src={listIntroImage} alt="" loading="lazy" decoding="async" />
+                </figure>
+              ) : null}
+              <div className="places-discover__intro-main">
+                <SafeHtml html={listIntroHtml} className="places-discover__intro-copy" />
+                {renderDiscoverControls(true)}
+              </div>
+            </section>
+          ) : (
+            renderDiscoverControls(false)
+          )}
 
-          {/* Search Bar */}
-          <div style={{ marginBottom: 24 }}>
-            <input
-              type="text"
-              placeholder={t("public.searchPlaces") || "Keresés..."}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%",
-                maxWidth: "100%",
-                padding: "14px 20px",
-                fontSize: 16,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                border: "2px solid #e0e0e0",
-                borderRadius: 12,
-                background: "white",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                transition: "all 0.2s",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#667eea";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.15)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e0e0e0";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04)";
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Filters and Places Grid - Same width as searchbar */}
-        <div
-          style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            width: "100%",
-          }}
-        >
-          {/* Filters */}
-          <div style={{ marginBottom: 32 }}>
-            <MapFilters
-              selectedCategories={selectedCategories}
-              selectedPriceBands={selectedPriceBands}
-              onCategoriesChange={setSelectedCategories}
-              onPriceBandsChange={setSelectedPriceBands}
-              isOpenNow={isOpenNow}
-              hasEventToday={hasEventToday}
-              within30Minutes={within30Minutes}
-              rainSafe={rainSafe}
-              onOpenNowChange={setIsOpenNow}
-              onHasEventTodayChange={setHasEventToday}
-              onWithin30MinutesChange={setWithin30Minutes}
-              onRainSafeChange={setRainSafe}
-              lang={lang}
-            />
-          </div>
-
-          {/* Places and Events Grid */}
-          <LoadingSpinner isLoading={isLoading && places.length === 0} />
           {!isLoading && isError ? (
-            <div style={{ textAlign: "center", padding: "64px 0", color: "#c00" }}>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#f87171" }}>
               {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
             </div>
+          ) : isLoading && places.length === 0 ? (
+            <PublicCardSkeletonGrid
+              count={ITEMS_PER_PAGE}
+              variant="places"
+              label={t("common.loading")}
+            />
           ) : !isLoading && combinedItems.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "64px 0",
-                color: "#666",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("public.noPlacesFound") || "Nincs találat"}
-            </div>
-          ) : isLoading && places.length === 0 ? null : (
+            <EmptyResults
+              title={
+                section === "services"
+                  ? t("public.noServices")
+                  : t("public.noPlacesFound")
+              }
+              description={
+                section === "services"
+                  ? undefined
+                  : t("public.emptyResultsDefaultHint")
+              }
+            />
+          ) : (
             <>
               <div className="places-grid">
-                {combinedItems.map((item, index) => {
+                {combinedItems.map((item) => {
                   if (item.type === "place") {
                     const place = item.data as Place;
-                    return <PlaceCard key={place.slug || place.id} place={place} index={index} />;
+                    return <PlaceCard key={place.slug || place.id} place={place} />;
                   } else {
                     const event = item.data as Event;
-                    // Only render link if event has a valid slug (not just the ID fallback)
-                    // Backend returns event.id as slug fallback, so check if slug equals id
-                    const hasValidSlug = event.slug && event.slug !== event.id;
-                    if (!hasValidSlug) {
-                      return (
-                        <div
-                          key={event.id}
-                          style={{
-                            background: "white",
-                            borderRadius: 12,
-                            overflow: "hidden",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                            borderBottom: event.category ? `3px solid #667eea` : "none",
-                            opacity: 0.7,
-                          }}
-                        >
-                          {(() => {
-                            const eventImage = event.heroImage?.trim() || null;
-                            const placeholderImage =
-                              platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
-                            const imageUrl = eventImage || placeholderImage;
-                            const hasImage = !!imageUrl && imageUrl.length > 0;
-
-                            return hasImage ? (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: 200,
-                                  backgroundImage: `url(${imageUrl})`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                  position: "relative",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    top: 12,
-                                    left: 12,
-                                    zIndex: 10,
-                                  }}
-                                >
-                                  <Badge
-                                    variant="custom"
-                                    backgroundColor="rgba(102, 126, 234, 0.95)"
-                                    textColor="white"
-                                    size="small"
-                                    uppercase={true}
-                                    style={{
-                                      backdropFilter: "blur(8px)",
-                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-                                    }}
-                                  >
-                                    {t("public.events") || "Esemény"}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ) : null;
-                          })()}
-                          <div style={{ padding: 20 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
-                                marginBottom: 8,
-                                gap: 12,
-                              }}
-                            >
-                              <h3
-                                style={{
-                                  margin: 0,
-                                  fontSize: 20,
-                                  fontWeight: 600,
-                                  fontFamily:
-                                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  color: "#1a1a1a",
-                                  flex: 1,
-                                }}
-                              >
-                                {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
-                                {event.name}
-                              </h3>
-                              {!event.heroImage && (
-                                <Badge
-                                  variant="custom"
-                                  backgroundColor="rgba(102, 126, 234, 0.95)"
-                                  textColor="white"
-                                  size="small"
-                                  uppercase={true}
-                                >
-                                  {t("public.events") || "Esemény"}
-                                </Badge>
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "clamp(14px, 3.5vw, 16px)",
-                                color: "#666",
-                                marginBottom: 8,
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                fontWeight: 400,
-                              }}
-                            >
-                              {new Date(event.startDate).toLocaleDateString(
-                                lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </div>
-                            {event.shortDescription && (
-                              <p
-                                style={{
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  color: "#666",
-                                  margin: "8px 0",
-                                  lineHeight: 1.6,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  fontWeight: 400,
-                                }}
-                              >
-                                {event.shortDescription}
-                              </p>
-                            )}
-                            {event.placeName && (
-                              <div
-                                style={{
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  color: "#667eea",
-                                  marginTop: 8,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  fontWeight: 400,
-                                }}
-                              >
-                                📍 {event.placeName}
-                              </div>
-                            )}
-                            <div
-                              style={{
-                                marginTop: 12,
-                                fontSize: "clamp(14px, 3.5vw, 16px)",
-                                color: "#999",
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                fontWeight: 400,
-                              }}
-                            >
-                              {t("public.placeSlugMissing") || "Részletek hamarosan..."}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
                     return (
-                      <Link
+                      <EventGridCard
                         key={event.id}
-                        to={buildUrl({ lang, siteKey, path: `event/${event.slug}` })}
-                        style={{ textDecoration: "none", color: "inherit" }}
-                      >
-                        <div
-                          style={{
-                            background: "white",
-                            borderRadius: 12,
-                            overflow: "hidden",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                            transition: "all 0.3s ease",
-                            cursor: "pointer",
-                            borderBottom: event.category ? `3px solid #667eea` : "none",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "translateY(-4px)";
-                            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.12)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
-                          }}
-                        >
-                          {(() => {
-                            const eventImage = event.heroImage?.trim() || null;
-                            const placeholderImage =
-                              platformSettings?.defaultEventPlaceholderCardImage?.trim() || null;
-                            const imageUrl = eventImage || placeholderImage;
-                            const hasImage = !!imageUrl && imageUrl.length > 0;
-
-                            return hasImage ? (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: 200,
-                                  backgroundImage: `url(${imageUrl})`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                  position: "relative",
-                                }}
-                              >
-                                {/* Event badge overlay */}
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    top: 12,
-                                    left: 12,
-                                    zIndex: 10,
-                                  }}
-                                >
-                                  <Badge
-                                    variant="custom"
-                                    backgroundColor="rgba(102, 126, 234, 0.95)"
-                                    textColor="white"
-                                    size="small"
-                                    uppercase={true}
-                                    style={{
-                                      backdropFilter: "blur(8px)",
-                                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-                                    }}
-                                  >
-                                    {t("public.events") || "Esemény"}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ) : null;
-                          })()}
-                          <div style={{ padding: 20 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
-                                marginBottom: 8,
-                                gap: 12,
-                              }}
-                            >
-                              <h3
-                                style={{
-                                  margin: 0,
-                                  fontSize: 20,
-                                  fontWeight: 600,
-                                  fontFamily:
-                                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  color: "#1a1a1a",
-                                  flex: 1,
-                                }}
-                              >
-                                {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
-                                {event.name}
-                              </h3>
-                              {!event.heroImage && (
-                                <Badge
-                                  variant="custom"
-                                  backgroundColor="rgba(102, 126, 234, 0.95)"
-                                  textColor="white"
-                                  size="small"
-                                  uppercase={true}
-                                >
-                                  {t("public.events") || "Esemény"}
-                                </Badge>
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "clamp(14px, 3.5vw, 16px)",
-                                color: "#666",
-                                marginBottom: 8,
-                                fontFamily:
-                                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                fontWeight: 400,
-                              }}
-                            >
-                              {new Date(event.startDate).toLocaleDateString(
-                                lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </div>
-                            {event.shortDescription && (
-                              <p
-                                style={{
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  color: "#666",
-                                  margin: "8px 0",
-                                  lineHeight: 1.6,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  fontWeight: 400,
-                                }}
-                              >
-                                {event.shortDescription}
-                              </p>
-                            )}
-                            {event.placeName && (
-                              <div
-                                style={{
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  color: "#667eea",
-                                  marginTop: 8,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  fontWeight: 400,
-                                }}
-                              >
-                                📍 {event.placeName}
-                              </div>
-                            )}
-                            <div
-                              style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}
-                            >
-                              <span
-                                style={{
-                                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                                  fontWeight: 500,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  color: "#667eea",
-                                }}
-                              >
-                                {t("public.readMore")} →
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
+                        event={event}
+                        placeholderImage={platformSettings?.defaultEventPlaceholderCardImage}
+                      />
                     );
                   }
                 })}
               </div>
-
-              {/* Infinite scroll trigger */}
-              <div ref={observerTarget} style={{ height: 20, marginBottom: 32 }}>
-                <LoadingSpinner isLoading={isFetchingNextPage} />
-              </div>
+              {/* Only reserve space for the next batch while fetching — not blank void. */}
+              {hasNextPage ? (
+                <div ref={observerTarget} style={{ marginTop: 16, marginBottom: 24 }}>
+                  {isFetchingNextPage ? (
+                    <PublicCardSkeletonGrid
+                      count={Math.min(ITEMS_PER_PAGE, 6)}
+                      variant="places"
+                      label={t("common.loading")}
+                    />
+                  ) : (
+                    <div style={{ height: 1 }} aria-hidden="true" />
+                  )}
+                </div>
+              ) : null}
             </>
           )}
         </div>

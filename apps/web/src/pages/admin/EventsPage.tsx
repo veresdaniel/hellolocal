@@ -1,5 +1,6 @@
 // src/pages/admin/EventsPage.tsx
 import { useState, useEffect, useContext } from "react";
+import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
@@ -13,6 +14,7 @@ import {
   type TableColumn,
   type CardField,
 } from "../../components/AdminResponsiveTable";
+import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import {
   getEvents,
@@ -34,8 +36,11 @@ import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { SlugInput } from "../../components/SlugInput";
+import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { findTranslation } from "../../utils/langHelpers";
+import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
@@ -47,6 +52,7 @@ export function EventsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const hierarchy = useAdminHierarchyFilters();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   usePageTitle("admin.events");
@@ -118,6 +124,7 @@ export function EventsPage() {
     isPinned: false,
     isRainSafe: false,
     showOnMap: true,
+    gaMeasurementId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -145,7 +152,7 @@ export function EventsPage() {
       loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, pagination.page, pagination.limit]);
+  }, [selectedSiteId, pagination.page, pagination.limit, hierarchy.placeId, hierarchy.townId]);
 
   // Load my places and check site admin role for RBAC filtering
   useEffect(() => {
@@ -215,9 +222,16 @@ export function EventsPage() {
     setIsLoading(true);
     setError(null);
     try {
+      // Town filter is server-side (townId) so pagination is accurate (no under-fetch).
       const [eventsResponse, categoriesResponse, townsResponse, placesResponse, tagsResponse] =
         await Promise.all([
-          getEvents(selectedSiteId, pagination.page, pagination.limit),
+          getEvents(
+            selectedSiteId,
+            pagination.page,
+            pagination.limit,
+            hierarchy.placeId || undefined,
+            !hierarchy.placeId && hierarchy.townId ? hierarchy.townId : undefined
+          ),
           getCategories(selectedSiteId),
           getTowns(selectedSiteId),
           getPlaces(selectedSiteId),
@@ -290,6 +304,9 @@ export function EventsPage() {
     const errors: Record<string, string> = {};
     if (!formData.titleHu.trim()) errors.titleHu = t("admin.validation.hungarianTitleRequired");
     if (!formData.startDate) errors.startDate = t("admin.validation.startDateRequired");
+    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -372,6 +389,9 @@ export function EventsPage() {
         heroImage: formData.heroImage || null,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
+        gaMeasurementId: formData.gaMeasurementId.trim()
+          ? formData.gaMeasurementId.trim().toUpperCase()
+          : null,
       });
       setIsCreating(false);
       resetForm();
@@ -471,6 +491,9 @@ export function EventsPage() {
           heroImage: formData.heroImage || null,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
+          gaMeasurementId: formData.gaMeasurementId.trim()
+            ? formData.gaMeasurementId.trim().toUpperCase()
+            : null,
         },
         selectedSiteId || undefined
       );
@@ -493,9 +516,9 @@ export function EventsPage() {
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
-      title: t("admin.confirmDeleteEvent") || "Delete Event",
+      title: t("admin.confirmations.deleteEvent") || "Delete Event",
       message:
-        t("admin.confirmDeleteEvent") ||
+        t("admin.confirmations.deleteEvent") ||
         "Are you sure you want to delete this event? This action cannot be undone.",
       confirmLabel: t("common.delete") || "Delete",
       cancelLabel: t("common.cancel") || "Cancel",
@@ -566,6 +589,7 @@ export function EventsPage() {
       isPinned: event.isPinned,
       isRainSafe: event.isRainSafe || false,
       showOnMap: event.showOnMap ?? true,
+      gaMeasurementId: event.gaMeasurementId || "",
     });
   };
 
@@ -613,6 +637,7 @@ export function EventsPage() {
       isPinned: false,
       isRainSafe: false,
       showOnMap: true,
+      gaMeasurementId: "",
     });
     setFormErrors({});
   };
@@ -631,6 +656,10 @@ export function EventsPage() {
       // Use setTimeout to ensure state is updated first
       setTimeout(() => {
         resetForm();
+        const placeIdFromUrl = searchParams.get("placeId") || "";
+        if (placeIdFromUrl) {
+          setFormData((prev) => ({ ...prev, placeId: placeIdFromUrl }));
+        }
       }, 0);
       // Remove query param from URL
       const newSearchParams = new URLSearchParams(searchParams);
@@ -639,6 +668,21 @@ export function EventsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString(), isCreating, editingId]);
+
+  // Handle ?edit= query param (from hierarchy drill-down)
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && !editingId && !isCreating && events.length > 0) {
+      const eventToEdit = events.find((e) => e.id === editId);
+      if (eventToEdit) {
+        startEdit(eventToEdit);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("edit");
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("edit"), events.length, editingId, isCreating]);
 
   // Wait for site context to initialize
   if (isSiteLoading) {
@@ -649,7 +693,7 @@ export function EventsPage() {
     return <div style={{ padding: 24 }}>{t("admin.table.pleaseSelectSite")}</div>;
   }
 
-  // Filter events based on search query
+  // Hierarchy filters are applied server-side (placeId / townId); search stays client-side.
   const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
   const filteredEvents = events.filter((event) => {
     if (!searchQuery.trim()) return true;
@@ -695,38 +739,55 @@ export function EventsPage() {
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
 
-      {/* Search/Filter Bar - unified style with AdminResponsiveTable */}
-      {!isCreating && !editingId && events.length > 0 && (
+      {!isCreating && !editingId && (
         <div style={{ marginBottom: 24 }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentMobileIndex(0); // Reset to first card when searching
+          <AdminHierarchyFilters
+            idPrefix="events-filter"
+            requireSite
+            allowClearSite={hierarchy.canPickSite}
+            siteId={hierarchy.siteId}
+            townId={hierarchy.townId}
+            placeId={hierarchy.placeId}
+            onSiteChange={(next) => {
+              hierarchy.setSiteId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              setCurrentMobileIndex(0);
             }}
-            placeholder={t("admin.searchPlaceholders.events")}
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              fontSize: 15,
-              border: "2px solid #e0e7ff",
-              borderRadius: 8,
-              outline: "none",
-              transition: "all 0.3s ease",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              boxSizing: "border-box",
+            onTownChange={(next) => {
+              hierarchy.setTownId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              setCurrentMobileIndex(0);
             }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#667eea";
-              e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+            onPlaceChange={(next) => {
+              hierarchy.setPlaceId(next);
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              setCurrentMobileIndex(0);
             }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e0e7ff";
-              e.target.style.boxShadow = "none";
+            siteOptions={hierarchy.siteOptions}
+            townOptions={hierarchy.townOptions}
+            placeOptions={hierarchy.placeOptions}
+            onClear={() => {
+              hierarchy.clearFilters();
+              setSearchQuery("");
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              setCurrentMobileIndex(0);
             }}
-          />
+            clearDisabled={!hierarchy.filtersActive && !searchQuery.trim()}
+          >
+            <div className="admin-flist__filter admin-flist__filter--span-2">
+              <label htmlFor="events-filter-search">{t("admin.filters.search")}</label>
+              <input
+                id="events-filter-search"
+                type="search"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentMobileIndex(0);
+                }}
+                placeholder={t("admin.searchPlaceholders.events")}
+              />
+            </div>
+          </AdminHierarchyFilters>
         </div>
       )}
 
@@ -877,9 +938,7 @@ export function EventsPage() {
                         display: "block",
                         marginBottom: 8,
                         color:
-                          (selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe)
+                          readLang(formErrors, "title", selectedLang)
                             ? "#dc2626"
                             : "#667eea",
                         fontWeight: 600,
@@ -888,30 +947,34 @@ export function EventsPage() {
                     >
                       {t("common.title")} ({selectedLang.toUpperCase()}) *
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "event",
+                        field: "title",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "title", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "title", selectedLang, text))
+                      }
+                    >
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.titleHu
-                          : selectedLang === "en"
-                            ? formData.titleEn
-                            : formData.titleDe
+                        readLang(formData, "title", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, titleHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, titleEn: e.target.value });
-                        else setFormData({ ...formData, titleDe: e.target.value });
+                        setFormData(patchLang(formData, "title", selectedLang, e.target.value));
                       }}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
                         fontSize: 15,
                         border:
-                          (selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe)
+                          readLang(formErrors, "title", selectedLang)
                             ? "2px solid #fca5a5"
                             : "2px solid #e0e7ff",
                         borderRadius: 8,
@@ -920,18 +983,14 @@ export function EventsPage() {
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         background:
-                          (selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe)
+                          readLang(formErrors, "title", selectedLang)
                             ? "#fef2f2"
                             : "white",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
                         const hasError =
-                          (selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe);
+                          readLang(formErrors, "title", selectedLang);
                         if (!hasError) {
                           e.target.style.borderColor = "#667eea";
                           e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
@@ -939,24 +998,17 @@ export function EventsPage() {
                       }}
                       onBlur={(e) => {
                         const hasError =
-                          (selectedLang === "hu" && formErrors.titleHu) ||
-                          (selectedLang === "en" && formErrors.titleEn) ||
-                          (selectedLang === "de" && formErrors.titleDe);
+                          readLang(formErrors, "title", selectedLang);
                         e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
                         e.target.style.boxShadow = "none";
                       }}
                     />
-                    {((selectedLang === "hu" && formErrors.titleHu) ||
-                      (selectedLang === "en" && formErrors.titleEn) ||
-                      (selectedLang === "de" && formErrors.titleDe)) && (
+                    </AiPostfixField>
+                    {(readLang(formErrors, "title", selectedLang)) && (
                       <div
                         style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}
                       >
-                        {selectedLang === "hu"
-                          ? formErrors.titleHu
-                          : selectedLang === "en"
-                            ? formErrors.titleEn
-                            : formErrors.titleDe}
+                        {readLang(formErrors, "title", selectedLang)}
                       </div>
                     )}
                   </div>
@@ -964,33 +1016,19 @@ export function EventsPage() {
                   {/* Slug - right after Title */}
                   <SlugInput
                     value={
-                      selectedLang === "hu"
-                        ? formData.slugHu
-                        : selectedLang === "en"
-                          ? formData.slugEn
-                          : formData.slugDe
+                      readLang(formData, "slug", selectedLang)
                     }
                     onChange={(value) => {
-                      if (selectedLang === "hu") setFormData({ ...formData, slugHu: value });
-                      else if (selectedLang === "en") setFormData({ ...formData, slugEn: value });
-                      else setFormData({ ...formData, slugDe: value });
+                      setFormData(patchLang(formData, "slug", selectedLang, value));
                     }}
                     sourceName={
-                      selectedLang === "hu"
-                        ? formData.titleHu
-                        : selectedLang === "en"
-                          ? formData.titleEn
-                          : formData.titleDe
+                      readLang(formData, "title", selectedLang)
                     }
                     lang={selectedLang}
                     label={t("admin.slug") || "Slug"}
                     placeholder="auto-generated-from-title"
                     error={
-                      selectedLang === "hu"
-                        ? formErrors.slugHu
-                        : selectedLang === "en"
-                          ? formErrors.slugEn
-                          : formErrors.slugDe
+                      readLang(formErrors, "slug", selectedLang)
                     }
                   />
 
@@ -1009,21 +1047,21 @@ export function EventsPage() {
                     </label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.descriptionHu
-                          : selectedLang === "en"
-                            ? formData.descriptionEn
-                            : formData.descriptionDe
+                        readLang(formData, "description", selectedLang)
                       }
                       onChange={(html) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, descriptionHu: html });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, descriptionEn: html });
-                        else setFormData({ ...formData, descriptionDe: html });
+                        setFormData(patchLang(formData, "description", selectedLang, html));
                       }}
                       uploadFolder="editor/events"
                       enableVideo={true}
+                      aiDraft={{
+                        kind: "event",
+                        field: "description",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
                     />
                   </div>
 
@@ -1043,18 +1081,10 @@ export function EventsPage() {
                     </label>
                     <TipTapEditorWithUpload
                       value={
-                        selectedLang === "hu"
-                          ? formData.shortDescriptionHu
-                          : selectedLang === "en"
-                            ? formData.shortDescriptionEn
-                            : formData.shortDescriptionDe
+                        readLang(formData, "shortDescription", selectedLang)
                       }
                       onChange={(value) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, shortDescriptionHu: value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, shortDescriptionEn: value });
-                        else setFormData({ ...formData, shortDescriptionDe: value });
+                        setFormData(patchLang(formData, "shortDescription", selectedLang, value));
                       }}
                       placeholder={
                         t("admin.shortDescriptionPlaceholder") ||
@@ -1062,8 +1092,16 @@ export function EventsPage() {
                       }
                       height={150}
                       uploadFolder="editor/events"
+                      aiDraft={{
+                        kind: "event",
+                        field: "shortDescription",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.shortDescriptionHint") ||
                         "Ez a mező jelenik meg a lista oldali kártyákon"}
                     </small>
@@ -1101,21 +1139,27 @@ export function EventsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       SEO {t("common.title")}
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "event",
+                        field: "seoTitle",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoTitle", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "seoTitle", selectedLang, text))
+                      }
+                    >
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoTitleHu
-                          : selectedLang === "en"
-                            ? formData.seoTitleEn
-                            : formData.seoTitleDe
+                        readLang(formData, "seoTitle", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoTitleHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoTitleEn: e.target.value });
-                        else setFormData({ ...formData, seoTitleDe: e.target.value });
+                        setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
@@ -1128,7 +1172,8 @@ export function EventsPage() {
                         borderRadius: 4,
                       }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    </AiPostfixField>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoTitleHint") || "If empty, event name will be used"}
                     </small>
                   </div>
@@ -1137,20 +1182,27 @@ export function EventsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       SEO {t("common.description")}
                     </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "event",
+                        field: "seoDescription",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoDescription", selectedLang)}
+                      onApply={(text) =>
+                        setFormData(patchLang(formData, "seoDescription", selectedLang, text))
+                      }
+                      variant="textarea"
+                    >
                     <textarea
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoDescriptionHu
-                          : selectedLang === "en"
-                            ? formData.seoDescriptionEn
-                            : formData.seoDescriptionDe
+                        readLang(formData, "seoDescription", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoDescriptionHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoDescriptionEn: e.target.value });
-                        else setFormData({ ...formData, seoDescriptionDe: e.target.value });
+                        setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoDescriptionPlaceholder") ||
@@ -1165,7 +1217,8 @@ export function EventsPage() {
                         borderRadius: 4,
                       }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    </AiPostfixField>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoDescriptionHint") ||
                         "If empty, first 2 sentences from description will be used"}
                     </small>
@@ -1178,18 +1231,10 @@ export function EventsPage() {
                     <input
                       type="url"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoImageHu
-                          : selectedLang === "en"
-                            ? formData.seoImageEn
-                            : formData.seoImageDe
+                        readLang(formData, "seoImage", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoImageHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoImageEn: e.target.value });
-                        else setFormData({ ...formData, seoImageDe: e.target.value });
+                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoImagePlaceholder") ||
@@ -1203,7 +1248,7 @@ export function EventsPage() {
                         borderRadius: 4,
                       }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoImageHint") || "If empty, hero image will be used"}
                     </small>
                   </div>
@@ -1215,18 +1260,10 @@ export function EventsPage() {
                     <input
                       type="text"
                       value={
-                        selectedLang === "hu"
-                          ? formData.seoKeywordsHu
-                          : selectedLang === "en"
-                            ? formData.seoKeywordsEn
-                            : formData.seoKeywordsDe
+                        readLang(formData, "seoKeywords", selectedLang)
                       }
                       onChange={(e) => {
-                        if (selectedLang === "hu")
-                          setFormData({ ...formData, seoKeywordsHu: e.target.value });
-                        else if (selectedLang === "en")
-                          setFormData({ ...formData, seoKeywordsEn: e.target.value });
-                        else setFormData({ ...formData, seoKeywordsDe: e.target.value });
+                        setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
                       }}
                       placeholder={
                         t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
@@ -1239,7 +1276,7 @@ export function EventsPage() {
                         borderRadius: 4,
                       }}
                     />
-                    <small style={{ color: "#666", fontSize: 12, marginTop: 4, display: "block" }}>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
                     </small>
                   </div>
@@ -1266,7 +1303,7 @@ export function EventsPage() {
                       marginBottom: 4,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: 600,
-                      color: "#333",
+                      color: "var(--hl-ink, #1b1730)",
                     }}
                   >
                     📱 {t("public.phone")}
@@ -1296,7 +1333,7 @@ export function EventsPage() {
                       marginBottom: 4,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: 600,
-                      color: "#333",
+                      color: "var(--hl-ink, #1b1730)",
                     }}
                   >
                     ✉️ {t("public.email")}
@@ -1326,7 +1363,7 @@ export function EventsPage() {
                       marginBottom: 4,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: 600,
-                      color: "#333",
+                      color: "var(--hl-ink, #1b1730)",
                     }}
                   >
                     🌐 {t("public.website")}
@@ -1356,7 +1393,7 @@ export function EventsPage() {
                       marginBottom: 4,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: 600,
-                      color: "#333",
+                      color: "var(--hl-ink, #1b1730)",
                     }}
                   >
                     📘 Facebook
@@ -1386,7 +1423,7 @@ export function EventsPage() {
                       marginBottom: 4,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontWeight: 600,
-                      color: "#333",
+                      color: "var(--hl-ink, #1b1730)",
                     }}
                   >
                     💬 WhatsApp
@@ -1550,7 +1587,7 @@ export function EventsPage() {
                       onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
                       style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     />
-                    <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.isPinned")}</span>
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.isPinned")}</span>
                   </label>
                   <label
                     style={{
@@ -1567,9 +1604,9 @@ export function EventsPage() {
                       onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
                       style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     />
-                    <span style={{ color: "#333", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
                   </label>
-                  <div style={{ fontSize: 12, color: "#666", marginTop: -8, marginLeft: 28 }}>
+                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
                     {t("common.isRainSafeHint")}
                   </div>
                   <label
@@ -1587,9 +1624,9 @@ export function EventsPage() {
                       onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
                       style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
                     />
-                    <span style={{ color: "#333", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
                   </label>
-                  <div style={{ fontSize: 12, color: "#666", marginTop: -8, marginLeft: 28 }}>
+                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
                     {t("admin.showOnMapHint")}
                   </div>
                 </div>
@@ -1689,6 +1726,46 @@ export function EventsPage() {
               </div>
             </div>
 
+            <div style={{ marginBottom: 24, maxWidth: 420 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: 8,
+                  fontWeight: 500,
+                  fontSize: "clamp(14px, 3.5vw, 16px)",
+                }}
+              >
+                {t("admin.googleAnalytics.eventLabel")}
+              </label>
+              <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
+                {t("admin.googleAnalytics.eventHelp")}
+              </p>
+              <input
+                type="text"
+                value={formData.gaMeasurementId}
+                onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
+                placeholder="G-XXXXXXXX"
+                autoComplete="off"
+                spellCheck={false}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 14,
+                }}
+              />
+              {formErrors.gaMeasurementId ? (
+                <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
+                  {formErrors.gaMeasurementId}
+                </p>
+              ) : (
+                <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
+                  {t("admin.googleAnalytics.clearHint")}
+                </p>
+              )}
+            </div>
+
             {/* isActive checkbox - prominent at the bottom - visible to everyone */}
             <div
               style={{
@@ -1709,7 +1786,7 @@ export function EventsPage() {
                   alignItems: "center",
                   gap: 12,
                   cursor: "pointer",
-                  color: "white",
+                  color: "var(--hl-on-dark-strong, #ffffff)",
                 }}
               >
                 <input
@@ -1833,7 +1910,7 @@ export function EventsPage() {
                             background: event.isActive
                               ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                               : "#6c757d",
-                            color: "white",
+                            color: "var(--hl-on-dark-strong, #ffffff)",
                             fontSize: 12,
                             fontWeight: 600,
                           }}
@@ -1848,7 +1925,7 @@ export function EventsPage() {
                             style={{
                               padding: "6px 10px",
                               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                              color: "white",
+                              color: "var(--hl-on-dark-strong, #ffffff)",
                               border: "none",
                               borderRadius: 6,
                               cursor: "pointer",
@@ -1955,7 +2032,7 @@ export function EventsPage() {
                             style={{
                               padding: "6px 10px",
                               background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                              color: "white",
+                              color: "var(--hl-on-dark-strong, #ffffff)",
                               border: "none",
                               borderRadius: 6,
                               cursor: "pointer",
@@ -2004,7 +2081,7 @@ export function EventsPage() {
               </tbody>
             </table>
             {filteredEvents.length === 0 && (
-              <div style={{ padding: 48, textAlign: "center", color: "#999" }}>
+              <div style={{ padding: 48, textAlign: "center", color: "var(--hl-muted, #665d78)" }}>
                 {searchQuery ? t("admin.table.noSearchResults") : t("admin.table.noData")}
               </div>
             )}
@@ -2033,7 +2110,7 @@ export function EventsPage() {
                 style={{
                   padding: 48,
                   textAlign: "center",
-                  color: "#999",
+                  color: "var(--hl-muted, #665d78)",
                   background: "white",
                   borderRadius: 12,
                 }}
@@ -2337,7 +2414,7 @@ export function EventsPage() {
                                 style={{
                                   width: 80,
                                   background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                  color: "white",
+                                  color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",
                                   display: "flex",
@@ -2393,7 +2470,7 @@ export function EventsPage() {
                                 style={{
                                   width: 80,
                                   background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                  color: "white",
+                                  color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",
                                   display: "flex",
@@ -2442,7 +2519,7 @@ export function EventsPage() {
                                 style={{
                                   width: 80,
                                   background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                                  color: "white",
+                                  color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",
                                   display: "flex",
@@ -2554,7 +2631,7 @@ export function EventsPage() {
                                 style={{
                                   fontSize: 18,
                                   fontWeight: 700,
-                                  color: "#333",
+                                  color: "var(--hl-ink, #1b1730)",
                                   marginBottom: 4,
                                 }}
                               >
@@ -2571,7 +2648,7 @@ export function EventsPage() {
                                 gap: 8,
                                 marginBottom: 8,
                                 fontSize: 14,
-                                color: "#666",
+                                color: "var(--hl-muted, #665d78)",
                               }}
                             >
                               <span style={{ fontWeight: 600 }}>📅</span>
@@ -2600,7 +2677,7 @@ export function EventsPage() {
                                   gap: 8,
                                   marginBottom: 8,
                                   fontSize: 14,
-                                  color: "#666",
+                                  color: "var(--hl-muted, #665d78)",
                                 }}
                               >
                                 <span style={{ fontWeight: 600 }}>📍</span>
@@ -2621,7 +2698,7 @@ export function EventsPage() {
                                   background: event.isActive
                                     ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                                     : "#6c757d",
-                                  color: "white",
+                                  color: "var(--hl-on-dark-strong, #ffffff)",
                                   fontSize: 13,
                                   fontWeight: 600,
                                 }}

@@ -9,35 +9,32 @@ import { FloatingHeader } from "../components/FloatingHeader";
 import { Footer } from "../ui/layout/Footer";
 import {
   HAS_MULTIPLE_SITES,
-  DEFAULT_SITE_SLUG,
-  APP_LANGS,
+  DEFAULT_SITE_SLUG, 
   DEFAULT_LANG,
-  type Lang,
-} from "../app/config";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+  type Lang, isLang} from "../app/config";
+import { PublicCardSkeletonGrid } from "../components/PublicSkeleton";
+import { EmptyResults } from "../components/EmptyResults";
 import { useSeo } from "../seo/useSeo";
 import { useQuery } from "@tanstack/react-query";
 import { getPlatformSettings } from "../api/places.api";
 
 const ITEMS_PER_PAGE = 12;
 
-// Map of path to language
-const PATH_TO_LANG: Record<string, "hu" | "en" | "de"> = {
+// Map of path to language (includes legacy teruletek)
+const PATH_TO_LANG: Record<string, Lang> = {
+  regiok: "hu",
   teruletek: "hu",
   regions: "en",
   regionen: "de",
 };
 
-// Map of language to path
-const LANG_TO_PATH: Record<"hu" | "en" | "de", string> = {
-  hu: "teruletek",
+// Canonical language → region-list path (Site === Régió)
+const LANG_TO_PATH: Record<Lang, string> = {
+  hu: "regiok",
   en: "regions",
   de: "regionen",
 };
 
-function isLang(x: unknown): x is Lang {
-  return typeof x === "string" && (APP_LANGS as readonly string[]).includes(x);
-}
 
 export function SitesListPage() {
   const { t, i18n } = useTranslation();
@@ -58,8 +55,8 @@ export function SitesListPage() {
   // Use path language if available, otherwise use URL lang param
   const effectiveLang = pathLang || lang;
 
-  // If path language is different from URL lang, redirect to correct URL
-  if (pathLang && pathLang !== lang) {
+  // If path language is different from URL lang, or legacy HU path, redirect to canonical
+  if (pathLang && (pathLang !== lang || currentPath !== LANG_TO_PATH[pathLang])) {
     const redirectPath = `/${pathLang}/${LANG_TO_PATH[pathLang]}`;
     return <Navigate to={redirectPath} replace />;
   }
@@ -166,7 +163,8 @@ export function SitesListPage() {
         
         .tenants-list-container {
           min-height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: var(--hl-bg-image, var(--hl-bg, #1b1730));
+          background-color: var(--hl-bg, #1b1730);
           padding: 0;
           position: relative;
           overflow-x: hidden;
@@ -180,8 +178,8 @@ export function SitesListPage() {
           top: 0;
           left: 0;
           right: 0;
-          height: 400px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          height: 280px;
+          background: transparent;
           z-index: 0;
         }
         
@@ -207,11 +205,11 @@ export function SitesListPage() {
           margin: 0;
           margin-bottom: 16px;
           font-size: clamp(32px, 6vw, 56px);
-          font-weight: 800;
-          color: white;
-          letter-spacing: -0.03em;
-          line-height: 1.1;
-          text-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+          font-weight: 700;
+          color: var(--hl-on-dark, #f2f4fb);
+          font-family: Poppins, system-ui, sans-serif;
+          letter-spacing: -0.04em;
+          line-height: 1.05;
         }
         
         .tenants-subtitle {
@@ -219,7 +217,7 @@ export function SitesListPage() {
           margin-bottom: 32px;
           font-size: clamp(16px, 2.5vw, 20px);
           font-weight: 400;
-          color: rgba(255, 255, 255, 0.9);
+          color: var(--hl-muted-on-dark, #a8b0c8);
           line-height: 1.6;
           max-width: 600px;
         }
@@ -247,7 +245,9 @@ export function SitesListPage() {
           font-size: 16px;
           border: none;
           border-radius: 16px;
-          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(27, 23, 48, 0.1);
+          background: var(--hl-card, #fffdf9);
+          color: var(--hl-ink, #1b1730);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-sizing: border-box;
@@ -338,14 +338,14 @@ export function SitesListPage() {
         .tenants-empty-state {
           text-align: center;
           padding: 80px 24px;
-          color: rgba(255, 255, 255, 0.9);
+          color: var(--hl-muted-on-dark, #a8b0c8);
         }
         
         .tenants-empty-state-title {
           font-size: 24px;
           font-weight: 600;
           margin-bottom: 12px;
-          color: white;
+          color: var(--hl-on-dark, #f2f4fb);
         }
         
         .tenants-empty-state-text {
@@ -366,12 +366,11 @@ export function SitesListPage() {
         }
         
         .tenants-loading-more {
-          display: flex;
-          justify-content: center;
-          padding: 40px 0;
+          display: block;
+          padding: 16px 0 24px;
         }
       `}</style>
-      <div className="tenants-list-container">
+      <div className="tenants-list-container hl-public">
         <div className="tenants-list-content">
           {/* Header Section */}
           <div className="tenants-header">
@@ -400,7 +399,7 @@ export function SitesListPage() {
                 <input
                   type="text"
                   className="tenants-search-input"
-                  placeholder={t("public.searchSites") || "Keresés site-ok között..."}
+                  placeholder={t("public.searchSites") || "Keresés helyek között..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -411,27 +410,28 @@ export function SitesListPage() {
           {/* Sites Grid */}
           <div className="tenants-grid-container">
             {isLoading && allSites.length === 0 ? (
-              <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
-                <LoadingSpinner isLoading={true} delay={0} />
-              </div>
+              <PublicCardSkeletonGrid
+                count={ITEMS_PER_PAGE}
+                variant="sites"
+                label={t("common.loading")}
+              />
             ) : isError ? (
               <div className="tenants-error-state">
                 <div className="tenants-empty-state-title">
-                  {t("public.errorLoadingSites") || "Hiba a site-ok betöltésekor"}
+                  {t("public.errorLoadingSites")}
                 </div>
-                <div className="tenants-empty-state-text">Kérjük, próbáld újra később.</div>
+                <div className="tenants-empty-state-text">{t("public.tryAgainLater")}</div>
               </div>
             ) : allSites.length === 0 ? (
-              <div className="tenants-empty-state">
-                <div className="tenants-empty-state-title">
-                  {t("public.noSitesFound") || "Nincs találat"}
-                </div>
-                <div className="tenants-empty-state-text">
-                  {searchQuery
-                    ? "Nincs site, ami megfelelne a keresési feltételeknek."
-                    : "Jelenleg nincs elérhető site."}
-                </div>
-              </div>
+              <EmptyResults
+                className="tenants-empty-state"
+                title={t("public.noSitesFound")}
+                description={
+                  searchQuery
+                    ? t("public.emptySitesSearchHint")
+                    : t("public.emptySitesDefaultHint")
+                }
+              />
             ) : (
               <>
                 <div className="tenants-grid">
@@ -440,12 +440,19 @@ export function SitesListPage() {
                   ))}
                 </div>
 
-                {/* Infinite scroll trigger */}
-                {hasNextPage && (
+                {hasNextPage ? (
                   <div ref={observerTarget} className="tenants-loading-more">
-                    <LoadingSpinner isLoading={isFetchingNextPage} delay={0} />
+                    {isFetchingNextPage ? (
+                      <PublicCardSkeletonGrid
+                        count={Math.min(ITEMS_PER_PAGE, 4)}
+                        variant="sites"
+                        label={t("common.loading")}
+                      />
+                    ) : (
+                      <div style={{ height: 1 }} aria-hidden="true" />
+                    )}
                   </div>
-                )}
+                ) : null}
               </>
             )}
           </div>

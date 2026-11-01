@@ -9,6 +9,10 @@ export type PlatformSettings = {
     name: string;
     shortDescription?: string | null;
     description?: string | null;
+    heroImage?: string | null;
+    landingHtml?: string | null;
+    listIntroHtml?: string | null;
+    listIntroImage?: string | null;
   };
 
   brand: {
@@ -17,6 +21,9 @@ export type PlatformSettings = {
     faviconUrl?: string | null;
     theme?: any;
   };
+
+  /** Per-site theme colors. Null = brand / code defaults. */
+  siteTheme?: any | null;
 
   seo: {
     defaultTitle?: string | null;
@@ -46,6 +53,13 @@ export type PlatformSettings = {
     blog: boolean;
     knowledgeBase: boolean;
     cookieConsent: boolean;
+  };
+
+  visitorHold?: boolean;
+
+  /** Per-site GA4 ID (platform ID is loaded separately on platform routes). */
+  analytics?: {
+    gaMeasurementId?: string | null;
   };
 };
 

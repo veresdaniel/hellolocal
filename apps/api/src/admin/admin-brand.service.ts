@@ -3,6 +3,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { isValidImageUrl, sanitizeImageUrl } from "../common/url-validation";
+import { mergeThemeWithColors } from "../common/public-theme-colors";
 
 export interface CreateBrandDto {
   name: string;
@@ -111,12 +112,23 @@ export class AdminBrandService {
       }
     }
 
+    let theme: Record<string, unknown> | undefined;
+    if (dto.theme !== undefined) {
+      try {
+        theme = mergeThemeWithColors({}, dto.theme);
+      } catch (err) {
+        throw new BadRequestException(
+          err instanceof Error ? err.message : "Invalid theme colors. Use #RRGGBB hex values."
+        );
+      }
+    }
+
     return this.prisma.brand.create({
       data: {
         name: dto.name,
         logoUrl: dto.logoUrl ? sanitizeImageUrl(dto.logoUrl) : null,
         faviconUrl: dto.faviconUrl ? sanitizeImageUrl(dto.faviconUrl) : null,
-        theme: dto.theme || undefined,
+        theme: theme as any,
         placeholders: dto.placeholders || undefined,
         mapDefaults: dto.mapDefaults || undefined,
       },
@@ -174,7 +186,17 @@ export class AdminBrandService {
     }
 
     if (dto.theme !== undefined) {
-      updateData.theme = dto.theme;
+      try {
+        const existing = await this.prisma.brand.findUnique({
+          where: { id },
+          select: { theme: true },
+        });
+        updateData.theme = mergeThemeWithColors(existing?.theme, dto.theme);
+      } catch (err) {
+        throw new BadRequestException(
+          err instanceof Error ? err.message : "Invalid theme colors. Use #RRGGBB hex values."
+        );
+      }
     }
 
     if (dto.placeholders !== undefined) {

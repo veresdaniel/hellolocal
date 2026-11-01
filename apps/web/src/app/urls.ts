@@ -1,12 +1,79 @@
 // src/app/urls.ts
 import { HAS_MULTIPLE_SITES } from "./config";
 import type { Lang } from "./config";
+import { placeEntityPath, regionListSegment, townEntityPath } from "./entityPaths";
 
 type BuildArgs = {
   lang: Lang;
+  /** Public region slug (Prisma Site). Param name kept for API compatibility. */
   siteKey?: string;
-  path?: string; // pl. "place/xyz"
+  path?: string; // pl. "hely/xyz" / "place/xyz"
 };
+
+const PLATFORM_HOSTS = new Set(["localhost", "127.0.0.1", "hello-local.io", "www.hello-local.io"]);
+
+export function isPlatformHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().split(":")[0];
+  if (!host || PLATFORM_HOSTS.has(host)) return true;
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+}
+
+function hostFromDomain(raw?: string | null): string | null {
+  const domain = raw?.trim().replace(/^https?:\/\//, "").split("/")[0];
+  return domain || null;
+}
+
+/** Custom domain when the region has one. Otherwise the slug path on this site. */
+export function regionAddress({
+  lang,
+  slug,
+  primaryDomain,
+  path = "",
+}: {
+  lang: string;
+  slug: string;
+  primaryDomain?: string | null;
+  path?: string;
+}): string {
+  const clean = path.replace(/^\//, "");
+  const tail = clean ? `/${clean}` : "";
+  const domain = hostFromDomain(primaryDomain);
+  if (domain) return `https://${domain}/${lang}/${slug}${tail}`;
+  return buildUrl({ lang: lang as Lang, siteKey: slug, path });
+}
+
+/**
+ * Public URL for a town or place. Prefer the entity's own customDomain (root of that host);
+ * otherwise fall back to the region host or platform slug path.
+ */
+export function entityPublicAddress({
+  lang,
+  siteSlug,
+  entityType,
+  entitySlug,
+  primaryDomain,
+  customDomain,
+}: {
+  lang: string;
+  siteSlug: string;
+  entityType: "town" | "place";
+  entitySlug: string;
+  primaryDomain?: string | null;
+  customDomain?: string | null;
+}): string {
+  const own = hostFromDomain(customDomain);
+  if (own) return `https://${own}/`;
+  const path =
+    entityType === "town"
+      ? townEntityPath(lang, entitySlug)
+      : placeEntityPath(lang, entitySlug);
+  return regionAddress({
+    lang,
+    slug: siteSlug,
+    primaryDomain,
+    path,
+  });
+}
 
 export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
   const clean = path.replace(/^\//, "");
@@ -24,13 +91,9 @@ export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
 
 /**
  * Builds a public URL for an entity based on its type and slug.
+ * Path segments are language-specific (hely/place/ort, telepules/town/gemeinde, regiok/regions/regionen).
  *
- * @param args - URL building arguments
- * @param args.lang - Language code
- * @param args.siteKey - Site key (required in multi-site mode)
- * @param args.entityType - Entity type (place, event, town, page, etc.)
- * @param args.slug - Entity slug
- * @returns Public URL path (e.g., "/hu/etyek-budai/place/borostyan-pince")
+ * @returns Public URL path (e.g., "/hu/etyek-budai/hely/borostyan-pince")
  */
 export function buildPublicUrl({
   lang,
@@ -43,20 +106,33 @@ export function buildPublicUrl({
   entityType: "place" | "event" | "town" | "page" | "region" | "placeType";
   slug: string;
 }): string {
-  // Map entity types to URL paths
-  const entityPathMap: Record<string, string> = {
-    place: "place",
-    event: "event",
-    town: "town",
-    page: "static-page", // Static pages use "static-page" in URL
-    region: "teruletek", // Regions/sites use "teruletek" in URL
-    placeType: "place-type", // Place types (if needed)
-  };
-
-  const entityPath = entityPathMap[entityType] || entityType;
+  const safeLang = lang as Lang;
+  let path: string;
+  switch (entityType) {
+    case "place":
+      path = placeEntityPath(safeLang, slug);
+      break;
+    case "town":
+      path = townEntityPath(safeLang, slug);
+      break;
+    case "region":
+      // Region list index (slug unused); language-specific list path
+      path = regionListSegment(safeLang);
+      break;
+    case "page":
+      path = `static-page/${slug}`;
+      break;
+    case "placeType":
+      path = `place-type/${slug}`;
+      break;
+    case "event":
+    default:
+      path = `event/${slug}`;
+      break;
+  }
   return buildUrl({
-    lang: lang as Lang,
-    siteKey: siteKey,
-    path: `${entityPath}/${slug}`,
+    lang: safeLang,
+    siteKey: entityType === "region" ? undefined : siteKey,
+    path,
   });
 }

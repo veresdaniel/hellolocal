@@ -5,17 +5,12 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-  Lang,
-  SlugEntityType,
-  UserRole,
-  SiteRole,
-  PlaceRole,
-  PlacePlan,
-  SitePlan,
-} from "@prisma/client";
+import { SlugEntityType, UserRole, SiteRole, PlaceRole, PlacePlan, SitePlan } from "@prisma/client";
+import { Lang, normalizeLanguageList } from "../common/language-code";
 import { generateSlug } from "../slug/slug.helper";
 import { RbacService } from "../auth/rbac.service";
+import { canEditCopy, placeCopyChanged } from "../auth/copy-access";
+import { isMissingColumn } from "../common/prisma-column";
 import {
   canAddImage,
   canBeFeatured,
@@ -29,6 +24,9 @@ import {
 } from "../config/site-limits.config";
 import { PlaceUpsellService } from "../entitlements/place-upsell.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
+import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -39,12 +37,17 @@ export interface OpeningHoursDto {
 
 export interface CreatePlaceDto {
   siteId: string;
-  townId?: string | null;
+  townId: string;
   categoryId: string;
+  parentPlaceId?: string | null;
   priceBandId?: string | null;
   tagIds?: string[];
   ownerId?: string | null;
   openingHours?: OpeningHoursDto[]; // New: structured opening hours
+  /** Optional custom hostname for this place. */
+  customDomain?: string | null;
+  /** GA4 measurement ID (G-…). Empty string or null inherits Town/Site. */
+  gaMeasurementId?: string | null;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -63,6 +66,7 @@ export interface CreatePlaceDto {
   }>;
   isActive?: boolean;
   heroImage?: string | null;
+  mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
   lng?: number | string | null; // Can be string from HTTP requests
   ratingAvg?: number | null;
@@ -75,12 +79,17 @@ export interface CreatePlaceDto {
 }
 
 export interface UpdatePlaceDto {
-  townId?: string | null;
+  townId?: string;
   categoryId?: string;
+  parentPlaceId?: string | null;
   priceBandId?: string | null;
   tagIds?: string[];
   ownerId?: string | null;
   openingHours?: OpeningHoursDto[]; // New: structured opening hours
+  /** Optional custom hostname for this place. Pass null/empty to clear. */
+  customDomain?: string | null;
+  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Town/Site. */
+  gaMeasurementId?: string | null;
   translations?: Array<{
     lang: Lang;
     name: string;
@@ -99,6 +108,7 @@ export interface UpdatePlaceDto {
   }>;
   isActive?: boolean;
   heroImage?: string | null;
+  mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
   lng?: number | string | null; // Can be string from HTTP requests
   ratingAvg?: number | null;
@@ -130,18 +140,22 @@ export class AdminPlaceService {
     translations: Array<{ lang: Lang; name: string; slug?: string | null }>,
     throwOnConflict: boolean = false
   ) {
-    // Find Hungarian translation to use as fallback for missing languages
-    const hungarianTranslation = translations.find((t) => t.lang === Lang.hu);
-    const fallbackName = hungarianTranslation?.name || `place-${placeId}`;
+    const siteRow = await this.prisma.site.findUnique({
+      where: { id: siteId },
+      select: { languages: true },
+    });
+    const published = normalizeLanguageList(siteRow?.languages ?? []);
+    const languagesToCreate = normalizeLanguageList([
+      ...(published.length ? published : [Lang.hu, Lang.en, Lang.de]),
+      ...translations.map((item) => item.lang),
+    ]);
 
-    // Determine which languages need slugs
-    const languagesToCreate: Lang[] = [];
+    const fallbackName =
+      translations.find((item) => item.lang === languagesToCreate[0])?.name ||
+      translations.find((item) => item.lang === Lang.hu)?.name ||
+      translations[0]?.name ||
+      `place-${placeId}`;
     const translationByLang = new Map(translations.map((t) => [t.lang, t]));
-
-    // Always create slugs for all supported languages (hu, en, de)
-    for (const lang of [Lang.hu, Lang.en, Lang.de]) {
-      languagesToCreate.push(lang);
-    }
 
     for (const lang of languagesToCreate) {
       // Check if slug already exists for this place and language
@@ -189,9 +203,8 @@ export class AdminPlaceService {
 
       // If conflict detected and throwOnConflict is true, throw error
       if (conflictingSlug && throwOnConflict) {
-        const langName = lang === Lang.hu ? "magyar" : lang === Lang.en ? "angol" : "német";
         throw new BadRequestException(
-          `A slug "${slug}" már létezik ${langName} nyelven. Kérjük, használjon másik nevet vagy módosítsa a meglévő helyet.`
+          `A slug „${slug}” már létezik ezen a nyelven (${lang}). Kérjük, használjon másik nevet.`
         );
       }
 
@@ -291,53 +304,121 @@ export class AdminPlaceService {
     }
   }
 
-  async findAll(siteId: string, page?: number, limit?: number) {
+  async findAll(siteId: string, page?: number, limit?: number, townId?: string) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
 
-    const where = { siteId };
+    const where: { siteId: string; townId?: string } = { siteId };
+    if (townId) {
+      where.townId = townId;
+    }
+
+    const include = {
+      category: {
+        include: {
+          translations: true,
+        },
+      },
+      priceBand: {
+        include: {
+          translations: true,
+        },
+      },
+      tags: {
+        include: {
+          tag: {
+            include: {
+              translations: true,
+            },
+          },
+        },
+      },
+      town: {
+        include: {
+          translations: true,
+        },
+      },
+      translations: true,
+      openingHours: {
+        orderBy: { dayOfWeek: "asc" as const },
+      },
+    };
 
     // Get total count
     const total = await this.prisma.place.count({ where });
 
-    // Get paginated results
-    const places = await this.prisma.place.findMany({
-      where,
-      include: {
-        category: {
-          include: {
-            translations: true,
-          },
-        },
-        priceBand: {
-          include: {
-            translations: true,
-          },
-        },
-        tags: {
-          include: {
-            tag: {
-              include: {
-                translations: true,
-              },
+    // Get paginated results. Optional columns (parentPlaceId, Category.kind) may lag migrate.
+    let places: any[];
+    try {
+      places = await this.prisma.place.findMany({
+        where,
+        include,
+        orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      });
+    } catch (error) {
+      if (
+        !isMissingColumn(error, "parentPlaceId") &&
+        !isMissingColumn(error, "kind") &&
+        !isMissingColumn(error)
+      ) {
+        throw error;
+      }
+      // Fall back to a select that omits newer hierarchy columns.
+      places = await this.prisma.place.findMany({
+        where,
+        orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+        select: {
+          id: true,
+          siteId: true,
+          townId: true,
+          ownerId: true,
+          categoryId: true,
+          isActive: true,
+          plan: true,
+          isFeatured: true,
+          featuredUntil: true,
+          galleryLimitOverride: true,
+          heroImage: true,
+          mapImage: true,
+          lat: true,
+          lng: true,
+          priceBandId: true,
+          ratingAvg: true,
+          ratingCount: true,
+          extras: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              siteId: true,
+              parentId: true,
+              isActive: true,
+              color: true,
+              order: true,
+              createdAt: true,
+              updatedAt: true,
+              translations: true,
             },
           },
+          priceBand: { include: { translations: true } },
+          tags: { include: { tag: { include: { translations: true } } } },
+          town: { include: { translations: true } },
+          translations: true,
+          openingHours: { orderBy: { dayOfWeek: "asc" } },
         },
-        town: {
-          include: {
-            translations: true,
-          },
-        },
-        translations: true,
-        openingHours: {
-          orderBy: { dayOfWeek: "asc" },
-        },
-      },
-      orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum,
-    });
+      } as any);
+      places = places.map((place) => ({
+        ...place,
+        parentPlaceId: null,
+        category: place.category ? { ...place.category, kind: "place" } : place.category,
+      }));
+    }
 
     // Always return paginated response
     return {
@@ -394,6 +475,54 @@ export class AdminPlaceService {
     return place;
   }
 
+  private async assertPlaceCapacity(siteId: string, willBeActive: boolean) {
+    if (!willBeActive) return;
+    const ent = await this.entitlementsService.getBySiteId(siteId);
+    const max = ent.limits.placesMax;
+    if (!Number.isFinite(max)) return;
+    const count = await this.prisma.place.count({
+      where: { siteId, isActive: true },
+    });
+    if (count >= max) {
+      throw new BadRequestException("A csomag helykerete betelt.");
+    }
+  }
+
+  private async assertParentPlace(siteId: string, parentPlaceId?: string | null) {
+    if (!parentPlaceId) return;
+    const parent = await this.prisma.place.findFirst({
+      where: { id: parentPlaceId, siteId },
+      select: { id: true },
+    });
+    if (!parent) throw new BadRequestException("Parent place does not belong to this site");
+  }
+
+  /**
+   * Town must belong to this site, or be standalone (Town.siteId null).
+   * Place.siteId remains the required tenant/region FK even when the town is standalone —
+   * optional Town.siteId vs required Place.siteId is intentional (geo vs tenant scope).
+   */
+  private async assertTownForSite(siteId: string, townId: string) {
+    const town = await this.prisma.town.findFirst({
+      where: { id: townId, OR: [{ siteId }, { siteId: null }] },
+      select: { id: true },
+    });
+    if (!town) {
+      throw new BadRequestException(
+        "townId must belong to this site or be a standalone town (no region). Note: Place.siteId is always required for tenant scope even if Town.siteId is null."
+      );
+    }
+  }
+
+  /** Place customDomain inherits the parent Site's plan domain entitlement. */
+  private async assertPlaceDomainEntitlement(siteId: string) {
+    const ent = await this.entitlementsService.getBySiteId(siteId);
+    assertSiteAllowsCustomDomain(
+      ent,
+      "A régió csomagja nem engedi a saját domaint (hely domain a régió jogosultságát örökli)."
+    );
+  }
+
   async create(dto: CreatePlaceDto) {
     const {
       tagIds = [],
@@ -401,8 +530,37 @@ export class AdminPlaceService {
       openingHours = [],
       lat: _lat,
       lng: _lng,
+      parentPlaceId,
+      customDomain: customDomainRaw,
+      gaMeasurementId: gaMeasurementIdRaw,
       ...placeData
     } = dto;
+    if (!dto.townId) {
+      throw new BadRequestException("townId is required (places belong to a town)");
+    }
+    await this.assertTownForSite(dto.siteId, dto.townId);
+    await this.assertParentPlace(dto.siteId, parentPlaceId);
+    await this.assertPlaceCapacity(dto.siteId, dto.isActive === true);
+    if (customDomainRaw !== undefined && String(customDomainRaw ?? "").trim()) {
+      await this.assertPlaceDomainEntitlement(dto.siteId);
+    }
+    const customDomain =
+      customDomainRaw !== undefined
+        ? await assertHostnameAvailable(this.prisma, customDomainRaw, {
+            kind: "place",
+            placeId: "__new__",
+          })
+        : null;
+    let gaMeasurementId: string | null = null;
+    if (gaMeasurementIdRaw !== undefined) {
+      try {
+        gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
 
     // Validate image limit based on plan (default: free)
     // Note: Gallery images are now managed via Gallery entities and shortcodes, not place.gallery array
@@ -460,6 +618,10 @@ export class AdminPlaceService {
     const place = await this.prisma.place.create({
       data: {
         ...placeData,
+        townId: dto.townId,
+        parentPlaceId: parentPlaceId || null,
+        customDomain,
+        gaMeasurementId,
         lat,
         lng,
         plan: dto.plan || "free",
@@ -543,6 +705,10 @@ export class AdminPlaceService {
   async update(id: string, siteId: string, dto: UpdatePlaceDto, userId?: string) {
     const place = await this.findOne(id, siteId);
 
+    if (dto.isActive === true && place.isActive !== true) {
+      await this.assertPlaceCapacity(siteId, true);
+    }
+
     // Validate featured status using EntitlementsService
     if (dto.isFeatured !== undefined && dto.isFeatured === true && place.isFeatured === false) {
       const ent = await this.entitlementsService.getBySiteId(siteId);
@@ -605,16 +771,57 @@ export class AdminPlaceService {
     }
 
     // Extract lat and lng separately to avoid them being included in restData as strings
-    const { tagIds, translations, openingHours, lat: _lat, lng: _lng, ...restData } = dto;
+    const {
+      tagIds,
+      translations,
+      openingHours,
+      lat: _lat,
+      lng: _lng,
+      customDomain: customDomainRaw,
+      gaMeasurementId: gaMeasurementIdRaw,
+      ...restData
+    } = dto;
 
     // Build update data object, explicitly handling all fields to ensure proper updates
     const updateData: any = {};
 
     // Copy all fields from restData (categoryId, townId, priceBandId, heroImage, isActive, etc.)
     if (restData.categoryId !== undefined) updateData.categoryId = restData.categoryId;
-    if (restData.townId !== undefined) updateData.townId = restData.townId;
+    if (customDomainRaw !== undefined) {
+      if (String(customDomainRaw ?? "").trim()) {
+        await this.assertPlaceDomainEntitlement(siteId);
+      }
+      updateData.customDomain = await assertHostnameAvailable(this.prisma, customDomainRaw, {
+        kind: "place",
+        placeId: id,
+      });
+    }
+    if (gaMeasurementIdRaw !== undefined) {
+      try {
+        updateData.gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+        );
+      }
+    }
+    if (restData.parentPlaceId !== undefined) {
+      if (restData.parentPlaceId && restData.parentPlaceId === id) {
+        throw new BadRequestException("A place cannot belong to itself");
+      }
+      await this.assertParentPlace(siteId, restData.parentPlaceId);
+      updateData.parentPlaceId = restData.parentPlaceId || null;
+    }
+    if (restData.townId !== undefined) {
+      if (!restData.townId) {
+        throw new BadRequestException("townId is required (places belong to a town)");
+      }
+      await this.assertTownForSite(siteId, restData.townId);
+      updateData.townId = restData.townId;
+    }
     if (restData.priceBandId !== undefined) updateData.priceBandId = restData.priceBandId;
     if (restData.heroImage !== undefined) updateData.heroImage = restData.heroImage;
+    if (restData.mapImage !== undefined) updateData.mapImage = restData.mapImage;
     // Gallery is now managed via Gallery entities and shortcodes, not place.gallery array
     if (restData.isActive !== undefined) updateData.isActive = restData.isActive;
     if (restData.ratingAvg !== undefined) updateData.ratingAvg = restData.ratingAvg;
@@ -704,7 +911,17 @@ export class AdminPlaceService {
     }
 
     if (translations) {
-      for (const translation of translations) {
+      const actor = userId
+        ? await this.rbacService.copyActor(userId, undefined, siteId, id)
+        : { role: null, siteRole: null, placeRole: null };
+      if (!canEditCopy(actor, "place")) {
+        const existing = await this.prisma.placeTranslation.findMany({ where: { placeId: id } });
+        if (placeCopyChanged(existing, translations)) {
+          throw new ForbiddenException(
+            "Only the site owner or a superadmin can edit place translations"
+          );
+        }
+      } else for (const translation of translations) {
         await this.prisma.placeTranslation.upsert({
           where: {
             placeId_lang: {

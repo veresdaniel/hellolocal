@@ -1,3 +1,4 @@
+import type { Lang} from "../types/enums";
 // src/api/public.api.ts
 /**
  * Public API functions that don't require authentication
@@ -23,7 +24,7 @@ function getApiBaseUrl(): string {
 }
 
 export interface DefaultLanguageResponse {
-  defaultLanguage: "hu" | "en" | "de";
+  defaultLanguage: Lang;
 }
 
 export interface ActiveSitesCountResponse {
@@ -55,6 +56,40 @@ export async function getPublicDefaultLanguage(): Promise<DefaultLanguageRespons
 /**
  * Get active sites count from public endpoint (no authentication required)
  */
+export type MunicipalQuotePayload = {
+  organization: string;
+  contactName: string;
+  email: string;
+  message: string;
+  plan: "municipal";
+};
+
+export type MunicipalQuoteResult = {
+  stored: boolean;
+  emailed: boolean;
+  reason: "sent" | "no_smtp" | "no_recipient" | "send_failed";
+};
+
+export async function requestMunicipalQuote(
+  body: MunicipalQuotePayload
+): Promise<MunicipalQuoteResult> {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/public/quote-requests`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = (await res.json().catch(() => null)) as { message?: string | string[] } | null;
+  if (!res.ok) {
+    const message = Array.isArray(payload?.message) ? payload?.message[0] : payload?.message;
+    throw new Error(message || "A kérést nem sikerült rögzíteni.");
+  }
+  return payload as MunicipalQuoteResult;
+}
+
 export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {
   const apiBaseUrl = getApiBaseUrl();
   const res = await fetch(`${apiBaseUrl}/api/app-settings/active-sites-count`, {
@@ -69,4 +104,25 @@ export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {
   }
 
   return (await res.json()) as ActiveSitesCountResponse;
+}
+
+export type PlatformGaResponse = {
+  gaMeasurementId: string | null;
+};
+
+/** Platform-wide GA4 ID for platform routes only (no site fallback). */
+export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-ga`, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    return { gaMeasurementId: null };
+  }
+
+  const data = (await res.json()) as PlatformGaResponse;
+  return { gaMeasurementId: data.gaMeasurementId?.trim() || null };
 }

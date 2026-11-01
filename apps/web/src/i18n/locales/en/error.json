@@ -8,13 +8,15 @@
   "forbidden": "Forbidden",
   "notFound": "Not Found",
   "internalServerError": "Internal Server Error",
+  "serverErrorDescription": "Something went wrong on the server. Please try again later.",
   "badGateway": "Bad Gateway",
   "serviceUnavailable": "Service Unavailable",
   "goHome": "Go Home",
   "goBack": "Go Back",
   "reload": "Reload Page",
   "errorDetails": "Error Details",
-  "siteNotFound": "Site Not Found",
-  "siteNotFoundMessage": "The specified site does not exist or is not enabled.",
-  "backToSites": "Back to Sites"
+  "siteNotFound": "Place not found",
+  "siteNotFoundMessage": "The specified place does not exist or is not enabled.",
+  "backToSites": "Back to places",
+  "visitorHold": "The public map is unavailable right now. Places were kept."
 }
