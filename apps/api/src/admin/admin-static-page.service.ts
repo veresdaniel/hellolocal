@@ -108,7 +108,7 @@ export class AdminStaticPageService {
       );
     }
 
-    return this.prisma.staticPage.create({
+    const created = await this.prisma.staticPage.create({
       data: {
         siteId: dto.siteId,
         category: dto.category,
@@ -130,6 +130,8 @@ export class AdminStaticPageService {
         translations: true,
       },
     });
+    this.sitemapService.invalidate();
+    return created;
   }
 
   async update(id: string, siteId: string, dto: UpdateStaticPageDto) {
@@ -186,6 +188,7 @@ export class AdminStaticPageService {
       }
     }
 
+    this.sitemapService.invalidate();
     return this.findOne(id, siteId);
   }
 
@@ -196,6 +199,7 @@ export class AdminStaticPageService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Static page deleted successfully" };
   }
 }

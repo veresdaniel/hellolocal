@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
+import { SitemapService } from "../seo/sitemap.service";
 
 const ALLOWED_KEYS = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
@@ -37,7 +38,10 @@ export interface UpdateLegalPageDto {
 
 @Injectable()
 export class AdminLegalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sitemapService: SitemapService
+  ) {}
 
   async findAll(siteId: string, page?: number, limit?: number) {
     // Default pagination values
@@ -115,7 +119,7 @@ export class AdminLegalService {
       );
     }
 
-    return this.prisma.legalPage.create({
+    const created = await this.prisma.legalPage.create({
       data: {
         siteId: dto.siteId,
         key: dto.key,
@@ -137,6 +141,8 @@ export class AdminLegalService {
         translations: true,
       },
     });
+    this.sitemapService.invalidate();
+    return created;
   }
 
   async update(id: string, siteId: string, dto: UpdateLegalPageDto) {
@@ -185,6 +191,7 @@ export class AdminLegalService {
       }
     }
 
+    this.sitemapService.invalidate();
     return this.findOne(id, siteId);
   }
 
@@ -195,6 +202,7 @@ export class AdminLegalService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Legal page deleted successfully" };
   }
 }

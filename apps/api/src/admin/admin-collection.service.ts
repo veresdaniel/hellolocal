@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface CreateCollectionDto {
   slug: string;
@@ -66,7 +67,10 @@ export interface UpdateCollectionItemDto {
 
 @Injectable()
 export class AdminCollectionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sitemapService: SitemapService
+  ) {}
 
   async findAll() {
     try {
@@ -184,7 +188,7 @@ export class AdminCollectionService {
           })
         : null;
 
-    return this.prisma.collection.create({
+    const created = await this.prisma.collection.create({
       data: {
         slug: dto.slug,
         domain,
@@ -209,6 +213,8 @@ export class AdminCollectionService {
         items: true,
       },
     });
+    this.sitemapService.invalidate();
+    return created;
   }
 
   async update(id: string, dto: UpdateCollectionDto) {
@@ -258,7 +264,7 @@ export class AdminCollectionService {
       };
     }
 
-    return this.prisma.collection.update({
+    const updated = await this.prisma.collection.update({
       where: { id },
       data: updateData,
       include: {
@@ -278,13 +284,17 @@ export class AdminCollectionService {
         },
       },
     });
+    this.sitemapService.invalidate();
+    return updated;
   }
 
   async delete(id: string) {
     const collection = await this.findOne(id);
-    return this.prisma.collection.delete({
+    const deleted = await this.prisma.collection.delete({
       where: { id },
     });
+    this.sitemapService.invalidate();
+    return deleted;
   }
 
   // Collection Items
