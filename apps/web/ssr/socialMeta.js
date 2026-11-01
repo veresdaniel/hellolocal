@@ -10,6 +10,10 @@ export const SHARE_IMAGE_HEIGHT = "656";
 
 const LOCALES = { hu: "hu_HU", en: "en_US", de: "de_DE" };
 const LANGS = ["hu", "en", "de"];
+const PLACE_SEGMENTS = new Set(["hely", "place", "ort"]);
+const TOWN_SEGMENTS = new Set(["telepules", "town", "gemeinde"]);
+const REGION_LIST_SEGMENTS = new Set(["regiok", "teruletek", "regions", "regionen"]);
+const PLACE_SEGMENT_BY_LANG = { hu: "hely", en: "place", de: "ort" };
 const RESERVED = new Set([
   "overview",
   "pricing",
@@ -19,9 +23,15 @@ const RESERVED = new Set([
   "aszf",
   "adatvedelem",
   "teruletek",
+  "regiok",
   "regions",
   "regionen",
+  "hely",
   "place",
+  "ort",
+  "telepules",
+  "town",
+  "gemeinde",
   "event",
   "collections",
   "admin",
@@ -31,10 +41,14 @@ const RESERVED = new Set([
   "static-page",
 ]);
 
+export function placePathSegment(lang) {
+  return PLACE_SEGMENT_BY_LANG[LANGS.includes(lang) ? lang : "hu"];
+}
+
 const copyCache = new Map();
 const jsonCache = new Map();
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -42,7 +56,7 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-function plainText(value) {
+export function plainText(value) {
   return String(value ?? "")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
@@ -55,7 +69,7 @@ function plainText(value) {
     .trim();
 }
 
-function clip(value, max) {
+export function clip(value, max) {
   const clean = plainText(value);
   if (!clean || clean === "(missing translation)") return "";
   if (clean.length <= max) return clean;
@@ -106,14 +120,21 @@ export function absoluteShareImage(origin, image) {
 function loadCopy(lang) {
   const code = LANGS.includes(lang) ? lang : "hu";
   if (copyCache.has(code)) return copyCache.get(code);
-  try {
-    const json = JSON.parse(readFileSync(join(here, "../src/i18n/locales", code, "public.json"), "utf8"));
-    copyCache.set(code, json);
-    return json;
-  } catch {
-    if (code !== "hu") return loadCopy("hu");
-    return {};
+  const candidates = [
+    join(here, "locales", code, "public.json"),
+    join(here, "../src/i18n/locales", code, "public.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      const json = JSON.parse(readFileSync(file, "utf8"));
+      copyCache.set(code, json);
+      return json;
+    } catch {
+      // try the next location
+    }
   }
+  if (code !== "hu") return loadCopy("hu");
+  return {};
 }
 
 function text(copy, ...keys) {
@@ -130,7 +151,7 @@ function decodePart(value) {
   }
 }
 
-function parsePath(pathname) {
+export function parsePublicPath(pathname) {
   const parts = String(pathname || "/")
     .split("?")[0]
     .split("/")
@@ -140,23 +161,30 @@ function parsePath(pathname) {
   if (!parts.length || !LANGS.includes(parts[0])) return { kind: "brand", lang: "hu" };
   if (parts.length === 1) return { kind: "sites", lang };
   const second = parts[1];
-  if (second === "admin") return { kind: "brand", lang };
+  if (second === "admin") return { kind: "admin", lang };
   if (second === "overview") return { kind: "overview", lang };
   if (second === "pricing" || second === "tarife" || second === "preise") return { kind: "pricing", lang };
   if (second === "impresszum") return { kind: "legal", lang, page: "imprint" };
   if (second === "aszf") return { kind: "legal", lang, page: "terms" };
   if (second === "adatvedelem") return { kind: "legal", lang, page: "privacy" };
-  if (second === "teruletek" || second === "regions" || second === "regionen") return { kind: "sites", lang };
+  if (REGION_LIST_SEGMENTS.has(second)) return { kind: "sites", lang };
   if (second === "collections") return { kind: "collections", lang };
   if (second === "products") return { kind: "products", lang };
+  if (PLACE_SEGMENTS.has(second) && parts[2]) {
+    return { kind: "place", lang, siteKey: undefined, slug: parts[2] };
+  }
+  if (second === "event" && parts[2]) {
+    return { kind: "event", lang, siteKey: undefined, slug: parts[2] };
+  }
   if (RESERVED.has(second)) return { kind: "brand", lang };
 
   const siteKey = second;
   const route = parts[2];
   const slug = parts[3] || "";
   if (!route) return { kind: "site", lang, siteKey };
-  if (route === "place" && slug) return { kind: "place", lang, siteKey, slug };
+  if (PLACE_SEGMENTS.has(route) && slug) return { kind: "place", lang, siteKey, slug };
   if (route === "event" && slug) return { kind: "event", lang, siteKey, slug };
+  if (TOWN_SEGMENTS.has(route) && slug) return { kind: "town", lang, siteKey, slug };
   if (route === "overview") return { kind: "overview", lang };
   if (route === "pricing" || route === "tarife" || route === "preise") return { kind: "pricing", lang };
   if (route === "impresszum") return { kind: "legal", lang, page: "imprint" };
@@ -164,6 +192,7 @@ function parsePath(pathname) {
   if (route === "adatvedelem") return { kind: "legal", lang, page: "privacy" };
   if (route === "products") return { kind: "products", lang, siteKey };
   if (route === "collections") return { kind: "collections", lang };
+  if (route === "admin") return { kind: "admin", lang, siteKey };
   return { kind: "site", lang, siteKey };
 }
 
@@ -209,20 +238,26 @@ function copyFor(route, copy) {
         type: "article",
       };
     case "site":
+    case "town":
       return {
         title: text(copy, "home", "title") || brandTitle,
         description: text(copy, "home", "description") || brandDesc,
+      };
+    case "admin":
+      return {
+        title: "Admin · HelloLocal",
+        description: brandDesc,
       };
     default:
       return { title: brandTitle, description: brandDesc };
   }
 }
 
-async function getJson(url) {
+export async function fetchPublicJson(url, timeoutMs = 1000) {
   const cached = jsonCache.get(url);
   if (cached && cached.until > Date.now()) return cached.value;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 1000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, {
       signal: controller.signal,
@@ -275,15 +310,19 @@ function entityShare(data) {
 
 async function enrich(route, apiUrl, origin) {
   const base = String(apiUrl || "").replace(/\/$/, "");
-  if (!base || !route.siteKey) return null;
-  const key = encodeURIComponent(route.siteKey);
-  if (route.kind === "site") {
-    let share = siteShare(await getJson(`${base}/api/public/${route.lang}/${key}/platform`));
+  if (!base) return null;
+  const key = route.siteKey ? encodeURIComponent(route.siteKey) : "";
+  if (route.kind === "site" || route.kind === "town") {
+    if (!key) return null;
+    let share = siteShare(await fetchPublicJson(`${base}/api/public/${route.lang}/${key}/platform`));
     if (!share && route.lang !== "hu") {
-      share = siteShare(await getJson(`${base}/api/public/hu/${key}/platform`));
+      share = siteShare(await fetchPublicJson(`${base}/api/public/hu/${key}/platform`));
     }
     if (!share) return null;
     const patch = { title: share.title, description: share.description, siteName: share.siteName };
+    if (route.kind === "town" && route.slug) {
+      patch.title = clip(`${route.slug} · ${share.title || share.siteName || ""}`, 140) || patch.title;
+    }
     if (share.hero) {
       const image = absoluteShareImage(origin, share.hero);
       patch.image = image.url;
@@ -294,10 +333,11 @@ async function enrich(route, apiUrl, origin) {
   }
   if (route.kind !== "place" && route.kind !== "event") return null;
   const collection = route.kind === "place" ? "places" : "events";
-  const suffix = `${key}/${collection}/${encodeURIComponent(route.slug)}`;
-  let share = entityShare(await getJson(`${base}/api/public/${route.lang}/${suffix}`));
+  const sitePart = key || "default";
+  const suffix = `${sitePart}/${collection}/${encodeURIComponent(route.slug)}`;
+  let share = entityShare(await fetchPublicJson(`${base}/api/public/${route.lang}/${suffix}`));
   if (!share && route.lang !== "hu") {
-    share = entityShare(await getJson(`${base}/api/public/hu/${suffix}`));
+    share = entityShare(await fetchPublicJson(`${base}/api/public/hu/${suffix}`));
   }
   if (!share) return null;
   const patch = { title: share.title, description: share.description, type: share.type };
@@ -311,7 +351,7 @@ async function enrich(route, apiUrl, origin) {
 }
 
 export async function resolvePublicShare({ pathname, apiUrl, requestOrigin }) {
-  const route = parsePath(pathname);
+  const route = parsePublicPath(pathname);
   const origin = publicOrigin(requestOrigin);
   const path = String(pathname || "/").split("?")[0];
   const canonical = path === "/" ? `${origin}/` : `${origin}${path.startsWith("/") ? path : `/${path}`}`;

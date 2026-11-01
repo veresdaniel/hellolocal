@@ -33,6 +33,8 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
 COPY apps/web/server.js ./apps/web/server.js
 COPY apps/web/ssr ./apps/web/ssr
+# SSR reads these from apps/web/ssr/* (src/ is not present in the runtime image).
+COPY apps/web/src/i18n/languages.json ./apps/web/ssr/languages.json
 COPY apps/web/src/i18n/locales/hu/public.json ./apps/web/ssr/locales/hu/public.json
 COPY apps/web/src/i18n/locales/en/public.json ./apps/web/ssr/locales/en/public.json
 COPY apps/web/src/i18n/locales/de/public.json ./apps/web/ssr/locales/de/public.json

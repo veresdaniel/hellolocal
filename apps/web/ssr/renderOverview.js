@@ -4,9 +4,30 @@ import { fileURLToPath } from "url";
 import { applySocialMeta, publicOrigin, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./socialMeta.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const catalog = JSON.parse(readFileSync(join(here, "../src/i18n/languages.json"), "utf8"));
+
+/** Prod image copies catalog next to this file; local/dev keeps it under src/i18n. */
+function loadLanguageCatalog() {
+  const candidates = [
+    join(here, "languages.json"),
+    join(here, "../src/i18n/languages.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      return JSON.parse(readFileSync(file, "utf8"));
+    } catch {
+      // try the next location
+    }
+  }
+  // Never crash the HTML server if the catalog is missing from the image.
+  return {
+    fallback: "hu",
+    languages: [{ code: "hu" }, { code: "en" }, { code: "de" }],
+  };
+}
+
+const catalog = loadLanguageCatalog();
 const LANGS = catalog.languages.map((language) => language.code);
-const FALLBACK_LANG = catalog.fallback;
+const FALLBACK_LANG = catalog.fallback || "hu";
 const RESERVED = new Set(["api", "assets", "static", "src", "www", "app", "css", "img"]);
 
 function escapeHtml(value) {
