@@ -732,7 +732,7 @@ function OverviewTab({
                   kind: "site",
                   field: "name",
                   lang: selectedLang,
-                  siteId: id,
+                  siteId: site.id,
                   name: readLang(formData, "name", selectedLang),
                 }}
                 value={readLang(formData, "name", selectedLang)}
@@ -783,7 +783,7 @@ function OverviewTab({
                   kind: "site",
                   field: "shortDescription",
                   lang: selectedLang,
-                  siteId: id,
+                  siteId: site.id,
                   name: readLang(formData, "name", selectedLang),
                 }}
               />
@@ -813,7 +813,7 @@ function OverviewTab({
                   kind: "site",
                   field: "description",
                   lang: selectedLang,
-                  siteId: id,
+                  siteId: site.id,
                   name: readLang(formData, "name", selectedLang),
                 }}
               />
@@ -955,7 +955,7 @@ function OverviewTab({
                   kind: "site",
                   field: "content",
                   lang: selectedLang,
-                  siteId: id,
+                  siteId: site.id,
                   name: readLang(formData, "name", selectedLang),
                   contextHints: "Landing page body",
                 }}
@@ -1100,7 +1100,7 @@ function OverviewTab({
                   kind: "site",
                   field: "intro",
                   lang: selectedLang,
-                  siteId: id,
+                  siteId: site.id,
                   name: readLang(formData, "name", selectedLang),
                   contextHints: "Places list intro",
                 }}
