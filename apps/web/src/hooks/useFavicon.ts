@@ -65,19 +65,5 @@ export function useFavicon() {
     appleLink.id = "dynamic-apple-touch-icon";
     appleLink.href = faviconUrlWithCacheBusting;
     document.head.appendChild(appleLink);
-
-    // Preload the image to verify it works (but don't block on it)
-    const img = new Image();
-    img.onerror = () => {
-      console.warn("[useFavicon] Failed to load custom favicon:", faviconUrlWithCacheBusting);
-      // Don't remove the link - let browser handle it
-    };
-    img.onload = () => {};
-    img.src = faviconUrlWithCacheBusting;
-
-    // Cleanup function
-    return () => {
-      // Don't remove on unmount - let it persist
-    };
   }, [platformSettings?.brand?.faviconUrl]);
 }

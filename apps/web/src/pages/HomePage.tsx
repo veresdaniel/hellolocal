@@ -1,6 +1,6 @@
 // src/pages/HomePage.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { getPlaces, getEvents, getMapSettings, getPlatformSettings } from "../api/places.api";
@@ -24,7 +24,6 @@ export function HomePage() {
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   // Use Zustand stores for state management with persistence
   const {
@@ -50,32 +49,17 @@ export function HomePage() {
 
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile viewport
   useEffect(() => {
-    const checkMobile = () => {
+    const handleResize = () => {
       setIsMobile(window.innerWidth < BREAKPOINTS.tablet);
+      const footerHeight = window.innerWidth < 768 ? 52 : 56;
+      setMapHeight(window.innerHeight - footerHeight);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [setMapHeight]);
 
-  // Get siteKey for API call (only if multi-site mode)
-
-  // Listen for place changes from admin panel to refresh map view
-  useEffect(() => {
-    const handlePlacesChanged = async () => {
-      // Invalidate places cache - this will automatically refetch active queries
-      await queryClient.invalidateQueries({ queryKey: ["places"] });
-    };
-
-    window.addEventListener("admin:places:changed", handlePlacesChanged);
-    return () => {
-      window.removeEventListener("admin:places:changed", handlePlacesChanged);
-    };
-  }, [queryClient]);
-
-  // Listen for showMapView event (from FloatingHeader or other components)
   useEffect(() => {
     const handleShowMapView = () => {
       setShowMap(true);
@@ -86,19 +70,6 @@ export function HomePage() {
       window.removeEventListener("showMapView", handleShowMapView);
     };
   }, [setShowMap]);
-
-  // Update map height when window resizes
-  useEffect(() => {
-    const handleResize = () => {
-      const footerHeight = window.innerWidth < 768 ? 52 : 56;
-      setMapHeight(window.innerHeight - footerHeight);
-    };
-    if (typeof window !== "undefined") {
-      handleResize(); // Set initial height
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }
-  }, [setMapHeight, isMobile]);
 
   // Load map settings first to avoid flickering
   // Don't cache too aggressively - need to refresh on lang/tenant change
@@ -445,19 +416,10 @@ export function HomePage() {
       (place) => place.location && place.location.lat != null && place.location.lng != null
     ) || [];
 
-  // Reset initialization flags when lang or tenant changes
   useEffect(() => {
     hasInitializedCenter.current = false;
     initialPlacesLoaded.current = false;
-    hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
-  }, [lang, siteKey]);
-
-  // Force reset and update when lang or tenant changes (ensures fresh initialization)
-  useEffect(() => {
-    // Reset flags when lang or tenant changes
-    hasInitializedCenter.current = false;
-    initialPlacesLoaded.current = false;
-    hasEverLoadedPlaces.current = false; // Reset so loader shows on new lang/site
+    hasEverLoadedPlaces.current = false;
   }, [lang, siteKey]);
 
   // Track previous mapSettings values to detect actual changes
@@ -645,27 +607,6 @@ export function HomePage() {
       defaultZoom: 13,
     };
   }, [mapCenter, mapSettings]);
-
-  // If mapSettings is loaded but mapCenter is not set yet, use mapSettings directly
-  // This can happen when lang changes and mapSettings loads but mapCenter update is pending
-  // Use useEffect to set mapCenter immediately when mapSettings loads
-  useEffect(() => {
-    if (
-      !isLoadingMapSettings &&
-      mapSettings &&
-      mapSettings.lat != null &&
-      mapSettings.lng != null
-    ) {
-      if (
-        !mapCenter ||
-        Math.abs(mapCenter.lat - mapSettings.lat) > 0.0001 ||
-        Math.abs(mapCenter.lng - mapSettings.lng) > 0.0001
-      ) {
-        setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
-        hasInitializedCenter.current = true;
-      }
-    }
-  }, [mapSettings, isLoadingMapSettings, mapCenter, setMapCenter]);
 
   // Show spinner while critical data is loading (map settings OR places)
   // This prevents showing empty page with just header/footer

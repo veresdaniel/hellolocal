@@ -1,6 +1,6 @@
 // src/components/PlacesListView.tsx
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { getPlaces, getEvents, type Event, getPlatformSettings } from "../api/places.api";
@@ -51,9 +51,7 @@ export function PlacesListView({
 }: PlacesListViewProps) {
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
-  const queryClient = useQueryClient();
 
-  // Use Zustand store as default, props override if provided
   const storeFilters = useFiltersStore();
   const selectedCategories = propSelectedCategories ?? storeFilters.selectedCategories;
   const selectedPriceBands = propSelectedPriceBands ?? storeFilters.selectedPriceBands;
@@ -124,27 +122,6 @@ export function PlacesListView({
     queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handlePlatformSettingsChanged = () => {
-      // Invalidate and refetch platform settings to update placeholder images
-      console.debug("[PlacesListView] Platform settings changed, invalidating cache");
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteKey, queryClient]);
-
-  // Debug: log platform settings when they change
-  useEffect(() => {
-    if (platformSettings) {
-    }
-  }, [platformSettings, lang, siteKey]);
 
   // Get user location for "within30Minutes" filter
   useEffect(() => {

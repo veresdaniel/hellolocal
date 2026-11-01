@@ -1,7 +1,6 @@
 // src/pages/admin/PriceBandsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
@@ -45,7 +44,6 @@ export function PriceBandsPage() {
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const selectedTenantId = selectedSiteId; // Alias for backward compatibility
   const isTenantLoading = isSiteLoading;
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const confirm = useConfirm();
   usePageTitle("admin.priceBands");

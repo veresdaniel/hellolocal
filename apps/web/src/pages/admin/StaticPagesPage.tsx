@@ -2,7 +2,6 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import {
   getStaticPages,
@@ -47,7 +46,6 @@ export function StaticPagesPage() {
   const { t, i18n } = useTranslation();
   const { selectedSiteId, isLoading: isSiteLoading, sites } = useAdminSite();
   const currentSite = sites.find((s) => s.id === selectedSiteId);
-  const queryClient = useQueryClient();
   usePageTitle("admin.staticPages");
   const [staticPages, setStaticPages] = useState<StaticPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);

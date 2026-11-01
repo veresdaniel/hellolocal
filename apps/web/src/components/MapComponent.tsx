@@ -1,7 +1,7 @@
 // src/components/MapComponent.tsx
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl";
+import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl/maplibre";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAX_DISTANCE_KM } from "../app/config";

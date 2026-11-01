@@ -244,20 +244,6 @@ export function EventDetailPage() {
     }
   };
 
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handlePlatformSettingsChanged = () => {
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteKey, queryClient]);
-
-  // Ref for HTML content container
   const descriptionRef = useRef<HTMLDivElement>(null);
 
   // Make images and videos responsive in HTML content

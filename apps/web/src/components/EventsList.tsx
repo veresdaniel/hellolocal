@@ -1,6 +1,6 @@
 // src/components/EventsList.tsx
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getEvents, getPlatformSettings, type Event } from "../api/places.api";
 import { useRouteCtx } from "../app/useRouteCtx";
@@ -18,7 +18,6 @@ interface EventsListProps {
 export function EventsList({ lang }: EventsListProps) {
   const { t } = useTranslation();
   const { siteKey } = useRouteCtx();
-  const queryClient = useQueryClient();
   const { activeBox, setActiveBox } = useActiveBoxStore();
 
   const [isOpen, setIsOpen] = useState(() => {
@@ -87,25 +86,11 @@ export function EventsList({ lang }: EventsListProps) {
   }, [isOpen]);
 
   // Load site settings for default placeholder image
-  const { data: platformSettings, isLoading: isLoadingPlatformSettings } = useQuery({
+  const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
     queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
-
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handlePlatformSettingsChanged = () => {
-      // Invalidate and refetch platform settings to update placeholder images
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteKey, queryClient]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events", lang, siteKey],

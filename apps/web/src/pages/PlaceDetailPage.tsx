@@ -307,20 +307,6 @@ export function PlaceDetailPage() {
     }
   };
 
-  // Listen for site settings changes from admin
-  useEffect(() => {
-    const handlePlatformSettingsChanged = () => {
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteKey, queryClient]);
-
-  // Refs for HTML content containers
   const descriptionRef = useRef<HTMLDivElement>(null);
   const addressRef = useRef<HTMLDivElement>(null);
   const accessibilityRef = useRef<HTMLDivElement>(null);

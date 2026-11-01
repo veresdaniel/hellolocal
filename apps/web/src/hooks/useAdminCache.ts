@@ -53,8 +53,6 @@ export function useAdminCache() {
       // Platform settings affect public pages (Footer, Header, etc.)
       // Invalidate all platformSettings queries regardless of language/tenant
       await queryClient.invalidateQueries({ queryKey: ["platformSettings"] });
-      // Explicitly refetch all active platformSettings queries to ensure immediate update
-      await queryClient.refetchQueries({ queryKey: ["platformSettings"] });
     };
 
     const handleMapSettingsChanged = async () => {

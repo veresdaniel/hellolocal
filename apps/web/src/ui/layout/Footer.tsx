@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
 import type { Lang } from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
@@ -32,28 +32,10 @@ export function Footer({
   });
 
   const hasStaticPages = staticPages.length > 0;
-  const queryClient = useQueryClient();
 
-  // Use platform settings from prop (passed from SiteLayout) or try to get from context
   const contextPlatformSettings = usePlatformSettingsContextOptional();
   const platformSettings = platform || contextPlatformSettings;
 
-  // Listen for platform settings changes from admin
-  useEffect(() => {
-    if (!effectiveSiteSlug) return; // Skip if no site slug
-
-    const handlePlatformSettingsChanged = () => {
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, effectiveSiteSlug] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, effectiveSiteSlug, queryClient]);
-
-  // Map new DTO structure to legacy format for compatibility
   const siteName = platformSettings?.site?.name;
   const brandBadgeIcon = platformSettings?.placeholders?.avatar;
   const [logoError, setLogoError] = useState(false);

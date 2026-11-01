@@ -1,7 +1,6 @@
 // src/pages/admin/TownsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminSite } from "../../contexts/useAdminSite";
@@ -45,7 +44,6 @@ export function TownsPage() {
   const navigate = useNavigate();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const selectedTenantId = selectedSiteId; // Alias for backward compatibility
-  const queryClient = useQueryClient();
   usePageTitle("admin.towns");
   const [towns, setTowns] = useState<Town[]>([]);
   const [isLoading, setIsLoading] = useState(true);

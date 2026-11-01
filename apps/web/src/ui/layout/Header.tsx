@@ -1,7 +1,6 @@
 // src/ui/layout/Header.tsx
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
@@ -13,7 +12,6 @@ export function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const isDesktop =
     typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -52,22 +50,7 @@ export function Header() {
   const activeZIndex = 10000; // High z-index when actively being used (dragging)
   const currentZIndex = isDragging ? activeZIndex : baseZIndex;
 
-  // Use platform settings from context (loaded once at TenantLayout level)
   const platformSettings = usePlatformSettingsContext();
-
-  // Listen for platform settings changes from admin
-  useEffect(() => {
-    const handlePlatformSettingsChanged = () => {
-      // Refetch platform settings when changed in admin
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteKey] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteKey] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteKey]);
 
   const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
   const brandBadgeIcon = platformSettings?.placeholders.avatar;

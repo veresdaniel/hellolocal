@@ -21,8 +21,6 @@ import {
   DEFAULT_SITE_SLUG,
   type Lang,
 } from "../app/config";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getPlatformSettings } from "../api/places.api";
 import { AdminPageSkeleton } from "./AdminPageSkeleton";
 import "../styles/sessionWarning.css";
 import "../styles/admin-inputs.css";
@@ -144,37 +142,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const siteError = siteContext?.error ?? null;
   const currentSite = sites.find((s) => s.id === selectedSiteId);
 
-  // Determine site slug: use current site slug if available, otherwise undefined
-  // Don't use DEFAULT_SITE_SLUG in multi-site mode as it may not exist
-  const siteSlug = currentSite?.slug;
-
   const { showWarning, secondsRemaining } = useSessionWarning();
-  const queryClient = useQueryClient();
-
-  // Load site name and brand badge icon from settings
-  // IMPORTANT: This hook must be called before any conditional returns
-  const { data: platformSettings } = useQuery({
-    queryKey: ["platformSettings", lang, siteSlug],
-    queryFn: () => getPlatformSettings(lang, siteSlug),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    enabled: !!siteSlug && !siteContext?.isLoading, // Only fetch if we have a valid site slug and sites are loaded
-  });
-
-  // Listen for site settings changes
-  useEffect(() => {
-    if (isUnmountingRef.current) return;
-
-    const handlePlatformSettingsChanged = () => {
-      if (isUnmountingRef.current) return;
-      queryClient.invalidateQueries({ queryKey: ["platformSettings", lang, siteSlug] });
-      queryClient.refetchQueries({ queryKey: ["platformSettings", lang, siteSlug] });
-    };
-
-    window.addEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    return () => {
-      window.removeEventListener("admin:platformSettings:changed", handlePlatformSettingsChanged);
-    };
-  }, [lang, siteSlug, queryClient]);
 
   // Check screen size for responsive behavior
   useEffect(() => {
@@ -208,20 +176,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Now we can check conditions after all hooks are called
-  if (!authContext) {
-    // If AuthContext is not available, show error or redirect
-    return <div>Error: Authentication context not available</div>;
-  }
-  const { user, logout, isLoading } = authContext;
-
-  // Note: siteName and brandBadgeIcon are not used in admin layout - we always show fixed "Adminisztrációs felület" title
-  // Public pages (FloatingHeader, Header components) still use dynamic logo
-
-  // All admin pages should have noindex, nofollow robots meta tag
-  // Note: title is handled by usePageTitle hook in each page, so we don't set it here
+  // All admin pages should have noindex, nofollow robots meta tag.
+  // Title is set per page by usePageTitle.
   useEffect(() => {
-    // Only set robots meta tag, don't touch document.title (let usePageTitle handle it)
     const robotsMeta = document.querySelector('meta[name="robots"]');
     if (robotsMeta) {
       robotsMeta.setAttribute("content", "noindex, nofollow");
@@ -232,6 +189,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       document.head.appendChild(meta);
     }
   }, []);
+
+  // Now we can check conditions after all hooks are called
+  if (!authContext) {
+    // If AuthContext is not available, show error or redirect
+    return <div>Error: Authentication context not available</div>;
+  }
+  const { user, logout, isLoading } = authContext;
 
   // If still loading, show skeleton screen (prevents layout shift)
   // Note: ProtectedRoute already handles authentication, so we don't need to check for user here

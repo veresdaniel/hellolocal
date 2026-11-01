@@ -1,7 +1,6 @@
 // src/pages/admin/EventsPage.tsx
 import { useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -50,7 +49,6 @@ export function EventsPage() {
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
-  const queryClient = useQueryClient();
   usePageTitle("admin.events");
   const [events, setEvents] = useState<Event[]>([]);
   const [categories, setCategories] = useState<any[]>([]);

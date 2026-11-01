@@ -1,7 +1,6 @@
 // src/pages/admin/TagsPage.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
@@ -38,7 +37,6 @@ export function TagsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const confirm = useConfirm();
   usePageTitle("admin.tags");
