@@ -232,6 +232,27 @@ export function Footer({
                 {t("public.legal.privacy.title")}
               </Link>
               <Link
+                to={buildUrl({ lang, path: "overview" })}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+              >
+                {t("public.overview.menu")}
+              </Link>
+              <Link
                 to={buildUrl({
                   lang,
                   siteKey: effectiveSiteSlug,
@@ -485,6 +506,29 @@ export function Footer({
                 }}
               >
                 {t("public.home.title")}
+              </Link>
+              <Link
+                to={buildUrl({ lang, path: "overview" })}
+                style={{
+                  color: "white",
+                  textDecoration: "none",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  opacity: 0.9,
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                  e.currentTarget.style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                {t("public.overview.menu")}
               </Link>
               {hasStaticPages && (
                 <Link

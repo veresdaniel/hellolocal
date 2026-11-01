@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, devel]
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Hetzner
+        env:
+          SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ -z "$SSH_KEY" ]; then
+            echo "A HETZNER_SSH_KEY secret hiányzik. Futtasd a szerveren a deploy/bootstrap.sh szkriptet, és a kiírt kulcsot tedd be GitHub secretnek."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 135.181.157.111 >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o ServerAliveInterval=30 \
+            root@135.181.157.111 "BRANCH=${BRANCH} bash -s" < deploy/remote-deploy.sh

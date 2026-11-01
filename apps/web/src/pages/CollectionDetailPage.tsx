@@ -42,6 +42,7 @@ export function CollectionDetailPage() {
     "pricing",
     "tarife",
     "preise",
+    "overview",
     "collections",
   ];
 

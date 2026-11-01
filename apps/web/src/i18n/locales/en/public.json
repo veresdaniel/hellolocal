@@ -9,6 +9,54 @@
   },
   "listView": "List View",
   "mapView": "Map View",
+  "overview": {
+    "menu": "Overview",
+    "title": "Local tourism, in one system",
+    "lead": "HelloLocal gives a town its places, events and map. The interface is Hungarian, English and German, and several locations share the same system.",
+    "featuresTitle": "What the system does",
+    "audienceTitle": "Who it is for",
+    "cta": "Open the areas",
+    "features": {
+      "places": {
+        "title": "Places",
+        "text": "Categories, tags, prices and a description. Each place has its own address."
+      },
+      "events": {
+        "title": "Events",
+        "text": "Dated programmes, featuring and ratings in the same list."
+      },
+      "map": {
+        "title": "Map",
+        "text": "Places and events appear on one map, including on a phone."
+      },
+      "languages": {
+        "title": "Three languages",
+        "text": "Hungarian, English and German content, each with its own URL."
+      },
+      "sites": {
+        "title": "Several towns",
+        "text": "More than one site in a single system. Each has its own content and permissions."
+      },
+      "editors": {
+        "title": "Editors",
+        "text": "Roles, two-step sign-in, and an editor for the text."
+      }
+    },
+    "audience": {
+      "municipality": {
+        "title": "Municipality",
+        "text": "A town's programmes and sights on one page."
+      },
+      "office": {
+        "title": "Tourist office",
+        "text": "Several languages, and a map a visitor can actually open."
+      },
+      "destination": {
+        "title": "Destination",
+        "text": "Several towns on one platform, each with its own content."
+      }
+    }
+  },
   "place": {
     "title": "Place Details",
     "description": "View place details",

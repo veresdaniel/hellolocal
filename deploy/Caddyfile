@@ -1,0 +1,27 @@
+{
+	email admin@hello-local.io
+}
+
+www.hello-local.io {
+	redir https://hello-local.io{uri} permanent
+}
+
+hello-local.io {
+	encode gzip
+	reverse_proxy web-prod:3000
+}
+
+api.hello-local.io {
+	encode gzip
+	reverse_proxy api-prod:3002
+}
+
+devel.hello-local.io {
+	encode gzip
+	reverse_proxy web-devel:3000
+}
+
+api.devel.hello-local.io {
+	encode gzip
+	reverse_proxy api-devel:3002
+}

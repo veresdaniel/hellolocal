@@ -9,6 +9,54 @@
   },
   "listView": "Lista nézet",
   "mapView": "Térkép nézet",
+  "overview": {
+    "menu": "Áttekintés",
+    "title": "Helyi turizmus, egy rendszerben",
+    "lead": "A HelloLocal helyeket, eseményeket és térképet ad egy településnek. A felület magyar, angol és német, és több helyszín fér el ugyanabban a rendszerben.",
+    "featuresTitle": "Amit a rendszer tud",
+    "audienceTitle": "Kinek készül",
+    "cta": "Területek megnyitása",
+    "features": {
+      "places": {
+        "title": "Helyek",
+        "text": "Kategóriák, címkék, árak és leírás. Minden helynek saját címe van."
+      },
+      "events": {
+        "title": "Események",
+        "text": "Időponthoz kötött programok, kiemelés és értékelés ugyanabban a listában."
+      },
+      "map": {
+        "title": "Térkép",
+        "text": "A helyek és a programok egy térképen jelennek meg, mobilon is."
+      },
+      "languages": {
+        "title": "Három nyelv",
+        "text": "Magyar, angol és német tartalom, saját URL-lel."
+      },
+      "sites": {
+        "title": "Több település",
+        "text": "Egy rendszerben több site. Mindegyiknek saját tartalma és jogosultsága van."
+      },
+      "editors": {
+        "title": "Szerkesztők",
+        "text": "Szerepkörök, kétlépcsős belépés, és szerkesztő a szövegekhez."
+      }
+    },
+    "audience": {
+      "municipality": {
+        "title": "Önkormányzat",
+        "text": "A település programjai és látnivalói egy oldalon."
+      },
+      "office": {
+        "title": "Turisztikai iroda",
+        "text": "Több nyelv és egy térkép, amit a látogató meg tud nyitni."
+      },
+      "destination": {
+        "title": "Desztináció",
+        "text": "Több település egy platformon, mindegyik a saját tartalmával."
+      }
+    }
+  },
   "place": {
     "title": "Hely részletei",
     "description": "Hely részleteinek megtekintése",

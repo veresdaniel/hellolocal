@@ -49,12 +49,16 @@ export function SiteLayout() {
     "pricing",
     "tarife",
     "preise",
+    "overview",
     "collections",
   ];
 
   // multi-site módban siteKey elvárt, single-site módban fix
   // Ha a siteKeyParam egy foglalt path, akkor redirectálunk a sites listára
   if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam)) {
+    if (siteKeyParam === "overview") {
+      return <Navigate to={`/${lang}/overview`} replace />;
+    }
     return <Navigate to={`/${lang}`} replace />;
   }
 

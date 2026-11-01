@@ -1,0 +1,102 @@
+name: hellolocal
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hellolocal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hellolocal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ${PROD_SRC}/deploy/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hellolocal -d hellolocal"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${PROD_SRC}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  api-prod:
+    build:
+      context: ${PROD_SRC}
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      DATABASE_URL: postgresql://hellolocal:${POSTGRES_PASSWORD}@postgres:5432/hellolocal
+      JWT_SECRET: ${JWT_SECRET_PROD}
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: https://hello-local.io
+      CORS_ORIGIN: https://hello-local.io,https://www.hello-local.io
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web-prod:
+    build:
+      context: ${PROD_SRC}
+      dockerfile: apps/web/Dockerfile.prod
+      args:
+        VITE_API_URL: https://api.hello-local.io
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_URL: http://api-prod:3002
+      FRONTEND_URL: https://hello-local.io
+    depends_on:
+      - api-prod
+    restart: unless-stopped
+
+  api-devel:
+    profiles: ["devel"]
+    build:
+      context: ${DEVEL_SRC}
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      DATABASE_URL: postgresql://hellolocal:${POSTGRES_PASSWORD}@postgres:5432/hellolocal_devel
+      JWT_SECRET: ${JWT_SECRET_DEVEL}
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: https://devel.hello-local.io
+      CORS_ORIGIN: https://devel.hello-local.io
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web-devel:
+    profiles: ["devel"]
+    build:
+      context: ${DEVEL_SRC}
+      dockerfile: apps/web/Dockerfile.prod
+      args:
+        VITE_API_URL: https://api.devel.hello-local.io
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_URL: http://api-devel:3002
+      FRONTEND_URL: https://devel.hello-local.io
+    depends_on:
+      - api-devel
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

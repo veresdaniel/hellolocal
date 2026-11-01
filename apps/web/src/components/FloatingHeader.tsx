@@ -615,6 +615,34 @@ export function FloatingHeader({
               </>
             )}
 
+            {!location.pathname.includes("/admin") && (
+              <Link
+                to={buildUrl({ lang, path: "overview" })}
+                style={{
+                  background: location.pathname.includes("/overview")
+                    ? "rgba(102, 126, 234, 0.18)"
+                    : "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 8,
+                  color: "#667eea",
+                  fontSize: "clamp(12px, 2.5vw, 16px)",
+                  fontWeight: 500,
+                  height: "clamp(36px, 4vw, 40px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxSizing: "border-box",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t("public.overview.menu")}
+              </Link>
+            )}
             {/* Map view button - show on all non-map view pages */}
             {(() => {
               // Don't show if explicitly hidden
@@ -1041,6 +1069,32 @@ export function FloatingHeader({
                   🚪 {t("admin.logout")}
                 </button>
               </>
+            )}
+            {!location.pathname.includes("/admin") && (
+              <Link
+                to={buildUrl({ lang, path: "overview" })}
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  margin: "20px 24px 0",
+                  background: location.pathname.includes("/overview")
+                    ? "rgba(102, 126, 234, 0.18)"
+                    : "rgba(102, 126, 234, 0.1)",
+                  border: "1px solid rgba(102, 126, 234, 0.3)",
+                  borderRadius: 12,
+                  color: "#667eea",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  textDecoration: "none",
+                  padding: "16px 24px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {t("public.overview.menu")}
+              </Link>
             )}
             {/* Map view button - Mobile */}
             {(() => {

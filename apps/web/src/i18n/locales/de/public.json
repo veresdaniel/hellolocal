@@ -9,6 +9,54 @@
   },
   "listView": "Listenansicht",
   "mapView": "Kartenansicht",
+  "overview": {
+    "menu": "Überblick",
+    "title": "Lokaler Tourismus, in einem System",
+    "lead": "HelloLocal gibt einem Ort seine Plätze, Veranstaltungen und Karte. Die Oberfläche ist ungarisch, englisch und deutsch, und mehrere Standorte teilen sich dasselbe System.",
+    "featuresTitle": "Was das System kann",
+    "audienceTitle": "Für wen es ist",
+    "cta": "Gebiete öffnen",
+    "features": {
+      "places": {
+        "title": "Orte",
+        "text": "Kategorien, Schlagwörter, Preise und Beschreibung. Jeder Ort hat eine eigene Adresse."
+      },
+      "events": {
+        "title": "Veranstaltungen",
+        "text": "Terminierte Programme, Hervorhebung und Bewertung in derselben Liste."
+      },
+      "map": {
+        "title": "Karte",
+        "text": "Orte und Programme erscheinen auf einer Karte, auch auf dem Handy."
+      },
+      "languages": {
+        "title": "Drei Sprachen",
+        "text": "Ungarische, englische und deutsche Inhalte, jeweils mit eigener URL."
+      },
+      "sites": {
+        "title": "Mehrere Orte",
+        "text": "Mehrere Sites in einem System. Jede hat eigene Inhalte und Rechte."
+      },
+      "editors": {
+        "title": "Redaktion",
+        "text": "Rollen, Anmeldung in zwei Schritten und ein Editor für die Texte."
+      }
+    },
+    "audience": {
+      "municipality": {
+        "title": "Gemeinde",
+        "text": "Programme und Sehenswürdigkeiten eines Ortes auf einer Seite."
+      },
+      "office": {
+        "title": "Tourismusbüro",
+        "text": "Mehrere Sprachen und eine Karte, die Besucher öffnen können."
+      },
+      "destination": {
+        "title": "Destination",
+        "text": "Mehrere Orte auf einer Plattform, jeder mit eigenen Inhalten."
+      }
+    }
+  },
   "place": {
     "title": "Ortsdetails",
     "description": "Ortsdetails anzeigen",

@@ -144,7 +144,7 @@ async function handleBotRequest(req, res, next) {
       : 'hu';
 
     // Extract tenant key
-    const knownRoutes = ['place', 'event', 'blog', 'tudastar', 'infok', 'imprint', 'terms', 'privacy'];
+    const knownRoutes = ['place', 'event', 'blog', 'tudastar', 'infok', 'imprint', 'terms', 'privacy', 'overview'];
     const tenantKey = pathParts[1] && !knownRoutes.includes(pathParts[1])
       ? pathParts[1]
       : undefined;

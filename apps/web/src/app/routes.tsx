@@ -15,6 +15,7 @@ import { PlaceDetailPage } from "../pages/PlaceDetailPage";
 import { EventDetailPage } from "../pages/EventDetailPage";
 import { LegalPage } from "../pages/LegalPage";
 import { PricingPage } from "../pages/PricingPage";
+import { OverviewPage } from "../pages/OverviewPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { StaticPageDetailPage } from "../pages/StaticPageDetailPage";
 import { SitesListPage } from "../pages/SitesListPage";
@@ -154,6 +155,7 @@ const createPublicRoutes = () => {
     { path: "pricing", element: <PricingPage /> },
     { path: "tarife", element: <PricingPage /> },
     { path: "preise", element: <PricingPage /> },
+    { path: "overview", element: <OverviewPage /> },
     { path: "offline", element: <OfflinePage /> },
   ];
 
@@ -173,6 +175,7 @@ const createPublicRoutes = () => {
           { path: "teruletek", element: <SitesListPage /> },
           { path: "regions", element: <SitesListPage /> },
           { path: "regionen", element: <SitesListPage /> },
+          { path: "overview", element: <OverviewPage /> },
           // Redirect old-style URLs (without siteKey) to default site
           { path: "place/:slug", element: <RedirectToSiteRoute entityType="place" /> },
           { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
