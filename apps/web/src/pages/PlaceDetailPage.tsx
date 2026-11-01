@@ -20,8 +20,9 @@ import { FloorplanImageViewer, type FloorplanPin } from "../components/Floorplan
 import { createOrUpdateRating, getMyRating } from "../api/rating.api";
 import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
+import { absoluteCanonical } from "../seo/canonical";
 import { buildUrl } from "../app/urls";
-import { placeEntityPath } from "../app/entityPaths";
+import { placeEntityPath, townEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
 import { PublicPageSkeleton } from "../components/PublicSkeleton";
@@ -453,10 +454,31 @@ export function PlaceDetailPage() {
         description: platformSettings?.seoDescription || t("public.place.description"),
       };
     }
+    const canonical = absoluteCanonical();
+    const origin = window.location.origin;
+    const breadcrumbs: Array<{ name: string; url: string }> = [
+      {
+        name: platformSettings?.siteName || t("common.siteName"),
+        url: `${origin}${buildUrl({ lang: lang as Lang, siteKey })}`,
+      },
+    ];
+    if (place.townSlug) {
+      breadcrumbs.push({
+        name: place.townSlug.replace(/-/g, " "),
+        url: `${origin}${buildUrl({
+          lang: lang as Lang,
+          siteKey,
+          path: townEntityPath(lang as Lang, place.townSlug),
+        })}`,
+      });
+    }
+    breadcrumbs.push({ name: place.name, url: canonical });
     return buildPlaceSeo(place.seo, place, {
-      canonical: window.location.href,
+      canonical,
+      indexable: platformSettings?.isCrawlable,
+      breadcrumbs,
     });
-  }, [place, platformSettings, t]);
+  }, [place, platformSettings, t, lang, siteKey]);
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,

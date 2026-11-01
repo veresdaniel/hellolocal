@@ -82,11 +82,17 @@ export function SitesListPage() {
   // SEO
   const sitesTitle = t("public.sites.title");
   const sitesDescription = t("public.sites.description");
+  const sitesCanonical =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+      : "";
   useSeo(
     {
       title: sitesTitle,
       description: sitesDescription,
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      canonical: sitesCanonical,
+      robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
       og: {
         type: "website",
         title: sitesTitle || platformSettings?.siteName || sitesTitle,
@@ -98,6 +104,18 @@ export function SitesListPage() {
         title: sitesTitle || platformSettings?.siteName || sitesTitle,
         description: sitesDescription,
         image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      schemaOrg: {
+        type: "WebPage",
+        data: {
+          name: sitesTitle,
+          description: sitesDescription,
+          url: sitesCanonical,
+          inLanguage: effectiveLang,
+          isPartOf: platformSettings?.siteName
+            ? { name: platformSettings.siteName, url: window.location.origin }
+            : undefined,
+        },
       },
     },
     {

@@ -13,6 +13,7 @@ import { SlugEntityType } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import { assertLang } from "../common/lang";
+import { frontendOrigin, placePathSegment } from "./public-path.util";
 
 /**
  * Removes HTML tags from a string and normalizes whitespace
@@ -24,6 +25,11 @@ function stripHtml(html: string | null | undefined): string {
   const text = html.replace(/<[^>]*>/g, " ");
   // Normalize whitespace (multiple spaces/newlines to single space)
   return text.replace(/\s+/g, " ").trim();
+}
+
+function publicBase(lang: string, siteKey?: string | null): string {
+  const origin = frontendOrigin();
+  return siteKey ? `${origin}/${lang}/${siteKey}` : `${origin}/${lang}`;
 }
 
 @Controller("/api/seo")
@@ -108,7 +114,7 @@ export class SeoController {
         platformSettings.defaultPlaceholderDetailHeroImage ||
         "";
       const keywords = translation?.seoKeywords || [];
-      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/place/${slugResult.canonicalSlug}`;
+      const url = `${publicBase(site.lang, site.canonicalSiteKey)}/${placePathSegment(site.lang)}/${slugResult.canonicalSlug}`;
 
       // Generate basic LocalBusiness schema.org data
       const schemaOrg: any = {
@@ -236,7 +242,7 @@ export class SeoController {
         platformSettings.defaultPlaceholderDetailHeroImage ||
         "";
       const keywords = translation?.seoKeywords || [];
-      const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}/event/${slugResult.canonicalSlug}`;
+      const url = `${publicBase(site.lang, site.canonicalSiteKey)}/event/${slugResult.canonicalSlug}`;
 
       // Generate basic Event schema.org data
       const schemaOrg: any = {
@@ -320,7 +326,7 @@ export class SeoController {
       schemaOrg.organizer = {
         "@type": "Organization",
         name: siteName,
-        url: process.env.FRONTEND_URL || "http://localhost:5173",
+        url: frontendOrigin(),
       };
 
       return {
@@ -355,28 +361,36 @@ export class SeoController {
     const rawSeoDescription =
       platformSettings.seoDescription[site.lang as Lang] || "";
     const seoDescription = stripHtml(rawSeoDescription);
-    const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/${site.lang}${site.canonicalSiteKey ? `/${site.canonicalSiteKey}` : ""}`;
+    const url = publicBase(site.lang, site.canonicalSiteKey);
 
-    // Generate WebSite schema.org data
-    const schemaOrg: any = {
-      "@context": "https://schema.org",
+    // WebSite + Organization as a @graph for richer SERP eligibility
+    const webSite: any = {
       "@type": "WebSite",
+      "@id": `${url}#website`,
+      name: siteName,
+      url,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${url}/?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    };
+    if (seoDescription) webSite.description = seoDescription;
+
+    const organization: any = {
+      "@type": "Organization",
+      "@id": `${url}#organization`,
       name: siteName,
       url,
     };
+    if (seoDescription) organization.description = seoDescription;
 
-    if (seoDescription) {
-      schemaOrg.description = seoDescription;
-    }
-
-    // Add SearchAction for site search
-    schemaOrg.potentialAction = {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${url}/?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
+    const schemaOrg = {
+      "@context": "https://schema.org",
+      "@graph": [organization, webSite],
     };
 
     return {

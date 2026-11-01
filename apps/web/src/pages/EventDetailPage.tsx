@@ -411,7 +411,10 @@ export function EventDetailPage() {
         .trim();
     };
 
-    const eventUrl = window.location.href;
+    const eventUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+        : "";
     const startDate = event.startDate ? new Date(event.startDate).toISOString() : "";
     const endDate = event.endDate ? new Date(event.endDate).toISOString() : undefined;
 
@@ -421,6 +424,7 @@ export function EventDetailPage() {
       keywords: event.seo?.keywords || [],
       image: eventImage,
       canonical: eventUrl,
+      robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
       og: {
         type: "article",
         title: event.seo?.title || event.name,

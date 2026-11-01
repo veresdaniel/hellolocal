@@ -28,6 +28,7 @@
     "db:fix-duplicate-slugs": "tsx scripts/fix-duplicate-slugs.ts",
     "db:fix-admin": "tsx scripts/fix-admin-user.ts",
     "db:fill-etyek": "tsx scripts/fill-etyek-sample.ts",
+    "db:bootstrap:etyek-real": "tsx scripts/bootstrap-etyek-real.ts",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
     "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",
     "lint": "eslint .",

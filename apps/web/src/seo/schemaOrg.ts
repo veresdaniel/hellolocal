@@ -88,13 +88,28 @@ export interface WebSiteSchemaData {
   };
 }
 
+export interface OrganizationSchemaData {
+  name: string;
+  description?: string;
+  url: string;
+  logo?: string;
+  sameAs?: string[];
+}
+
+export interface BreadcrumbListSchemaData {
+  items: Array<{ name: string; url: string }>;
+}
+
 /**
- * Generate LocalBusiness schema for places
+ * Generate LocalBusiness (or TouristAttraction) schema for places
  */
-export function generateLocalBusinessSchema(data: PlaceSchemaData): object {
+export function generateLocalBusinessSchema(
+  data: PlaceSchemaData,
+  type: "LocalBusiness" | "TouristAttraction" = "LocalBusiness"
+): object {
   const schema: any = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": type,
     name: data.name,
   };
 
@@ -318,6 +333,55 @@ export function generateWebSiteSchema(data: WebSiteSchemaData): object {
 }
 
 /**
+ * Generate Organization schema
+ */
+export function generateOrganizationSchema(data: OrganizationSchemaData): object {
+  const schema: any = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: data.name,
+    url: data.url,
+  };
+  if (data.description) schema.description = data.description;
+  if (data.logo) {
+    schema.logo = { "@type": "ImageObject", url: data.logo };
+  }
+  if (data.sameAs?.length) schema.sameAs = data.sameAs;
+  return schema;
+}
+
+/**
+ * Generate BreadcrumbList schema
+ */
+export function generateBreadcrumbListSchema(data: BreadcrumbListSchemaData): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: data.items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
+ * Combine multiple schema nodes into a single @graph document
+ */
+export function generateGraphSchema(nodes: object[]): object {
+  const cleaned = nodes.map((node) => {
+    const copy = { ...(node as Record<string, unknown>) };
+    delete copy["@context"];
+    return copy;
+  });
+  return {
+    "@context": "https://schema.org",
+    "@graph": cleaned,
+  };
+}
+
+/**
  * Inject JSON-LD script tag into document head
  */
 export function injectJsonLd(schema: object): void {
@@ -332,4 +396,9 @@ export function injectJsonLd(schema: object): void {
   script.type = "application/ld+json";
   script.textContent = JSON.stringify(schema, null, 2);
   document.head.appendChild(script);
+}
+
+/** Robots directive from platform/site crawlability flag. */
+export function robotsDirective(indexable: boolean | undefined | null): string {
+  return indexable === false ? "noindex, nofollow" : "index, follow";
 }

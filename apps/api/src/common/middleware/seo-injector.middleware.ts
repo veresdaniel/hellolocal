@@ -95,6 +95,11 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       // Extract tenant key (second part, if exists and not a known route)
       const knownRoutes = [
         "place",
+        "hely",
+        "ort",
+        "town",
+        "telepules",
+        "gemeinde",
         "event",
         "blog",
         "tudastar",
@@ -102,6 +107,23 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         "imprint",
         "terms",
         "privacy",
+        "impresszum",
+        "aszf",
+        "adatvedelem",
+        "overview",
+        "pricing",
+        "tarife",
+        "preise",
+        "admin",
+        "teruletek",
+        "regiok",
+        "regions",
+        "regionen",
+        "products",
+        "collections",
+        "static-pages",
+        "static-page",
+        "offline",
       ];
       const tenantKey =
         pathParts[1] && !knownRoutes.includes(pathParts[1]) ? pathParts[1] : undefined;
@@ -110,6 +132,8 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       const routeIndex = tenantKey ? 2 : 1;
       const routeType = pathParts[routeIndex];
       const slug = pathParts[routeIndex + 1];
+      const isPlaceRoute =
+        routeType === "place" || routeType === "hely" || routeType === "ort";
 
       // Fetch SEO metadata
       type SeoData = {
@@ -124,8 +148,8 @@ export class SeoInjectorMiddleware implements NestMiddleware {
 
       try {
         let seoUrl: string;
-        if (routeType === "place" && slug) {
-          // Place detail page
+        if (isPlaceRoute && slug) {
+          // Place detail page (lang-specific path: hely/place/ort)
           seoUrl = `${this.apiUrl}/api/seo/${lang}/place/${slug}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ""}`;
         } else if (routeType === "event" && slug) {
           // Event detail page

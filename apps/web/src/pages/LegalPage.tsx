@@ -59,8 +59,13 @@ export function LegalPage({ pageKey }: Props) {
       .trim();
   };
 
-  const pageUrl = window.location.href;
-  const siteUrl = window.location.origin;
+  const pageUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+      : "";
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const robots =
+    platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow";
 
   // Use SEO from data if available, otherwise use i18n fallback
   const seo = data?.seo
@@ -69,6 +74,8 @@ export function LegalPage({ pageKey }: Props) {
         description: data.seo.description,
         image: data.seo.image,
         keywords: data.seo.keywords || [],
+        canonical: pageUrl,
+        robots,
         og: {
           type: "article",
           title: (data.seo as any).og?.title || data.seo.title,
@@ -101,6 +108,8 @@ export function LegalPage({ pageKey }: Props) {
         title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
         description: platformSettings?.seoDescription || "",
         keywords: [],
+        canonical: pageUrl,
+        robots,
         og: {
           type: "article" as const,
           title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),

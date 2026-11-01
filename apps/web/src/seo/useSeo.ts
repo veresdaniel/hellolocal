@@ -8,6 +8,9 @@ import {
   generateArticleSchema,
   generateWebPageSchema,
   generateWebSiteSchema,
+  generateOrganizationSchema,
+  generateBreadcrumbListSchema,
+  generateGraphSchema,
 } from "./schemaOrg";
 
 function upsertMeta(sel: string, attrs: Record<string, string>, content?: string) {
@@ -95,10 +98,13 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
 
     // Inject Schema.org JSON-LD if provided
     if (seo.schemaOrg) {
-      let schema: any;
+      let schema: object | null = null;
       switch (seo.schemaOrg.type) {
         case "LocalBusiness":
-          schema = generateLocalBusinessSchema(seo.schemaOrg.data);
+          schema = generateLocalBusinessSchema(seo.schemaOrg.data, "LocalBusiness");
+          break;
+        case "TouristAttraction":
+          schema = generateLocalBusinessSchema(seo.schemaOrg.data, "TouristAttraction");
           break;
         case "Event":
           schema = generateEventSchema(seo.schemaOrg.data);
@@ -112,10 +118,21 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
         case "WebSite":
           schema = generateWebSiteSchema(seo.schemaOrg.data);
           break;
+        case "Organization":
+          schema = generateOrganizationSchema(seo.schemaOrg.data);
+          break;
+        case "BreadcrumbList":
+          schema = generateBreadcrumbListSchema(seo.schemaOrg.data);
+          break;
+        case "Graph":
+          schema = generateGraphSchema(
+            Array.isArray(seo.schemaOrg.data) ? seo.schemaOrg.data : seo.schemaOrg.data?.nodes || []
+          );
+          break;
         default:
-          return;
+          schema = null;
       }
-      injectJsonLd(schema);
+      if (schema) injectJsonLd(schema);
     }
   }, [seo, opts?.defaultOgType, opts?.siteName, t]);
 }

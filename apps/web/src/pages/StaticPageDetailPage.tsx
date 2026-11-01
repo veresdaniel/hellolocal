@@ -54,14 +54,21 @@ export function StaticPageDetailPage() {
       .trim();
   };
 
-  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  const pageUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+      : "";
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const robots =
+    platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow";
 
   // Use SEO from data if available, otherwise use fallback
   const seo = staticPage?.seo
     ? {
         ...staticPage.seo,
         keywords: staticPage.seo.keywords || [],
+        canonical: pageUrl,
+        robots,
         og: {
           type: "article" as const,
           title: staticPage.seo.og?.title || staticPage.seo.title,
@@ -94,6 +101,8 @@ export function StaticPageDetailPage() {
         title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
         description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
         keywords: [],
+        canonical: pageUrl,
+        robots,
         og: {
           type: "article" as const,
           title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),

@@ -45,9 +45,36 @@ export function ProductsPage() {
 
   const totalPages = Math.max(1, Math.ceil((data?.total || 0) / PAGE_SIZE));
 
+  const catalogTitle = t("public.catalog.title");
+  const catalogDescription = t("public.catalog.lead");
+  const catalogCanonical =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+      : "";
   useSeo({
-    title: t("public.catalog.title"),
-    description: t("public.catalog.lead"),
+    title: catalogTitle,
+    description: catalogDescription,
+    canonical: catalogCanonical,
+    robots: "index, follow",
+    og: {
+      type: "website",
+      title: catalogTitle,
+      description: catalogDescription,
+    },
+    twitter: {
+      card: "summary",
+      title: catalogTitle,
+      description: catalogDescription,
+    },
+    schemaOrg: {
+      type: "WebPage",
+      data: {
+        name: catalogTitle,
+        description: catalogDescription,
+        url: catalogCanonical,
+        inLanguage: lang,
+      },
+    },
   });
 
   function update(next: Record<string, string | null>) {

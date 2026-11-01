@@ -56,22 +56,43 @@ export function StaticPagesListPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const staticListTitle = t("public.staticPages.title");
+  const staticListDescription =
+    platformSettings?.seoDescription || t("public.staticPages.title");
+  const staticListCanonical =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
+      : "";
   useSeo(
     {
-      title: platformSettings?.seoTitle || t("public.staticPages.title"),
-      description: platformSettings?.seoDescription || t("public.staticPages.title"),
+      title: staticListTitle,
+      description: staticListDescription,
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      canonical: staticListCanonical,
+      robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
       og: {
         type: "website",
-        title: platformSettings?.seoTitle || t("public.staticPages.title"),
-        description: platformSettings?.seoDescription || t("public.staticPages.title"),
+        title: staticListTitle,
+        description: staticListDescription,
         image: platformSettings?.defaultPlaceholderCardImage || undefined,
       },
       twitter: {
         card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-        title: platformSettings?.seoTitle || t("public.staticPages.title"),
-        description: platformSettings?.seoDescription || t("public.staticPages.title"),
+        title: staticListTitle,
+        description: staticListDescription,
         image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      schemaOrg: {
+        type: "WebPage",
+        data: {
+          name: staticListTitle,
+          description: staticListDescription,
+          url: staticListCanonical,
+          inLanguage: lang,
+          isPartOf: platformSettings?.siteName
+            ? { name: platformSettings.siteName, url: window.location.origin }
+            : undefined,
+        },
       },
     },
     {

@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPlaces } from "../api/places.api";
+import { getPlaces, getPlatformSettings } from "../api/places.api";
 import { PlaceCard } from "../ui/place/PlaceCard";
 import { useSeo } from "../seo/useSeo";
+import { absoluteCanonical } from "../seo/canonical";
+import { robotsDirective } from "../seo/schemaOrg";
 import { buildUrl } from "../app/urls";
 import { placeEntityPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
@@ -144,9 +146,45 @@ export function ExplorePage() {
     queryFn: () => getPlaces(lang, siteKey),
   });
 
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, siteKey],
+    queryFn: () => getPlatformSettings(lang, siteKey),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const exploreTitle = t("public.explore.title");
+  const exploreDescription = t("public.explore.description");
+  const exploreCanonical = absoluteCanonical();
   useSeo({
-    title: t("public.explore.title"),
-    description: t("public.explore.description"),
+    title: exploreTitle,
+    description: exploreDescription,
+    canonical: exploreCanonical,
+    robots: robotsDirective(platformSettings?.isCrawlable),
+    image: platformSettings?.defaultPlaceholderCardImage || undefined,
+    og: {
+      type: "website",
+      title: exploreTitle,
+      description: exploreDescription,
+      image: platformSettings?.defaultPlaceholderCardImage || undefined,
+    },
+    twitter: {
+      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
+      title: exploreTitle,
+      description: exploreDescription,
+      image: platformSettings?.defaultPlaceholderCardImage || undefined,
+    },
+    schemaOrg: {
+      type: "WebPage",
+      data: {
+        name: exploreTitle,
+        description: exploreDescription,
+        url: exploreCanonical,
+        inLanguage: lang,
+        isPartOf: platformSettings?.siteName
+          ? { name: platformSettings.siteName, url: window.location.origin }
+          : undefined,
+      },
+    },
   });
 
   if (isError)

@@ -6,6 +6,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { overviewLang, renderOverviewDocument } from './ssr/renderOverview.js';
+import {
+  applyAdminRobots,
+  buildPublicContentHtml,
+  injectRootContent,
+  isAdminPath,
+} from './ssr/renderPublicContent.js';
 import { applySocialMeta, publicOrigin, resolvePublicShare } from './ssr/socialMeta.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -61,17 +67,69 @@ function readShell() {
   throw new Error('index.html missing');
 }
 
+const KNOWN_PUBLIC_SEGMENTS = new Set([
+  'place', 'hely', 'ort',
+  'town', 'telepules', 'gemeinde',
+  'event',
+  'blog', 'tudastar', 'infok',
+  'imprint', 'terms', 'privacy', 'impresszum', 'aszf', 'adatvedelem',
+  'overview', 'pricing', 'tarife', 'preise',
+  'admin', 'teruletek', 'regiok', 'regions', 'regionen',
+  'products', 'collections', 'static-pages', 'static-page', 'offline',
+]);
+
+function isPlaceSegment(segment) {
+  return segment === 'place' || segment === 'hely' || segment === 'ort';
+}
+
+async function proxyApiText(apiPath, res, contentType) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(`${API_URL}${apiPath}`, {
+      signal: controller.signal,
+      headers: { Accept: contentType },
+    });
+    if (!response.ok) {
+      res.status(response.status).type('text/plain').send(`Upstream error ${response.status}`);
+      return;
+    }
+    const body = await response.text();
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', response.headers.get('cache-control') || 'public, max-age=1800');
+    res.send(body);
+  } catch (error) {
+    console.error(`[SEO] Proxy failed for ${apiPath}: ${error.message}`);
+    res.status(502).type('text/plain').send('Bad gateway');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Crawl files must be on the public host (Caddy → web), not only on api.*
+app.get('/robots.txt', (req, res) => {
+  return proxyApiText('/api/seo/robots.txt', res, 'text/plain; charset=utf-8');
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  return proxyApiText('/api/seo/sitemap.xml', res, 'application/xml; charset=utf-8');
+});
+
+app.get('/sitemap-:chunk.xml', (req, res) => {
+  const chunk = encodeURIComponent(req.params.chunk || '');
+  return proxyApiText(`/api/seo/sitemap-${chunk}.xml`, res, 'application/xml; charset=utf-8');
+});
+
 async function fetchBotSchema(req) {
   if (!isBot(req.get('user-agent') || '')) return null;
   const pathParts = req.path.split('/').filter(Boolean);
   const lang = pathParts[0] && ['hu', 'en', 'de'].includes(pathParts[0]) ? pathParts[0] : 'hu';
-  const knownRoutes = ['place', 'event', 'blog', 'tudastar', 'infok', 'imprint', 'terms', 'privacy', 'overview', 'pricing', 'tarife', 'preise', 'impresszum', 'aszf', 'adatvedelem', 'admin', 'teruletek', 'regions', 'regionen', 'products', 'collections', 'static-pages', 'static-page', 'offline'];
-  const tenantKey = pathParts[1] && !knownRoutes.includes(pathParts[1]) ? pathParts[1] : undefined;
+  const tenantKey = pathParts[1] && !KNOWN_PUBLIC_SEGMENTS.has(pathParts[1]) ? pathParts[1] : undefined;
   const routeIndex = tenantKey ? 2 : 1;
   const routeType = pathParts[routeIndex];
   const slug = pathParts[routeIndex + 1];
   let seoUrl;
-  if (routeType === 'place' && slug) {
+  if (isPlaceSegment(routeType) && slug) {
     seoUrl = `${API_URL}/api/seo/${lang}/place/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
   } else if (routeType === 'event' && slug) {
     seoUrl = `${API_URL}/api/seo/${lang}/event/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
@@ -203,16 +261,26 @@ app.get('*', async (req, res, next) => {
   }
   
   try {
+    // Admin/auth HTML for crawlers: always noindex, never content-prerendered.
+    if (isAdminPath(req.path)) {
+      const html = applyAdminRobots(readShell());
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      return res.send(html);
+    }
+
     const requestOrigin = `${req.protocol}://${req.get('host')}`;
-    const [meta, schema] = await Promise.all([
+    const [meta, schema, contentBody] = await Promise.all([
       resolvePublicShare({ pathname: req.path, apiUrl: API_URL, requestOrigin }),
       fetchBotSchema(req),
+      buildPublicContentHtml({ pathname: req.path, apiUrl: API_URL }),
     ]);
     let html = applySocialMeta(readShell(), meta);
     if (schema) {
       const json = JSON.stringify(schema).replace(/</g, '\\u003c');
       html = html.replace('</head>', `    <script type="application/ld+json">${json}</script>\n  </head>`);
     }
+    html = injectRootContent(html, contentBody);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
   } catch (error) {

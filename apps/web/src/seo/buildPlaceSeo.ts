@@ -1,11 +1,20 @@
 import type { Seo } from "../types/seo";
 import type { Place } from "../types/place";
-import { generateLocalBusinessSchema } from "./schemaOrg";
+import {
+  generateBreadcrumbListSchema,
+  generateLocalBusinessSchema,
+  robotsDirective,
+} from "./schemaOrg";
 
 export function buildPlaceSeo(
   base: Seo | undefined,
   place: Place,
-  ctx: { canonical: string; townName?: string }
+  ctx: {
+    canonical: string;
+    townName?: string;
+    indexable?: boolean;
+    breadcrumbs?: Array<{ name: string; url: string }>;
+  }
 ) {
   const town = ctx.townName ? ` – ${ctx.townName}` : "";
   const placeImage = base?.image || place.heroImage;
@@ -50,6 +59,7 @@ export function buildPlaceSeo(
     image: placeImage,
     keywords: allKeywords,
     canonical: base?.canonical ?? ctx.canonical,
+    robots: base?.robots ?? robotsDirective(ctx.indexable),
     og: {
       type: "article",
       title: base?.og?.title || base?.title || fallbackTitle,
@@ -124,28 +134,55 @@ export function buildPlaceSeo(
   if (place.contact?.website) sameAs.push(place.contact.website);
   if (place.contact?.facebook) sameAs.push(place.contact.facebook);
 
-  seo.schemaOrg = {
-    type: "LocalBusiness",
-    data: {
-      name: place.name,
-      description: stripHtml(base?.description || place.description),
-      image: placeImage,
-      url: ctx.canonical,
-      address: place.contact?.address ? stripHtml(place.contact.address) : undefined,
-      telephone: place.contact?.phone,
-      email: place.contact?.email,
-      geo: place.location
-        ? {
-            latitude: place.location.lat,
-            longitude: place.location.lng,
-          }
-        : undefined,
-      openingHoursSpecification:
-        openingHoursSpec && openingHoursSpec.length > 0 ? openingHoursSpec : undefined,
-      priceRange: place.priceBand || undefined,
-      sameAs: sameAs.length > 0 ? sameAs : undefined,
-    },
-  };
+  const localBusiness = generateLocalBusinessSchema({
+    name: place.name,
+    description: stripHtml(base?.description || place.description),
+    image: placeImage,
+    url: ctx.canonical,
+    address: place.contact?.address ? stripHtml(place.contact.address) : undefined,
+    telephone: place.contact?.phone,
+    email: place.contact?.email,
+    geo: place.location
+      ? {
+          latitude: place.location.lat,
+          longitude: place.location.lng,
+        }
+      : undefined,
+    openingHoursSpecification:
+      openingHoursSpec && openingHoursSpec.length > 0 ? openingHoursSpec : undefined,
+    priceRange: place.priceBand || undefined,
+    sameAs: sameAs.length > 0 ? sameAs : undefined,
+  });
+
+  if (ctx.breadcrumbs && ctx.breadcrumbs.length > 0) {
+    seo.schemaOrg = {
+      type: "Graph",
+      data: [localBusiness, generateBreadcrumbListSchema({ items: ctx.breadcrumbs })],
+    };
+  } else {
+    seo.schemaOrg = {
+      type: "LocalBusiness",
+      data: {
+        name: place.name,
+        description: stripHtml(base?.description || place.description),
+        image: placeImage,
+        url: ctx.canonical,
+        address: place.contact?.address ? stripHtml(place.contact.address) : undefined,
+        telephone: place.contact?.phone,
+        email: place.contact?.email,
+        geo: place.location
+          ? {
+              latitude: place.location.lat,
+              longitude: place.location.lng,
+            }
+          : undefined,
+        openingHoursSpecification:
+          openingHoursSpec && openingHoursSpec.length > 0 ? openingHoursSpec : undefined,
+        priceRange: place.priceBand || undefined,
+        sameAs: sameAs.length > 0 ? sameAs : undefined,
+      },
+    };
+  }
 
   return seo;
 }

@@ -1,5 +1,21 @@
 # Frontend SEO Middleware (server.js)
 
+## Crawl files (robots + sitemap)
+
+Production Caddy sends `hello-local.io` to the **web** container (`server.js`), not the API host.
+Therefore crawl files are exposed on the public origin via web → API proxy:
+
+| Public URL | Proxied API |
+|------------|-------------|
+| `https://hello-local.io/robots.txt` | `GET /api/seo/robots.txt` |
+| `https://hello-local.io/sitemap.xml` | `GET /api/seo/sitemap.xml` (index) |
+| `https://hello-local.io/sitemap-{chunk}.xml` | `GET /api/seo/sitemap-{chunk}.xml` |
+
+Chunks: `static`, `sites`, `places`, `events`, `towns`, `pages`, `collections`.
+`FRONTEND_URL` must be the canonical public origin (used in sitemap `<loc>` and robots `Sitemap:`).
+
+After deploy: submit `https://hello-local.io/sitemap.xml` in Google Search Console.
+
 ## Áttekintés
 
 A frontend `server.js` fájl tartalmaz egy SEO middleware-t, amely automatikusan injektálja a SEO meta tag-eket az `index.html`-be, amikor bot/crawler user agent-ek érkeznek. Ez biztosítja, hogy a social media platformok (Facebook, Twitter, LinkedIn, stb.) megfelelően jelenítsék meg a megosztott linkeket.

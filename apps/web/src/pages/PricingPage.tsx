@@ -37,7 +37,7 @@ export function PricingPage() {
     enabled: !!siteKey, // Only fetch if siteKey is available
   });
 
-  const pageUrl = window.location.href;
+  const pageUrl = `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "");
   const siteUrl = window.location.origin;
 
   const seo = {
@@ -46,6 +46,8 @@ export function PricingPage() {
       : t("public.pricing.title"),
     description: t("public.pricing.description"),
     keywords: ["pricing", "csomagok", "tariffs", "preise", "tarife"],
+    canonical: pageUrl,
+    robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
     og: {
       type: "website" as const,
       title: t("public.pricing.title"),

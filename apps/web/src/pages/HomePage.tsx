@@ -12,7 +12,12 @@ import {
   type PublicTown,
 } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
-import { generateWebSiteSchema } from "../seo/schemaOrg";
+import { absoluteCanonical } from "../seo/canonical";
+import {
+  generateOrganizationSchema,
+  generateWebSiteSchema,
+  robotsDirective,
+} from "../seo/schemaOrg";
 import { MapDock } from "../components/MapDock";
 import { PlacesListView } from "../components/PlacesListView";
 import { Header } from "../ui/layout/Header";
@@ -157,11 +162,11 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const townGaId = useMemo(() => {
+  const selectedTown = useMemo(() => {
     if (!townSlug || !townsPayload?.towns?.length) return null;
-    const match = townsPayload.towns.find((t: PublicTown) => t.slug === townSlug);
-    return match?.gaMeasurementId ?? null;
+    return townsPayload.towns.find((t: PublicTown) => t.slug === townSlug) ?? null;
   }, [townSlug, townsPayload]);
+  const townGaId = selectedTown?.gaMeasurementId ?? null;
   usePublicGaOverride(townGaId);
 
   const {
@@ -316,40 +321,79 @@ export function HomePage() {
 
   const siteUrl = window.location.origin;
   const siteName = platformSettings?.siteName || t("common.siteName");
+  const pageCanonical = absoluteCanonical();
+  const stripHtml = (html: string | null | undefined) =>
+    (html || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const homeTitle = selectedTown
+    ? selectedTown.name
+    : platformSettings?.seoTitle || t("public.home.title");
+  const homeDescription = selectedTown
+    ? stripHtml(selectedTown.description) ||
+      t("public.home.description") ||
+      platformSettings?.seoDescription ||
+      ""
+    : platformSettings?.seoDescription || t("public.home.description");
+  const homeImage =
+    selectedTown?.heroImage || platformSettings?.defaultPlaceholderCardImage || undefined;
 
   useSeo(
     {
-      title: platformSettings?.seoTitle || t("public.home.title"),
-      description: platformSettings?.seoDescription || t("public.home.description"),
-      image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      title: homeTitle,
+      description: homeDescription,
+      image: homeImage,
+      canonical: pageCanonical,
+      robots: robotsDirective(platformSettings?.isCrawlable),
       og: {
         type: "website",
-        title: platformSettings?.seoTitle || siteName || t("public.home.title"),
-        description: platformSettings?.seoDescription || t("public.home.description"),
-        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+        title: homeTitle || siteName,
+        description: homeDescription,
+        image: homeImage,
       },
       twitter: {
-        card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-        title: platformSettings?.seoTitle || siteName || t("public.home.title"),
-        description: platformSettings?.seoDescription || t("public.home.description"),
-        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+        card: homeImage ? "summary_large_image" : "summary",
+        title: homeTitle || siteName,
+        description: homeDescription,
+        image: homeImage,
       },
-      schemaOrg: {
-        type: "WebSite",
-        data: {
-          name: siteName,
-          description: platformSettings?.seoDescription || t("public.home.description"),
-          url: siteUrl,
-          potentialAction: {
-            "@type": "SearchAction",
-            target: {
-              "@type": "EntryPoint",
-              urlTemplate: `${siteUrl}/${lang}/?q={search_term_string}`,
+      schemaOrg: selectedTown
+        ? {
+            type: "WebPage",
+            data: {
+              name: homeTitle,
+              description: homeDescription,
+              url: pageCanonical,
+              inLanguage: lang,
+              isPartOf: { name: siteName, url: siteUrl },
             },
-            "query-input": "required name=search_term_string",
+          }
+        : {
+            type: "Graph",
+            data: [
+              generateOrganizationSchema({
+                name: siteName,
+                description: homeDescription,
+                url: pageCanonical,
+                logo: platformSettings?.faviconUrl || undefined,
+              }),
+              generateWebSiteSchema({
+                name: siteName,
+                description: homeDescription,
+                url: pageCanonical,
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: `${pageCanonical}/?q={search_term_string}`,
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              }),
+            ],
           },
-        },
-      },
     },
     {
       siteName: platformSettings?.siteName,

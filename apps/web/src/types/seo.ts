@@ -23,7 +23,16 @@ export type Seo = {
 
   // Schema.org structured data
   schemaOrg?: {
-    type: "LocalBusiness" | "Event" | "Article" | "WebPage" | "WebSite";
+    type:
+      | "LocalBusiness"
+      | "TouristAttraction"
+      | "Event"
+      | "Article"
+      | "WebPage"
+      | "WebSite"
+      | "Organization"
+      | "BreadcrumbList"
+      | "Graph";
     data: any; // Schema-specific data
   };
 };
