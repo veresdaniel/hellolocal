@@ -12,6 +12,7 @@ import { RbacService } from "../auth/rbac.service";
 import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
 import { generateSlug } from "../slug/slug.helper";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface CreateEventDto {
   siteId: string;
@@ -90,7 +91,8 @@ export class AdminEventService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly rbacService: RbacService
+    private readonly rbacService: RbacService,
+    private readonly sitemapService: SitemapService
   ) {}
 
   /**
@@ -706,6 +708,7 @@ export class AdminEventService {
       });
     }, 100);
 
+    this.sitemapService.invalidate();
     return event;
   }
 

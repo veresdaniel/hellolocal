@@ -35,6 +35,7 @@ import { AuthModule } from "../auth/auth.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
+import { SeoModule } from "../seo/seo.module";
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
     forwardRef(() => EntitlementsModule),
     SiteModule,
     VisitorLadderModule,
+    SeoModule,
   ],
   controllers: [AdminController, GalleryPublicController, ContentDraftController],
   providers: [

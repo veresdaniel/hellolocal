@@ -82,13 +82,22 @@ function isPlaceSegment(segment) {
   return segment === 'place' || segment === 'hely' || segment === 'ort';
 }
 
-async function proxyApiText(apiPath, res, contentType) {
+async function proxyApiText(apiPath, req, res, contentType) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
+    // Forward public Host so API resolves SiteDomain / customDomain at request time
+    // (admin-configured domains — no redeploy per domain).
+    const host = req.get('x-forwarded-host') || req.get('host') || '';
+    const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
     const response = await fetch(`${API_URL}${apiPath}`, {
       signal: controller.signal,
-      headers: { Accept: contentType },
+      headers: {
+        Accept: contentType,
+        Host: host,
+        'X-Forwarded-Host': host,
+        'X-Forwarded-Proto': proto,
+      },
     });
     if (!response.ok) {
       res.status(response.status).type('text/plain').send(`Upstream error ${response.status}`);
@@ -96,7 +105,7 @@ async function proxyApiText(apiPath, res, contentType) {
     }
     const body = await response.text();
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', response.headers.get('cache-control') || 'public, max-age=1800');
+    res.setHeader('Cache-Control', response.headers.get('cache-control') || 'public, max-age=60');
     res.send(body);
   } catch (error) {
     console.error(`[SEO] Proxy failed for ${apiPath}: ${error.message}`);
@@ -108,16 +117,16 @@ async function proxyApiText(apiPath, res, contentType) {
 
 // Crawl files must be on the public host (Caddy → web), not only on api.*
 app.get('/robots.txt', (req, res) => {
-  return proxyApiText('/api/seo/robots.txt', res, 'text/plain; charset=utf-8');
+  return proxyApiText('/api/seo/robots.txt', req, res, 'text/plain; charset=utf-8');
 });
 
 app.get('/sitemap.xml', (req, res) => {
-  return proxyApiText('/api/seo/sitemap.xml', res, 'application/xml; charset=utf-8');
+  return proxyApiText('/api/seo/sitemap.xml', req, res, 'application/xml; charset=utf-8');
 });
 
 app.get('/sitemap-:chunk.xml', (req, res) => {
   const chunk = encodeURIComponent(req.params.chunk || '');
-  return proxyApiText(`/api/seo/sitemap-${chunk}.xml`, res, 'application/xml; charset=utf-8');
+  return proxyApiText(`/api/seo/sitemap-${chunk}.xml`, req, res, 'application/xml; charset=utf-8');
 });
 
 async function fetchBotSchema(req) {

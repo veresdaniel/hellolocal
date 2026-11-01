@@ -27,6 +27,7 @@ import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -126,7 +127,8 @@ export class AdminPlaceService {
     private readonly prisma: PrismaService,
     private readonly rbacService: RbacService,
     private readonly placeUpsellService: PlaceUpsellService,
-    private readonly entitlementsService: EntitlementsService
+    private readonly entitlementsService: EntitlementsService,
+    private readonly sitemapService: SitemapService
   ) {}
 
   /**
@@ -699,6 +701,7 @@ export class AdminPlaceService {
     // Throw error if slug conflict is detected (admin should be aware of conflicts)
     await this.createSlugsForPlace(place.id, place.siteId, translations, true);
 
+    this.sitemapService.invalidate();
     return place;
   }
 
@@ -1001,6 +1004,7 @@ export class AdminPlaceService {
       }
     }
 
+    this.sitemapService.invalidate();
     return this.findOne(id, siteId);
   }
 
@@ -1016,6 +1020,7 @@ export class AdminPlaceService {
       where: { id },
     });
 
+    this.sitemapService.invalidate();
     return { message: "Place deleted successfully" };
   }
 
