@@ -1675,6 +1675,12 @@
     "save": "Save platform addresses",
     "saved": "Platform addresses saved"
   },
+  "liveDemo": {
+    "title": "Live demo",
+    "help": "See it live opens this address. A full address, such as https://helloetyek.hu/hu, or a path, such as /en/regions. Empty keeps the region list.",
+    "save": "Save demo address",
+    "saved": "Demo address saved"
+  },
   "geocode": {
     "suggest": "Suggest coordinates",
     "suggested": "Suggestion: {{label}}. Latitude and longitude can still be edited.",

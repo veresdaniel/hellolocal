@@ -621,6 +621,11 @@ export function PlacesListView({
           font-weight: 600;
           color: var(--hl-ink, #1b1730);
         }
+        .places-discover__filters .map-dock__chip[aria-pressed="true"] {
+          background: var(--hl-navy, #1b1730);
+          border-color: var(--hl-navy, #1b1730);
+          color: #fff;
+        }
         .places-grid {
           display: grid;
           grid-template-columns: 1fr;

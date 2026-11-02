@@ -1,13 +1,12 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { OverviewSkeleton } from "../components/PublicSkeleton";
 import { Footer } from "../ui/layout/Footer";
 import { useSeo } from "../seo/useSeo";
-import { REGION_LIST_PATH } from "../app/entityPaths";
-import { buildUrl } from "../app/urls";
+import { LiveDemoLink } from "../components/LiveDemoLink";
 import { APP_LANGS, DEFAULT_LANG, type Lang, isLang } from "../app/config";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useLandingText } from "../hooks/useLandingText";
@@ -258,8 +257,6 @@ export function OverviewPage() {
   }, [description, image, lang, text]);
 
   // Avoid a blank navy flash before theme/settings resolve (standalone overview).
-  const liveUrl = buildUrl({ lang, path: REGION_LIST_PATH[lang] });
-
   if (!insideSiteLayout && isThemePending) {
     return (
       <div className="hl-public">
@@ -285,9 +282,9 @@ export function OverviewPage() {
               <h1>{title}</h1>
               <p className="overview__lead">{text("lead")}</p>
               <div className="overview__actions">
-                <Link className="overview__cta" to={liveUrl}>
+                <LiveDemoLink className="overview__cta" lang={lang}>
                   {text("cta")}
-                </Link>
+                </LiveDemoLink>
                 <a className="overview__ghost" href="#how">
                   {text("ctaSecondary")}
                 </a>
@@ -320,11 +317,11 @@ export function OverviewPage() {
               <span>{text("statsLanguages")}</span>
             </li>
             <li>
-              <strong>1</strong>
+              <strong>{text("statsMapValue")}</strong>
               <span>{text("statsMap")}</span>
             </li>
             <li>
-              <strong>0</strong>
+              <strong>{text("statsAppValue")}</strong>
               <span>{text("statsApp")}</span>
             </li>
           </ul>

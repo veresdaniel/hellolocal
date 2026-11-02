@@ -16,6 +16,7 @@ import {
   parsePlatformPublicHosts,
   PLATFORM_PUBLIC_HOST_KEY,
 } from "../common/platform-public-host";
+import { LIVE_DEMO_URL_KEY, normalizeLiveDemoUrl } from "../common/live-demo-url";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -68,6 +69,15 @@ export class AdminAppSettingsService {
       }
       value = formatPlatformPublicHosts(parsed.hosts);
       clearPlatformPublicHostCache();
+    }
+    if (key === LIVE_DEMO_URL_KEY) {
+      const parsed = normalizeLiveDemoUrl(value);
+      if ("error" in parsed) {
+        throw new BadRequestException(
+          "Érvénytelen demócím. Teljes cím, például https://helloetyek.hu/hu, vagy útvonal, például /hu/regiok."
+        );
+      }
+      value = parsed.url;
     }
     const secret = SECRET_SETTING_KEYS.has(key);
     if (ENCRYPTED_AT_REST_KEYS.has(key) && value) {

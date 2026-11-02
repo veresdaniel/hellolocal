@@ -1,9 +1,7 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import { DemoRequestForm } from "../components/DemoRequestForm";
 import { PlanPicker } from "../components/PlanPicker";
-import { REGION_LIST_PATH } from "../app/entityPaths";
-import { buildUrl } from "../app/urls";
+import { LiveDemoLink } from "../components/LiveDemoLink";
 import type { Lang } from "../app/config";
 import { useLandingText } from "../hooks/useLandingText";
 
@@ -21,7 +19,6 @@ const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
 
 export function OverviewBelowFold({ lang }: { lang: Lang }) {
   const text = useLandingText(lang);
-  const liveUrl = buildUrl({ lang, path: REGION_LIST_PATH[lang] });
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>(".overview__story"));
@@ -129,9 +126,9 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
         <div className="overview__close-copy">
           <h2>{text("closingTitle")}</h2>
           <p>{text("closingText")}</p>
-          <Link className="overview__cta" to={liveUrl}>
+          <LiveDemoLink className="overview__cta" lang={lang}>
             {text("cta")}
-          </Link>
+          </LiveDemoLink>
         </div>
         <img
           className="overview__close-map"

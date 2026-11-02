@@ -340,6 +340,12 @@
   color: var(--hl-ink, #1b1730);
 }
 
+.map-filters-inline .map-dock__chip[aria-pressed="true"] {
+  background: var(--hl-navy, #1b1730);
+  border-color: var(--hl-navy, #1b1730);
+  color: #fff;
+}
+
 @media (max-width: 767px) {
   .map-dock,
   .map-dock--mobile {

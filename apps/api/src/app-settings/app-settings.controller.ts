@@ -4,6 +4,7 @@ import { SkipThrottle } from "@nestjs/throttler";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { readPlatformPublicHostEntries } from "../common/platform-public-host";
+import { LIVE_DEMO_URL_KEY, normalizeLiveDemoUrl } from "../common/live-demo-url";
 
 /**
  * Public controller for app settings that don't require authentication
@@ -52,6 +53,18 @@ export class AppSettingsController {
    * Extra public platform hostnames. The first is the default origin.
    * hello-local.io stays available even when this list is empty.
    */
+  /**
+   * Where “see it live” opens. Empty means the region list.
+   */
+  @Get("/app-settings/live-demo")
+  async getLiveDemo() {
+    const row = await this.prisma.appSetting.findUnique({
+      where: { key: LIVE_DEMO_URL_KEY },
+    });
+    const parsed = normalizeLiveDemoUrl(row?.value ?? "");
+    return { url: "error" in parsed ? null : parsed.url || null };
+  }
+
   @Get("/app-settings/platform-host")
   async getPlatformHost() {
     const entries = await readPlatformPublicHostEntries(this.prisma);

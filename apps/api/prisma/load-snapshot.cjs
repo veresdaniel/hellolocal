@@ -39,6 +39,7 @@ const PLATFORM_SETTING_KEYS = new Set([
   "defaultLanguage",
   "underConstruction.copy",
   "underConstruction.enabled",
+  "platform.liveDemoUrl",
 ]);
 
 const SECRET_SETTING_KEYS = new Set([

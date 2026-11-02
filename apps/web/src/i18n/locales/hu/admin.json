@@ -1730,6 +1730,12 @@
     "save": "Platformcímek mentése",
     "saved": "Platformcímek elmentve"
   },
+  "liveDemo": {
+    "title": "Élő demó",
+    "help": "A „Nézd meg élőben” gomb ide visz. Teljes cím, például https://helloetyek.hu/hu, vagy útvonal, például /hu/regiok. Üresen a régiólista marad.",
+    "save": "Demócím mentése",
+    "saved": "Demócím elmentve"
+  },
   "geocode": {
     "suggest": "Koordináta javaslat",
     "suggested": "Javaslat: {{label}}. A szélesség és a hosszúság kézzel módosítható.",

@@ -55,6 +55,7 @@ import { GaMeasurementField } from "../../components/GaMeasurementField";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
+const LIVE_DEMO_URL_KEY = "platform.liveDemoUrl";
 
 type PlatformHostRow = { key: string; host: string; lang: Lang };
 
@@ -120,6 +121,8 @@ export function AppSettingsPage() {
     nextPlatformHostRow(),
   ]);
   const [isSavingPlatformHost, setIsSavingPlatformHost] = useState(false);
+  const [liveDemoUrl, setLiveDemoUrl] = useState("");
+  const [isSavingLiveDemo, setIsSavingLiveDemo] = useState(false);
   const [platformGaId, setPlatformGaId] = useState("");
   const [platformGaError, setPlatformGaError] = useState("");
   const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
@@ -198,6 +201,13 @@ export function AppSettingsPage() {
       })
       .catch(() => {
         if (!cancelled) setPlatformHostRows([nextPlatformHostRow()]);
+      });
+    getAppSetting(LIVE_DEMO_URL_KEY)
+      .then((row) => {
+        if (!cancelled) setLiveDemoUrl(row?.value ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) setLiveDemoUrl("");
       });
     getAppSetting(PLATFORM_GA_SETTING_KEY)
       .then((row) => {
@@ -349,6 +359,24 @@ export function AppSettingsPage() {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
     } finally {
       setIsSavingPlatformHost(false);
+    }
+  };
+
+  const handleSaveLiveDemo = async () => {
+    try {
+      setIsSavingLiveDemo(true);
+      const saved = await createAppSetting({
+        key: LIVE_DEMO_URL_KEY,
+        value: liveDemoUrl.trim(),
+        type: "string",
+        description: t("admin.liveDemo.title"),
+      });
+      setLiveDemoUrl(saved?.value ?? liveDemoUrl.trim());
+      showToast(t("admin.liveDemo.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingLiveDemo(false);
     }
   };
 
@@ -1368,6 +1396,59 @@ export function AppSettingsPage() {
               }}
             >
               {isSavingPlatformHost ? t("common.loading") : t("admin.platformHost.save")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "var(--admin-surface)",
+            borderRadius: 12,
+            border: "1px solid var(--admin-border-subtle)",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("admin.liveDemo.title")}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>{t("admin.liveDemo.help")}</p>
+          <input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="https://helloetyek.hu/hu"
+            value={liveDemoUrl}
+            onChange={(event) => setLiveDemoUrl(event.target.value)}
+            style={{
+              display: "block",
+              width: "min(100%, 560px)",
+              minHeight: 42,
+              padding: "0 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+              boxSizing: "border-box",
+            }}
+          />
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => void handleSaveLiveDemo()}
+              disabled={isSavingLiveDemo}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
+                fontWeight: 600,
+                cursor: isSavingLiveDemo ? "wait" : "pointer",
+              }}
+            >
+              {isSavingLiveDemo ? t("common.loading") : t("admin.liveDemo.save")}
             </button>
           </div>
         </div>

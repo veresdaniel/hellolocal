@@ -16,6 +16,7 @@ import { useToast } from "../contexts/ToastContext";
 import { DEFAULT_LANG, DEFAULT_SITE_SLUG } from "../app/config";
 import { ROLE_SUPERADMIN } from "../types/enums";
 import { useViewStore } from "../stores/useViewStore";
+import { useHostScope } from "../app/hostScope";
 import { openSiteExplore } from "../utils/siteLanding";
 import { BREAKPOINTS } from "../utils/viewport";
 import { USER_KEY } from "../constants/authStorage";
@@ -59,9 +60,12 @@ export function FloatingHeader({
 
   // Get showMap state from store to check if we're actually on map view (not just on home page)
   const { showMap } = useViewStore();
+  const hostScope = useHostScope();
   const isLangLanding =
     location.pathname === `/${lang}` || location.pathname === `/${lang}/`;
-  const isOverview = location.pathname.includes("/overview") || isLangLanding;
+  // /:lang is the sales overview only on a platform host. A region domain uses it for the map and the list.
+  const onPlatform = hostScope.status === "ready" && hostScope.kind === "platform";
+  const isOverview = location.pathname.includes("/overview") || (isLangLanding && onPlatform);
   const scrollToDemo = () => {
     setIsMobileMenuOpen(false);
     window.requestAnimationFrame(() => {
@@ -77,7 +81,7 @@ export function FloatingHeader({
   const isOnSiteHome =
     location.pathname === homePath || location.pathname === `${homePath}/`;
   // List discovery: site name belongs in the page H1 ("Szeged felfedezése"), not as a left nav label.
-  const isListDiscover = isOnSiteHome && !showMap && !landingMode && !isOverview;
+  const isListDiscover = isOnSiteHome && !showMap && !landingMode && !isOverview && onPlatform;
   const openExplore = (mode: "map" | "list") => {
     setIsMobileMenuOpen(false);
     openSiteExplore(mode);

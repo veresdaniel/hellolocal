@@ -1676,6 +1676,12 @@
     "save": "Plattformadressen speichern",
     "saved": "Plattformadressen gespeichert"
   },
+  "liveDemo": {
+    "title": "Live-Demo",
+    "help": "Live ansehen öffnet diese Adresse. Eine volle Adresse, zum Beispiel https://helloetyek.hu/hu, oder ein Pfad, zum Beispiel /de/regionen. Leer bleibt die Regionenliste.",
+    "save": "Demo-Adresse speichern",
+    "saved": "Demo-Adresse gespeichert"
+  },
   "geocode": {
     "suggest": "Koordinaten vorschlagen",
     "suggested": "Vorschlag: {{label}}. Breite und Länge bleiben editierbar.",

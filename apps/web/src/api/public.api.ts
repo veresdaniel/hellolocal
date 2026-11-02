@@ -188,6 +188,20 @@ export async function getPublicPlatformHost(): Promise<PlatformHostResponse> {
   };
 }
 
+export type LiveDemoResponse = { url: string | null };
+
+/** Overview “see it live” target. Null keeps the region list. */
+export async function getPublicLiveDemo(): Promise<LiveDemoResponse> {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/live-demo`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return { url: null };
+  const data = (await res.json()) as Partial<LiveDemoResponse>;
+  const url = typeof data.url === "string" ? data.url.trim() : "";
+  return { url: url || null };
+}
+
 export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
   const apiBaseUrl = getApiBaseUrl();
   const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-ga`, {
