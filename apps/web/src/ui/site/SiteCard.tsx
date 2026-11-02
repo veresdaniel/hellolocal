@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import type { Site } from "../../api/places.api";
-import { regionAddress } from "../../app/urls";
+import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../../api/places.api";
@@ -39,7 +40,9 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
     "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
   ];
   const gradient = gradients[index % gradients.length];
-  const siteUrl = regionAddress({ lang, slug: site.slug, primaryDomain: site.primaryDomain });
+  // Same-origin slug path only — never jump to Site.primaryDomain from the platform
+  // list (beta/?access= cookie lives on hello-local.io, not on the custom host).
+  const sitePath = buildUrl({ lang, siteKey: site.slug, path: "" });
 
   return (
     <div
@@ -60,8 +63,8 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
           transform: scale(1.05);
         }
       `}</style>
-      <a
-        href={siteUrl}
+      <Link
+        to={sitePath}
         style={{
           textDecoration: "none",
           color: "inherit",
@@ -249,7 +252,7 @@ export function SiteCard({ site, index = 0 }: SiteCardProps) {
             </div>
           </div>
         </article>
-      </a>
+      </Link>
     </div>
   );
 }

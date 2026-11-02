@@ -43,9 +43,6 @@ export function UnderConstructionSettings({ adminLang }: Props) {
   const [copy, setCopy] = useState<UnderConstructionCopyByLang>(emptyCopy);
   const [copyLang, setCopyLang] = useState<(typeof LANGS)[number]>("hu");
   const [copied, setCopied] = useState(false);
-  const [previewOrigin, setPreviewOrigin] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : ""
-  );
   const [previewSiteSlug, setPreviewSiteSlug] = useState(DEFAULT_SITE_SLUG);
 
   const applyStatus = (next: UnderConstructionAdminStatus) => {
@@ -80,37 +77,30 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     let cancelled = false;
     if (!selectedSiteId) {
       setPreviewSiteSlug(DEFAULT_SITE_SLUG);
-      if (typeof window !== "undefined") setPreviewOrigin(window.location.origin);
       return;
     }
     void getSite(selectedSiteId)
       .then((site) => {
         if (cancelled) return;
-        const slug = typeof site?.slug === "string" && site.slug.trim() ? site.slug.trim() : DEFAULT_SITE_SLUG;
+        const slug =
+          typeof site?.slug === "string" && site.slug.trim() ? site.slug.trim() : DEFAULT_SITE_SLUG;
         setPreviewSiteSlug(slug);
-        const domain =
-          typeof site?.primaryDomain === "string" ? site.primaryDomain.trim().toLowerCase() : "";
-        if (domain) {
-          setPreviewOrigin(`https://${domain.replace(/^https?:\/\//, "").split("/")[0]}`);
-        } else if (typeof window !== "undefined") {
-          setPreviewOrigin(window.location.origin);
-        }
       })
       .catch(() => {
-        if (cancelled) return;
-        setPreviewSiteSlug(DEFAULT_SITE_SLUG);
-        if (typeof window !== "undefined") setPreviewOrigin(window.location.origin);
+        if (!cancelled) setPreviewSiteSlug(DEFAULT_SITE_SLUG);
       });
     return () => {
       cancelled = true;
     };
   }, [selectedSiteId]);
 
+  // Stay on the current platform origin (hello-local.io / beta / …). Never send the
+  // beta ?access= link to Site.primaryDomain — that host may have no DNS yet.
   const previewUrl = useMemo(() => {
     const token = status?.accessToken;
-    if (!token || !previewOrigin) return "";
-    return buildAccessPreviewUrl(previewOrigin, adminLang || "hu", token, previewSiteSlug);
-  }, [adminLang, previewOrigin, previewSiteSlug, status?.accessToken]);
+    if (!token || typeof window === "undefined") return "";
+    return buildAccessPreviewUrl(window.location.origin, adminLang || "hu", token, previewSiteSlug);
+  }, [adminLang, previewSiteSlug, status?.accessToken]);
 
   const setField = (field: keyof UnderConstructionCopyFields, value: string) => {
     setCopy((prev) => ({

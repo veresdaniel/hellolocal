@@ -269,6 +269,11 @@ export class UnderConstructionService {
     const queryOk = tokensMatch(expected, input.queryToken);
     const cookieOk = tokensMatch(expected, input.cookieToken);
     const allowed = queryOk || cookieOk;
+    // Only clear when a cookie was actually presented and is invalid.
+    // Clearing on every deny races with ?access= → strip-query: the follow-up
+    // check can arrive before the browser attaches the new cookie and would
+    // wipe the just-issued preview session (home hard-loads feel "query only").
+    const clearCookie = Boolean(input.cookieToken?.trim()) && !cookieOk;
 
     return {
       enabled: true,
@@ -278,7 +283,7 @@ export class UnderConstructionService {
       cookieMaxAgeSec: UC_COOKIE_MAX_AGE_SEC,
       // Refresh persistent HttpOnly cookie whenever access is valid (query or existing cookie).
       refreshCookie: Boolean(allowed && expected),
-      clearCookie: !allowed,
+      clearCookie,
       cookieToken: allowed && expected ? expected : null,
       copy,
     };

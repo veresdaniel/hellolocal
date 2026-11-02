@@ -25,11 +25,18 @@ export function UnderConstructionGate() {
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
   const [state, setState] = useState<GateState>({ status: "loading" });
   const openedOnce = useRef(false);
+  /** Skip the immediate re-fetch caused by stripping ?access= after a successful unlock. */
+  const skipNextValidation = useRef(false);
 
   useEffect(() => {
     if (isAdminOrAuthPath(location.pathname) || location.pathname === "/offline") {
       setState({ status: "open" });
       openedOnce.current = true;
+      return;
+    }
+
+    if (skipNextValidation.current) {
+      skipNextValidation.current = false;
       return;
     }
 
@@ -56,6 +63,8 @@ export function UnderConstructionGate() {
             if (params.has(UC_QUERY_PARAM)) {
               params.delete(UC_QUERY_PARAM);
               const search = params.toString();
+              // Avoid a second gate round-trip that can race the new Set-Cookie.
+              skipNextValidation.current = true;
               navigate(
                 { pathname: location.pathname, search: search ? `?${search}` : "", hash: location.hash },
                 { replace: true }
@@ -71,11 +80,11 @@ export function UnderConstructionGate() {
         setState({ status: "blocked", copy: gate.copy });
       })
       .catch(() => {
-        // Fail closed when the gate check cannot complete.
-        if (!cancelled) {
-          openedOnce.current = false;
-          setState({ status: "blocked", copy: ucFailClosedCopy(lang) });
-        }
+        // Fail closed on first paint; keep an already-open session on transient errors.
+        if (cancelled) return;
+        if (openedOnce.current) return;
+        openedOnce.current = false;
+        setState({ status: "blocked", copy: ucFailClosedCopy(lang) });
       });
 
     return () => {
