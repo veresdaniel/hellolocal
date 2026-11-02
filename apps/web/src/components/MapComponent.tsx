@@ -975,8 +975,8 @@ export function MapComponent({
   }, [markersWithDistance, viewState.zoom]);
 
   // Sticky card selection (hover is separate and never clears selection).
-  // Single click/tap → keep enhanced card open. Navigáció draws the route.
-  // Place detail opens via card title click, not by re-tapping the pin.
+  // First click/tap → open enhanced card. Second click on same pin → open detail.
+  // Card body/media also opens detail; Navigáció draws the route without navigating away.
   const handleMarkerClick = useCallback(
     (marker: (typeof markersWithDistance)[0], event: React.MouseEvent | React.TouchEvent) => {
       const now = Date.now();
@@ -999,8 +999,13 @@ export function MapComponent({
         shouldHaveRoutesRef.current = false;
         lastRouteFetchPosition.current = null;
         setSelectedMarkerId(marker.id);
+        return;
       }
-      // Same marker again: keep card sticky (do not navigate away).
+
+      // Same marker again: open place/event detail when available.
+      if (marker.onClick) {
+        marker.onClick();
+      }
     },
     [selectedMarkerId, suppressNextMapClick]
   );
@@ -1488,11 +1493,16 @@ export function MapComponent({
                       suppressNextMapClick();
                     }}
                     onClick={(e) => {
-                      // Keep card interactions from re-toggling the pin / bubbling to the map.
+                      // Card media/body opens detail; Navigáció stops propagation itself.
                       e.stopPropagation();
                       suppressNextMapClick();
+                      if (!isClickable || !marker.onClick) return;
+                      marker.onClick();
                     }}
-                    style={{ pointerEvents: showEnhancedCard ? "auto" : "none" }}
+                    style={{
+                      pointerEvents: showEnhancedCard ? "auto" : "none",
+                      cursor: isClickable ? "pointer" : undefined,
+                    }}
                   >
                     {cardImageUrl && (
                       <div className="hl-map-marker-card__media">
@@ -1511,12 +1521,6 @@ export function MapComponent({
                           className="hl-map-marker-card__title"
                           role={isClickable ? "link" : undefined}
                           tabIndex={isClickable ? 0 : undefined}
-                          onClick={(e) => {
-                            if (!isClickable || !marker.onClick) return;
-                            e.stopPropagation();
-                            suppressNextMapClick();
-                            marker.onClick();
-                          }}
                           onKeyDown={(e) => {
                             if (!isClickable || !marker.onClick) return;
                             if (e.key !== "Enter" && e.key !== " ") return;
@@ -1524,7 +1528,6 @@ export function MapComponent({
                             e.stopPropagation();
                             marker.onClick();
                           }}
-                          style={isClickable ? { cursor: "pointer" } : undefined}
                         >
                           {marker.name}
                         </span>

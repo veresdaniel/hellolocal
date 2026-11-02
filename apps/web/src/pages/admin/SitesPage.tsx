@@ -223,7 +223,8 @@ export function SitesPage() {
 
   const startEdit = (site: Site) => {
     // Navigate to Site Edit page instead of inline editing
-    navigate(`/admin/sites/${site.id}/edit`);
+    const lang = i18n.language?.split("-")[0] || "hu";
+    navigate(`/${lang}/admin/sites/${site.id}/edit`);
   };
 
   const startEditInline = (site: Site) => {

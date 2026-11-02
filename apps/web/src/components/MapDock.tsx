@@ -174,14 +174,14 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events", props.lang, siteKey],
-    queryFn: () => getEvents(props.lang, siteKey ?? "", undefined, undefined, 50, 0),
+    queryFn: () => getEvents(props.lang, siteKey ?? "", undefined, undefined, 100, 0),
     staleTime: 5 * 60 * 1000,
     select: upcomingEvents,
     refetchInterval: 5 * 60 * 1000,
   });
 
   const { data: services = [], isLoading: servicesLoading } = useQuery({
-    queryKey: ["places", props.lang, siteKey, "services"],
+    queryKey: ["places", props.lang, siteKey, "service"],
     queryFn: () =>
       getPlaces(props.lang, siteKey ?? "", undefined, undefined, undefined, 200, 0, "service"),
     staleTime: 5 * 60 * 1000,

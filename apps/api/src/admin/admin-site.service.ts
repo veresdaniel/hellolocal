@@ -1050,7 +1050,7 @@ export class AdminSiteService {
 
     if (usersCount > 0) {
       throw new BadRequestException(
-        `Cannot delete site: it is used by ${usersCount} user(s). Deactivate it instead.`
+        `A régiót ${usersCount} felhasználó használja — előbb vedd le róluk, vagy inkább inaktiváld.`
       );
     }
 

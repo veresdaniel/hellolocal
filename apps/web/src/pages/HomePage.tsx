@@ -183,8 +183,8 @@ export function HomePage() {
         selectedCategories.length > 0 ? selectedCategories : undefined,
         selectedPriceBands.length > 0 ? selectedPriceBands : undefined,
         undefined,
-        undefined,
-        undefined,
+        200,
+        0,
         "place",
         townSlug
       ),
@@ -536,29 +536,78 @@ export function HomePage() {
     eventsData,
   ]);
 
-  const placesWithCoordinates =
-    filteredPlaces?.filter(
-      (place) => place.location && place.location.lat != null && place.location.lng != null
-    ) || [];
-  const markers = placesWithCoordinates.map((place) => ({
-    id: place.slug || place.id, // Use slug if available, otherwise use ID
-    lat: place.location!.lat!,
-    lng: place.location!.lng!,
-    name: place.name,
-    category: place.category,
-    mapImage: place.mapImage ?? null,
-    heroImage: place.heroImage ?? null,
-    onClick: place.slug
-      ? () => {
-          const path = buildUrl({
-            lang,
-            siteKey: siteKey,
-            path: placeEntityPath(lang, place.slug),
-          });
-          navigate(path);
-        }
-      : undefined, // Only allow navigation if slug exists
-  }));
+  // Keep map markers aligned with list: places + showOnMap events (with coords)
+  // on the unfiltered map — same merge rules as PlacesListView.
+  const markers = useMemo(() => {
+    const placeMarkers = (filteredPlaces || [])
+      .filter(
+        (place) => place.location && place.location.lat != null && place.location.lng != null
+      )
+      .map((place) => ({
+        id: place.slug || place.id,
+        lat: place.location!.lat!,
+        lng: place.location!.lng!,
+        name: place.name,
+        category: place.category,
+        mapImage: place.mapImage ?? null,
+        heroImage: place.heroImage ?? null,
+        onClick: place.slug
+          ? () => {
+              const path = buildUrl({
+                lang,
+                siteKey,
+                path: placeEntityPath(lang, place.slug),
+              });
+              navigate(path);
+            }
+          : undefined,
+      }));
+
+    if (mapPanel === "services" || selectedCategories.length > 0) {
+      return placeMarkers;
+    }
+
+    const now = Date.now();
+    const eventMarkers =
+      eventsData && Array.isArray(eventsData)
+        ? eventsData
+            .filter((event) => {
+              if (event.showOnMap === false || !event.slug) return false;
+              if (event.location?.lat == null || event.location?.lng == null) return false;
+              const end = event.endDate ? new Date(event.endDate).getTime() : null;
+              const start = new Date(event.startDate).getTime();
+              if (end != null ? end < now : start < now - 24 * 60 * 60 * 1000) return false;
+              return true;
+            })
+            .map((event) => ({
+              id: `event-${event.slug}`,
+              lat: event.location!.lat,
+              lng: event.location!.lng,
+              name: event.name,
+              category: event.category,
+              mapImage: null as string | null,
+              heroImage: event.heroImage ?? null,
+              onClick: () => {
+                const path = buildUrl({
+                  lang,
+                  siteKey,
+                  path: `event/${event.slug}`,
+                });
+                navigate(path);
+              },
+            }))
+        : [];
+
+    return [...placeMarkers, ...eventMarkers];
+  }, [
+    filteredPlaces,
+    eventsData,
+    mapPanel,
+    selectedCategories,
+    lang,
+    siteKey,
+    navigate,
+  ]);
 
   // Initialize map center from settings (only once, or when settings change)
   // Use original placesData (not filtered) for center calculation
