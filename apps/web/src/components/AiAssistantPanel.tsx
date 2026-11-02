@@ -188,7 +188,7 @@ function stripHtml(value: string): string {
 function buildSeoScore(
   values: Props["values"],
   t: (key: string, opts?: Record<string, unknown>) => string
-): string {
+): { score: number; tips: string[] } {
   const title = stripHtml(values.seoTitle || values.name || values.title || "");
   const meta = stripHtml(values.seoDescription || "");
   const excerpt = stripHtml(values.shortDescription || "");
@@ -226,8 +226,7 @@ function buildSeoScore(
   else if (values.seoKeywords !== undefined) tips.push(t("admin.contentDraft.seoTips.keywordsFew"));
   else score += 10; // kinds without keywords don't lose points
 
-  const headline = t("admin.contentDraft.seoTips.score", { score: Math.min(100, score) });
-  return tips.length ? `${headline}\n• ${tips.join("\n• ")}` : headline;
+  return { score: Math.min(100, score), tips };
 }
 
 /**
@@ -268,7 +267,7 @@ export function AiAssistantPanel({
   });
   const [guidelines, setGuidelines] = useState("");
   const [busyId, setBusyId] = useState<AiAssistantActionId | null>(null);
-  const [seoReport, setSeoReport] = useState<string | null>(null);
+  const [seoReport, setSeoReport] = useState<{ score: number; tips: string[] } | null>(null);
 
   useEffect(() => {
     try {
@@ -296,10 +295,7 @@ export function AiAssistantPanel({
 
   const runAction = async (action: AiAssistantAction) => {
     if (action.id === "seoScore") {
-      const report = buildSeoScore(values, t);
-      setSeoReport(report);
-      setOpen(true);
-      showToast(t("admin.contentDraft.seoTips.ready"), "info");
+      setSeoReport(buildSeoScore(values, t));
       return;
     }
 
@@ -550,25 +546,6 @@ export function AiAssistantPanel({
             })}
           </div>
 
-          {seoReport ? (
-            <pre
-              style={{
-                margin: 0,
-                padding: 10,
-                borderRadius: 8,
-                background: "#f8fafc",
-                border: "1px solid var(--admin-border-subtle)",
-                color: "var(--admin-ink, #0f172a)",
-                fontSize: 12,
-                lineHeight: 1.45,
-                whiteSpace: "pre-wrap",
-                fontFamily: "inherit",
-              }}
-            >
-              {seoReport}
-            </pre>
-          ) : null}
-
           {allowed && !gated ? (
             <p style={{ margin: 0, fontSize: 11, color: "var(--admin-muted, #475569)" }}>
               {t("admin.contentDraft.assistantFooter")}
@@ -579,6 +556,98 @@ export function AiAssistantPanel({
     </section>
   );
 
+  const scoreCard = seoReport ? (
+    <aside className="ai-seo-card" role="status" aria-live="polite">
+      <div className="ai-seo-card__head">
+        <strong>{t("admin.contentDraft.seoTips.score", { score: seoReport.score })}</strong>
+        <button type="button" onClick={() => setSeoReport(null)} aria-label={t("common.close")}>
+          ×
+        </button>
+      </div>
+      {seoReport.tips.length > 0 ? (
+        <ul>
+          {seoReport.tips.map((tip) => (
+            <li key={tip}>{tip}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>{t("admin.contentDraft.seoTips.noTips")}</p>
+      )}
+    </aside>
+  ) : null;
+
   if (typeof document === "undefined") return dock;
-  return createPortal(dock, document.body);
+  return createPortal(
+    <>
+      <style>{`
+        .ai-seo-card {
+          position: fixed;
+          z-index: 1200;
+          right: calc(24px + min(360px, calc(100vw - 24px)));
+          bottom: max(16px, env(safe-area-inset-bottom));
+          width: min(320px, calc(100vw - 36px - min(360px, calc(100vw - 24px))));
+          max-height: min(70vh, 420px);
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 14px 16px;
+          overflow: auto;
+          box-sizing: border-box;
+          border: 1px solid var(--admin-border, #cbd5e1);
+          border-radius: 12px;
+          background: var(--admin-surface, #fff);
+          color: var(--admin-ink, #0f172a);
+          box-shadow: 0 12px 40px rgba(15, 23, 42, 0.22);
+          font-family: var(--admin-font, Inter, system-ui, sans-serif);
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .ai-seo-card__head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        .ai-seo-card__head strong {
+          font-size: 16px;
+          line-height: 1.4;
+        }
+        .ai-seo-card__head button {
+          width: 32px;
+          height: 32px;
+          flex: 0 0 auto;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          color: inherit;
+          font-size: 22px;
+          line-height: 1;
+          cursor: pointer;
+        }
+        .ai-seo-card ul {
+          margin: 0;
+          padding-left: 18px;
+        }
+        .ai-seo-card li + li {
+          margin-top: 6px;
+        }
+        .ai-seo-card p {
+          margin: 0;
+        }
+        @media (max-width: 760px) {
+          .ai-seo-card {
+            top: 72px;
+            right: 12px;
+            left: 12px;
+            bottom: auto;
+            width: auto;
+            max-height: min(40vh, 280px);
+          }
+        }
+      `}</style>
+      {scoreCard}
+      {dock}
+    </>,
+    document.body
+  );
 }

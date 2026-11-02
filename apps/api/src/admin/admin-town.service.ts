@@ -9,6 +9,13 @@ import { generateSlug } from "../slug/slug.helper";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 import { SitemapService } from "../seo/sitemap.service";
+import { assertTownNameAvailable } from "../common/unique-place-name";
+
+/** Optional town zoom. Null keeps the region map zoom. */
+function normalizeMapZoom(value: number | null | undefined): number | null {
+  if (value == null || Number.isNaN(value)) return null;
+  return Math.min(20, Math.max(1, value));
+}
 
 export interface CreateTownDto {
   /**
@@ -34,6 +41,8 @@ export interface CreateTownDto {
   }>;
   lat?: number | null;
   lng?: number | null;
+  /** Optional zoom. Null keeps the region map zoom. */
+  zoom?: number | null;
   isActive?: boolean;
   isCrawlable?: boolean;
 }
@@ -57,6 +66,8 @@ export interface UpdateTownDto {
   }>;
   lat?: number | null;
   lng?: number | null;
+  /** Optional zoom. Null keeps the region map zoom. */
+  zoom?: number | null;
   isActive?: boolean;
   isCrawlable?: boolean;
 }
@@ -201,6 +212,14 @@ export class AdminTownService {
       }
     }
 
+    for (const translation of dto.translations) {
+      await assertTownNameAvailable(this.prisma, {
+        name: translation.name,
+        siteId,
+        townId: null,
+      });
+    }
+
     const town = await this.prisma.town.create({
       data: {
         siteId,
@@ -210,6 +229,7 @@ export class AdminTownService {
         isCrawlable: dto.isCrawlable ?? true,
         lat: dto.lat ?? null,
         lng: dto.lng ?? null,
+        zoom: normalizeMapZoom(dto.zoom),
         translations: {
           create: dto.translations.map((t) => ({
             lang: t.lang,
@@ -248,6 +268,7 @@ export class AdminTownService {
       isCrawlable?: boolean;
       lat?: number | null;
       lng?: number | null;
+      zoom?: number | null;
       siteId?: string | null;
       customDomain?: string | null;
       gaMeasurementId?: string | null;
@@ -264,6 +285,9 @@ export class AdminTownService {
     }
     if (dto.lng !== undefined) {
       updateData.lng = dto.lng;
+    }
+    if (dto.zoom !== undefined) {
+      updateData.zoom = normalizeMapZoom(dto.zoom);
     }
     if (dto.gaMeasurementId !== undefined) {
       try {
@@ -310,6 +334,19 @@ export class AdminTownService {
 
     const regionChanged =
       dto.siteId !== undefined && (existing.siteId ?? null) !== (nextSiteId ?? null);
+
+    const namesToCheck = dto.translations?.length
+      ? dto.translations
+      : regionChanged
+        ? existing.translations
+        : [];
+    for (const translation of namesToCheck) {
+      await assertTownNameAvailable(this.prisma, {
+        name: translation.name,
+        siteId: nextSiteId,
+        townId: id,
+      });
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.town.update({

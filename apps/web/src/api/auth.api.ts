@@ -1,5 +1,5 @@
 // src/api/auth.api.ts
-import { apiPost, apiPostPublic } from "./client";
+import { apiGetPublic, apiPost, apiPostPublic } from "./client";
 import type { UserRole } from "../types/enums";
 
 export interface PublicFormShieldFields {
@@ -16,6 +16,8 @@ export interface RegisterDto extends PublicFormShieldFields {
   lastName: string;
   bio?: string;
   siteId?: string;
+  /** "visitor" creates a public account without a plan or a place. */
+  audience?: "visitor";
 }
 
 export interface LoginDto extends PublicFormShieldFields {
@@ -26,6 +28,7 @@ export interface LoginDto extends PublicFormShieldFields {
 
 export interface ForgotPasswordDto extends PublicFormShieldFields {
   email: string;
+  lang?: string;
 }
 
 export interface ResetPasswordDto extends PublicFormShieldFields {
@@ -64,6 +67,11 @@ export interface User {
   aiAssistantEnabled?: boolean;
   // Backward compatibility: backend may still return tenantIds
   tenantIds?: string[];
+}
+
+export function usernameAvailable(username: string) {
+  const params = new URLSearchParams({ username });
+  return apiGetPublic<{ available: boolean }>(`/auth/username-available?${params.toString()}`);
 }
 
 export function register(data: RegisterDto) {

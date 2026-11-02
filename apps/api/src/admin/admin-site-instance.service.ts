@@ -225,6 +225,26 @@ export class AdminSiteInstanceService {
 
     if (dto.mapConfig !== undefined) {
       updateData.mapConfig = dto.mapConfig;
+      const frame = dto.mapConfig as {
+        lat?: number | null;
+        lng?: number | null;
+        zoom?: number | null;
+      };
+      const siteFrame: { lat?: number | null; lng?: number | null; zoom?: number | null } = {};
+      if ("lat" in frame) siteFrame.lat = frame.lat ?? null;
+      if ("lng" in frame) siteFrame.lng = frame.lng ?? null;
+      if ("zoom" in frame) {
+        siteFrame.zoom =
+          frame.zoom == null || Number.isNaN(frame.zoom)
+            ? null
+            : Math.min(20, Math.max(1, frame.zoom));
+      }
+      if (Object.keys(siteFrame).length > 0) {
+        await this.prisma.site.update({
+          where: { id: siteInstance.siteId },
+          data: siteFrame,
+        });
+      }
     }
 
     if (dto.features !== undefined) {

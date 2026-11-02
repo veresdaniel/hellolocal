@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Collection" ADD COLUMN IF NOT EXISTS "isCrawlable" BOOLEAN NOT NULL DEFAULT true;

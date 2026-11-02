@@ -1,12 +1,16 @@
 // src/pages/auth/RegisterPage.tsx
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
 import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
+import { usernameAvailable } from "../../api/auth.api";
+import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
+import { passwordProblem, passwordStrength } from "../../auth/passwordStrength";
+import { safeInternalPath } from "../../utils/safeInternalPath";
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -21,9 +25,13 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
   const { register } = useAuth();
   const shield = usePublicFormShield("register");
   const navigate = useNavigate();
+  const location = useLocation();
+  const visitor = isVisitorAuthPath(location.pathname);
   const { t, i18n } = useTranslation();
   const { lang: langParam } = useParams<{ lang?: string }>();
 
@@ -47,7 +55,7 @@ export function RegisterPage() {
 
   // Auth pages should have noindex, nofollow robots meta tag
   useSeo({
-    title: t("admin.register") || "Register",
+    title: visitor ? t("public.visitorAuth.register") : t("admin.register") || "Register",
     description: "",
     robots: "noindex, nofollow",
   });
@@ -63,11 +71,18 @@ export function RegisterPage() {
 
   const handlePasswordChange = (value: string) => {
     setFormData({ ...formData, password: value });
-    if (value && value.length < 6) {
-      setPasswordError(t("admin.passwordTooShort"));
-    } else {
-      setPasswordError(null);
+    if (!visitor) {
+      setPasswordError(value && value.length < 6 ? t("admin.passwordTooShort") : null);
+      return;
     }
+    const problem = passwordProblem(value);
+    setPasswordError(
+      !value || !problem
+        ? null
+        : problem === "short"
+          ? t("public.visitorAuth.passwordShort")
+          : t("public.visitorAuth.passwordWeak")
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,7 +94,27 @@ export function RegisterPage() {
       setEmailError(t("admin.invalidEmail"));
       return;
     }
-    if (formData.password.length < 6) {
+    const username = formData.username.trim();
+    if (visitor && !/^[a-zA-Z0-9._-]{3,50}$/.test(username)) {
+      setUsernameError(t("public.visitorAuth.usernameInvalid"));
+      return;
+    }
+    if (!visitor && username.length < 3) {
+      setUsernameError(t("public.visitorAuth.usernameInvalid"));
+      return;
+    }
+
+    if (visitor) {
+      const problem = passwordProblem(formData.password);
+      if (problem) {
+        setPasswordError(
+          problem === "short"
+            ? t("public.visitorAuth.passwordShort")
+            : t("public.visitorAuth.passwordWeak")
+        );
+        return;
+      }
+    } else if (formData.password.length < 6) {
       setPasswordError(t("admin.passwordTooShort"));
       return;
     }
@@ -87,15 +122,27 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
+      if (visitor) {
+        const taken = await usernameAvailable(username);
+        if (!taken.available) {
+          setUsernameError(t("public.visitorAuth.usernameTaken"));
+          return;
+        }
+      }
       await register({
-        username: formData.username,
+        username,
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        bio: formData.bio || undefined,
+        bio: visitor ? undefined : formData.bio || undefined,
+        audience: visitor ? "visitor" : undefined,
         ...(await shield.payload()),
       });
+      if (visitor) {
+        setRegistered(true);
+        return;
+      }
       navigate(`/${lang}/admin`);
     } catch (err) {
       setError(publicFormErrorMessage(t, err, t("admin.registrationFailed")));
@@ -105,8 +152,64 @@ export function RegisterPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (e.target.name === "username") setUsernameError(null);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleUsernameBlur = async (value: string) => {
+    if (!visitor) return;
+    const username = value.trim();
+    if (!username) return;
+    if (!/^[a-zA-Z0-9._-]{3,50}$/.test(username)) {
+      setUsernameError(t("public.visitorAuth.usernameInvalid"));
+      return;
+    }
+    try {
+      const taken = await usernameAvailable(username);
+      setUsernameError(taken.available ? null : t("public.visitorAuth.usernameTaken"));
+    } catch {
+      setUsernameError(null);
+    }
+  };
+
+  if (registered) {
+    const next = safeInternalPath(sessionStorage.getItem("authReturnUrl"), `/${lang}`);
+    return (
+      <div className="admin-login">
+        <div
+          style={{
+            maxWidth: 500,
+            width: "100%",
+            background: "white",
+            borderRadius: 16,
+            padding: "clamp(24px, 5vw, 40px)",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+            textAlign: "center",
+          }}
+        >
+          <h1 style={{ marginBottom: 12, color: "#1b1730", fontSize: 28 }}>
+            {t("public.visitorAuth.successTitle")}
+          </h1>
+          <p style={{ color: "#665d78", marginBottom: 24 }}>{t("public.visitorAuth.successBody")}</p>
+          <button
+            type="button"
+            onClick={() => navigate(next)}
+            style={{
+              padding: "12px 24px",
+              background: "#1b1730",
+              color: "white",
+              border: "none",
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {t("public.visitorAuth.continue")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -133,7 +236,7 @@ export function RegisterPage() {
               "var(--admin-font-display)",
           }}
         >
-          {t("admin.register")}
+          {visitor ? t("public.visitorAuth.register") : t("admin.register")}
         </h1>
         <p
           style={{
@@ -146,7 +249,7 @@ export function RegisterPage() {
             fontWeight: 400,
           }}
         >
-          {t("admin.createAccount")}
+          {visitor ? t("public.visitorAuth.registerLead") : t("admin.createAccount")}
         </p>
 
         {error && (
@@ -178,7 +281,7 @@ export function RegisterPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: "#1b1730",
+                color: usernameError ? "#dc2626" : "#1b1730",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -192,13 +295,15 @@ export function RegisterPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
+              autoComplete="username"
               required
               minLength={3}
+              maxLength={50}
               style={{
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
-                border: "2px solid #e0e7ff",
+                border: usernameError ? "2px solid #dc2626" : "2px solid #e0e7ff",
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -211,10 +316,14 @@ export function RegisterPage() {
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e0e7ff";
+                e.currentTarget.style.borderColor = usernameError ? "#dc2626" : "#e0e7ff";
                 e.currentTarget.style.boxShadow = "none";
+                void handleUsernameBlur(e.currentTarget.value);
               }}
             />
+            {usernameError && (
+              <div style={{ color: "#dc2626", fontSize: 12, marginTop: 4 }}>{usernameError}</div>
+            )}
           </div>
 
           <div>
@@ -296,7 +405,7 @@ export function RegisterPage() {
               value={formData.password}
               onChange={(e) => handlePasswordChange(e.target.value)}
               required
-              minLength={6}
+              minLength={visitor ? 8 : 6}
               autoComplete="new-password"
               style={{
                 width: "100%",
@@ -336,6 +445,16 @@ export function RegisterPage() {
                 }}
               >
                 {passwordError}
+              </p>
+            )}
+            {visitor && formData.password && (
+              <p style={{ marginTop: 6, fontSize: 12, color: "#665d78" }}>
+                {t("public.visitorAuth.strength")}:{" "}
+                {passwordStrength(formData.password) === "strong"
+                  ? t("public.visitorAuth.strengthStrong")
+                  : passwordStrength(formData.password) === "ok"
+                    ? t("public.visitorAuth.strengthOk")
+                    : t("public.visitorAuth.strengthWeak")}
               </p>
             )}
           </div>
@@ -422,7 +541,7 @@ export function RegisterPage() {
             />
           </div>
 
-          <div>
+          {!visitor && <div>
             <label
               style={{
                 display: "block",
@@ -462,7 +581,7 @@ export function RegisterPage() {
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
-          </div>
+          </div>}
 
           <button
             type="submit"
@@ -597,7 +716,7 @@ export function RegisterPage() {
         >
           {t("admin.alreadyHaveAccount")}{" "}
           <Link
-            to={`/${lang}/admin/login`}
+            to={visitor ? visitorAuthPath(lang, "login") : `/${lang}/admin/login`}
             style={{
               color: "#1b1730",
               fontWeight: 500,
@@ -612,7 +731,7 @@ export function RegisterPage() {
               e.currentTarget.style.textDecoration = "none";
             }}
           >
-            {t("admin.login")}
+            {visitor ? t("public.visitorAuth.login") : t("admin.login")}
           </Link>
         </div>
       </div>

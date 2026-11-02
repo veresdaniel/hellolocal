@@ -49,9 +49,14 @@ export class EmailService {
   /**
    * Sends a password reset email with reset link.
    */
-  async sendPasswordResetEmail(to: string, resetToken: string, username: string): Promise<void> {
+  async sendPasswordResetEmail(
+    to: string,
+    resetToken: string,
+    username: string,
+    lang = "hu"
+  ): Promise<void> {
     const subject = "Password Reset Request";
-    const resetUrl = `${this.baseUrl}/reset-password?token=${resetToken}`;
+    const resetUrl = `${this.baseUrl}/${lang}/reset-password?token=${resetToken}`;
     const html = `
       <!DOCTYPE html>
       <html>

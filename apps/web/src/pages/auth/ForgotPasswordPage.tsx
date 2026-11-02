@@ -1,15 +1,18 @@
 // src/pages/auth/ForgotPasswordPage.tsx
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import { forgotPassword } from "../../api/auth.api";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
+import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
 
 
 export function ForgotPasswordPage() {
   const { lang: langParam } = useParams<{ lang?: string }>();
+  const location = useLocation();
+  const visitor = isVisitorAuthPath(location.pathname);
   const { t, i18n } = useTranslation();
 
   // Get language from URL or use current i18n language or default
@@ -67,7 +70,7 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await forgotPassword({ email, ...(await shield.payload()) });
+      const response = await forgotPassword({ email, lang, ...(await shield.payload()) });
       setSuccess(response.message);
       // In development, show the reset token if provided
       if (response.resetToken) {
@@ -267,7 +270,7 @@ export function ForgotPasswordPage() {
 
         <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center" }}>
           <Link
-            to={`/${lang}/admin/login`}
+            to={visitor ? visitorAuthPath(lang, "login") : `/${lang}/admin/login`}
             style={{
               color: "#1b1730",
               fontWeight: 500,

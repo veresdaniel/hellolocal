@@ -36,7 +36,7 @@ export function RegionTownsIndex({
 
   return (
     <div className="story region-towns">
-      <FloatingHeader landingMode />
+      <FloatingHeader landingMode visitorAuth />
       <div className="story__sky" aria-hidden="true" />
       <div className="story__wrap">
         {landing?.hero ? (

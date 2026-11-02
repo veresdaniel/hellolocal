@@ -109,6 +109,9 @@ export class PlatformSettingsService {
       id: true,
       isCrawlable: true,
       languages: true,
+      lat: true,
+      lng: true,
+      zoom: true,
       brand: {
         select: {
           name: true,
@@ -289,6 +292,15 @@ export class PlatformSettingsService {
     const instanceMap = (instance?.mapConfig ?? {}) as any;
 
     const mergedMap = deepMerge(deepMerge(appDefaults.map, brandMapDefaults), instanceMap);
+    if (site.lat != null && site.lng != null) {
+      mergedMap.center = { lat: site.lat, lng: site.lng };
+      const frame = mergedMap as { lat?: number; lng?: number };
+      frame.lat = site.lat;
+      frame.lng = site.lng;
+    }
+    if (site.zoom != null) {
+      mergedMap.zoom = site.zoom;
+    }
     const mergedFeatures = deepMerge(appDefaults.features, instanceFeatures) as any;
 
     // Placeholders come from Brand only (not from SiteInstance)
@@ -406,46 +418,31 @@ export class PlatformSettingsService {
    * Uses SiteInstance mapConfig (falls back to Brand mapDefaults if no SiteInstance config)
    */
   async getMapSettings(siteId: string) {
-    // Get default SiteInstance (or first one if no default)
-    const siteInstance = await this.prisma.siteInstance.findFirst({
-      where: {
-        siteId,
-        OR: [{ isDefault: true }, {}],
-      },
-      orderBy: { isDefault: "desc" },
-    });
-
-    if (siteInstance?.mapConfig) {
-      const config = siteInstance.mapConfig as any;
-      return {
-        townId: config.townId || null,
-        lat: config.lat || null,
-        lng: config.lng || null,
-        zoom: config.zoom || null,
-      };
-    }
-
-    // Fallback to Brand mapDefaults
     const site = await this.prisma.site.findUnique({
       where: { id: siteId },
-      include: { brand: true },
+      select: { lat: true, lng: true, zoom: true, brand: { select: { mapDefaults: true } } },
     });
-
-    if (site?.brand?.mapDefaults) {
-      const defaults = site.brand.mapDefaults as any;
-      return {
-        townId: defaults.townId || null,
-        lat: defaults.lat || null,
-        lng: defaults.lng || null,
-        zoom: defaults.zoom || null,
-      };
-    }
-
+    const siteInstance = await this.prisma.siteInstance.findFirst({
+      where: { siteId },
+      orderBy: { isDefault: "desc" },
+    });
+    const config = (siteInstance?.mapConfig ?? {}) as {
+      townId?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      zoom?: number | null;
+    };
+    const defaults = (site?.brand?.mapDefaults ?? {}) as {
+      townId?: string | null;
+      lat?: number | null;
+      lng?: number | null;
+      zoom?: number | null;
+    };
     return {
-      townId: null,
-      lat: null,
-      lng: null,
-      zoom: null,
+      townId: config.townId || defaults.townId || null,
+      lat: site?.lat ?? config.lat ?? defaults.lat ?? null,
+      lng: site?.lng ?? config.lng ?? defaults.lng ?? null,
+      zoom: site?.zoom ?? config.zoom ?? defaults.zoom ?? null,
     };
   }
 
@@ -512,10 +509,27 @@ export class PlatformSettingsService {
       newConfig.zoom = settings.zoom;
     }
 
-    await this.prisma.siteInstance.update({
-      where: { id: siteInstance.id },
-      data: { mapConfig: newConfig },
-    });
+    await this.prisma.$transaction([
+      this.prisma.site.update({
+        where: { id: siteId },
+        data: {
+          ...(settings.lat !== undefined ? { lat: settings.lat } : {}),
+          ...(settings.lng !== undefined ? { lng: settings.lng } : {}),
+          ...(settings.zoom !== undefined
+            ? {
+                zoom:
+                  settings.zoom == null || Number.isNaN(settings.zoom)
+                    ? null
+                    : Math.min(20, Math.max(1, settings.zoom)),
+              }
+            : {}),
+        },
+      }),
+      this.prisma.siteInstance.update({
+        where: { id: siteInstance.id },
+        data: { mapConfig: newConfig },
+      }),
+    ]);
 
     return this.getMapSettings(siteId);
   }

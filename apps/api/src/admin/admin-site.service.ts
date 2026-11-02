@@ -14,6 +14,7 @@ import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { sanitizeSiteTheme } from "../common/public-theme-colors";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { assertRegionNameAvailable } from "../common/unique-place-name";
 
 export interface CreateSiteDto {
   slug: string;
@@ -522,6 +523,12 @@ export class AdminSiteService {
       }
       countryId = fallback.id;
     }
+    for (const translation of dto.translations) {
+      await assertRegionNameAvailable(this.prisma, {
+        name: translation.name,
+        countryId,
+      });
+    }
     const createPayload = {
       slug: normalizedSlug, // Use normalized slug (accent-free)
       brandId: dto.brandId,
@@ -619,14 +626,14 @@ export class AdminSiteService {
     if (createdSiteKeys.length === 0) {
       console.warn(`⚠️  WARNING: No SiteKeys were created for site ${site.id} (${normalizedSlug})`);
       console.warn(
-        `   This will cause "Site not found" errors. Please run: pnpm db:ensure-site-keys`
+        `   This will cause "Site not found" errors. Save the region again so its public keys are created.`
       );
     } else if (createdSiteKeys.length < languages.length) {
       console.warn(
         `⚠️  WARNING: Only ${createdSiteKeys.length}/${languages.length} SiteKeys were created for site ${site.id}`
       );
       console.warn(`   Created: ${createdSiteKeys.join(", ")}`);
-      console.warn(`   Please run: pnpm db:ensure-site-keys to fix missing SiteKeys`);
+      console.warn(`   Save the region again to create the missing public keys.`);
     } else {
     }
 
@@ -898,6 +905,11 @@ export class AdminSiteService {
           throw new BadRequestException(`Érvénytelen nyelvkód: "${translation.lang}".`);
         }
         translation.lang = code;
+        await assertRegionNameAvailable(this.prisma, {
+          name: translation.name,
+          countryId: site.countryId,
+          siteId: id,
+        });
         // Check if translation already exists
         const existingTranslation = await this.prisma.siteTranslation.findUnique({
           where: {

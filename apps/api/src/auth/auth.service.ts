@@ -14,6 +14,7 @@ import { TwoFactorService } from "../two-factor/two-factor.service";
 import { AdminEventLogService } from "../event-log/admin-eventlog.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { RegisterDto } from "./dto/register.dto";
+import { assertPasswordStrength } from "./password-strength";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
@@ -125,6 +126,19 @@ export class AuthService {
     }
   }
 
+  /** True when the username is free and uses letters, numbers, dot, hyphen, or underscore. */
+  async usernameAvailable(raw: string): Promise<{ available: boolean }> {
+    const username = raw.trim();
+    if (!/^[a-zA-Z0-9._-]{3,50}$/.test(username)) {
+      return { available: false };
+    }
+    const existing = await this.prisma.user.findFirst({
+      where: { username: { equals: username, mode: "insensitive" } },
+      select: { id: true },
+    });
+    return { available: !existing };
+  }
+
   /**
    * Registers a new user.
    * If siteId is not provided, assigns user to the site from the request context
@@ -136,15 +150,27 @@ export class AuthService {
     requestSiteId?: string,
     referer?: string
   ): Promise<AuthResponse> {
-    // Check if user already exists
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: dto.email }, { username: dto.username }],
-      },
+    dto.username = dto.username.trim();
+    if (dto.audience === "visitor" && !/^[a-zA-Z0-9._-]{3,50}$/.test(dto.username)) {
+      throw new BadRequestException("username_invalid");
+    }
+    const nameTaken = await this.prisma.user.findFirst({
+      where: { username: { equals: dto.username, mode: "insensitive" } },
+      select: { id: true },
     });
-
-    if (existingUser) {
+    if (nameTaken) {
+      throw new BadRequestException("username_taken");
+    }
+    const emailTaken = await this.prisma.user.findFirst({
+      where: { email: dto.email },
+      select: { id: true },
+    });
+    if (emailTaken) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ALREADY_EXISTS);
+    }
+
+    if (dto.audience === "visitor") {
+      return this.registerVisitor(dto);
     }
 
     if (dto.plan === "free") {
@@ -304,6 +330,51 @@ export class AuthService {
         siteIds,
         activeSiteId: user.activeSiteId,
         aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
+      },
+    };
+  }
+
+  /**
+   * Visitor account: no plan, no region membership, no place request.
+   * The person can sign in on the public site and rate a place.
+   */
+  private async registerVisitor(dto: RegisterDto): Promise<AuthResponse> {
+    assertPasswordStrength(dto.password);
+    const passwordHash = await this.hashPassword(dto.password);
+    const user = await this.prisma.user.create({
+      data: {
+        username: dto.username,
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        role: UserRole.viewer,
+        activeSiteId: null,
+      },
+    });
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      siteIds: [],
+      activeSiteId: null,
+    };
+    const { accessToken, refreshToken } = await this.generateTokens(payload);
+    this.emailService.sendWelcomeEmail(user.email, user.username, user.firstName).catch(() => undefined);
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        siteIds: [],
+        activeSiteId: null,
+        aiAssistantEnabled: false,
       },
     };
   }
@@ -572,7 +643,8 @@ export class AuthService {
     });
 
     // Send password reset email (non-blocking)
-    this.emailService.sendPasswordResetEmail(user.email, resetToken, user.username).catch((err) => {
+    const lang = dto.lang === "en" || dto.lang === "de" || dto.lang === "hu" ? dto.lang : "hu";
+    this.emailService.sendPasswordResetEmail(user.email, resetToken, user.username, lang).catch((err) => {
       console.error("Failed to send password reset email:", err);
       // Don't fail if email fails, but log error
     });
@@ -600,6 +672,7 @@ export class AuthService {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_OR_EXPIRED_RESET_TOKEN);
     }
 
+    assertPasswordStrength(dto.newPassword);
     const passwordHash = await this.hashPassword(dto.newPassword);
 
     await this.prisma.user.update({
@@ -712,7 +785,12 @@ export class AuthService {
       return null;
     }
 
-    const siteIds = user.sites.map((s) => s.siteId);
+    const membershipIds = user.sites.map((s) => s.siteId);
+    // Superadmin is not a member of each region. Every current region is in scope.
+    const siteIds =
+      user.role === UserRole.superadmin
+        ? (await this.prisma.site.findMany({ select: { id: true } })).map((site) => site.id)
+        : membershipIds;
 
     return {
       id: user.id,

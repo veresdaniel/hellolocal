@@ -160,7 +160,7 @@ export function CollectionDetailPage() {
   if (isLoading) {
     return (
       <>
-        <FloatingHeader hideMapViewButton={true} />
+        <FloatingHeader visitorAuth hideMapViewButton={true} />
         <PublicPageSkeleton withHero label={t("common.loading")} />
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 48px" }}>
           <PublicCardSkeletonGrid count={6} variant="sites" label={t("common.loading")} />
@@ -189,7 +189,7 @@ export function CollectionDetailPage() {
 
   return (
     <>
-      <FloatingHeader hideMapViewButton={true} />
+      <FloatingHeader visitorAuth hideMapViewButton={true} />
       <div
         style={{
           maxWidth: 1200,

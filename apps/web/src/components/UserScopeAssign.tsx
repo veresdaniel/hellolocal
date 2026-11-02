@@ -41,7 +41,10 @@ export function UserScopeAssign({ userId, sites }: { userId: string; sites: Site
       return;
     }
     void getPlaces(siteId, 1, 200)
-      .then((rows) => setPlaces(Array.isArray(rows) ? rows : rows?.places || []))
+      .then((rows) => {
+        setPlaces(Array.isArray(rows) ? rows : rows?.places || []);
+        setError("");
+      })
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [siteId]);
 
@@ -113,14 +116,20 @@ export function UserScopeAssign({ userId, sites }: { userId: string; sites: Site
           <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
             {t("admin.roles.placeAdmin")}
           </label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <select value={siteId} onChange={(event) => setSiteId(event.target.value)} style={{ minHeight: 40 }}>
-              {sites.map((site) => (
-                <option key={site.id} value={site.id}>
-                  {site.slug}
-                </option>
-              ))}
-            </select>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {sites.length === 1 ? (
+              <span style={{ fontWeight: 600 }}>
+                {sites[0].translations?.find((row) => row.lang === "hu")?.name || sites[0].slug}
+              </span>
+            ) : (
+              <select value={siteId} onChange={(event) => setSiteId(event.target.value)} style={{ minHeight: 40 }}>
+                {sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.translations?.find((row) => row.lang === "hu")?.name || site.slug}
+                  </option>
+                ))}
+              </select>
+            )}
             <select value={placeId} onChange={(event) => setPlaceId(event.target.value)} style={{ flex: 1, minHeight: 40 }}>
               <option value="">{t("admin.selectPlace")}</option>
               {places.map((place) => (

@@ -187,8 +187,10 @@ model PlaceSignup {
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   country Country  @relation(fields: [countryId], references: [id], onDelete: Restrict)
   town    Town?    @relation(fields: [townId], references: [id], onDelete: SetNull)
+  place   Place?   @relation(fields: [placeId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([placeId])
   @@index([countryId])
   @@index([status])
 }
@@ -224,6 +226,12 @@ model Site {
   // More specific Town/Place/Event IDs override when set. Platform ID is separate (no fallback).
   // Platform-wide ID lives in AppSetting key platformGaMeasurementId.
   gaMeasurementId String?
+
+  // Region map frame. Null zoom lets the public map fit the towns.
+  // A town zoom overrides this when the map opens on that town.
+  lat  Float?
+  lng  Float?
+  zoom Float?
 
   // Optional public theme colors (JSON). Null = inherit Brand.theme / code defaults.
   theme Json?
@@ -360,9 +368,10 @@ model Town {
   // GA4 measurement ID for this town's public pages (G-…). Null = inherit Site / disabled.
   gaMeasurementId String?
 
-  // Map coordinates
+  // Map coordinates. zoom is optional and overrides the region map zoom.
   lat Float?
   lng Float?
+  zoom Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -566,6 +575,7 @@ model Place {
   productClickDaily    ProductClickDaily[]
   floorplans           PlaceFloorplan[]
   featureSubscriptions FeatureSubscription[]
+  signups              PlaceSignup[]
 
   @@index([siteId, categoryId])
   @@index([parentPlaceId])
@@ -833,6 +843,8 @@ model User {
   townMemberships TownMembership[]
 
   placeSignups PlaceSignup[]
+
+  subscriptionChanges SubscriptionHistory[] @relation("SubscriptionChangedBy")
 
   // Events created by this user
   createdEvents Event[] @relation("EventCreator")
@@ -1252,7 +1264,8 @@ model SubscriptionHistory {
   amountCents    Int? // fizetett/tervezett összeg
   currency       String? // "HUF"
   note           String? // megjegyzés (pl. "Upgrade from BASIC to PRO")
-  changedBy      String? // user ID who made the change (if admin)
+  changedBy     String?
+  changedByUser User? @relation("SubscriptionChangedBy", fields: [changedBy], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -1260,6 +1273,7 @@ model SubscriptionHistory {
   @@index([changeType])
   @@index([createdAt])
   @@index([paymentDueDate])
+  @@index([changedBy])
 }
 
 // Gallery: image galleries under a Place (optional event scope within that place)
@@ -1311,6 +1325,7 @@ model AnalyticsDaily {
   place Place? @relation(fields: [placeId], references: [id], onDelete: SetNull)
 
   @@unique([day, siteId, placeId])
+  // A second unique index (migration) treats a null placeId as one row per site and day.
   @@index([siteId, day])
   @@index([placeId, day])
 }

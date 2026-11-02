@@ -123,6 +123,8 @@ export interface PublicTown {
   heroImage: string | null;
   lat: number | null;
   lng: number | null;
+  /** Set when this town overrides the region zoom. */
+  zoom?: number | null;
   /** Resolved GA4 ID for this town (Town > Site). */
   gaMeasurementId?: string | null;
   placeCount: number;

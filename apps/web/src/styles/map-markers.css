@@ -222,6 +222,9 @@
   max-width: min(310px, 86vw);
   min-width: min(240px, 86vw);
   text-align: center;
+  /* The photo clips itself. The card must stay visible so the hover bridge
+     below it can be crossed on the way to Navigáció. */
+  overflow: visible;
 }
 
 .hl-map-marker-card--selected {
@@ -235,6 +238,10 @@
   overflow: hidden;
   background: rgba(27, 23, 48, 0.06);
   flex-shrink: 0;
+}
+
+.hl-map-marker-card--enhanced .hl-map-marker-card__media {
+  border-radius: 17px 17px 0 0;
 }
 
 .hl-map-marker-card__media img,
@@ -325,7 +332,8 @@
   left: 0;
   right: 0;
   top: 100%;
-  height: 10px;
+  height: 22px;
+  pointer-events: auto;
 }
 
 @media (max-width: 640px) {

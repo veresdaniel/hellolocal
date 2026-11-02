@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  Query,
   Req,
   Res,
   HttpException,
@@ -41,6 +42,12 @@ export class AuthController {
    * (determined by domain or URL-based site resolution).
    * Falls back to referer-based resolution if request context is not available.
    */
+  @Get("/username-available")
+  @Throttle({ strict: { limit: 30, ttl: 60000 } })
+  async usernameAvailable(@Query("username") username = "") {
+    return this.authService.usernameAvailable(username);
+  }
+
   @Post("/register")
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async register(@Body() dto: RegisterDto, @Req() req: RequestWithSite) {

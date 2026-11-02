@@ -281,6 +281,10 @@ const createPublicRoutes = () => {
               { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
             ],
           },
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
+          { path: "forgot-password", element: <ForgotPasswordPage /> },
+          { path: "reset-password", element: <ResetPasswordPage /> },
           {
             path: "collections/:slug",
             element: <SiteLayout />,
@@ -302,7 +306,13 @@ const createPublicRoutes = () => {
         path: `/:lang`,
         element: <SiteLayout />,
         errorElement: <ErrorPage />,
-        children: baseChildren,
+        children: [
+          { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
+          { path: "forgot-password", element: <ForgotPasswordPage /> },
+          { path: "reset-password", element: <ResetPasswordPage /> },
+          ...baseChildren,
+        ],
       },
     ];
   }

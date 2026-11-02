@@ -18,6 +18,7 @@ import { useViewStore } from "../stores/useViewStore";
 import { openSiteExplore } from "../utils/siteLanding";
 import { BREAKPOINTS } from "../utils/viewport";
 import { USER_KEY } from "../constants/authStorage";
+import { rememberAuthReturn } from "../auth/visitorAuth";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
@@ -25,6 +26,7 @@ interface FloatingHeaderProps {
   showEditButton?: boolean; // Whether to show edit button (based on permissions)
   hideMapViewButton?: boolean; // Whether to hide the map view button
   landingMode?: boolean; // Opening page: keep the map action available
+  visitorAuth?: boolean; // Region, place, event, curator list: public sign-in
 }
 
 export function FloatingHeader({
@@ -33,6 +35,7 @@ export function FloatingHeader({
   showEditButton = false,
   hideMapViewButton = false,
   landingMode = false,
+  visitorAuth = false,
 }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
   const { lang, siteKey, siteKeyParam } = useRouteCtx();
@@ -198,7 +201,8 @@ export function FloatingHeader({
   // FloatingHeader only appears on non-map view pages, so we should always show buttons here
   // The onMapViewClick prop indicates we're on a list view page (definitely show buttons)
   // If onMapViewClick is undefined, we're still on a non-map page (like detail pages), so show buttons
-  const showAuthButtons = true; // Always show on FloatingHeader pages (all non-map views)
+  const showAuthButtons = true; // Logged-in chrome on content pages
+  const showVisitorLinks = visitorAuth && !isOverview && !user && !isLoading;
 
   const handleActivateFree = async () => {
     try {
@@ -407,26 +411,34 @@ export function FloatingHeader({
               alignSelf: "center",
             }}
           >
-            {(isOverview || (!user && !isLoading && showAuthButtons)) && (
+            {(isOverview || showVisitorLinks) && (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {isOverview && (
                   <button type="button" onClick={scrollToDemo} style={menuButton(true, false)}>
                     {t("public.overview.demo.submit")}
                   </button>
                 )}
-                {!isOverview && !user && !isLoading && showAuthButtons && (
+                {showVisitorLinks && (
                   <>
-                    <Link to={buildUrl({ lang, path: "admin/login" })} style={menuButton(false, false)}>
-                      {t("admin.login")}
+                    <Link
+                      to={buildUrl({ lang, path: "login" })}
+                      onClick={rememberAuthReturn}
+                      style={menuButton(false, false)}
+                    >
+                      {t("public.visitorAuth.login")}
                     </Link>
-                    <Link to={buildUrl({ lang, path: "admin/register" })} style={menuButton(true, false)}>
-                      {t("admin.register")}
+                    <Link
+                      to={buildUrl({ lang, path: "register" })}
+                      onClick={rememberAuthReturn}
+                      style={menuButton(true, false)}
+                    >
+                      {t("public.visitorAuth.register")}
                     </Link>
                   </>
                 )}
               </div>
             )}
-            {!isOverview && !user && !isLoading && showAuthButtons && (
+            {showVisitorLinks && (
               <div
                 style={{
                   width: 1,
@@ -485,7 +497,7 @@ export function FloatingHeader({
                   </>
                 )}
                 {/* Visitor - Switch to free plan */}
-                {isVisitor && (
+                {isVisitor && !visitorAuth && (
                   <>
                     <button
                       onClick={() => setShowActivationModal(true)}
@@ -936,22 +948,28 @@ export function FloatingHeader({
             {!isOverview && (
             <>
             {/* Not logged in: Sign in and Sign up buttons - Mobile */}
-            {!user && !isLoading && showAuthButtons && (
+            {showVisitorLinks && (
               <>
                 <div style={{ display: "flex", gap: 8, width: "100%" }}>
                   <Link
-                    to={buildUrl({ lang, path: "admin/login" })}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    to={buildUrl({ lang, path: "login" })}
+                    onClick={() => {
+                      rememberAuthReturn();
+                      setIsMobileMenuOpen(false);
+                    }}
                     style={menuButton(false, true)}
                   >
-                    {t("admin.login")}
+                    {t("public.visitorAuth.login")}
                   </Link>
                   <Link
-                    to={buildUrl({ lang, path: "admin/register" })}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    to={buildUrl({ lang, path: "register" })}
+                    onClick={() => {
+                      rememberAuthReturn();
+                      setIsMobileMenuOpen(false);
+                    }}
                     style={menuButton(true, true)}
                   >
-                    {t("admin.register")}
+                    {t("public.visitorAuth.register")}
                   </Link>
                 </div>
               </>
@@ -961,7 +979,7 @@ export function FloatingHeader({
             {user && showAuthButtons && (
               <>
                 {/* Visitor - Switch to free plan - Mobile */}
-                {isVisitor && (
+                {isVisitor && !visitorAuth && (
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);

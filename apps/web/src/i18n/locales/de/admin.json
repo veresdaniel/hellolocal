@@ -1293,7 +1293,8 @@
       "metaLength": "Meta-Beschreibung hat {{count}} Zeichen (ideal: 70–160).",
       "excerptShort": "Kurzbeschreibung ist zu kurz für Listen.",
       "bodyShort": "Lange Beschreibung wirkt noch kurz.",
-      "keywordsFew": "Mindestens 3 SEO-Keywords angeben."
+      "keywordsFew": "Mindestens 3 SEO-Keywords angeben.",
+      "noTips": "Nichts zu ändern."
     },
     "settingsTitle": "KI-Textentwurf",
     "settingsHelp": "Optionaler Free-Tier-KI-Entwurf für Admin-Inhaltsfelder (Standard: Google Gemini Free Tier; auch Groq oder OpenRouter free). Der API-Schlüssel des gewählten Anbieters wird nur serverseitig gespeichert und nie wieder angezeigt.",
@@ -1316,11 +1317,27 @@
     "scopeTitle": "Gemeinde- und Ort-Admin",
     "scopeHint": "Die Regionsrolle bleibt. Ein Gemeinde-Admin legt Orte an der Gemeinde an. Ein Ort-Admin setzt die Gemeinde im Ort-Formular."
   },
+  "access": {
+    "title": "Zugriffe",
+    "hint": "Benutzer einer Region, einer Gemeinde oder einem Ort zuordnen.",
+    "user": "Benutzer",
+    "region": "Region",
+    "town": "Gemeinde",
+    "place": "Ort",
+    "target": "Ziel",
+    "scope": "Ebene",
+    "add": "Hinzufügen",
+    "empty": "Noch keine Zuordnung.",
+    "removeConfirm": "Diese Zuordnung wirklich entfernen?",
+    "townEditor": "Gemeinde-Redakteur"
+  },
   "townsPage": {
     "subtitle": "Alle Gemeinden. Die Region kann leer bleiben und später gesetzt werden.",
     "scopedSubtitle": "Deine Gemeinde. Hier kannst du Orte bis zum Abo-Limit anlegen.",
     "addPlace": "Neuer Ort für diese Gemeinde",
-    "needsRegion": "Dieser Gemeinde muss zuerst eine Region zugeordnet werden, danach kann ein Ort angelegt werden."
+    "needsRegion": "Dieser Gemeinde muss zuerst eine Region zugeordnet werden, danach kann ein Ort angelegt werden.",
+    "zoom": "Zoom überschreiben",
+    "zoomHint": "Leer lassen behält den Zoom der Region. Ein Wert gilt nur für diese Gemeinde."
   },
   "townMembers": {
     "title": "Gemeinde-Benutzer",

@@ -1333,7 +1333,8 @@
       "metaLength": "A meta leírás {{count}} karakter (ideális: 70–160).",
       "excerptShort": "A rövid leírás túl rövid a listákhoz.",
       "bodyShort": "A hosszú leírás még rövidnek tűnik.",
-      "keywordsFew": "Adj meg legalább 3 SEO kulcsszót."
+      "keywordsFew": "Adj meg legalább 3 SEO kulcsszót.",
+      "noTips": "Nincs javítanivaló."
     },
     "settingsTitle": "AI szövegvázlat",
     "settingsHelp": "Opcionális free-tier AI szövegvázlat az admin tartalmi mezőkhöz (alapértelmezett: Google Gemini free tier; Groq vagy OpenRouter free is választható). A kiválasztott szolgáltató API kulcsa csak a szerveren tárolódik, soha nem jelenik meg újra.",
@@ -1362,11 +1363,27 @@
     "scopeTitle": "Település és hely admin",
     "scopeHint": "A régiószerep megmarad. A településadmin a saját településén vesz fel helyet. A helyadmin a hely űrlapján állítja a települést."
   },
+  "access": {
+    "title": "Hozzáférések",
+    "hint": "Felhasználó hozzárendelése régióhoz, településhez vagy helyhez.",
+    "user": "Felhasználó",
+    "region": "Régió",
+    "town": "Település",
+    "place": "Hely",
+    "target": "Cél",
+    "scope": "Szint",
+    "add": "Hozzáadás",
+    "empty": "Még nincs hozzárendelés.",
+    "removeConfirm": "Biztosan törlöd ezt a hozzárendelést?",
+    "townEditor": "Település szerkesztő"
+  },
   "townsPage": {
     "subtitle": "Minden település. A régió üresen is hagyható, később is hozzárendelhető.",
     "scopedSubtitle": "A saját településed. Ide vehetsz fel helyet, a csomag keretéig.",
     "addPlace": "Új hely ehhez a településhez",
-    "needsRegion": "Ehhez a településhez előbb régió kell, utána lehet helyet felvenni."
+    "needsRegion": "Ehhez a településhez előbb régió kell, utána lehet helyet felvenni.",
+    "zoom": "Nagyítás felülírása",
+    "zoomHint": "Üresen a régió nagyítása érvényes. Ha megadod, csak ennek a településnek a térképe használja."
   },
   "townMembers": {
     "title": "Település felhasználói",

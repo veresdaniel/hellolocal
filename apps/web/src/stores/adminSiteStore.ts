@@ -41,7 +41,12 @@ export const useAdminSiteStore = create<AdminSiteState>()(
         isSitesLoaded: false,
 
         setSelectedSiteId: (siteId: string | null) => {
-          // Only store if siteId is valid or null
+          const onlySite = get().sites.length === 1 ? get().sites[0] : null;
+          if (!siteId && onlySite) {
+            set({ selectedSiteId: onlySite.id });
+            localStorage.setItem("adminSelectedSiteId", onlySite.id);
+            return;
+          }
           if (siteId === null || isValidSiteId(siteId)) {
             set({ selectedSiteId: siteId });
             if (siteId) {
@@ -103,9 +108,11 @@ export const useAdminSiteStore = create<AdminSiteState>()(
             const stored = localStorage.getItem("adminSelectedSiteId");
             let computedSelectedSiteId: string | null = null;
 
-            if (loadedSites.length > 0) {
+            if (loadedSites.length === 1) {
+              const onlySiteId = loadedSites[0]?.id;
+              computedSelectedSiteId = isValidSiteId(onlySiteId) ? onlySiteId : null;
+            } else if (loadedSites.length > 1) {
               if (stored === "" && user.role === ROLE_SUPERADMIN) {
-                // Superadmin explicitly cleared Régió — keep none selected.
                 computedSelectedSiteId = null;
               } else if (isValidSiteId(stored) && loadedSites.some((s) => s.id === stored)) {
                 computedSelectedSiteId = stored;

@@ -354,7 +354,13 @@ export function MapComponent({
   >([]);
   const loadingRoutesRef = useRef<Set<string>>(new Set());
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  /** Place the walking route was drawn to. Survives closing the card. */
+  const [navigationMarkerId, setNavigationMarkerId] = useState<string | null>(null);
+  const navigationMarkerIdRef = useRef<string | null>(null);
   const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
+  const hoverCloseTimerRef = useRef<number | null>(null);
+  /** After Navigáció, ignore hover on that pin until the pointer actually leaves. */
+  const suppressHoverIdRef = useRef<string | null>(null);
   const [pinnedMarkerId, setPinnedMarkerId] = useState<string | null>(null);
   const lastClickTimeRef = useRef<{ [key: string]: number }>({});
   /** MapLibre often fires map click after HTML marker/card clicks — ignore those. */
@@ -365,6 +371,15 @@ export function MapComponent({
   const suppressNextMapClick = useCallback((ms = 600) => {
     suppressMapClickUntilRef.current = Date.now() + ms;
   }, []);
+
+  const cancelHoverClose = useCallback(() => {
+    if (hoverCloseTimerRef.current !== null) {
+      window.clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => cancelHoverClose, [cancelHoverClose]);
 
   const isDesktop =
     typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
@@ -695,12 +710,10 @@ export function MapComponent({
         return;
       }
 
-      // Outside click: dismiss sticky card + route
+      // Outside click closes the card. The walking route stays until another place,
+      // location off, or the destination leaves the map.
       if (selectedMarkerId) {
         setSelectedMarkerId(null);
-        setRoutes([]);
-        shouldHaveRoutesRef.current = false;
-        lastRouteFetchPosition.current = null;
       }
       if (pinnedMarkerId) setPinnedMarkerId(null);
       if (hoveredMarkerId) setHoveredMarkerId(null);
@@ -784,11 +797,9 @@ export function MapComponent({
         distance,
         duration: calculateWalkingTime(distance),
       };
+      if (navigationMarkerIdRef.current !== markerId) return;
       shouldHaveRoutesRef.current = true;
-      setRoutes((prev) => {
-        const filtered = prev.filter((r) => r.markerId !== markerId);
-        return [...filtered, newRoute];
-      });
+      setRoutes([newRoute]);
       if (shouldFit) fitMapToRoute(coordinates);
       devLog.debug("navigation:straight-line", { markerId, distance });
     },
@@ -841,19 +852,16 @@ export function MapComponent({
               ? osrmWalkingMinutes
               : calculateWalkingTime(distance);
 
+          if (navigationMarkerIdRef.current !== markerId) return;
           shouldHaveRoutesRef.current = true;
-          setRoutes((prev) => {
-            const filtered = prev.filter((r) => r.markerId !== markerId);
-            return [
-              ...filtered,
-              {
-                coordinates,
-                markerId,
-                distance,
-                duration: walkingDuration,
-              },
-            ];
-          });
+          setRoutes([
+            {
+              coordinates,
+              markerId,
+              distance,
+              duration: walkingDuration,
+            },
+          ]);
           if (shouldFit) fitMapToRoute(coordinates);
           devLog.debug("navigation:osrm", { markerId, distance });
         }
@@ -889,22 +897,22 @@ export function MapComponent({
     if (
       !shouldHaveRoutesRef.current ||
       !showUserLocation ||
-      !selectedMarkerId ||
+      !navigationMarkerId ||
       !hasCoords(userLocation)
     ) {
       return;
     }
 
-    const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
+    const selectedMarker = markers.find((m) => m.id === navigationMarkerId);
     if (!selectedMarker || !Number.isFinite(selectedMarker.lat) || !Number.isFinite(selectedMarker.lng)) {
       return;
     }
 
-    const isLoading = loadingRoutesRef.current.has(selectedMarkerId);
+    const isLoading = loadingRoutesRef.current.has(navigationMarkerId);
     const lastFetch = lastRouteFetchPosition.current;
     const shouldUpdate =
       !!lastFetch &&
-      lastFetch.markerId === selectedMarkerId &&
+      lastFetch.markerId === navigationMarkerId &&
       (Math.abs(lastFetch.lat - userLocation.lat) > 0.0005 ||
         Math.abs(lastFetch.lng - userLocation.lng) > 0.0005);
 
@@ -912,28 +920,31 @@ export function MapComponent({
       lastRouteFetchPosition.current = {
         lat: userLocation.lat,
         lng: userLocation.lng,
-        markerId: selectedMarkerId,
+        markerId: navigationMarkerId,
       };
-      fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, selectedMarkerId);
+      fetchRouteRef.current(selectedMarker.lat, selectedMarker.lng, navigationMarkerId);
     }
-  }, [selectedMarkerId, userLocation, markers, showUserLocation]);
+  }, [navigationMarkerId, userLocation, markers, showUserLocation]);
 
-  // Clear selected marker if it's no longer in the markers list (filtered out)
+  // Clear the card if that place was filtered out. Drop the route only when its destination is gone.
   useEffect(() => {
-    if (selectedMarkerId) {
-      const markerStillExists = markers.find((m) => m.id === selectedMarkerId);
-      if (!markerStillExists) {
-        setSelectedMarkerId(null);
-        setRoutes([]);
-        shouldHaveRoutesRef.current = false;
-        lastRouteFetchPosition.current = null;
-      }
+    if (selectedMarkerId && !markers.some((m) => m.id === selectedMarkerId)) {
+      setSelectedMarkerId(null);
     }
-  }, [markers, selectedMarkerId]);
+    if (navigationMarkerId && !markers.some((m) => m.id === navigationMarkerId)) {
+      navigationMarkerIdRef.current = null;
+      setNavigationMarkerId(null);
+      setRoutes([]);
+      shouldHaveRoutesRef.current = false;
+      lastRouteFetchPosition.current = null;
+    }
+  }, [markers, selectedMarkerId, navigationMarkerId]);
 
   // Location off: drop route polyline, but keep sticky card selection.
   useEffect(() => {
     if (!showUserLocation) {
+      navigationMarkerIdRef.current = null;
+      setNavigationMarkerId(null);
       setRoutes([]);
       shouldHaveRoutesRef.current = false;
       lastRouteFetchPosition.current = null;
@@ -994,10 +1005,14 @@ export function MapComponent({
       setHoveredMarkerId(null);
 
       if (selectedMarkerId !== marker.id) {
-        // Switching place: drop previous route; new route only via Navigáció.
-        setRoutes([]);
-        shouldHaveRoutesRef.current = false;
-        lastRouteFetchPosition.current = null;
+        // Another place closes the previous card. Keep the route if this pin is its destination.
+        if (navigationMarkerIdRef.current && navigationMarkerIdRef.current !== marker.id) {
+          navigationMarkerIdRef.current = null;
+          setNavigationMarkerId(null);
+          setRoutes([]);
+          shouldHaveRoutesRef.current = false;
+          lastRouteFetchPosition.current = null;
+        }
         setSelectedMarkerId(marker.id);
         return;
       }
@@ -1016,8 +1031,12 @@ export function MapComponent({
       // Keep map-click dismiss from racing the Navigáció click / geolocation prompt.
       suppressNextMapClick(1500);
       setPinnedMarkerId(null);
+      cancelHoverClose();
+      suppressHoverIdRef.current = marker.id;
       setHoveredMarkerId(null);
-      setSelectedMarkerId(marker.id);
+      setSelectedMarkerId(null);
+      navigationMarkerIdRef.current = marker.id;
+      setNavigationMarkerId(marker.id);
       shouldHaveRoutesRef.current = true;
       devLog.debug("navigation:start", {
         markerId: marker.id,
@@ -1041,6 +1060,8 @@ export function MapComponent({
             if (error.code === error.PERMISSION_DENIED) {
               setShowUserLocation(false);
               setUserLocation(null);
+              navigationMarkerIdRef.current = null;
+              setNavigationMarkerId(null);
               setRoutes([]);
               shouldHaveRoutesRef.current = false;
               lastRouteFetchPosition.current = null;
@@ -1087,13 +1108,14 @@ export function MapComponent({
             markerId: marker.id,
           };
           shouldHaveRoutesRef.current = true;
-          setSelectedMarkerId(marker.id);
           void fetchRouteRef.current(marker.lat, marker.lng, marker.id, origin, true);
         },
         (error) => {
           console.warn("Geolocation error:", error);
           setShowUserLocation(false);
           setUserLocation(null);
+          navigationMarkerIdRef.current = null;
+          setNavigationMarkerId(null);
           setRoutes([]);
           shouldHaveRoutesRef.current = false;
           lastRouteFetchPosition.current = null;
@@ -1114,6 +1136,7 @@ export function MapComponent({
       showToast,
       t,
       suppressNextMapClick,
+      cancelHoverClose,
     ]
   );
 
@@ -1133,10 +1156,14 @@ export function MapComponent({
     return vintageWineRegionStyle;
   }, [mapStyle]);
 
+  // Only the latest Navigáció destination is drawn. A previous route must not stay in front.
+  const activeRoute =
+    (navigationMarkerId && routes.find((route) => route.markerId === navigationMarkerId)) || null;
+
   // SVG overlay: always-visible route even when MapLibre style/tiles never finish loading.
   const [routeOverlayPath, setRouteOverlayPath] = useState<string | null>(null);
   useEffect(() => {
-    const coords = routes[0]?.coordinates;
+    const coords = activeRoute?.coordinates;
     const map = getMap();
     if (!map || !coords || coords.length < 2) {
       setRouteOverlayPath(null);
@@ -1166,7 +1193,7 @@ export function MapComponent({
       map.off("pitch", update);
       map.off("rotate", update);
     };
-  }, [routes, getMap, viewState.latitude, viewState.longitude, viewState.zoom]);
+  }, [activeRoute, getMap, viewState.latitude, viewState.longitude, viewState.zoom]);
 
   // Convert height to CSS value
   const heightStyle = typeof height === "number" ? `${height}px` : height;
@@ -1239,13 +1266,13 @@ export function MapComponent({
           });
         }}
       >
-        {routes[0] &&
-          Array.isArray(routes[0].coordinates) &&
-          routes[0].coordinates.length >= 2 && (
+        {activeRoute &&
+          Array.isArray(activeRoute.coordinates) &&
+          activeRoute.coordinates.length >= 2 && (
             <Source
               id={ROUTE_SOURCE_ID}
               type="geojson"
-              data={buildRouteGeoJson(routes[0].coordinates)}
+              data={buildRouteGeoJson(activeRoute.coordinates)}
             >
               <Layer
                 id={ROUTE_LAYER_ID}
@@ -1439,12 +1466,22 @@ export function MapComponent({
                   cursor: "pointer",
                 }}
                 onMouseEnter={() => {
-                  if (canHoverPreview) setHoveredMarkerId(marker.id);
+                  if (!canHoverPreview) return;
+                  if (suppressHoverIdRef.current === marker.id) return;
+                  cancelHoverClose();
+                  setHoveredMarkerId(marker.id);
                 }}
                 onMouseLeave={() => {
                   // Hover preview only — never clear sticky selection.
+                  // Delay the close so the pointer can cross onto the card and Navigáció.
                   if (!canHoverPreview) return;
-                  setHoveredMarkerId((current) => (current === marker.id ? null : current));
+                  if (suppressHoverIdRef.current === marker.id) {
+                    suppressHoverIdRef.current = null;
+                  }
+                  cancelHoverClose();
+                  hoverCloseTimerRef.current = window.setTimeout(() => {
+                    setHoveredMarkerId((current) => (current === marker.id ? null : current));
+                  }, 280);
                 }}
                 onPointerDown={(e) => {
                   e.stopPropagation();
@@ -1580,7 +1617,7 @@ export function MapComponent({
                         />
                       )}
                     </div>
-                    {showDirections && (
+                    {showEnhancedCard && (
                       <span className="hl-map-marker-card__bridge" aria-hidden="true" />
                     )}
                   </div>
@@ -1801,6 +1838,8 @@ export function MapComponent({
                     setShowUserLocation(false);
                     setUserLocation(null);
                     setSelectedMarkerId(null);
+                    navigationMarkerIdRef.current = null;
+                    setNavigationMarkerId(null);
                     setRoutes([]);
                     shouldHaveRoutesRef.current = false;
                     lastRouteFetchPosition.current = null;

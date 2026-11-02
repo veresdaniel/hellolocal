@@ -1,6 +1,6 @@
 // src/pages/auth/LoginPage.tsx
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, Link, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { 
@@ -15,6 +15,7 @@ import { safeInternalPath } from "../../utils/safeInternalPath";
 import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/authStorage";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
+import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
 
 
 export function LoginPage() {
@@ -29,6 +30,8 @@ export function LoginPage() {
   const { login, user, isLoading: authIsLoading, refreshUser } = useAuth();
   const shield = usePublicFormShield("login");
   const navigate = useNavigate();
+  const location = useLocation();
+  const visitor = isVisitorAuthPath(location.pathname);
   const [searchParams, setSearchParams] = useSearchParams();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
   const googleAuthHandledRef = useRef(false);
@@ -81,7 +84,7 @@ export function LoginPage() {
 
   // Auth pages should have noindex, nofollow robots meta tag
   useSeo({
-    title: t("admin.login") || "Login",
+    title: visitor ? t("public.visitorAuth.login") : t("admin.login") || "Login",
     description: "",
     robots: "noindex, nofollow",
   });
@@ -252,6 +255,9 @@ export function LoginPage() {
 
     try {
       await login(email, password, requiresTwoFactor ? twoFactorToken : undefined, await shield.payload());
+      if (visitor) {
+        return;
+      }
       // Clear any public return URL - admin users should always go to dashboard
       const returnUrl = safeInternalPath(sessionStorage.getItem("authReturnUrl"), "");
       if (!returnUrl || !returnUrl.includes("/admin")) {
@@ -309,10 +315,10 @@ export function LoginPage() {
     <div className="admin-login">
       <div className="admin-auth-card">
         <h1 className="admin-auth-card__title" style={{ textAlign: "center" }}>
-          {t("admin.login")}
+          {visitor ? t("public.visitorAuth.login") : t("admin.login")}
         </h1>
         <p className="admin-auth-card__subtitle" style={{ textAlign: "center" }}>
-          {t("admin.loginDescription")}
+          {visitor ? t("public.visitorAuth.loginLead") : t("admin.loginDescription")}
         </p>
 
         {wasManualLogout && (
@@ -717,7 +723,7 @@ export function LoginPage() {
 
         <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center" }}>
           <Link
-            to={`/${lang}/admin/forgot-password`}
+            to={visitor ? visitorAuthPath(lang, "forgot-password") : `/${lang}/admin/forgot-password`}
             style={{
               color: "var(--admin-primary)",
               fontWeight: 500,
@@ -733,7 +739,7 @@ export function LoginPage() {
               e.currentTarget.style.textDecoration = "none";
             }}
           >
-            {t("admin.forgotPassword")}
+            {visitor ? t("public.visitorAuth.forgot") : t("admin.forgotPassword")}
           </Link>
         </div>
 
@@ -748,9 +754,9 @@ export function LoginPage() {
             fontWeight: 400,
           }}
         >
-          {t("admin.dontHaveAccount")}{" "}
+          {visitor ? t("public.visitorAuth.registerLead") : t("admin.dontHaveAccount")}{" "}
           <Link
-            to={`/${lang}/admin/register`}
+            to={visitor ? visitorAuthPath(lang, "register") : `/${lang}/admin/register`}
             style={{
               color: "var(--admin-primary)",
               fontWeight: 500,
@@ -765,7 +771,15 @@ export function LoginPage() {
               e.currentTarget.style.textDecoration = "none";
             }}
           >
-            {t("admin.register")}
+            {visitor ? t("public.visitorAuth.register") : t("admin.register")}
+          </Link>
+        </div>
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <Link
+            to={visitor ? `/${lang}/admin/login` : visitorAuthPath(lang, "login")}
+            style={{ color: "#665d78", fontSize: 13, textDecoration: "none" }}
+          >
+            {visitor ? t("public.visitorAuth.staffLogin") : t("public.visitorAuth.visitorLogin")}
           </Link>
         </div>
       </div>

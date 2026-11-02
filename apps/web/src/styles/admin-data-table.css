@@ -82,6 +82,69 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
+.admin-data-table__filter {
+  position: relative;
+  width: 100%;
+}
+
+.admin-data-table__filter input {
+  padding-right: 28px;
+}
+
+.admin-data-table__filter-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hl-muted, #665d78);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-data-table__filter-menu {
+  position: fixed;
+  z-index: 80;
+  max-height: 240px;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--admin-primary-border, #d9d6e5);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  box-sizing: border-box;
+}
+
+.admin-data-table__filter-option {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-ink, #1b1730);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.admin-data-table__filter-option.is-active,
+.admin-data-table__filter-option:hover {
+  background: #eef2ff;
+}
+
 .admin-data-table__table td {
   padding: 12px;
   border-bottom: 1px solid #eee;

@@ -95,8 +95,9 @@ export function SiteSelector() {
     }
   };
 
-  // Get current site
-  const currentSite = sites.find((s) => s.id === selectedSiteId);
+  // Get current site. A single region is already selected, so the name is enough.
+  const onlySite = sites.length === 1 ? sites[0] : null;
+  const currentSite = sites.find((s) => s.id === selectedSiteId) ?? onlySite;
 
   // Function to open public page (same tab, not new tab)
   const openPublicPage = () => {
@@ -110,32 +111,41 @@ export function SiteSelector() {
     window.location.href = publicPath;
   };
 
-  // Superadmin-only control: always a select so Régió can be cleared ("Nincs kiválasztva").
+  const canClear = sites.length > 1;
+  const nameStyle = {
+    fontSize: 16,
+    fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontWeight: 600,
+    color: "#1b1730",
+  } as const;
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-      <select
-        value={selectedSiteId || ""}
-        onChange={handleSiteChange}
-        aria-label={t("admin.selectSite")}
-        style={{
-          padding: "8px 16px",
-          fontSize: 16,
-          borderRadius: 4,
-          border: "1px solid #ddd",
-          background: "white",
-          cursor: "pointer",
-          fontFamily:
-            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          fontWeight: 400,
-        }}
-      >
-        <option value="">{t("admin.filters.noneSelected")}</option>
-        {sites.map((site) => (
-          <option key={site.id} value={site.id}>
-            {getSiteName(site)}
-          </option>
-        ))}
-      </select>
+      {onlySite ? (
+        <span style={nameStyle}>{getSiteName(onlySite)}</span>
+      ) : (
+        <select
+          value={selectedSiteId || ""}
+          onChange={handleSiteChange}
+          aria-label={t("admin.selectSite")}
+          style={{
+            padding: "8px 16px",
+            fontSize: 16,
+            borderRadius: 4,
+            border: "1px solid #ddd",
+            background: "white",
+            cursor: "pointer",
+            fontFamily: nameStyle.fontFamily,
+            fontWeight: 400,
+          }}
+        >
+          {canClear ? <option value="">{t("admin.filters.noneSelected")}</option> : null}
+          {sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {getSiteName(site)}
+            </option>
+          ))}
+        </select>
+      )}
       <button
         type="button"
         onClick={openPublicPage}

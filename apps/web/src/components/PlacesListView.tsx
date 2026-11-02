@@ -473,7 +473,7 @@ export function PlacesListView({
 
   return (
     <>
-      <FloatingHeader onMapViewClick={onMapViewClick} />
+      <FloatingHeader visitorAuth onMapViewClick={onMapViewClick} />
       <style>{`
         /* Spacing scale: 8 / 12 / 16 / 24 */
         .places-discover {

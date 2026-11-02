@@ -1,11 +1,13 @@
 // src/ui/layout/Header.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { usePlatformSettingsContext } from "../../context/PlatformSettingsContext";
 import { LanguageSelector } from "../../components/LanguageSelector";
+import { AuthContext } from "../../contexts/AuthContext";
+import { rememberAuthReturn, visitorAuthPath } from "../../auth/visitorAuth";
 
 export function Header() {
   const { lang, siteKey } = useRouteCtx();
@@ -50,6 +52,8 @@ export function Header() {
   const activeZIndex = 10000; // High z-index when actively being used (dragging)
   const currentZIndex = isDragging ? activeZIndex : baseZIndex;
 
+  const auth = useContext(AuthContext);
+  const user = auth?.user ?? null;
   const platformSettings = usePlatformSettingsContext();
 
   const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
@@ -290,6 +294,61 @@ export function Header() {
             </div>
           </div>
         )}
+        <div
+          style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: 8 }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          {user ? (
+            <button
+              type="button"
+              onClick={() => auth?.logout(true)}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(27, 23, 48, 0.16)",
+                borderRadius: 999,
+                color: "#1b1730",
+                fontSize: 13,
+                fontWeight: 600,
+                padding: "6px 12px",
+                cursor: "pointer",
+              }}
+            >
+              {t("public.visitorAuth.logout")}
+            </button>
+          ) : (
+            <>
+              <Link
+                to={visitorAuthPath(lang, "login")}
+                onClick={rememberAuthReturn}
+                style={{
+                  color: "#1b1730",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  padding: "6px 10px",
+                }}
+              >
+                {t("public.visitorAuth.login")}
+              </Link>
+              <Link
+                to={visitorAuthPath(lang, "register")}
+                onClick={rememberAuthReturn}
+                style={{
+                  background: "#1b1730",
+                  color: "#fffdf9",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                }}
+              >
+                {t("public.visitorAuth.register")}
+              </Link>
+            </>
+          )}
+        </div>
         {/* Map view button - show when NOT on map view */}
         {!isOnMapView && (
           <>

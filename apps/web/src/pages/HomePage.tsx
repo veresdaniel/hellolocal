@@ -645,7 +645,11 @@ export function HomePage() {
     if (townSlug) {
       if (isLoadingTowns) return;
       if (selectedTown?.lat != null && selectedTown.lng != null) {
-        setMapCenter({ lat: selectedTown.lat, lng: selectedTown.lng, zoom: 13 });
+        setMapCenter({
+          lat: selectedTown.lat,
+          lng: selectedTown.lng,
+          zoom: selectedTown.zoom ?? mapSettings?.zoom ?? 15,
+        });
         appliedMapFocus.current = mapFocusKey;
         return;
       }
@@ -654,13 +658,22 @@ export function HomePage() {
         place.location?.lat != null && place.location.lng != null ? [place.location] : []
       );
       if (townPoints.length > 0) {
-        setMapCenter(framePoints(townPoints, 14));
+        setMapCenter(framePoints(townPoints, selectedTown?.zoom ?? mapSettings?.zoom ?? 15));
         appliedMapFocus.current = mapFocusKey;
         return;
       }
     }
 
     if (isLoadingTowns || isLoadingPlaces) return;
+    if (mapSettings?.lat != null && mapSettings.lng != null && mapSettings.zoom != null) {
+      setMapCenter({
+        lat: mapSettings.lat,
+        lng: mapSettings.lng,
+        zoom: mapSettings.zoom,
+      });
+      appliedMapFocus.current = mapFocusKey;
+      return;
+    }
     const townPoints = (townsPayload?.towns || []).flatMap((town) =>
       town.lat != null && town.lng != null ? [{ lat: town.lat, lng: town.lng }] : []
     );
@@ -669,7 +682,7 @@ export function HomePage() {
     );
     const areaPoints = townPoints.length > 0 ? townPoints : placePoints;
     if (areaPoints.length > 0) {
-      setMapCenter(framePoints(areaPoints, 12));
+      setMapCenter(framePoints(areaPoints, 15));
       appliedMapFocus.current = mapFocusKey;
       return;
     }
@@ -677,12 +690,12 @@ export function HomePage() {
       setMapCenter({
         lat: mapSettings.lat,
         lng: mapSettings.lng,
-        zoom: mapSettings.zoom ?? 11,
+        zoom: mapSettings.zoom ?? 13,
       });
       appliedMapFocus.current = mapFocusKey;
       return;
     }
-    setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: 11 });
+    setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: 13 });
     appliedMapFocus.current = mapFocusKey;
   }, [
     mapFocusKey,
@@ -714,7 +727,7 @@ export function HomePage() {
       return {
         centerLat: mapSettings.lat,
         centerLng: mapSettings.lng,
-        defaultZoom: mapSettings.zoom ?? 13,
+        defaultZoom: mapSettings.zoom ?? 15,
       };
     }
 
@@ -722,7 +735,7 @@ export function HomePage() {
     return {
       centerLat: 47.4979,
       centerLng: 19.0402,
-      defaultZoom: 13,
+      defaultZoom: 15,
     };
   }, [mapCenter, mapSettings]);
 

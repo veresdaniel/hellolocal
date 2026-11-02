@@ -780,13 +780,8 @@ export class AdminController {
       throw new ForbiddenException("Places are outside your access");
     }
     const siteId = siteIdParam || (scope.unrestricted ? user.siteIds[0] : null);
-    if (scope.unrestricted) {
-      if (!siteId) {
-        throw new Error("User has no associated site");
-      }
-      if (!user.siteIds.includes(siteId)) {
-        throw new Error("User does not have access to this site");
-      }
+    if (scope.unrestricted && !siteId) {
+      throw new BadRequestException("User has no associated site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;

@@ -50,10 +50,12 @@
     sans-serif !important;
 }
 
-/* Placeholder styling - unified color and Inter font */
+/* Placeholder styling - lighter than entered text so empty fields stay obvious */
 .admin-layout input::placeholder,
-.admin-layout textarea::placeholder {
-  color: var(--hl-muted, #665d78) !important;
+.admin-layout textarea::placeholder,
+.admin-login input::placeholder,
+.admin-login textarea::placeholder {
+  color: var(--admin-placeholder, #94a3b8) !important;
   font-family:
     "Inter",
     system-ui,

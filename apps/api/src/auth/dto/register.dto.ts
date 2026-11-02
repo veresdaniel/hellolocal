@@ -37,6 +37,11 @@ export class RegisterDto extends PublicFormShieldFields {
   @IsString()
   plan?: string;
 
+  /** Public visitor account. Ignores plan and does not attach a place or region. */
+  @IsOptional()
+  @IsString()
+  audience?: string;
+
   @IsOptional()
   @IsString()
   countryId?: string;

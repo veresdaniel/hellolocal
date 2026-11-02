@@ -111,9 +111,11 @@ VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
 
 ```bash
 cd apps/api
-pnpm prisma migrate dev
-pnpm prisma db seed
+pnpm db:reset
 ```
+
+`db:reset` eldobja a helyi sémát, felteszi az egyetlen init migrációt, és betölti a demót.
+Meglévő sémán a tartalom újratöltése: `pnpm db:seed`. Csak a helyi `127.0.0.1` adatbázison.
 
 ### 5. Fejlesztői szerverek indítása
 
@@ -138,10 +140,9 @@ pnpm run dev:api   # 3002
 pnpm run dev:web   # 5173
 ```
 
-Ha `http://localhost:5173/hu/etyek-budai` üres: a **local** DB-ben nincs site/hely.
-Csak a helyi (127.0.0.1) DB-n: `pnpm -C apps/api db:seed` (TRUNCATE + minta).
-`db:fill-etyek` csak meglévő etyek helyeket frissít; üres DB-n nem elég.
-Staging/live/production URL ellen soha ne futtass seedet.
+Ha `http://localhost:5173/hu/etyek-budai` üres: a helyi adatbázisban nincs régió.
+Csak a helyi (127.0.0.1) adatbázison: `pnpm -C apps/api db:seed`.
+Staging, live és production URL ellen soha ne futtass seedet vagy resetet.
 
 ## 📦 Production Build
 

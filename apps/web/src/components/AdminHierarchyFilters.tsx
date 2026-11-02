@@ -62,28 +62,34 @@ export function AdminHierarchyFilters({
     <>
       {showSite ? (
         <div className="admin-flist__filter">
-          <label htmlFor={`${idPrefix}-site`}>{t("admin.filters.site")}</label>
-          <select
-            id={`${idPrefix}-site`}
-            value={siteId || ""}
-            disabled={disabled || !onSiteChange}
-            onChange={(event) => {
-              const next = event.target.value;
-              if (requireSite && !next && !allowClearSite) return;
-              onSiteChange?.(next);
-            }}
-          >
-            {!requireSite ? (
-              <option value="">{t("admin.filters.allSites")}</option>
-            ) : allowClearSite ? (
-              <option value="">{t("admin.filters.noneSelected")}</option>
-            ) : null}
-            {siteOptions.map((site) => (
-              <option key={site.id} value={site.id}>
-                {site.label}
-              </option>
-            ))}
-          </select>
+          <label htmlFor={siteOptions.length === 1 ? undefined : `${idPrefix}-site`}>
+            {t("admin.filters.site")}
+          </label>
+          {siteOptions.length === 1 ? (
+            <div className="admin-flist__filter-value">{siteOptions[0].label}</div>
+          ) : (
+            <select
+              id={`${idPrefix}-site`}
+              value={siteId || ""}
+              disabled={disabled || !onSiteChange}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (requireSite && !next && !allowClearSite) return;
+                onSiteChange?.(next);
+              }}
+            >
+              {!requireSite ? (
+                <option value="">{t("admin.filters.allSites")}</option>
+              ) : allowClearSite && siteOptions.length > 1 ? (
+                <option value="">{t("admin.filters.noneSelected")}</option>
+              ) : null}
+              {siteOptions.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       ) : null}
 

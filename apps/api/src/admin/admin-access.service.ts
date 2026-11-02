@@ -7,6 +7,7 @@ import {
 import { PlaceRole, PlaceSignupStatus, SiteRole, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { RbacService } from "../auth/rbac.service";
+import { ensureRegionLink, removeRegionLink } from "./region-link";
 
 export type AccessKind = "region" | "town" | "place";
 
@@ -133,6 +134,10 @@ export class AdminAccessService {
       if (!town.siteId) {
         throw new BadRequestException("Településadmin csak régióhoz kötött településhez adható.");
       }
+      const existing = await this.prisma.townMembership.findUnique({
+        where: { townId_userId: { townId: dto.targetId, userId: dto.userId } },
+      });
+      if (existing) return existing;
       return this.prisma.townMembership.create({
         data: { townId: dto.targetId, userId: dto.userId, role: "editor" },
       });
@@ -143,9 +148,18 @@ export class AdminAccessService {
         throw new ForbiddenException("Only a superadmin can assign region users");
       }
       const role = dto.role === "siteadmin" ? SiteRole.siteadmin : SiteRole.editor;
-      return this.prisma.siteMembership.create({
+      const existing = await this.prisma.siteMembership.findUnique({
+        where: { siteId_userId: { siteId: dto.targetId, userId: dto.userId } },
+      });
+      if (existing) {
+        await ensureRegionLink(this.prisma, dto.userId, dto.targetId);
+        return existing;
+      }
+      const created = await this.prisma.siteMembership.create({
         data: { siteId: dto.targetId, userId: dto.userId, role },
       });
+      await ensureRegionLink(this.prisma, dto.userId, dto.targetId);
+      return created;
     }
 
     const place = await this.prisma.place.findUnique({
@@ -160,6 +174,10 @@ export class AdminAccessService {
         : dto.role === "manager"
           ? PlaceRole.manager
           : PlaceRole.editor;
+    const existing = await this.prisma.placeMembership.findUnique({
+      where: { placeId_userId: { placeId: dto.targetId, userId: dto.userId } },
+    });
+    if (existing) return existing;
     return this.prisma.placeMembership.create({
       data: { placeId: dto.targetId, userId: dto.userId, role },
     });
@@ -178,7 +196,7 @@ export class AdminAccessService {
       const row = await this.prisma.siteMembership.findUnique({ where: { id } });
       if (!row) throw new NotFoundException("Grant not found");
       await this.assertRegionManager(actor.role, actorId, row.siteId);
-      await this.prisma.siteMembership.delete({ where: { id } });
+      await removeRegionLink(this.prisma, row.userId, row.siteId);
       return { ok: true };
     }
     const row = await this.prisma.placeMembership.findUnique({

@@ -44,6 +44,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = exception.constructor.name.replace("Exception", "");
       }
     } else if (exception instanceof Error) {
+      const duplicateTown = exception.message.includes("duplicate town name");
+      const duplicateRegion = exception.message.includes("duplicate region name");
+      if (duplicateTown || duplicateRegion) {
+        status = HttpStatus.BAD_REQUEST;
+        message = duplicateTown
+          ? "Már van ilyen nevű település ebben az országban."
+          : "Már van ilyen nevű régió ebben az országban.";
+        error = "Bad Request";
+        return response.status(status).json({
+          statusCode: status,
+          message,
+          error,
+          timestamp: new Date().toISOString(),
+          path: request.url,
+        });
+      }
       // Handle generic JavaScript errors
       status = HttpStatus.INTERNAL_SERVER_ERROR;
 

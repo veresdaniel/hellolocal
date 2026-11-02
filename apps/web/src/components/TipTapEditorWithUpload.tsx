@@ -579,7 +579,7 @@ export function TipTapEditorWithUpload({
           font-size: clamp(15px, 3.5vw, 16px) !important;
         }
         .tiptap-editor p.is-editor-empty:first-child::before {
-          color: #999;
+          color: var(--admin-placeholder, #94a3b8);
           content: attr(data-placeholder);
           float: left;
           height: 0;

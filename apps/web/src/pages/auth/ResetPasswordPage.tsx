@@ -1,11 +1,13 @@
 // src/pages/auth/ResetPasswordPage.tsx
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link, useParams, useLocation } from "react-router-dom";
 import { resetPassword } from "../../api/auth.api";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
+import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
+import { passwordProblem } from "../../auth/passwordStrength";
 
 
 export function ResetPasswordPage() {
@@ -19,6 +21,8 @@ export function ResetPasswordPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const visitor = isVisitorAuthPath(location.pathname);
   const { lang: langParam } = useParams<{ lang?: string }>();
   const { t, i18n } = useTranslation();
   const shield = usePublicFormShield("reset_password");
@@ -29,6 +33,7 @@ export function ResetPasswordPage() {
     : isLang(i18n.language)
       ? i18n.language
       : DEFAULT_LANG;
+  const loginPath = visitor ? visitorAuthPath(lang, "login") : `/${lang}/admin/login`;
 
   // Sync i18n language with URL parameter
   useEffect(() => {
@@ -47,11 +52,14 @@ export function ResetPasswordPage() {
 
   const handlePasswordChange = (value: string) => {
     setNewPassword(value);
-    if (value && value.length < 6) {
-      setPasswordError(t("admin.passwordTooShort"));
-    } else {
-      setPasswordError(null);
-    }
+    const problem = passwordProblem(value);
+    setPasswordError(
+      !value || !problem
+        ? null
+        : problem === "short"
+          ? t("public.visitorAuth.passwordShort")
+          : t("public.visitorAuth.passwordWeak")
+    );
     // Check confirm match
     if (confirmPassword && value !== confirmPassword) {
       setConfirmError(t("admin.passwordsDoNotMatch"));
@@ -78,8 +86,13 @@ export function ResetPasswordPage() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setPasswordError(t("admin.passwordTooShort"));
+    const problem = passwordProblem(newPassword);
+    if (problem) {
+      setPasswordError(
+        problem === "short"
+          ? t("public.visitorAuth.passwordShort")
+          : t("public.visitorAuth.passwordWeak")
+      );
       return;
     }
 
@@ -94,7 +107,7 @@ export function ResetPasswordPage() {
       await resetPassword({ token, newPassword, ...(await shield.payload()) });
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/${lang}/admin/login`);
+        navigate(loginPath);
       }, 2000);
     } catch (err) {
       setError(publicFormErrorMessage(t, err, t("admin.resetPasswordFailed")));
@@ -159,7 +172,7 @@ export function ResetPasswordPage() {
             {t("admin.passwordResetSuccessMessage")}
           </div>
           <Link
-            to={`/${lang}/admin/login`}
+            to={loginPath}
             style={{
               display: "inline-block",
               padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",
@@ -441,7 +454,7 @@ export function ResetPasswordPage() {
 
         <div style={{ marginTop: "clamp(20px, 4vw, 24px)", textAlign: "center" }}>
           <Link
-            to={`/${lang}/admin/login`}
+            to={loginPath}
             style={{
               color: "var(--admin-primary)",
               fontWeight: 500,

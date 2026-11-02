@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteRole, UserRole } from "@prisma/client";
+import { ensureRegionLink, removeRegionLink } from "./region-link";
 
 export interface CreateSiteMembershipDto {
   siteId: string;
@@ -26,6 +27,16 @@ export class AdminSiteMembershipService {
     const where: any = {};
     if (siteId) where.siteId = siteId;
     if (userId) where.userId = userId;
+
+    if (siteId) {
+      const links = await this.prisma.userSite.findMany({
+        where: { siteId },
+        select: { userId: true },
+      });
+      for (const link of links) {
+        await ensureRegionLink(this.prisma, link.userId, siteId);
+      }
+    }
 
     return this.prisma.siteMembership.findMany({
       where,
@@ -99,12 +110,11 @@ export class AdminSiteMembershipService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        `SiteMembership already exists for site ${dto.siteId} and user ${dto.userId}`
-      );
+      await ensureRegionLink(this.prisma, dto.userId, dto.siteId);
+      return this.findOne(existing.id);
     }
 
-    return this.prisma.siteMembership.create({
+    const created = await this.prisma.siteMembership.create({
       data: {
         siteId: dto.siteId,
         userId: dto.userId,
@@ -115,6 +125,8 @@ export class AdminSiteMembershipService {
         user: true,
       },
     });
+    await ensureRegionLink(this.prisma, dto.userId, dto.siteId);
+    return created;
   }
 
   async update(id: string, dto: UpdateSiteMembershipDto, actorUserId: string) {
@@ -140,9 +152,8 @@ export class AdminSiteMembershipService {
     const membership = await this.findOne(id);
     await this.assertCanManageMemberships(actorUserId, membership.siteId);
 
-    return this.prisma.siteMembership.delete({
-      where: { id },
-    });
+    await removeRegionLink(this.prisma, membership.userId, membership.siteId);
+    return membership;
   }
 
   /** Region membership is a superadmin assignment. */

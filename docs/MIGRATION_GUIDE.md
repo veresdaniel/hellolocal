@@ -7,20 +7,19 @@
 #### Teljes Reset (új adatbázis vagy tiszta kezdés)
 ```bash
 cd apps/api
-pnpm run db:setup:reset
+pnpm db:reset
 ```
-- ✅ Törli az összes adatot
-- ✅ Alkalmazza az összes migrációt
-- ✅ Seedeli az adatbázist
+- ✅ Eldobja a helyi adatbázist
+- ✅ Felteszi az init migrációt
+- ✅ Betölti a demó seedet
 
-#### Meglévő Adatbázis Migrálása
+#### Meglévő séma, csak a demó újratöltése
 ```bash
 cd apps/api
-pnpm run db:setup
+pnpm db:seed
 ```
-- ✅ Alkalmazza a hiányzó migrációkat
-- ✅ Seedeli az adatbázist (ha üres)
-- ⚠️ Nem törli a meglévő adatokat
+- ✅ Kiüríti a tartalmat és újra betölti a snapshotot
+- ⚠️ A sémát nem módosítja
 
 #### Csak Migrációk (seed nélkül)
 ```bash
@@ -49,15 +48,13 @@ pnpm run migrate:deploy
 
 ```bash
 cd apps/api
-pnpm run db:setup:reset
+pnpm db:reset
 ```
 
 **Mit csinál**:
-1. Törli az összes táblát és enum-ot
-2. Alkalmazza az összes migrációt
-3. Seedeli az adatbázist demo adatokkal
-4. Aktiválja az összes site-ot
-5. Létrehozza a szükséges SiteKey és SiteInstance bejegyzéseket
+1. Eldobja a helyi adatbázist
+2. Felteszi az init migrációt
+3. Betölti a demó snapshotot (szuperadmin, Etyek–Budai, felületi szövegek)
 
 **Figyelem**: ⚠️ **MINDEN ADAT TÖRLŐDIK!**
 
@@ -67,14 +64,13 @@ pnpm run db:setup:reset
 
 ```bash
 cd apps/api
-pnpm run db:setup
+pnpm migrate:deploy
 ```
 
 **Mit csinál**:
 1. Alkalmazza a hiányzó migrációkat
-2. Ha az adatbázis üres, seedeli
-3. Ellenőrzi és javítja a site-okat (SiteKeys, SiteInstances)
-4. Nem törli a meglévő adatokat
+2. Nem futtat seedet
+3. Nem törli a meglévő adatokat
 
 **Biztonságos**: ✅ Meglévő adatok megmaradnak
 
@@ -137,7 +133,7 @@ npx prisma db push
 
 ```bash
 cd apps/api
-pnpm run db:reset:seed
+pnpm db:reset
 ```
 
 **Mit csinál**:
@@ -153,11 +149,7 @@ Ha a migrációk sikertelenek voltak:
 
 ```bash
 cd apps/api
-# Automatikus cleanup script
-tsx scripts/delete-failed-migrations.ts
-
-# Vagy manuálisan
-npx prisma migrate resolve --applied migration_name
+pnpm exec prisma migrate resolve --applied migration_name
 ```
 
 ### Adatbázis Inkonzisztens Állapotban
@@ -166,7 +158,7 @@ Ha az adatbázis inkonzisztens állapotban van:
 
 ```bash
 cd apps/api
-pnpm run db:setup:reset
+pnpm db:reset
 ```
 
 ⚠️ **Figyelem**: Ez törli az összes adatot!
@@ -214,8 +206,7 @@ apps/api/prisma/migrations/
 **Megoldás**:
 ```bash
 cd apps/api
-tsx scripts/delete-failed-migrations.ts
-pnpm run migrate:deploy
+pnpm db:reset
 ```
 
 ### P1001: Can't reach database server

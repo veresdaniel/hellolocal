@@ -37,6 +37,7 @@ import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
 import { devLog } from "../lib/devLog";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
+import { rememberAuthReturn, visitorAuthPath } from "../auth/visitorAuth";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { formatMoney } from "../utils/formatMoney";
@@ -282,7 +283,8 @@ export function PlaceDetailPage() {
   const handleRate = async (value: number) => {
     if (!isAuthenticated) {
       // Redirect to login
-      navigate(`/${lang}/admin/login`);
+      sessionStorage.setItem("authReturnUrl", window.location.pathname + window.location.search);
+      navigate(`/${lang}/login`);
       return;
     }
 
@@ -495,7 +497,7 @@ export function PlaceDetailPage() {
   if (resolveQ.isLoading) {
     return (
       <>
-        <FloatingHeader />
+        <FloatingHeader visitorAuth />
         <PublicPageSkeleton label={t("common.loading")} />
       </>
     );
@@ -526,7 +528,7 @@ export function PlaceDetailPage() {
   if (isLoading) {
     return (
       <>
-        <FloatingHeader />
+        <FloatingHeader visitorAuth />
         <PublicPageSkeleton label={t("common.loading")} />
       </>
     );
@@ -560,7 +562,7 @@ export function PlaceDetailPage() {
 
   return (
     <>
-      <FloatingHeader editUrl={editUrl} showEditButton={canEditPlace} />
+      <FloatingHeader visitorAuth editUrl={editUrl} showEditButton={canEditPlace} />
       <div
         style={{
           minHeight: "100vh",
@@ -835,6 +837,19 @@ export function PlaceDetailPage() {
                     interactive={false}
                     size="md"
                   />
+                  <Link
+                    to={visitorAuthPath(lang || "hu", "login")}
+                    onClick={() => rememberAuthReturn()}
+                    style={{
+                      display: "inline-block",
+                      marginTop: 6,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--hl-accent, #6d28d9)",
+                    }}
+                  >
+                    {t("public.visitorAuth.loginToRate")}
+                  </Link>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                   <SocialShareButtons

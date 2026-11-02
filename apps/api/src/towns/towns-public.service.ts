@@ -111,6 +111,7 @@ export class TownsPublicService {
         heroImage: tr?.heroImage ?? null,
         lat: town.lat,
         lng: town.lng,
+        zoom: town.zoom,
         placeCount: town._count.places,
         isCrawlable: allowsCrawl(globalOn, town.isCrawlable),
         // Town > Site for town explore pages (no platform fallback).

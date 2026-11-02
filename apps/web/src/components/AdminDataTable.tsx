@@ -2,7 +2,8 @@ import { type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AdminRowActions } from "./AdminRowActions";
 import { Pagination } from "./Pagination";
-import { ADMIN_DEFAULT_PAGE_SIZE, filterAndSortRows } from "./adminTableModel";
+import { ADMIN_DEFAULT_PAGE_SIZE, columnFilterOptions, filterAndSortRows } from "./adminTableModel";
+import { ColumnFilterCombobox } from "./ColumnFilterCombobox";
 import { useAdminListState } from "./useAdminListState";
 import "../styles/admin-data-table.css";
 
@@ -110,6 +111,14 @@ export function AdminDataTable<T>({
     () => filterAndSortRows(items, columns, filters, sort),
     [items, columns, filters, sort]
   );
+  const filterOptions = useMemo(() => {
+    const next = new Map<string, string[]>();
+    for (const column of columns) {
+      if (column.filterable === false) continue;
+      next.set(column.key, columnFilterOptions(items, columns, filters, column.key));
+    }
+    return next;
+  }, [items, columns, filters]);
 
   const page = pagination ? pagination.page : query.page;
   const pageSize = pagination ? pagination.pageSize : query.pageSize || defaultPageSize;
@@ -213,12 +222,12 @@ export function AdminDataTable<T>({
               {columns.map((column) => (
                 <td key={`${column.key}-filter`} style={{ textAlign: column.align || "left" }}>
                   {column.filterable === false ? null : (
-                    <input
-                      type="search"
+                    <ColumnFilterCombobox
                       value={filters[column.key] || ""}
-                      aria-label={t("admin.table.filterColumn", { column: column.label })}
+                      options={filterOptions.get(column.key) || []}
+                      ariaLabel={t("admin.table.filterColumn", { column: column.label })}
                       placeholder={t("admin.table.filterPlaceholder")}
-                      onChange={(event) => setFilter(column.key, event.target.value)}
+                      onChange={(value) => setFilter(column.key, value)}
                     />
                   )}
                 </td>

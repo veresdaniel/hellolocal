@@ -117,9 +117,7 @@ export class AdminPlaceMembershipService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        `PlaceMembership already exists for place ${dto.placeId} and user ${dto.userId}`
-      );
+      return this.findOne(existing.id);
     }
 
     // RBAC: Check if actor can assign this role

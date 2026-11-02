@@ -7,7 +7,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { getPlaces, getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
+import { getMapSettings, getPlaces, getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
@@ -34,6 +34,7 @@ interface Town {
   gaMeasurementId?: string | null;
   lat: number | null;
   lng: number | null;
+  zoom?: number | null;
   translations: Array<{
     id: string;
     lang: string;
@@ -73,6 +74,7 @@ function emptyTownForm(siteId = "") {
     seoKeywordsDe: "",
     lat: "",
     lng: "",
+    zoom: "",
     isActive: true,
     isCrawlable: true,
     customDomain: "",
@@ -105,6 +107,7 @@ export function TownsPage() {
   const [townPlaces, setTownPlaces] = useState<Array<{ id: string; translations?: Array<{ lang: string; name: string }> }>>([]);
   const [formData, setFormData] = useState(() => emptyTownForm());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [regionZoom, setRegionZoom] = useState<number | null>(null);
 
   const siteLabel = (site: (typeof sites)[number]) => {
     const lang = (i18n.language || "hu").slice(0, 2);
@@ -124,6 +127,25 @@ export function TownsPage() {
     loadTowns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId, pagination.page, pagination.limit]);
+
+  useEffect(() => {
+    const siteId = formData.siteId.trim();
+    if (!siteId) {
+      setRegionZoom(null);
+      return;
+    }
+    let active = true;
+    void getMapSettings(siteId)
+      .then((settings) => {
+        if (active) setRegionZoom(settings?.zoom ?? null);
+      })
+      .catch(() => {
+        if (active) setRegionZoom(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [formData.siteId]);
 
   useEffect(() => {
     if (!viewingTown) {
@@ -236,6 +258,7 @@ export function TownsPage() {
         translations,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
+        zoom: formData.zoom.trim() ? Number(formData.zoom) : null,
         isActive: formData.isActive,
         isCrawlable: formData.isCrawlable,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
@@ -323,6 +346,7 @@ export function TownsPage() {
           translations,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
+          zoom: formData.zoom.trim() ? Number(formData.zoom) : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
@@ -385,6 +409,7 @@ export function TownsPage() {
       seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
       lat: town.lat?.toString() || "",
       lng: town.lng?.toString() || "",
+      zoom: town.zoom?.toString() || "",
       isActive: town.isActive,
       isCrawlable: town.isCrawlable !== false,
       customDomain: town.customDomain || "",
@@ -711,8 +736,19 @@ export function TownsPage() {
                   latitude={formData.lat ? parseFloat(formData.lat) : null}
                   longitude={formData.lng ? parseFloat(formData.lng) : null}
                   onLocationChange={(lat, lng) => {
-                    setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
+                    setFormData((prev) => ({ ...prev, lat: lat.toString(), lng: lng.toString() }));
                   }}
+                  onZoomChange={(zoom) => {
+                    const next = String(Math.round(zoom * 10) / 10);
+                    setFormData((prev) => {
+                      const inherited = regionZoom ?? 15;
+                      const current = prev.zoom ? Number(prev.zoom) : inherited;
+                      if (Math.abs(zoom - current) < 0.2) return prev;
+                      if (prev.zoom === next) return prev;
+                      return { ...prev, zoom: next };
+                    });
+                  }}
+                  defaultZoom={formData.zoom ? parseFloat(formData.zoom) : regionZoom ?? 15}
                   height={500}
                   interactive={true}
                   hideLocationButton={true}
@@ -776,6 +812,38 @@ export function TownsPage() {
                     }}
                     placeholder="19.0402"
                   />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 4,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.townsPage.zoom")}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    step="0.1"
+                    value={formData.zoom}
+                    onChange={(e) => setFormData({ ...formData, zoom: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                    placeholder={String(regionZoom ?? 15)}
+                  />
+                  <p className="admin-section-card__help">{t("admin.townsPage.zoomHint")}</p>
                 </div>
               </div>
             </div>

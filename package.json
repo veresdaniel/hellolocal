@@ -1,6 +1,6 @@
 {
   "name": "hellolocal",
-  "version": "1.0.10-beta",
+  "version": "1.0.11-beta",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -15,7 +15,6 @@
     "local:dev": "node scripts/local-dev.cjs",
     "local:staging": "node scripts/staging.cjs",
     "local:live": "node scripts/local-live.cjs",
-    "staging": "node scripts/staging.cjs",
     "staging:web": "pnpm -C apps/web staging",
     "staging:api": "pnpm -C apps/api start:staging",
     "build:shared": "pnpm -C packages/shared build",

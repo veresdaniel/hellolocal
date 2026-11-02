@@ -106,5 +106,7 @@ export function publicFormErrorMessage(t: TFunction, err: unknown, fallback: str
   if (code === "public_form_too_fast") return t("public.form.tooFast");
   if (code === "public_form_captcha") return t("public.form.captcha");
   if (code === "public_form_rejected") return t("public.form.rejected");
+  if (code === "username_taken") return t("public.visitorAuth.usernameTaken");
+  if (code === "username_invalid") return t("public.visitorAuth.usernameInvalid");
   return code || fallback;
 }

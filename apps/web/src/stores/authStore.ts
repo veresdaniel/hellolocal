@@ -32,6 +32,7 @@ interface AuthState {
     firstName: string;
     lastName: string;
     bio?: string;
+    audience?: "visitor";
     companyWebsite?: string;
     formStartedAt?: number;
     recaptchaToken?: string;

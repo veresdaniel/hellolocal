@@ -41,6 +41,44 @@ export function columnText<T>(item: T, column: AdminColumnText<T>): string {
   return "";
 }
 
+function columnMatchesFilter<T>(
+  item: T,
+  column: AdminColumnText<T>,
+  filters: Record<string, string>
+): boolean {
+  if (column.filterable === false) return true;
+  const query = (filters[column.key] || "").trim().toLowerCase();
+  if (!query) return true;
+  return columnText(item, column).toLowerCase().includes(query);
+}
+
+/** Unique display values of one column, given every other active column filter. */
+export function columnFilterOptions<T>(
+  items: T[],
+  columns: AdminColumnText<T>[],
+  filters: Record<string, string>,
+  columnKey: string
+): string[] {
+  const column = columns.find((item) => item.key === columnKey);
+  if (!column || column.filterable === false) return [];
+  const seen = new Set<string>();
+  const values: string[] = [];
+  for (const item of items) {
+    const matchesOthers = columns.every(
+      (other) => other.key === columnKey || columnMatchesFilter(item, other, filters)
+    );
+    if (!matchesOthers) continue;
+    const text = columnText(item, column).replace(/\s+/g, " ").trim();
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    values.push(text);
+  }
+  values.sort((left, right) =>
+    left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" })
+  );
+  return values;
+}
+
 export function filterAndSortRows<T>(
   items: T[],
   columns: AdminColumnText<T>[],

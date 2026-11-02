@@ -1292,7 +1292,8 @@
       "metaLength": "Meta description is {{count}} characters (ideal: 70–160).",
       "excerptShort": "Short description is too short for list cards.",
       "bodyShort": "Full description still looks short.",
-      "keywordsFew": "Add at least 3 SEO keywords."
+      "keywordsFew": "Add at least 3 SEO keywords.",
+      "noTips": "Nothing to change."
     },
     "settingsTitle": "AI text draft",
     "settingsHelp": "Optional free-tier AI drafts for admin content fields (default: Google Gemini free tier; also Groq or OpenRouter free). The selected provider’s API key is stored server-side only and is never shown again.",
@@ -1315,11 +1316,27 @@
     "scopeTitle": "Town and place admin",
     "scopeHint": "The region role stays. A town admin adds places on their town. A place admin sets the town on the place form."
   },
+  "access": {
+    "title": "Access",
+    "hint": "Attach a user to a region, a town, or a place.",
+    "user": "User",
+    "region": "Region",
+    "town": "Town",
+    "place": "Place",
+    "target": "Target",
+    "scope": "Level",
+    "add": "Add",
+    "empty": "No assignments yet.",
+    "removeConfirm": "Remove this assignment?",
+    "townEditor": "Town editor"
+  },
   "townsPage": {
     "subtitle": "Every town. The region can stay empty and be assigned later.",
     "scopedSubtitle": "Your town. Add places here, up to the subscription.",
     "addPlace": "New place for this town",
-    "needsRegion": "This town needs a region before a place can be added."
+    "needsRegion": "This town needs a region before a place can be added.",
+    "zoom": "Zoom override",
+    "zoomHint": "Leave empty to keep the region zoom. A value replaces it for this town only."
   },
   "townMembers": {
     "title": "Town members",

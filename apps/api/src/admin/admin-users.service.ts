@@ -8,6 +8,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { ensureRegionLink, replaceRegionLinks } from "./region-link";
 
 export interface UpdateUserRoleDto {
   role: UserRole;
@@ -49,7 +50,7 @@ export class AdminUsersService {
       };
     }
 
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       where,
       include: {
         sites: {
@@ -91,6 +92,7 @@ export class AdminUsersService {
       },
       orderBy: { createdAt: "desc" },
     });
+    return Promise.all(users.map((user) => this.withRegionMemberships(user)));
   }
 
   async findOne(id: string) {
@@ -120,6 +122,37 @@ export class AdminUsersService {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
+    return this.withRegionMemberships(user);
+  }
+
+  /** Region members assigned on the region page also show up as the user's regions. */
+  private async withRegionMemberships<T extends { id: string; sites: Array<{ siteId: string }> }>(
+    user: T
+  ): Promise<T> {
+    const memberships = await this.prisma.siteMembership.findMany({
+      where: { userId: user.id },
+      include: {
+        site: {
+          select: {
+            id: true,
+            slug: true,
+            translations: { select: { lang: true, name: true } },
+          },
+        },
+      },
+    });
+    const seen = new Set(user.sites.map((row) => row.siteId));
+    for (const membership of memberships) {
+      if (seen.has(membership.siteId)) continue;
+      user.sites.push({
+        id: membership.id,
+        userId: user.id,
+        siteId: membership.siteId,
+        isPrimary: false,
+        createdAt: membership.createdAt,
+        site: membership.site,
+      } as T["sites"][number]);
+    }
     return user;
   }
 
@@ -271,6 +304,11 @@ export class AdminUsersService {
       },
     });
 
+    if (dto.siteIds?.length) {
+      for (const siteId of dto.siteIds) {
+        await ensureRegionLink(this.prisma, user.id, siteId);
+      }
+    }
     return user;
   }
 
@@ -323,21 +361,9 @@ export class AdminUsersService {
       updateData.aiAssistantEnabled = dto.aiAssistantEnabled;
     }
 
-    // Update site relationships if provided (admin only)
+    // Régiók on the user and members on the region page are the same list.
     if (dto.siteIds !== undefined && isAdmin) {
-      await this.prisma.userSite.deleteMany({
-        where: { userId },
-      });
-
-      if (dto.siteIds.length > 0) {
-        await this.prisma.userSite.createMany({
-          data: dto.siteIds.map((siteId, index) => ({
-            userId,
-            siteId,
-            isPrimary: index === 0,
-          })),
-        });
-      }
+      await replaceRegionLinks(this.prisma, userId, dto.siteIds);
     }
 
     return this.updateUser(userId, updateData);

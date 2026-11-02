@@ -53,6 +53,15 @@
   font-weight: 600;
 }
 
+.admin-flist__filter-value {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--admin-text, #0f172a);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .admin-flist__filter input,
 .admin-flist__filter select {
   width: 100%;
@@ -70,7 +79,7 @@
 }
 
 .admin-flist__filter input::placeholder {
-  color: var(--admin-text-muted, #475569);
+  color: var(--admin-placeholder, #94a3b8);
   opacity: 1;
 }
 

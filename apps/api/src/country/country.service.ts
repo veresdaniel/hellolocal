@@ -7,6 +7,7 @@ import {
 import { PlaceRole, PlaceSignupStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "../common/domain-host";
+import { assertRegionNameAvailable } from "../common/unique-place-name";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 
 export type CountryDomainInput = {
@@ -158,8 +159,18 @@ export class CountryService {
     }
     const country = await this.prisma.country.findUnique({ where: { id: countryId } });
     if (!country) throw new NotFoundException("Country not found");
-    const site = await this.prisma.site.findUnique({ where: { id: siteId } });
+    const site = await this.prisma.site.findUnique({
+      where: { id: siteId },
+      include: { translations: true },
+    });
     if (!site) throw new NotFoundException("Region not found");
+    for (const translation of site.translations) {
+      await assertRegionNameAvailable(this.prisma, {
+        name: translation.name,
+        countryId,
+        siteId,
+      });
+    }
     return this.prisma.site.update({ where: { id: siteId }, data: { countryId } });
   }
 
@@ -203,6 +214,7 @@ export class CountryService {
     const name = input.name?.trim();
     const slug = this.slugify(input.slug || name || "");
     if (!name || !slug) throw new BadRequestException("Region name and slug are required");
+    await assertRegionNameAvailable(this.prisma, { name, countryId });
     const brand = await this.prisma.brand.findFirst({ orderBy: { createdAt: "asc" } });
     if (!brand) throw new BadRequestException("Create a brand before adding a region");
     const taken = await this.prisma.site.findUnique({ where: { slug } });
