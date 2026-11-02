@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
 import { API_AUTH_GOOGLE } from "@hellolocal/shared";
+import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export function RegisterPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const { register } = useAuth();
+  const shield = usePublicFormShield("register");
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { lang: langParam } = useParams<{ lang?: string }>();
@@ -92,10 +94,11 @@ export function RegisterPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         bio: formData.bio || undefined,
+        ...(await shield.payload()),
       });
       navigate(`/${lang}/admin`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.registrationFailed"));
+      setError(publicFormErrorMessage(t, err, t("admin.registrationFailed")));
     } finally {
       setIsLoading(false);
     }
@@ -167,8 +170,9 @@ export function RegisterPage() {
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)", position: "relative" }}
         >
+          {shield.fields}
           <div>
             <label
               style={{

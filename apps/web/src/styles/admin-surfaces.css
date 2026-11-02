@@ -257,6 +257,17 @@
   color: var(--admin-on-chrome-muted);
 }
 
+/* Light card. Without a background this class forced dark ink onto the purple shell. */
+.admin-surface {
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
 /* Light surfaces: dark ink even when nested under purple chrome */
 .admin-layout > nav,
 .admin-surface,
@@ -416,6 +427,61 @@
 .admin-btn--ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.22);
   color: var(--admin-on-chrome);
+}
+
+.admin-role-select,
+.admin-role-badge {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #94a3b8;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--admin-font);
+}
+
+.admin-role-select {
+  padding: 6px 28px 6px 10px;
+  font-size: 14px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.admin-role-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.admin-role-select option {
+  background: #fff;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.admin-role-select[data-role="editor"],
+.admin-role-badge[data-role="editor"],
+.admin-role-select[data-role="member"],
+.admin-role-badge[data-role="member"] {
+  border-left-color: #15803d;
+}
+
+.admin-role-select[data-role="admin"],
+.admin-role-badge[data-role="admin"],
+.admin-role-select[data-role="siteadmin"],
+.admin-role-badge[data-role="siteadmin"] {
+  border-left-color: #64748b;
+}
+
+.admin-role-select[data-role="superadmin"],
+.admin-role-badge[data-role="superadmin"] {
+  border-left-color: #7c3aed;
 }
 
 .admin-btn--danger {

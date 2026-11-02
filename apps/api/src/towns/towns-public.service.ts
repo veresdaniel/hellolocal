@@ -5,6 +5,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { assignMissingSlugs, generateSlug } from "../slug/slug.helper";
+import { allowsCrawl } from "../seo/crawlability";
+import { CrawlabilityService } from "../seo/crawlability.service";
 
 type ListTownsArgs = {
   lang: string;
@@ -16,7 +18,8 @@ type ListTownsArgs = {
 export class TownsPublicService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService,
+    private readonly crawlability: CrawlabilityService
   ) {}
 
   /**
@@ -93,6 +96,7 @@ export class TownsPublicService {
       siteGaMeasurementId = null;
     }
 
+    const globalOn = await this.crawlability.isGlobalOn();
     const items = towns.map((town) => {
       const tr =
         town.translations.find((t) => t.lang === site.lang) ||
@@ -108,6 +112,7 @@ export class TownsPublicService {
         lat: town.lat,
         lng: town.lng,
         placeCount: town._count.places,
+        isCrawlable: allowsCrawl(globalOn, town.isCrawlable),
         // Town > Site for town explore pages (no platform fallback).
         gaMeasurementId: resolveGaMeasurementId(town.gaMeasurementId, siteGaMeasurementId),
       };

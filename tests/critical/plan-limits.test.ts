@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AdminPlaceService } from "../../apps/api/src/admin/admin-place.service";
 import { AdminSiteService } from "../../apps/api/src/admin/admin-site.service";
+import { PLAN_DEFS } from "../../apps/api/src/entitlements/entitlements.config";
+import { EntitlementsService } from "../../apps/api/src/entitlements/entitlements.service";
 import {
   PUBLIC_PLAN_DEFAULTS,
   resolvePublicPlans,
@@ -8,32 +10,75 @@ import {
   syncPublicPlansFromMatrixLimits,
 } from "../../apps/web/src/components/publicPlans";
 
-function placeService(options: {
-  placesMax: number;
-  count?: number;
-  onCount?: () => void;
-  onCreate?: () => Promise<unknown>;
-}) {
+function placeService(options: { rejectWhenActive?: boolean; onCreate?: () => Promise<unknown> } = {}) {
+  const calls: Array<{ actor?: string; siteId: string; active: boolean }> = [];
   const prisma = {
     place: {
-      count: async () => {
-        options.onCount?.();
-        return options.count ?? 0;
-      },
       create: async () => options.onCreate?.() ?? {},
+      update: async () => options.onCreate?.() ?? {},
       findFirst: async () => null,
     },
     town: {
       findFirst: async () => ({ id: "town-1" }),
     },
-    siteDomain: { findUnique: async () => null },
-    site: { findFirst: async () => null },
-    collection: { findUnique: async () => null },
   };
   const entitlements = {
-    getBySiteId: async () => ({ limits: { placesMax: options.placesMax } }),
+    assertCanAddPlace: async (actor: string | undefined, siteId: string, active: boolean) => {
+      calls.push({ actor, siteId, active });
+      if (active && options.rejectWhenActive) {
+        throw new Error("A régió helykerete betelt (3/3).");
+      }
+    },
   };
-  return new AdminPlaceService(prisma as never, {} as never, {} as never, entitlements as never);
+  return {
+    calls,
+    service: new AdminPlaceService(prisma as never, {} as never, {} as never, entitlements as never),
+  };
+}
+
+function entitlements(options: {
+  role?: string;
+  regionEditorSiteIds?: string[];
+  townIds?: string[];
+  townInSite?: boolean;
+  customerPlans?: string[];
+  customerPlaces?: number;
+  staffPlaces?: number;
+  events?: number;
+  subscription?: { plan: string; status: string; validUntil: Date | null } | null;
+  overrides?: unknown;
+  placeOwnerId?: string | null;
+}) {
+  const prisma = {
+    user: { findUnique: async () => ({ role: options.role ?? "editor" }) },
+    town: { findFirst: async () => (options.townInSite ? { id: "town-1" } : null) },
+    place: {
+      findMany: async () => (options.customerPlans ?? []).map((plan) => ({ plan })),
+      findUnique: async () => ({ ownerId: options.placeOwnerId ?? null }),
+      count: async (args: { where?: { OR?: unknown } }) =>
+        args?.where?.OR ? (options.customerPlaces ?? 0) : (options.staffPlaces ?? 0),
+    },
+    event: { count: async () => options.events ?? 0 },
+    siteSubscription: {
+      findUnique: async () =>
+        options.subscription === undefined
+          ? { plan: "BASIC", status: "ACTIVE", validUntil: null }
+          : options.subscription,
+    },
+    brand: { findFirst: async () => ({ planOverrides: options.overrides ?? null }) },
+    siteMembership: { count: async () => 0 },
+    siteDomain: { count: async () => 0 },
+    site: { findUnique: async () => ({ languages: ["hu"], plan: "municipal" }) },
+    gallery: { count: async () => 0 },
+  };
+  const rbac = {
+    getContentScope: async () => ({
+      unrestricted: false,
+      regionEditorSiteIds: options.regionEditorSiteIds ?? [],
+      townIds: options.townIds ?? [],
+    }),
+  };
+  return new EntitlementsService(prisma as never, {} as never, rbac as never);
 }
 
 function siteService(options: {
@@ -61,57 +106,135 @@ const draft = {
 };
 
 describe("place capacity", () => {
-  it("refuses another active place once placesMax is reached", async () => {
+  it("refuses to store an active place when the entitlement check fails", async () => {
     let created = 0;
-    const service = placeService({
-      placesMax: 3,
-      count: 3,
+    const harness = placeService({
+      rejectWhenActive: true,
       onCreate: async () => {
         created += 1;
         return {};
       },
     });
-    await expect(service.create({ ...draft, isActive: true })).rejects.toThrow(/helykerete/);
-    expect(created).toBe(0);
-  });
-
-  it("does not count a draft, and an unlimited plan skips the query", async () => {
-    let counts = 0;
-    const drafts = placeService({
-      placesMax: 1,
-      count: 99,
-      onCount: () => {
-        counts += 1;
-      },
-      onCreate: async () => {
-        throw new Error("stored");
-      },
-    });
-    await expect(drafts.create({ ...draft })).rejects.toThrow(/stored/);
-    await expect(drafts.create({ ...draft, isActive: false })).rejects.toThrow(/stored/);
-    expect(counts).toBe(0);
-
-    const open = placeService({
-      placesMax: Number.POSITIVE_INFINITY,
-      onCount: () => {
-        counts += 1;
-      },
-      onCreate: async () => {
-        throw new Error("stored");
-      },
-    });
-    await expect(open.create({ ...draft, isActive: true })).rejects.toThrow(/stored/);
-    expect(counts).toBe(0);
-  });
-
-  it("checks the cap again when an existing place is published", async () => {
-    const service = placeService({ placesMax: 1, count: 1 }) as unknown as {
-      findOne: () => Promise<{ isActive: boolean; isFeatured: boolean }>;
-      update: AdminPlaceService["update"];
-    };
-    service.findOne = async () => ({ isActive: false, isFeatured: false });
-    await expect(service.update("place-1", "site-1", { isActive: true })).rejects.toThrow(
+    await expect(harness.service.create({ ...draft, isActive: true }, "editor-1")).rejects.toThrow(
       /helykerete/
+    );
+    expect(created).toBe(0);
+    expect(harness.calls).toEqual([{ actor: "editor-1", siteId: "site-1", active: true }]);
+  });
+
+  it("asks for a slot only when the place will be active", async () => {
+    const harness = placeService({
+      onCreate: async () => {
+        throw new Error("stored");
+      },
+    });
+    await expect(harness.service.create({ ...draft })).rejects.toThrow(/stored/);
+    await expect(harness.service.create({ ...draft, isActive: false })).rejects.toThrow(/stored/);
+    expect(harness.calls.map((call) => call.active)).toEqual([false, false]);
+  });
+
+  it("rechecks a staff place when it is published, and skips a customer place", async () => {
+    const staff = placeService({ rejectWhenActive: true });
+    (staff.service as unknown as { findOne: () => Promise<unknown> }).findOne = async () => ({
+      isActive: false,
+      isFeatured: false,
+      ownerId: null,
+    });
+    await expect(staff.service.update("place-1", "site-1", { isActive: true }, "editor-1")).rejects.toThrow(
+      /helykerete/
+    );
+    expect(staff.calls).toEqual([{ actor: "editor-1", siteId: "site-1", active: true }]);
+
+    const owned = placeService({ rejectWhenActive: true });
+    (owned.service as unknown as { findOne: () => Promise<unknown> }).findOne = async () => ({
+      isActive: false,
+      isFeatured: false,
+      ownerId: "customer-1",
+    });
+    await expect(owned.service.update("place-2", "site-1", { isActive: true }, "editor-1")).rejects.toThrow(
+      /findUnique/
+    );
+    expect(owned.calls).toEqual([]);
+  });
+});
+
+describe("customer and region quotas", () => {
+  it("keeps Több telephely at 30 and leaves unlimited to the municipal plan", () => {
+    expect(PLAN_DEFS.PRO.limits.placesMax).toBe(30);
+    expect(PLAN_DEFS.PRO.limits.eventsPerMonthMax).toBe(30);
+    expect(PLAN_DEFS.BUSINESS.limits.placesMax).toBe(30);
+    expect(PLAN_DEFS.BUSINESS.limits.eventsPerMonthMax).toBe(30);
+    expect(PLAN_DEFS.MUNICIPAL.limits.placesMax).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("uses the region subscription for staff and ignores a municipal label on the region row", async () => {
+    const full = entitlements({ regionEditorSiteIds: ["site-1"], staffPlaces: 5 });
+    await expect(full.assertCanAddPlace("editor-1", "site-1", true)).rejects.toThrow(/régió helykerete/);
+
+    const draft = entitlements({ regionEditorSiteIds: ["site-1"], staffPlaces: 99 });
+    await draft.assertCanAddPlace("editor-1", "site-1", false);
+
+    const municipal = entitlements({
+      regionEditorSiteIds: ["site-1"],
+      staffPlaces: 80,
+      subscription: { plan: "MUNICIPAL", status: "ACTIVE", validUntil: null },
+    });
+    await municipal.assertCanAddPlace("editor-1", "site-1", true);
+  });
+
+  it("ignores a saved Infinity override and keeps the municipal cap as the only unlimited plan", async () => {
+    const capped = entitlements({
+      regionEditorSiteIds: ["site-1"],
+      staffPlaces: 5,
+      overrides: { BASIC: { limits: { placesMax: Number.POSITIVE_INFINITY } } },
+    });
+    await expect(capped.assertCanAddPlace("editor-1", "site-1", true)).rejects.toThrow(/régió helykerete/);
+  });
+
+  it("lets a superadmin pass a full region", async () => {
+    const service = entitlements({ role: "superadmin", staffPlaces: 99 });
+    await service.assertCanAddPlace("super-1", "site-1", true);
+  });
+
+  it("counts a customer's own places, including drafts, on Egy hely", async () => {
+    const taken = entitlements({ customerPlans: ["free"], customerPlaces: 1 });
+    await expect(taken.assertCanAddPlace("customer-1", "site-1", false)).rejects.toThrow(/1 helyet/);
+
+    const open = entitlements({ customerPlans: ["free"], customerPlaces: 0, staffPlaces: 99 });
+    await open.assertCanAddPlace("customer-1", "site-1", true);
+  });
+
+  it("raises the customer cap from the highest place plan", async () => {
+    const room = entitlements({ customerPlans: ["free", "pro"], customerPlaces: 29 });
+    await room.assertCanAddPlace("customer-1", "site-1", true);
+
+    const full = entitlements({ customerPlans: ["pro"], customerPlaces: 30 });
+    await expect(full.assertCanAddPlace("customer-1", "site-1", true)).rejects.toThrow(/30 helyet/);
+  });
+
+  it("charges a town admin to the region, and a customer event to the owner", async () => {
+    const townAdmin = entitlements({
+      townIds: ["town-1"],
+      townInSite: true,
+      staffPlaces: 5,
+      customerPlaces: 0,
+    });
+    await expect(townAdmin.assertCanAddPlace("town-user", "site-1", true)).rejects.toThrow(
+      /régió helykerete/
+    );
+
+    const customerEvent = entitlements({
+      placeOwnerId: "customer-1",
+      customerPlans: ["free"],
+      events: 5,
+    });
+    await expect(customerEvent.assertCanAddEvent("editor-1", "site-1", "place-1")).rejects.toThrow(
+      /előfizetésed havi eseménykerete/
+    );
+
+    const regionEvent = entitlements({ placeOwnerId: null, events: 15 });
+    await expect(regionEvent.assertCanAddEvent("editor-1", "site-1", "place-1")).rejects.toThrow(
+      /régió havi eseménykerete/
     );
   });
 });
@@ -180,7 +303,10 @@ describe("public plan numbers", () => {
     expect(defaults.free.places).toBeLessThan(defaults.basic.places);
     expect(defaults.basic.places).toBeLessThan(defaults.premium.places);
     expect(defaults.free.languages).toBe(1);
-    expect(defaults.premium.languages).toBe(3);
+    expect(defaults.premium.languages).toBe(1);
+    expect(defaults.free.places).toBe(1);
+    expect(defaults.basic.places).toBe(5);
+    expect(defaults.premium.places).toBe(30);
 
     const resolved = resolvePublicPlans({
       BASIC: { limits: { placesMax: 12, languagesMax: 2, eventsPerMonthMax: Number.POSITIVE_INFINITY } },

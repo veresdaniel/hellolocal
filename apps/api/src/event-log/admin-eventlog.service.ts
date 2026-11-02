@@ -4,8 +4,8 @@ import {
   BadRequestException,
   ForbiddenException,
 } from "@nestjs/common";
+import { Prisma, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { UserRole } from "@prisma/client";
 
 export interface EventLogFilterDto {
   siteId?: string;
@@ -16,6 +16,8 @@ export interface EventLogFilterDto {
   endDate?: string; // ISO date string
   page?: number;
   limit?: number;
+  /** global is rejected for anyone who is not a superadmin. */
+  scope?: string;
 }
 
 export interface CreateEventLogDto {
@@ -65,6 +67,45 @@ export class AdminEventLogService {
       },
     });
     return result;
+  }
+
+  /**
+   * Rows inside an already-scoped where. Callers must not pass a where wider than the actor.
+   */
+  async findWhere(accessWhere: Prisma.EventLogWhereInput, filters: EventLogFilterDto) {
+    const and: Prisma.EventLogWhereInput[] = [accessWhere];
+    if (filters.siteId) and.push({ siteId: filters.siteId });
+    if (filters.userId) and.push({ userId: filters.userId });
+    if (filters.action) and.push({ action: filters.action });
+    if (filters.entityType) and.push({ entityType: filters.entityType });
+    if (filters.startDate || filters.endDate) {
+      and.push({
+        createdAt: {
+          ...(filters.startDate ? { gte: new Date(filters.startDate) } : {}),
+          ...(filters.endDate ? { lte: new Date(filters.endDate) } : {}),
+        },
+      });
+    }
+    const page = Math.max(1, Number(filters.page) || 1);
+    const limit = Math.min(200, Math.max(1, Number(filters.limit) || 50));
+    const where = { AND: and };
+    const [logs, total] = await Promise.all([
+      this.prisma.eventLog.findMany({
+        where,
+        include: {
+          user: { select: { id: true, username: true, email: true, firstName: true, lastName: true } },
+          site: { select: { id: true, slug: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.eventLog.count({ where }),
+    ]);
+    return {
+      logs,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   /**

@@ -27,6 +27,8 @@ import {
   type CardField,
 } from "../../components/AdminResponsiveTable";
 import { ROLE_SUPERADMIN } from "../../types/enums";
+import { AdminRoleSelect } from "../../components/AdminRoleSelect";
+import { UserScopeAssign } from "../../components/UserScopeAssign";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -295,6 +297,29 @@ export function UsersPage() {
         >
           + {t("admin.forms.newUser")}
         </button>
+      </div>
+      <div
+        style={{
+          marginBottom: 24,
+          padding: 16,
+          background: "#fff",
+          color: "#0f172a",
+          border: "1px solid #e2e8f0",
+          borderRadius: 12,
+        }}
+      >
+        <h2 style={{ margin: "0 0 8px", fontSize: 16 }}>{t("admin.scopeSplit.title")}</h2>
+        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+          <li>
+            <Link to={`/${lang || "hu"}/admin/site-memberships`}>{t("admin.scopeSplit.region")}</Link>
+          </li>
+          <li>
+            <Link to={`/${lang || "hu"}/admin/towns`}>{t("admin.scopeSplit.town")}</Link>
+          </li>
+          <li>
+            <Link to={`/${lang || "hu"}/admin/places`}>{t("admin.scopeSplit.place")}</Link>
+          </li>
+        </ul>
       </div>
 
       {error && (
@@ -619,6 +644,8 @@ export function UsersPage() {
             />
           )}
 
+          {editingId ? <UserScopeAssign userId={editingId} sites={sites} /> : null}
+
           {editingId && (
             <div
               style={{
@@ -793,40 +820,46 @@ export function UsersPage() {
               key: "role",
               label: t("admin.role"),
               render: (user) => (
-                <select
+                <AdminRoleSelect
                   value={user.role}
-                  onChange={(e) =>
-                    handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"])
-                  }
                   disabled={user.role === "superadmin" && user.id !== currentUser?.id}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    borderRadius: 4,
-                    border: "1px solid #ddd",
-                    cursor:
-                      user.role === "superadmin" && user.id !== currentUser?.id
-                        ? "not-allowed"
-                        : "pointer",
-                    background:
-                      user.role === "superadmin"
-                        ? "#9c27b0"
-                        : user.role === "admin"
-                          ? "#dc3545"
-                          : user.role === "editor"
-                            ? "#28a745"
-                            : "#6c757d",
-                    color: "white",
-                  }}
-                >
-                  <option value="viewer">{t("admin.roles.viewer")}</option>
-                  <option value="editor">{t("admin.roles.editor")}</option>
-                  <option value="admin">{t("admin.roles.admin")}</option>
-                  <option value="superadmin">{t("admin.roles.superadmin")}</option>
-                </select>
+                  onChange={(role) =>
+                    handleRoleChange(user.id, role as UpdateUserRoleDto["role"])
+                  }
+                  options={[
+                    { value: "viewer", label: t("admin.roles.viewer") },
+                    { value: "editor", label: t("admin.roles.editor") },
+                    { value: "admin", label: t("admin.roles.admin") },
+                    { value: "superadmin", label: t("admin.roles.superadmin") },
+                  ]}
+                />
               ),
+            },
+            {
+              key: "towns",
+              label: t("admin.roles.townAdmin"),
+              render: (user) => {
+                const names = (user.townMemberships || []).map(
+                  (row) =>
+                    row.town.translations.find((item) => item.lang === "hu")?.name ||
+                    row.town.translations[0]?.name ||
+                    row.town.id
+                );
+                return names.length ? names.join(", ") : <span style={{ color: "#999" }}>{t("common.none")}</span>;
+              },
+            },
+            {
+              key: "places",
+              label: t("admin.roles.placeAdmin"),
+              render: (user) => {
+                const names = (user.placeMemberships || []).map(
+                  (row) =>
+                    row.place.translations.find((item) => item.lang === "hu")?.name ||
+                    row.place.translations[0]?.name ||
+                    row.place.id
+                );
+                return names.length ? names.join(", ") : <span style={{ color: "#999" }}>{t("common.none")}</span>;
+              },
             },
             {
               key: "sites",
@@ -898,41 +931,20 @@ export function UsersPage() {
               key: "role",
               render: (user) => (
                 <div style={{ marginBottom: 8 }}>
-                  <select
+                  <AdminRoleSelect
                     value={user.role}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleRoleChange(user.id, e.target.value as UpdateUserRoleDto["role"]);
-                    }}
                     disabled={user.role === "superadmin" && user.id !== currentUser?.id}
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      borderRadius: 6,
-                      border: "1px solid #ddd",
-                      cursor:
-                        user.role === "superadmin" && user.id !== currentUser?.id
-                          ? "not-allowed"
-                          : "pointer",
-                      background:
-                        user.role === "superadmin"
-                          ? "#9c27b0"
-                          : user.role === "admin"
-                            ? "#dc3545"
-                            : user.role === "editor"
-                              ? "#28a745"
-                              : "#6c757d",
-                      color: "white",
-                      fontWeight: 600,
-                    }}
-                  >
-                    <option value="viewer">{t("admin.roles.viewer")}</option>
-                    <option value="editor">{t("admin.roles.editor")}</option>
-                    <option value="admin">{t("admin.roles.admin")}</option>
-                    <option value="superadmin">{t("admin.roles.superadmin")}</option>
-                  </select>
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(role) =>
+                      handleRoleChange(user.id, role as UpdateUserRoleDto["role"])
+                    }
+                    options={[
+                      { value: "viewer", label: t("admin.roles.viewer") },
+                      { value: "editor", label: t("admin.roles.editor") },
+                      { value: "admin", label: t("admin.roles.admin") },
+                      { value: "superadmin", label: t("admin.roles.superadmin") },
+                    ]}
+                  />
                 </div>
               ),
             },

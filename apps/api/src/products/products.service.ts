@@ -11,6 +11,7 @@ import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { requireLang } from "../common/lang";
 import { isMissingProductClickTable } from "../analytics/product-click-table";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { RbacService } from "../auth/rbac.service";
 
 const PAGE_SIZE_DEFAULT = 24;
 const PAGE_SIZE_MAX = 60;
@@ -38,7 +39,8 @@ type Actor = { id: string; role: UserRole; siteIds?: string[] };
 export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService,
+    private readonly rbac: RbacService
   ) {}
 
   async listPublic(args: {
@@ -127,13 +129,15 @@ export class ProductsService {
     };
   }
 
-  async listAdmin(siteId: string, actor: Actor, q?: string, placeId?: string) {
-    this.assertSite(actor, siteId);
+  async listAdmin(siteId: string | undefined, actor: Actor, q?: string, placeId?: string) {
+    const resolvedSiteId = await this.resolveAdminSite(actor, siteId);
+    const placeFilter = await this.productReadFilter(actor, resolvedSiteId, placeId);
     const query = q?.trim() || "";
     const scopedPlaceId = placeId?.trim() || "";
     const rows = await this.prisma.product.findMany({
       where: {
-        siteId,
+        siteId: resolvedSiteId,
+        ...(placeFilter ? { place: placeFilter } : {}),
         ...(scopedPlaceId ? { placeId: scopedPlaceId } : {}),
         ...(query
           ? {
@@ -150,12 +154,13 @@ export class ProductsService {
     return rows.map((row) => this.toAdmin(row, clicks.get(row.id) ?? 0));
   }
 
-  async create(siteId: string, input: ProductWriteInput, actor: Actor) {
-    this.assertSite(actor, siteId);
-    const data = await this.normalize(siteId, input);
+  async create(siteId: string | undefined, input: ProductWriteInput, actor: Actor) {
+    const resolvedSiteId = await this.resolveAdminSite(actor, siteId);
+    await this.assertProductWrite(actor, resolvedSiteId, input.placeId);
+    const data = await this.normalize(resolvedSiteId, input);
     const created = await this.prisma.product.create({
       data: {
-        siteId,
+        siteId: resolvedSiteId,
         ...data.product,
         translations: { create: data.translations },
       },
@@ -164,11 +169,13 @@ export class ProductsService {
     return this.toAdmin(created, 0);
   }
 
-  async update(id: string, siteId: string, input: ProductWriteInput, actor: Actor) {
-    this.assertSite(actor, siteId);
-    const existing = await this.prisma.product.findFirst({ where: { id, siteId } });
+  async update(id: string, siteId: string | undefined, input: ProductWriteInput, actor: Actor) {
+    const resolvedSiteId = await this.resolveAdminSite(actor, siteId);
+    const existing = await this.prisma.product.findFirst({ where: { id, siteId: resolvedSiteId } });
     if (!existing) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRODUCT);
-    const data = await this.normalize(siteId, input);
+    await this.assertProductWrite(actor, resolvedSiteId, existing.placeId);
+    await this.assertProductWrite(actor, resolvedSiteId, input.placeId);
+    const data = await this.normalize(resolvedSiteId, input);
     const updated = await this.prisma.product.update({
       where: { id },
       data: {
@@ -184,10 +191,11 @@ export class ProductsService {
     return this.toAdmin(updated, clicks.get(updated.id) ?? 0);
   }
 
-  async remove(id: string, siteId: string, actor: Actor) {
-    this.assertSite(actor, siteId);
-    const existing = await this.prisma.product.findFirst({ where: { id, siteId } });
+  async remove(id: string, siteId: string | undefined, actor: Actor) {
+    const resolvedSiteId = await this.resolveAdminSite(actor, siteId);
+    const existing = await this.prisma.product.findFirst({ where: { id, siteId: resolvedSiteId } });
     if (!existing) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRODUCT);
+    await this.assertProductWrite(actor, resolvedSiteId, existing.placeId);
     await this.prisma.product.delete({ where: { id } });
     return { ok: true };
   }
@@ -208,12 +216,31 @@ export class ProductsService {
     return totals;
   }
 
-  private assertSite(actor: Actor, siteId: string) {
-    if (!siteId) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_SITE_ID_REQUIRED);
-    if (actor.role === UserRole.superadmin) return;
-    if (!actor.siteIds?.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+  private async resolveAdminSite(actor: Actor, siteId?: string) {
+    if (actor.role === UserRole.superadmin) {
+      if (!siteId) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_SITE_ID_REQUIRED);
+      return siteId;
     }
+    return this.rbac.defaultContentSiteId(actor.id, siteId || undefined, actor.siteIds ?? []);
+  }
+
+  private async productReadFilter(actor: Actor, siteId: string, placeId?: string) {
+    if (actor.role === UserRole.superadmin) return undefined;
+    const scope = await this.rbac.getContentScope(actor.id);
+    if (!this.rbac.canListPlaces(scope)) {
+      throw new ForbiddenException("Products are outside your access");
+    }
+    if (placeId?.trim()) {
+      const place = await this.rbac.requirePlace(actor.id, placeId.trim());
+      if (place.siteId !== siteId) throw new ForbiddenException("Place is outside your access");
+    }
+    return this.rbac.placeWhere(scope);
+  }
+
+  private async assertProductWrite(actor: Actor, siteId: string, placeId: string) {
+    if (actor.role === UserRole.superadmin) return;
+    const place = await this.rbac.assertPlaceContentEditor(actor.id, placeId);
+    if (place.siteId !== siteId) throw new ForbiddenException("Place is outside your access");
   }
 
   private async normalize(siteId: string, input: ProductWriteInput) {

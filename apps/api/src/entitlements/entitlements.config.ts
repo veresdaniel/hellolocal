@@ -1,6 +1,6 @@
 // entitlements.config.ts
 export type Entitlements = {
-  plan: "BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL";
+  plan: "FREE" | "BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL";
   status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
   validUntil?: string | null;
 
@@ -38,12 +38,34 @@ export type Entitlements = {
 };
 
 export const PLAN_DEFS = {
+  FREE: {
+    limits: {
+      placesMax: 1,
+      featuredPlacesMax: 0,
+      galleryImagesPerPlaceMax: Infinity,
+      eventsPerMonthMax: 5,
+      siteMembersMax: 1,
+      domainAliasesMax: 0,
+      languagesMax: 1,
+      galleriesMax: Infinity,
+      imagesPerGalleryMax: Infinity,
+      galleriesPerPlaceMax: Infinity,
+      galleriesPerEventMax: Infinity,
+    },
+    features: {
+      eventsEnabled: true,
+      placeSeoEnabled: false,
+      extrasEnabled: false,
+      customDomainEnabled: false,
+      eventLogEnabled: false,
+    },
+  },
   BASIC: {
     limits: {
-      placesMax: Infinity, // Korlátlan place (default) - mind a tulaj, mind az oda regisztráló felhasználó létrehozhat
-      featuredPlacesMax: 0, // Nincs kiemelt helyek
-      galleryImagesPerPlaceMax: Infinity, // Korlátlan kép
-      eventsPerMonthMax: 0, // Nincs események
+      placesMax: 5,
+      featuredPlacesMax: 0,
+      galleryImagesPerPlaceMax: Infinity,
+      eventsPerMonthMax: 15,
       siteMembersMax: Infinity, // Korlátlan tag
       domainAliasesMax: 0, // Nincs egyedi domain
       languagesMax: 1,
@@ -53,7 +75,7 @@ export const PLAN_DEFS = {
       galleriesPerEventMax: Infinity,
     },
     features: {
-      eventsEnabled: false, // Nincs események
+      eventsEnabled: true,
       placeSeoEnabled: false, // Nincs SEO
       extrasEnabled: false,
       customDomainEnabled: false, // Nincs egyedi domain
@@ -62,10 +84,10 @@ export const PLAN_DEFS = {
   },
   PRO: {
     limits: {
-      placesMax: Infinity,
+      placesMax: 30,
       featuredPlacesMax: 15,
       galleryImagesPerPlaceMax: 30,
-      eventsPerMonthMax: 200,
+      eventsPerMonthMax: 30,
       siteMembersMax: 20,
       domainAliasesMax: 5,
       languagesMax: 3,
@@ -84,10 +106,10 @@ export const PLAN_DEFS = {
   },
   BUSINESS: {
     limits: {
-      placesMax: Infinity,
+      placesMax: 30,
       featuredPlacesMax: Infinity,
       galleryImagesPerPlaceMax: Infinity,
-      eventsPerMonthMax: Infinity,
+      eventsPerMonthMax: 30,
       siteMembersMax: Infinity,
       domainAliasesMax: Infinity,
       languagesMax: Infinity,

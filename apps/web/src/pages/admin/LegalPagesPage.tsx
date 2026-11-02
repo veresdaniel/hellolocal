@@ -16,6 +16,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
+import { CrawlableToggle } from "../../components/CrawlableToggle";
 import {
   AdminResponsiveTable,
   type TableColumn,
@@ -30,6 +31,7 @@ interface LegalPage {
   tenantId: string;
   key: "imprint" | "terms" | "privacy";
   isActive: boolean;
+  isCrawlable?: boolean;
   translations: Array<{
     id: string;
     lang: string;
@@ -86,6 +88,7 @@ export function LegalPagesPage() {
     seoKeywordsEn: "",
     seoKeywordsDe: "",
     isActive: true,
+    isCrawlable: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -213,6 +216,7 @@ export function LegalPagesPage() {
           return translations;
         })(),
         isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
       });
       setIsCreating(false);
       resetForm();
@@ -294,6 +298,7 @@ export function LegalPagesPage() {
             return translations;
           })(),
           isActive: formData.isActive,
+          isCrawlable: formData.isCrawlable,
         },
         selectedSiteId || undefined
       );
@@ -349,6 +354,7 @@ export function LegalPagesPage() {
       seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
       seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
       isActive: legalPage.isActive,
+      isCrawlable: legalPage.isCrawlable !== false,
     });
   };
 
@@ -377,6 +383,7 @@ export function LegalPagesPage() {
       seoKeywordsEn: "",
       seoKeywordsDe: "",
       isActive: true,
+      isCrawlable: true,
     });
     setFormErrors({});
   };
@@ -557,6 +564,11 @@ export function LegalPagesPage() {
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
+
+          <CrawlableToggle
+            checked={formData.isCrawlable}
+            onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+          />
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -1132,19 +1144,15 @@ export function LegalPagesPage() {
           }}
           onDelete={(legalPage) => handleDelete(legalPage.id)}
           error={null}
+          pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onLimitChange: (limit) => setPagination((prev) => ({ ...prev, limit, page: 1 })),
+          }}
         />
-      )}
-      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
-          />
-        </div>
       )}
     </div>
   );

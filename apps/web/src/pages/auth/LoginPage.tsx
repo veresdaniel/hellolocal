@@ -14,6 +14,7 @@ import { useSeo } from "../../seo/useSeo";
 import { safeInternalPath } from "../../utils/safeInternalPath";
 import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/authStorage";
+import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 
 
 export function LoginPage() {
@@ -26,6 +27,7 @@ export function LoginPage() {
   const [wasManualLogout, setWasManualLogout] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const { login, user, isLoading: authIsLoading, refreshUser } = useAuth();
+  const shield = usePublicFormShield("login");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const twoFactorInputRef = useRef<HTMLInputElement>(null);
@@ -249,7 +251,7 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password, requiresTwoFactor ? twoFactorToken : undefined);
+      await login(email, password, requiresTwoFactor ? twoFactorToken : undefined, await shield.payload());
       // Clear any public return URL - admin users should always go to dashboard
       const returnUrl = safeInternalPath(sessionStorage.getItem("authReturnUrl"), "");
       if (!returnUrl || !returnUrl.includes("/admin")) {
@@ -258,7 +260,7 @@ export function LoginPage() {
       // Navigate after login completes - React will re-render when AuthContext updates
       navigate(`/${lang}/admin`, { replace: true });
     } catch (err) {
-      const rawMessage = err instanceof Error ? err.message : t("admin.loginFailed");
+      const rawMessage = publicFormErrorMessage(t, err, t("admin.loginFailed"));
       const errorMessage = Array.isArray(rawMessage) ? rawMessage.join(" ") : String(rawMessage);
       const errorStatus = (err as any)?.status;
 
@@ -397,8 +399,9 @@ export function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)", position: "relative" }}
         >
+          {shield.fields}
           <div>
             <label
               style={{

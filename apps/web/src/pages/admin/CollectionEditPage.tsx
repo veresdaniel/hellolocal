@@ -1302,6 +1302,9 @@ function ContentTab({
               {t("admin.collections.isCrawlable")}
             </span>
           </label>
+          <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+            {t("admin.isCrawlableDescription")}
+          </div>
         </div>
 
         <div>

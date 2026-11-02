@@ -143,7 +143,7 @@
     "deleteTenantFailed": "Failed to delete region",
     "loadDefaultLanguageFailed": "Failed to load default language",
     "updateDefaultLanguageFailed": "Failed to update default language",
-    "loadEventLogsFailed": "Failed to load event logs",
+    "loadEventLogsFailed": "Failed to load the log",
     "exportFailed": "Export failed",
     "loadSubscriptionSummaryFailed": "Failed to load summary",
     "loadExpiringSubscriptionsFailed": "Failed to load expiring subscriptions",
@@ -563,7 +563,12 @@
       "map": "Map",
       "features": "Features",
       "subscription": "Subscription",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "members": "Memberships"
+    },
+    "members": {
+      "title": "Region memberships",
+      "hint": "Members of this region. Memberships of other regions are not listed here."
     },
     "instances": {
       "title": "Page instances",
@@ -609,6 +614,21 @@
       "subdomainLabel": "Subdomain",
       "addSubdomain": "Add subdomain",
       "primarySubdomainHint": "The primary domain is the main (apex) host; subdomains are additional hostnames (e.g. hu.example.com), each with its own default language. Both resolve to this region.",
+      "countryTitle": "Country",
+      "countryHint": "The region belongs to one country. Country domains are a separate instance. Names come from the browser country list.",
+      "countryPlaceholder": "Search countries",
+      "countryEmpty": "No matching country",
+      "countrySaved": "Country saved",
+      "countrySaveFailed": "Could not save the country",
+      "countryDomains": "Country domains",
+      "countryDomainsSaved": "Country domains saved",
+      "saveCountryDomains": "Save country domains",
+      "addRegionTitle": "Add a region under this country",
+      "regionName": "Region name",
+      "regionSlug": "Region slug",
+      "addRegion": "Add region",
+      "regionAdded": "Region created",
+      "regionAddFailed": "Could not create the region",
       "defaultLang": "Default Language",
       "addDomain": "Add New Domain",
       "domain": "Domain",
@@ -822,7 +842,8 @@
   "search": {
     "sites": "Search among regions (name, slug)...",
     "tenantMemberships": "Search among region memberships (region, user, role)...",
-    "placeMemberships": "Search among place memberships (place, user, role)..."
+    "placeMemberships": "Search among place memberships (place, user, role)...",
+    "subscriptions": "Search subscriptions..."
   },
   "all": "All",
   "allPlans": "All plans",
@@ -881,7 +902,11 @@
     "towns": "Towns",
     "townsDesc": "Manage towns",
     "contentHierarchy": "Towns",
-    "contentHierarchyDesc": "Region (optional) → Town → Place → Event / Gallery / Product / Tag · analytics at every level",
+    "contentHierarchyDesc": "Create towns. A region is optional. Superadmin only.",
+    "myTowns": "My town",
+    "myTownsDesc": "Add places to this town, up to the subscription.",
+    "placesList": "Places",
+    "placesListDesc": "Place list, separate from towns. Place members are managed on the place.",
     "legalPages": "Legal Pages",
     "legalPagesDesc": "Manage legal pages",
     "staticPages": "Static Pages",
@@ -896,8 +921,8 @@
     "uiCopyDesc": "Public-place sentences, in any language",
     "i18nDesc": "Global platform strings, grouped by page",
     "usersDesc": "Manage users and permissions",
-    "eventLog": "Event Log",
-    "eventLogDesc": "View user activity logs",
+    "eventLog": "Log",
+    "eventLogDesc": "Entries for your own region, towns, and places.",
     "siteInstances": "Site Instances",
     "siteInstancesDesc": "Manage site instances",
     "tenantMemberships": "Region memberships",
@@ -908,7 +933,7 @@
     "regionMembershipsOnly": "Region memberships",
     "regionAndMembershipsDesc": "Region settings and page instances (superadmin only) plus region memberships",
     "placeMemberships": "Place memberships",
-    "placeMembershipsDesc": "Manage place memberships",
+    "placeMembershipsDesc": "Place memberships, separate from region members. Assignment is also on the place.",
     "manageRegions": "Manage regions",
     "manageRegionsHint": "Regions, domains, and page instances — superadmin only",
     "membershipsSection": "Region memberships",
@@ -982,7 +1007,7 @@
       "places": "Places",
       "events": "Events",
       "users": "Users",
-      "eventLogs": "Event Logs"
+      "eventLogs": "Log"
     },
     "sitesByPlan": {
       "title": "Regions by Plan"
@@ -1070,7 +1095,9 @@
     "actions": "Actions",
     "noData": "No data found",
     "pleaseSelectSite": "Please select a region",
-    "noSearchResults": "No search results"
+    "noSearchResults": "No search results",
+    "filterPlaceholder": "Filter…",
+    "filterColumn": "Filter {{column}}"
   },
   "pagination": {
     "showing": "Showing {{start}} to {{end}} of {{total}} entries",
@@ -1080,8 +1107,12 @@
     "pageInfo": "Page {{current}} of {{total}}"
   },
   "published": "Published",
-  "isCrawlable": "Allow search engines to crawl the place",
-  "isCrawlableDescription": "If enabled, search engines (Google, Bing, etc.) can index the place. If disabled, robots.txt and meta tags will prevent indexing.",
+  "isCrawlable": "Allow search engines to index this page",
+  "isCrawlableDescription": "Own switch for this content. If global indexing is off, this page stays out of the index too.",
+  "globalCrawlability": "Global indexing",
+  "globalCrawlabilityDescription": "When this is off, no page can be indexed, even if that page is enabled on its own. When this is on, each place, event, region, town, page and collection follows its own switch.",
+  "globalCrawlabilityEnabled": "Indexable (SEO)",
+  "globalCrawlabilityUpdated": "Global crawl setting updated",
   "features": "Features",
   "enableEvents": "Enable Events",
   "enableBlog": "Enable Blog",
@@ -1122,6 +1153,7 @@
     "atLeastOneImageRequired": "At least one image is required",
     "categoryRequired": "Category is required",
     "hungarianNameRequired": "Hungarian name is required",
+    "townRequired": "The town is required",
     "slugRequired": "Slug is required",
     "hungarianTitleRequired": "Hungarian title is required",
     "usernameRequired": "Username is required",
@@ -1279,13 +1311,51 @@
     "statusOn": "Enabled",
     "statusOff": "Disabled"
   },
+  "usersPage": {
+    "scopeTitle": "Town and place admin",
+    "scopeHint": "The region role stays. A town admin adds places on their town. A place admin sets the town on the place form."
+  },
+  "townsPage": {
+    "subtitle": "Every town. The region can stay empty and be assigned later.",
+    "scopedSubtitle": "Your town. Add places here, up to the subscription.",
+    "addPlace": "New place for this town",
+    "needsRegion": "This town needs a region before a place can be added."
+  },
+  "townMembers": {
+    "title": "Town members",
+    "hint": "Only a superadmin can attach users to a town. A town can have more than one user. They see only that town, its places, and its events.",
+    "add": "Add",
+    "empty": "No users on this town yet."
+  },
+  "placeMembers": {
+    "title": "Place members",
+    "hint": "Place membership covers this one place and its events. Not the town and not the region.",
+    "add": "Add",
+    "emailPlaceholder": "email@example.com",
+    "mailSent": "Membership saved and the confirmation email was sent.",
+    "mailNotSent": "Membership saved. The email was not sent because SMTP is not configured.",
+    "empty": "No users on this place yet."
+  },
+  "scopeSplit": {
+    "title": "Access on three levels",
+    "region": "Region members: admin or editor of a whole region. Manage them on the region.",
+    "town": "Town admin: sees their own town and can add places there up to the subscription. Existing roles stay. Assign them here or on the town.",
+    "place": "Place admin: sees their own places and sets the town when adding a place. Existing roles stay. Assign them here or on the place."
+  },
   "roles": {
     "viewer": "Viewer",
     "editor": "Editor",
     "admin": "Admin",
     "superadmin": "Superadmin",
-    "siteadmin": "Place admin",
-    "tenantadmin": "Place admin",
+    "siteadmin": "Region admin",
+    "regionAdmin": "Region admin",
+    "regionEditor": "Region editor",
+    "regionViewer": "Region viewer",
+    "townMember": "Town member",
+    "townAdmin": "Town admin",
+    "placeAdmin": "Place admin",
+    "placeEditor": "Place editor",
+    "tenantadmin": "Region admin",
     "owner": "Owner",
     "manager": "Manager"
   },
@@ -1351,8 +1421,10 @@
   },
   "parentCategory": "Parent Category",
   "categoryKindService": "Local service category",
-  "parentPlace": "Town",
-  "noParentPlace": "Not tied to a town",
+  "placeTown": "Town",
+  "parentPlace": "Parent place",
+  "parentPlaceHint": "Only when this place sits inside another place, such as a stall at a market.",
+  "noParentPlace": "Standalone place",
   "order": "Order",
   "orderDescription": "Lower number = higher in list",
   "dragToReorder": "Drag categories to reorder. Drag under a category to make it a child category.",
@@ -1371,7 +1443,11 @@
   "seoKeywordsHint": "Comma-separated keywords for search engines",
   "eventLog": {
     "date": "Date",
-    "title": "Event Log",
+    "title": "Log",
+    "scopedHint": "Entries for your own region, towns, and places.",
+    "globalTitle": "Full log",
+    "globalHint": "Every region and place entry. Superadmin only.",
+    "empty": "No entries",
     "description": "View and manage user activity logs",
     "filters": "Filters",
     "filterSite": "Region",
@@ -1386,18 +1462,18 @@
     "allEntityTypes": "All Entity Types",
     "export": "Export CSV",
     "exporting": "Exporting...",
-    "exportSuccess": "Event logs exported successfully",
+    "exportSuccess": "Log exported successfully",
     "delete": "Delete Logs",
     "deleting": "Deleting...",
-    "deleteConfirm": "Are you sure you want to delete the filtered event logs?",
-    "deleteSuccess": "Deleted {{count}} event log(s)",
+    "deleteConfirm": "Delete the filtered log entries?",
+    "deleteSuccess": "Deleted {{count}} log entries",
     "resetFilters": "Reset Filters",
     "timestamp": "Timestamp",
     "site": "Region",
     "user": "User",
     "action": "Action",
     "entityType": "Entity Type",
-    "noLogs": "No event logs found",
+    "noLogs": "No entries",
     "showing": "Showing",
     "of": "of",
     "previous": "Previous",
@@ -1537,6 +1613,13 @@
     "allPlaces": "All places",
     "search": "Search"
   },
+  "regionList": {
+    "subtitle": "Regions are listed as separate cards. Memberships are managed inside that region's editor.",
+    "searchPlaceholder": "Search by region name or slug…",
+    "members": "Memberships",
+    "empty": "No regions to show",
+    "forbidden": "You do not have access to this region"
+  },
   "list": {
     "clearFilters": "Clear filters",
     "noResults": "No results",
@@ -1564,7 +1647,12 @@
   "status": "Status",
   "statusPastDue": "Past due",
   "statusCanceled": "Canceled",
-  "quoteRecipientDescription": "Inbox for municipal quote requests",
+  "quoteRecipientDescription": "Inbox for quote and demo requests",
+  "geocode": {
+    "suggest": "Suggest coordinates",
+    "suggested": "Suggestion: {{label}}. Latitude and longitude can still be edited.",
+    "missing": "No coordinates for that name or address."
+  },
   "googleAnalytics": {
     "platformTitle": "Google Analytics (platform)",
     "platformHelp": "GA4 measurement ID for platform pages (overview, pricing, login, multi-place list). Leave empty to disable. Region/town/place/event pages use their own hierarchy — no platform fallback.",
@@ -1580,6 +1668,7 @@
     "subscriberTitle": "Google Analytics (subscriber)",
     "subscriberLabel": "GA4 measurement ID",
     "subscriberHelp": "Loaded on this subscriber region's public pages (after cookie consent). Town/place/event may override with their own ID. Leave empty to disable at region level. The platform uses a separate ID — no shared fallback.",
+    "openConsole": "Open in Analytics",
     "clearHint": "Format: G-XXXXXXXX. Clear to disable / inherit parent.",
     "invalidId": "Invalid GA4 measurement ID. Expected format: G-XXXXXXXX",
     "save": "Save analytics",
@@ -1657,6 +1746,14 @@
   "sending": "Sending…",
   "userInfo": "User info",
   "viewPlan": "View plan",
+  "countriesPage": {
+    "title": "Countries",
+    "hint": "A country and its domains live here. A region's domain is edited on the region.",
+    "add": "Add country",
+    "empty": "No countries yet",
+    "code": "Code",
+    "regions": "Regions"
+  },
   "domains": "Domains",
   "selectDomain": "Select Domain",
   "domainBadgeIcon": "Domain Badge Icon",

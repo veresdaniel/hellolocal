@@ -145,11 +145,8 @@ export class AdminSiteMembershipService {
     });
   }
 
-  /**
-   * Superadmin / global admin / régióadmin (siteadmin) may manage memberships for a site.
-   * Region CRUD remains superadmin-only on separate endpoints.
-   */
-  private async assertCanManageMemberships(actorUserId: string, siteId: string): Promise<void> {
+  /** Region membership is a superadmin assignment. */
+  private async assertCanManageMemberships(actorUserId: string, _siteId: string): Promise<void> {
     const actor = await this.prisma.user.findUnique({
       where: { id: actorUserId },
       select: { role: true },
@@ -159,23 +156,10 @@ export class AdminSiteMembershipService {
       throw new ForbiddenException("Actor not found");
     }
 
-    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
+    if (actor.role === UserRole.superadmin) {
       return;
     }
 
-    const siteMembership = await this.prisma.siteMembership.findUnique({
-      where: {
-        siteId_userId: {
-          siteId,
-          userId: actorUserId,
-        },
-      },
-    });
-
-    if (siteMembership?.role === SiteRole.siteadmin) {
-      return;
-    }
-
-    throw new ForbiddenException("Only superadmin, admin, or siteadmin can manage region memberships");
+    throw new ForbiddenException("Only a superadmin can manage region memberships");
   }
 }

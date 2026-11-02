@@ -4,9 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../api/places.api";
 import { requestMunicipalQuote } from "../api/public.api";
+import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
 import { buildUrl } from "../app/urls";
 import type { Lang } from "../app/config";
-import { PUBLIC_PLAN_IDS, resolvePublicPlans, type PublicPlanId, type PublicPlanNumbers } from "./publicPlans";
+import {
+  PUBLIC_PLAN_IDS,
+  resolvePlanEnabled,
+  resolvePublicPlans,
+  type PublicPlanId,
+  type PublicPlanNumbers,
+} from "./publicPlans";
 import { useLandingText } from "../hooks/useLandingText";
 import "../styles/plan-picker.css";
 
@@ -51,6 +58,8 @@ export function PlanPicker({ lang }: { lang: Lang }) {
     retry: 1,
   });
   const plans = resolvePublicPlans(data?.featureMatrix?.planOverrides);
+  const enabled = resolvePlanEnabled(data?.featureMatrix?.planOverrides);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   useEffect(() => {
     const node = sectionRef.current;
@@ -80,12 +89,12 @@ export function PlanPicker({ lang }: { lang: Lang }) {
       <h2>{text("plansTitle")}</h2>
       <p>{text("plansLead")}</p>
       <div className="plan-picker__grid">
-        {PUBLIC_PLAN_IDS.map((id) => (
+        {PUBLIC_PLAN_IDS.filter((id) => enabled[id]).map((id) => (
           <PlanCard key={id} id={id} lang={lang} numbers={plans[id]} />
         ))}
-        <MunicipalCard lang={lang} />
+        {enabled.municipal ? <MunicipalCard lang={lang} onOpen={() => setQuoteOpen(true)} /> : null}
       </div>
-      <MunicipalQuote />
+      {quoteOpen ? <MunicipalQuote onClose={() => setQuoteOpen(false)} /> : null}
     </section>
   );
 }
@@ -129,7 +138,7 @@ function PlanCard({
   );
 }
 
-function MunicipalCard({ lang }: { lang: Lang }) {
+function MunicipalCard({ lang, onOpen }: { lang: Lang; onOpen: () => void }) {
   const text = useLandingText(lang);
   return (
     <article className="plan-picker__card plan-picker__card--municipal">
@@ -143,35 +152,83 @@ function MunicipalCard({ lang }: { lang: Lang }) {
         <li>{text("plans.municipal.events")}</li>
         <li>{text("plans.municipal.languages")}</li>
       </ul>
-      <a className="plan-picker__cta" href="#municipal-quote">
+      <button className="plan-picker__cta" type="button" onClick={onOpen}>
         {text("plans.municipal.cta")}
-      </a>
+      </button>
     </article>
   );
 }
 
-function MunicipalQuote() {
+function MunicipalQuote({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const [organization, setOrganization] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    organization?: string;
+    contactName?: string;
+    email?: string;
+    message?: string;
+  }>({});
   const [error, setError] = useState("");
   const [status, setStatus] = useState<"sent" | "stored" | "noRecipient" | "">("");
+  const shield = usePublicFormShield("quote");
   const [sending, setSending] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const root = dialogRef.current;
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusable = () =>
+      Array.from(
+        root?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]):not([data-honeypot]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      );
+    root?.querySelector<HTMLElement>("input:not([data-honeypot])")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const nodes = focusable();
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      previous?.focus();
+    };
+  }, []);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
     setStatus("");
-    if (!organization.trim() || !contactName.trim() || !email.trim() || !message.trim()) {
-      setError(t("public.overview.plans.quote.required"));
-      return;
-    }
-    if (!EMAIL_RE.test(email.trim())) {
-      setError(t("public.overview.plans.quote.invalidEmail"));
-      return;
-    }
+    const next: typeof fieldErrors = {};
+    if (organization.trim().length < 2) next.organization = t("public.overview.plans.quote.organizationRequired");
+    if (contactName.trim().length < 2) next.contactName = t("public.overview.plans.quote.contactRequired");
+    if (!EMAIL_RE.test(email.trim())) next.email = t("public.overview.plans.quote.invalidEmail");
+    if (message.trim().length < 12) next.message = t("public.overview.plans.quote.messageShort");
+    setFieldErrors(next);
+    if (Object.keys(next).length) return;
     setSending(true);
     try {
       const result = await requestMunicipalQuote({
@@ -180,39 +237,60 @@ function MunicipalQuote() {
         email: email.trim(),
         message: message.trim(),
         plan: "municipal",
+        ...(await shield.payload()),
       });
       if (result.emailed) setStatus("sent");
       else if (result.reason === "no_recipient") setStatus("noRecipient");
       else setStatus("stored");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("public.overview.plans.quote.failed"));
+      setError(publicFormErrorMessage(t, err, t("public.overview.plans.quote.failed")));
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <form className="plan-quote" id="municipal-quote" onSubmit={onSubmit}>
-      <h3>{t("public.overview.plans.municipal.cta")}</h3>
+    <div className="plan-quote-modal" onClick={onClose}>
+      <div
+        className="plan-quote-modal__panel"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="municipal-quote-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button className="plan-quote-modal__close" type="button" onClick={onClose} aria-label={t("common.close")}>
+          ×
+        </button>
+        <form className="plan-quote" noValidate onSubmit={onSubmit}>
+      {shield.fields}
+      <h3 id="municipal-quote-title">{t("public.overview.plans.municipal.cta")}</h3>
+      <p className="plan-quote__intro">{t("public.overview.plans.quote.intro")}</p>
       <label>
         {t("public.overview.plans.quote.organization")}
         <input
           name="organization"
           autoComplete="organization"
+          placeholder={t("public.overview.plans.quote.placeholderOrganization")}
           value={organization}
           onChange={(event) => setOrganization(event.target.value)}
           required
+          aria-invalid={fieldErrors.organization ? true : undefined}
         />
+        {fieldErrors.organization ? <span className="plan-quote__field-error">{fieldErrors.organization}</span> : null}
       </label>
       <label>
         {t("public.overview.plans.quote.contactName")}
         <input
           name="name"
           autoComplete="name"
+          placeholder={t("public.overview.plans.quote.placeholderContactName")}
           value={contactName}
           onChange={(event) => setContactName(event.target.value)}
           required
+          aria-invalid={fieldErrors.contactName ? true : undefined}
         />
+        {fieldErrors.contactName ? <span className="plan-quote__field-error">{fieldErrors.contactName}</span> : null}
       </label>
       <label>
         {t("public.overview.plans.quote.email")}
@@ -220,20 +298,27 @@ function MunicipalQuote() {
           name="email"
           type="email"
           autoComplete="email"
+          placeholder={t("public.overview.plans.quote.placeholderEmail")}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
+          aria-invalid={fieldErrors.email ? true : undefined}
         />
+        {fieldErrors.email ? <span className="plan-quote__field-error">{fieldErrors.email}</span> : null}
       </label>
       <label>
         {t("public.overview.plans.quote.message")}
         <textarea
           name="message"
           rows={4}
+          placeholder={t("public.overview.plans.quote.placeholderMessage")}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           required
+          minLength={12}
+          aria-invalid={fieldErrors.message ? true : undefined}
         />
+        {fieldErrors.message ? <span className="plan-quote__field-error">{fieldErrors.message}</span> : null}
       </label>
       {error ? <p className="plan-quote__error">{error}</p> : null}
       {status ? (
@@ -245,7 +330,9 @@ function MunicipalQuote() {
         {sending
           ? t("public.overview.plans.quote.sending")
           : t("public.overview.plans.quote.submit")}
-      </button>
-    </form>
+        </button>
+        </form>
+      </div>
+    </div>
   );
 }

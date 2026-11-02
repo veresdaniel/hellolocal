@@ -68,6 +68,26 @@ export class AdminUsersService {
             },
           },
         },
+        townMemberships: {
+          include: {
+            town: {
+              select: {
+                id: true,
+                translations: { select: { lang: true, name: true } },
+              },
+            },
+          },
+        },
+        placeMemberships: {
+          include: {
+            place: {
+              select: {
+                id: true,
+                translations: { select: { lang: true, name: true } },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });

@@ -19,7 +19,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { UserRole, FeatureSubscriptionScope } from "@prisma/client";
+import { UserRole, PlaceRole, FeatureSubscriptionScope } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { requireUiLang } from "../common/lang";
 import {
@@ -69,6 +69,7 @@ import {
   CreatePlaceMembershipDto,
   UpdatePlaceMembershipDto,
 } from "./admin-place-membership.service";
+import { AdminAccessService, type CreateAccessGrantDto } from "./admin-access.service";
 import { AdminSubscriptionService, UpdateSubscriptionDto } from "./admin-subscription.service";
 import { AdminGalleryService, CreateGalleryDto, UpdateGalleryDto } from "./admin-gallery.service";
 import { AdminPriceListService, UpdatePriceListDto } from "./admin-price-list.service";
@@ -101,6 +102,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { geocodeQuery } from "./geocode";
 import {
   generateCreateDescription,
   generateUpdateDescription,
@@ -136,6 +138,7 @@ export class AdminController {
     private readonly siteInstanceService: AdminSiteInstanceService,
     private readonly siteMembershipService: AdminSiteMembershipService,
     private readonly placeMembershipService: AdminPlaceMembershipService,
+    private readonly accessService: AdminAccessService,
     private readonly subscriptionService: AdminSubscriptionService,
     private readonly galleryService: AdminGalleryService,
     private readonly priceListService: AdminPriceListService,
@@ -155,32 +158,26 @@ export class AdminController {
 
   @Get("/categories")
   async getCategories(
-    @CurrentUser() user: { siteIds: string[] },
+    @CurrentUser() user: { id: string; siteIds: string[] },
     @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    // Use siteId from query if provided, otherwise use first site from user
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    // Verify user has access to this site
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const siteId = await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds);
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
     return this.categoryService.findAll(siteId, pageNum, limitNum);
   }
 
   @Get("/categories/:id")
-  async getCategory(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
-    const siteId = user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    return this.categoryService.findOne(id, siteId);
+  async getCategory(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      select: { siteId: true },
+    });
+    if (!category) throw new NotFoundException("Category not found");
+    await this.rbacService.assertReadableSite(user.id, category.siteId);
+    return this.categoryService.findOne(id, category.siteId);
   }
 
   @Post("/categories")
@@ -191,11 +188,9 @@ export class AdminController {
   ) {
     // Use siteId from user if not provided
     if (!dto.siteId) {
-      dto.siteId = user.siteIds[0];
+      dto.siteId = await this.rbacService.defaultContentSiteId(user.id, undefined, user.siteIds);
     }
-    if (!user.siteIds.includes(dto.siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    await this.rbacService.assertRegionEditorSite(user.id, dto.siteId);
     const result = await this.categoryService.create(dto);
 
     // Log the action with detailed description
@@ -224,13 +219,8 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const siteId = await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds);
+    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     // Get old data for comparison
     const oldCategory = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.update(id, siteId, dto);
@@ -273,13 +263,8 @@ export class AdminController {
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const siteId = await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds);
+    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     // Get category data before deletion for logging
     const category = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.remove(id, siteId);
@@ -308,15 +293,10 @@ export class AdminController {
       siteId: string;
       updates: Array<{ id: string; parentId: string | null; order: number }>;
     },
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = body.siteId || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const siteId = await this.rbacService.defaultContentSiteId(user.id, body.siteId, user.siteIds);
+    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     return this.categoryService.reorder(siteId, body.updates);
   }
 
@@ -606,6 +586,19 @@ export class AdminController {
 
   // ==================== Towns ====================
 
+  @Get("/geocode")
+  async geocode(@Query("q") q?: string) {
+    const query = q?.trim() || "";
+    if (query.length < 3) {
+      throw new BadRequestException("A name or address is required");
+    }
+    const hit = await geocodeQuery(query);
+    if (!hit) {
+      throw new NotFoundException("No coordinates for that name");
+    }
+    return hit;
+  }
+
   @Get("/towns")
   async getTowns(
     @Query("siteId") siteIdParam: string | undefined,
@@ -613,52 +606,60 @@ export class AdminController {
     @Query("limit") limitParam: string | undefined,
     @Query("includeStandalone") includeStandaloneParam: string | undefined,
     @Query("standaloneOnly") standaloneOnlyParam: string | undefined,
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     const standaloneOnly =
       standaloneOnlyParam === "1" || standaloneOnlyParam === "true";
     const includeStandalone =
       includeStandaloneParam === "1" || includeStandaloneParam === "true";
-    const siteId = standaloneOnly ? null : siteIdParam || user.siteIds[0];
-    if (!standaloneOnly) {
-      if (!siteId) {
-        throw new Error("User has no associated site");
-      }
-      if (!user.siteIds.includes(siteId)) {
-        throw new Error("User does not have access to this site");
-      }
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (!this.rbacService.canListTowns(scope)) {
+      throw new ForbiddenException("Towns are outside your access");
+    }
+    const siteId = standaloneOnly ? null : siteIdParam || null;
+    if (!scope.unrestricted) {
+      const page = pageParam ? parseInt(pageParam, 10) : undefined;
+      const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+      return this.townService.findAll(siteIdParam && !standaloneOnly ? siteIdParam : siteId, page, limit, {
+        includeStandalone,
+        standaloneOnly: scope.unrestricted ? standaloneOnly : false,
+        accessWhere: this.rbacService.townWhere(scope),
+      });
+    }
+    if (!standaloneOnly && siteId && !user.siteIds.includes(siteId) && !scope.unrestricted) {
+      throw new ForbiddenException("User does not have access to this site");
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    // Default: only towns for the selected régió (standalone towns stay in the unassigned bucket).
+    // No region selected: every town, including those without a region.
     return this.townService.findAll(siteId, page, limit, {
       includeStandalone,
       standaloneOnly,
+      all: !standaloneOnly && !siteId,
     });
   }
 
   @Get("/towns/:id")
   async getTown(
     @Param("id") id: string,
-    @Query("siteId") siteIdParam: string | undefined,
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0] || null;
-    if (siteId && !user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
-    return this.townService.findOne(id, siteId);
+    const town = await this.rbacService.requireTown(user.id, id);
+    return this.townService.findOne(id, town.siteId);
   }
 
   @Post("/towns")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async createTown(
     @Body() dto: CreateTownDto,
-    @CurrentUser() user: { id: string; siteIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
+    if (user.role !== UserRole.superadmin) {
+      throw new ForbiddenException("Only a superadmin can create a town");
+    }
     // Region (siteId) is optional. Empty string → null (standalone town).
     const regionId = dto.siteId && String(dto.siteId).trim() ? dto.siteId : null;
-    if (regionId && !user.siteIds.includes(regionId)) {
+    if (regionId && !user.siteIds.includes(regionId) && user.role !== UserRole.superadmin) {
       throw new Error("User does not have access to this site");
     }
     dto.siteId = regionId;
@@ -682,24 +683,23 @@ export class AdminController {
   }
 
   @Put("/towns/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async updateTown(
     @Param("id") id: string,
     @Body() dto: UpdateTownDto,
     @Query("siteId") siteIdParam: string | undefined,
-    @CurrentUser() user: { id: string; siteIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
-    const contextSiteId = siteIdParam || user.siteIds[0] || null;
-    if (contextSiteId && !user.siteIds.includes(contextSiteId)) {
-      throw new Error("User does not have access to this site");
+    if (user.role !== UserRole.superadmin) {
+      throw new ForbiddenException("Only a superadmin can edit a town");
+    }
+    const visible = await this.rbacService.assertTownContentEditor(user.id, id);
+    const contextSiteId = siteIdParam || visible.siteId || null;
+    if (dto.siteId !== undefined && user.role !== UserRole.superadmin) {
+      throw new ForbiddenException("Only a superadmin can move a town between regions");
     }
     if (dto.siteId !== undefined) {
-      const nextRegion =
-        dto.siteId && String(dto.siteId).trim() ? dto.siteId : null;
-      if (nextRegion && !user.siteIds.includes(nextRegion)) {
-        throw new Error("User does not have access to this site");
-      }
-      dto.siteId = nextRegion;
+      dto.siteId = dto.siteId && String(dto.siteId).trim() ? dto.siteId : null;
     }
 
     const oldTown = await this.townService.findOne(id, contextSiteId);
@@ -733,16 +733,17 @@ export class AdminController {
   }
 
   @Delete("/towns/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async deleteTown(
     @Param("id") id: string,
     @Query("siteId") siteIdParam: string | undefined,
-    @CurrentUser() user: { id: string; siteIds: string[] }
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
-    const contextSiteId = siteIdParam || user.siteIds[0] || null;
-    if (contextSiteId && !user.siteIds.includes(contextSiteId)) {
-      throw new Error("User does not have access to this site");
+    if (user.role !== UserRole.superadmin) {
+      throw new ForbiddenException("Only a superadmin can delete a town");
     }
+    const visible = await this.rbacService.assertTownDeletable(user.id, id);
+    const contextSiteId = siteIdParam || visible.siteId || null;
     const town = await this.townService.findOne(id, contextSiteId);
     const result = await this.townService.remove(id, contextSiteId);
 
@@ -772,34 +773,39 @@ export class AdminController {
     @Query("page") pageParam: string | undefined,
     @Query("limit") limitParam: string | undefined,
     @Query("townId") townIdParam: string | undefined,
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (!this.rbacService.canListPlaces(scope)) {
+      throw new ForbiddenException("Places are outside your access");
     }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
+    const siteId = siteIdParam || (scope.unrestricted ? user.siteIds[0] : null);
+    if (scope.unrestricted) {
+      if (!siteId) {
+        throw new Error("User has no associated site");
+      }
+      if (!user.siteIds.includes(siteId)) {
+        throw new Error("User does not have access to this site");
+      }
     }
     const page = pageParam ? parseInt(pageParam, 10) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
-    return this.placeService.findAll(siteId, page, limit, townIdParam || undefined);
+    return this.placeService.findAll(
+      siteId,
+      page,
+      limit,
+      townIdParam || undefined,
+      this.rbacService.placeWhere(scope)
+    );
   }
 
   @Get("/places/:id")
   async getPlace(
     @Param("id") id: string,
-    @Query("siteId") siteIdParam: string | undefined,
-    @CurrentUser() user: { siteIds: string[] }
+    @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
-    return this.placeService.findOne(id, siteId);
+    const place = await this.rbacService.requirePlace(user.id, id);
+    return this.placeService.findOne(id, place.siteId);
   }
 
   @Get("/places/:id/upsell-state")
@@ -840,18 +846,61 @@ export class AdminController {
   }
 
   @Post("/places")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async createPlace(
     @Body() dto: CreatePlaceDto,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    if (!dto.siteId) {
-      dto.siteId = user.siteIds[0];
+    const scope = await this.rbacService.getContentScope(user.id);
+    const body = dto as CreatePlaceDto & { tenantId?: string };
+    if (!body.siteId && body.tenantId) body.siteId = body.tenantId;
+    const townId = body.townId || null;
+    const town = townId
+      ? await this.prisma.town.findUnique({
+          where: { id: townId },
+          select: { siteId: true },
+        })
+      : null;
+    const townSiteId = town?.siteId || null;
+    if (!body.siteId) {
+      body.siteId =
+        townSiteId ||
+        user.siteIds[0] ||
+        scope.regionEditorSiteIds[0] ||
+        scope.placeSiteIds[0];
     }
-    if (!user.siteIds.includes(dto.siteId)) {
-      throw new Error("User does not have access to this site");
+    if (townId && scope.townIds.includes(townId) && !townSiteId && !scope.unrestricted) {
+      throw new BadRequestException("Ehhez a településhez előbb régió kell, utána lehet helyet felvenni.");
     }
-    const result = await this.placeService.create(dto);
+    const townAdmin = Boolean(townId && townSiteId && scope.townIds.includes(townId));
+    const customer =
+      !scope.unrestricted &&
+      !(body.siteId && scope.regionEditorSiteIds.includes(body.siteId)) &&
+      !townAdmin &&
+      scope.placeIds.length > 0;
+    if (customer && townId && !townSiteId) {
+      throw new BadRequestException("Ehhez a településhez előbb régió kell, utána lehet helyet felvenni.");
+    }
+    if (townAdmin && !scope.unrestricted && !scope.regionEditorSiteIds.includes(townSiteId!)) {
+      body.siteId = townSiteId!;
+    } else if (customer && townSiteId) {
+      body.siteId = townSiteId;
+    }
+    const allowed =
+      scope.unrestricted ||
+      (body.siteId && scope.regionEditorSiteIds.includes(body.siteId)) ||
+      (townAdmin && body.siteId === townSiteId) ||
+      (customer && Boolean(townSiteId) && scope.placeSiteIds.includes(townSiteId!) && body.siteId === townSiteId);
+    if (!body.siteId || !allowed) {
+      throw new ForbiddenException("You cannot create a place outside your region or town");
+    }
+    if (customer) body.ownerId = user.id;
+    const result = await this.placeService.create(body, user.id);
+    if (customer) {
+      await this.prisma.placeMembership.create({
+        data: { placeId: result.id, userId: user.id, role: PlaceRole.owner },
+      });
+    }
 
     // Log the action with detailed description
     const description = generateCreateDescription("place", result.translations, {
@@ -874,19 +923,28 @@ export class AdminController {
   }
 
   @Put("/places/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async updatePlace(
     @Param("id") id: string,
     @Body() dto: UpdatePlaceDto,
-    @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
+    const visible = await this.rbacService.assertPlaceContentEditor(user.id, id);
+    const siteId = visible.siteId;
+    if (dto.townId) {
+      const scope = await this.rbacService.getContentScope(user.id);
+      if (!scope.unrestricted && !scope.regionEditorSiteIds.includes(siteId)) {
+        const town = await this.prisma.town.findUnique({
+          where: { id: dto.townId },
+          select: { id: true, siteId: true },
+        });
+        if (!town || town.siteId !== siteId) {
+          throw new ForbiddenException("A településnek a hely régiójához kell tartoznia.");
+        }
+        if (scope.townIds.length > 0 && !scope.townIds.includes(town.id)) {
+          throw new ForbiddenException("Csak a saját településedhez tartozhat a hely.");
+        }
+      }
     }
     // Get old data for comparison
     const oldPlace = await this.placeService.findOne(id, siteId);
@@ -930,19 +988,13 @@ export class AdminController {
   }
 
   @Delete("/places/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async deletePlace(
     @Param("id") id: string,
-    @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const visible = await this.rbacService.assertPlaceContentEditor(user.id, id);
+    const siteId = visible.siteId;
     // Get place data before deletion for logging
     const place = await this.placeService.findOne(id, siteId);
     const result = await this.placeService.remove(id, siteId, user.id);
@@ -1341,14 +1393,19 @@ export class AdminController {
   // ==================== Users ====================
 
   @Get("/users")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getUsers(
     @Query("siteId") siteId?: string,
-    @CurrentUser() user?: { role: UserRole; siteIds: string[] }
+    @CurrentUser() user?: { id: string; role: UserRole; siteIds: string[] }
   ) {
-    // Superadmin and admin can see all users, others only see users from their sites
+    if (user?.role === UserRole.viewer) {
+      const scope = await this.rbacService.getContentScope(user.id);
+      if (scope.regionAdminSiteIds.length === 0) {
+        throw new ForbiddenException("You cannot list users");
+      }
+    }
     const filterSiteId =
-      user?.role === UserRole.superadmin || user?.role === UserRole.admin
+      user?.role === UserRole.superadmin || user?.role === UserRole.admin || user?.role === UserRole.viewer
         ? siteId
         : user?.siteIds[0];
     return this.usersService.findAll(filterSiteId);
@@ -1522,9 +1579,15 @@ export class AdminController {
   // ==================== Sites ====================
 
   @Get("/sites")
-  @Roles(UserRole.superadmin, UserRole.admin)
-  async getSites() {
-    return this.siteService.findAll();
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getSites(@CurrentUser() user: { id: string; role: UserRole }) {
+    const sites = await this.siteService.findAll();
+    if (user.role === UserRole.superadmin || user.role === UserRole.admin) return sites;
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (scope.regionEditorSiteIds.length === 0) {
+      throw new ForbiddenException("Regions are outside your access");
+    }
+    return sites.filter((site) => scope.regionEditorSiteIds.includes(site.id));
   }
 
   @Get("/sites/:id")
@@ -1573,29 +1636,14 @@ export class AdminController {
   }
 
   @Put("/sites/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  @Roles(UserRole.superadmin)
   async updateSite(
     @Param("id") id: string,
     @Body() dto: UpdateSiteDto,
     @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     if (user.role !== UserRole.superadmin) {
-      const actor = await this.rbacService.copyActor(user.id, user.role, id);
-      this.rbacService.assertCopyEditor(actor, "site");
-      const current = await this.siteService.findOne(id);
-      if (
-        siteSettingBlockedForOwner(
-          current as unknown as Record<string, unknown>,
-          dto as unknown as Record<string, unknown>
-        )
-      ) {
-        throw new ForbiddenException(
-          "Only a superadmin can change site settings that are not translations"
-        );
-      }
-      for (const key of SITE_OWNER_STRIPPED_FIELDS) {
-        delete (dto as unknown as Record<string, unknown>)[key];
-      }
+      throw new ForbiddenException("Only a superadmin can edit a region");
     }
     // Get old data for comparison
     const oldSite = await this.siteService.findOne(id);
@@ -1664,19 +1712,25 @@ export class AdminController {
 
   @Get("/events")
   async getEvents(
-    @CurrentUser() user: { siteIds: string[] },
+    @CurrentUser() user: { id: string; siteIds: string[] },
     @Query("siteId") siteIdParam?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string,
     @Query("placeId") placeIdParam?: string,
     @Query("townId") townIdParam?: string
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (!this.rbacService.canListPlaces(scope)) {
+      throw new ForbiddenException("Events are outside your access");
     }
-    if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+    const siteId = siteIdParam || (scope.unrestricted ? user.siteIds[0] : null);
+    if (scope.unrestricted) {
+      if (!siteId) {
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
+      }
+      if (!user.siteIds.includes(siteId)) {
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+      }
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -1685,17 +1739,15 @@ export class AdminController {
       pageNum,
       limitNum,
       placeIdParam || undefined,
-      townIdParam || undefined
+      townIdParam || undefined,
+      this.rbacService.eventWhere(scope)
     );
   }
 
   @Get("/events/:id")
-  async getEvent(@Param("id") id: string, @CurrentUser() user: { siteIds: string[] }) {
-    const siteId = user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    return this.eventService.findOne(id, siteId);
+  async getEvent(@Param("id") id: string, @CurrentUser() user: { id: string; siteIds: string[] }) {
+    const event = await this.rbacService.requireEvent(user.id, id);
+    return this.eventService.findOne(id, event.siteId);
   }
 
   @Post("/events")
@@ -1703,14 +1755,21 @@ export class AdminController {
     @Body() dto: CreateEventDto,
     @CurrentUser() user: { id: string; siteIds: string[]; role: UserRole }
   ) {
+    if (!dto.siteId && dto.placeId) {
+      const place = await this.prisma.place.findUnique({
+        where: { id: dto.placeId },
+        select: { siteId: true },
+      });
+      if (place?.siteId) dto.siteId = place.siteId;
+    }
     if (!dto.siteId) {
       dto.siteId = user.siteIds[0];
     }
-    if (!user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+    if (!dto.siteId) {
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
     }
 
-    // RBAC: Check if user can create event for this place
+    // Region editor, town member, or place member. Superadmin passes inside the check.
     await this.rbacService.assertCanCreateEventForPlace(user.id, dto.siteId, dto.placeId || null);
 
     // Set createdByUserId for audit trail
@@ -1738,23 +1797,18 @@ export class AdminController {
   }
 
   @Put("/events/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async updateEvent(
     @Param("id") id: string,
     @Body() dto: UpdateEventDto,
-    @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const visible = await this.rbacService.requireEvent(user.id, id);
+    await this.rbacService.assertPlaceContentEditor(user.id, visible.placeId);
+    const siteId = visible.siteId;
     // Get old data for comparison
     const oldEvent = await this.eventService.findOne(id, siteId);
-    const result = await this.eventService.update(id, siteId, dto);
+    const result = await this.eventService.update(id, siteId, dto, user.id);
 
     // Log the action with detailed description
     const description = generateUpdateDescription(
@@ -1790,19 +1844,14 @@ export class AdminController {
   }
 
   @Delete("/events/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async deleteEvent(
     @Param("id") id: string,
-    @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new Error("User does not have access to this site");
-    }
+    const visible = await this.rbacService.requireEvent(user.id, id);
+    await this.rbacService.assertPlaceContentEditor(user.id, visible.placeId);
+    const siteId = visible.siteId;
     // Get event data before deletion for logging
     const event = await this.eventService.findOne(id, siteId);
     const result = await this.eventService.remove(id, siteId, user.id);
@@ -1898,7 +1947,7 @@ export class AdminController {
   // ==================== Event Logs ====================
 
   @Get("/event-logs")
-  @Roles(UserRole.superadmin, UserRole.admin)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getEventLogs(
     @Query() filters: EventLogFilterDto,
     @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
@@ -1917,7 +1966,46 @@ export class AdminController {
           : filters.limit
         : undefined,
     };
-    return this.eventLogService.findAll(user.role, user.siteIds, normalizedFilters);
+    if (normalizedFilters.scope === "global") {
+      if (user.role !== UserRole.superadmin) {
+        throw new ForbiddenException("Only a superadmin can read the full event log");
+      }
+      return this.eventLogService.findWhere({}, normalizedFilters);
+    }
+    const accessWhere = await this.eventLogAccessWhere(user.id);
+    return this.eventLogService.findWhere(accessWhere, normalizedFilters);
+  }
+
+  /** Region editors see their regions. Town and place users see only those entities and their events. */
+  private async eventLogAccessWhere(userId: string) {
+    const scope = await this.rbacService.getContentScope(userId);
+    if (scope.unrestricted) return {};
+    const or: Array<Record<string, unknown>> = [];
+    if (scope.regionEditorSiteIds.length) {
+      or.push({ siteId: { in: scope.regionEditorSiteIds } });
+    }
+    const placeIds = [...scope.placeIds];
+    if (scope.townIds.length) {
+      const rows = await this.prisma.place.findMany({
+        where: { townId: { in: scope.townIds } },
+        select: { id: true },
+      });
+      for (const row of rows) {
+        if (!placeIds.includes(row.id)) placeIds.push(row.id);
+      }
+      or.push({ entityType: "town", entityId: { in: scope.townIds } });
+    }
+    if (placeIds.length) {
+      const events = await this.prisma.event.findMany({
+        where: { placeId: { in: placeIds } },
+        select: { id: true },
+      });
+      or.push({ entityType: "place", entityId: { in: placeIds } });
+      const eventIds = events.map((row) => row.id);
+      if (eventIds.length) or.push({ entityType: "event", entityId: { in: eventIds } });
+    }
+    if (!or.length) return { id: { in: [] as string[] } };
+    return { OR: or };
   }
 
   @Get("/event-logs/filter-options")
@@ -2087,23 +2175,81 @@ export class AdminController {
     return this.siteInstanceService.delete(id);
   }
 
+  // ==================== Access grants (region / town / place) ====================
+
+  @Get("/access/scope")
+  async getAccessScope(@CurrentUser() user: { id: string }) {
+    return this.accessService.scope(user.id);
+  }
+
+  @Get("/access/grants")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getAccessGrants(@CurrentUser() user: { id: string }) {
+    return this.accessService.listGrants(user.id);
+  }
+
+  @Post("/access/grants")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async createAccessGrant(
+    @Body() dto: CreateAccessGrantDto,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.accessService.createGrant(user.id, dto);
+  }
+
+  @Delete("/access/grants/:kind/:id")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async deleteAccessGrant(
+    @Param("kind") kind: "region" | "town" | "place",
+    @Param("id") id: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.accessService.deleteGrant(user.id, kind, id);
+  }
+
+  @Get("/towns/:townId/members")
+  @Roles(UserRole.superadmin)
+  async getTownMembers(
+    @Param("townId") townId: string,
+    @CurrentUser() user: { id: string }
+  ) {
+    return this.accessService.listTownMembers(user.id, townId);
+  }
+
   // ==================== Site Memberships ====================
-  // Editor allowed so régióadmin (siteadmin SiteRole) can manage tagság; service enforces RBAC.
+  // Assigning a region role is superadmin-only. Others may only read their own row.
 
   @Get("/site-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
-  async getSiteMemberships(@Query("siteId") siteId?: string, @Query("userId") userId?: string) {
-    return this.siteMembershipService.findAll(siteId, userId);
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getSiteMemberships(
+    @Query("siteId") siteId?: string,
+    @Query("userId") userIdQuery?: string,
+    @CurrentUser() user?: { id: string; role: UserRole }
+  ) {
+    const scope = user ? await this.rbacService.getContentScope(user.id) : null;
+    const rows = await this.siteMembershipService.findAll(siteId, userIdQuery);
+    if (!user || !scope || scope.unrestricted) {
+      return rows;
+    }
+    if (scope.regionAdminSiteIds.length) {
+      return rows.filter((row) => scope.regionAdminSiteIds.includes(row.siteId));
+    }
+    return rows.filter((row) => row.userId === user.id);
   }
 
   @Get("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
-  async getSiteMembership(@Param("id") id: string) {
-    return this.siteMembershipService.findOne(id);
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getSiteMembership(@Param("id") id: string, @CurrentUser() user: { id: string }) {
+    const row = await this.siteMembershipService.findOne(id);
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (scope.unrestricted || scope.regionAdminSiteIds.includes(row.siteId) || row.userId === user.id) {
+      return row;
+    }
+    throw new ForbiddenException("Membership is outside your access");
   }
 
   @Post("/site-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async createSiteMembership(
     @Body() dto: CreateSiteMembershipDto,
     @CurrentUser() user: { id: string }
@@ -2112,7 +2258,7 @@ export class AdminController {
   }
 
   @Put("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async updateSiteMembership(
     @Param("id") id: string,
     @Body() dto: UpdateSiteMembershipDto,
@@ -2122,7 +2268,7 @@ export class AdminController {
   }
 
   @Delete("/site-memberships/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async deleteSiteMembership(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     return this.siteMembershipService.delete(id, user.id);
   }
@@ -2131,14 +2277,27 @@ export class AdminController {
   // Editor allowed so régióadmin (siteadmin SiteRole) can manage; service enforces RBAC.
 
   @Get("/place-memberships")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getPlaceMemberships(
     @Query("placeId") placeId?: string,
-    @Query("userId") userId?: string
+    @Query("userId") userId?: string,
+    @CurrentUser() user?: { id: string; role: UserRole }
   ) {
-    // Do not default userId to the actor — admins need the full list for a place/region.
-    // Clients that want "my memberships" must pass userId explicitly (or use /my-places).
-    return this.placeMembershipService.findAll(placeId, userId);
+    const rows = await this.placeMembershipService.findAll(placeId, userId);
+    if (!user) throw new ForbiddenException("Membership is outside your access");
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (scope.unrestricted) return rows;
+    const where =
+      user.role === UserRole.admin
+        ? this.rbacService.adminMembershipPlaceWhere(scope)
+        : this.rbacService.placeWhere(scope);
+    if (!where) return rows;
+    const visible = await this.prisma.place.findMany({
+      where,
+      select: { id: true },
+    });
+    const allowed = new Set(visible.map((place) => place.id));
+    return rows.filter((row) => allowed.has(row.placeId));
   }
 
   @Get("/place-memberships/my-places")
@@ -2155,8 +2314,32 @@ export class AdminController {
 
   @Get("/place-memberships/:id")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
-  async getPlaceMembership(@Param("id") id: string) {
-    return this.placeMembershipService.findOne(id);
+  async getPlaceMembership(@Param("id") id: string, @CurrentUser() user: { id: string; role: UserRole }) {
+    const row = await this.placeMembershipService.findOne(id);
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (scope.unrestricted) return row;
+    const where =
+      user.role === UserRole.admin
+        ? this.rbacService.adminMembershipPlaceWhere(scope)
+        : this.rbacService.placeWhere(scope);
+    const visible = where
+      ? await this.prisma.place.findFirst({ where: { AND: [{ id: row.placeId }, where] }, select: { id: true } })
+      : { id: row.placeId };
+    if (!visible) throw new ForbiddenException("Membership is outside your access");
+    return row;
+  }
+
+  @Post("/places/:id/members")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async invitePlaceMember(
+    @Param("id") id: string,
+    @Body() body: { email?: string; role?: PlaceRole },
+    @CurrentUser() user: { id: string }
+  ) {
+    if (!body.email || !body.role) {
+      throw new BadRequestException("Email and place role are required");
+    }
+    return this.placeMembershipService.inviteByEmail(user.id, id, body.email, body.role);
   }
 
   @Post("/place-memberships")
@@ -2296,19 +2479,27 @@ export class AdminController {
 
   @Get("/galleries")
   async getGalleries(
-    @CurrentUser() user: { id: string; siteIds: string[] },
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] },
     @Query("siteId") siteIdParam?: string,
     @Query("placeId") placeId?: string,
     @Query("eventId") eventId?: string,
     @Query("page") page?: string,
     @Query("limit") limit?: string
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (!this.rbacService.canListPlaces(scope)) {
+      throw new ForbiddenException("Galleries are outside your access");
     }
-    if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+    const siteId =
+      scope.unrestricted
+        ? siteIdParam || user.siteIds[0]
+        : siteIdParam
+          ? await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds)
+          : undefined;
+    if (scope.unrestricted) {
+      if (!siteId || !user.siteIds.includes(siteId)) {
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+      }
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -2317,62 +2508,50 @@ export class AdminController {
 
   @Get("/galleries/:id")
   async getGallery(
-    @CurrentUser() user: { id: string; siteIds: string[] },
+    @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] },
     @Param("id") id: string,
     @Query("siteId") siteIdParam?: string
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (!this.rbacService.canListPlaces(scope)) {
+      throw new ForbiddenException("Galleries are outside your access");
     }
-    if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+    if (scope.unrestricted) {
+      const siteId = siteIdParam || user.siteIds[0];
+      if (!siteId || !user.siteIds.includes(siteId)) {
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
+      }
+      return this.galleryService.findOne(user.id, id, siteId);
     }
-    return this.galleryService.findOne(user.id, id, siteId);
+    if (siteIdParam) await this.rbacService.assertReadableSite(user.id, siteIdParam);
+    return this.galleryService.findOne(user.id, id, siteIdParam);
   }
 
   @Post("/galleries")
-  async createGallery(
-    @CurrentUser() user: { id: string; siteIds: string[] },
-    @Body() dto: CreateGalleryDto
-  ) {
-    if (!user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
-    }
+  async createGallery(@CurrentUser() user: { id: string }, @Body() dto: CreateGalleryDto) {
+    if (dto.siteId) await this.rbacService.assertReadableSite(user.id, dto.siteId);
     return this.galleryService.create(user.id, dto);
   }
 
   @Put("/galleries/:id")
   async updateGallery(
-    @CurrentUser() user: { id: string; siteIds: string[] },
+    @CurrentUser() user: { id: string },
     @Param("id") id: string,
     @Body() dto: UpdateGalleryDto,
     @Query("siteId") siteIdParam?: string
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
-    }
-    return this.galleryService.update(id, user.id, siteId, dto);
+    if (siteIdParam) await this.rbacService.assertReadableSite(user.id, siteIdParam);
+    return this.galleryService.update(id, user.id, siteIdParam, dto);
   }
 
   @Delete("/galleries/:id")
   async deleteGallery(
-    @CurrentUser() user: { id: string; siteIds: string[] },
+    @CurrentUser() user: { id: string },
     @Param("id") id: string,
     @Query("siteId") siteIdParam?: string
   ) {
-    const siteId = siteIdParam || user.siteIds[0];
-    if (!siteId) {
-      throw new Error("User has no associated site");
-    }
-    if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
-    }
-    return this.galleryService.delete(user.id, id, siteId);
+    if (siteIdParam) await this.rbacService.assertReadableSite(user.id, siteIdParam);
+    return this.galleryService.delete(user.id, id, siteIdParam);
   }
 
   // ==================== Site Status & Statistics ====================
@@ -2380,20 +2559,32 @@ export class AdminController {
   // Cache invalidation stays superadmin-only below.
 
   @Get("/site-status")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getSiteStatus(
+    @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     const isSuperadmin = user.role === UserRole.superadmin;
-    const siteIds = user.siteIds ?? [];
+    const scope = await this.rbacService.getContentScope(user.id);
+    if (siteIdParam && !isSuperadmin && !scope.regionAdminSiteIds.includes(siteIdParam)) {
+      throw new ForbiddenException("Region status is outside your access");
+    }
+    const siteIds = siteIdParam
+      ? [siteIdParam]
+      : isSuperadmin
+        ? (user.siteIds ?? [])
+        : scope.regionAdminSiteIds;
+    if (!isSuperadmin && scope.regionAdminSiteIds.length === 0) {
+      throw new ForbiddenException("Region status is outside your access");
+    }
 
     if (!isSuperadmin && siteIds.length === 0) {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_REGION);
     }
 
-    const siteFilter = isSuperadmin ? undefined : { id: { in: siteIds } };
-    const scoped = isSuperadmin ? {} : { siteId: { in: siteIds } };
-    const userScoped = isSuperadmin
+    const siteFilter = siteIdParam || !isSuperadmin ? { id: { in: siteIds } } : undefined;
+    const scoped = siteIdParam || !isSuperadmin ? { siteId: { in: siteIds } } : {};
+    const userScoped = isSuperadmin && !siteIdParam
       ? {}
       : {
           OR: [

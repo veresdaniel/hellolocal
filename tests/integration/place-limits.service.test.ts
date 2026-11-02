@@ -1,26 +1,35 @@
+import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { AdminPlaceService } from "../../apps/api/src/admin/admin-place.service";
 
 /**
  * Service-level integration against a mocked Prisma + entitlements (no production DB).
+ * The quota itself lives in EntitlementsService; this checks the place service calls it.
  * Command: pnpm test:integration
  */
-function placeService(options: { placesMax: number; count?: number }) {
+function placeService(options: { rejectWhenActive?: boolean }) {
+  const calls: boolean[] = [];
   let created = 0;
   const prisma = {
     place: {
-      count: async () => options.count ?? 0,
       create: async () => {
         created += 1;
-        return { id: "place-new" };
+        throw new Error("stored");
       },
       findFirst: async () => null,
     },
+    town: { findFirst: async () => ({ id: "town-1" }) },
   };
   const entitlements = {
-    getBySiteId: async () => ({ limits: { placesMax: options.placesMax } }),
+    assertCanAddPlace: async (_actor: string | undefined, _siteId: string, active: boolean) => {
+      calls.push(active);
+      if (active && options.rejectWhenActive) {
+        throw new BadRequestException("A régió helykerete betelt (2/2).");
+      }
+    },
   };
   return {
+    calls,
     getCreated: () => created,
     service: new AdminPlaceService(prisma as never, {} as never, {} as never, entitlements as never),
   };
@@ -28,41 +37,27 @@ function placeService(options: { placesMax: number; count?: number }) {
 
 const draft = {
   siteId: "site-1",
+  townId: "town-1",
   categoryId: "category-1",
   translations: [],
 };
 
 describe("AdminPlaceService place caps (integration)", () => {
-  it("refuses another active place once placesMax is reached", async () => {
-    const harness = placeService({ placesMax: 2, count: 2 });
-    await expect(harness.service.create({ ...draft, isActive: true })).rejects.toThrow(/helykerete/);
+  it("refuses to store an active place when the region slot is full", async () => {
+    const harness = placeService({ rejectWhenActive: true });
+    await expect(harness.service.create({ ...draft, isActive: true }, "editor-1")).rejects.toThrow(
+      /helykerete/
+    );
     expect(harness.getCreated()).toBe(0);
+    expect(harness.calls).toEqual([true]);
   });
 
-  it("skips the count query when the plan is unlimited", async () => {
-    let counted = 0;
-    const prisma = {
-      place: {
-        count: async () => {
-          counted += 1;
-          return 99;
-        },
-        create: async () => {
-          throw new Error("stored");
-        },
-        findFirst: async () => null,
-      },
-    };
-    const entitlements = {
-      getBySiteId: async () => ({ limits: { placesMax: Number.POSITIVE_INFINITY } }),
-    };
-    const service = new AdminPlaceService(
-      prisma as never,
-      {} as never,
-      {} as never,
-      entitlements as never
+  it("reaches persistence for a draft without consuming a slot", async () => {
+    const harness = placeService({});
+    await expect(harness.service.create({ ...draft, isActive: false }, "editor-1")).rejects.toThrow(
+      /stored/
     );
-    await expect(service.create({ ...draft, isActive: true })).rejects.toThrow(/stored/);
-    expect(counted).toBe(0);
+    expect(harness.getCreated()).toBe(1);
+    expect(harness.calls).toEqual([false]);
   });
 });

@@ -33,6 +33,8 @@ export type PlatformSettingsDto = {
     defaultTitle?: string | null;
     defaultDescription?: string | null;
     indexable: boolean;
+    /** Master switch. Off forces every public page out of the index. */
+    globalIndexable?: boolean;
   };
 
   placeholders: {

@@ -29,7 +29,8 @@ export type PlatformSettingsDto = {
   seo: {
     defaultTitle?: string | null;
     defaultDescription?: string | null;
-    indexable: boolean; // robots/index meta alapján
+    indexable: boolean; // region home: global && site switch
+    globalIndexable: boolean; // master switch; off forces every page off
   };
 
   placeholders: {

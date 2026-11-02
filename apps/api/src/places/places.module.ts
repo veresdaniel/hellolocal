@@ -9,9 +9,16 @@ import { PlacesPriceListService } from "./places-price-list.service";
 import { RatingService } from "./rating.service";
 import { RatingController } from "./rating.controller";
 import { AdminModule } from "../admin/admin.module";
+import { CrawlabilityModule } from "../seo/crawlability.module";
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => SiteModule), SlugModule, forwardRef(() => AdminModule)],
+  imports: [
+    PrismaModule,
+    forwardRef(() => SiteModule),
+    SlugModule,
+    forwardRef(() => AdminModule),
+    CrawlabilityModule,
+  ],
   controllers: [PlacesController, PlacesPublicController, RatingController],
   providers: [PlacesService, PlacesPriceListService, RatingService],
   exports: [PlacesService, PlacesPriceListService, RatingService],

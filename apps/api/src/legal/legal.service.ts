@@ -3,6 +3,7 @@ import { requireLang } from "../common/lang";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { CrawlabilityService } from "../seo/crawlability.service";
 
 const ALLOWED_PAGES = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
@@ -15,7 +16,8 @@ type LegalKey = "imprint" | "terms" | "privacy";
 export class LegalService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService,
+    private readonly crawlability: CrawlabilityService
   ) {}
 
   /**
@@ -89,6 +91,7 @@ export class LegalService {
         description: seoDescription,
         image: t.seoImage ?? null,
         keywords: t.seoKeywords ?? [],
+        indexable: await this.crawlability.allows(legal.isCrawlable),
         canonical: null,
         robots: null,
         og: { title: null, description: null, image: null, type: "website" },

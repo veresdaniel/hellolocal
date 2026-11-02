@@ -424,7 +424,10 @@ export function EventDetailPage() {
       keywords: event.seo?.keywords || [],
       image: eventImage,
       canonical: eventUrl,
-      robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
+      robots:
+        (event.isCrawlable ?? platformSettings?.isCrawlable) === false
+          ? "noindex, nofollow"
+          : "index, follow",
       og: {
         type: "article",
         title: event.seo?.title || event.name,

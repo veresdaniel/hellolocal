@@ -5,6 +5,7 @@ import { PlacePlan, SitePlan, SubscriptionPlan } from "@prisma/client";
 import { getPlaceLimits, type PlaceLimits } from "../config/place-limits.config";
 import { getSiteLimits, type SiteLimits } from "../config/site-limits.config";
 import { VisitorLadderService, type VisitorLadderSnapshot } from "../visitor-ladder/visitor-ladder.service";
+import { EntitlementsService } from "../entitlements/entitlements.service";
 
 // Helper function to convert PlacePlan to SubscriptionPlan
 function sitePlanToSubscriptionPlan(plan: SitePlan): SubscriptionPlan {
@@ -98,7 +99,8 @@ export interface SiteEntitlementsDto {
 export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly visitorLadder: VisitorLadderService
+    private readonly visitorLadder: VisitorLadderService,
+    private readonly entitlementsService: EntitlementsService
   ) {}
 
   /**
@@ -545,28 +547,25 @@ export class BillingService {
   async getSiteEntitlements(siteId: string): Promise<SiteEntitlementsDto> {
     const site = await this.prisma.site.findUnique({
       where: { id: siteId },
-      include: {
-        places: {
-          where: { isActive: true },
-          select: {
-            id: true,
-            isFeatured: true,
-          },
-        },
-        events: {
-          select: { id: true },
-        },
-      },
+      select: { id: true, plan: true },
     });
 
     if (!site) {
       throw new NotFoundException(`Site with ID ${siteId} not found`);
     }
 
-    const limits = getSiteLimits(site.plan);
-    const placeCount = site.places?.length || 0;
-    const featuredPlaceCount = site.places?.filter((p) => p.isFeatured).length || 0;
-    const eventCount = site.events?.length || 0;
+    const ent = await this.entitlementsService.getBySiteId(siteId);
+    const limits = {
+      ...getSiteLimits(site.plan),
+      places: ent.limits.placesMax,
+      featuredSlots: ent.limits.featuredPlacesMax,
+      events: ent.limits.eventsPerMonthMax,
+      imagesPerPlace: ent.limits.galleryImagesPerPlaceMax,
+      customDomain: ent.features.customDomainEnabled,
+    };
+    const placeCount = ent.usage.placesCount;
+    const featuredPlaceCount = ent.usage.featuredPlacesCount;
+    const eventCount = ent.usage.eventsThisMonthCount;
 
     // Determine if upgrade/downgrade is possible
     const canUpgrade = site.plan !== "business";

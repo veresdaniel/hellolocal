@@ -3,7 +3,6 @@ import { useState, useContext, useRef, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../contexts/AuthContext";
-import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 
 export function UserInfoDropdown() {
   const { t } = useTranslation();
@@ -37,19 +36,6 @@ export function UserInfoDropdown() {
   if (!user) return null;
 
   const profilePath = `/${lang || "hu"}/admin/profile`;
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case ROLE_SUPERADMIN:
-        return "#9c27b0";
-      case ROLE_ADMIN:
-        return "#dc3545";
-      case ROLE_EDITOR:
-        return "#28a745";
-      default:
-        return "#6c757d";
-    }
-  };
 
   return (
     <div
@@ -164,18 +150,8 @@ export function UserInfoDropdown() {
                   {t("admin.role")}
                 </div>
                 <div>
-                  <span
-                    style={{
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      background: getRoleColor(user.role),
-                      color: "white",
-                      fontSize: "clamp(13px, 3vw, 15px)",
-                      fontWeight: 600,
-                      display: "inline-block",
-                    }}
-                  >
-                    {user.role}
+                  <span className="admin-role-badge" data-role={user.role}>
+                    {t(`admin.roles.${user.role}`, { defaultValue: user.role })}
                   </span>
                 </div>
               </div>

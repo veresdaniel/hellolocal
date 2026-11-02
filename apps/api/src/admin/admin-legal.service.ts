@@ -21,6 +21,7 @@ export interface CreateLegalPageDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 export interface UpdateLegalPageDto {
@@ -35,6 +36,7 @@ export interface UpdateLegalPageDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 @Injectable()
@@ -125,6 +127,7 @@ export class AdminLegalService {
         siteId: dto.siteId,
         key: dto.key,
         isActive: dto.isActive ?? true,
+        isCrawlable: dto.isCrawlable ?? true,
         translations: {
           create: dto.translations.map((t) => ({
             lang: t.lang,
@@ -152,6 +155,9 @@ export class AdminLegalService {
     const updateData: any = {};
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
+    }
+    if (dto.isCrawlable !== undefined) {
+      updateData.isCrawlable = dto.isCrawlable;
     }
 
     await this.prisma.legalPage.update({

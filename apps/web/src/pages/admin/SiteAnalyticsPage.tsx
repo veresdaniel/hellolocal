@@ -1,10 +1,13 @@
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { AnalyticsDashboard } from "../../components/analytics/AnalyticsDashboard";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { usePageTitle } from "../../hooks/usePageTitle";
 
 export function SiteAnalyticsPage() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const siteKey = searchParams.get("siteKey") || undefined;
   usePageTitle("admin.analyticsLabel");
 
   return (
@@ -17,7 +20,7 @@ export function SiteAnalyticsPage() {
         }
         showNewButton={false}
       />
-      <AnalyticsDashboard scope="site" />
+      <AnalyticsDashboard scope="site" siteKey={siteKey} />
     </div>
   );
 }

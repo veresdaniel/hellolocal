@@ -10,6 +10,7 @@ export type LegalPageDto = {
     description: string | null;
     image: string | null;
     keywords: string[];
+    indexable?: boolean;
   };
 };
 

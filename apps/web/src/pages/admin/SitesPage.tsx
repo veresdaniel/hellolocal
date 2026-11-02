@@ -28,6 +28,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
 import { findTranslation } from "../../utils/langHelpers";
+import { regionAddress } from "../../app/urls";
 import type { Lang} from "../../types/enums";
 
 export function SitesPage() {
@@ -224,7 +225,9 @@ export function SitesPage() {
   const startEdit = (site: Site) => {
     // Navigate to Site Edit page instead of inline editing
     const lang = i18n.language?.split("-")[0] || "hu";
-    navigate(`/${lang}/admin/sites/${site.id}/edit`);
+    navigate(`/${lang}/admin/sites/${site.id}/edit`, {
+      state: { adminReturn: `${window.location.pathname}${window.location.search}` },
+    });
   };
 
   const startEditInline = (site: Site) => {
@@ -806,6 +809,17 @@ export function SitesPage() {
             },
           ]}
           onEdit={startEdit}
+          onView={(site) => {
+            window.open(
+              regionAddress({
+                lang: i18n.language || "hu",
+                slug: site.slug,
+                primaryDomain: site.primaryDomain,
+              }),
+              "_blank",
+              "noopener,noreferrer"
+            );
+          }}
           onDelete={(site) => handleDelete(site.id)}
           error={error}
         />

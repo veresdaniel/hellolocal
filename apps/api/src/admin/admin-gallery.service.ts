@@ -52,18 +52,38 @@ export class AdminGalleryService {
 
   async findAll(
     userId: string,
-    siteId: string,
+    siteId?: string,
     placeId?: string,
     eventId?: string,
     page?: number,
     limit?: number
   ) {
-    // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, siteId, ["siteadmin", "editor"]);
+    const scope = await this.rbacService.getContentScope(userId);
+    if (!this.rbacService.canListPlaces(scope)) {
+      throw new ForbiddenException("Galleries are outside your access");
+    }
+    if (siteId && !scope.unrestricted) {
+      await this.rbacService.assertReadableSite(userId, siteId);
+    }
+    if (placeId) {
+      const place = await this.rbacService.requirePlace(userId, placeId);
+      if (siteId && place.siteId !== siteId) {
+        throw new ForbiddenException("Place is outside your access");
+      }
+    }
+    if (eventId) {
+      const event = await this.rbacService.requireEvent(userId, eventId);
+      if (siteId && event.siteId !== siteId) {
+        throw new ForbiddenException("Event is outside your access");
+      }
+    }
 
-    const where: any = { siteId };
+    const where: any = {};
+    if (siteId) where.siteId = siteId;
     if (placeId) {
       where.placeId = placeId;
+    } else if (!scope.unrestricted) {
+      where.place = this.rbacService.placeWhere(scope);
     }
     if (eventId) {
       where.eventId = eventId;
@@ -95,42 +115,19 @@ export class AdminGalleryService {
     };
   }
 
-  async findOne(userId: string, id: string, siteId: string) {
-    // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, siteId, ["siteadmin", "editor"]);
-
+  async findOne(userId: string, id: string, siteId?: string) {
     const gallery = await this.prisma.gallery.findFirst({
-      where: { id, siteId },
+      where: { id, ...(siteId ? { siteId } : {}) },
     });
 
     if (!gallery) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_GALLERY);
     }
-
+    await this.rbacService.requirePlace(userId, gallery.placeId);
     return gallery;
   }
 
   async create(userId: string, dto: CreateGalleryDto) {
-    // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, dto.siteId, ["siteadmin", "editor"]);
-
-    // Check entitlements
-    const entitlements = await this.entitlementsService.getBySiteId(dto.siteId);
-
-    // Check total galleries limit
-    if (entitlements.usage.galleriesCount >= entitlements.limits.galleriesMax) {
-      throw new ForbiddenException(
-        `Gallery limit reached. Maximum ${entitlements.limits.galleriesMax} galleries allowed for ${entitlements.plan} plan.`
-      );
-    }
-
-    // Check images per gallery limit
-    if (dto.images.length > entitlements.limits.imagesPerGalleryMax) {
-      throw new ForbiddenException(
-        `Image limit per gallery exceeded. Maximum ${entitlements.limits.imagesPerGalleryMax} images allowed for ${entitlements.plan} plan.`
-      );
-    }
-
     let placeId = typeof dto.placeId === "string" ? dto.placeId.trim() : "";
     if (!placeId && dto.eventId) {
       const event = await this.prisma.event.findFirst({
@@ -149,6 +146,21 @@ export class AdminGalleryService {
     });
     if (!place) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
+    }
+    await this.rbacService.assertPlaceContentEditor(userId, placeId);
+
+    const entitlements = await this.entitlementsService.getBySiteId(dto.siteId);
+
+    if (entitlements.usage.galleriesCount >= entitlements.limits.galleriesMax) {
+      throw new ForbiddenException(
+        `Gallery limit reached. Maximum ${entitlements.limits.galleriesMax} galleries allowed for ${entitlements.plan} plan.`
+      );
+    }
+
+    if (dto.images.length > entitlements.limits.imagesPerGalleryMax) {
+      throw new ForbiddenException(
+        `Image limit per gallery exceeded. Maximum ${entitlements.limits.imagesPerGalleryMax} images allowed for ${entitlements.plan} plan.`
+      );
     }
 
     if (dto.eventId) {
@@ -199,11 +211,10 @@ export class AdminGalleryService {
     });
   }
 
-  async update(id: string, userId: string, siteId: string, dto: UpdateGalleryDto) {
-    // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, siteId, ["siteadmin", "editor"]);
-
-    const gallery = await this.findOne(userId, id, siteId);
+  async update(id: string, userId: string, siteIdParam: string | undefined, dto: UpdateGalleryDto) {
+    const gallery = await this.findOne(userId, id, siteIdParam);
+    await this.rbacService.assertPlaceContentEditor(userId, gallery.placeId);
+    const siteId = siteIdParam || gallery.siteId;
 
     // Check entitlements if images are being updated
     if (dto.images !== undefined) {
@@ -234,6 +245,7 @@ export class AdminGalleryService {
       if (!place) {
         throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
       }
+      await this.rbacService.assertPlaceContentEditor(userId, nextPlaceId);
 
       const entitlements = await this.entitlementsService.getBySiteId(siteId);
       const placeGalleriesCount = await this.prisma.gallery.count({
@@ -310,11 +322,9 @@ export class AdminGalleryService {
     });
   }
 
-  async delete(userId: string, id: string, siteId: string) {
-    // RBAC check
-    await this.rbacService.checkSiteAccessWithUser(userId, siteId, ["siteadmin", "editor"]);
-
+  async delete(userId: string, id: string, siteId?: string) {
     const gallery = await this.findOne(userId, id, siteId);
+    await this.rbacService.assertPlaceContentEditor(userId, gallery.placeId);
 
     await this.prisma.gallery.delete({
       where: { id },

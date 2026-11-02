@@ -21,6 +21,7 @@ export interface CreateStaticPageDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 export interface UpdateStaticPageDto {
@@ -36,6 +37,7 @@ export interface UpdateStaticPageDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 @Injectable()
@@ -113,6 +115,7 @@ export class AdminStaticPageService {
         siteId: dto.siteId,
         category: dto.category,
         isActive: dto.isActive ?? true,
+        isCrawlable: dto.isCrawlable ?? true,
         translations: {
           create: dto.translations.map((t) => ({
             lang: t.lang,
@@ -148,6 +151,9 @@ export class AdminStaticPageService {
     }
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
+    }
+    if (dto.isCrawlable !== undefined) {
+      updateData.isCrawlable = dto.isCrawlable;
     }
 
     await this.prisma.staticPage.update({

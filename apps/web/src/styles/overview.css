@@ -26,6 +26,38 @@
   padding: clamp(96px, 14vw, 128px) clamp(16px, 4vw, 28px) clamp(64px, 8vw, 96px);
 }
 
+#demo-request,
+#how {
+  scroll-margin-top: 108px;
+}
+
+.overview__fold-sentinel {
+  height: 1px;
+}
+
+.overview__fold-fallback {
+  min-height: 40vh;
+}
+
+.overview__demo {
+  margin-top: 0;
+}
+
+.overview__demo-lead {
+  margin: 0;
+  grid-column: 1 / -1;
+  color: #5c4638;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.overview__demo-optional {
+  font-size: 16px;
+  font-weight: 500;
+  color: #8a7f96;
+}
+
 .overview__sky {
   position: fixed;
   z-index: 0;
@@ -440,6 +472,10 @@
 }
 
 .overview__close {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(200px, 0.85fr);
+  gap: clamp(20px, 4vw, 40px);
+  align-items: center;
   margin-top: clamp(56px, 8vw, 88px);
   padding: clamp(28px, 5vw, 48px);
   border-radius: 28px;
@@ -469,6 +505,17 @@
 
 .overview__close .overview__cta {
   margin-top: 22px;
+}
+
+.overview__close-map {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center 68%;
+  border-radius: 18px;
+  border: 1px solid rgba(242, 244, 251, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
 }
 
 .overview__rise {
@@ -563,7 +610,12 @@
   }
 
   .overview__close {
+    grid-template-columns: 1fr;
     padding: 24px 18px;
+  }
+
+  .overview__close-map {
+    height: 180px;
   }
 }
 

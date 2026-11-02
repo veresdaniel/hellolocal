@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
 import { resetPassword } from "../../api/auth.api";
+import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
@@ -20,6 +21,7 @@ export function ResetPasswordPage() {
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
   const { t, i18n } = useTranslation();
+  const shield = usePublicFormShield("reset_password");
 
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam)
@@ -89,13 +91,13 @@ export function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      await resetPassword({ token, newPassword });
+      await resetPassword({ token, newPassword, ...(await shield.payload()) });
       setSuccess(true);
       setTimeout(() => {
         navigate(`/${lang}/admin/login`);
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.resetPasswordFailed"));
+      setError(publicFormErrorMessage(t, err, t("admin.resetPasswordFailed")));
     } finally {
       setIsLoading(false);
     }
@@ -269,8 +271,9 @@ export function ResetPasswordPage() {
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)", position: "relative" }}
         >
+          {shield.fields}
           <div>
             <label
               style={{

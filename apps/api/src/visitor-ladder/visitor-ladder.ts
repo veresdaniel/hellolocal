@@ -23,17 +23,17 @@ export const METER_WINDOW_DAYS = 30;
 
 /**
  * Defaults chosen for a local map:
- * under 1 000 visitors / 30 days the site stays on the free plan and public,
+ * under 1 000 visitors / 30 days the admin is notified, the plan stays as saved,
  * from 5 000 the site admin is notified, from 20 000 they are notified again.
  * Suspend and apply-plan are available, but they are not the default.
- * Apply-plan names an existing plan and only changes entitlement limits.
+ * A quiet month must not rewrite a paid plan down to FREE.
  */
 export const DEFAULT_VISITOR_LADDER: VisitorLadderConfig = {
   freeUntil: 1000,
   stepTwoFrom: 5000,
   stepThreeFrom: 20000,
   steps: [
-    { action: "apply-plan", plan: "FREE" },
+    { action: "notify", plan: "FREE" },
     { action: "notify", plan: "PRO" },
     { action: "notify", plan: "BUSINESS" },
   ],

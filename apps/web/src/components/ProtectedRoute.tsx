@@ -3,7 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { useAdminSite } from "../contexts/useAdminSite";
-import { getSiteMemberships } from "../api/admin.api";
+import { getAccessScope, getSiteMemberships, type AccessScope } from "../api/admin.api";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { DEFAULT_LANG,  type Lang, isLang} from "../app/config";
@@ -11,11 +11,13 @@ import { isSuperadmin, isAdmin } from "../utils/roleHelpers";
 import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 import type { UserRole } from "../types/enums";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../constants/authStorage";
+import { scopeAllows, type ScopeGate } from "../utils/adminTileAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: UserRole;
   considerSiteRole?: boolean; // If true, also check site-level role (siteadmin)
+  scopeGate?: ScopeGate;
 }
 
 
@@ -23,6 +25,7 @@ export function ProtectedRoute({
   children,
   requiredRole,
   considerSiteRole = false,
+  scopeGate,
 }: ProtectedRouteProps) {
   // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY EARLY RETURNS
   // Use useContext directly to avoid throwing error if AuthContext is not available
@@ -32,6 +35,8 @@ export function ProtectedRoute({
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
   const [isCheckingSiteRole, setIsCheckingSiteRole] = useState(false);
+  const [accessScope, setAccessScope] = useState<AccessScope | null>(null);
+  const [scopeReady, setScopeReady] = useState(false);
 
   // Check for tokens immediately (before waiting for AuthContext)
   const [shouldRedirect, setShouldRedirect] = useState(() => {
@@ -57,6 +62,29 @@ export function ProtectedRoute({
   // Get user and isLoading from authContext (may be undefined)
   const user = authContext?.user ?? null;
   const isLoading = authContext?.isLoading ?? false;
+
+  useEffect(() => {
+    if (!user || isSuperadmin(user.role)) {
+      setAccessScope(null);
+      setScopeReady(true);
+      return;
+    }
+    let cancelled = false;
+    setScopeReady(false);
+    getAccessScope()
+      .then((scope) => {
+        if (!cancelled) setAccessScope(scope);
+      })
+      .catch(() => {
+        if (!cancelled) setAccessScope(null);
+      })
+      .finally(() => {
+        if (!cancelled) setScopeReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.role]);
 
   // Check site-level role if considerSiteRole is enabled
   useEffect(() => {
@@ -151,7 +179,8 @@ export function ProtectedRoute({
 
   // Wait for AuthContext to finish loading before checking user
   // This prevents blocking lazy-loaded modules
-  if (isLoading || (considerSiteRole && isCheckingSiteRole)) {
+  const needsScope = !!user && !isSuperadmin(user.role);
+  if (isLoading || (considerSiteRole && isCheckingSiteRole) || (needsScope && !scopeReady)) {
     // But check tokens again while loading - if no tokens, redirect immediately
     const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -164,7 +193,7 @@ export function ProtectedRoute({
         return <Navigate to={`/${lang}/admin/login`} replace />;
       }
     }
-    return <LoadingSpinner isLoading={isLoading || isCheckingSiteRole} delay={0} />;
+    return <LoadingSpinner isLoading={isLoading || isCheckingSiteRole || (needsScope && !scopeReady)} delay={0} />;
   }
 
   // Redirect to login if no user (after loading is complete)
@@ -178,12 +207,28 @@ export function ProtectedRoute({
   const userIsSuperadmin = isSuperadmin(user.role);
   const userIsAdmin = user.role === ROLE_ADMIN;
   const userIsEditor = user.role === ROLE_EDITOR;
+  const hasScopedAccess = Boolean(
+    accessScope &&
+      (accessScope.unrestricted ||
+        accessScope.siteIds.length > 0 ||
+        accessScope.townIds.length > 0 ||
+        accessScope.placeIds.length > 0)
+  );
   const hasAdminAccess = userIsSuperadmin || userIsAdmin || userIsEditor;
   const isVisitor =
-    !hasAdminAccess && (user.activeSiteId === null || user.activeSiteId === undefined);
+    !hasAdminAccess &&
+    !hasScopedAccess &&
+    (user.activeSiteId === null || user.activeSiteId === undefined);
   if (isVisitor) {
     // Redirect visitor to public pages (home page)
     return <Navigate to={`/${lang}`} replace />;
+  }
+
+  if (scopeGate) {
+    if (!scopeAllows(scopeGate, user.role, accessScope)) {
+      return <div style={{ padding: 24 }}>Access denied.</div>;
+    }
+    return <>{children}</>;
   }
 
   // Check if user is a viewer - viewers should not access admin routes at all
@@ -215,6 +260,20 @@ export function ProtectedRoute({
     // For editor/viewer roles, check if site-level role elevates permissions
     // Siteadmin can access admin-level routes (except superadmin-only)
     if (considerSiteRole && isSiteAdmin && requiredRole === ROLE_ADMIN) {
+      return <>{children}</>;
+    }
+
+    const canUseEditorScreens = Boolean(
+      accessScope &&
+        ((accessScope.regionEditorSiteIds?.length ?? 0) > 0 ||
+          accessScope.townIds.length > 0 ||
+          accessScope.placeIds.length > 0)
+    );
+    if (
+      canUseEditorScreens &&
+      requiredRole !== ROLE_SUPERADMIN &&
+      requiredRole !== ROLE_ADMIN
+    ) {
       return <>{children}</>;
     }
 

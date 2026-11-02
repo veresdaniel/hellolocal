@@ -110,6 +110,9 @@ const SubscriptionsDashboardPage = lazy(() =>
 const DomainsPage = lazy(() =>
   import("../pages/admin/DomainsPage").then((m) => ({ default: m.DomainsPage }))
 );
+const CountriesPage = lazy(() =>
+  import("../pages/admin/CountriesPage").then((m) => ({ default: m.CountriesPage }))
+);
 const SiteMembershipsPage = lazy(() =>
   import("../pages/admin/SiteMembershipsPage").then((m) => ({ default: m.SiteMembershipsPage }))
 );
@@ -245,8 +248,9 @@ const createPublicRoutes = () => {
 
   if (HAS_MULTIPLE_SITES) {
     // Multi-site mode:
-    // - /:lang → region list
-    // - /:lang/:siteKey → region (Prisma Site slug)
+    // - /:lang → marketing overview (public opener)
+    // - /:lang/:siteKey → region map/list (Prisma Site slug)
+    // Region list stays at regiok / regions / regionen.
     return [
       {
         path: `/:lang`,
@@ -261,7 +265,7 @@ const createPublicRoutes = () => {
           {
             element: <PlatformGaShell />,
             children: [
-              { index: true, element: <SitesListPage /> },
+              { index: true, element: <OverviewPage /> },
               ...regionListRoutes,
               { path: "overview", element: <OverviewPage /> },
               { path: "pricing", element: <PublicPricingPage /> },
@@ -373,7 +377,7 @@ export const router = createBrowserRouter([
       {
         path: "categories",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole="editor" scopeGate="regionEditor">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <CategoriesPage />
@@ -409,7 +413,7 @@ export const router = createBrowserRouter([
       {
         path: "places",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PlacesPage />
@@ -445,7 +449,7 @@ export const router = createBrowserRouter([
       {
         path: "towns/:townId/analytics",
         element: (
-          <ProtectedRoute requiredRole="editor" considerSiteRole={true}>
+          <ProtectedRoute requiredRole="viewer" scopeGate="towns">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <TownAnalyticsPage />
@@ -469,7 +473,7 @@ export const router = createBrowserRouter([
       {
         path: "towns",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole="viewer" scopeGate="ownTowns">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <TownsPage />
@@ -645,6 +649,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "countries",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <CountriesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "domains",
         element: (
           <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
@@ -668,7 +684,7 @@ export const router = createBrowserRouter([
       {
         path: "site-memberships",
         element: (
-          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteMembershipsPage />
@@ -680,7 +696,7 @@ export const router = createBrowserRouter([
       {
         path: "place-memberships",
         element: (
-          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
+          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true} scopeGate="regionAdmin">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <PlaceMembershipsPage />
@@ -728,7 +744,7 @@ export const router = createBrowserRouter([
       {
         path: "events",
         element: (
-          <ProtectedRoute requiredRole="editor">
+          <ProtectedRoute requiredRole="viewer" scopeGate="events">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventsPage />
@@ -740,7 +756,7 @@ export const router = createBrowserRouter([
       {
         path: "event-log",
         element: (
-          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <EventLogPage />
@@ -752,7 +768,7 @@ export const router = createBrowserRouter([
       {
         path: "site-status",
         element: (
-          <ProtectedRoute requiredRole={ROLE_ADMIN} considerSiteRole={true}>
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SiteStatusPage />

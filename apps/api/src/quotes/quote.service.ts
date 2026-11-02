@@ -9,6 +9,9 @@ export type QuoteRequestInput = {
   email?: unknown;
   message?: unknown;
   plan?: unknown;
+  companyWebsite?: unknown;
+  formStartedAt?: unknown;
+  recaptchaToken?: unknown;
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,14 +35,18 @@ export class QuoteService {
     const message = text(input.message, 2000);
     const plan = text(input.plan, 40) || "municipal";
 
-    if (!organization || !contactName || !email || !message) {
-      throw new BadRequestException("Töltsd ki a szervezetet, a nevet, az emailt és az üzenetet.");
+    if (plan !== "municipal" && plan !== "demo") {
+      throw new BadRequestException("Egyedi ajánlatot az önkormányzati csomaghoz lehet kérni.");
+    }
+    if (plan === "demo") {
+      if (!contactName || !email) {
+        throw new BadRequestException("Töltsd ki a nevet és az emailt.");
+      }
+    } else if (!organization || !contactName || !email || message.length < 12) {
+      throw new BadRequestException("Töltsd ki a szervezetet, a nevet, az emailt és egy legalább 12 karakteres üzenetet.");
     }
     if (!EMAIL_RE.test(email)) {
       throw new BadRequestException("Ez nem tűnik email címnek.");
-    }
-    if (plan !== "municipal") {
-      throw new BadRequestException("Egyedi ajánlatot az önkormányzati csomaghoz lehet kérni.");
     }
 
     const recipient = await this.settings.ensureQuoteRecipient();
@@ -54,15 +61,21 @@ export class QuoteService {
       },
     });
 
-    const subject = "Önkormányzati ajánlatkérés";
-    const body = [
-      `Szervezet: ${organization}`,
-      `Kapcsolattartó: ${contactName}`,
-      `Email: ${email}`,
-      `Csomag: ${plan}`,
-      "",
-      message,
-    ].join("\n");
+    const subject = plan === "demo" ? "Demó kérés" : "Önkormányzati ajánlatkérés";
+    const demoLines = [`Név: ${contactName}`, `Email: ${email}`];
+    if (organization) demoLines.unshift(`Szervezet: ${organization}`);
+    if (message) demoLines.push("", message);
+    const body =
+      plan === "demo"
+        ? demoLines.join("\n")
+        : [
+            `Szervezet: ${organization}`,
+            `Kapcsolattartó: ${contactName}`,
+            `Email: ${email}`,
+            `Csomag: ${plan}`,
+            "",
+            message,
+          ].join("\n");
 
     const emailed = recipient
       ? await this.email.deliverIfConfigured(recipient, subject, body)

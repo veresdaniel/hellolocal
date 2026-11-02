@@ -9,6 +9,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { CrawlableToggle } from "../../components/CrawlableToggle";
 import { Pagination } from "../../components/Pagination";
 import {
   getPlaces,
@@ -42,7 +43,11 @@ import {
 } from "../../components/AdminResponsiveTable";
 import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { ScopedEventsList } from "../../components/ScopedEventsList";
+import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
+import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
+import { PlaceMembersPanel } from "../../components/PlaceMembersPanel";
 import { FloorplanEditor } from "../../components/FloorplanEditor";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
@@ -60,6 +65,7 @@ interface Place {
   parentPlaceId?: string | null;
   priceBandId: string | null;
   isActive: boolean;
+  isCrawlable?: boolean;
   plan?: "free" | "basic" | "pro";
   isFeatured?: boolean;
   featuredUntil?: string | null;
@@ -285,6 +291,7 @@ export function PlacesPage() {
     lat: "",
     lng: "",
     isActive: false,
+    isCrawlable: true,
     plan: "free" as "free" | "basic" | "pro",
     isFeatured: false,
     featuredUntil: "",
@@ -303,15 +310,29 @@ export function PlacesPage() {
 
   useEffect(() => {
     if (selectedSiteId) {
-      // Reset to first page when site changes
       setPagination((prev) => ({ ...prev, page: 1 }));
       loadData();
       checkSiteAdminRole();
-    } else {
-      // Reset loading state if no site
-      setIsLoading(false);
+      return;
     }
+    void getTowns(undefined, 1, 500)
+      .then((response) => setTowns(Array.isArray(response) ? response : response?.towns || []))
+      .catch(() => setTowns([]));
   }, [selectedSiteId, currentUser?.id]);
+
+  useEffect(() => {
+    if (selectedSiteId || !formData.townId) return;
+    const town = towns.find((item) => item.id === formData.townId);
+    if (!town?.siteId) return;
+    void getCategories(town.siteId)
+      .then((response) => setCategories(Array.isArray(response) ? response : response?.categories || []))
+      .catch(() => setCategories([]));
+  }, [selectedSiteId, formData.townId, towns]);
+
+  useEffect(() => {
+    if (!isCreating || formData.townId || towns.length !== 1) return;
+    setFormData((prev) => ({ ...prev, townId: prev.townId || towns[0].id }));
+  }, [isCreating, formData.townId, towns]);
 
   const checkSiteAdminRole = async () => {
     if (!selectedSiteId || !currentUser) return;
@@ -377,9 +398,7 @@ export function PlacesPage() {
   };
 
   useEffect(() => {
-    if (selectedSiteId) {
-      loadPlaces();
-    }
+    loadPlaces();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId, pagination.page, pagination.limit, hierarchy.townId, hierarchy.placeId]);
 
@@ -416,12 +435,11 @@ export function PlacesPage() {
   };
 
   const loadPlaces = async () => {
-    if (!selectedSiteId) return;
     setIsLoading(true);
     try {
       // Single-place filter: fetch that place directly so pagination cannot hide it.
       if (hierarchy.placeId) {
-        const place = await getPlace(hierarchy.placeId, selectedSiteId);
+        const place = await getPlace(hierarchy.placeId, selectedSiteId || undefined);
         setPlaces(place ? [place] : []);
         setPagination((prev) => ({
           ...prev,
@@ -434,7 +452,7 @@ export function PlacesPage() {
 
       const townIdFilter = hierarchy.townId || undefined;
       const response = await getPlaces(
-        selectedSiteId,
+        selectedSiteId || undefined,
         pagination.page,
         pagination.limit,
         townIdFilter
@@ -482,6 +500,7 @@ export function PlacesPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!formData.categoryId) errors.categoryId = t("admin.validation.categoryRequired");
+    if (!formData.townId) errors.townId = t("admin.validation.townRequired");
     if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
     if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
       errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
@@ -586,8 +605,10 @@ export function PlacesPage() {
         }
       );
 
+      const townForCreate = towns.find((town) => town.id === formData.townId);
       await createPlace({
-        tenantId: selectedSiteId,
+        siteId: townForCreate?.siteId || selectedSiteId,
+        tenantId: townForCreate?.siteId || selectedSiteId,
         categoryId: formData.categoryId,
         parentPlaceId: formData.parentPlaceId || null,
         townId: formData.townId || null,
@@ -600,6 +621,7 @@ export function PlacesPage() {
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
         isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
         plan: formData.plan,
         isFeatured: formData.isFeatured,
         featuredUntil: formData.featuredUntil
@@ -738,6 +760,7 @@ export function PlacesPage() {
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
           plan: formData.plan,
           isFeatured: formData.isFeatured,
           featuredUntil: formData.featuredUntil
@@ -845,6 +868,7 @@ export function PlacesPage() {
       lat: place.lat?.toString() || "",
       lng: place.lng?.toString() || "",
       isActive: place.isActive,
+      isCrawlable: place.isCrawlable !== false,
       plan: place.plan || "free",
       isFeatured: place.isFeatured || false,
       featuredUntil: place.featuredUntil
@@ -918,6 +942,7 @@ export function PlacesPage() {
       lat: "",
       lng: "",
       isActive: false,
+    isCrawlable: true,
       plan: "free",
       isFeatured: false,
       featuredUntil: "",
@@ -1031,6 +1056,7 @@ export function PlacesPage() {
           lat: "",
           lng: "",
           isActive: false,
+    isCrawlable: true,
           plan: "free" as "free" | "basic" | "pro",
           isFeatured: false,
           featuredUntil: "",
@@ -1140,49 +1166,18 @@ export function PlacesPage() {
                     color: "var(--admin-primary)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
-                  }}
-                >
-                  {t("admin.parentPlace")}
-                </label>
-                <select
-                  value={formData.parentPlaceId}
-                  onChange={(e) => setFormData({ ...formData, parentPlaceId: e.target.value })}
-                  style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-                >
-                  <option value="">{t("admin.noParentPlace")}</option>
-                  {parentChoices
-                    .filter((place) => place.id !== editingId)
-                    .map((place) => {
-                      const currentLang = (i18n.language || "hu").split("-")[0];
-                      const name =
-                        place.translations.find((item) => item.lang === currentLang)?.name ||
-                        place.translations.find((item) => item.lang === "hu")?.name ||
-                        place.id;
-                      return (
-                        <option key={place.id} value={place.id}>
-                          {name}
-                        </option>
-                      );
-                    })}
-                </select>
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.towns")}
+                  {t("admin.placeTown")} *
                 </label>
                 <select
                   value={formData.townId}
-                  onChange={(e) => setFormData({ ...formData, townId: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, townId: e.target.value });
+                    if (formErrors.townId) setFormErrors((prev) => ({ ...prev, townId: "" }));
+                  }}
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -1213,6 +1208,46 @@ export function PlacesPage() {
                     </option>
                   ))}
                 </select>
+                {formErrors.townId ? (
+                  <p className="admin-section-card__help" style={{ color: "#b91c1c" }}>
+                    {formErrors.townId}
+                  </p>
+                ) : null}
+              </div>
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    color: "var(--admin-primary)",
+                    fontWeight: 600,
+                    fontSize: "clamp(14px, 3.5vw, 16px)",
+                  }}
+                >
+                  {t("admin.parentPlace")}
+                </label>
+                <select
+                  value={formData.parentPlaceId}
+                  onChange={(e) => setFormData({ ...formData, parentPlaceId: e.target.value })}
+                  style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+                >
+                  <option value="">{t("admin.noParentPlace")}</option>
+                  {parentChoices
+                    .filter((place) => place.id !== editingId)
+                    .map((place) => {
+                      const currentLang = (i18n.language || "hu").split("-")[0];
+                      const name =
+                        place.translations.find((item) => item.lang === currentLang)?.name ||
+                        place.translations.find((item) => item.lang === "hu")?.name ||
+                        place.id;
+                      return (
+                        <option key={place.id} value={place.id}>
+                          {name}
+                        </option>
+                      );
+                    })}
+                </select>
+                <p className="admin-section-card__help">{t("admin.parentPlaceHint")}</p>
               </div>
               <div>
                 <label
@@ -1841,6 +1876,21 @@ export function PlacesPage() {
                 <label style={{ ...labelStyle, marginBottom: 8 }}>
                   {t("admin.location")} ({t("admin.coordinates")})
                 </label>
+                <CoordinateSuggestion
+                  query={[
+                    formData.addressHu || formData.addressEn || formData.addressDe,
+                    formData.nameHu || formData.nameEn || formData.nameDe,
+                    towns.find((town) => town.id === formData.townId)?.translations?.find(
+                      (row: { lang: string }) => row.lang === "hu"
+                    )?.name,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  filled={Boolean(formData.lat && formData.lng)}
+                  onApply={(lat, lng) =>
+                    setFormData((prev) => ({ ...prev, lat: String(lat), lng: String(lng) }))
+                  }
+                />
                 <div style={{ marginBottom: 16 }}>
                   <MapComponent
                     latitude={formData.lat ? parseFloat(formData.lat) : null}
@@ -1922,45 +1972,14 @@ export function PlacesPage() {
               </p>
             </div>
 
-            <div style={{ marginBottom: 24, maxWidth: 420 }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontWeight: 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                }}
-              >
-                {t("admin.googleAnalytics.placeLabel")}
-              </label>
-              <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
-                {t("admin.googleAnalytics.placeHelp")}
-              </p>
-              <input
-                type="text"
-                value={formData.gaMeasurementId}
-                onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
-                placeholder="G-XXXXXXXX"
-                autoComplete="off"
-                spellCheck={false}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
-                  borderRadius: 6,
-                  fontSize: 14,
-                }}
-              />
-              {formErrors.gaMeasurementId ? (
-                <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
-                  {formErrors.gaMeasurementId}
-                </p>
-              ) : (
-                <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
-                  {t("admin.googleAnalytics.clearHint")}
-                </p>
-              )}
-            </div>
+            <GaMeasurementField
+              label={t("admin.googleAnalytics.placeLabel")}
+              help={t("admin.googleAnalytics.placeHelp")}
+              value={formData.gaMeasurementId}
+              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+              error={formErrors.gaMeasurementId}
+              hint={t("admin.googleAnalytics.clearHint")}
+            />
 
             {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
             <div
@@ -2029,6 +2048,11 @@ export function PlacesPage() {
                 </div>
               </label>
             </div>
+
+            <CrawlableToggle
+              checked={formData.isCrawlable}
+              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+            />
 
             {/* Hero kép teljes szélességben */}
             <div style={{ marginBottom: 16 }}>
@@ -2111,6 +2135,21 @@ export function PlacesPage() {
                 />
               </div>
             )}
+
+            {editingId ? (
+              <PlaceMembersPanel
+                placeId={editingId}
+                canManage={
+                  isSiteAdmin ||
+                  currentPlaceRole === "owner" ||
+                  currentPlaceRole === "manager"
+                }
+              />
+            ) : null}
+
+            {editingId ? (
+              <ScopedEventsList placeId={editingId} siteId={selectedSiteId || undefined} />
+            ) : null}
 
             {/* Floorplans section - separate block, only visible if entitled */}
             {editingId && selectedSiteId && (
@@ -2296,44 +2335,6 @@ export function PlacesPage() {
                   }}
                 >
                   {t("admin.priceList")}
-                </button>
-              ),
-            },
-            {
-              key: "analytics",
-              label: t("admin.analyticsLabel"),
-              align: "right" as const,
-              render: (place) => (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/${i18n.language || "hu"}/admin/places/${place.id}/analytics`);
-                  }}
-                  style={{
-                    padding: "6px 12px",
-                    background: "var(--admin-primary)",
-                    color: "var(--hl-on-dark-strong, #ffffff)",
-                    border: "none",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    fontSize: "clamp(13px, 3vw, 15px)",
-                    fontWeight: 600,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    transition: "all 0.2s ease",
-                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
-                    marginLeft: 8,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.24)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
-                  }}
-                >
-                  {t("admin.analyticsLabel")}
                 </button>
               ),
             },
@@ -2554,6 +2555,9 @@ export function PlacesPage() {
                 ]
               : []),
           ]}
+          onAnalytics={(place) =>
+            navigate(`/${i18n.language || "hu"}/admin/places/${place.id}/analytics`)
+          }
           onEdit={startEdit}
           onView={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
@@ -2646,20 +2650,16 @@ export function PlacesPage() {
           }}
           isLoading={isLoading}
           error={null}
+          pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onLimitChange: (limit) => setPagination((prev) => ({ ...prev, limit, page: 1 })),
+          }}
         />
         </>
-      )}
-      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
-          />
-        </div>
       )}
     </div>
   );

@@ -62,7 +62,13 @@ export async function getPublicDefaultLanguage(): Promise<DefaultLanguageRespons
 /**
  * Get active sites count from public endpoint (no authentication required)
  */
-export type MunicipalQuotePayload = {
+export type PublicFormShieldPayload = {
+  companyWebsite?: string;
+  formStartedAt?: number;
+  recaptchaToken?: string;
+};
+
+export type MunicipalQuotePayload = PublicFormShieldPayload & {
   organization: string;
   contactName: string;
   email: string;
@@ -76,8 +82,8 @@ export type MunicipalQuoteResult = {
   reason: "sent" | "no_smtp" | "no_recipient" | "send_failed";
 };
 
-export async function requestMunicipalQuote(
-  body: MunicipalQuotePayload
+async function postQuoteRequest(
+  body: Record<string, string | number | undefined>
 ): Promise<MunicipalQuoteResult> {
   const apiBaseUrl = getApiBaseUrl();
   const res = await fetch(`${apiBaseUrl}/api/public/quote-requests`, {
@@ -94,6 +100,33 @@ export async function requestMunicipalQuote(
     throw new Error(message || "A kérést nem sikerült rögzíteni.");
   }
   return payload as MunicipalQuoteResult;
+}
+
+export async function requestMunicipalQuote(
+  body: MunicipalQuotePayload
+): Promise<MunicipalQuoteResult> {
+  return postQuoteRequest(body);
+}
+
+export type DemoRequestPayload = PublicFormShieldPayload & {
+  contactName: string;
+  email: string;
+  organization?: string;
+  message?: string;
+};
+
+/** Demo request on the public landing. Same inbox as municipal quotes. */
+export async function requestDemo(body: DemoRequestPayload): Promise<MunicipalQuoteResult> {
+  return postQuoteRequest({
+    contactName: body.contactName,
+    email: body.email,
+    organization: body.organization?.trim() ?? "",
+    message: body.message?.trim() ?? "",
+    plan: "demo",
+    companyWebsite: body.companyWebsite,
+    formStartedAt: body.formStartedAt,
+    recaptchaToken: body.recaptchaToken,
+  });
 }
 
 export async function getActiveSitesCount(): Promise<ActiveSitesCountResponse> {

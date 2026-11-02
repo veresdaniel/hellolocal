@@ -140,7 +140,7 @@
     "deleteTenantFailed": "Region konnte nicht gelöscht werden",
     "loadDefaultLanguageFailed": "Standardsprache konnte nicht geladen werden",
     "updateDefaultLanguageFailed": "Standardsprache konnte nicht aktualisiert werden",
-    "loadEventLogsFailed": "Ereignisprotokolle konnten nicht geladen werden",
+    "loadEventLogsFailed": "Protokoll konnte nicht geladen werden",
     "exportFailed": "Export fehlgeschlagen",
     "loadSubscriptionSummaryFailed": "Zusammenfassung konnte nicht geladen werden",
     "loadExpiringSubscriptionsFailed": "Ablaufende Abonnements konnten nicht geladen werden",
@@ -558,7 +558,12 @@
       "map": "Karte",
       "features": "Funktionen",
       "subscription": "Abonnement",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "members": "Mitgliedschaften"
+    },
+    "members": {
+      "title": "Regionsmitgliedschaften",
+      "hint": "Mitglieder dieser Region. Mitgliedschaften anderer Regionen erscheinen hier nicht."
     },
     "instances": {
       "title": "Seiteninstanzen",
@@ -604,6 +609,21 @@
       "subdomainLabel": "Subdomain",
       "addSubdomain": "Subdomain hinzufügen",
       "primarySubdomainHint": "Die primäre Domain ist der Haupt-Host (Apex); Subdomains sind weitere Hostnamen (z. B. hu.beispiel.de), jeweils mit eigener Standardsprache. Beide führen zu dieser Region.",
+      "countryTitle": "Land",
+      "countryHint": "Die Region gehört zu genau einem Land. Landesdomains sind eine eigene Instanz. Die Namen kommen aus der Länderliste des Browsers.",
+      "countryPlaceholder": "Land suchen",
+      "countryEmpty": "Kein passendes Land",
+      "countrySaved": "Land gespeichert",
+      "countrySaveFailed": "Land konnte nicht gespeichert werden",
+      "countryDomains": "Landesdomains",
+      "countryDomainsSaved": "Landesdomains gespeichert",
+      "saveCountryDomains": "Landesdomains speichern",
+      "addRegionTitle": "Region unter diesem Land anlegen",
+      "regionName": "Regionsname",
+      "regionSlug": "Regions-Slug",
+      "addRegion": "Region hinzufügen",
+      "regionAdded": "Region angelegt",
+      "regionAddFailed": "Region konnte nicht angelegt werden",
       "defaultLang": "Standardsprache",
       "addDomain": "Neue Domain hinzufügen",
       "domain": "Domain",
@@ -820,7 +840,8 @@
   },
   "search": {
     "tenantMemberships": "Suche unter Regions-Mitgliedschaften (Region, Benutzer, Rolle)...",
-    "placeMemberships": "Suche unter Ortsmitgliedschaften (Ort, Benutzer, Rolle)..."
+    "placeMemberships": "Suche unter Ortsmitgliedschaften (Ort, Benutzer, Rolle)...",
+    "subscriptions": "Suche unter Abonnements..."
   },
   "all": "Alle",
   "allPlans": "Alle Pläne",
@@ -882,7 +903,11 @@
     "towns": "Gemeinden",
     "townsDesc": "Gemeinden verwalten",
     "contentHierarchy": "Gemeinden",
-    "contentHierarchyDesc": "Region (optional) → Gemeinde → Ort → Event / Galerie / Produkt / Tag · Analytics auf jeder Ebene",
+    "contentHierarchyDesc": "Gemeinden anlegen. Eine Region ist optional. Nur für Superadmins.",
+    "myTowns": "Meine Gemeinde",
+    "myTownsDesc": "Orte zu dieser Gemeinde hinzufügen, bis zum Abo-Limit.",
+    "placesList": "Orte",
+    "placesListDesc": "Ortsliste, getrennt von den Gemeinden. Ort-Benutzer werden am Ort verwaltet.",
     "legalPages": "Rechtliche Seiten",
     "legalPagesDesc": "Rechtliche Seiten verwalten",
     "staticPages": "Statische Seiten",
@@ -897,8 +922,8 @@
     "uiCopyDesc": "Sätze der öffentlichen Seite, in beliebiger Sprache",
     "i18nDesc": "Globale Plattformtexte, nach Seiten gruppiert",
     "usersDesc": "Benutzer und Berechtigungen verwalten",
-    "eventLog": "Ereignisprotokoll",
-    "eventLogDesc": "Benutzeraktivitätsprotokolle anzeigen",
+    "eventLog": "Protokoll",
+    "eventLogDesc": "Einträge deiner Region, Gemeinden und Orte.",
     "siteInstances": "Seiteninstanzen",
     "siteInstancesDesc": "Seiteninstanzen verwalten",
     "tenantMemberships": "Regions-Mitgliedschaften",
@@ -909,7 +934,7 @@
     "regionMembershipsOnly": "Regionsmitgliedschaften",
     "regionAndMembershipsDesc": "Regionseinstellungen und Seiteninstanzen (nur Superadmin) sowie Regions-Mitgliedschaften",
     "placeMemberships": "Ortsmitgliedschaften",
-    "placeMembershipsDesc": "Ortsmitgliedschaften verwalten",
+    "placeMembershipsDesc": "Ort-Mitgliedschaften, getrennt von den Regionsmitgliedern. Die Zuweisung ist auch am Ort.",
     "manageRegions": "Regionen verwalten",
     "manageRegionsHint": "Regionen, Domains und Seiteninstanzen — nur Superadmin",
     "membershipsSection": "Regions-Mitgliedschaften",
@@ -983,7 +1008,7 @@
       "places": "Orte",
       "events": "Veranstaltungen",
       "users": "Benutzer",
-      "eventLogs": "Ereignisprotokolle"
+      "eventLogs": "Protokoll"
     },
     "sitesByPlan": {
       "title": "Regionen nach Plan"
@@ -1071,7 +1096,9 @@
     "actions": "Aktionen",
     "noData": "Keine Daten gefunden",
     "pleaseSelectSite": "Bitte eine Region wählen",
-    "noSearchResults": "Keine Suchergebnisse"
+    "noSearchResults": "Keine Suchergebnisse",
+    "filterPlaceholder": "Filtern…",
+    "filterColumn": "{{column}} filtern"
   },
   "pagination": {
     "showing": "Anzeigen: {{start}}-{{end}} / {{total}}",
@@ -1081,8 +1108,12 @@
     "pageInfo": "{{current}} / {{total}} Seite"
   },
   "published": "Veröffentlicht",
-  "isCrawlable": "Suchmaschinen dürfen die Website durchsuchen",
-  "isCrawlableDescription": "Wenn aktiviert, können Suchmaschinen (Google, Bing, etc.) die Website indexieren. Wenn deaktiviert, verhindern robots.txt und Meta-Tags die Indexierung.",
+  "isCrawlable": "Suchmaschinen dürfen diese Seite indexieren",
+  "isCrawlableDescription": "Eigener Schalter für diesen Inhalt. Ist die globale Indexierung aus, bleibt auch diese Seite aus dem Index.",
+  "globalCrawlability": "Globale Indexierung",
+  "globalCrawlabilityDescription": "Wenn dies aus ist, kann keine Seite indexiert werden, auch wenn sie einzeln erlaubt ist. Wenn es an ist, folgt jeder Ort, jedes Ereignis, jede Region, jeder Ortsteil, jede Seite und jede Sammlung dem eigenen Schalter.",
+  "globalCrawlabilityEnabled": "Indexierbar (SEO)",
+  "globalCrawlabilityUpdated": "Globale Crawl-Einstellung aktualisiert",
   "features": "Funktionen",
   "enableEvents": "Veranstaltungen aktivieren",
   "enableBlog": "Blog aktivieren",
@@ -1123,6 +1154,7 @@
     "atLeastOneImageRequired": "Mindestens ein Bild ist erforderlich",
     "categoryRequired": "Kategorie ist erforderlich",
     "hungarianNameRequired": "Ungarischer Name ist erforderlich",
+    "townRequired": "Die Gemeinde ist erforderlich",
     "slugRequired": "Slug ist erforderlich",
     "hungarianTitleRequired": "Ungarischer Titel ist erforderlich",
     "usernameRequired": "Benutzername ist erforderlich",
@@ -1280,13 +1312,51 @@
     "statusOn": "Aktiv",
     "statusOff": "Inaktiv"
   },
+  "usersPage": {
+    "scopeTitle": "Gemeinde- und Ort-Admin",
+    "scopeHint": "Die Regionsrolle bleibt. Ein Gemeinde-Admin legt Orte an der Gemeinde an. Ein Ort-Admin setzt die Gemeinde im Ort-Formular."
+  },
+  "townsPage": {
+    "subtitle": "Alle Gemeinden. Die Region kann leer bleiben und später gesetzt werden.",
+    "scopedSubtitle": "Deine Gemeinde. Hier kannst du Orte bis zum Abo-Limit anlegen.",
+    "addPlace": "Neuer Ort für diese Gemeinde",
+    "needsRegion": "Dieser Gemeinde muss zuerst eine Region zugeordnet werden, danach kann ein Ort angelegt werden."
+  },
+  "townMembers": {
+    "title": "Gemeinde-Benutzer",
+    "hint": "Nur ein Superadmin kann Benutzer einer Gemeinde zuordnen. Mehrere Benutzer sind möglich. Sie sehen nur diese Gemeinde, ihre Orte und Ereignisse.",
+    "add": "Hinzufügen",
+    "empty": "Dieser Gemeinde ist noch kein Benutzer zugeordnet."
+  },
+  "placeMembers": {
+    "title": "Ort-Benutzer",
+    "hint": "Eine Ort-Mitgliedschaft gilt nur für diesen einen Ort und seine Ereignisse. Nicht für die Gemeinde und nicht für die Region.",
+    "add": "Hinzufügen",
+    "emailPlaceholder": "email@beispiel.de",
+    "mailSent": "Mitgliedschaft gespeichert, die Bestätigung wurde gesendet.",
+    "mailNotSent": "Mitgliedschaft gespeichert. Die E-Mail wurde nicht gesendet, weil SMTP fehlt.",
+    "empty": "Diesem Ort ist noch kein Benutzer zugeordnet."
+  },
+  "scopeSplit": {
+    "title": "Zugriff auf drei Ebenen",
+    "region": "Regionsmitglieder: Admin oder Bearbeiter einer ganzen Region. Verwaltung an der Region.",
+    "town": "Gemeinde-Admin: sieht die eigene Gemeinde und kann dort Orte bis zum Abo-Limit anlegen. Die Rollen bleiben. Zuweisung hier oder an der Gemeinde.",
+    "place": "Ort-Admin: sieht die eigenen Orte und setzt die Gemeinde beim Anlegen. Die Rollen bleiben. Zuweisung hier oder am Ort."
+  },
   "roles": {
     "viewer": "Betrachter",
     "editor": "Bearbeiter",
     "admin": "Admin",
     "superadmin": "Superadmin",
-    "siteadmin": "Standort-Admin",
-    "tenantadmin": "Standort-Admin",
+    "siteadmin": "Regions-Admin",
+    "regionAdmin": "Regions-Admin",
+    "regionEditor": "Regions-Bearbeiter",
+    "regionViewer": "Regions-Betrachter",
+    "townMember": "Gemeinde-Benutzer",
+    "townAdmin": "Gemeinde-Admin",
+    "placeAdmin": "Ort-Admin",
+    "placeEditor": "Ort-Bearbeiter",
+    "tenantadmin": "Regions-Admin",
     "owner": "Eigentümer",
     "manager": "Manager"
   },
@@ -1352,8 +1422,10 @@
   },
   "parentCategory": "Übergeordnete Kategorie",
   "categoryKindService": "Kategorie für lokale Dienste",
-  "parentPlace": "Ort",
-  "noParentPlace": "Keinem Ort zugeordnet",
+  "placeTown": "Gemeinde",
+  "parentPlace": "Übergeordneter Ort",
+  "parentPlaceHint": "Nur wenn dieser Ort in einem anderen Ort liegt, zum Beispiel ein Stand auf dem Markt.",
+  "noParentPlace": "Eigenständiger Ort",
   "order": "Reihenfolge",
   "orderDescription": "Kleinere Zahl = weiter oben in der Liste",
   "dragToReorder": "Ziehen Sie Kategorien, um sie neu zu ordnen. Ziehen Sie unter eine Kategorie, um sie zu einer Unterkategorie zu machen.",
@@ -1372,7 +1444,11 @@
   "seoKeywordsHint": "Durch Komma getrennte Stichwörter für Suchmaschinen",
   "eventLog": {
     "date": "Datum",
-    "title": "Ereignisprotokoll",
+    "title": "Protokoll",
+    "scopedHint": "Einträge deiner Region, Gemeinden und Orte.",
+    "globalTitle": "Vollständiges Protokoll",
+    "globalHint": "Alle Regionen und Orte. Nur Superadmin.",
+    "empty": "Keine Einträge",
     "description": "Benutzeraktivitätsprotokolle anzeigen und verwalten",
     "filters": "Filter",
     "filterSite": "Region",
@@ -1387,18 +1463,18 @@
     "allEntityTypes": "Alle Entitätstypen",
     "export": "CSV exportieren",
     "exporting": "Exportieren...",
-    "exportSuccess": "Ereignisprotokolle erfolgreich exportiert",
+    "exportSuccess": "Protokoll erfolgreich exportiert",
     "delete": "Protokolle löschen",
     "deleting": "Löschen...",
-    "deleteConfirm": "Möchten Sie die gefilterten Ereignisprotokolle wirklich löschen?",
-    "deleteSuccess": "{{count}} Ereignisprotokoll(e) gelöscht",
+    "deleteConfirm": "Gefilterte Protokolleinträge wirklich löschen?",
+    "deleteSuccess": "{{count}} Protokolleinträge gelöscht",
     "resetFilters": "Filter zurücksetzen",
     "timestamp": "Zeitstempel",
     "site": "Region",
     "user": "Benutzer",
     "action": "Aktion",
     "entityType": "Entitätstyp",
-    "noLogs": "Keine Ereignisprotokolle gefunden",
+    "noLogs": "Keine Einträge",
     "showing": "Anzeigen",
     "of": "von",
     "previous": "Vorherige",
@@ -1538,6 +1614,13 @@
     "allPlaces": "Alle Orte",
     "search": "Suche"
   },
+  "regionList": {
+    "subtitle": "Regionen stehen als eigene Karten. Mitgliedschaften werden im Editor der jeweiligen Region verwaltet.",
+    "searchPlaceholder": "Suche nach Regionsname oder Slug…",
+    "members": "Mitgliedschaften",
+    "empty": "Keine Region zum Anzeigen",
+    "forbidden": "Kein Zugriff auf diese Region"
+  },
   "list": {
     "clearFilters": "Filter zurücksetzen",
     "noResults": "Keine Ergebnisse",
@@ -1565,7 +1648,12 @@
   "status": "Status",
   "statusPastDue": "Überfällig",
   "statusCanceled": "Gekündigt",
-  "quoteRecipientDescription": "Posteingang für kommunale Angebotsanfragen",
+  "quoteRecipientDescription": "Posteingang für Angebots- und Demoanfragen",
+  "geocode": {
+    "suggest": "Koordinaten vorschlagen",
+    "suggested": "Vorschlag: {{label}}. Breite und Länge bleiben editierbar.",
+    "missing": "Keine Koordinaten für diesen Namen oder diese Adresse."
+  },
   "googleAnalytics": {
     "platformTitle": "Google Analytics (Plattform)",
     "platformHelp": "GA4-Mess-ID für Plattformseiten (Übersicht, Preise, Login, Multi-Standort-Liste). Leer = deaktiviert. Region/Gemeinde/Ort/Event-Seiten nutzen ihre eigene Hierarchie — kein Plattform-Fallback.",
@@ -1581,6 +1669,7 @@
     "subscriberTitle": "Google Analytics (Abonnent)",
     "subscriberLabel": "GA4-Mess-ID",
     "subscriberHelp": "Wird auf den öffentlichen Seiten dieser Abonnenten-Region geladen (nach Cookie-Zustimmung). Gemeinde/Ort/Event können mit eigener ID überschreiben. Leer = auf Regionsebene deaktiviert. Die Plattform nutzt eine eigene ID — kein gemeinsamer Fallback.",
+    "openConsole": "In Analytics öffnen",
     "clearHint": "Format: G-XXXXXXXX. Leeren = deaktivieren / Eltern erben.",
     "invalidId": "Ungültige GA4-Mess-ID. Erwartetes Format: G-XXXXXXXX",
     "save": "Analytics speichern",
@@ -1658,6 +1747,14 @@
   "sending": "Wird gesendet…",
   "userInfo": "Benutzerinfo",
   "viewPlan": "Plan anzeigen",
+  "countriesPage": {
+    "title": "Länder",
+    "hint": "Land und Domains an einem Ort. Die Domain einer Region steht im Regionseditor.",
+    "add": "Land hinzufügen",
+    "empty": "Noch kein Land",
+    "code": "Code",
+    "regions": "Regionen"
+  },
   "domains": "Domains",
   "selectDomain": "Domain auswählen",
   "domainBadgeIcon": "Domain-Abzeichen-Symbol",

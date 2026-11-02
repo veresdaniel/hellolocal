@@ -6,6 +6,10 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { AuthContext } from "../../contexts/AuthContext";
+import { useAdminSite } from "../../contexts/useAdminSite";
+import { RegionMembersPanel } from "../../components/RegionMembersPanel";
+import { isSuperadmin } from "../../utils/roleHelpers";
+import { ROLE_ADMIN } from "../../types/enums";
 import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
@@ -43,6 +47,7 @@ import {
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 import { regionAddress } from "../../app/urls";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import { GaMeasurementField } from "../../components/GaMeasurementField";
 import {
   DEFAULT_PUBLIC_THEME_COLORS,
   isValidHexColor,
@@ -59,7 +64,8 @@ type TabId =
   | "map"
   | "features"
   | "subscription"
-  | "analytics";
+  | "analytics"
+  | "members";
 
 const SITE_EDIT_TABS: TabId[] = [
   "overview",
@@ -70,6 +76,7 @@ const SITE_EDIT_TABS: TabId[] = [
   "features",
   "subscription",
   "analytics",
+  "members",
 ];
 
 function isSiteEditTab(value: string | null): value is TabId {
@@ -84,6 +91,13 @@ export function SiteEditPage() {
   const { showToast } = useToast();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
+  const { sites, isLoading: sitesLoading } = useAdminSite();
+  const fullEditor = currentUser ? isSuperadmin(currentUser.role) : false;
+  const membersOnly = !!currentUser && !fullEditor;
+  const canAccessSite =
+    fullEditor ||
+    currentUser?.role === ROLE_ADMIN ||
+    sites.some((item) => item.id === id);
   usePageTitle("admin.sites");
 
   const [site, setSite] = useState<Site | null>(null);
@@ -114,10 +128,14 @@ export function SiteEditPage() {
   // Update tab when URL changes
   useEffect(() => {
     const nextTab = searchParams.get("tab");
+    if (membersOnly) {
+      if (activeTab !== "members") selectTab("members");
+      return;
+    }
     if (isSiteEditTab(nextTab)) {
       setActiveTab(nextTab);
     }
-  }, [searchParams]);
+  }, [searchParams, membersOnly]);
   const [formData, setFormData] = useState({
     // Overview tab
     nameHu: "",
@@ -408,8 +426,12 @@ export function SiteEditPage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (membersOnly && sitesLoading)) {
     return null;
+  }
+
+  if (currentUser && !sitesLoading && !canAccessSite) {
+    return <div style={{ padding: 24 }}>{t("admin.regionList.forbidden")}</div>;
   }
 
   if (!site) {
@@ -430,6 +452,7 @@ export function SiteEditPage() {
     { id: "features", label: t("admin.siteEdit.tabs.features") },
     { id: "subscription", label: t("admin.siteEdit.tabs.subscription") },
     { id: "analytics", label: t("admin.siteEdit.tabs.analytics") },
+    { id: "members", label: t("admin.siteEdit.tabs.members") },
   ];
 
   return (
@@ -437,7 +460,7 @@ export function SiteEditPage() {
       <AdminPageHeader
         title={currentTranslation?.name || site.slug}
         isCreatingOrEditing={true}
-        onSave={handleSave}
+        onSave={membersOnly ? undefined : handleSave}
         saveLabel={t("common.save")}
         cancelLabel={t("common.cancel")}
       />
@@ -488,7 +511,7 @@ export function SiteEditPage() {
             borderBottom: "1px solid #e5e7eb",
           }}
         >
-          {tabs.map((tab) => (
+          {(membersOnly ? tabs.filter((tab) => tab.id === "members") : tabs).map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -532,7 +555,10 @@ export function SiteEditPage() {
             minHeight: 400,
           }}
         >
-          {activeTab === "overview" && (
+          {membersOnly ? (
+            <RegionMembersPanel siteId={site.id} />
+          ) : null}
+          {!membersOnly && activeTab === "overview" && (
             <OverviewTab
               site={site}
               formData={formData}
@@ -597,11 +623,12 @@ export function SiteEditPage() {
               t={t}
             />
           )}
-          {activeTab === "analytics" && (
+          {activeTab === "analytics" && !membersOnly && (
             <div>
               <SiteAnalyticsPage />
             </div>
           )}
+          {activeTab === "members" && <RegionMembersPanel siteId={site.id} />}
         </div>
       </div>
     </div>
@@ -1123,56 +1150,15 @@ function OverviewTab({
         </label>
       </div>
 
-      <div style={{ marginTop: 24, maxWidth: 420 }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: 8,
-            fontWeight: 500,
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.googleAnalytics.siteLabel")}
-        </label>
-        <p
-          style={{
-            margin: "0 0 8px",
-            color: "#6b7280",
-            fontSize: 13,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.googleAnalytics.siteHelp")}
-        </p>
-        <input
-          type="text"
+      <div style={{ marginTop: 24 }}>
+        <GaMeasurementField
+          label={t("admin.googleAnalytics.siteLabel")}
+          help={t("admin.googleAnalytics.siteHelp")}
           value={formData.gaMeasurementId}
-          onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
-          placeholder="G-XXXXXXXX"
-          autoComplete="off"
-          spellCheck={false}
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
-            borderRadius: 6,
-            fontSize: 14,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
+          onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+          error={formErrors.gaMeasurementId}
+          hint={t("admin.googleAnalytics.clearHint")}
         />
-        {formErrors.gaMeasurementId ? (
-          <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
-            {formErrors.gaMeasurementId}
-          </p>
-        ) : (
-          <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
-            {t("admin.googleAnalytics.clearHint")}
-          </p>
-        )}
       </div>
 
       <div style={{ marginTop: 32 }}>
@@ -2705,7 +2691,10 @@ function FeaturesTab({
     enableEvents: instance?.features?.enableEvents ?? true,
     enableBlog: instance?.features?.enableBlog ?? false,
     enableStaticPages: instance?.features?.enableStaticPages ?? true,
-    isCrawlable: instance?.features?.isCrawlable ?? true,
+    isCrawlable:
+      typeof site.isCrawlable === "boolean"
+        ? site.isCrawlable
+        : (instance?.features?.isCrawlable ?? true),
   });
 
   useEffect(() => {
@@ -2714,9 +2703,12 @@ function FeaturesTab({
       enableEvents: inst?.features?.enableEvents ?? true,
       enableBlog: inst?.features?.enableBlog ?? false,
       enableStaticPages: inst?.features?.enableStaticPages ?? true,
-      isCrawlable: inst?.features?.isCrawlable ?? true,
+      isCrawlable:
+        typeof site.isCrawlable === "boolean"
+          ? site.isCrawlable
+          : (inst?.features?.isCrawlable ?? true),
     });
-  }, [selectedLang, siteInstances]);
+  }, [selectedLang, siteInstances, site.isCrawlable]);
 
   const handleSave = async () => {
     if (!instance) {
@@ -3212,92 +3204,26 @@ function SubscriptionTab({
           borderRadius: 12,
           border: "1px solid #e5e7eb",
           boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-          maxWidth: 520,
         }}
       >
-        <h4
-          style={{
-            margin: "0 0 8px",
-            fontSize: "clamp(16px, 3.5vw, 18px)",
-            fontWeight: 600,
-            color: "#334155",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.googleAnalytics.subscriberTitle")}
-        </h4>
-        <p
-          style={{
-            margin: "0 0 12px",
-            color: "#6b7280",
-            fontSize: 13,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.googleAnalytics.subscriberHelp")}
-        </p>
-        <label
-          style={{
-            display: "block",
-            marginBottom: 8,
-            fontWeight: 500,
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.googleAnalytics.subscriberLabel")}
-        </label>
-        <input
-          type="text"
+        <GaMeasurementField
+          label={t("admin.googleAnalytics.subscriberLabel")}
+          help={t("admin.googleAnalytics.subscriberHelp")}
           value={formData.gaMeasurementId}
-          onChange={(e) => {
+          onChange={(gaMeasurementId) => {
             setGaError(null);
-            setFormData({ ...formData, gaMeasurementId: e.target.value });
+            setFormData({ ...formData, gaMeasurementId });
           }}
-          placeholder="G-XXXXXXXX"
-          autoComplete="off"
-          spellCheck={false}
+          error={gaError}
+          hint={t("admin.googleAnalytics.clearHint")}
           disabled={!canEditGa || isSavingGa}
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            border: gaError ? "1px solid #dc2626" : "1px solid #d1d5db",
-            borderRadius: 6,
-            fontSize: 14,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            background: canEditGa ? "white" : "#f9fafb",
-          }}
         />
-        {gaError ? (
-          <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>{gaError}</p>
-        ) : (
-          <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
-            {t("admin.googleAnalytics.clearHint")}
-          </p>
-        )}
         {canEditGa && (
           <button
             type="button"
+            className="admin-btn admin-btn--primary"
             onClick={handleSaveGa}
             disabled={isSavingGa}
-            style={{
-              marginTop: 12,
-              padding: "8px 16px",
-              border: "none",
-              borderRadius: 6,
-              background: "var(--admin-primary)",
-              color: "white",
-              cursor: isSavingGa ? "not-allowed" : "pointer",
-              fontSize: 14,
-              fontWeight: 600,
-              opacity: isSavingGa ? 0.6 : 1,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
           >
             {isSavingGa ? t("common.loading") : t("admin.googleAnalytics.save")}
           </button>

@@ -529,19 +529,15 @@ export function PriceBandsPage() {
           onEdit={startEdit}
           onDelete={(priceBand) => handleDelete(priceBand.id)}
           error={null}
+          pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onLimitChange: (limit) => setPagination((prev) => ({ ...prev, limit, page: 1 })),
+          }}
         />
-      )}
-      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
-          />
-        </div>
       )}
     </div>
   );

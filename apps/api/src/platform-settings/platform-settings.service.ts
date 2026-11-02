@@ -10,6 +10,7 @@ import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { UiCopyService } from "../ui-copy/ui-copy.service";
 import { alignPlanMatrixAndPublicPlans } from "./plan-matrix-sync";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { allowsCrawl } from "../seo/crawlability";
 
 function pickLang(lang: string): Lang {
   return langOrDefault(lang);
@@ -106,6 +107,7 @@ export class PlatformSettingsService {
     // landingHtml may be absent until the migration runs on live; keep serving the map.
     const siteSelectBase = {
       id: true,
+      isCrawlable: true,
       languages: true,
       brand: {
         select: {
@@ -301,9 +303,9 @@ export class PlatformSettingsService {
       avatar: brandPlaceholders.brandBadgeIcon ?? appDefaults.placeholders.avatar,
     };
 
-    // 5) indexable: instance.features.seo?.indexable felülírhatja, fallback: globális crawlability
+    // Region home follows the site switch. Global off forces every page off.
     const globalCrawlability = await this.getGlobalCrawlability();
-    const indexable = instanceFeatures?.seo?.indexable ?? globalCrawlability;
+    const indexable = allowsCrawl(globalCrawlability, site.isCrawlable);
 
     // Get feature matrix overrides from Brand (for pricing page)
     const brand = await this.prisma.brand.findFirst({
@@ -336,6 +338,7 @@ export class PlatformSettingsService {
         defaultTitle: t?.seoTitle ?? null,
         defaultDescription: t?.seoDescription ?? null,
         indexable: !!indexable,
+        globalIndexable: globalCrawlability,
       },
       placeholders: placeholdersDto,
       map: mergedMap,
@@ -550,7 +553,7 @@ export class PlatformSettingsService {
     const siteDescription: Record<string, string> = { hu: "", en: "", de: "" };
     const seoTitle: Record<string, string> = { hu: "", en: "", de: "" };
     const seoDescription: Record<string, string> = { hu: "", en: "", de: "" };
-    let isCrawlable = true;
+    const isCrawlable = site.isCrawlable;
 
     // Get language-specific content from SiteTranslation
     for (const translation of site.translations) {
@@ -559,25 +562,6 @@ export class PlatformSettingsService {
       siteDescription[lang] = translation.description || "";
       seoTitle[lang] = translation.seoTitle || "";
       seoDescription[lang] = translation.seoDescription || "";
-    }
-
-    // Get runtime features from SiteInstances (isCrawlable, enableEvents, etc.)
-    // Use the default instance or first one if no default, or null if none exist
-    const defaultInstance =
-      site.siteInstances?.find((si) => si.isDefault) || site.siteInstances?.[0] || null;
-    let hasSiteSpecificCrawlability = false;
-    if (defaultInstance?.features) {
-      const features = defaultInstance.features as any;
-      if (features.isCrawlable !== undefined) {
-        isCrawlable = features.isCrawlable;
-        hasSiteSpecificCrawlability = true;
-      }
-    }
-
-    // Fallback to global crawlability if no site-specific setting
-    if (!hasSiteSpecificCrawlability) {
-      const globalCrawlability = await this.getGlobalCrawlability();
-      isCrawlable = globalCrawlability;
     }
 
     return {
@@ -793,6 +777,10 @@ export class PlatformSettingsService {
       await this.prisma.siteInstance.update({
         where: { id: defaultInstance.id },
         data: { features },
+      });
+      await this.prisma.site.update({
+        where: { id: siteId },
+        data: { isCrawlable: settings.isCrawlable },
       });
     }
 

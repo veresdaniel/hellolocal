@@ -10,6 +10,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useToast } from "../../contexts/ToastContext";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
+import { AdminRowActions } from "../../components/AdminRowActions";
 import {
   AdminResponsiveTable,
   type TableColumn,
@@ -1035,36 +1036,10 @@ export function CategoriesPage() {
                       </span>
                     </td>
                     <td style={{ padding: 12, textAlign: "right" }}>
-                      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => startEdit(category)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#007bff",
-                            color: "var(--hl-on-dark-strong, #ffffff)",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.edit")}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(category.id)}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#dc3545",
-                            color: "var(--hl-on-dark-strong, #ffffff)",
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 12,
-                          }}
-                        >
-                          {t("common.delete")}
-                        </button>
-                      </div>
+                      <AdminRowActions
+                        onEdit={() => startEdit(category)}
+                        onDelete={() => handleDelete(category.id)}
+                      />
                     </td>
                   </tr>
                 );

@@ -1,15 +1,25 @@
 // entitlements.service.ts
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, forwardRef } from "@nestjs/common";
+import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { RbacService } from "../auth/rbac.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { PLAN_DEFS, type Entitlements } from "./entitlements.config";
 import { Lang } from "../common/language-code";
+
+const CUSTOMER_LIMITS = {
+  free: { placesMax: 1, eventsPerMonthMax: 5 },
+  basic: { placesMax: 5, eventsPerMonthMax: 15 },
+  pro: { placesMax: 30, eventsPerMonthMax: 30 },
+} as const;
 
 @Injectable()
 export class EntitlementsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService,
+    @Inject(forwardRef(() => RbacService))
+    private readonly rbac: RbacService
   ) {}
 
   async getForRequest(args: { lang: Lang; siteKey?: string }): Promise<Entitlements> {
@@ -60,7 +70,7 @@ export class EntitlementsService {
       galleriesCount,
     ] = await Promise.all([
       this.prisma.place.count({
-        where: { siteId, isActive: true },
+        where: { siteId, isActive: true, ownerId: null },
       }),
       this.prisma.place.count({
         where: {
@@ -147,7 +157,7 @@ export class EntitlementsService {
       galleriesCount,
     ] = await Promise.all([
       this.prisma.place.count({
-        where: { siteId, isActive: true },
+        where: { siteId, isActive: true, ownerId: null },
       }),
       this.prisma.place.count({
         where: {
@@ -191,19 +201,15 @@ export class EntitlementsService {
   }
 
   /**
-   * Site.plan municipal wins, so a town is not capped by a BASIC marketing override.
-   * BASIC, PRO and BUSINESS stay on their own definitions.
+   * The subscription row is the plan. A municipal label on the region does not
+   * unlock unlimited places unless the subscription itself is MUNICIPAL.
    */
   private async resolvePlan(
-    siteId: string,
+    _siteId: string,
     subscriptionPlan: string
-  ): Promise<"BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL"> {
-    const site = await this.prisma.site.findUnique({
-      where: { id: siteId },
-      select: { plan: true },
-    });
-    if (site?.plan === "municipal") return "MUNICIPAL";
+  ): Promise<"FREE" | "BASIC" | "PRO" | "BUSINESS" | "MUNICIPAL"> {
     if (
+      subscriptionPlan === "FREE" ||
       subscriptionPlan === "PRO" ||
       subscriptionPlan === "BUSINESS" ||
       subscriptionPlan === "MUNICIPAL"
@@ -221,7 +227,12 @@ export class EntitlementsService {
 
     // Merge limits
     if (override.limits) {
-      result.limits = { ...base.limits, ...override.limits };
+      const limits = { ...base.limits, ...override.limits };
+      // A saved Infinity is the old "no cap" placeholder, not a chosen quota.
+      for (const key of ["placesMax", "eventsPerMonthMax"] as const) {
+        if (!Number.isFinite(limits[key])) limits[key] = base.limits[key];
+      }
+      result.limits = limits;
     }
 
     // Merge features
@@ -240,9 +251,137 @@ export class EntitlementsService {
       where: {
         siteId,
         isActive: true,
-        startDate: { gte: start, lt: end },
+        createdAt: { gte: start, lt: end },
+        place: { ownerId: null },
       },
     });
+  }
+
+  /**
+   * Region staff use the region subscription. A place owner uses their own
+   * plan (Egy hely / Vállalkozás / Több telephely). Superadmin is uncapped.
+   */
+  async assertCanAddPlace(actorUserId: string | undefined, siteId: string, willBeActive: boolean) {
+    if (await this.isSuperadmin(actorUserId)) return;
+    if (actorUserId && (await this.isCustomerActor(actorUserId, siteId))) {
+      await this.assertCustomerPlaceAllowance(actorUserId);
+      return;
+    }
+    if (!willBeActive) return;
+    await this.assertRegionPlaceAllowance(siteId);
+  }
+
+  async assertCustomerPlaceAllowance(userId: string) {
+    const plan = await this.customerPlan(userId);
+    const max = CUSTOMER_LIMITS[plan].placesMax;
+    const count = await this.customerPlaceCount(userId);
+    if (count >= max) {
+      throw new BadRequestException(`Az előfizetésed ${max} helyet tartalmaz (${count}/${max}).`);
+    }
+  }
+
+  async assertCanAddEvent(actorUserId: string | undefined, siteId: string, placeId: string) {
+    if (await this.isSuperadmin(actorUserId)) return;
+    const place = await this.prisma.place.findUnique({
+      where: { id: placeId },
+      select: { ownerId: true },
+    });
+    if (place?.ownerId) {
+      await this.assertCustomerEventAllowance(place.ownerId);
+      return;
+    }
+    await this.assertRegionEventAllowance(siteId);
+  }
+
+  private async assertCustomerEventAllowance(ownerId: string) {
+    const plan = await this.customerPlan(ownerId);
+    const max = CUSTOMER_LIMITS[plan].eventsPerMonthMax;
+    const { start, end } = this.monthRange();
+    const count = await this.prisma.event.count({
+      where: {
+        isActive: true,
+        createdAt: { gte: start, lt: end },
+        place: { ownerId },
+      },
+    });
+    if (count >= max) {
+      throw new BadRequestException(`Az előfizetésed havi eseménykerete betelt (${count}/${max}).`);
+    }
+  }
+
+  private async assertRegionPlaceAllowance(siteId: string) {
+    const ent = await this.getBySiteId(siteId);
+    if (ent.status === "SUSPENDED" || ent.status === "EXPIRED") {
+      throw new BadRequestException("Az előfizetés nem aktív, új hely nem vehető fel.");
+    }
+    const max = ent.limits.placesMax;
+    if (!Number.isFinite(max)) return;
+    if (ent.usage.placesCount >= max) {
+      throw new BadRequestException(`A régió helykerete betelt (${ent.usage.placesCount}/${max}).`);
+    }
+  }
+
+  private async assertRegionEventAllowance(siteId: string) {
+    const ent = await this.getBySiteId(siteId);
+    if (ent.status === "SUSPENDED" || ent.status === "EXPIRED") {
+      throw new BadRequestException("Az előfizetés nem aktív, új esemény nem vehető fel.");
+    }
+    if (!ent.features.eventsEnabled) {
+      throw new BadRequestException("Ez a csomag nem tartalmaz eseményeket.");
+    }
+    const max = ent.limits.eventsPerMonthMax;
+    if (!Number.isFinite(max)) return;
+    if (ent.usage.eventsThisMonthCount >= max) {
+      throw new BadRequestException(
+        `A régió havi eseménykerete betelt (${ent.usage.eventsThisMonthCount}/${max}).`
+      );
+    }
+  }
+
+  private async isSuperadmin(userId: string | undefined) {
+    if (!userId) return false;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    return user?.role === UserRole.superadmin;
+  }
+
+  private async isCustomerActor(userId: string, siteId: string) {
+    const scope = await this.rbac.getContentScope(userId);
+    if (scope.unrestricted || scope.regionEditorSiteIds.includes(siteId)) return false;
+    if (scope.townIds.length) {
+      const town = await this.prisma.town.findFirst({
+        where: { id: { in: scope.townIds }, siteId },
+        select: { id: true },
+      });
+      if (town) return false;
+    }
+    return true;
+  }
+
+  private async customerPlan(userId: string): Promise<keyof typeof CUSTOMER_LIMITS> {
+    const places = await this.prisma.place.findMany({
+      where: { OR: [{ ownerId: userId }, { memberships: { some: { userId } } }] },
+      select: { plan: true },
+    });
+    if (places.some((place) => place.plan === "pro")) return "pro";
+    if (places.some((place) => place.plan === "basic")) return "basic";
+    return "free";
+  }
+
+  private async customerPlaceCount(userId: string) {
+    return this.prisma.place.count({
+      where: { OR: [{ ownerId: userId }, { memberships: { some: { userId } } }] },
+    });
+  }
+
+  private monthRange() {
+    const now = new Date();
+    return {
+      start: new Date(now.getFullYear(), now.getMonth(), 1),
+      end: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+    };
   }
 
   private async countLanguages(siteId: string): Promise<number> {

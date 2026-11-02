@@ -48,18 +48,9 @@ export function SiteLanguagesEditor({
   };
 
   return (
-    <section className="admin-surface" style={{ marginBottom: 28 }}>
-      <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "var(--hl-ink, #1b1730)" }}>
-        {t("admin.siteLanguages")}
-      </h3>
-      <p
-        style={{
-          margin: "0 0 14px",
-          color: "var(--hl-muted, #665d78)",
-          maxWidth: 640,
-          lineHeight: 1.5,
-        }}
-      >
+    <section className="admin-section-card" style={{ marginBottom: 28 }}>
+      <h3 className="admin-section-card__title">{t("admin.siteLanguages")}</h3>
+      <p className="admin-section-card__help" style={{ maxWidth: 720, fontSize: 16 }}>
         {t("admin.siteLanguagesHint")}
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
@@ -118,7 +109,7 @@ export function SiteLanguagesEditor({
         })}
       </div>
       {!canRemove ? (
-        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--hl-muted, #665d78)" }}>
+        <p className="admin-section-card__help" style={{ fontSize: 15 }}>
           {t("admin.siteLanguagesNeedOne")}
         </p>
       ) : null}

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
-import { SlugEntityType } from "@prisma/client";
+import { Prisma, SlugEntityType } from "@prisma/client";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
@@ -35,6 +35,7 @@ export interface CreateTownDto {
   lat?: number | null;
   lng?: number | null;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 export interface UpdateTownDto {
@@ -57,6 +58,7 @@ export interface UpdateTownDto {
   lat?: number | null;
   lng?: number | null;
   isActive?: boolean;
+  isCrawlable?: boolean;
 }
 
 export type FindTownsOptions = {
@@ -67,6 +69,10 @@ export type FindTownsOptions = {
   includeStandalone?: boolean;
   /** When true, return only standalone towns (ignores siteId). Unassigned bucket. */
   standaloneOnly?: boolean;
+  /** Superadmin list: every town, with or without a region. */
+  all?: boolean;
+  /** Extra visibility filter. Omitted for superadmin. */
+  accessWhere?: Prisma.TownWhereInput;
 };
 
 @Injectable()
@@ -91,19 +97,26 @@ export class AdminTownService {
   ) {
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
-    const { includeStandalone = false, standaloneOnly = false } = options;
+    const { includeStandalone = false, standaloneOnly = false, accessWhere, all = false } = options;
 
-    let where: { siteId?: string | null; OR?: Array<{ siteId: string | null }> };
-    if (standaloneOnly) {
+    let where: Prisma.TownWhereInput;
+    if (all) {
+      where = {};
+    } else if (standaloneOnly) {
       where = { siteId: null };
-    } else if (!siteId) {
+    } else if (!siteId && !accessWhere) {
       throw new BadRequestException(
         "siteId is required unless standaloneOnly=true (unassigned towns)"
       );
+    } else if (!siteId) {
+      where = {};
     } else if (includeStandalone) {
       where = { OR: [{ siteId }, { siteId: null }] };
     } else {
       where = { siteId };
+    }
+    if (accessWhere) {
+      where = { AND: [where, accessWhere] };
     }
 
     const total = await this.prisma.town.count({ where });
@@ -194,6 +207,7 @@ export class AdminTownService {
         customDomain,
         gaMeasurementId,
         isActive: dto.isActive ?? true,
+        isCrawlable: dto.isCrawlable ?? true,
         lat: dto.lat ?? null,
         lng: dto.lng ?? null,
         translations: {
@@ -231,6 +245,7 @@ export class AdminTownService {
 
     const updateData: {
       isActive?: boolean;
+      isCrawlable?: boolean;
       lat?: number | null;
       lng?: number | null;
       siteId?: string | null;
@@ -240,6 +255,9 @@ export class AdminTownService {
 
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
+    }
+    if (dto.isCrawlable !== undefined) {
+      updateData.isCrawlable = dto.isCrawlable;
     }
     if (dto.lat !== undefined) {
       updateData.lat = dto.lat;

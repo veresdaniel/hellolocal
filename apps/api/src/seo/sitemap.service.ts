@@ -113,8 +113,17 @@ ${entries}
     return body;
   }
 
+  private async isGlobalCrawlOn(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: "globalCrawlability" },
+    });
+    if (setting && setting.type === "boolean") return setting.value === "true";
+    return true;
+  }
+
   private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {
     if (scope.kind === "unknown") return [];
+    if (!(await this.isGlobalCrawlOn())) return [];
 
     if (scope.kind === "town") {
       return chunk === "towns" ? this.townEntityHostUrls(scope) : [];
@@ -214,6 +223,7 @@ ${entries}
       where: { id: { in: siteIds }, isActive: true },
       select: {
         id: true,
+        isCrawlable: true,
         updatedAt: true,
         languages: true,
         siteKeys: {
@@ -221,7 +231,7 @@ ${entries}
           select: { lang: true, slug: true },
         },
         legalPages: {
-          where: { isActive: true },
+          where: { isActive: true, isCrawlable: true },
           select: { key: true, updatedAt: true },
         },
       },
@@ -233,24 +243,26 @@ ${entries}
       for (const key of site.siteKeys) {
         const lang = key.lang;
         if (!site.languages.includes(lang)) continue;
-        urls.push({
-          loc: absoluteUrlOnOrigin(origin, siteHomePath(lang, key.slug)),
-          lastmod,
-          changefreq: "daily",
-          priority: 0.9,
-        });
-        urls.push({
-          loc: absoluteUrlOnOrigin(origin, productsPath(lang, key.slug)),
-          lastmod,
-          changefreq: "weekly",
-          priority: 0.5,
-        });
-        urls.push({
-          loc: absoluteUrlOnOrigin(origin, staticPagesListPath(lang, key.slug)),
-          lastmod,
-          changefreq: "weekly",
-          priority: 0.5,
-        });
+        if (site.isCrawlable) {
+          urls.push({
+            loc: absoluteUrlOnOrigin(origin, siteHomePath(lang, key.slug)),
+            lastmod,
+            changefreq: "daily",
+            priority: 0.9,
+          });
+          urls.push({
+            loc: absoluteUrlOnOrigin(origin, productsPath(lang, key.slug)),
+            lastmod,
+            changefreq: "weekly",
+            priority: 0.5,
+          });
+          urls.push({
+            loc: absoluteUrlOnOrigin(origin, staticPagesListPath(lang, key.slug)),
+            lastmod,
+            changefreq: "weekly",
+            priority: 0.5,
+          });
+        }
         for (const legal of site.legalPages) {
           const path = legalPagePath(lang, key.slug, legal.key);
           if (!path) continue;
@@ -338,6 +350,7 @@ ${entries}
           where: {
             id: { in: unique },
             isActive: true,
+            isCrawlable: true,
             ...(excludeOwnCustomDomain ? { customDomain: null } : {}),
           },
           select: { id: true },
@@ -346,7 +359,7 @@ ${entries}
       }
       case SlugEntityType.event: {
         const rows = await this.prisma.event.findMany({
-          where: { id: { in: unique }, isActive: true },
+          where: { id: { in: unique }, isActive: true, isCrawlable: true },
           select: { id: true },
         });
         return new Set(rows.map((r) => r.id));
@@ -356,6 +369,7 @@ ${entries}
           where: {
             id: { in: unique },
             isActive: true,
+            isCrawlable: true,
             ...(excludeOwnCustomDomain ? { customDomain: null } : {}),
           },
           select: { id: true },
@@ -364,7 +378,7 @@ ${entries}
       }
       case SlugEntityType.page: {
         const rows = await this.prisma.staticPage.findMany({
-          where: { id: { in: unique }, isActive: true },
+          where: { id: { in: unique }, isActive: true, isCrawlable: true },
           select: { id: true },
         });
         return new Set(rows.map((r) => r.id));
@@ -427,7 +441,7 @@ ${entries}
     scope: Extract<SitemapScope, { kind: "town" }>
   ): Promise<SitemapUrl[]> {
     const town = await this.prisma.town.findFirst({
-      where: { id: scope.townId, isActive: true },
+      where: { id: scope.townId, isActive: true, isCrawlable: true },
       select: {
         updatedAt: true,
         site: {
@@ -441,7 +455,8 @@ ${entries}
         },
       },
     });
-    if (!town?.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
+    if (!town) return [];
+    if (!town.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
 
     const urls: SitemapUrl[] = [
       {
@@ -476,7 +491,7 @@ ${entries}
     scope: Extract<SitemapScope, { kind: "place" }>
   ): Promise<SitemapUrl[]> {
     const place = await this.prisma.place.findFirst({
-      where: { id: scope.placeId, isActive: true },
+      where: { id: scope.placeId, isActive: true, isCrawlable: true },
       select: {
         updatedAt: true,
         site: {
@@ -490,7 +505,8 @@ ${entries}
         },
       },
     });
-    if (!place?.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
+    if (!place) return [];
+    if (!place.site) return [{ loc: scope.origin + "/", changefreq: "weekly", priority: 1.0 }];
 
     const urls: SitemapUrl[] = [
       {

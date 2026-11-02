@@ -5,9 +5,13 @@ import {
   BadRequestException,
   ForbiddenException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { randomBytes } from "crypto";
+import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaceRole, UserRole, SiteRole } from "@prisma/client";
 import { RbacService } from "../auth/rbac.service";
+import { EmailService } from "../email/email.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreatePlaceMembershipDto {
@@ -24,7 +28,9 @@ export interface UpdatePlaceMembershipDto {
 export class AdminPlaceMembershipService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly rbacService: RbacService
+    private readonly rbacService: RbacService,
+    private readonly email: EmailService,
+    private readonly config: ConfigService
   ) {}
 
   async findAll(placeId?: string, userId?: string) {
@@ -136,6 +142,98 @@ export class AdminPlaceMembershipService {
     });
   }
 
+  /**
+   * Attach an existing user, or create one, then mail the assignment.
+   * Membership is stored even when SMTP is not configured.
+   */
+  async inviteByEmail(actorUserId: string, placeId: string, email: string, role: PlaceRole) {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized.includes("@")) throw new BadRequestException("Email is required");
+    if (!Object.values(PlaceRole).includes(role)) {
+      throw new BadRequestException("Place role is required");
+    }
+    const place = await this.prisma.place.findUnique({
+      where: { id: placeId },
+      include: { translations: { select: { lang: true, name: true } } },
+    });
+    if (!place) throw new NotFoundException(`Place with ID ${placeId} not found`);
+    await this.checkCanAssignRole(actorUserId, placeId, place.siteId, role, null);
+
+    let user = await this.prisma.user.findFirst({
+      where: { email: { equals: normalized, mode: "insensitive" } },
+    });
+    let created = false;
+    let resetToken: string | null = null;
+    if (!user) {
+      const local = normalized.split("@")[0]?.replace(/[^a-z0-9._-]/gi, "") || "user";
+      let username = local.slice(0, 40);
+      const taken = await this.prisma.user.findUnique({ where: { username } });
+      if (taken) username = `${username.slice(0, 28)}-${Date.now().toString(36)}`;
+      resetToken = randomBytes(32).toString("hex");
+      user = await this.prisma.user.create({
+        data: {
+          username,
+          email: normalized,
+          passwordHash: await bcrypt.hash(randomBytes(24).toString("hex"), 10),
+          firstName: local,
+          lastName: "-",
+          role: UserRole.viewer,
+          isActive: true,
+          activeSiteId: null,
+          resetToken,
+          resetTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+      created = true;
+    }
+
+    const existing = await this.prisma.placeMembership.findUnique({
+      where: { placeId_userId: { placeId, userId: user.id } },
+    });
+    if (existing) {
+      await this.checkCanAssignRole(actorUserId, placeId, place.siteId, role, existing.role);
+    }
+    const membership = existing
+      ? await this.prisma.placeMembership.update({
+          where: { id: existing.id },
+          data: { role },
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true, username: true } },
+          },
+        })
+      : await this.prisma.placeMembership.create({
+          data: { placeId, userId: user.id, role },
+          include: {
+            user: { select: { id: true, email: true, firstName: true, lastName: true, username: true } },
+          },
+        });
+
+    const placeName =
+      place.translations.find((row) => row.lang === "hu")?.name ||
+      place.translations[0]?.name ||
+      placeId;
+    const base = (this.config.get<string>("APP_BASE_URL") || "http://localhost:5173").replace(/\/$/, "");
+    const lines = [
+      `Felvettünk a(z) „${placeName}” helyhez.`,
+      `Szerepkör: ${role}.`,
+      `Bejelentkezés: ${base}/hu/admin/login`,
+    ];
+    if (created && resetToken) {
+      lines.push(`Új fiók. Jelszó megadása: ${base}/hu/reset-password?token=${resetToken}`);
+    }
+    const emailed = await this.email.deliverIfConfigured(
+      normalized,
+      `Hozzáférés: ${placeName}`,
+      lines.join("\n")
+    );
+    return {
+      membership,
+      created,
+      emailed,
+      reason: emailed ? "sent" : "no_smtp",
+    };
+  }
+
   async update(id: string, dto: UpdatePlaceMembershipDto, actorUserId: string) {
     const membership = await this.findOne(id);
 
@@ -230,8 +328,7 @@ export class AdminPlaceMembershipService {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
-    // Global admin/superadmin can assign any role (align with site-membership RBAC).
-    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
+    if (actor.role === UserRole.superadmin) {
       return;
     }
 
@@ -308,8 +405,7 @@ export class AdminPlaceMembershipService {
       throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_ACTOR_NOT_FOUND);
     }
 
-    // Global admin/superadmin can delete any membership (align with site-membership RBAC).
-    if (actor.role === UserRole.superadmin || actor.role === UserRole.admin) {
+    if (actor.role === UserRole.superadmin) {
       return;
     }
 

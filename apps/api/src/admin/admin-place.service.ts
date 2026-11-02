@@ -5,7 +5,15 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { SlugEntityType, UserRole, SiteRole, PlaceRole, PlacePlan, SitePlan } from "@prisma/client";
+import {
+  Prisma,
+  SlugEntityType,
+  UserRole,
+  SiteRole,
+  PlaceRole,
+  PlacePlan,
+  SitePlan,
+} from "@prisma/client";
 import { Lang, normalizeLanguageList } from "../common/language-code";
 import { generateSlug } from "../slug/slug.helper";
 import { RbacService } from "../auth/rbac.service";
@@ -67,6 +75,7 @@ export interface CreatePlaceDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   heroImage?: string | null;
   mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
@@ -109,6 +118,7 @@ export interface UpdatePlaceDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   heroImage?: string | null;
   mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
@@ -307,15 +317,21 @@ export class AdminPlaceService {
     }
   }
 
-  async findAll(siteId: string, page?: number, limit?: number, townId?: string) {
+  async findAll(
+    siteId: string | null | undefined,
+    page?: number,
+    limit?: number,
+    townId?: string,
+    accessWhere?: Prisma.PlaceWhereInput
+  ) {
     // Default pagination values
     const pageNum = page ? parseInt(String(page)) : 1;
     const limitNum = limit ? parseInt(String(limit)) : 10;
 
-    const where: { siteId: string; townId?: string } = { siteId };
-    if (townId) {
-      where.townId = townId;
-    }
+    const where: Prisma.PlaceWhereInput = {};
+    if (siteId) where.siteId = siteId;
+    if (townId) where.townId = townId;
+    if (accessWhere) where.AND = [accessWhere];
 
     const include = {
       category: {
@@ -478,19 +494,6 @@ export class AdminPlaceService {
     return place;
   }
 
-  private async assertPlaceCapacity(siteId: string, willBeActive: boolean) {
-    if (!willBeActive) return;
-    const ent = await this.entitlementsService.getBySiteId(siteId);
-    const max = ent.limits.placesMax;
-    if (!Number.isFinite(max)) return;
-    const count = await this.prisma.place.count({
-      where: { siteId, isActive: true },
-    });
-    if (count >= max) {
-      throw new BadRequestException("A csomag helykerete betelt.");
-    }
-  }
-
   private async assertParentPlace(siteId: string, parentPlaceId?: string | null) {
     if (!parentPlaceId) return;
     const parent = await this.prisma.place.findFirst({
@@ -526,7 +529,7 @@ export class AdminPlaceService {
     );
   }
 
-  async create(dto: CreatePlaceDto) {
+  async create(dto: CreatePlaceDto, actorUserId?: string) {
     const {
       tagIds = [],
       translations,
@@ -543,7 +546,7 @@ export class AdminPlaceService {
     }
     await this.assertTownForSite(dto.siteId, dto.townId);
     await this.assertParentPlace(dto.siteId, parentPlaceId);
-    await this.assertPlaceCapacity(dto.siteId, dto.isActive === true);
+    await this.entitlementsService.assertCanAddPlace(actorUserId, dto.siteId, dto.isActive === true);
     if (customDomainRaw !== undefined && String(customDomainRaw ?? "").trim()) {
       await this.assertPlaceDomainEntitlement(dto.siteId);
     }
@@ -709,8 +712,8 @@ export class AdminPlaceService {
   async update(id: string, siteId: string, dto: UpdatePlaceDto, userId?: string) {
     const place = await this.findOne(id, siteId);
 
-    if (dto.isActive === true && place.isActive !== true) {
-      await this.assertPlaceCapacity(siteId, true);
+    if (dto.isActive === true && place.isActive !== true && !place.ownerId) {
+      await this.entitlementsService.assertCanAddPlace(userId, siteId, true);
     }
 
     // Validate featured status using EntitlementsService
@@ -828,6 +831,7 @@ export class AdminPlaceService {
     if (restData.mapImage !== undefined) updateData.mapImage = restData.mapImage;
     // Gallery is now managed via Gallery entities and shortcodes, not place.gallery array
     if (restData.isActive !== undefined) updateData.isActive = restData.isActive;
+    if (restData.isCrawlable !== undefined) updateData.isCrawlable = restData.isCrawlable;
     if (restData.ratingAvg !== undefined) updateData.ratingAvg = restData.ratingAvg;
     if (restData.ratingCount !== undefined) updateData.ratingCount = restData.ratingCount;
     if (restData.extras !== undefined) updateData.extras = restData.extras;

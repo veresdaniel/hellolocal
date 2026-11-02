@@ -1,20 +1,25 @@
 // src/pages/admin/TownsPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../contexts/AuthContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { getTowns, createTown, updateTown, deleteTown, deletePlace } from "../../api/admin.api";
+import { getPlaces, getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { MapComponent } from "../../components/MapComponent";
-import { Pagination } from "../../components/Pagination";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
-import { TownHierarchyList } from "../../components/TownHierarchyList";
+import { AdminDataTable } from "../../components/AdminDataTable";
+import { TownMembersPanel } from "../../components/TownMembersPanel";
+import { ScopedEventsList } from "../../components/ScopedEventsList";
+import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
+import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { DomainInput } from "../../components/DomainInput";
+import { CrawlableToggle } from "../../components/CrawlableToggle";
 import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import type { Lang} from "../../types/enums";
@@ -24,6 +29,7 @@ interface Town {
   siteId: string | null;
   tenantId?: string;
   isActive: boolean;
+  isCrawlable?: boolean;
   customDomain?: string | null;
   gaMeasurementId?: string | null;
   lat: number | null;
@@ -68,6 +74,7 @@ function emptyTownForm(siteId = "") {
     lat: "",
     lng: "",
     isActive: true,
+    isCrawlable: true,
     customDomain: "",
     customDomainEnabled: false,
     gaMeasurementId: "",
@@ -77,14 +84,15 @@ function emptyTownForm(siteId = "") {
 export function TownsPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+  const currentUser = authContext?.user ?? null;
+  const isSuperadmin = currentUser?.role === "superadmin";
   const { selectedSiteId, sites, isLoading: isSiteLoading } = useAdminSite();
   const selectedTenantId = selectedSiteId; // Alias for backward compatibility
   usePageTitle("admin.towns");
   const [towns, setTowns] = useState<Town[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -93,6 +101,8 @@ export function TownsPage() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [viewingTown, setViewingTown] = useState<Town | null>(null);
+  const [townPlaces, setTownPlaces] = useState<Array<{ id: string; translations?: Array<{ lang: string; name: string }> }>>([]);
   const [formData, setFormData] = useState(() => emptyTownForm());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -106,12 +116,6 @@ export function TownsPage() {
   };
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
     // Reset to first page when site / unassigned-bucket context changes
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, [selectedTenantId]);
@@ -121,16 +125,21 @@ export function TownsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId, pagination.page, pagination.limit]);
 
+  useEffect(() => {
+    if (!viewingTown) {
+      setTownPlaces([]);
+      return;
+    }
+    void getPlaces(viewingTown.siteId || undefined, 1, 200, viewingTown.id)
+      .then((rows) => setTownPlaces(Array.isArray(rows) ? rows : rows?.places || []))
+      .catch(() => setTownPlaces([]));
+  }, [viewingTown]);
+
   const loadTowns = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Régió selected → only that region’s towns. No régió → unassigned (standalone) bucket.
-      const response = selectedTenantId
-        ? await getTowns(selectedTenantId, pagination.page, pagination.limit)
-        : await getTowns(undefined, pagination.page, pagination.limit, {
-            standaloneOnly: true,
-          });
+      const response = await getTowns(undefined, pagination.page, pagination.limit);
       // Backend always returns paginated response now
       if (Array.isArray(response)) {
         // Fallback for backward compatibility (should not happen)
@@ -228,6 +237,7 @@ export function TownsPage() {
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
         isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         gaMeasurementId: formData.gaMeasurementId.trim()
           ? formData.gaMeasurementId.trim().toUpperCase()
@@ -314,12 +324,13 @@ export function TownsPage() {
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
           isActive: formData.isActive,
+          isCrawlable: formData.isCrawlable,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
           gaMeasurementId: formData.gaMeasurementId.trim()
             ? formData.gaMeasurementId.trim().toUpperCase()
             : null,
         },
-        selectedTenantId || undefined
+        undefined
       );
       setEditingId(null);
       resetForm();
@@ -335,7 +346,7 @@ export function TownsPage() {
     if (!confirm(t("admin.confirmations.deleteTown"))) return;
 
     try {
-      await deleteTown(id, selectedTenantId || undefined);
+      await deleteTown(id);
       await loadTowns();
       // Notify global cache manager that towns have changed
       notifyEntityChanged("towns");
@@ -344,29 +355,13 @@ export function TownsPage() {
     }
   };
 
-  const handleDeletePlace = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deletePlace"))) return false;
-
-    try {
-      await deletePlace(id, selectedSiteId || undefined);
-      notifyEntityChanged("places");
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.errors.deletePlaceFailed"));
-      return false;
-    }
-  };
-
   const startEdit = (town: Town) => {
     setEditingId(town.id);
     const hu = findTranslation(town.translations, "hu" as Lang);
     const en = findTranslation(town.translations, "en" as Lang);
     const de = findTranslation(town.translations, "de" as Lang);
-    // Constrained region picker: only header site or empty — never a free multi-site list.
-    const constrainedSiteId =
-      !town.siteId ? "" : selectedSiteId || "";
     setFormData({
-      ...emptyTownForm(constrainedSiteId),
+      ...emptyTownForm(town.siteId || ""),
       nameHu: hu?.name || "",
       nameEn: en?.name || "",
       nameDe: de?.name || "",
@@ -391,6 +386,7 @@ export function TownsPage() {
       lat: town.lat?.toString() || "",
       lng: town.lng?.toString() || "",
       isActive: town.isActive,
+      isCrawlable: town.isCrawlable !== false,
       customDomain: town.customDomain || "",
       customDomainEnabled: !!town.customDomain,
       gaMeasurementId: town.gaMeasurementId || "",
@@ -408,20 +404,13 @@ export function TownsPage() {
     return null;
   }
 
-  const headerSite = selectedSiteId ? sites.find((s) => s.id === selectedSiteId) : null;
-  const headerSiteLabel = headerSite
-    ? siteLabel(headerSite)
-    : selectedSiteId || t("admin.hierarchy.unassignedTowns");
-
   return (
     <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.towns")}
         subtitle={
           !isCreating && !editingId
-            ? selectedSiteId
-              ? t("admin.hierarchy.subtitle")
-              : t("admin.hierarchy.unassignedTownsHint")
+            ? t("admin.townsPage.subtitle")
             : undefined
         }
         newButtonLabel={t("admin.forms.newTown")}
@@ -430,7 +419,7 @@ export function TownsPage() {
           setIsCreating(true);
           resetForm();
         }}
-        showNewButton={!isCreating && !editingId}
+        showNewButton={isSuperadmin && !isCreating && !editingId}
         isCreatingOrEditing={isCreating || !!editingId}
         onSave={() => (editingId ? handleUpdate(editingId) : handleCreate())}
         onCancel={() => {
@@ -514,15 +503,11 @@ export function TownsPage() {
               }}
             >
               <option value="">{t("admin.noRegion")}</option>
-              {selectedSiteId ? (
-                <option value={selectedSiteId}>{headerSiteLabel}</option>
-              ) : (
-                sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {siteLabel(site)}
-                  </option>
-                ))
-              )}
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {siteLabel(site)}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -673,6 +658,11 @@ export function TownsPage() {
             </label>
           </div>
 
+          <CrawlableToggle
+            checked={formData.isCrawlable}
+            onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+          />
+
           <div style={{ marginBottom: 16 }}>
             <DomainInput
               value={formData.customDomain}
@@ -695,50 +685,26 @@ export function TownsPage() {
             </p>
           </div>
 
-          <div style={{ marginBottom: 16, maxWidth: 420 }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 500,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-              }}
-            >
-              {t("admin.googleAnalytics.townLabel")}
-            </label>
-            <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
-              {t("admin.googleAnalytics.townHelp")}
-            </p>
-            <input
-              type="text"
-              value={formData.gaMeasurementId}
-              onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
-              placeholder="G-XXXXXXXX"
-              autoComplete="off"
-              spellCheck={false}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: 14,
-              }}
-            />
-            {formErrors.gaMeasurementId ? (
-              <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
-                {formErrors.gaMeasurementId}
-              </p>
-            ) : (
-              <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
-                {t("admin.googleAnalytics.clearHint")}
-              </p>
-            )}
-          </div>
+          <GaMeasurementField
+            label={t("admin.googleAnalytics.townLabel")}
+            help={t("admin.googleAnalytics.townHelp")}
+            value={formData.gaMeasurementId}
+            onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+            error={formErrors.gaMeasurementId}
+            hint={t("admin.googleAnalytics.clearHint")}
+          />
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", marginBottom: 8 }}>
               {t("admin.location")} ({t("admin.coordinates")})
             </label>
+            <CoordinateSuggestion
+              query={formData.nameHu || formData.nameEn || formData.nameDe}
+              filled={Boolean(formData.lat && formData.lng)}
+              onApply={(lat, lng) =>
+                setFormData((prev) => ({ ...prev, lat: String(lat), lng: String(lng) }))
+              }
+            />
             <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ flex: "0 0 400px" }}>
                 <MapComponent
@@ -814,43 +780,99 @@ export function TownsPage() {
               </div>
             </div>
           </div>
+          {isSuperadmin && editingId ? <TownMembersPanel townId={editingId} /> : null}
+          {editingId ? (
+            <ScopedEventsList
+              townId={editingId}
+              siteId={formData.siteId || selectedSiteId || undefined}
+            />
+          ) : null}
         </div>
       )}
 
-      {!isCreating && !editingId && (
-        <>
-          <TownHierarchyList
-            siteId={selectedSiteId}
-            towns={towns}
-            searchQuery={searchQuery}
-            onSearchChange={(query) => {
-              setSearchQuery(query);
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            onEditTown={(townId) => {
-              const town = towns.find((item) => item.id === townId);
-              if (town) startEdit(town);
-            }}
-            onDeleteTown={(townId) => handleDelete(townId)}
-            onDeletePlace={handleDeletePlace}
-            isLoadingTowns={isLoading}
-            error={error}
-          />
-          {!isMobile && !isLoading && pagination.total > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                total={pagination.total}
-                limit={pagination.limit}
-                onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                onLimitChange={(limit) =>
-                  setPagination((prev) => ({ ...prev, limit, page: 1 }))
-                }
-              />
-            </div>
+      {viewingTown && !isSuperadmin && !isCreating && !editingId ? (
+        <div className="admin-section-card" style={{ marginBottom: 24 }}>
+          <h2 className="admin-section-card__title">
+            {findTranslation(viewingTown.translations, (i18n.language || "hu").slice(0, 2) as Lang)?.name ||
+              findTranslation(viewingTown.translations, "hu")?.name}
+          </h2>
+          <p className="admin-section-card__help">{t("admin.townsPage.scopedSubtitle")}</p>
+          {viewingTown.siteId ? (
+            <button
+              type="button"
+              className="admin-btn admin-btn--primary"
+              onClick={() =>
+                navigate(
+                  `/${(i18n.language || "hu").split("-")[0]}/admin/places?new=true&townId=${viewingTown.id}`
+                )
+              }
+            >
+              {t("admin.townsPage.addPlace")}
+            </button>
+          ) : (
+            <p className="admin-section-card__help">{t("admin.townsPage.needsRegion")}</p>
           )}
-        </>
+          <ul style={{ marginTop: 16 }}>
+            {townPlaces.map((place) => (
+              <li key={place.id}>
+                {place.translations?.find((item) => item.lang === "hu")?.name || place.id}
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="admin-btn admin-btn--secondary" onClick={() => setViewingTown(null)}>
+            {t("common.close")}
+          </button>
+        </div>
+      ) : null}
+
+      {!isCreating && !editingId && (
+        <AdminDataTable
+          items={towns}
+          getItemId={(town) => town.id}
+          stateKey="towns"
+          isLoading={isLoading}
+          emptyMessage={t("admin.table.noData")}
+          pagination={{
+            page: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.total,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onPageSizeChange: (pageSize) =>
+              setPagination((prev) => ({ ...prev, limit: pageSize, page: 1 })),
+          }}
+          columns={[
+            {
+              key: "name",
+              label: t("common.name"),
+              getText: (town) =>
+                findTranslation(town.translations, (i18n.language || "hu").slice(0, 2) as Lang)
+                  ?.name ||
+                findTranslation(town.translations, "hu")?.name ||
+                town.id,
+              render: (town) =>
+                findTranslation(town.translations, (i18n.language || "hu").slice(0, 2) as Lang)
+                  ?.name ||
+                findTranslation(town.translations, "hu")?.name ||
+                town.id,
+            },
+            {
+              key: "region",
+              label: t("admin.hierarchy.siteTools"),
+              getText: (town) =>
+                town.siteId ? sites.find((site) => site.id === town.siteId)?.slug || town.siteId : "",
+              render: (town) => {
+                if (!town.siteId) return t("admin.hierarchy.unassignedTowns");
+                const site = sites.find((item) => item.id === town.siteId);
+                return site ? siteLabel(site) : town.siteId;
+              },
+            },
+          ]}
+          onAnalytics={(town) =>
+            navigate(`/${(i18n.language || "hu").split("-")[0]}/admin/towns/${town.id}/analytics`)
+          }
+          onEdit={isSuperadmin ? startEdit : (town) => setViewingTown(town)}
+          onDelete={isSuperadmin ? (town) => void handleDelete(town.id) : undefined}
+        />
       )}
     </div>
   );

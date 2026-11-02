@@ -29,6 +29,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { PublicPlansEditor } from "../../components/PublicPlansEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
+import { GlobalCrawlabilityCard } from "../../components/GlobalCrawlabilityCard";
 import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
@@ -50,6 +51,7 @@ import {
 } from "../../styles/publicThemeColors";
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import { GaMeasurementField } from "../../components/GaMeasurementField";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 /** Display-only mask; never a real key. Cleared on focus so a new key can be typed. */
@@ -377,7 +379,9 @@ export function AppSettingsPage() {
   };
 
   const handleSavePublicPlans = async (
-    plans: Record<PublicPlanId, PublicPlanNumbers>,
+    plans: Record<PublicPlanId, PublicPlanNumbers & { enabled?: boolean }> & {
+      municipal?: { enabled: boolean };
+    },
     copyDrafts?: import("../../components/publicPlans").PlanCopyDrafts
   ) => {
     try {
@@ -969,6 +973,8 @@ export function AppSettingsPage() {
         </div>
       )}
 
+      {userIsSuperadmin && <GlobalCrawlabilityCard />}
+
       {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
 
       {userIsSuperadmin && (
@@ -1150,39 +1156,17 @@ export function AppSettingsPage() {
             padding: 24,
           }}
         >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("admin.googleAnalytics.platformTitle")}
-          </h2>
-          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
-            {t("admin.googleAnalytics.platformHelp")}
-          </p>
-          <input
-            type="text"
+          <GaMeasurementField
+            label={t("admin.googleAnalytics.platformTitle")}
+            help={t("admin.googleAnalytics.platformHelp")}
             value={platformGaId}
-            onChange={(event) => {
-              setPlatformGaId(event.target.value);
+            onChange={(value) => {
+              setPlatformGaId(value);
               if (platformGaError) setPlatformGaError("");
             }}
-            placeholder="G-XXXXXXXX"
-            autoComplete="off"
-            spellCheck={false}
-            style={{
-              width: "100%",
-              maxWidth: 420,
-              minHeight: 42,
-              padding: "0 12px",
-              border: platformGaError ? "1px solid #dc2626" : "1px solid #d9d3e4",
-              borderRadius: 8,
-              font: "inherit",
-            }}
+            error={platformGaError}
+            hint={t("admin.googleAnalytics.clearHint")}
           />
-          {platformGaError ? (
-            <p style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}>{platformGaError}</p>
-          ) : (
-            <p style={{ margin: "8px 0 0", color: "#9ca3af", fontSize: 12 }}>
-              {t("admin.googleAnalytics.clearHint")}
-            </p>
-          )}
           <div style={{ marginTop: 12 }}>
             <button
               type="button"
@@ -1631,10 +1615,10 @@ function FeatureMatrixEditor({
   const defaultDefs = {
     BASIC: {
       limits: {
-        placesMax: Infinity, // Korlátlan place (default)
+        placesMax: 5,
         featuredPlacesMax: 0, // Nincs kiemelt helyek
         galleryImagesPerPlaceMax: Infinity, // Korlátlan kép
-        eventsPerMonthMax: 0, // Nincs események
+        eventsPerMonthMax: 15,
         siteMembersMax: Infinity, // Korlátlan tag
         domainAliasesMax: 0, // Nincs egyedi domain
         languagesMax: 1,
@@ -1644,7 +1628,7 @@ function FeatureMatrixEditor({
         galleriesPerEventMax: Infinity,
       },
       features: {
-        eventsEnabled: false, // Nincs események
+        eventsEnabled: true,
         placeSeoEnabled: false, // Nincs SEO
         extrasEnabled: false,
         customDomainEnabled: false, // Nincs egyedi domain
@@ -1659,10 +1643,10 @@ function FeatureMatrixEditor({
     },
     PRO: {
       limits: {
-        placesMax: Infinity,
+        placesMax: 30,
         featuredPlacesMax: 15,
         galleryImagesPerPlaceMax: 30,
-        eventsPerMonthMax: 200,
+        eventsPerMonthMax: 30,
         siteMembersMax: 20,
         domainAliasesMax: 5,
         languagesMax: 3,
@@ -1687,10 +1671,10 @@ function FeatureMatrixEditor({
     },
     BUSINESS: {
       limits: {
-        placesMax: Infinity,
+        placesMax: 30,
         featuredPlacesMax: Infinity,
         galleryImagesPerPlaceMax: Infinity,
-        eventsPerMonthMax: Infinity,
+        eventsPerMonthMax: 30,
         siteMembersMax: Infinity,
         domainAliasesMax: Infinity,
         languagesMax: Infinity,

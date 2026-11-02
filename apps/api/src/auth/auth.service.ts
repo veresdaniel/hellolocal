@@ -21,6 +21,7 @@ import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { UserRole } from "@prisma/client";
 import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
+import { CountryService } from "../country/country.service";
 
 export interface JwtPayload {
   sub: string; // user id
@@ -55,7 +56,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     @Optional() private readonly twoFactorService?: TwoFactorService,
-    @Optional() private readonly eventLogService?: AdminEventLogService
+    @Optional() private readonly eventLogService?: AdminEventLogService,
+    @Optional() private readonly countries?: CountryService
   ) {}
 
   private getDefaultSiteSlug(): string {
@@ -143,6 +145,10 @@ export class AuthService {
 
     if (existingUser) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ALREADY_EXISTS);
+    }
+
+    if (dto.plan === "free") {
+      return this.registerFreePlace(dto);
     }
 
     // Get site ID (priority: DTO > request context > referer-based resolution > default site)
@@ -298,6 +304,70 @@ export class AuthService {
         siteIds,
         activeSiteId: user.activeSiteId,
         aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
+      },
+    };
+  }
+
+  /**
+   * Free plan ("Egy hely"): country + town only. Does not create geography.
+   * The user is a place member when the town already exists, otherwise the signup stays pending.
+   */
+  private async registerFreePlace(dto: RegisterDto): Promise<AuthResponse> {
+    if (!this.countries) {
+      throw new BadRequestException("Registration is unavailable");
+    }
+    if (!dto.countryId || !dto.townName?.trim()) {
+      throw new BadRequestException("Country and town are required");
+    }
+    const passwordHash = await this.hashPassword(dto.password);
+    const user = await this.prisma.user.create({
+      data: {
+        username: dto.username,
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        bio: dto.bio,
+        role: UserRole.viewer,
+        activeSiteId: null,
+      },
+    });
+    try {
+      await this.countries.registerFreePlace({
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        countryId: dto.countryId,
+        townId: dto.townId,
+        townName: dto.townName,
+      });
+    } catch (error) {
+      await this.prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
+      throw error;
+    }
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      siteIds: [],
+      activeSiteId: null,
+    };
+    const { accessToken, refreshToken } = await this.generateTokens(payload);
+    this.emailService.sendWelcomeEmail(user.email, user.username, user.firstName).catch(() => undefined);
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        siteIds: [],
+        activeSiteId: null,
+        aiAssistantEnabled: false,
       },
     };
   }

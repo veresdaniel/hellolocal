@@ -38,7 +38,9 @@ export interface PlatformSettings extends PlatformSettingsDto {
   faviconUrl: string | null;
   // Additional fields (already in PlatformSettingsDto, but explicitly listed for clarity)
   seoImage?: string | null;
-  isCrawlable?: boolean; // Derived from seo.indexable
+  isCrawlable?: boolean; // Region home: global && site switch
+  /** Master switch. Off forces every public page out of the index. */
+  globalIndexable?: boolean;
   featureMatrix?: {
     planOverrides?: any;
     placePlanOverrides?: any;
@@ -72,6 +74,7 @@ export function getPlatformSettings(
     // Additional fields
     seoImage: dto.seoImage || null,
     isCrawlable: dto.seo.indexable,
+    globalIndexable: dto.seo.globalIndexable ?? dto.seo.indexable,
     featureMatrix: dto.featureMatrix,
   }));
 }
@@ -123,6 +126,8 @@ export interface PublicTown {
   /** Resolved GA4 ID for this town (Town > Site). */
   gaMeasurementId?: string | null;
   placeCount: number;
+  /** Effective crawl flag (global switch already applied). */
+  isCrawlable?: boolean;
 }
 
 export interface PublicTownsResponse {
@@ -419,6 +424,8 @@ export interface Event {
   isPinned: boolean;
   isRainSafe: boolean;
   showOnMap: boolean;
+  /** Effective crawl flag (global switch already applied). */
+  isCrawlable?: boolean;
   tags: string[];
   rating?: {
     avg: number | null; // Average rating (1-5)

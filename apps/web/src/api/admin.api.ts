@@ -33,6 +33,14 @@ export interface User {
       }>;
     };
   }>;
+  townMemberships?: Array<{
+    id: string;
+    town: { id: string; translations: Array<{ lang: string; name: string }> };
+  }>;
+  placeMemberships?: Array<{
+    id: string;
+    place: { id: string; translations: Array<{ lang: string; name: string }> };
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -739,6 +747,7 @@ export interface Site {
   id: string;
   slug: string;
   isActive: boolean;
+  isCrawlable?: boolean;
   primaryDomain?: string | null;
   brandId: string;
   brand?: Brand;
@@ -768,6 +777,12 @@ export interface Site {
     seoImage: string | null;
     seoKeywords: string[];
   }>;
+  countryId?: string;
+  country?: {
+    id: string;
+    code: string;
+    domains?: Array<{ id: string; domain: string; isPrimary: boolean }>;
+  } | null;
   siteDomains?: Array<{
     id: string;
     domain: string;
@@ -1007,6 +1022,15 @@ export interface UpdatePlaceMembershipDto {
   role?: "owner" | "manager" | "editor";
 }
 
+export function invitePlaceMember(placeId: string, email: string, role: "owner" | "manager" | "editor") {
+  return apiPost<{
+    membership: PlaceMembership;
+    created: boolean;
+    emailed: boolean;
+    reason: "sent" | "no_smtp";
+  }>(`/admin/places/${placeId}/members`, { email, role });
+}
+
 export function getPlaceMemberships(placeId?: string, userId?: string) {
   const params = new URLSearchParams();
   if (placeId) params.append("placeId", placeId);
@@ -1015,6 +1039,58 @@ export function getPlaceMemberships(placeId?: string, userId?: string) {
   return apiGet<PlaceMembership[]>(
     `/admin/place-memberships${queryString ? `?${queryString}` : ""}`
   );
+}
+
+export type AccessKind = "region" | "town" | "place";
+
+export type AccessScope = {
+  unrestricted: boolean;
+  siteIds: string[];
+  regionEditorSiteIds: string[];
+  regionAdminSiteIds: string[];
+  townIds: string[];
+  placeIds: string[];
+  pendingSignup?: boolean;
+};
+
+export type AccessGrant = {
+  id: string;
+  kind: AccessKind;
+  role: string;
+  targetId: string;
+  targetName: string;
+  user: { id: string; email: string; firstName: string; lastName: string };
+};
+
+export function getAccessScope() {
+  return apiGet<AccessScope>("/admin/access/scope");
+}
+
+export function getAccessGrants() {
+  return apiGet<AccessGrant[]>("/admin/access/grants");
+}
+
+export function createAccessGrant(data: {
+  userId: string;
+  kind: AccessKind;
+  targetId: string;
+  role?: string;
+}) {
+  return apiPost("/admin/access/grants", data);
+}
+
+export function deleteAccessGrant(kind: AccessKind, id: string) {
+  return apiDelete(`/admin/access/grants/${kind}/${id}`);
+}
+
+export function getTownMembers(townId: string) {
+  return apiGet<
+    Array<{
+      id: string;
+      role: string;
+      user: { id: string; email: string; firstName: string; lastName: string };
+    }>
+  >(`/admin/towns/${townId}/members`);
 }
 
 export function getMyPlaces(siteId?: string) {
@@ -1285,6 +1361,7 @@ export interface Event {
   placeId: string | null;
   categoryId: string | null; // Legacy: kept for backward compatibility
   isActive: boolean;
+  isCrawlable?: boolean;
   isPinned: boolean;
   isRainSafe: boolean;
   showOnMap: boolean;
@@ -1348,6 +1425,7 @@ export interface CreateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean;
   showOnMap?: boolean;
@@ -1377,6 +1455,7 @@ export interface UpdateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean;
   showOnMap?: boolean;
@@ -1461,6 +1540,7 @@ export interface EventLogFilterDto {
   endDate?: string;
   page?: number;
   limit?: number;
+  scope?: "global";
 }
 
 export interface EventLogResponse {
@@ -1488,6 +1568,7 @@ export function getEventLogs(filters: EventLogFilterDto) {
   if (filters.endDate) params.append("endDate", filters.endDate);
   if (filters.page) params.append("page", filters.page.toString());
   if (filters.limit) params.append("limit", filters.limit.toString());
+  if (filters.scope) params.append("scope", filters.scope);
 
   // Add cache-busting timestamp to ensure fresh data
   // Always use current timestamp for maximum freshness
@@ -2053,8 +2134,9 @@ export interface SiteStatusResponse {
   }>;
 }
 
-export function getSiteStatus() {
-  return apiGet<SiteStatusResponse>("/admin/site-status");
+export function getSiteStatus(siteId?: string) {
+  const query = siteId ? `?siteId=${encodeURIComponent(siteId)}` : "";
+  return apiGet<SiteStatusResponse>(`/admin/site-status${query}`);
 }
 
 // ==================== Cache Management ====================

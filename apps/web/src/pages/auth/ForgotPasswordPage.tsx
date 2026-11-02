@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { forgotPassword } from "../../api/auth.api";
+import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
@@ -41,6 +42,7 @@ export function ForgotPasswordPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const shield = usePublicFormShield("forgot_password");
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
@@ -65,14 +67,14 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await forgotPassword({ email });
+      const response = await forgotPassword({ email, ...(await shield.payload()) });
       setSuccess(response.message);
       // In development, show the reset token if provided
       if (response.resetToken) {
         setSuccess(`${response.message}\n\n${t("admin.resetToken")}: ${response.resetToken}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("admin.resetEmailFailed"));
+      setError(publicFormErrorMessage(t, err, t("admin.resetEmailFailed")));
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +162,9 @@ export function ForgotPasswordPage() {
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)" }}
+          style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)", position: "relative" }}
         >
+          {shield.fields}
           <div>
             <label
               style={{

@@ -58,6 +58,21 @@ export async function assertHostnameAvailable(
     throw new BadRequestException(`A(z) ${domain} domain már használatban van.`);
   }
 
+  const countryDomain = await prisma.countryDomain.findUnique({
+    where: { domain },
+    select: { id: true },
+  });
+  if (countryDomain) {
+    throw new BadRequestException(`A(z) ${domain} domain már egy országhoz tartozik.`);
+  }
+  const countryPrimary = await prisma.country.findFirst({
+    where: { primaryDomain: domain },
+    select: { id: true },
+  });
+  if (countryPrimary) {
+    throw new BadRequestException(`A(z) ${domain} domain már egy országhoz tartozik.`);
+  }
+
   const collection = await prisma.collection.findUnique({
     where: { domain },
     select: { id: true },

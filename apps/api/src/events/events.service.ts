@@ -8,6 +8,8 @@ import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { allowsCrawl } from "../seo/crawlability";
+import { CrawlabilityService } from "../seo/crawlability.service";
 
 /** Event pin, or the parent place pin when the event has no coordinates of its own. */
 function mapLocation(
@@ -35,7 +37,8 @@ export class EventsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly siteResolver: SiteKeyResolverService,
-    private readonly slugResolver: SlugResolverService
+    private readonly slugResolver: SlugResolverService,
+    private readonly crawlability: CrawlabilityService
   ) {}
 
   /**
@@ -127,6 +130,8 @@ export class EventsService {
       const translation = requested || hungarian;
       return translation?.[field] ?? null;
     };
+
+    const globalOn = await this.crawlability.isGlobalOn();
 
     // Resolve slugs for events
     const eventsWithSlugs = await Promise.all(
@@ -234,6 +239,7 @@ export class EventsService {
           isPinned: event.isPinned,
           isRainSafe: event.isRainSafe ?? false,
           showOnMap: event.showOnMap ?? true,
+          isCrawlable: allowsCrawl(globalOn, event.isCrawlable),
           tags: tagNames,
           rating: { avg: event.ratingAvg ?? null, count: event.ratingCount ?? null },
           seo: {
@@ -418,6 +424,7 @@ export class EventsService {
       endDate: event.endDate?.toISOString() ?? null,
       isPinned: event.isPinned,
       isRainSafe: event.isRainSafe ?? false,
+      isCrawlable: await this.crawlability.allows(event.isCrawlable),
       tags: tagNames,
       rating: { avg: event.ratingAvg ?? null, count: event.ratingCount ?? null },
       // Most specific GA wins: Event > Place > Town > Site (no platform fallback).

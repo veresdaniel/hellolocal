@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -43,6 +43,10 @@ import { formatMoney } from "../utils/formatMoney";
 import { PlaceProductStrip } from "../components/PlaceProductStrip";
 import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
 import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
+
+const MapComponent = lazy(() =>
+  import("../components/MapComponent").then((module) => ({ default: module.MapComponent }))
+);
 import { track } from "../lib/analytics/track";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
@@ -475,7 +479,7 @@ export function PlaceDetailPage() {
     breadcrumbs.push({ name: place.name, url: canonical });
     return buildPlaceSeo(place.seo, place, {
       canonical,
-      indexable: platformSettings?.isCrawlable,
+      indexable: place.seo?.indexable ?? platformSettings?.isCrawlable,
       breadcrumbs,
     });
   }, [place, platformSettings, t, lang, siteKey]);
@@ -843,6 +847,36 @@ export function PlaceDetailPage() {
               </div>
             )}
           </div>
+
+          {place.location?.lat != null && place.location.lng != null && (
+            <div
+              style={{
+                margin: "0 16px 24px",
+                height: 360,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <Suspense fallback={null}>
+                <MapComponent
+                  latitude={place.location.lat}
+                  longitude={place.location.lng}
+                  defaultZoom={16}
+                  height={360}
+                  interactive
+                  hideLocationButton
+                  markers={[
+                    {
+                      id: place.id,
+                      lat: place.location.lat,
+                      lng: place.location.lng,
+                      name: place.name,
+                    },
+                  ]}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Contact and Opening Hours side by side */}
           {(() => {

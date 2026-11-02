@@ -1,6 +1,7 @@
 import { IsEmail, IsString, MinLength, IsOptional, MaxLength } from "class-validator";
+import { PublicFormShieldFields } from "../../common/public-form-shield.dto";
 
-export class RegisterDto {
+export class RegisterDto extends PublicFormShieldFields {
   @IsString()
   @MinLength(3, { message: "Username must be at least 3 characters" })
   @MaxLength(50, { message: "Username must be at most 50 characters" })
@@ -31,4 +32,21 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   siteId?: string; // Optional: if not provided, uses default site
+
+  @IsOptional()
+  @IsString()
+  plan?: string;
+
+  @IsOptional()
+  @IsString()
+  countryId?: string;
+
+  @IsOptional()
+  @IsString()
+  townId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  townName?: string;
 }

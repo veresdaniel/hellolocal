@@ -47,7 +47,10 @@ export function PricingPage() {
     description: t("public.pricing.description"),
     keywords: ["pricing", "csomagok", "tariffs", "preise", "tarife"],
     canonical: pageUrl,
-    robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
+    robots:
+      (platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) === false
+        ? "noindex, nofollow"
+        : "index, follow",
     og: {
       type: "website" as const,
       title: t("public.pricing.title"),

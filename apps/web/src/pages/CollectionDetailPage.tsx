@@ -99,9 +99,8 @@ export function CollectionDetailPage() {
 
   // SEO
   // Determine crawlability: collection-specific > platform global
-  const isCrawlable = collection
-    ? collection.isCrawlable !== false && (platformSettings?.isCrawlable ?? true)
-    : (platformSettings?.isCrawlable ?? true);
+  const globalOn = platformSettings?.globalIndexable ?? platformSettings?.isCrawlable ?? true;
+  const isCrawlable = collection ? globalOn && collection.isCrawlable !== false : globalOn;
 
   const seo = collection
     ? {

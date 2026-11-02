@@ -4,9 +4,10 @@ import { SiteModule } from "../site/site.module";
 import { StaticPagesController } from "./static-pages.controller";
 import { StaticPagesPublicController } from "./static-pages-public.controller";
 import { StaticPagesService } from "./static-pages.service";
+import { CrawlabilityModule } from "../seo/crawlability.module";
 
 @Module({
-  imports: [PrismaModule, SiteModule],
+  imports: [PrismaModule, SiteModule, CrawlabilityModule],
   controllers: [StaticPagesController, StaticPagesPublicController],
   providers: [StaticPagesService],
   exports: [StaticPagesService],

@@ -137,12 +137,12 @@
   height: 36px;
   min-height: 36px;
   padding: 0;
-  border: none;
-  color: #fff;
 }
 
-.admin-hierarchy__btn--danger {
-  background: var(--admin-danger, #b91c1c);
+.admin-hierarchy__btn--icon.admin-hierarchy__btn--danger {
+  background: #fff;
+  color: var(--admin-danger, #dc2626);
+  border: 1px solid var(--admin-danger, #dc2626);
 }
 
 .admin-hierarchy__places-bar {

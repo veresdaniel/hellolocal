@@ -342,6 +342,36 @@ export class SiteResolveMiddleware implements NestMiddleware {
       };
     }
 
+    // A country host is its own instance. One region: that region is the site.
+    // Several regions: do not guess. Region domains above still win.
+    const countryDomain = await this.prisma.countryDomain.findUnique({
+      where: { domain: host },
+      select: { isActive: true, countryId: true, country: { select: { isActive: true } } },
+    });
+    const countryId =
+      countryDomain?.isActive && countryDomain.country?.isActive
+        ? countryDomain.countryId
+        : (
+            await this.prisma.country.findFirst({
+              where: { primaryDomain: host, isActive: true },
+              select: { id: true },
+            })
+          )?.id;
+    if (countryId) {
+      const regions = await this.prisma.site.findMany({
+        where: { countryId, isActive: true },
+        select: { id: true, slug: true, languages: true },
+      });
+      if (regions.length === 1) {
+        return {
+          siteId: regions[0].id,
+          slug: regions[0].slug,
+          defaultLang: (regions[0].languages?.[0] || "hu") as Lang,
+          source: "site",
+        };
+      }
+    }
+
     return null;
   }
 

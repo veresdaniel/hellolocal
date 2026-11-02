@@ -17,9 +17,9 @@ export type SiteLimits = {
 
 export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
   basic: {
-    places: Infinity, // Korlátlan place (default) - mind a tulaj, mind az oda regisztráló felhasználó létrehozhat
+    places: 5,
     featuredSlots: 0, // Nincs kiemelt helyek
-    events: 0, // Nincs események
+    events: 15,
     imagesPerPlace: Infinity, // Korlátlan kép
     customDomain: false, // Nincs egyedi domain
     multiAdmin: false,
@@ -27,9 +27,9 @@ export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
     support: "community",
   },
   pro: {
-    places: Infinity,
+    places: 30,
     featuredSlots: 3,
-    events: Infinity,
+    events: 30,
     imagesPerPlace: Infinity,
     customDomain: true,
     multiAdmin: false,
@@ -37,9 +37,9 @@ export const SITE_LIMITS: Record<SitePlanType, SiteLimits> = {
     support: "email",
   },
   business: {
-    places: Infinity,
+    places: 30,
     featuredSlots: Infinity,
-    events: Infinity,
+    events: 30,
     imagesPerPlace: Infinity,
     customDomain: true,
     multiAdmin: true,

@@ -17,6 +17,7 @@ import { AdminBrandService } from "./admin-brand.service";
 import { AdminSiteInstanceService } from "./admin-site-instance.service";
 import { AdminSiteMembershipService } from "./admin-site-membership.service";
 import { AdminPlaceMembershipService } from "./admin-place-membership.service";
+import { AdminAccessService } from "./admin-access.service";
 import { AdminSubscriptionService } from "./admin-subscription.service";
 import { AdminGalleryService } from "./admin-gallery.service";
 import { AdminPriceListService } from "./admin-price-list.service";
@@ -36,6 +37,7 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
 import { SeoCrawlModule } from "../seo/seo-crawl.module";
+import { EmailModule } from "../email/email.module";
 
 @Module({
   imports: [
@@ -49,6 +51,7 @@ import { SeoCrawlModule } from "../seo/seo-crawl.module";
     SiteModule,
     VisitorLadderModule,
     SeoCrawlModule,
+    EmailModule,
   ],
   controllers: [AdminController, GalleryPublicController, ContentDraftController],
   providers: [
@@ -67,6 +70,7 @@ import { SeoCrawlModule } from "../seo/seo-crawl.module";
     AdminSiteInstanceService,
     AdminSiteMembershipService,
     AdminPlaceMembershipService,
+    AdminAccessService,
     AdminSubscriptionService,
     AdminGalleryService,
     AdminPriceListService,

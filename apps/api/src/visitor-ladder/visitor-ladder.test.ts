@@ -102,6 +102,25 @@ test("downgrade one step after full 30 quiet days", () => {
   assert.equal(decision.ladderSuspended, false);
 });
 
+test("a quiet month notifies and keeps the paid plan", () => {
+  assert.deepEqual(DEFAULT_VISITOR_LADDER.steps[0], { action: "notify", plan: "FREE" });
+  const held = new Date(now.getTime() - HOLD_WINDOW_MS);
+  const decision = decideVisitorLadder({
+    state: state({
+      ladderStep: 1,
+      plan: "PRO",
+      belowFloorSince: held,
+    }),
+    meter: 100,
+    config: DEFAULT_VISITOR_LADDER,
+    now,
+  });
+  assert.equal(decision.ladderStep, 0);
+  assert.equal(decision.plan, "PRO");
+  assert.equal(decision.planChanged, false);
+  assert.equal(decision.notify, true);
+});
+
 test("X < Y < Z is rejected", () => {
   const steps = DEFAULT_VISITOR_LADDER.steps;
   assert.throws(

@@ -52,7 +52,20 @@ export function FloatingHeader({
 
   // Get showMap state from store to check if we're actually on map view (not just on home page)
   const { showMap } = useViewStore();
-  const isOverview = location.pathname.includes("/overview");
+  const isLangLanding =
+    location.pathname === `/${lang}` || location.pathname === `/${lang}/`;
+  const isOverview = location.pathname.includes("/overview") || isLangLanding;
+  const scrollToDemo = () => {
+    setIsMobileMenuOpen(false);
+    window.requestAnimationFrame(() => {
+      const node = document.getElementById("demo-request");
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      window.dispatchEvent(new CustomEvent("overview:reveal-demo"));
+    });
+  };
   const homePath = buildUrl({ lang, siteKey: siteKey || DEFAULT_SITE_SLUG, path: "" });
   const isOnSiteHome =
     location.pathname === homePath || location.pathname === `${homePath}/`;
@@ -382,7 +395,7 @@ export function FloatingHeader({
           {/* Desktop Navigation */}
           <nav
             style={{
-              display: isMobile ? "none" : "flex",
+              display: isMobile && !isOverview ? "none" : "flex",
               gap: "clamp(8px, 1.5vw, 16px)",
               alignItems: "center",
               flexShrink: 0,
@@ -397,16 +410,11 @@ export function FloatingHeader({
             {(isOverview || (!user && !isLoading && showAuthButtons)) && (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {isOverview && (
-                  <>
-                    <button type="button" onClick={() => openExplore("map")} style={menuButton(true, false)}>
-                      {t("public.mapView")}
-                    </button>
-                    <button type="button" onClick={() => openExplore("list")} style={menuButton(false, false)}>
-                      {t("public.listView")}
-                    </button>
-                  </>
+                  <button type="button" onClick={scrollToDemo} style={menuButton(true, false)}>
+                    {t("public.overview.demo.submit")}
+                  </button>
                 )}
-                {!user && !isLoading && showAuthButtons && (
+                {!isOverview && !user && !isLoading && showAuthButtons && (
                   <>
                     <Link to={buildUrl({ lang, path: "admin/login" })} style={menuButton(false, false)}>
                       {t("admin.login")}
@@ -418,7 +426,7 @@ export function FloatingHeader({
                 )}
               </div>
             )}
-            {!user && !isLoading && showAuthButtons && (
+            {!isOverview && !user && !isLoading && showAuthButtons && (
               <div
                 style={{
                   width: 1,
@@ -429,7 +437,7 @@ export function FloatingHeader({
             )}
 
             {/* Logged in: User info and action buttons */}
-            {user && showAuthButtons && (
+            {!isOverview && user && showAuthButtons && (
               <>
                 {/* Edit button - shown if user has edit permissions for current page */}
                 {showEditButton && editUrl && (
@@ -604,7 +612,7 @@ export function FloatingHeader({
             {/* Map view button - show on all non-map view pages */}
             {(() => {
               // Don't show if explicitly hidden
-              if (hideMapViewButton) return null;
+              if (hideMapViewButton || isOverview) return null;
               // Don't show on admin pages
               if (location.pathname.includes("/admin")) return null;
 
@@ -686,20 +694,21 @@ export function FloatingHeader({
             <div className="hl-floating-header__lang">
               <LanguageSelector />
               <style>{`
-                .hl-floating-header__lang select {
+                .hl-floating-header__lang .hl-lang-switch__trigger {
                   color: #f2f4fb !important;
                   border-color: rgba(242, 244, 251, 0.28) !important;
                   background: rgba(242, 244, 251, 0.08) !important;
                 }
-                .hl-floating-header__lang select option {
-                  color: #1b1730 !important;
-                  background: #fffdf9 !important;
+                .hl-floating-header__lang .hl-lang-switch__trigger:hover {
+                  color: #f2f4fb !important;
+                  border-color: rgba(242, 244, 251, 0.28) !important;
+                  background: rgba(242, 244, 251, 0.08) !important;
                 }
               `}</style>
             </div>
 
             {/* Username + logout — far right, after primary nav */}
-            {user && showAuthButtons && (
+            {!isOverview && user && showAuthButtons && (
               <>
                 <div
                   style={{
@@ -781,7 +790,7 @@ export function FloatingHeader({
           </nav>
 
           {/* Mobile Menu Button */}
-          {isMobile && (
+          {isMobile && !isOverview && (
             <button
               data-mobile-menu-button
               onClick={(e) => {
@@ -924,7 +933,8 @@ export function FloatingHeader({
                 }}
               />
             </button>
-            {isOverview && exploreModes(true)}
+            {!isOverview && (
+            <>
             {/* Not logged in: Sign in and Sign up buttons - Mobile */}
             {!user && !isLoading && showAuthButtons && (
               <>
@@ -1052,7 +1062,7 @@ export function FloatingHeader({
             {/* Map view button - Mobile */}
             {(() => {
               // Don't show if explicitly hidden
-              if (hideMapViewButton) return null;
+              if (hideMapViewButton || isOverview) return null;
               // Don't show on admin pages
               if (location.pathname.includes("/admin")) return null;
 
@@ -1116,6 +1126,8 @@ export function FloatingHeader({
                 </button>
               );
             })()}
+            </>
+            )}
 
             {/* Language selector in mobile menu */}
             <div

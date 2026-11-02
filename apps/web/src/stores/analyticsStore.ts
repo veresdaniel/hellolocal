@@ -179,7 +179,7 @@ type State = {
   event?: EventDashboard;
   town?: TownDashboard;
   global?: GlobalDashboard;
-  fetchSite: (range: Range, lang?: string) => Promise<void>;
+  fetchSite: (range: Range, lang?: string, siteKey?: string) => Promise<void>;
   fetchPlace: (placeId: string, range: Range, lang?: string) => Promise<void>;
   fetchEvent: (eventId: string, range: Range, lang?: string) => Promise<void>;
   fetchTown: (townId: string, range: Range, lang?: string) => Promise<void>;
@@ -195,10 +195,11 @@ export const useAnalyticsStore = create<State>((set) => ({
   town: undefined,
   global: undefined,
 
-  fetchSite: async (range, lang = "hu") => {
+  fetchSite: async (range, lang = "hu", siteKey) => {
     set({ loading: true, error: undefined });
     try {
-      const data = await apiGet<SiteDashboard>(`/${lang}/analytics/site?range=${range}`);
+      const key = siteKey ? `&siteKey=${encodeURIComponent(siteKey)}` : "";
+      const data = await apiGet<SiteDashboard>(`/${lang}/analytics/site?range=${range}${key}`);
       set({ site: data, loading: false });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Failed to fetch analytics";

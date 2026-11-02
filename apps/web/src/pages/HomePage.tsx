@@ -39,6 +39,7 @@ import {
   readSiteLanding,
 } from "../utils/siteLanding";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
+import { framePoints } from "../lib/mapFrame";
 
 // MapLibre only when map view is shown — keeps list/landing/overview free of map-vendor
 const MapComponent = lazy(() =>
@@ -121,7 +122,6 @@ export function HomePage() {
   const {
     data: mapSettings,
     isLoading: isLoadingMapSettings,
-    dataUpdatedAt,
   } = useQuery({
     queryKey: ["mapSettings", lang, siteKey],
     queryFn: async () => {
@@ -141,11 +141,9 @@ export function HomePage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Map center initialization tracking (mapCenter is now in useViewStore)
-  const hasInitializedCenter = useRef(false);
-  const initialPlacesLoaded = useRef(false);
-  const previousMarkersCount = useRef(0);
   const hasEverLoadedPlaces = useRef(false);
+  /** Last URL focus that already positioned the map. User pan and zoom stay until this changes. */
+  const appliedMapFocus = useRef<string | null>(null);
 
   // Load events for "hasEventToday" filter
   const { data: eventsData } = useQuery({
@@ -346,7 +344,9 @@ export function HomePage() {
       description: homeDescription,
       image: homeImage,
       canonical: pageCanonical,
-      robots: robotsDirective(platformSettings?.isCrawlable),
+      robots: robotsDirective(
+        townSlug ? selectedTown?.isCrawlable : platformSettings?.isCrawlable
+      ),
       og: {
         type: "website" as const,
         title: homeTitle || siteName,
@@ -624,176 +624,79 @@ export function HomePage() {
     navigate,
   ]);
 
-  // Initialize map center from settings (only once, or when settings change)
-  // Use original placesData (not filtered) for center calculation
-  const allPlacesWithCoordinates =
-    placesData?.filter(
-      (place) => place.location && place.location.lat != null && place.location.lng != null
-    ) || [];
+  const placeSlug = searchParams.get("place")?.trim() || undefined;
+  const mapFocusKey = `${siteKey || ""}|${townSlug || ""}|${placeSlug || ""}`;
 
+  // Position once per URL. A later pan or zoom is left alone.
   useEffect(() => {
-    hasInitializedCenter.current = false;
-    initialPlacesLoaded.current = false;
-    hasEverLoadedPlaces.current = false;
-  }, [lang, siteKey]);
+    if (appliedMapFocus.current === mapFocusKey) return;
+    if (isLoadingMapSettings) return;
 
-  // Track previous mapSettings values to detect actual changes
-  const prevMapSettingsRef = useRef<{
-    lat: number | null;
-    lng: number | null;
-    zoom: number | null;
-  } | null>(null);
-  // Initialize with null to detect initial mount
-  const prevLangRef = useRef<string | null>(null);
-  const prevSiteKeyRef = useRef<string | undefined>(undefined);
-
-  // Update map center when mapSettings loads or changes (including on lang/tenant change)
-  // This is the primary effect that should always run when mapSettings is available
-  useEffect(() => {
-    // Wait for mapSettings to load
-    if (isLoadingMapSettings) {
-      return;
-    }
-
-    // Check if lang or siteKey changed (force update even if mapSettings values are the same)
-    // On initial mount, prevLangRef will be null, so we want to update
-    const isInitialMount = prevLangRef.current === null;
-    const langChanged = !isInitialMount && prevLangRef.current !== lang;
-    const siteKeyChanged = !isInitialMount && prevSiteKeyRef.current !== siteKey;
-    const mapSettingsChanged =
-      prevMapSettingsRef.current === null ||
-      prevMapSettingsRef.current.lat !== mapSettings?.lat ||
-      prevMapSettingsRef.current.lng !== mapSettings?.lng ||
-      prevMapSettingsRef.current.zoom !== mapSettings?.zoom;
-
-    // Update refs
-    if (isInitialMount || langChanged || siteKeyChanged) {
-      prevLangRef.current = lang;
-      prevSiteKeyRef.current = siteKey;
-    }
-
-    if (mapSettings?.lat != null && mapSettings?.lng != null) {
-      // Always update if mapSettings is available (including on initial load and lang/tenant change)
-      // Force update if lang/tenant changed, or on initial mount, or if mapSettings changed, or if not initialized yet
-      // Also check if current mapCenter doesn't match mapSettings (safety check)
-      const currentCenterMatches =
-        mapCenter &&
-        Math.abs(mapCenter.lat - mapSettings.lat) < 0.0001 &&
-        Math.abs(mapCenter.lng - mapSettings.lng) < 0.0001;
-
-      if (
-        isInitialMount ||
-        langChanged ||
-        siteKeyChanged ||
-        mapSettingsChanged ||
-        !hasInitializedCenter.current ||
-        !currentCenterMatches
-      ) {
-        setMapCenter({ lat: mapSettings.lat, lng: mapSettings.lng, zoom: mapSettings.zoom ?? 13 });
-        hasInitializedCenter.current = true;
-        prevMapSettingsRef.current = {
-          lat: mapSettings.lat,
-          lng: mapSettings.lng,
-          zoom: mapSettings.zoom ?? null,
-        };
-        return; // Exit early if we have map settings
+    if (placeSlug) {
+      if (isLoadingPlaces) return;
+      const place = placesData?.find((row) => row.slug === placeSlug);
+      if (place?.location?.lat != null && place.location.lng != null) {
+        setMapCenter({ lat: place.location.lat, lng: place.location.lng, zoom: 16 });
+        appliedMapFocus.current = mapFocusKey;
+        return;
       }
     }
 
-    // Fallback: only use places center if we don't have map settings and haven't initialized yet
-    if (
-      !hasInitializedCenter.current &&
-      !initialPlacesLoaded.current &&
-      allPlacesWithCoordinates.length > 0 &&
-      !isLoadingPlaces
-    ) {
-      const avgLat =
-        allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lat!, 0) /
-        allPlacesWithCoordinates.length;
-      const avgLng =
-        allPlacesWithCoordinates.reduce((sum, p) => sum + p.location!.lng!, 0) /
-        allPlacesWithCoordinates.length;
-      setMapCenter({ lat: avgLat, lng: avgLng, zoom: mapSettings?.zoom ?? 12 });
-      hasInitializedCenter.current = true;
-      initialPlacesLoaded.current = true;
-      previousMarkersCount.current = allPlacesWithCoordinates.length;
-    } else if (!hasInitializedCenter.current && !isLoadingPlaces && !isLoadingMapSettings) {
-      // Default to Budapest only if we have no settings and no places yet
-      setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: mapSettings?.zoom ?? 13 });
-      hasInitializedCenter.current = true;
+    if (townSlug) {
+      if (isLoadingTowns) return;
+      if (selectedTown?.lat != null && selectedTown.lng != null) {
+        setMapCenter({ lat: selectedTown.lat, lng: selectedTown.lng, zoom: 13 });
+        appliedMapFocus.current = mapFocusKey;
+        return;
+      }
+      if (isLoadingPlaces) return;
+      const townPoints = (placesData || []).flatMap((place) =>
+        place.location?.lat != null && place.location.lng != null ? [place.location] : []
+      );
+      if (townPoints.length > 0) {
+        setMapCenter(framePoints(townPoints, 14));
+        appliedMapFocus.current = mapFocusKey;
+        return;
+      }
     }
 
-    // Mark places as loaded once we've checked them
-    if (!isLoadingPlaces) {
-      initialPlacesLoaded.current = true;
+    if (isLoadingTowns || isLoadingPlaces) return;
+    const townPoints = (townsPayload?.towns || []).flatMap((town) =>
+      town.lat != null && town.lng != null ? [{ lat: town.lat, lng: town.lng }] : []
+    );
+    const placePoints = (placesData || []).flatMap((place) =>
+      place.location?.lat != null && place.location.lng != null ? [place.location] : []
+    );
+    const areaPoints = townPoints.length > 0 ? townPoints : placePoints;
+    if (areaPoints.length > 0) {
+      setMapCenter(framePoints(areaPoints, 12));
+      appliedMapFocus.current = mapFocusKey;
+      return;
     }
+    if (mapSettings?.lat != null && mapSettings.lng != null) {
+      setMapCenter({
+        lat: mapSettings.lat,
+        lng: mapSettings.lng,
+        zoom: mapSettings.zoom ?? 11,
+      });
+      appliedMapFocus.current = mapFocusKey;
+      return;
+    }
+    setMapCenter({ lat: 47.4979, lng: 19.0402, zoom: 11 });
+    appliedMapFocus.current = mapFocusKey;
   }, [
+    mapFocusKey,
+    placeSlug,
+    townSlug,
+    selectedTown,
+    townsPayload,
+    placesData,
     mapSettings,
-    isLoadingPlaces,
     isLoadingMapSettings,
-    allPlacesWithCoordinates.length,
-    lang,
-    siteKey,
+    isLoadingTowns,
+    isLoadingPlaces,
     setMapCenter,
-    dataUpdatedAt,
-    mapCenter,
   ]);
-
-  // Adjust zoom only if markers don't fit in current viewport (and only when markers change)
-  useEffect(() => {
-    // Don't adjust zoom if:
-    // 1. Map center hasn't been initialized yet
-    // 2. We're still loading
-    // 3. There are no markers (keep current zoom - don't change)
-    // 4. Marker count hasn't changed (filter didn't change the number of visible markers)
-    if (!mapCenter || isLoadingPlaces || markers.length === 0) {
-      if (markers.length > 0) {
-        previousMarkersCount.current = markers.length;
-      }
-      return;
-    }
-
-    // Only adjust if marker count actually changed
-    if (markers.length === previousMarkersCount.current) {
-      return;
-    }
-
-    // Calculate bounding box of all markers
-    const lats = markers.map((m) => m.lat);
-    const lngs = markers.map((m) => m.lng);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-
-    // Calculate required zoom to fit all markers with some padding
-    // Approximate: each zoom level doubles/halves the view
-    const latRange = maxLat - minLat;
-    const lngRange = maxLng - minLng;
-    const maxRange = Math.max(latRange, lngRange);
-
-    // Estimate required zoom level (rough calculation)
-    // This is approximate - adjust based on testing
-    let requiredZoom = 13;
-    if (maxRange > 0.1) requiredZoom = 10;
-    else if (maxRange > 0.05) requiredZoom = 11;
-    else if (maxRange > 0.02) requiredZoom = 12;
-    else if (maxRange > 0.01) requiredZoom = 13;
-    else if (maxRange > 0.005) requiredZoom = 14;
-    else requiredZoom = 15;
-
-    // Only adjust zoom if current zoom is too high (markers don't fit)
-    // And only decrease zoom minimally (max 1 level)
-    if (mapCenter.zoom > requiredZoom) {
-      const newZoom = Math.max(requiredZoom, mapCenter.zoom - 1); // Max decrease by 1 level
-      // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => {
-        setMapCenter({ ...mapCenter, zoom: newZoom });
-      }, 0);
-    }
-
-    previousMarkersCount.current = markers.length;
-  }, [markers, mapCenter, isLoadingPlaces]);
 
   // Calculate center and zoom - use stored center, don't recalculate on filter changes
   // If mapCenter is not set yet, use mapSettings directly as fallback

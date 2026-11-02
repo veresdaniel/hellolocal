@@ -18,6 +18,7 @@ import { SlugModule } from "./slug/slug.module";
 import { SiteModule } from "./site/site.module";
 import { AuthModule } from "./auth/auth.module";
 import { AdminModule } from "./admin/admin.module";
+import { CountryModule } from "./country/country.module";
 import { AppSettingsModule } from "./app-settings/app-settings.module";
 import { TwoFactorModule } from "./two-factor/two-factor.module";
 import { SeoModule } from "./seo/seo.module";
@@ -80,6 +81,7 @@ const envFilePath = configEnvFilePath();
     AppSettingsModule, // Public app settings (no auth required)
     UnderConstructionModule, // Public under-development gate + admin token/copy settings
     AdminModule, // AdminModule must be imported before PlacesModule to ensure /api/admin routes take precedence
+    CountryModule,
     PlacesModule,
     TownsModule,
     SitesModule,

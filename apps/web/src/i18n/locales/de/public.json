@@ -22,7 +22,7 @@
   "overview": {
     "menu": "Überblick",
     "eyebrow": "Für Gemeinden, Tourismusbüros und lokale Betriebe",
-    "title": "Der Gast findet auf einer Karte, was es bei euch gibt",
+    "title": "Gäste finden eure Orte und Veranstaltungen auf einer Karte",
     "lead": "Orte, Termine und die Karte stehen auf einer Seite. Der Gast öffnet sie auf dem Handy und geht los.",
     "differenceKicker": "Warum es anders ist",
     "differenceTitle": "Auch der weniger bekannte Ort bekommt Gäste",
@@ -60,6 +60,7 @@
     "faqTitle": "Was meistens gefragt wird",
     "closingTitle": "Der nächste Gast startet von der Karte.",
     "closingText": "Öffne sie und stell dir deine eigenen Orte an diesen Punkten vor: die Werkstatt, den Keller, den Dienst oder die ganze Gegend.",
+    "closingImageAlt": "Eine Person mit gelbem Rucksack auf einem Bergpfad",
     "steps": {
       "collect": {
         "title": "Wer bisher fehlte, kommt drauf",
@@ -144,8 +145,29 @@
         "alt": "Eine lebendige Karte mit lokalen Orten und Veranstaltungen"
       }
     },
-    "plansTitle": "Drei Pakete",
-    "plansLead": "Monatlich, in Forint. Für eine Werkstatt, einen Dienst oder eine ganze Gegend.",
+    "demo": {
+      "title": "Demo anfragen",
+      "lead": "Möchtest du sehen, wie es funktioniert? Schreib uns, wir zeigen es an deinen Orten. Name und E-Mail reichen.",
+      "name": "Name",
+      "email": "E-Mail",
+      "organization": "Organisation",
+      "message": "Nachricht",
+      "placeholderName": "z. B. Anna Kovacs",
+      "placeholderEmail": "anna@example.com",
+      "placeholderOrganization": "z. B. Kovács Werkstatt",
+      "placeholderMessage": "Was soll die Karte zeigen?",
+      "optional": "optional",
+      "submit": "Demo anfragen",
+      "sending": "Senden…",
+      "sent": "Wir haben die Anfrage geschickt. Wir melden uns.",
+      "stored": "Wir haben die Anfrage gespeichert. Es ging keine E-Mail raus, der Versand ist nicht eingerichtet.",
+      "noRecipient": "Wir haben die Anfrage gespeichert. Es ist kein Empfänger hinterlegt, deshalb ging keine E-Mail raus.",
+      "failed": "Die Anfrage konnte nicht gesendet werden. Bitte noch einmal versuchen.",
+      "required": "Bitte Name und E-Mail angeben.",
+      "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
+    },
+    "plansTitle": "Pakete",
+    "plansLead": "Monatlich, in Forint. Für einen Ort, einen Betrieb oder eine Gemeinde.",
     "plans": {
       "priceUnit": "Ft / Monat",
       "freePrice": "Kostenlos",
@@ -156,6 +178,7 @@
       "languagesOne": "Ungarisch, unter eigener Adresse",
       "languages": "{{count}} Sprachen, jede unter eigener Adresse",
       "adminNote": "Orte / Termine / Sprachen werden mit der Rechtematrix gespeichert und füllen die {{count}}-Vorlagen auf den Karten. Namen und Pitch bleiben manuell. Das Gemeinde-Paket hat keinen Matrix-Limit-Sync.",
+      "visible": "Auf der öffentlichen Seite sichtbar",
       "save": "Pakete speichern",
       "saving": "Speichern…",
       "fields": {
@@ -165,38 +188,46 @@
         "languages": "Sprachen"
       },
       "free": {
-        "name": "Kostenlos",
-        "kicker": "Ausprobieren",
-        "pitch": "Ein paar Orte, auf Ungarisch. Du siehst die Karte, bevor irgendjemand eine Rechnung bekommt.",
+        "name": "Ein Ort",
+        "kicker": "Für Privatkunden",
+        "pitch": "Eine Werkstatt, ein Keller oder ein Dienst. Auf Ungarisch, unter der eigenen Adresse.",
         "cta": "Kostenlos"
       },
       "basic": {
-        "name": "Basis",
-        "kicker": "Für einen Ort und seine Betriebe",
+        "name": "Betrieb",
+        "kicker": "Ein Unternehmen, ein paar Standorte",
         "badge": "Die übliche Wahl",
-        "pitch": "Werkstatt, Dienst und das Wochenendprogramm, auf einem Link. Der Betrieb füllt die eigene Seite aus, die Gemeinde schickt den Link weiter.",
-        "cta": "Mit Basis"
+        "pitch": "Ein paar Standorte, ein Betrieb. Auf Ungarisch, auf der eigenen Domain.",
+        "cta": "Als Betrieb"
       },
       "premium": {
-        "name": "Premium",
-        "kicker": "Für eine ganze Region",
-        "pitch": "Mehr Sprachen und hervorgehobene Orte. Handwerk und Gemeinde stehen auf einer Karte, auch auf Englisch und auf Deutsch.",
-        "cta": "Mit Premium"
+        "name": "Mehrere Standorte",
+        "kicker": "Für ein größeres Unternehmen",
+        "pitch": "Mehrere Standorte, eine Marke. Auf Ungarisch, auf der eigenen Domain.",
+        "cta": "Mehrere Standorte"
       },
       "municipal": {
         "name": "Gemeinde",
-        "kicker": "Individuelles Angebot",
-        "pitch": "So viele Orte, wie die Gemeinde braucht. Der Preis gilt für diese Gemeinde, nicht als fester Tarif.",
+        "kicker": "Für die Gemeindeverwaltung",
+        "pitch": "Der Preis gilt für die Gemeinde. Es gibt keinen festen Monatspreis.",
         "cta": "Angebot anfragen",
-        "places": "Beliebig viele Orte auf der Karte",
-        "events": "Das Programm ist Teil des Angebots",
+        "places": "So viele Orte, wie die Gemeinde braucht",
+        "events": "Die Termine sind Teil des Angebots",
         "languages": "Die Sprachen sind Teil des Angebots"
       },
       "quote": {
+        "intro": "Schreib uns, wie viele Orte und Termine die Karte für eure Gegend fassen soll. Wir antworten mit einem Angebot für eure Region. Ohne Verpflichtung.",
         "organization": "Organisation",
         "contactName": "Ansprechperson",
         "email": "E-Mail",
         "message": "Kurze Nachricht",
+        "placeholderOrganization": "z. B. Kovács Werkstatt",
+        "placeholderContactName": "z. B. Anna Kovacs",
+        "placeholderEmail": "anna@example.com",
+        "placeholderMessage": "Wie viele Orte, welche Sprachen, ab wann?",
+        "organizationRequired": "Bitte den Namen der Organisation angeben.",
+        "contactRequired": "Bitte den Namen der Ansprechperson angeben.",
+        "messageShort": "Mindestens 12 Zeichen, damit wir wissen, wofür das Angebot ist.",
         "submit": "Angebot anfragen",
         "sending": "Senden…",
         "sent": "Wir haben die Anfrage geschickt. Wir melden uns.",
@@ -208,11 +239,16 @@
       },
       "recipient": {
         "label": "E-Mail für Angebotsanfragen",
-        "help": "Gemeinde-Anfragen gehen an diese Adresse. Wenn das Feld leer bleibt, speichern wir die Anfrage und senden keine E-Mail.",
+        "help": "Gemeinde-Anfragen und Demo-Anfragen von der Startseite gehen an diese Adresse. Wenn das Feld leer bleibt, speichern wir die Anfrage und senden keine E-Mail.",
         "save": "Empfänger speichern",
         "saved": "Empfänger gespeichert."
       }
     }
+  },
+  "form": {
+    "tooFast": "Das war zu schnell. Warte einen Moment und versuch es noch einmal.",
+    "captcha": "Die Roboterprüfung ist fehlgeschlagen. Bitte noch einmal versuchen.",
+    "rejected": "Die Sendung konnten wir nicht annehmen."
   },
   "catalog": {
     "title": "Produktkatalog",
@@ -363,7 +399,7 @@
   "events": "Veranstaltungen",
   "services": "Lokale Dienste",
   "servicesTab": "Dienste",
-  "parentPlace": "Ort",
+  "parentPlace": "Gehört zu",
   "noServices": "Noch keine lokalen Dienste.",
   "placesTab": "Orte",
   "noEvents": "Keine Veranstaltungen",

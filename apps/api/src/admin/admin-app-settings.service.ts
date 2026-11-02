@@ -9,6 +9,7 @@ import {
 import { encryptSecret } from "../common/secret-box";
 import { CONTENT_DRAFT_API_KEY } from "./content-draft.constants";
 import { UC_ACCESS_TOKEN_KEY } from "../under-construction/under-construction.constants";
+import { SitemapService } from "../seo/sitemap.service";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -23,7 +24,10 @@ export interface AppSettingDto {
 
 @Injectable()
 export class AdminAppSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sitemapService: SitemapService
+  ) {}
 
   async findAll() {
     const rows = await this.prisma.appSetting.findMany({
@@ -163,11 +167,13 @@ export class AdminAppSettingsService {
    * Set global crawlability setting
    */
   async setGlobalCrawlability(isCrawlable: boolean) {
-    return this.upsert("globalCrawlability", {
+    const saved = await this.upsert("globalCrawlability", {
       value: isCrawlable ? "true" : "false",
       type: "boolean",
       description:
-        "Global platform crawlability setting. If false, all pages will have noindex meta tag by default.",
+        "Global crawl switch. When false, every page is noindex and omitted from the sitemap, regardless of per-content switches.",
     });
+    this.sitemapService.invalidate();
+    return saved;
   }
 }

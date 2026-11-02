@@ -1,5 +1,6 @@
 // src/pages/admin/SiteStatusPage.tsx
 import { useState, useEffect, useContext, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
@@ -17,6 +18,8 @@ export function SiteStatusPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const authContext = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const siteId = searchParams.get("siteId") || undefined;
   const user = authContext?.user ?? null;
   const userIsSuperadmin = user?.role ? isSuperadmin(user.role as UserRole) : false;
   usePageTitle("admin.siteStatus");
@@ -28,12 +31,12 @@ export function SiteStatusPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [siteId]);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const response = await getSiteStatus();
+      const response = await getSiteStatus(siteId);
       setData(response);
     } catch (error) {
       console.error("Failed to load site status:", error);

@@ -37,6 +37,18 @@ export async function isKnownPublicHostname(
   });
   if (place?.isActive && place.site?.isActive) return true;
 
+  const countryDomain = await prisma.countryDomain.findUnique({
+    where: { domain },
+    select: { isActive: true, country: { select: { isActive: true } } },
+  });
+  if (countryDomain?.isActive && countryDomain.country?.isActive) return true;
+
+  const countryByPrimary = await prisma.country.findFirst({
+    where: { primaryDomain: domain, isActive: true },
+    select: { id: true },
+  });
+  if (countryByPrimary) return true;
+
   const collection = await prisma.collection.findUnique({
     where: { domain },
     select: { isActive: true },

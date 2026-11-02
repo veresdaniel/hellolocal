@@ -7,9 +7,10 @@ import { EventRatingController } from "./event-rating.controller";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SiteModule } from "../site/site.module";
 import { SlugModule } from "../slug/slug.module";
+import { CrawlabilityModule } from "../seo/crawlability.module";
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => SiteModule), SlugModule],
+  imports: [PrismaModule, forwardRef(() => SiteModule), SlugModule, CrawlabilityModule],
   controllers: [EventsController, EventsPublicController, EventRatingController],
   providers: [EventsService, EventRatingService],
   exports: [EventsService, EventRatingService],

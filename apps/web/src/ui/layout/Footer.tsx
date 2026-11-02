@@ -13,11 +13,13 @@ export function Footer({
   siteSlug,
   platform,
   compact = false,
+  variant,
 }: {
   lang: Lang;
   siteSlug?: string; // Optional - not available on site list page
   platform?: PlatformSettings; // Optional - not available on site list page
   compact?: boolean;
+  variant?: "overview";
 }) {
   const { t } = useTranslation();
   const effectiveSiteSlug = siteSlug;
@@ -306,7 +308,7 @@ export function Footer({
   // Full version for other pages
   return (
     <footer
-      className="hl-public"
+      className={variant === "overview" ? "hl-public overview-footer" : "hl-public"}
       style={{
         marginTop: "auto",
         background: "#1b1730",
@@ -319,16 +321,25 @@ export function Footer({
         style={{
           paddingTop: 48,
           paddingBottom: 32,
+          ...(variant === "overview"
+            ? { paddingLeft: "clamp(16px, 4vw, 28px)", paddingRight: "clamp(16px, 4vw, 28px)" }
+            : {}),
         }}
       >
-      <div className="hl-public-width">
+      <div className="hl-public-width" style={variant === "overview" ? { maxWidth: 1120 } : undefined}>
         {/* Main Footer Content */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 40,
-            marginBottom: 40,
+            gridTemplateColumns:
+              variant === "overview"
+                ? isMobile
+                  ? "1fr"
+                  : "repeat(2, minmax(0, 1fr))"
+                : "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: variant === "overview" ? (isMobile ? 28 : 48) : 40,
+            marginBottom: variant === "overview" ? 28 : 40,
+            alignItems: "start",
           }}
         >
           {/* Brand Section */}

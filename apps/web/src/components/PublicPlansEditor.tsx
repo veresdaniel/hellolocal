@@ -14,11 +14,13 @@ import {
   PUBLIC_PLAN_IDS,
   applyPlanCopyMessages,
   emptyPlanCopyDrafts,
+  resolvePlanEnabled,
   resolvePublicPlans,
   type PlanCopyDrafts,
   type PlanCopyField,
   type PublicPlanId,
   type PublicPlanNumbers,
+  type SwitchablePlanId,
 } from "./publicPlans";
 import "../styles/plan-picker.css";
 
@@ -59,7 +61,9 @@ export function PublicPlansEditor({
   planOverrides: unknown;
   saving: boolean;
   onSave: (
-    plans: Record<PublicPlanId, PublicPlanNumbers>,
+    plans: Record<PublicPlanId, PublicPlanNumbers & { enabled: boolean }> & {
+      municipal?: { enabled: boolean };
+    },
     copyDrafts: PlanCopyDrafts
   ) => Promise<void>;
 }) {
@@ -68,11 +72,15 @@ export function PublicPlansEditor({
   const chrome = PLAN_EDITOR_CHROME[isUiLang(uiLang) ? uiLang : "hu"];
   const [active, setActive] = useState<Lang>(uiLang);
   const [draft, setDraft] = useState(() => resolvePublicPlans(planOverrides));
+  const [enabled, setEnabled] = useState<Record<SwitchablePlanId, boolean>>(() =>
+    resolvePlanEnabled(planOverrides)
+  );
   const [copyDrafts, setCopyDrafts] = useState<PlanCopyDrafts>(() => emptyPlanCopyDrafts());
   const [copyLoading, setCopyLoading] = useState(true);
 
   useEffect(() => {
     setDraft(resolvePublicPlans(planOverrides));
+    setEnabled(resolvePlanEnabled(planOverrides));
   }, [planOverrides]);
 
   useEffect(() => {
@@ -135,7 +143,13 @@ export function PublicPlansEditor({
       className="public-plans-editor"
       onSubmit={(event) => {
         event.preventDefault();
-        void onSave(draft, copyDrafts);
+        const plans = Object.fromEntries(
+          PUBLIC_PLAN_IDS.map((id) => [id, { ...draft[id], enabled: enabled[id] }])
+        ) as Record<PublicPlanId, PublicPlanNumbers & { enabled: boolean }> & {
+          municipal?: { enabled: boolean };
+        };
+        plans.municipal = { enabled: enabled.municipal };
+        void onSave(plans, copyDrafts);
       }}
     >
       <p className="public-plans-editor__note">{chrome.note}</p>
@@ -190,6 +204,16 @@ export function PublicPlansEditor({
           <div className="public-plans-editor__grid">
             {PUBLIC_PLAN_IDS.map((id) => (
               <fieldset className="public-plans-editor__card" key={id}>
+                <label className="public-plans-editor__toggle">
+                  <input
+                    type="checkbox"
+                    checked={enabled[id]}
+                    onChange={(event) =>
+                      setEnabled((current) => ({ ...current, [id]: event.target.checked }))
+                    }
+                  />
+                  {t("public.overview.plans.visible")}
+                </label>
                 {PLAN_CARD_FIELDS[id].map((item) => (
                   <TextField
                     key={item.path}
@@ -218,6 +242,16 @@ export function PublicPlansEditor({
 
           <div className="public-plans-editor__section">
             <h4>{chrome.municipalTitle}</h4>
+            <label className="public-plans-editor__toggle">
+              <input
+                type="checkbox"
+                checked={enabled.municipal}
+                onChange={(event) =>
+                  setEnabled((current) => ({ ...current, municipal: event.target.checked }))
+                }
+              />
+              {t("public.overview.plans.visible")}
+            </label>
             <div className="public-plans-editor__municipal">
               {PLAN_MUNICIPAL_FIELDS.map((item) => (
                 <TextField

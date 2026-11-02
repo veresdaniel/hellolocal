@@ -83,7 +83,7 @@ export function SiteLayout() {
 
   // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
   // Hook-okat mindig a komponens elején kell hívni, még a korai return-ek előtt
-  const { data: platform, isLoading, isError, refetch } = usePlatformSettings({ lang, siteKey });
+  const { data: platform, isLoading, isError, error, refetch } = usePlatformSettings({ lang, siteKey });
 
   // Reserved segments are public pages, not site slugs. Render them after hooks
   // so navigating onto one of these paths does not change the hook count.
@@ -146,14 +146,16 @@ export function SiteLayout() {
     return <LoadingSpinner isLoading={true} delay={500} />;
   }
 
-  // Hiba esetén (pl. rossz siteKey): 404 → NotFoundPage, egyéb → 500 state
+  // Hiba esetén (pl. rossz siteKey): 404 → NotFoundPage, egyéb → 500 state.
+  // isError boolean; a HTTP státusz a query error objektumon van.
   if (isError || !platform) {
-    const errorStatus = (isError as any)?.status || (isError as any)?.response?.status;
+    const queryError = error as { status?: number; response?: { status?: number } } | null;
+    const errorStatus = queryError?.status ?? queryError?.response?.status;
     if (errorStatus === 404 || (!isError && !platform)) {
       devLog.warn("[SiteLayout] site not found", { lang, errorStatus });
       return <NotFoundPage />;
     }
-    devLog.error("[SiteLayout] platform load failed", isError);
+    devLog.error("[SiteLayout] platform load failed", error);
     return (
       <ErrorState
         title={t("error.internalServerError")}

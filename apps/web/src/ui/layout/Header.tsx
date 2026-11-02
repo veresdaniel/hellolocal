@@ -274,15 +274,17 @@ export function Header() {
             >
               <LanguageSelector />
               <style>{`
-                header select {
+                header .hl-lang-switch__trigger {
                   color: #1b1730 !important;
                   border-color: rgba(27, 23, 48, 0.16) !important;
-                  padding: 4px 12px !important;
+                  background: transparent !important;
+                  padding: 4px 10px 4px 12px !important;
                   height: auto !important;
                 }
-                header select option {
-                  color: #333 !important;
-                  background: white !important;
+                header .hl-lang-switch__trigger:hover {
+                  color: #1b1730 !important;
+                  border-color: rgba(27, 23, 48, 0.16) !important;
+                  background: transparent !important;
                 }
               `}</style>
             </div>

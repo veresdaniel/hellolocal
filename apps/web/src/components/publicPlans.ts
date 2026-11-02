@@ -14,11 +14,25 @@ export type PublicPlanNumbers = {
   languages: number;
 };
 
-/** Marketing defaults. Premium is the existing PRO subscription. */
+/**
+ * Marketing defaults.
+ * free = one private place, basic = a small business, premium = several locations of one company.
+ * Premium is off on the public page until a superadmin turns it on.
+ */
 export const PUBLIC_PLAN_DEFAULTS: Record<PublicPlanId, PublicPlanNumbers> = {
-  free: { priceHuf: 0, places: 3, events: 0, languages: 1 },
-  basic: { priceHuf: 3990, places: 30, events: 30, languages: 1 },
-  premium: { priceHuf: 8990, places: 150, events: 200, languages: 3 },
+  free: { priceHuf: 0, places: 1, events: 5, languages: 1 },
+  basic: { priceHuf: 3990, places: 5, events: 15, languages: 1 },
+  premium: { priceHuf: 8990, places: 30, events: 30, languages: 1 },
+};
+
+export type SwitchablePlanId = PublicPlanId | "municipal";
+
+/** Public pricing shows these unless planOverrides.publicPlans.<id>.enabled says otherwise. */
+export const PLAN_ENABLED_DEFAULTS: Record<SwitchablePlanId, boolean> = {
+  free: true,
+  basic: true,
+  premium: false,
+  municipal: true,
 };
 
 /** Public marketing cards ↔ entitlement matrix plan keys. Municipal is not mapped. */
@@ -80,6 +94,21 @@ export function resolvePublicPlans(
     };
   }
 
+  return result;
+}
+
+export function resolvePlanEnabled(planOverrides: unknown): Record<SwitchablePlanId, boolean> {
+  const root =
+    planOverrides && typeof planOverrides === "object"
+      ? (planOverrides as Record<string, any>)
+      : {};
+  const customRoot =
+    root.publicPlans && typeof root.publicPlans === "object" ? root.publicPlans : {};
+  const result = { ...PLAN_ENABLED_DEFAULTS };
+  for (const id of Object.keys(PLAN_ENABLED_DEFAULTS) as SwitchablePlanId[]) {
+    const flag = customRoot[id]?.enabled;
+    if (typeof flag === "boolean") result[id] = flag;
+  }
   return result;
 }
 

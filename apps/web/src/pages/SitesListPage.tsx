@@ -92,7 +92,10 @@ export function SitesListPage() {
       description: sitesDescription,
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
       canonical: sitesCanonical,
-      robots: platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow",
+      robots:
+        (platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) === false
+          ? "noindex, nofollow"
+          : "index, follow",
       og: {
         type: "website",
         title: sitesTitle || platformSettings?.siteName || sitesTitle,

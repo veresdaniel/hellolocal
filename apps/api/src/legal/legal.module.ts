@@ -4,9 +4,10 @@ import { SiteModule } from "../site/site.module";
 import { LegalController } from "./legal.controller";
 import { LegalPublicController } from "./legal-public.controller";
 import { LegalService } from "./legal.service";
+import { CrawlabilityModule } from "../seo/crawlability.module";
 
 @Module({
-  imports: [PrismaModule, SiteModule],
+  imports: [PrismaModule, SiteModule, CrawlabilityModule],
   controllers: [LegalController, LegalPublicController],
   providers: [LegalService],
 })

@@ -75,11 +75,10 @@ export function Pagination({
             color: "var(--hl-ink, #1b1730)",
           }}
         >
+          <option value={5}>5 / {t("admin.pagination.page")}</option>
           <option value={10}>10 / {t("admin.pagination.page")}</option>
           <option value={20}>20 / {t("admin.pagination.page")}</option>
-          <option value={25}>25 / {t("admin.pagination.page")}</option>
           <option value={50}>50 / {t("admin.pagination.page")}</option>
-          <option value={100}>100 / {t("admin.pagination.page")}</option>
         </select>
       </div>
 

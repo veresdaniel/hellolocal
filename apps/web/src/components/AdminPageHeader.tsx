@@ -66,8 +66,11 @@ export function AdminPageHeader({
     onCancel?.();
     if (shouldCancelNavigate) {
       window.setTimeout(() => {
+        const returned = (location.state as { adminReturn?: string } | null)?.adminReturn;
         const path =
-          getAdminBackPath(location.pathname, lang, backTo) ?? `/${lang}/admin`;
+          (returned && returned.startsWith("/") ? returned : null) ||
+          getAdminBackPath(location.pathname, lang, backTo) ||
+          `/${lang}/admin`;
         navigate(path);
       }, 0);
     }

@@ -25,7 +25,7 @@ import { BREAKPOINTS as VIEWPORT_BREAKPOINTS } from "../../utils/viewport";
 
 type Props =
   | { scope: "global" }
-  | { scope: "site" }
+  | { scope: "site"; siteKey?: string }
   | { scope: "town"; townId: string }
   | { scope: "place"; placeId: string }
   | { scope: "event"; eventId: string };
@@ -172,7 +172,7 @@ export function AnalyticsDashboard(props: Props) {
     if (props.scope === "global") {
       fetchGlobal(range, lang);
     } else if (props.scope === "site") {
-      fetchSite(range, lang);
+      fetchSite(range, lang, props.siteKey);
     } else if (props.scope === "town") {
       fetchTown(props.townId, range, lang);
     } else if (props.scope === "place") {

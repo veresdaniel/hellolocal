@@ -65,7 +65,10 @@ export function LegalPage({ pageKey }: Props) {
       : "";
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const robots =
-    platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow";
+    (data?.seo?.indexable ?? platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) ===
+    false
+      ? "noindex, nofollow"
+      : "index, follow";
 
   // Use SEO from data if available, otherwise use i18n fallback
   const seo = data?.seo

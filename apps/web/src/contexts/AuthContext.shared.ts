@@ -6,7 +6,12 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, twoFactorToken?: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    twoFactorToken?: string,
+    shield?: { companyWebsite?: string; formStartedAt?: number; recaptchaToken?: string }
+  ) => Promise<void>;
   register: (data: {
     username: string;
     email: string;
@@ -14,6 +19,9 @@ export interface AuthContextType {
     firstName: string;
     lastName: string;
     bio?: string;
+    companyWebsite?: string;
+    formStartedAt?: number;
+    recaptchaToken?: string;
   }) => Promise<void>;
   logout: (isManualLogout?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;

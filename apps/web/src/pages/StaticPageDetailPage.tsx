@@ -60,7 +60,10 @@ export function StaticPageDetailPage() {
       : "";
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
   const robots =
-    platformSettings?.isCrawlable === false ? "noindex, nofollow" : "index, follow";
+    (staticPage?.seo?.indexable ?? platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) ===
+    false
+      ? "noindex, nofollow"
+      : "index, follow";
 
   // Use SEO from data if available, otherwise use fallback
   const seo = staticPage?.seo

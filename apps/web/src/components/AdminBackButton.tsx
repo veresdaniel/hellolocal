@@ -39,6 +39,11 @@ export function AdminBackButton({
   }
 
   const handleClick = () => {
+    const returned = (location.state as { adminReturn?: string } | null)?.adminReturn;
+    if (returned && returned.startsWith("/")) {
+      navigate(returned);
+      return;
+    }
     const action = resolveAdminBackNavigation(location.pathname, lang, backTo);
     if (action.type === "none") return;
     if (action.type === "history") {

@@ -243,7 +243,7 @@ export class AdminSiteInstanceService {
       updateData.faviconUrl = dto.faviconUrl;
     }
 
-    return this.prisma.siteInstance.update({
+    const updated = await this.prisma.siteInstance.update({
       where: { id },
       data: updateData,
       include: {
@@ -254,6 +254,16 @@ export class AdminSiteInstanceService {
         },
       },
     });
+
+    const crawlable = (dto.features as { isCrawlable?: unknown } | undefined)?.isCrawlable;
+    if (typeof crawlable === "boolean") {
+      await this.prisma.site.update({
+        where: { id: siteInstance.siteId },
+        data: { isCrawlable: crawlable },
+      });
+    }
+
+    return updated;
   }
 
   async delete(id: string) {

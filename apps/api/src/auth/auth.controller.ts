@@ -24,6 +24,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { RequestWithSite } from "../common/middleware/site-resolve.middleware";
 import { langFromPath } from "../common/lang";
+import { assertPublicFormShield } from "../common/public-form-shield";
 import { API_AUTH_BASE } from "@hellolocal/shared";
 
 /**
@@ -43,6 +44,7 @@ export class AuthController {
   @Post("/register")
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async register(@Body() dto: RegisterDto, @Req() req: RequestWithSite) {
+    await assertPublicFormShield(dto);
     const referer = req.headers.referer || req.headers.origin;
     return this.authService.register(dto, req.site?.siteId, referer);
   }
@@ -55,6 +57,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 5, ttl: 60000 } }) // 5 kérés percenként (brute-force védelem, strict throttler)
   async login(@Body() dto: LoginDto) {
+    await assertPublicFormShield(dto);
     return this.authService.login(dto);
   }
 
@@ -66,6 +69,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await assertPublicFormShield(dto);
     return this.authService.forgotPassword(dto);
   }
 
@@ -76,6 +80,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async resetPassword(@Body() dto: ResetPasswordDto) {
+    await assertPublicFormShield(dto);
     return this.authService.resetPassword(dto);
   }
 

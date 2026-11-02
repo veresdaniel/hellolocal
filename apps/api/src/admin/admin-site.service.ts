@@ -34,6 +34,7 @@ export interface CreateSiteDto {
   }>;
   isActive?: boolean;
   primaryDomain?: string | null;
+  countryId?: string;
   languages?: string[];
   domains?: SiteDomainInput[];
   plan?: SitePlan;
@@ -411,6 +412,7 @@ export class AdminSiteService {
       include: {
         translations: true,
         brand: true,
+        country: { include: { domains: true } },
         siteDomains: true,
         siteKeys: {
           orderBy: [{ isPrimary: "desc" }, { lang: "asc" }],
@@ -512,9 +514,18 @@ export class AdminSiteService {
       seoImage: t.seoImage ?? null,
       seoKeywords: t.seoKeywords ?? [],
     }));
+    let countryId = dto.countryId;
+    if (!countryId) {
+      const fallback = await this.prisma.country.findFirst({ orderBy: { createdAt: "asc" } });
+      if (!fallback) {
+        throw new BadRequestException("Create a country before adding a region");
+      }
+      countryId = fallback.id;
+    }
     const createPayload = {
       slug: normalizedSlug, // Use normalized slug (accent-free)
       brandId: dto.brandId,
+      countryId,
       isActive: dto.isActive ?? true,
       primaryDomain: null as string | null,
       languages,

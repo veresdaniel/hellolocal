@@ -10,7 +10,7 @@ type Actor = { id: string; role: UserRole; siteIds?: string[] };
 
 @Controller("/api/admin/products")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+@Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
 export class ProductsAdminController {
   constructor(private readonly products: ProductsService) {}
 

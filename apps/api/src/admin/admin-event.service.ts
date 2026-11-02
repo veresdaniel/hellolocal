@@ -5,11 +5,11 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { Prisma, SlugEntityType, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { NotificationsService } from "../notifications/notifications.service";
 import { RbacService } from "../auth/rbac.service";
-import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
+import { EntitlementsService } from "../entitlements/entitlements.service";
 import { generateSlug } from "../slug/slug.helper";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { SitemapService } from "../seo/sitemap.service";
@@ -41,6 +41,7 @@ export interface CreateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   isPublished?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean; // New: whether event is rain-safe
@@ -76,6 +77,7 @@ export interface UpdateEventDto {
     seoKeywords?: string[];
   }>;
   isActive?: boolean;
+  isCrawlable?: boolean;
   isPublished?: boolean;
   isPinned?: boolean;
   isRainSafe?: boolean; // New: whether event is rain-safe
@@ -93,7 +95,8 @@ export class AdminEventService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly rbacService: RbacService,
-    private readonly sitemapService: SitemapService
+    private readonly sitemapService: SitemapService,
+    private readonly entitlementsService: EntitlementsService
   ) {}
 
   /**
@@ -424,27 +427,27 @@ export class AdminEventService {
   }
 
   async findAll(
-    siteId: string,
+    siteId: string | null | undefined,
     page?: number,
     limit?: number,
     placeId?: string,
-    townId?: string
+    townId?: string,
+    accessWhere?: Prisma.EventWhereInput
   ) {
     try {
       // Default pagination values
       const pageNum = page ? parseInt(String(page)) : 1;
       const limitNum = limit ? parseInt(String(limit)) : 10;
 
-      const where: {
-        siteId: string;
-        placeId?: string | { in: string[] };
-      } = { siteId };
+      const where: Prisma.EventWhereInput = {};
+      if (siteId) where.siteId = siteId;
+      if (accessWhere) where.AND = [accessWhere];
       if (placeId) {
         where.placeId = placeId;
       } else if (townId) {
         // Server-side town filter avoids client under-fetch (wide window + client slice).
         const places = await this.prisma.place.findMany({
-          where: { siteId, townId },
+          where: { townId, ...(siteId ? { siteId } : {}) },
           select: { id: true },
         });
         const placeIds = places.map((p) => p.id);
@@ -557,6 +560,10 @@ export class AdminEventService {
     return event;
   }
 
+  private async assertEventCapacity(actorUserId: string | undefined, siteId: string, placeId: string) {
+    await this.entitlementsService.assertCanAddEvent(actorUserId, siteId, placeId);
+  }
+
   async create(dto: CreateEventDto) {
     const {
       tagIds = [],
@@ -583,24 +590,14 @@ export class AdminEventService {
 
     const place = await this.prisma.place.findFirst({
       where: { id: dto.placeId, siteId: dto.siteId },
-      select: { id: true, plan: true, lat: true, lng: true },
+      select: { id: true, lat: true, lng: true },
     });
     if (!place) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
     }
 
-    const plan: PlacePlan = (place.plan as PlacePlan) || "free";
-    const eventCount = await this.prisma.event.count({
-      where: {
-        placeId: dto.placeId,
-        isActive: true,
-      },
-    });
-
-    if (!canAddEvent(plan, eventCount)) {
-      throw new BadRequestException(
-        `Plan "${plan}" allows maximum ${plan === "free" ? 0 : 3} events per place. This place already has ${eventCount} events.`
-      );
+    if (dto.isActive !== false) {
+      await this.assertEventCapacity(dto.createdByUserId || undefined, dto.siteId, dto.placeId);
     }
 
     let gaMeasurementId: string | null = null;
@@ -715,8 +712,11 @@ export class AdminEventService {
     return event;
   }
 
-  async update(id: string, siteId: string, dto: UpdateEventDto) {
+  async update(id: string, siteId: string, dto: UpdateEventDto, actorUserId?: string) {
     const event = await this.findOne(id, siteId);
+    if (actorUserId && dto.isActive === true && event.isActive !== true) {
+      await this.assertEventCapacity(actorUserId, siteId, event.placeId);
+    }
     const { tagIds, categoryIds, translations, isPublished, ...eventData } = dto;
 
     // Update translations if provided

@@ -82,6 +82,25 @@ describe("visitor ladder (unit)", () => {
     expect(decision.notify).toBe(true);
   });
 
+  it("notifies on a quiet month and leaves a paid plan in place", () => {
+    expect(DEFAULT_VISITOR_LADDER.steps[0]).toEqual({ action: "notify", plan: "FREE" });
+    const held = new Date(now.getTime() - HOLD_WINDOW_MS);
+    const decision = decideVisitorLadder({
+      state: state({
+        ladderStep: 1,
+        plan: "PRO",
+        belowFloorSince: held,
+      }),
+      meter: 100,
+      config: DEFAULT_VISITOR_LADDER,
+      now,
+    });
+    expect(decision.ladderStep).toBe(0);
+    expect(decision.plan).toBe("PRO");
+    expect(decision.planChanged).toBe(false);
+    expect(decision.notify).toBe(true);
+  });
+
   it("rejects thresholds that are not X < Y < Z", () => {
     const steps = DEFAULT_VISITOR_LADDER.steps;
     expect(() =>

@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { langOrDefault } from "../common/lang";
+import { CrawlabilityService } from "../seo/crawlability.service";
 
 @Injectable()
 export class StaticPagesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly siteResolver: SiteKeyResolverService
+    private readonly siteResolver: SiteKeyResolverService,
+    private readonly crawlability: CrawlabilityService
   ) {}
 
   /**
@@ -141,6 +143,7 @@ export class StaticPagesService {
         description: seoDescription,
         image: translation.seoImage ?? null,
         keywords: translation.seoKeywords ?? [],
+        indexable: await this.crawlability.allows(staticPage.isCrawlable),
         canonical: null,
         robots: null,
         og: { title: null, description: null, image: null, type: "website" },

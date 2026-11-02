@@ -1,6 +1,7 @@
 // entitlements.module.ts
 import { Module, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
+import { AuthModule } from "../auth/auth.module";
 import { SiteModule } from "../site/site.module";
 import { EntitlementsService } from "./entitlements.service";
 import { PlaceUpsellService } from "./place-upsell.service";
@@ -9,7 +10,7 @@ import { AdminSiteSubscriptionController } from "./subscription.controller";
 import { AdminModule } from "../admin/admin.module";
 
 @Module({
-  imports: [PrismaModule, SiteModule, forwardRef(() => AdminModule)],
+  imports: [PrismaModule, SiteModule, forwardRef(() => AuthModule), forwardRef(() => AdminModule)],
   controllers: [EntitlementsController, AdminSiteSubscriptionController],
   providers: [EntitlementsService, PlaceUpsellService],
   exports: [EntitlementsService, PlaceUpsellService],

@@ -84,4 +84,38 @@ describe("municipal quote recipient", () => {
     await expect(service.create({ ...lead, plan: "basic" })).rejects.toThrow(/önkormányzati/);
     await expect(service.create({ ...lead, email: "not-an-email" })).rejects.toThrow(/email/);
   });
+
+  it("emails a demo request to the same settings inbox", async () => {
+    const sent: Array<{ to: string; subject: string; text: string }> = [];
+    const service = new QuoteService(
+      {
+        quoteRequest: {
+          create: async () => ({ id: "lead-demo" }),
+          update: async () => ({}),
+        },
+      } as never,
+      {
+        deliverIfConfigured: async (to: string, subject: string, text: string) => {
+          sent.push({ to, subject, text });
+          return true;
+        },
+      } as never,
+      { ensureQuoteRecipient: async () => "offers@example.com" } as never
+    );
+
+    const result = await service.create({
+      contactName: "Anna",
+      email: "anna@example.com",
+      plan: "demo",
+    });
+    expect(sent).toEqual([
+      {
+        to: "offers@example.com",
+        subject: "Demó kérés",
+        text: "Név: Anna\nEmail: anna@example.com",
+      },
+    ]);
+    expect(result).toMatchObject({ stored: true, emailed: true, reason: "sent" });
+    await expect(service.create({ email: "anna@example.com", plan: "demo" })).rejects.toThrow(/nevet/);
+  });
 });

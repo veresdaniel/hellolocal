@@ -42,6 +42,12 @@ enum PlaceRole {
   editor
 }
 
+// Town scope is separate from region (SiteRole) and place (PlaceRole).
+// One membership row = one user on one town. Only a superadmin assigns these.
+enum TownRole {
+  editor
+}
+
 enum PlacePlan {
   free
   basic
@@ -112,10 +118,87 @@ model Brand {
   sites Site[]
 }
 
+// Country is its own instance above regions (Site). Superadmin only.
+// A country has its own domains, the same way a region does. Regions belong to one country.
+model Country {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  // ISO 3166-1 alpha-2. Display names come from Intl, not stored translations.
+  code          String   @unique @db.VarChar(2)
+  isActive      Boolean  @default(true)
+  primaryDomain String?  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations CountryTranslation[]
+  domains      CountryDomain[]
+  sites        Site[]
+  signups      PlaceSignup[]
+}
+
+model CountryTranslation {
+  id        String @id @default(cuid())
+  countryId String
+  lang      String @db.VarChar(8)
+  name      String
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([countryId, lang])
+  @@index([lang])
+}
+
+model CountryDomain {
+  id          String  @id @default(cuid())
+  countryId   String
+  domain      String  @unique
+  isActive    Boolean @default(true)
+  isPrimary   Boolean @default(false)
+  defaultLang String  @default("hu") @db.VarChar(8)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@index([countryId])
+  @@index([isActive])
+}
+
+enum PlaceSignupStatus {
+  pending
+  attached
+}
+
+// Free-plan ("Egy hely") registration. Geography is never created by the public request.
+model PlaceSignup {
+  id                 String            @id @default(cuid())
+  userId             String
+  countryId          String
+  townId             String?
+  requestedTownName  String
+  status             PlaceSignupStatus @default(pending)
+  placeId            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country Country  @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  town    Town?    @relation(fields: [townId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([status])
+}
+
 model Site {
   id       String  @id @default(cuid())
   slug     String  @unique
   isActive Boolean @default(false)
+  // Own crawl switch. Global crawlability still forces noindex when it is off.
+  isCrawlable Boolean @default(true)
 
   // Languages this site publishes. ISO 639-1 or 639-2 codes, in display order.
   languages String[] @default(["hu", "en", "de"])
@@ -149,6 +232,10 @@ model Site {
   brandId String
   brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
+  // Every region belongs to exactly one country.
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Restrict)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -180,6 +267,7 @@ model Site {
   products             Product[]
 
   @@index([brandId])
+  @@index([countryId])
   @@index([plan])
   @@index([planValidUntil])
 }
@@ -263,6 +351,7 @@ model Town {
   // Optional parent region (Site). Null = standalone town (település régió nélkül).
   siteId   String?
   isActive Boolean @default(true)
+  isCrawlable Boolean @default(true)
 
   // Single primary custom hostname for this town (no SiteDomain-style subdomain list).
   // Cross-entity uniqueness vs SiteDomain / Place.customDomain / Collection.domain is enforced in app code.
@@ -281,6 +370,8 @@ model Town {
   site         Site?             @relation(fields: [siteId], references: [id], onDelete: SetNull)
   places       Place[]
   translations TownTranslation[]
+  memberships  TownMembership[]
+  signups      PlaceSignup[]
 
   @@index([siteId])
 }
@@ -418,6 +509,7 @@ model Place {
   categoryId String
   parentPlaceId String?
   isActive   Boolean @default(false)
+  isCrawlable Boolean @default(true)
 
   // Subscription/upsell fields
   plan                 PlacePlan @default(free)
@@ -614,6 +706,7 @@ model LegalPage {
   siteId   String
   key      String // imprint | terms | privacy
   isActive Boolean @default(true)
+  isCrawlable Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -651,6 +744,7 @@ model StaticPage {
   siteId   String
   category String // blog | tudastar | infok
   isActive Boolean @default(true)
+  isCrawlable Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -734,6 +828,11 @@ model User {
 
   // Place memberships (RBAC)
   placeMemberships PlaceMembership[]
+
+  // Town memberships (RBAC) — one town, not the whole region
+  townMemberships TownMembership[]
+
+  placeSignups PlaceSignup[]
 
   // Events created by this user
   createdEvents Event[] @relation("EventCreator")
@@ -839,6 +938,25 @@ model PlaceMembership {
   @@index([role])
 }
 
+// TownMembership: a user who may see and edit one town, its places, and its events.
+// Not a region role and not a place role. Assigned only by superadmin.
+model TownMembership {
+  id     String   @id @default(cuid())
+  townId String
+  userId String
+  role   TownRole @default(editor)
+
+  createdAt DateTime @default(now())
+
+  town Town @relation(fields: [townId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([townId, userId])
+  @@index([userId])
+  @@index([townId])
+  @@index([role])
+}
+
 // Application settings (global, not site-specific)
 model AppSetting {
   id          String  @id @default(cuid())
@@ -874,6 +992,7 @@ model Event {
   categoryId      String? // Optional: event can have a category
   createdByUserId String? // User who created the event (for audit trail)
   isActive        Boolean   @default(true)
+  isCrawlable     Boolean   @default(true)
   isPinned        Boolean   @default(false) // Pinned events appear at top of lists
   isRainSafe      Boolean   @default(false) // Whether the event is rain-safe (indoor or covered)
   showOnMap       Boolean   @default(true) // Whether to show event in map view event box

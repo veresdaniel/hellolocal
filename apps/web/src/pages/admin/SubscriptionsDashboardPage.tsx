@@ -942,7 +942,7 @@ export function SubscriptionsDashboardPage() {
       >
         <input
           type="text"
-          placeholder={t("admin.search")}
+          placeholder={t("admin.search.subscriptions")}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);

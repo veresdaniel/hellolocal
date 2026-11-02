@@ -14,6 +14,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { StaticPageCategoryAutocomplete } from "../../components/StaticPageCategoryAutocomplete";
+import { CrawlableToggle } from "../../components/CrawlableToggle";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -31,6 +32,7 @@ interface StaticPage {
   siteId: string;
   category: "blog" | "tudastar" | "infok";
   isActive: boolean;
+  isCrawlable?: boolean;
   translations: Array<{
     id: string;
     lang: string;
@@ -86,6 +88,7 @@ export function StaticPagesPage() {
     seoKeywordsEn: "",
     seoKeywordsDe: "",
     isActive: true,
+    isCrawlable: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -218,6 +221,7 @@ export function StaticPagesPage() {
           return translations;
         })(),
         isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
       });
       setIsCreating(false);
       resetForm();
@@ -294,6 +298,7 @@ export function StaticPagesPage() {
             return translations;
           })(),
           isActive: formData.isActive,
+          isCrawlable: formData.isCrawlable,
         },
         selectedSiteId || undefined
       );
@@ -347,6 +352,7 @@ export function StaticPagesPage() {
       seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
       seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
       isActive: staticPage.isActive,
+      isCrawlable: staticPage.isCrawlable !== false,
     });
   };
 
@@ -375,6 +381,7 @@ export function StaticPagesPage() {
       seoKeywordsEn: "",
       seoKeywordsDe: "",
       isActive: true,
+      isCrawlable: true,
     });
     setFormErrors({});
   };
@@ -540,6 +547,11 @@ export function StaticPagesPage() {
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
           </div>
+
+          <CrawlableToggle
+            checked={formData.isCrawlable}
+            onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+          />
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -1103,19 +1115,15 @@ export function StaticPagesPage() {
           }}
           onDelete={(staticPage) => handleDelete(staticPage.id)}
           error={error}
+          pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onLimitChange: (limit) => setPagination((prev) => ({ ...prev, limit, page: 1 })),
+          }}
         />
-      )}
-      {!isMobile && !isLoading && !isCreating && !editingId && pagination.total > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-            onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
-          />
-        </div>
       )}
     </div>
   );

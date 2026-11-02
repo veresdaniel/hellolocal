@@ -72,7 +72,9 @@ export function CollectionsPage() {
   };
 
   const startEdit = (collection: Collection) => {
-    navigate(`/admin/collections/${collection.id}/edit`);
+    navigate(`/admin/collections/${collection.id}/edit`, {
+      state: { adminReturn: `${window.location.pathname}${window.location.search}` },
+    });
   };
 
   const handleView = (collection: Collection) => {

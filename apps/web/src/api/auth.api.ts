@@ -2,7 +2,13 @@
 import { apiPost, apiPostPublic } from "./client";
 import type { UserRole } from "../types/enums";
 
-export interface RegisterDto {
+export interface PublicFormShieldFields {
+  companyWebsite?: string;
+  formStartedAt?: number;
+  recaptchaToken?: string;
+}
+
+export interface RegisterDto extends PublicFormShieldFields {
   username: string;
   email: string;
   password: string;
@@ -12,17 +18,17 @@ export interface RegisterDto {
   siteId?: string;
 }
 
-export interface LoginDto {
+export interface LoginDto extends PublicFormShieldFields {
   email: string;
   password: string;
   twoFactorToken?: string;
 }
 
-export interface ForgotPasswordDto {
+export interface ForgotPasswordDto extends PublicFormShieldFields {
   email: string;
 }
 
-export interface ResetPasswordDto {
+export interface ResetPasswordDto extends PublicFormShieldFields {
   token: string;
   newPassword: string;
 }

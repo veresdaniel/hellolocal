@@ -567,36 +567,17 @@ export class AnalyticsService {
     if (!args.townId) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_TOWN_ID_REQUIRED);
     }
-    const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
+    const town = await this.rbacService.requireTown(args.userId, args.townId);
+    const siteId = town.siteId;
 
-    const town = await this.prisma.town.findFirst({
-      where: {
-        id: args.townId,
-        OR: [{ siteId: site.siteId }, { siteId: null }],
-      },
-      select: { id: true },
-    });
-    if (!town) {
-      throw new NotFoundException("Town not found");
-    }
-
-    const hasPermission = await this.rbacService.hasSitePermission(
-      args.userId,
-      site.siteId,
-      "editor"
-    );
-    if (!hasPermission) {
-      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_INSUFFICIENT_SITE_PERMISSIONS);
-    }
-
-    const plan = await this.getSitePlan(site.siteId);
+    const plan = siteId ? await this.getSitePlan(siteId) : "free";
     const days = this.clampRangeByPlan(plan, args.rangeDays);
     const from = new Date();
     from.setDate(from.getDate() - (days - 1));
     const fromDay = this.toDayStart(from);
 
     const places = await this.prisma.place.findMany({
-      where: { siteId: site.siteId, townId: args.townId },
+      where: siteId ? { siteId, townId: args.townId } : { townId: args.townId },
       select: { id: true, translations: { select: { lang: true, name: true } } },
     });
     const placeIds = places.map((p) => p.id);
@@ -638,7 +619,11 @@ export class AnalyticsService {
     }
 
     const rows = await this.prisma.analyticsDaily.findMany({
-      where: { siteId: site.siteId, placeId: { in: placeIds }, day: { gte: fromDay } },
+      where: {
+        ...(siteId ? { siteId } : {}),
+        placeId: { in: placeIds },
+        day: { gte: fromDay },
+      },
       orderBy: { day: "asc" },
       select: {
         day: true,
@@ -796,16 +781,9 @@ export class AnalyticsService {
     }
     const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
 
-    // RBAC check: event editor+ required (similar to place)
-    // For now, we'll check if user has site editor+ permission
-    // TODO: Add event-specific permission check if needed
-    const hasPermission = await this.rbacService.hasSitePermission(
-      args.userId,
-      site.siteId,
-      "editor"
-    );
-    if (!hasPermission) {
-      throw new ForbiddenException("Insufficient permissions. Required: editor or higher");
+    const event = await this.rbacService.requireEvent(args.userId, args.eventId);
+    if (event.siteId !== site.siteId) {
+      throw new NotFoundException("Event not found");
     }
 
     const plan = await this.getSitePlan(site.siteId);

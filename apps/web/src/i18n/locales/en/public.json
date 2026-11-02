@@ -22,7 +22,7 @@
   "overview": {
     "menu": "Overview",
     "eyebrow": "For councils, tourist offices and local businesses",
-    "title": "A visitor finds what you have on one map",
+    "title": "Visitors find your places and events on one map",
     "lead": "Places, events and the map sit on one page. The guest opens it on a phone and sets off.",
     "differenceKicker": "Why it is different",
     "differenceTitle": "The lesser-known place gets visitors too",
@@ -60,6 +60,7 @@
     "faqTitle": "What people usually ask",
     "closingTitle": "The next guest starts from the map.",
     "closingText": "Open it and picture your own places on those dots: the workshop, the cellar, the service, or the whole area.",
+    "closingImageAlt": "A hiker with a yellow backpack on a mountain trail",
     "steps": {
       "collect": {
         "title": "Whoever was missing gets a place",
@@ -144,8 +145,29 @@
         "alt": "A live map of local places and events"
       }
     },
-    "plansTitle": "Three plans",
-    "plansLead": "A monthly price in forints. It can be a workshop, a service, or a whole area.",
+    "demo": {
+      "title": "Request a demo",
+      "lead": "Curious how it works? Write to us, and we'll show it on your places. Your name and email are enough.",
+      "name": "Name",
+      "email": "Email",
+      "organization": "Organization",
+      "message": "Message",
+      "placeholderName": "e.g. Anna Kovacs",
+      "placeholderEmail": "anna@example.com",
+      "placeholderOrganization": "e.g. Kovacs Workshop",
+      "placeholderMessage": "What should the map show?",
+      "optional": "optional",
+      "submit": "Request a demo",
+      "sending": "Sending…",
+      "sent": "We sent the request. We'll be in touch.",
+      "stored": "We saved the request. No email went out, because mail is not set up.",
+      "noRecipient": "We saved the request. No recipient is set, so no email went out.",
+      "failed": "We could not send the request. Try again.",
+      "required": "Enter your name and email.",
+      "invalidEmail": "That does not look like an email address."
+    },
+    "plansTitle": "Plans",
+    "plansLead": "A monthly price in forints. For one place, a business, or a town.",
     "plans": {
       "priceUnit": "HUF / month",
       "freePrice": "Free",
@@ -156,6 +178,7 @@
       "languagesOne": "Hungarian, on its own address",
       "languages": "{{count}} languages, each on its own address",
       "adminNote": "Place / event / language numbers save with the entitlement matrix and fill the {{count}} templates on the cards. Names and pitch stay manually editable. The municipal plan has no matrix-limit sync.",
+      "visible": "Shown on the public page",
       "save": "Save plans",
       "saving": "Saving…",
       "fields": {
@@ -165,38 +188,46 @@
         "languages": "Languages"
       },
       "free": {
-        "name": "Free",
-        "kicker": "A trial",
-        "pitch": "A few places, in Hungarian. You can look at the map before anyone gets a bill.",
+        "name": "One place",
+        "kicker": "For a private customer",
+        "pitch": "One workshop, cellar, or service. In Hungarian, on your own address.",
         "cta": "Register free"
       },
       "basic": {
-        "name": "Basic",
-        "kicker": "For a settlement and its businesses",
+        "name": "Business",
+        "kicker": "One company, a few locations",
         "badge": "The usual choice",
-        "pitch": "The workshop, the service and the weekend event, on one link. The business fills in their own page, and the town sends the link on.",
-        "cta": "Get Basic"
+        "pitch": "A few locations under one business. In Hungarian, on your own domain.",
+        "cta": "Get Business"
       },
       "premium": {
-        "name": "Premium",
-        "kicker": "For a whole region",
-        "pitch": "More languages and featured places. The maker and the town share one map, in English and German too.",
-        "cta": "Get Premium"
+        "name": "Several locations",
+        "kicker": "For a larger company",
+        "pitch": "Several locations, one brand. In Hungarian, on your own domain.",
+        "cta": "Get several locations"
       },
       "municipal": {
-        "name": "Municipal",
-        "kicker": "A custom offer",
-        "pitch": "As many places as the town needs. The price is written for that town, not a fixed fee.",
+        "name": "Town",
+        "kicker": "For a council",
+        "pitch": "The price is written for the town. There is no fixed monthly fee.",
         "cta": "Custom quote",
-        "places": "As many places as you need",
-        "events": "Events are part of the offer",
-        "languages": "Languages are part of the offer"
+        "places": "As many places as the town needs",
+        "events": "Events are part of the quote",
+        "languages": "Languages are part of the quote"
       },
       "quote": {
+        "intro": "Tell us how many places and events the map should hold for your area. We reply with a quote for your region. No commitment.",
         "organization": "Organization",
         "contactName": "Contact name",
         "email": "Email",
         "message": "Short message",
+        "placeholderOrganization": "e.g. Kovacs Workshop",
+        "placeholderContactName": "e.g. Anna Kovacs",
+        "placeholderEmail": "anna@example.com",
+        "placeholderMessage": "How many places, which languages, from when?",
+        "organizationRequired": "Enter the organization name.",
+        "contactRequired": "Enter the contact name.",
+        "messageShort": "Write at least 12 characters so we know what the quote is for.",
         "submit": "Request an offer",
         "sending": "Sending…",
         "sent": "We sent the request. We'll be in touch.",
@@ -208,11 +239,16 @@
       },
       "recipient": {
         "label": "Quote request email",
-        "help": "Municipal quote requests are sent here. If you save this empty, we keep the request and do not send mail.",
+        "help": "Municipal quotes and landing demo requests are sent here. If you save this empty, we keep the request and do not send mail.",
         "save": "Save recipient",
         "saved": "Recipient saved."
       }
     }
+  },
+  "form": {
+    "tooFast": "That was sent too quickly. Wait a moment and try again.",
+    "captcha": "The robot check failed. Try again.",
+    "rejected": "We could not accept that submission."
   },
   "catalog": {
     "title": "Product catalog",
@@ -373,7 +409,7 @@
   "events": "Events",
   "services": "Local services",
   "servicesTab": "Services",
-  "parentPlace": "Town",
+  "parentPlace": "Part of",
   "noServices": "No local services yet.",
   "placesTab": "Places",
   "noEvents": "No events",

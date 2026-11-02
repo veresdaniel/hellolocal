@@ -10,7 +10,8 @@ import {
   type Lang,
   isLang,
 } from "../../app/config";
-import { getSiteMemberships } from "../../api/admin.api";
+import { getAccessScope, getSiteMemberships, type AccessScope } from "../../api/admin.api";
+import { visibleContentTiles, type ContentTileId } from "../../utils/adminTileAccess";
 import { isSuperadmin, hasUserRolePermission } from "../../utils/roleHelpers";
 import { ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 import type { UserRole } from "../../types/enums";
@@ -34,6 +35,7 @@ export function AdminDashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
+  const [contentScope, setContentScope] = useState<AccessScope | null>(null);
 
   // Handle window resize
   useEffect(() => {
@@ -67,6 +69,24 @@ export function AdminDashboard() {
     checkSiteAdminRole();
   }, [selectedSiteId, user?.id]);
 
+  useEffect(() => {
+    if (!user) {
+      setContentScope(null);
+      return;
+    }
+    let cancelled = false;
+    getAccessScope()
+      .then((scope) => {
+        if (!cancelled) setContentScope(scope);
+      })
+      .catch(() => {
+        if (!cancelled) setContentScope(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   // Get language from URL or use default
   const currentLang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
 
@@ -83,10 +103,64 @@ export function AdminDashboard() {
     userIsSuperadmin ||
     (userRole ? hasUserRolePermission(userRole, ROLE_ADMIN) : false) ||
     isSiteAdmin;
-  // Tartalom order: Új hely → Új esemény → Régió/tagságok → Települések → Hely tagságok → Kategóriák → Eseménynapló → Régióállapot.
+  // Tartalom: településadmin a saját települését látja, helyadmin a helyeket. Régiószerep mindkettőt megtartja.
   // Galériák/Termékek/Címkék live under hely in Települések — not top-level cards.
   // Régió card: superadmin label includes region settings; siteadmin/régióadmin sees memberships-only label.
   const contentCards = useMemo((): DashboardCardItem[] => {
+    const tileCopy: Record<ContentTileId, DashboardCardItem> = {
+      towns: {
+        key: "towns",
+        title: t("admin.dashboardCards.myTowns"),
+        description: t("admin.dashboardCards.myTownsDesc"),
+        link: adminPath("/towns"),
+        icon: "🏘️",
+        variant: "content",
+      },
+      places: {
+        key: "places",
+        title: t("admin.dashboardCards.placesList", { defaultValue: t("admin.dashboardCards.places") }),
+        description: t("admin.dashboardCards.placesListDesc", { defaultValue: t("admin.dashboardCards.placesDesc") }),
+        link: adminPath("/places"),
+        icon: "📍",
+        variant: "content",
+      },
+      access: {
+        key: "access",
+        title: t("admin.access.title"),
+        description: t("admin.access.hint"),
+        link: adminPath("/place-memberships"),
+        icon: "🔐",
+        variant: "content",
+      },
+      categories: {
+        key: "categories",
+        title: t("admin.dashboardCards.categories"),
+        description: t("admin.dashboardCards.categoriesDesc"),
+        link: adminPath("/categories"),
+        icon: "📁",
+        variant: "content",
+      },
+      eventLog: {
+        key: "eventLog",
+        title: t("admin.dashboardCards.eventLog"),
+        description: t("admin.dashboardCards.eventLogDesc"),
+        link: adminPath("/event-log"),
+        icon: "📋",
+        variant: "content",
+      },
+      siteStatus: {
+        key: "siteStatus",
+        title: t("admin.siteStatus.title"),
+        description: t("admin.dashboardCards.siteStatusDesc"),
+        link: adminPath("/site-status"),
+        icon: "📡",
+        variant: "content",
+      },
+    };
+    return visibleContentTiles(userRole, contentScope).map((id) => tileCopy[id]);
+  }, [userRole, contentScope, currentLang, t]);
+
+  const _legacyContentCards = useMemo((): DashboardCardItem[] => {
     const cards: DashboardCardItem[] = [];
     if (canEditContent) {
       cards.push(
@@ -122,14 +196,24 @@ export function AdminDashboard() {
       });
     }
     if (canEditContent) {
-      cards.push({
-        key: "contentHierarchy",
-        title: t("admin.dashboardCards.contentHierarchy"),
-        description: t("admin.dashboardCards.contentHierarchyDesc"),
-        link: adminPath("/towns"),
-        icon: "🏘️",
-        variant: "content",
-      });
+      cards.push(
+        {
+          key: "contentHierarchy",
+          title: t("admin.dashboardCards.contentHierarchy"),
+          description: t("admin.dashboardCards.contentHierarchyDesc"),
+          link: adminPath("/towns"),
+          icon: "🏘️",
+          variant: "content",
+        },
+        {
+          key: "placesList",
+          title: t("admin.dashboardCards.placesList"),
+          description: t("admin.dashboardCards.placesListDesc"),
+          link: adminPath("/places"),
+          icon: "📍",
+          variant: "content",
+        }
+      );
     }
     // Matches place-memberships: ROLE_ADMIN + considerSiteRole
     if (canManageSite) {
@@ -177,11 +261,36 @@ export function AdminDashboard() {
     return cards;
   }, [canEditContent, canManageSite, userIsSuperadmin, currentLang, t]);
 
-  // Platform / superadmin only — matches ROLE_SUPERADMIN route gates
-  // Régió + régió tagságok live under Tartalom (combined card).
+  // Platform / superadmin only — matches ROLE_SUPERADMIN route gates.
+  // Régiótagságok is a superadmin assignment, not a content tile.
   const platformCards = useMemo((): DashboardCardItem[] => {
     if (!userIsSuperadmin) return [];
+    // Site tree, then people, billing, platform content, system.
     return [
+      {
+        key: "countries",
+        title: t("admin.countriesPage.title"),
+        description: t("admin.countriesPage.hint"),
+        link: adminPath("/countries"),
+        icon: "🌍",
+        variant: "admin",
+      },
+      {
+        key: "towns",
+        title: t("admin.dashboardCards.contentHierarchy"),
+        description: t("admin.dashboardCards.contentHierarchyDesc"),
+        link: adminPath("/towns"),
+        icon: "🏘️",
+        variant: "admin",
+      },
+      {
+        key: "regionMemberships",
+        title: t("admin.dashboardCards.regionAndMemberships"),
+        description: t("admin.dashboardCards.regionAndMembershipsDesc"),
+        link: adminPath("/site-memberships"),
+        icon: "🗺️",
+        variant: "admin",
+      },
       {
         key: "users",
         title: t("admin.users"),
@@ -191,19 +300,11 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
-        key: "i18n",
-        title: t("admin.i18n.title"),
-        description: t("admin.dashboardCards.i18nDesc"),
-        link: adminPath("/i18n"),
-        icon: "🌐",
-        variant: "admin",
-      },
-      {
-        key: "appSettings",
-        title: t("admin.appSettings"),
-        description: t("admin.dashboardCards.appSettingsDesc"),
-        link: adminPath("/platform-settings"),
-        icon: "⚙️",
+        key: "subscriptions",
+        title: t("admin.subscriptionsDashboard"),
+        description: t("admin.dashboardCards.subscriptionsDesc"),
+        link: adminPath("/subscriptions"),
+        icon: "💳",
         variant: "admin",
       },
       {
@@ -212,6 +313,14 @@ export function AdminDashboard() {
         description: t("admin.dashboardCards.priceBandsDesc"),
         link: adminPath("/price-bands"),
         icon: "💰",
+        variant: "admin",
+      },
+      {
+        key: "collections",
+        title: t("admin.dashboardCards.collections"),
+        description: t("admin.dashboardCards.collectionsDesc"),
+        link: adminPath("/collections"),
+        icon: "📚",
         variant: "admin",
       },
       {
@@ -231,28 +340,27 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
-        key: "domains",
-        title: t("admin.dashboardCards.domains"),
-        description: t("admin.dashboardCards.domainsDesc"),
-        link: adminPath("/domains"),
-        icon: "🏷️",
+        key: "appSettings",
+        title: t("admin.appSettings"),
+        description: t("admin.dashboardCards.appSettingsDesc"),
+        link: adminPath("/platform-settings"),
+        icon: "⚙️",
         variant: "admin",
       },
       {
-        key: "collections",
-        title: t("admin.dashboardCards.collections"),
-        description: t("admin.dashboardCards.collectionsDesc"),
-        link: adminPath("/collections"),
-        icon: "📚",
+        key: "i18n",
+        title: t("admin.i18n.title"),
+        description: t("admin.dashboardCards.i18nDesc"),
+        link: adminPath("/i18n"),
+        icon: "🌐",
         variant: "admin",
       },
-      // Site instances live under Régió edit (Instances tab) — not a platform card
       {
-        key: "subscriptions",
-        title: t("admin.subscriptionsDashboard"),
-        description: t("admin.dashboardCards.subscriptionsDesc"),
-        link: adminPath("/subscriptions"),
-        icon: "💳",
+        key: "eventLogAll",
+        title: t("admin.eventLog.globalTitle"),
+        description: t("admin.eventLog.globalHint"),
+        link: `${adminPath("/event-log")}?scope=global`,
+        icon: "📋",
         variant: "admin",
       },
       {

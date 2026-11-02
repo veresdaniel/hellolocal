@@ -3,6 +3,8 @@ export type Seo = {
   description: string;
   image?: string;
   keywords?: string[];
+  /** Effective crawl flag for this page (global switch already applied). */
+  indexable?: boolean;
 
   canonical?: string;
   robots?: string;

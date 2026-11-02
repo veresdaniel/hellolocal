@@ -1,8 +1,22 @@
 // src/auth/rbac.service.ts
-import { Injectable, ForbiddenException } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { UserRole, SiteRole, PlaceRole } from "@prisma/client";
+import { Prisma, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { canEditCopy, type CopyActor, type CopyScope } from "./copy-access";
+
+export type ContentScope = {
+  unrestricted: boolean;
+  /** Every region membership, including viewer. Used for reads. */
+  siteIds: string[];
+  /** Region admin or region editor. Site viewers are excluded. */
+  regionEditorSiteIds: string[];
+  /** Region admin only. May assign region memberships and delete towns. */
+  regionAdminSiteIds: string[];
+  townIds: string[];
+  placeIds: string[];
+  /** Sites of the user's places. Used so a place admin can pick a town in that region. */
+  placeSiteIds: string[];
+};
 
 @Injectable()
 export class RbacService {
@@ -88,14 +102,14 @@ export class RbacService {
     // Get place to check site
     const place = await this.prisma.place.findUnique({
       where: { id: placeId },
-      select: { siteId: true },
+      select: { siteId: true, townId: true },
     });
 
     if (!place) {
       return false;
     }
 
-    // Check if user is siteadmin for this site
+    // Region admin and region editor cover every place in the region.
     const siteMembership = await this.prisma.siteMembership.findUnique({
       where: {
         siteId_userId: {
@@ -105,8 +119,18 @@ export class RbacService {
       },
     });
 
-    if (siteMembership && siteMembership.role === SiteRole.siteadmin) {
-      return true; // Siteadmin can manage all places in site
+    if (
+      siteMembership &&
+      (siteMembership.role === SiteRole.siteadmin || siteMembership.role === SiteRole.editor)
+    ) {
+      return true;
+    }
+
+    if (place.townId) {
+      const townMembership = await this.prisma.townMembership.findUnique({
+        where: { townId_userId: { townId: place.townId, userId } },
+      });
+      if (townMembership) return true;
     }
 
     // Check place membership
@@ -176,14 +200,28 @@ export class RbacService {
       },
     });
 
-    // Siteadmin can create events for any place in site
-    if (siteMembership && siteMembership.role === SiteRole.siteadmin) {
+    // Region admin and region editor can create events anywhere in the region.
+    if (
+      siteMembership &&
+      (siteMembership.role === SiteRole.siteadmin || siteMembership.role === SiteRole.editor)
+    ) {
       return true;
     }
 
-    // If no place specified, only siteadmin can create
+    // If no place specified, only a region role can create.
     if (!placeId) {
       return false;
+    }
+
+    const place = await this.prisma.place.findUnique({
+      where: { id: placeId },
+      select: { townId: true },
+    });
+    if (place?.townId) {
+      const townMembership = await this.prisma.townMembership.findUnique({
+        where: { townId_userId: { townId: place.townId, userId } },
+      });
+      if (townMembership) return true;
     }
 
     // Check place membership
@@ -200,8 +238,277 @@ export class RbacService {
       return false;
     }
 
-    // Owner and manager can create events
-    return placeMembership.role === PlaceRole.owner || placeMembership.role === PlaceRole.manager;
+    // Place members can work on events of their own places.
+    return (
+      placeMembership.role === PlaceRole.owner ||
+      placeMembership.role === PlaceRole.manager ||
+      placeMembership.role === PlaceRole.editor
+    );
+  }
+
+  async getContentScope(userId: string): Promise<ContentScope> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!user) {
+      return {
+        unrestricted: false,
+        siteIds: [],
+        regionEditorSiteIds: [],
+        regionAdminSiteIds: [],
+        townIds: [],
+        placeIds: [],
+        placeSiteIds: [],
+      };
+    }
+    if (user.role === UserRole.superadmin) {
+      return {
+        unrestricted: true,
+        siteIds: [],
+        regionEditorSiteIds: [],
+        regionAdminSiteIds: [],
+        townIds: [],
+        placeIds: [],
+        placeSiteIds: [],
+      };
+    }
+    const [sites, towns, places, legacySites] = await Promise.all([
+      this.prisma.siteMembership.findMany({
+        where: { userId },
+        select: { siteId: true, role: true },
+      }),
+      this.prisma.townMembership.findMany({ where: { userId }, select: { townId: true } }),
+      this.prisma.placeMembership.findMany({
+        where: { userId },
+        select: { placeId: true, place: { select: { siteId: true } } },
+      }),
+      user.role === UserRole.admin || user.role === UserRole.editor
+        ? this.prisma.userSite.findMany({ where: { userId }, select: { siteId: true } })
+        : Promise.resolve([]),
+    ]);
+    const siteIds = sites.map((row) => row.siteId);
+    const regionEditorSiteIds = sites
+      .filter((row) => row.role === SiteRole.siteadmin || row.role === SiteRole.editor)
+      .map((row) => row.siteId);
+    const narrowerScope = towns.length > 0 || places.length > 0;
+    for (const row of legacySites) {
+      if (!siteIds.includes(row.siteId)) siteIds.push(row.siteId);
+      const explicit = sites.some((membership) => membership.siteId === row.siteId);
+      if (!explicit && narrowerScope) continue;
+      if (!regionEditorSiteIds.includes(row.siteId)) regionEditorSiteIds.push(row.siteId);
+    }
+    return {
+      unrestricted: false,
+      siteIds,
+      regionEditorSiteIds,
+      regionAdminSiteIds: sites
+        .filter((row) => row.role === SiteRole.siteadmin)
+        .map((row) => row.siteId),
+      townIds: towns.map((row) => row.townId),
+      placeIds: places.map((row) => row.placeId),
+      placeSiteIds: [...new Set(places.map((row) => row.place.siteId).filter(Boolean))],
+    };
+  }
+
+  canListTowns(scope: ContentScope): boolean {
+    return (
+      scope.unrestricted ||
+      scope.regionEditorSiteIds.length > 0 ||
+      scope.townIds.length > 0 ||
+      scope.placeSiteIds.length > 0
+    );
+  }
+
+  canListPlaces(scope: ContentScope): boolean {
+    return (
+      scope.unrestricted ||
+      scope.regionEditorSiteIds.length > 0 ||
+      scope.townIds.length > 0 ||
+      scope.placeIds.length > 0
+    );
+  }
+
+  /** Membership lists for a global admin: their region-admin sites, towns, and places. Not every UserSite. */
+  adminMembershipPlaceWhere(scope: ContentScope): Prisma.PlaceWhereInput {
+    const OR: Prisma.PlaceWhereInput[] = [];
+    if (scope.regionAdminSiteIds.length) OR.push({ siteId: { in: scope.regionAdminSiteIds } });
+    if (scope.townIds.length) OR.push({ townId: { in: scope.townIds } });
+    if (scope.placeIds.length) OR.push({ id: { in: scope.placeIds } });
+    return OR.length ? { OR } : { id: { in: [] } };
+  }
+
+  async assertReadableSite(userId: string, siteId: string) {
+    if (!siteId) throw new ForbiddenException("This region is outside your access");
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return scope;
+    if (scope.siteIds.includes(siteId) || scope.regionEditorSiteIds.includes(siteId)) return scope;
+    if (scope.townIds.length) {
+      const town = await this.prisma.town.findFirst({
+        where: { id: { in: scope.townIds }, siteId },
+        select: { id: true },
+      });
+      if (town) return scope;
+    }
+    if (scope.placeIds.length) {
+      const place = await this.prisma.place.findFirst({
+        where: { id: { in: scope.placeIds }, siteId },
+        select: { id: true },
+      });
+      if (place) return scope;
+    }
+    throw new ForbiddenException("This region is outside your access");
+  }
+
+  async assertRegionEditorSite(userId: string, siteId: string) {
+    if (!siteId) throw new ForbiddenException("This region is outside your access");
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return;
+    if (scope.regionEditorSiteIds.includes(siteId)) return;
+    throw new ForbiddenException("Only a region editor or superadmin can change this");
+  }
+
+  async defaultContentSiteId(userId: string, requested: string | undefined, fallbackSiteIds: string[]) {
+    if (requested) {
+      await this.assertReadableSite(userId, requested);
+      return requested;
+    }
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) {
+      const siteId = fallbackSiteIds[0];
+      if (!siteId) throw new ForbiddenException("This region is outside your access");
+      return siteId;
+    }
+    const direct = scope.regionEditorSiteIds[0] || scope.siteIds[0];
+    if (direct) return direct;
+    if (scope.townIds.length) {
+      const town = await this.prisma.town.findFirst({
+        where: { id: { in: scope.townIds }, siteId: { not: null } },
+        select: { siteId: true },
+      });
+      if (town?.siteId) return town.siteId;
+    }
+    if (scope.placeIds.length) {
+      const place = await this.prisma.place.findFirst({
+        where: { id: { in: scope.placeIds } },
+        select: { siteId: true },
+      });
+      if (place?.siteId) return place.siteId;
+    }
+    throw new ForbiddenException("This region is outside your access");
+  }
+
+  /** Edit a town: region admin/editor or a member of that town. Not a site viewer or a place-only user. */
+  async assertTownContentEditor(userId: string, townId: string) {
+    const town = await this.requireTown(userId, townId);
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return town;
+    if (scope.townIds.includes(town.id)) return town;
+    if (town.siteId && scope.regionEditorSiteIds.includes(town.siteId)) return town;
+    throw new ForbiddenException("You cannot edit this town");
+  }
+
+  /** Delete a town: superadmin or the region admin of that town. */
+  async assertTownDeletable(userId: string, townId: string) {
+    const town = await this.requireTown(userId, townId);
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return town;
+    if (town.siteId && scope.regionAdminSiteIds.includes(town.siteId)) return town;
+    throw new ForbiddenException("Only a superadmin or region admin can delete a town");
+  }
+
+  /** Edit a place or its events. Site viewers can read the region but not change it. */
+  async assertPlaceContentEditor(userId: string, placeId: string) {
+    const place = await this.requirePlace(userId, placeId);
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return place;
+    if (scope.placeIds.includes(place.id)) return place;
+    if (place.townId && scope.townIds.includes(place.townId)) return place;
+    if (scope.regionEditorSiteIds.includes(place.siteId)) return place;
+    throw new ForbiddenException("You cannot edit this place");
+  }
+
+  placeWhere(scope: ContentScope): Prisma.PlaceWhereInput | undefined {
+    if (scope.unrestricted) return undefined;
+    const OR: Prisma.PlaceWhereInput[] = [];
+    if (scope.regionEditorSiteIds.length) OR.push({ siteId: { in: scope.regionEditorSiteIds } });
+    if (scope.townIds.length) OR.push({ townId: { in: scope.townIds } });
+    if (scope.placeIds.length) OR.push({ id: { in: scope.placeIds } });
+    return OR.length ? { OR } : { id: { in: [] } };
+  }
+
+  townWhere(scope: ContentScope): Prisma.TownWhereInput | undefined {
+    if (scope.unrestricted) return undefined;
+    const OR: Prisma.TownWhereInput[] = [];
+    if (scope.regionEditorSiteIds.length) OR.push({ siteId: { in: scope.regionEditorSiteIds } });
+    if (scope.townIds.length) OR.push({ id: { in: scope.townIds } });
+    if (
+      scope.placeSiteIds.length > 0 &&
+      scope.townIds.length === 0 &&
+      scope.regionEditorSiteIds.length === 0
+    ) {
+      OR.push({ siteId: { in: scope.placeSiteIds } });
+    }
+    return OR.length ? { OR } : { id: { in: [] } };
+  }
+
+  eventWhere(scope: ContentScope): Prisma.EventWhereInput | undefined {
+    if (scope.unrestricted) return undefined;
+    const OR: Prisma.EventWhereInput[] = [];
+    if (scope.regionEditorSiteIds.length) {
+      OR.push({ place: { siteId: { in: scope.regionEditorSiteIds } } });
+    }
+    if (scope.townIds.length) OR.push({ place: { townId: { in: scope.townIds } } });
+    if (scope.placeIds.length) OR.push({ placeId: { in: scope.placeIds } });
+    return OR.length ? { OR } : { id: { in: [] } };
+  }
+
+  async requirePlace(userId: string, placeId: string) {
+    const place = await this.prisma.place.findUnique({
+      where: { id: placeId },
+      select: { id: true, siteId: true, townId: true },
+    });
+    if (!place) throw new NotFoundException("Place not found");
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return place;
+    const allowed =
+      scope.regionEditorSiteIds.includes(place.siteId) ||
+      (place.townId != null && scope.townIds.includes(place.townId)) ||
+      scope.placeIds.includes(place.id);
+    if (!allowed) throw new ForbiddenException("Place is outside your access");
+    return place;
+  }
+
+  async requireTown(userId: string, townId: string) {
+    const town = await this.prisma.town.findUnique({
+      where: { id: townId },
+      select: { id: true, siteId: true },
+    });
+    if (!town) throw new NotFoundException("Town not found");
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return town;
+    const allowed =
+      (town.siteId != null && scope.regionEditorSiteIds.includes(town.siteId)) ||
+      scope.townIds.includes(town.id);
+    if (!allowed) throw new ForbiddenException("Town is outside your access");
+    return town;
+  }
+
+  async requireEvent(userId: string, eventId: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, siteId: true, placeId: true, place: { select: { townId: true, siteId: true } } },
+    });
+    if (!event) throw new NotFoundException("Event not found");
+    const scope = await this.getContentScope(userId);
+    if (scope.unrestricted) return event;
+    const allowed =
+      scope.regionEditorSiteIds.includes(event.siteId) ||
+      scope.regionEditorSiteIds.includes(event.place.siteId) ||
+      (event.place.townId != null && scope.townIds.includes(event.place.townId)) ||
+      scope.placeIds.includes(event.placeId);
+    if (!allowed) throw new ForbiddenException("Event is outside your access");
+    return event;
   }
 
   /**

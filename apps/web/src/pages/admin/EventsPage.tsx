@@ -8,12 +8,8 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { Pagination } from "../../components/Pagination";
-import {
-  AdminResponsiveTable,
-  type TableColumn,
-  type CardField,
-} from "../../components/AdminResponsiveTable";
+import { CrawlableToggle } from "../../components/CrawlableToggle";
+import { AdminDataTable } from "../../components/AdminDataTable";
 import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import {
@@ -42,6 +38,7 @@ import { SlugInput } from "../../components/SlugInput";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import { GaMeasurementField } from "../../components/GaMeasurementField";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
@@ -52,7 +49,8 @@ export function EventsPage() {
   const confirm = useConfirm();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { selectedSiteId, isLoading: isSiteLoading } = useAdminSite();
+  const { selectedSiteId, sites, isLoading: isSiteLoading } = useAdminSite();
+  const currentSite = sites.find((site) => site.id === selectedSiteId);
   const hierarchy = useAdminHierarchyFilters();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
@@ -122,6 +120,7 @@ export function EventsPage() {
     lat: "",
     lng: "",
     isActive: true,
+    isCrawlable: true,
     isPinned: false,
     isRainSafe: false,
     showOnMap: true,
@@ -149,9 +148,7 @@ export function EventsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedSiteId) {
-      loadData();
-    }
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId, pagination.page, pagination.limit, hierarchy.placeId, hierarchy.townId]);
 
@@ -219,7 +216,6 @@ export function EventsPage() {
   };
 
   const loadData = async () => {
-    if (!selectedSiteId) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -227,16 +223,16 @@ export function EventsPage() {
       const [eventsResponse, categoriesResponse, townsResponse, placesResponse, tagsResponse] =
         await Promise.all([
           getEvents(
-            selectedSiteId,
+            selectedSiteId || undefined,
             pagination.page,
             pagination.limit,
             hierarchy.placeId || undefined,
             !hierarchy.placeId && hierarchy.townId ? hierarchy.townId : undefined
           ),
-          getCategories(selectedSiteId),
-          getTowns(selectedSiteId),
-          getPlaces(selectedSiteId),
-          getTags(selectedSiteId),
+          getCategories(selectedSiteId || undefined),
+          getTowns(selectedSiteId || undefined),
+          getPlaces(selectedSiteId || undefined),
+          getTags(selectedSiteId || undefined),
         ]);
       // Backend always returns paginated response now
       if (Array.isArray(eventsResponse)) {
@@ -382,6 +378,7 @@ export function EventsPage() {
         tagIds: formData.tagIds,
         translations,
         isActive: formData.isActive,
+        isCrawlable: formData.isCrawlable,
         isPinned: formData.isPinned,
         isRainSafe: formData.isRainSafe,
         showOnMap: formData.showOnMap,
@@ -484,6 +481,7 @@ export function EventsPage() {
           tagIds: formData.tagIds,
           translations,
           isActive: formData.isActive,
+          isCrawlable: formData.isCrawlable,
           isPinned: formData.isPinned,
           isRainSafe: formData.isRainSafe,
           showOnMap: formData.showOnMap,
@@ -587,6 +585,7 @@ export function EventsPage() {
       lat: event.lat?.toString() || "",
       lng: event.lng?.toString() || "",
       isActive: event.isActive,
+      isCrawlable: event.isCrawlable !== false,
       isPinned: event.isPinned,
       isRainSafe: event.isRainSafe || false,
       showOnMap: event.showOnMap ?? true,
@@ -635,6 +634,7 @@ export function EventsPage() {
       lat: "",
       lng: "",
       isActive: true,
+      isCrawlable: true,
       isPinned: false,
       isRainSafe: false,
       showOnMap: true,
@@ -670,20 +670,33 @@ export function EventsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString(), isCreating, editingId]);
 
-  // Handle ?edit= query param (from hierarchy drill-down)
+  // Handle ?edit= from a town or place event list, even when that row is not on the current page.
   useEffect(() => {
     const editId = searchParams.get("edit");
-    if (editId && !editingId && !isCreating && events.length > 0) {
-      const eventToEdit = events.find((e) => e.id === editId);
-      if (eventToEdit) {
-        startEdit(eventToEdit);
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete("edit");
-        setSearchParams(newParams, { replace: true });
-      }
+    if (!editId || editingId || isCreating) return;
+    let cancelled = false;
+    const open = (event: Event) => {
+      if (cancelled) return;
+      startEdit(event);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("edit");
+      setSearchParams(newParams, { replace: true });
+    };
+    const existing = events.find((event) => event.id === editId);
+    if (existing) {
+      open(existing);
+      return;
     }
+    void getEvent(editId).then(open).catch((err) => {
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : t("admin.errors.deleteEventFailed"));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.get("edit"), events.length, editingId, isCreating]);
+  }, [searchParams.get("edit"), editingId, isCreating]);
 
   // Wait for site context to initialize
   if (isSiteLoading) {
@@ -770,22 +783,8 @@ export function EventsPage() {
               setPagination((prev) => ({ ...prev, page: 1 }));
               setCurrentMobileIndex(0);
             }}
-            clearDisabled={!hierarchy.filtersActive && !searchQuery.trim()}
-          >
-            <div className="admin-flist__filter admin-flist__filter--span-2">
-              <label htmlFor="events-filter-search">{t("admin.filters.search")}</label>
-              <input
-                id="events-filter-search"
-                type="search"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentMobileIndex(0);
-                }}
-                placeholder={t("admin.searchPlaceholders.events")}
-              />
-            </div>
-          </AdminHierarchyFilters>
+            clearDisabled={!hierarchy.filtersActive}
+          />
         </div>
       )}
 
@@ -1743,45 +1742,14 @@ export function EventsPage() {
               </div>
             </div>
 
-            <div style={{ marginBottom: 24, maxWidth: 420 }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontWeight: 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                }}
-              >
-                {t("admin.googleAnalytics.eventLabel")}
-              </label>
-              <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 13 }}>
-                {t("admin.googleAnalytics.eventHelp")}
-              </p>
-              <input
-                type="text"
-                value={formData.gaMeasurementId}
-                onChange={(e) => setFormData({ ...formData, gaMeasurementId: e.target.value })}
-                placeholder="G-XXXXXXXX"
-                autoComplete="off"
-                spellCheck={false}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: formErrors.gaMeasurementId ? "1px solid #dc2626" : "1px solid #d1d5db",
-                  borderRadius: 6,
-                  fontSize: 14,
-                }}
-              />
-              {formErrors.gaMeasurementId ? (
-                <p style={{ margin: "6px 0 0", color: "#dc2626", fontSize: 13 }}>
-                  {formErrors.gaMeasurementId}
-                </p>
-              ) : (
-                <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 12 }}>
-                  {t("admin.googleAnalytics.clearHint")}
-                </p>
-              )}
-            </div>
+            <GaMeasurementField
+              label={t("admin.googleAnalytics.eventLabel")}
+              help={t("admin.googleAnalytics.eventHelp")}
+              value={formData.gaMeasurementId}
+              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+              error={formErrors.gaMeasurementId}
+              hint={t("admin.googleAnalytics.clearHint")}
+            />
 
             {/* isActive checkbox - prominent at the bottom - visible to everyone */}
             <div
@@ -1844,280 +1812,140 @@ export function EventsPage() {
                 </div>
               </label>
             </div>
+            <CrawlableToggle
+              checked={formData.isCrawlable}
+              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+            />
           </div>
         </div>
       )}
 
       {!isCreating && !editingId ? (
         <>
-          {/* Desktop táblázat nézet */}
-          <div
-            style={{
-              background: "var(--admin-surface)",
-              borderRadius: 8,
-              overflow: "hidden",
-              border: "1px solid #ddd",
-              display: isMobile ? "none" : "block",
-            }}
-          >
-            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
-              <thead>
-                <tr style={{ background: "#f5f5f5" }}>
-                  <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                    {t("common.title")}
-                  </th>
-                  <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                    {t("admin.startDate")}
-                  </th>
-                  <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                    {t("admin.place")}
-                  </th>
-                  <th style={{ padding: 12, textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                    {t("admin.table.status")}
-                  </th>
-                  <th
-                    style={{
-                      padding: 12,
-                      textAlign: "right",
-                      borderBottom: "2px solid #ddd",
-                      width: "1%",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t("admin.table.actions")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEvents.map((event) => {
-                  const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-                  const translation =
-                    findTranslation(event.translations, currentLang) ||
-                    findTranslation(event.translations, "hu" as Lang);
-                  return (
-                    <tr key={event.id} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: 12 }}>
+          <AdminDataTable
+              items={filteredEvents}
+              getItemId={(event) => event.id}
+              stateKey="events"
+              emptyMessage={t("admin.table.noData")}
+              pagination={{
+                page: pagination.page,
+                pageSize: pagination.limit,
+                total: pagination.total,
+                onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+                onPageSizeChange: (limit) =>
+                  setPagination((prev) => ({ ...prev, limit, page: 1 })),
+              }}
+              columns={[
+                {
+                  key: "title",
+                  label: t("common.title"),
+                  getText: (event) => {
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    const translation =
+                      findTranslation(event.translations, currentLang) ||
+                      findTranslation(event.translations, "hu" as Lang);
+                    return translation?.title || "";
+                  },
+                  render: (event) => {
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    const translation =
+                      findTranslation(event.translations, currentLang) ||
+                      findTranslation(event.translations, "hu" as Lang);
+                    return (
+                      <>
                         {event.isPinned && <span style={{ marginRight: 8 }}>📌</span>}
                         {translation?.title || "-"}
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        {new Date(event.startDate).toLocaleDateString(
-                          currentLang === "hu" ? "hu-HU" : currentLang === "de" ? "de-DE" : "en-US",
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        {event.place
-                          ? event.place.translations.find((t) => t.lang === currentLang)?.name ||
-                            event.place.translations[0]?.name ||
-                            "-"
-                          : "-"}
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        <span
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: 4,
-                            background: event.isActive
-                              ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                              : "#6c757d",
-                            color: "var(--hl-on-dark-strong, #ffffff)",
-                            fontSize: 12,
-                            fontWeight: 600,
-                          }}
-                        >
-                          {event.isActive ? t("common.active") : t("common.inactive")}
-                        </span>
-                      </td>
-                      <td style={{ padding: 12, textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                          <button
-                            onClick={() => startEdit(event)}
-                            style={{
-                              padding: "6px 10px",
-                              background: "var(--admin-primary)",
-                              color: "var(--hl-on-dark-strong, #ffffff)",
-                              border: "none",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                              fontSize: 12,
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              transition: "all 0.2s ease",
-                              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow =
-                                "0 4px 12px rgba(15, 23, 42, 0.24)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow =
-                                "0 2px 8px rgba(15, 23, 42, 0.18)";
-                            }}
-                            title={t("common.edit")}
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
-                              <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
-                            </svg>
-                          </button>
-                          {(() => {
-                            const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
-                            const translation =
-                              findTranslation(event.translations, currentLang) ||
-                              findTranslation(event.translations, "hu" as Lang);
-                            const slug = translation?.slug || "";
-                            const publicUrl =
-                              slug && currentSite?.slug
-                                ? buildPublicUrl({
-                                    lang: i18n.language || "hu",
-                                    siteKey: currentSite.slug,
-                                    entityType: "event",
-                                    slug,
-                                  })
-                                : null;
-                            return publicUrl ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(publicUrl, "_blank");
-                                }}
-                                style={{
-                                  padding: "6px 10px",
-                                  background: "rgba(16, 185, 129, 0.1)",
-                                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                                  borderRadius: 6,
-                                  cursor: "pointer",
-                                  fontSize: 12,
-                                  fontFamily:
-                                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                  transition: "all 0.2s ease",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: "#10b981",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
-                                }}
-                                title={t("admin.viewPublic") || "Megnézem"}
-                              >
-                                <svg
-                                  width="18"
-                                  height="18"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  style={{ display: "block" }}
-                                >
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                              </button>
-                            ) : null;
-                          })()}
-                          <button
-                            onClick={() => handleDelete(event.id)}
-                            style={{
-                              padding: "6px 10px",
-                              background: "var(--admin-danger, #b91c1c)",
-                              color: "var(--hl-on-dark-strong, #ffffff)",
-                              border: "none",
-                              borderRadius: 6,
-                              cursor: "pointer",
-                              fontSize: 12,
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                              transition: "all 0.2s ease",
-                              boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow =
-                                "0 4px 12px rgba(245, 87, 108, 0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(245, 87, 108, 0.3)";
-                            }}
-                            title={t("common.delete")}
-                          >
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              <line x1="10" y1="11" x2="10" y2="17" />
-                              <line x1="14" y1="11" x2="14" y2="17" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {filteredEvents.length === 0 && (
-              <div style={{ padding: 48, textAlign: "center", color: "var(--hl-muted, #665d78)" }}>
-                {searchQuery ? t("admin.table.noSearchResults") : t("admin.table.noData")}
-              </div>
-            )}
-            {!isMobile && pagination.total > 0 && !searchQuery && (
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                total={pagination.total}
-                limit={pagination.limit}
-                onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-                onLimitChange={(limit) => setPagination((prev) => ({ ...prev, limit, page: 1 }))}
-              />
-            )}
-          </div>
+                      </>
+                    );
+                  },
+                },
+                {
+                  key: "startDate",
+                  label: t("admin.startDate"),
+                  getText: (event) => event.startDate,
+                  render: (event) => {
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    return new Date(event.startDate).toLocaleDateString(
+                      currentLang === "hu" ? "hu-HU" : currentLang === "de" ? "de-DE" : "en-US",
+                      { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
+                    );
+                  },
+                },
+                {
+                  key: "place",
+                  label: t("admin.place"),
+                  getText: (event) => {
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    return (
+                      event.place?.translations.find((item) => item.lang === currentLang)?.name ||
+                      event.place?.translations[0]?.name ||
+                      ""
+                    );
+                  },
+                  render: (event) => {
+                    const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                    return event.place
+                      ? event.place.translations.find((item) => item.lang === currentLang)?.name ||
+                          event.place.translations[0]?.name ||
+                          "-"
+                      : "-";
+                  },
+                },
+                {
+                  key: "status",
+                  label: t("admin.table.status"),
+                  getText: (event) => (event.isActive ? t("common.active") : t("common.inactive")),
+                  render: (event) => (
+                    <span
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: 4,
+                        background: event.isActive
+                          ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                          : "#6c757d",
+                        color: "var(--hl-on-dark-strong, #ffffff)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {event.isActive ? t("common.active") : t("common.inactive")}
+                    </span>
+                  ),
+                },
+              ]}
+              onEdit={startEdit}
+              onDelete={(event) => handleDelete(event.id)}
+              showView={(event) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                const translation =
+                  findTranslation(event.translations, currentLang) ||
+                  findTranslation(event.translations, "hu" as Lang);
+                return Boolean(translation?.slug && currentSite?.slug);
+              }}
+              onView={(event) => {
+                const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
+                const translation =
+                  findTranslation(event.translations, currentLang) ||
+                  findTranslation(event.translations, "hu" as Lang);
+                const slug = translation?.slug || "";
+                if (!slug || !currentSite?.slug) return;
+                window.open(
+                  buildPublicUrl({
+                    lang: i18n.language || "hu",
+                    siteKey: currentSite.slug,
+                    entityType: "event",
+                    slug,
+                  }),
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              }}
+            />
 
           {/* Mobil carousel nézet */}
           <div
             style={{
-              display: isMobile ? "flex" : "none",
+              display: "none",
               flexDirection: "column",
               gap: 16,
             }}

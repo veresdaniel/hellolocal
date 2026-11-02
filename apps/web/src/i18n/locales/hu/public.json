@@ -22,7 +22,7 @@
   "overview": {
     "menu": "Áttekintés",
     "eyebrow": "Önkormányzatoknak, turisztikai irodáknak és helyi vállalkozóknak",
-    "title": "A látogató egy térképen találja meg, ami nálatok van",
+    "title": "A látogató egy térképen találja meg a helyeiteket és a programjaitokat.",
     "lead": "Helyek, programok és a térkép egy oldalon vannak. A vendég a telefonján nyitja meg, és elindul.",
     "differenceKicker": "Miért más",
     "differenceTitle": "A kevésbé ismert hely is kap vendéget",
@@ -60,6 +60,7 @@
     "faqTitle": "Amit általában megkérdeznek",
     "closingTitle": "A következő vendég a térképről indul.",
     "closingText": "Nyisd meg, és képzeld a saját helyeidet a pontok helyére: a műhelyt, a pincét, a szolgáltatást vagy az egész környéket.",
+    "closingImageAlt": "Túrázó sárga hátizsákkal egy hegyi ösvényen",
     "steps": {
       "collect": {
         "title": "Felkerül, aki eddig kimaradt",
@@ -144,8 +145,29 @@
         "alt": "Élő térkép a helyi helyekkel és programokkal"
       }
     },
-    "plansTitle": "Három csomag",
-    "plansLead": "Havonta, forintban. Szólhat egy műhelynek, egy szolgáltatónak vagy egy egész környéknek.",
+    "demo": {
+      "title": "Demót kérek",
+      "lead": "Érdekel, hogyan működik? Írj nekünk, és megmutatjuk a helyeiden. A neved és az emailed elég.",
+      "name": "Név",
+      "email": "Email",
+      "organization": "Szervezet",
+      "message": "Üzenet",
+      "placeholderName": "pl. Kovács Anna",
+      "placeholderEmail": "anna@example.com",
+      "placeholderOrganization": "pl. Kovács Műhely",
+      "placeholderMessage": "Mire lenne szükségetek a térképen?",
+      "optional": "nem kötelező",
+      "submit": "Demót kérek",
+      "sending": "Küldés…",
+      "sent": "Elküldtük a kérést. Jelentkezünk.",
+      "stored": "Rögzítettük a kérést. Email még nem ment ki, a levélküldés nincs beállítva.",
+      "noRecipient": "Rögzítettük a kérést. Nincs beállítva címzett, ezért email nem ment ki.",
+      "failed": "A kérést nem sikerült elküldeni. Próbáld újra.",
+      "required": "Add meg a nevet és az emailt.",
+      "invalidEmail": "Ez nem tűnik email címnek."
+    },
+    "plansTitle": "Csomagok",
+    "plansLead": "Havonta, forintban. Egy helynek, egy vállalkozásnak vagy egy településnek.",
     "plans": {
       "priceUnit": "Ft / hó",
       "freePrice": "Ingyenes",
@@ -156,6 +178,7 @@
       "languagesOne": "Magyar nyelv, saját címmel",
       "languages": "{{count}} nyelv, mindegyik saját címmel",
       "adminNote": "A hely / program / nyelv számok a jogosultsági mátrixszal együtt mentődnek, és a kártyákon a {{count}} sablonokba kerülnek. A nevek és a pitch kézzel szerkeszthető. Az önkormányzati csomagnak nincs mátrix-limit syncje.",
+      "visible": "Látható a nyilvános oldalon",
       "save": "Csomagok mentése",
       "saving": "Mentés…",
       "fields": {
@@ -165,38 +188,46 @@
         "languages": "Nyelvek"
       },
       "free": {
-        "name": "Ingyenes",
-        "kicker": "Kipróbálás",
-        "pitch": "Pár hely, magyarul. Megnézheted a térképet, mielőtt bárki számlát kapna.",
+        "name": "Egy hely",
+        "kicker": "Magánszemélynek",
+        "pitch": "Egy műhely, pince vagy szolgáltatás. Magyarul, a saját címeden.",
         "cta": "Ingyenesen"
       },
       "basic": {
-        "name": "Alap",
-        "kicker": "Egy településnek és a vállalkozóinak",
+        "name": "Vállalkozás",
+        "kicker": "Egy cégnek, pár hellyel",
         "badge": "A szokásos választás",
-        "pitch": "Műhely, szolgáltatás és a hétvégi program, egy linken. A vállalkozó kitölti a saját oldalát, a település pedig továbbküldi a linket.",
-        "cta": "Alapcsomaggal"
+        "pitch": "Néhány telephely, egy vállalkozás. Magyarul, a saját domaineteken.",
+        "cta": "Vállalkozásként"
       },
       "premium": {
-        "name": "Prémium",
-        "kicker": "Egy egész régiónak",
-        "pitch": "Több nyelv, kiemelt helyek. A kézműves és a település egy térképen várja a vendéget, angolul és németül is.",
-        "cta": "Prémiummal"
+        "name": "Több telephely",
+        "kicker": "Nagyobb cégnek",
+        "pitch": "Több telephely, egy márka. Magyarul, a saját domaineteken.",
+        "cta": "Több telephellyel"
       },
       "municipal": {
-        "name": "Önkormányzati",
-        "kicker": "Egyedi ajánlat",
-        "pitch": "Akárhány hely a térképen. Az árat a településhez írjuk, nincs fix díj.",
+        "name": "Település",
+        "kicker": "Önkormányzatnak",
+        "pitch": "Az árat a településhez írjuk. Nincs fix havi díj.",
         "cta": "Egyedi árat kérek",
-        "places": "Akárhány hely a térképen",
-        "events": "A programkeret az ajánlat része",
-        "languages": "A nyelvek az ajánlat része"
+        "places": "Akárhány hely",
+        "events": "A programok az ajánlat részei",
+        "languages": "A nyelvek az ajánlat részei"
       },
       "quote": {
+        "intro": "Írd meg, hány hely és program fér a térképre a környéketeken. Válaszolunk egy ajánlattal, a ti régiótokra. Nincs kötelezettség.",
         "organization": "Szervezet",
         "contactName": "Kapcsolattartó",
         "email": "Email",
         "message": "Rövid üzenet",
+        "placeholderOrganization": "pl. Kovács Műhely",
+        "placeholderContactName": "pl. Kovács Anna",
+        "placeholderEmail": "anna@example.com",
+        "placeholderMessage": "Hány hely, milyen nyelvek, mikortól?",
+        "organizationRequired": "Add meg a szervezet nevét.",
+        "contactRequired": "Add meg a kapcsolattartó nevét.",
+        "messageShort": "Írj legalább 12 karaktert, hogy tudjuk, mire kérsz ajánlatot.",
         "submit": "Ajánlatot kérek",
         "sending": "Küldés…",
         "sent": "Elküldtük a kérést. Jelentkezünk.",
@@ -208,11 +239,16 @@
       },
       "recipient": {
         "label": "Ajánlatkérések email címe",
-        "help": "Az önkormányzati ajánlatkérés ide érkezik. Ha üresen mented, a kérést rögzítjük, de nem küldünk levelet.",
+        "help": "Az önkormányzati ajánlatkérés és a nyitóoldali demókérés ide érkezik. Ha üresen mented, a kérést rögzítjük, de nem küldünk levelet.",
         "save": "Címzett mentése",
         "saved": "A címzett elmentve."
       }
     }
+  },
+  "form": {
+    "tooFast": "Túl gyors volt a küldés. Várj egy pillanatot, és próbáld újra.",
+    "captcha": "A robotellenőrzés nem sikerült. Próbáld újra.",
+    "rejected": "A küldést nem tudtuk elfogadni."
   },
   "catalog": {
     "title": "Termékkatalógus",
@@ -373,7 +409,7 @@
   "events": "Események",
   "services": "Helyi szolgáltatások",
   "servicesTab": "Szolgáltatások",
-  "parentPlace": "Település",
+  "parentPlace": "Ehhez a helyhez tartozik",
   "noServices": "Még nincs helyi szolgáltatás.",
   "placesTab": "Helyek",
   "noEvents": "Nincs esemény",

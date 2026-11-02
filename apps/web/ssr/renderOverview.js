@@ -39,10 +39,11 @@ function escapeHtml(value) {
 }
 
 const PLAN_DEFAULTS = {
-  free: { priceHuf: 0, places: 3, events: 0, languages: 1 },
-  basic: { priceHuf: 3990, places: 30, events: 30, languages: 1 },
-  premium: { priceHuf: 8990, places: 150, events: 200, languages: 3 },
+  free: { priceHuf: 0, places: 1, events: 5, languages: 1 },
+  basic: { priceHuf: 3990, places: 5, events: 15, languages: 1 },
+  premium: { priceHuf: 8990, places: 30, events: 30, languages: 1 },
 };
+const PLAN_ENABLED_DEFAULTS = { free: true, basic: true, premium: false, municipal: true };
 
 const MATRIX_PLAN = { free: "FREE", basic: "BASIC", premium: "PRO" };
 
@@ -83,11 +84,18 @@ function fillCount(template, count) {
   return String(template ?? "").replace(/\{\{\s*count\s*\}\}/g, String(count));
 }
 
+function planEnabled(planOverrides, id) {
+  const root = planOverrides && typeof planOverrides === "object" ? planOverrides : {};
+  const flag = root.publicPlans?.[id]?.enabled;
+  return typeof flag === "boolean" ? flag : PLAN_ENABLED_DEFAULTS[id];
+}
+
 function renderPlanCards(copy, lang, planOverrides) {
   const plans = copy.plans;
   if (!plans) return "";
   const numbersById = resolvePlanNumbers(planOverrides);
-  return ["free", "basic", "premium"]
+  const cards = ["free", "basic", "premium"]
+    .filter((id) => planEnabled(planOverrides, id))
     .map((id) => {
       const plan = plans[id];
       const numbers = numbersById[id];
@@ -105,8 +113,14 @@ function renderPlanCards(copy, lang, planOverrides) {
         .map((line) => `<li>${escapeHtml(line)}</li>`)
         .join("");
       return `<article><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(price)}</p><p>${escapeHtml(plan.pitch)}</p><ul>${bullets}</ul><p><a href="/${lang}/admin/register?plan=${id}">${escapeHtml(plan.cta)}</a></p></article>`;
-    })
-    .join("");
+    });
+  if (planEnabled(planOverrides, "municipal") && plans.municipal) {
+    const municipal = plans.municipal;
+    cards.push(
+      `<article><h3>${escapeHtml(municipal.name)}</h3><p>${escapeHtml(municipal.pitch)}</p><ul><li>${escapeHtml(municipal.places)}</li><li>${escapeHtml(municipal.events)}</li><li>${escapeHtml(municipal.languages)}</li></ul><p>${escapeHtml(municipal.cta)}</p></article>`
+    );
+  }
+  return cards.join("");
 }
 
 const STORY_IMAGES = {
@@ -191,6 +205,8 @@ function loadOverview(lang, override, messages) {
 export function overviewLang(pathname) {
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 1 && parts[0] === "overview") return FALLBACK_LANG;
+  // Language root is the public opener, the same landing as /:lang/overview.
+  if (parts.length === 1 && LANGS.includes(parts[0])) return parts[0];
   if (
     parts.length === 2 &&
     /^[a-z]{2,3}$/.test(parts[0]) &&

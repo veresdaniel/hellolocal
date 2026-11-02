@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { BREAKPOINTS } from "../utils/viewport";
-import { Pagination } from "./Pagination";
+import { AdminDataTable } from "./AdminDataTable";
 import { TableSkeleton } from "./TableSkeleton";
 
 export interface TableColumn<T> {
@@ -11,6 +11,10 @@ export interface TableColumn<T> {
   render: (item: T) => ReactNode;
   width?: string;
   align?: "left" | "center" | "right";
+  /** Plain text used for column sort and the filter under the title. */
+  filterText?: (item: T) => string;
+  sortable?: boolean;
+  filterable?: boolean;
 }
 
 export interface CardField<T> {
@@ -43,6 +47,7 @@ export interface AdminResponsiveTableProps<T> {
   onEdit: (item: T) => void;
   onDelete: (item: T) => void;
   onView?: (item: T) => void; // Optional: view button (magnifying glass icon)
+  onAnalytics?: (item: T) => void;
   shouldShowView?: (item: T) => boolean; // Optional: condition to show view button
 
   // Pagination (optional - only for desktop)
@@ -58,6 +63,7 @@ export interface AdminResponsiveTableProps<T> {
   // Loading & error
   isLoading?: boolean;
   error?: string | null;
+  emptyMessage?: ReactNode;
 }
 
 export function AdminResponsiveTable<T>({
@@ -74,10 +80,12 @@ export function AdminResponsiveTable<T>({
   onEdit,
   onDelete,
   onView,
+  onAnalytics,
   shouldShowView,
   pagination,
   isLoading = false,
   error = null,
+  emptyMessage,
 }: AdminResponsiveTableProps<T>) {
   const { t } = useTranslation();
 
@@ -112,7 +120,11 @@ export function AdminResponsiveTable<T>({
   }, []);
 
   // Filter data
-  const filteredData = searchQuery ? data.filter((item) => filterFn(item, searchQuery)) : data;
+  void searchQuery;
+  void onSearchChange;
+  void searchPlaceholder;
+  void filterFn;
+  const filteredData = data;
 
   // Helper function to update index with previous tracking
   const updateMobileIndex = (newIndex: number) => {
@@ -138,56 +150,6 @@ export function AdminResponsiveTable<T>({
 
   return (
     <div>
-      {/* Search Input - only show if there is data */}
-      {data.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              onSearchChange(e.target.value);
-              updateMobileIndex(0); // Reset to first card when searching
-            }}
-            placeholder={searchPlaceholder || t("admin.searchPlaceholder")}
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              fontSize: "clamp(15px, 3.5vw, 16px)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              border: "2px solid var(--admin-primary-border)",
-              borderRadius: 8,
-              outline: "none",
-              transition: "all 0.3s ease",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "var(--admin-primary)";
-              e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "var(--admin-primary-border)";
-              e.target.style.boxShadow = "none";
-            }}
-          />
-          {filteredData.length !== data.length && (
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                color: "var(--hl-on-dark-strong, #ffffff)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                textAlign: "center",
-                opacity: 0.9,
-              }}
-            >
-              {t("admin.searchResults", { count: filteredData.length, total: data.length })}
-            </div>
-          )}
-        </div>
-      )}
-
       {error && (
         <div
           style={{
@@ -205,310 +167,47 @@ export function AdminResponsiveTable<T>({
         </div>
       )}
 
-      {/* Desktop Table View */}
-      <div
-        className="admin-table-wrapper"
-        style={{
-          background: "white",
-          borderRadius: 8,
-          overflow: "hidden",
-          border: "1px solid #ddd",
-          display: isMobile ? "none" : "block",
-        }}
-      >
-        <table
-          className="admin-table"
-          data-font="poppins"
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            tableLayout: "auto",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          <thead
-            style={{
-              fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            <tr
-              style={{
-                background: "#f5f5f5",
-                fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  style={{
-                    padding: 12,
-                    textAlign: col.align || "left",
-                    borderBottom: "2px solid #ddd",
-                    width: col.width,
-                    fontFamily:
-                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 600,
-                    fontSize: 14,
-                    color: "var(--hl-ink, #1b1730)",
-                    fontStyle: "normal",
-                    fontVariant: "normal",
-                    textRendering: "optimizeLegibility",
-                    WebkitFontSmoothing: "antialiased",
-                    MozOsxFontSmoothing: "grayscale",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontWeight: 600,
-                      display: "inline-block",
-                    }}
-                  >
-                    {col.label}
-                  </span>
-                </th>
-              ))}
-              <th
-                style={{
-                  padding: 12,
-                  textAlign: "right",
-                  borderBottom: "2px solid #ddd",
-                  width: "1%",
-                  whiteSpace: "nowrap",
-                  fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontWeight: 600,
-                  fontSize: 14,
-                  color: "var(--hl-ink, #1b1730)",
-                  fontStyle: "normal",
-                  fontVariant: "normal",
-                  textRendering: "optimizeLegibility",
-                  WebkitFontSmoothing: "antialiased",
-                  MozOsxFontSmoothing: "grayscale",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily:
-                      "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 600,
-                    display: "inline-block",
-                  }}
-                >
-                  {t("admin.table.actions")}
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody
-            style={{
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            {filteredData.map((item) => (
-              <tr
-                key={getItemId(item)}
-                style={{
-                  borderBottom: "1px solid #eee",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    style={{
-                      padding: 12,
-                      textAlign: col.align || "left",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: 14,
-                    }}
-                  >
-                    {col.render(item)}
-                  </td>
-                ))}
-                <td
-                  style={{
-                    padding: 12,
-                    textAlign: "right",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                    <button
-                      onClick={() => onEdit(item)}
-                      style={{
-                        padding: "6px 10px",
-                        background: "var(--admin-primary)",
-                        color: "var(--hl-on-dark-strong, #ffffff)",
-                        border: "none",
-                        borderRadius: 6,
-                        cursor: "pointer",
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        transition: "all 0.2s ease",
-                        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.24)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
-                      }}
-                      title={t("common.edit")}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" />
-                        <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.43741 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" />
-                      </svg>
-                    </button>
-                    {onView && (!shouldShowView || shouldShowView(item)) && (
-                      <button
-                        onClick={() => onView(item)}
-                        style={{
-                          padding: "6px 10px",
-                          background: "rgba(16, 185, 129, 0.1)",
-                          border: "1px solid rgba(16, 185, 129, 0.3)",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          fontSize: "clamp(13px, 3vw, 15px)",
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          transition: "all 0.2s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#10b981",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-                          e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                          e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
-                        }}
-                        title={t("admin.viewPublic") || "Megnézem"}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          style={{ display: "block" }}
-                        >
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => onDelete(item)}
-                      style={{
-                        padding: "6px 10px",
-                        background: "var(--admin-danger, #b91c1c)",
-                        color: "var(--hl-on-dark-strong, #ffffff)",
-                        border: "none",
-                        borderRadius: 6,
-                        cursor: "pointer",
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        transition: "all 0.2s ease",
-                        boxShadow: "0 2px 8px rgba(245, 87, 108, 0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 87, 108, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(245, 87, 108, 0.3)";
-                      }}
-                      title={t("common.delete")}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredData.length === 0 && (
-          <div
-            style={{
-              padding: 48,
-              textAlign: "center",
-              color: "var(--hl-muted, #665d78)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontSize: 14,
-            }}
-          >
-            {searchQuery ? t("admin.table.noSearchResults") : t("admin.table.noData")}
-          </div>
-        )}
-        {pagination && pagination.total > 0 && !searchQuery && (
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={pagination.limit}
-            onPageChange={pagination.onPageChange}
-            onLimitChange={pagination.onLimitChange}
-          />
-        )}
-      </div>
+      {(
+        <AdminDataTable
+          items={filteredData}
+          getItemId={getItemId}
+          emptyMessage={
+            emptyMessage ||
+            (searchQuery ? t("admin.table.noSearchResults") : t("admin.table.noData"))
+          }
+          columns={columns.map((col) => ({
+            key: col.key,
+            label: col.label,
+            render: col.render,
+            align: col.align,
+            width: col.width,
+            getText: col.filterText,
+            sortable: col.sortable,
+            filterable: col.filterable,
+          }))}
+          pagination={
+            pagination
+              ? {
+                  page: pagination.page,
+                  pageSize: pagination.limit,
+                  total: pagination.total,
+                  onPageChange: pagination.onPageChange,
+                  onPageSizeChange: pagination.onLimitChange,
+                }
+              : undefined
+          }
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onView={onView}
+          onAnalytics={onAnalytics}
+          showView={shouldShowView}
+        />
+      )}
 
       {/* Mobile Carousel View - PONTOSAN AZ EVENTSPAGE-RŐL */}
       <div
         style={{
-          display: isMobile ? "flex" : "none",
+          display: "none",
           flexDirection: "column",
           gap: 16,
         }}

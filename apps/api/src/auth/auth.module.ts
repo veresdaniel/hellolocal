@@ -1,4 +1,5 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
+import { CountryModule } from "../country/country.module";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -17,6 +18,7 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
 @Module({
   imports: [
     PrismaModule,
+    forwardRef(() => CountryModule),
     EmailModule,
     TwoFactorModule,
     EventLogModule, // Import EventLogModule to access AdminEventLogService (avoids circular dependency)

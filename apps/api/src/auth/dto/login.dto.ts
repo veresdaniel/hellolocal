@@ -1,6 +1,7 @@
 import { IsEmail, IsString, MinLength, IsOptional, Length, Matches } from "class-validator";
+import { PublicFormShieldFields } from "../../common/public-form-shield.dto";
 
-export class LoginDto {
+export class LoginDto extends PublicFormShieldFields {
   @IsEmail({}, { message: "Email must be a valid email address" })
   email!: string;
 

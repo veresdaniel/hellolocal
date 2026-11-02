@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { allowsCrawl } from "../seo/crawlability";
+import { CrawlabilityService } from "../seo/crawlability.service";
 import { SlugEntityType } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { requireLang } from "../common/lang";
@@ -27,7 +29,8 @@ export class PlacesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly siteResolver: SiteKeyResolverService,
-    private readonly slugResolver: SlugResolverService
+    private readonly slugResolver: SlugResolverService,
+    private readonly crawlability: CrawlabilityService
   ) {}
 
   /**
@@ -424,6 +427,8 @@ export class PlacesService {
       return translation?.[field] ?? null;
     };
 
+    const globalOn = await this.crawlability.isGlobalOn();
+
     // Map places to response format with slugs attached
     return places.map((p) => {
       const canonicalPlaceSlug = placeSlugById.get(p.id) ?? null;
@@ -493,6 +498,7 @@ export class PlacesService {
           description: placeTranslation?.seoDescription ?? null,
           image: placeTranslation?.seoImage ?? null,
           keywords: placeTranslation?.seoKeywords ?? [],
+          indexable: allowsCrawl(globalOn, p.isCrawlable),
         },
       };
     });
@@ -746,6 +752,7 @@ export class PlacesService {
           : null,
         image: placeTranslation?.seoImage ?? null,
         keywords: placeTranslation?.seoKeywords ?? [],
+        indexable: await this.crawlability.allows(place.isCrawlable),
       },
       hasPriceList: false, // Will be set by controller using PlacesPriceListService
     };

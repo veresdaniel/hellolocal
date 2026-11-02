@@ -42,7 +42,7 @@ type FormErrors = {
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
-const PAGE_SIZE_DEFAULT = 20;
+const PAGE_SIZE_DEFAULT = 10;
 
 function emptyDraft(): Draft {
   return {
@@ -115,7 +115,6 @@ export function ProductsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
   const [page, setPage] = useState(1);
@@ -141,7 +140,6 @@ export function ProductsAdminPage() {
   }, [productsQuery.data, contentLang]);
 
   const filteredProducts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
     const placeIdSet =
       townId || placeFilter ? new Set(matchingPlaceIds) : null;
     return (productsQuery.data || []).filter((product) => {
@@ -149,10 +147,6 @@ export function ProductsAdminPage() {
       if (categoryFilter && product.category !== categoryFilter) return false;
       if (visibilityFilter === "visible" && !product.isActive) return false;
       if (visibilityFilter === "hidden" && product.isActive) return false;
-      if (query) {
-        const names = product.translations.map((row) => row.name.toLowerCase());
-        if (!names.some((name) => name.includes(query))) return false;
-      }
       return true;
     });
   }, [
@@ -162,17 +156,14 @@ export function ProductsAdminPage() {
     matchingPlaceIds,
     categoryFilter,
     visibilityFilter,
-    searchQuery,
   ]);
 
   const filtersActive =
-    Boolean(searchQuery.trim()) ||
     hierarchyFiltersActive ||
     Boolean(categoryFilter) ||
     visibilityFilter !== "all";
 
   function resetFilters() {
-    setSearchQuery("");
     clearHierarchyFilters();
     setCategoryFilter("");
     setVisibilityFilter("all");
@@ -553,19 +544,6 @@ export function ProductsAdminPage() {
               onClear={resetFilters}
               clearDisabled={!filtersActive}
             >
-              <div className="admin-flist__filter admin-flist__filter--span-2">
-                <label htmlFor="catalog-filter-search">{t("admin.catalog.filters.search")}</label>
-                <input
-                  id="catalog-filter-search"
-                  type="search"
-                  value={searchQuery}
-                  placeholder={t("admin.catalog.filters.searchPlaceholder")}
-                  onChange={(event) => {
-                    setSearchQuery(event.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
               <div className="admin-flist__filter">
                 <label htmlFor="catalog-filter-category">{t("admin.catalog.filters.category")}</label>
                 <select
@@ -650,15 +628,7 @@ export function ProductsAdminPage() {
               </span>
             </>
           )}
-          actions={(product) => (
-            <button
-              type="button"
-              className="admin-flist__action admin-flist__action--danger"
-              onClick={() => void remove(product)}
-            >
-              {t("admin.catalog.delete")}
-            </button>
-          )}
+          onDelete={(product) => void remove(product)}
         />
       ) : null}
     </div>
