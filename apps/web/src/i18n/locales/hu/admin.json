@@ -1292,6 +1292,7 @@
     "twoFactorAuthentication": "Kétfaktoros autentikáció",
     "usersCanEnable2FA": "A felhasználók a profil oldalukról engedélyezhetik a 2FA-t.",
     "openProfile": "Profil & 2FA megnyitása",
+    "menuButton": "Profil",
     "qrCodeAlt": "2FA QR kód"
   },
   "parentCategory": "Szülő kategória",

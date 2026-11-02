@@ -163,7 +163,7 @@ export function UserProfilePage() {
     setTwoFactorError(null);
     setTwoFactorSuccess(null);
     try {
-      await disableTwoFactor(user.id);
+      await disableTwoFactor();
       setTwoFactorSuccess(t("admin.twoFactor.disableSuccess"));
       setQrCodeUrl(null);
       setTwoFactorSecret(null);

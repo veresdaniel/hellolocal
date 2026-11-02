@@ -1013,20 +1013,12 @@ export function verifyAndEnableTwoFactor(token: string) {
 }
 
 export function disableTwoFactor(userId?: string) {
-  // If userId is not provided, we need to get it from the current user
-  // For now, we'll require it to be passed explicitly
-  if (!userId) {
-    // Try to get from localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      userId = user.id;
-    }
-  }
-  if (!userId) {
-    throw new Error("User ID is required to disable 2FA");
-  }
-  return apiPost<{ message: string }>("/two-factor/disable", { userId });
+  // Omit userId for self-disable — API uses the authenticated user.
+  // Pass userId only when an admin disables 2FA for someone else.
+  return apiPost<{ message: string }>(
+    "/two-factor/disable",
+    userId ? { userId } : {}
+  );
 }
 
 export function getTwoFactorStatus() {

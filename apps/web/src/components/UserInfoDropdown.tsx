@@ -116,28 +116,6 @@ export function UserInfoDropdown() {
               {t("admin.userInformation")}
             </h3>
 
-            <Link
-              to={profilePath}
-              role="menuitem"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: "block",
-                marginBottom: 16,
-                padding: "10px 12px",
-                borderRadius: 8,
-                background: "#f0f4ff",
-                border: "1px solid #c7d2fe",
-                color: "#3730a3",
-                textDecoration: "none",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
-            >
-              {t("admin.profile.openProfile", {
-                defaultValue: "Profil & 2FA megnyitása",
-              })}
-            </Link>
-
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div
@@ -218,6 +196,40 @@ export function UserInfoDropdown() {
                   {user.tenantIds?.length || 0}
                 </div>
               </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 20,
+                paddingTop: 16,
+                borderTop: "1px solid #e8e8e8",
+              }}
+            >
+              <Link
+                to={profilePath}
+                role="menuitem"
+                onClick={() => setIsOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "12px 16px",
+                  borderRadius: 8,
+                  background: "#1e3a5f",
+                  color: "#ffffff",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  fontSize: 15,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {t("admin.profile.menuButton", { defaultValue: "Profil" })}
+              </Link>
             </div>
           </div>
         </div>

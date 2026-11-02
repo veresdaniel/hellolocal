@@ -1241,6 +1241,7 @@
     "twoFactorAuthentication": "Two-Factor Authentication",
     "usersCanEnable2FA": "Users can enable 2FA from their profile page.",
     "openProfile": "Open profile & 2FA",
+    "menuButton": "Profile",
     "qrCodeAlt": "2FA QR Code"
   },
   "parentCategory": "Parent Category",

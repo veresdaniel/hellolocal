@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
+import { IsOptional, IsString, Length } from "class-validator";
 import { TwoFactorService } from "./two-factor.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -19,15 +20,24 @@ import { UserRole } from "@prisma/client";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export class SetupTwoFactorDto {
+  @IsOptional()
+  @IsString()
   userId?: string; // Optional: for admin to setup 2FA for other users
 }
 
 export class VerifyTwoFactorDto {
+  @IsString()
+  @Length(6, 6)
   token!: string; // 6-digit TOTP code
+
+  @IsOptional()
+  @IsString()
   userId?: string; // Optional: for admin to verify 2FA for other users
 }
 
 export class DisableTwoFactorDto {
+  @IsOptional()
+  @IsString()
   userId?: string; // Optional: if not provided, uses current user's ID
 }
 
