@@ -9,6 +9,7 @@ import { RootRedirect } from "../components/RootRedirect";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
+import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
 import { PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH } from "./entityPaths";
 import { useAdminSite } from "../contexts/useAdminSite";
@@ -304,9 +305,6 @@ const createPublicRoutes = () => {
 };
 
 export const router = createBrowserRouter([
-  // root -> default nyelv (dynamically loaded from app settings)
-  { path: "/", element: <RootRedirect /> },
-
   // Offline page - accessible without language prefix for service worker redirects
   { path: "/offline", element: <OfflinePage /> },
 
@@ -765,8 +763,13 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Public site routes (with language prefix) - MUST come after admin routes
-  ...createPublicRoutes(),
-
-  { path: "*", element: <NotFoundPage /> },
+  // Public site routes — under-development gate (admin routes above stay open)
+  {
+    element: <UnderConstructionGate />,
+    children: [
+      { path: "/", element: <RootRedirect /> },
+      ...createPublicRoutes(),
+      { path: "*", element: <NotFoundPage /> },
+    ],
+  },
 ]);

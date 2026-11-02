@@ -61,11 +61,16 @@ export class TwoFactorService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, username: true },
+      select: { id: true, email: true, username: true, isTwoFactorEnabled: true },
     });
 
     if (!user) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
+    }
+
+    // Opt-in only: do not replace an already-enabled secret via setup (disable first)
+    if (user.isTwoFactorEnabled) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_ALREADY_ENABLED);
     }
 
     // Generate TOTP secret
@@ -74,16 +79,15 @@ export class TwoFactorService {
       length: 32,
     });
 
-    // Store secret in database (but don't enable 2FA yet)
+    // Store pending secret; 2FA stays disabled until /verify succeeds
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         totpSecret: secret.base32,
-        isTwoFactorEnabled: false, // Will be enabled after verification
-      } as any, // Use 'as any' to handle case where fields might not exist in Prisma Client yet
+        isTwoFactorEnabled: false,
+      },
     });
 
-    // Generate QR code
     if (!QRCode) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_QR_CODE_NOT_AVAILABLE);
     }
@@ -105,33 +109,27 @@ export class TwoFactorService {
   ): Promise<{ verified: boolean; message: string }> {
     await this.ensureDependencies();
 
+    const normalizedToken = String(token ?? "").replace(/\s/g, "");
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, totpSecret: true, isTwoFactorEnabled: true } as any,
+      select: { id: true, totpSecret: true, isTwoFactorEnabled: true },
     });
 
     if (!user) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
-    if (!(user as any).totpSecret) {
+    if (!user.totpSecret) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_NOT_SETUP);
     }
 
-    // Verify the token
     let verified = false;
     try {
-      const totpSecret = (user as any).totpSecret as string | null;
-      if (!totpSecret) {
-        return {
-          verified: false,
-          message: "Invalid verification code. Please try again.",
-        };
-      }
       verified = speakeasy.totp.verify({
-        secret: totpSecret,
+        secret: user.totpSecret,
         encoding: "base32",
-        token,
+        token: normalizedToken,
         window: 2, // Allow 2 time steps (60 seconds) of tolerance
       });
     } catch (error) {
@@ -149,12 +147,12 @@ export class TwoFactorService {
       };
     }
 
-    // Enable 2FA
+    // Opt-in enable for this user only
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         isTwoFactorEnabled: true,
-      } as any, // Use 'as any' to handle case where fields might not exist in Prisma Client yet
+      },
     });
 
     return {
@@ -174,25 +172,22 @@ export class TwoFactorService {
       return false;
     }
 
+    const normalizedToken = String(token ?? "").replace(/\s/g, "");
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, totpSecret: true, isTwoFactorEnabled: true } as any,
+      select: { id: true, totpSecret: true, isTwoFactorEnabled: true },
     });
 
-    if (!user || !(user as any).isTwoFactorEnabled || !(user as any).totpSecret) {
+    if (!user || !user.isTwoFactorEnabled || !user.totpSecret) {
       return false;
     }
 
-    // Verify the token
     try {
-      const totpSecret = (user as any).totpSecret as string | null;
-      if (!totpSecret) {
-        return false;
-      }
       return speakeasy.totp.verify({
-        secret: totpSecret,
+        secret: user.totpSecret,
         encoding: "base32",
-        token,
+        token: normalizedToken,
         window: 2, // Allow 2 time steps (60 seconds) of tolerance
       });
     } catch (error) {
@@ -202,7 +197,7 @@ export class TwoFactorService {
   }
 
   /**
-   * Disables 2FA for a user (admin or self).
+   * Disables 2FA for a user (admin or self). Caller must already pass step-up checks.
    */
   async disableTwoFactor(userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
@@ -218,22 +213,31 @@ export class TwoFactorService {
       where: { id: userId },
       data: {
         isTwoFactorEnabled: false,
-        totpSecret: null, // Optionally clear the secret
-      } as any, // Use 'as any' to handle case where fields might not exist in Prisma Client yet
+        totpSecret: null,
+      },
     });
   }
 
+  /** Loads password hash for step-up verification. */
+  async getPasswordHash(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+    return user?.passwordHash ?? null;
+  }
+
   /**
-   * Checks if 2FA is enabled for a user.
+   * Checks if 2FA is enabled for a user (default false = optional / off).
    */
   async isTwoFactorEnabled(userId: string): Promise<boolean> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, isTwoFactorEnabled: true } as any,
+        select: { id: true, isTwoFactorEnabled: true },
       });
 
-      return (user as any)?.isTwoFactorEnabled === true;
+      return user?.isTwoFactorEnabled === true;
     } catch (error) {
       console.error("Error checking 2FA status:", error);
       return false;

@@ -39,7 +39,7 @@ export function TownAnalyticsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={`${townName} — ${t("admin.analyticsLabel") || "Analytics"}`}
         subtitle={

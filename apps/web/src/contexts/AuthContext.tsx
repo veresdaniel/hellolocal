@@ -29,12 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkSessionExpiring = () => {
       const currentPath = window.location.pathname;
-      const isPublicPage =
-        currentPath.startsWith("/admin/login") ||
-        currentPath.startsWith("/admin/register") ||
-        currentPath.startsWith("/admin/forgot-password") ||
-        currentPath.startsWith("/admin/reset-password") ||
-        !currentPath.startsWith("/admin");
+      // Admin lives under /admin and /:lang/admin — treat both as protected.
+      const isAdminArea = /(?:^|\/)admin(?:\/|$)/.test(currentPath);
+      const isAuthPage = /(?:^|\/)admin\/(login|register|forgot-password|reset-password)(?:\/|$)/.test(
+        currentPath
+      );
+      const isPublicPage = !isAdminArea || isAuthPage;
 
       if (isPublicPage || !user) {
         setShowSessionModal(false);
@@ -86,12 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastActivityTime = now;
 
         const currentPath = window.location.pathname;
-        const isPublicPage =
-          currentPath.startsWith("/admin/login") ||
-          currentPath.startsWith("/admin/register") ||
-          currentPath.startsWith("/admin/forgot-password") ||
-          currentPath.startsWith("/admin/reset-password") ||
-          !currentPath.startsWith("/admin");
+        const isAdminArea = /(?:^|\/)admin(?:\/|$)/.test(currentPath);
+        const isAuthPage =
+          /(?:^|\/)admin\/(login|register|forgot-password|reset-password)(?:\/|$)/.test(
+            currentPath
+          );
+        const isPublicPage = !isAdminArea || isAuthPage;
 
         if (isPublicPage || isRefreshing) {
           return;

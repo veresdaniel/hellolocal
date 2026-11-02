@@ -10,6 +10,8 @@ import {
   Query,
   ForbiddenException,
   NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
   Res,
 } from "@nestjs/common";
 import type { Response } from "express";
@@ -1418,7 +1420,9 @@ export class AdminController {
     }
     // Get old data for comparison
     const oldUser = await this.usersService.findOne(id);
-    const result = await this.usersService.updateUserWithSites(id, dto, user.role);
+    const result = await this.usersService.updateUserWithSites(id, dto, user.role, {
+      isSelf: user.id === id,
+    });
 
     const siteId = user.siteIds[0];
     if (siteId) {
@@ -1494,7 +1498,21 @@ export class AdminController {
 
   @Post("/users/:id/two-factor/disable")
   @Roles(UserRole.superadmin, UserRole.admin)
-  async disableTwoFactorForUser(@Param("id") id: string) {
+  async disableTwoFactorForUser(
+    @Param("id") id: string,
+    @Body() body: { password?: string },
+    @CurrentUser() actor: { id: string; role: UserRole }
+  ) {
+    // Step-up: require the acting admin's password before stripping another user's 2FA.
+    const password = typeof body?.password === "string" ? body.password : "";
+    if (!password || password.length < 6) {
+      throw new BadRequestException("errors.badRequest.twoFactorStepUpRequired");
+    }
+    const hash = await this.twoFactorService.getPasswordHash(actor.id);
+    const bcrypt = await import("bcryptjs");
+    if (!hash || !(await bcrypt.compare(password, hash))) {
+      throw new UnauthorizedException("errors.unauthorized.twoFactorStepUp");
+    }
     await this.twoFactorService.disableTwoFactor(id);
     return { message: "2FA has been disabled for this user." };
   }

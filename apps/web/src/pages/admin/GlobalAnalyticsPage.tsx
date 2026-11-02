@@ -8,7 +8,7 @@ export function GlobalAnalyticsPage() {
   usePageTitle("admin.dashboardCards.globalAnalytics");
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.dashboardCards.globalAnalytics") || "Globális analytics"}
         subtitle={

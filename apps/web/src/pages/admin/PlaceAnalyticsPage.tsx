@@ -42,7 +42,7 @@ export function PlaceAnalyticsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={`${placeName} ${t("admin.analyticsLabel") || "analitikája"}`}
         subtitle={

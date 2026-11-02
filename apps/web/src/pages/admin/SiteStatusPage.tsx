@@ -157,7 +157,7 @@ export function SiteStatusPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.siteStatus.title") || "Site Status"}
         subtitle={
@@ -171,7 +171,7 @@ export function SiteStatusPage() {
         style={{
           display: "flex",
           gap: "8px",
-          borderBottom: "2px solid rgba(102, 126, 234, 0.3)",
+          borderBottom: "2px solid rgba(15, 23, 42, 0.18)",
           marginBottom: "24px",
           padding: "0 24px",
         }}
@@ -184,7 +184,7 @@ export function SiteStatusPage() {
               padding: "12px 24px",
               background: "none",
               border: "none",
-              borderBottom: activeTab === tab.id ? "3px solid #667eea" : "3px solid transparent",
+              borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary, #2563eb)" : "3px solid transparent",
               color: activeTab === tab.id ? "#a8b3ff" : "rgba(255, 255, 255, 0.6)",
               fontSize: "15px",
               fontWeight: activeTab === tab.id ? 600 : 400,
@@ -232,7 +232,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
           icon="🌐"
           value={data.overview.sites.total}
           subtitle={`${data.overview.sites.active} active, ${data.overview.sites.inactive} inactive`}
-          color="#667eea"
+          color="var(--admin-primary, #2563eb)"
         />
         <StatCard
           title={t("admin.siteStatus.stats.places") || "Places"}
@@ -306,7 +306,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
           borderRadius: "12px",
           padding: "24px",
           marginBottom: "32px",
-          border: "1px solid rgba(102, 126, 234, 0.3)",
+          border: "1px solid rgba(15, 23, 42, 0.18)",
         }}
       >
         <h3
@@ -315,7 +315,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
             fontSize: "18px",
             fontWeight: 600,
             color: "#a8b3ff",
-            fontFamily: "'Poppins', system-ui, sans-serif",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
           }}
         >
           {t("admin.siteStatus.recentActivity.title") || "Recent Activity (Last 7 Days)"}
@@ -353,7 +353,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
             background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
             borderRadius: "12px",
             padding: "24px",
-            border: "1px solid rgba(102, 126, 234, 0.3)",
+            border: "1px solid rgba(15, 23, 42, 0.18)",
           }}
         >
           <h3
@@ -362,7 +362,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
               fontSize: "18px",
               fontWeight: 600,
               color: "#a8b3ff",
-              fontFamily: "'Poppins', system-ui, sans-serif",
+              fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {t("admin.siteStatus.sitesByPlan.title") || "Sites by Plan"}
@@ -379,9 +379,9 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
                 key={item.plan}
                 style={{
                   padding: "12px",
-                  background: "rgba(102, 126, 234, 0.1)",
+                  background: "rgba(37, 99, 235, 0.1)",
                   borderRadius: "8px",
-                  border: "1px solid rgba(102, 126, 234, 0.2)",
+                  border: "1px solid rgba(37, 99, 235, 0.18)",
                 }}
               >
                 <div
@@ -495,7 +495,7 @@ function CacheManagementTab({
           borderRadius: "12px",
           padding: "24px",
           marginBottom: "24px",
-          border: "1px solid rgba(102, 126, 234, 0.3)",
+          border: "1px solid rgba(15, 23, 42, 0.18)",
         }}
       >
         <h3
@@ -504,7 +504,7 @@ function CacheManagementTab({
             fontSize: "18px",
             fontWeight: 600,
             color: "#a8b3ff",
-            fontFamily: "'Poppins', system-ui, sans-serif",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
           }}
         >
           {t("admin.siteStatus.cache.title") || "Cache Management"}
@@ -525,7 +525,7 @@ function CacheManagementTab({
         style={{
           background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
           borderRadius: "12px",
-          border: "1px solid rgba(102, 126, 234, 0.3)",
+          border: "1px solid rgba(15, 23, 42, 0.18)",
           overflow: "hidden",
         }}
       >
@@ -538,11 +538,11 @@ function CacheManagementTab({
               justifyContent: "space-between",
               padding: "16px 24px",
               borderBottom:
-                index < cacheTypes.length - 1 ? "1px solid rgba(102, 126, 234, 0.2)" : "none",
+                index < cacheTypes.length - 1 ? "1px solid rgba(37, 99, 235, 0.18)" : "none",
               transition: "background 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)";
+              e.currentTarget.style.background = "rgba(37, 99, 235, 0.1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
@@ -554,7 +554,7 @@ function CacheManagementTab({
                   fontSize: "15px",
                   fontWeight: 600,
                   color: "#a8b3ff",
-                  fontFamily: "'Poppins', system-ui, sans-serif",
+                  fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
                   marginBottom: "4px",
                 }}
               >
@@ -578,7 +578,7 @@ function CacheManagementTab({
                 background:
                   cacheType.id === "all"
                     ? "linear-gradient(135deg, #f56565 0%, #e53e3e 100%)"
-                    : "linear-gradient(135deg, #667eea 0%, #5568d3 100%)",
+                    : "linear-gradient(135deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
                 border: "none",
                 borderRadius: "6px",
                 color: "white",
@@ -594,7 +594,7 @@ function CacheManagementTab({
               onMouseEnter={(e) => {
                 if (invalidatingCache !== cacheType.id) {
                   e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -633,7 +633,7 @@ function StatCard({
         background: "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)",
         borderRadius: "12px",
         padding: "20px",
-        border: "1px solid rgba(102, 126, 234, 0.3)",
+        border: "1px solid rgba(15, 23, 42, 0.18)",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
@@ -656,7 +656,7 @@ function StatCard({
               fontSize: "28px",
               fontWeight: 700,
               color: color,
-              fontFamily: "'Poppins', system-ui, sans-serif",
+              fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {value.toLocaleString()}
@@ -684,9 +684,9 @@ function ActivityItem({ label, value }: { label: string; value: number }) {
     <div
       style={{
         padding: "12px",
-        background: "rgba(102, 126, 234, 0.1)",
+        background: "rgba(37, 99, 235, 0.1)",
         borderRadius: "8px",
-        border: "1px solid rgba(102, 126, 234, 0.2)",
+        border: "1px solid rgba(37, 99, 235, 0.18)",
       }}
     >
       <div

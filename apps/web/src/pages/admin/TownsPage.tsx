@@ -401,7 +401,7 @@ export function TownsPage() {
     : selectedSiteId || t("admin.hierarchy.unassignedTowns");
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.towns")}
         subtitle={
@@ -455,18 +455,18 @@ export function TownsPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-            border: "1px solid rgba(102, 126, 234, 0.1)",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+            border: "1px solid rgba(37, 99, 235, 0.1)",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
@@ -636,9 +636,9 @@ export function TownsPage() {
             style={{
               marginBottom: 16,
               padding: "16px 20px",
-              background: "#f8f8ff",
+              background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid #e0e7ff",
+              border: "2px solid var(--admin-primary-border, #bfdbfe)",
             }}
           >
             <label
@@ -654,7 +654,7 @@ export function TownsPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>

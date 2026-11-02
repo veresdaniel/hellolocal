@@ -6,7 +6,13 @@ import {
   normalizeGaMeasurementId,
   PLATFORM_GA_MEASUREMENT_ID_KEY,
 } from "../common/ga-measurement-id";
+import { encryptSecret } from "../common/secret-box";
 import { CONTENT_DRAFT_API_KEY } from "./content-draft.constants";
+import { UC_ACCESS_TOKEN_KEY } from "../under-construction/under-construction.constants";
+
+const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
+/** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
+const ENCRYPTED_AT_REST_KEYS = new Set([CONTENT_DRAFT_API_KEY]);
 
 export interface AppSettingDto {
   key: string;
@@ -23,11 +29,11 @@ export class AdminAppSettingsService {
     const rows = await this.prisma.appSetting.findMany({
       orderBy: { key: "asc" },
     });
-    return rows.filter((row) => row.key !== CONTENT_DRAFT_API_KEY);
+    return rows.filter((row) => !SECRET_SETTING_KEYS.has(row.key));
   }
 
   async findOne(key: string) {
-    if (key === CONTENT_DRAFT_API_KEY) return null;
+    if (SECRET_SETTING_KEYS.has(key)) return null;
     return this.prisma.appSetting.findUnique({
       where: { key },
     });
@@ -45,8 +51,15 @@ export class AdminAppSettingsService {
         );
       }
     }
-    const secret = key === CONTENT_DRAFT_API_KEY;
-    const description = secret ? "Server-only content draft credential" : (dto.description ?? null);
+    const secret = SECRET_SETTING_KEYS.has(key);
+    if (ENCRYPTED_AT_REST_KEYS.has(key) && value) {
+      value = encryptSecret(value);
+    }
+    const description = secret
+      ? key === UC_ACCESS_TOKEN_KEY
+        ? "Server-only under-construction access token"
+        : "Server-only content draft credential (encrypted at rest)"
+      : (dto.description ?? null);
     try {
       const result = await this.prisma.appSetting.upsert({
         where: { key },

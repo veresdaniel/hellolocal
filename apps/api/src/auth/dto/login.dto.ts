@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, Length } from "class-validator";
+import { IsEmail, IsString, MinLength, IsOptional, Length, Matches } from "class-validator";
 
 export class LoginDto {
   @IsEmail({}, { message: "Email must be a valid email address" })
@@ -11,5 +11,6 @@ export class LoginDto {
   @IsOptional()
   @IsString()
   @Length(6, 6, { message: "2FA token must be exactly 6 digits" })
+  @Matches(/^\d{6}$/, { message: "2FA token must be exactly 6 digits" })
   twoFactorToken?: string; // Optional: 6-digit TOTP code if 2FA is enabled
 }

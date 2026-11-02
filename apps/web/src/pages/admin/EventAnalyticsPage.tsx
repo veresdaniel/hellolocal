@@ -43,7 +43,7 @@ export function EventAnalyticsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={`${eventName} ${t("admin.analyticsLabel") || "analitikája"}`}
         subtitle={

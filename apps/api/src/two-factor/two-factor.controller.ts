@@ -9,105 +9,101 @@ import {
   Query,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
-import { IsOptional, IsString, Length } from "class-validator";
+import { Throttle } from "@nestjs/throttler";
+import * as bcrypt from "bcryptjs";
 import { TwoFactorService } from "./two-factor.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRole } from "@prisma/client";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
-
-export class SetupTwoFactorDto {
-  @IsOptional()
-  @IsString()
-  userId?: string; // Optional: for admin to setup 2FA for other users
-}
-
-export class VerifyTwoFactorDto {
-  @IsString()
-  @Length(6, 6)
-  token!: string; // 6-digit TOTP code
-
-  @IsOptional()
-  @IsString()
-  userId?: string; // Optional: for admin to verify 2FA for other users
-}
-
-export class DisableTwoFactorDto {
-  @IsOptional()
-  @IsString()
-  userId?: string; // Optional: if not provided, uses current user's ID
-}
+import {
+  SetupTwoFactorDto,
+  VerifyTwoFactorDto,
+  DisableTwoFactorDto,
+} from "./dto/two-factor.dto";
 
 /**
- * Controller for Two-Factor Authentication (2FA) operations.
- * Users can set up and manage their own 2FA, admins can manage 2FA for any user.
+ * Optional per-user TOTP 2FA.
+ * Users enable/disable for themselves; login only challenges when that user has 2FA on.
+ * Superadmins may manage 2FA for other users with password confirmation (step-up).
  */
 @Controller("/api/two-factor")
 @UseGuards(JwtAuthGuard)
 export class TwoFactorController {
   constructor(private readonly twoFactorService: TwoFactorService) {}
 
+  private currentUserId(user: { id?: string; sub?: string }): string {
+    const id = user?.id || user?.sub;
+    if (!id) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
+    }
+    return id;
+  }
+
+  private async assertPassword(userId: string, password: string | undefined): Promise<void> {
+    if (!password) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_STEP_UP_REQUIRED);
+    }
+    const hash = await this.twoFactorService.getPasswordHash(userId);
+    if (!hash || !(await bcrypt.compare(password, hash))) {
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_2FA_STEP_UP);
+    }
+  }
+
   /**
-   * Sets up 2FA for a user (generates secret and QR code).
-   * Users can set up their own 2FA, admins can set up 2FA for any user.
+   * Target resolution for setup/verify:
+   * - Default: self
+   * - Another userId: superadmin only + confirmPassword step-up
+   */
+  private async resolveManagedUserId(
+    currentUser: { id?: string; sub?: string; role?: UserRole },
+    requestedUserId: string | undefined,
+    confirmPassword: string | undefined
+  ): Promise<string> {
+    const currentUserId = this.currentUserId(currentUser);
+    if (!requestedUserId || requestedUserId === currentUserId) {
+      return currentUserId;
+    }
+    if (currentUser.role !== UserRole.superadmin) {
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_2FA_MANAGE_OTHERS);
+    }
+    await this.assertPassword(currentUserId, confirmPassword);
+    return requestedUserId;
+  }
+
+  /**
+   * Generates a TOTP secret + QR code. Does not enable 2FA until /verify succeeds.
    */
   @Post("/setup")
   @HttpCode(HttpStatus.OK)
   async setupTwoFactor(@CurrentUser() user: any, @Body() dto: SetupTwoFactorDto) {
-    // If userId is provided and user is admin/superadmin, allow setting up for other users
-    // The user object from JWT strategy contains 'id' field, not 'sub'
-    const targetUserId =
-      dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
-        ? dto.userId
-        : user?.id || user?.sub;
-
-    if (!targetUserId) {
-      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
-    }
-
+    const targetUserId = await this.resolveManagedUserId(user, dto.userId, dto.confirmPassword);
     return this.twoFactorService.setupTwoFactor(targetUserId);
   }
 
   /**
-   * Verifies a TOTP code and enables 2FA.
-   * Users can verify their own 2FA, admins can verify 2FA for any user.
+   * Verifies a TOTP code and enables 2FA for that user only.
    */
   @Post("/verify")
   @HttpCode(HttpStatus.OK)
+  @Throttle({ strict: { limit: 10, ttl: 60000 } })
   async verifyAndEnableTwoFactor(@CurrentUser() user: any, @Body() dto: VerifyTwoFactorDto) {
-    // If userId is provided and user is admin/superadmin, allow verifying for other users
-    // The user object from JWT strategy contains 'id' field, not 'sub'
-    const targetUserId =
-      dto.userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
-        ? dto.userId
-        : user?.id || user?.sub;
-
-    if (!targetUserId) {
-      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
-    }
-
+    const targetUserId = await this.resolveManagedUserId(user, dto.userId, dto.confirmPassword);
     return this.twoFactorService.verifyAndEnableTwoFactor(targetUserId, dto.token);
   }
 
   /**
-   * Disables 2FA for a user.
-   * Users can disable their own 2FA, admins can disable 2FA for any user.
+   * Disables 2FA. Requires step-up: password and/or current TOTP.
    */
   @Post("/disable")
   @HttpCode(HttpStatus.OK)
+  @Throttle({ strict: { limit: 10, ttl: 60000 } })
   async disableTwoFactor(@CurrentUser() user: any, @Body() dto: DisableTwoFactorDto) {
-    // If userId is not provided, use current user's ID
-    const targetUserId = dto.userId || user?.id || user?.sub;
+    const currentUserId = this.currentUserId(user);
+    const targetUserId = dto.userId || currentUserId;
 
-    if (!targetUserId) {
-      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
-    }
-
-    // Users can only disable their own 2FA, admins can disable for any user
-    const currentUserId = user?.id || user?.sub;
     if (
       currentUserId !== targetUserId &&
       user.role !== UserRole.admin &&
@@ -116,34 +112,49 @@ export class TwoFactorController {
       throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_DISABLE_OWN_2FA);
     }
 
+    const isSelf = currentUserId === targetUserId;
+    const hasPassword = Boolean(dto.password?.trim());
+    const hasToken = Boolean(dto.token?.trim());
+
+    if (!hasPassword && !hasToken) {
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_STEP_UP_REQUIRED);
+    }
+
+    if (isSelf) {
+      let ok = false;
+      if (hasToken) {
+        ok = await this.twoFactorService.verifyTwoFactorCode(currentUserId, dto.token!);
+      }
+      if (!ok && hasPassword) {
+        const hash = await this.twoFactorService.getPasswordHash(currentUserId);
+        ok = Boolean(hash && (await bcrypt.compare(dto.password!, hash)));
+      }
+      if (!ok) {
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_2FA_STEP_UP);
+      }
+    } else {
+      // Admin/superadmin disabling another user: require the actor's password.
+      await this.assertPassword(currentUserId, dto.password);
+    }
+
     await this.twoFactorService.disableTwoFactor(targetUserId);
     return { message: "2FA has been disabled successfully." };
   }
 
   /**
-   * Checks if 2FA is enabled for a user.
-   * If userId query param is provided and user is admin/superadmin, checks for that user.
-   * Otherwise, checks for the current user.
+   * Returns whether 2FA is enabled for the current user (or another user if admin).
    */
   @Get("/status")
   async getTwoFactorStatus(@CurrentUser() user: any, @Query("userId") userId?: string) {
     try {
-      // If userId is provided and user is admin/superadmin, allow checking for other users
-      // The user object from JWT strategy contains 'id' field, not 'sub'
+      const currentUserId = this.currentUserId(user);
+      const isAdmin =
+        user.role === UserRole.admin || user.role === UserRole.superadmin;
       const targetUserId =
-        userId && (user.role === UserRole.admin || user.role === UserRole.superadmin)
-          ? userId
-          : user?.id || user?.sub;
-
-      if (!targetUserId) {
-        return { isEnabled: false };
-      }
-
+        userId && isAdmin ? userId : currentUserId;
       const isEnabled = await this.twoFactorService.isTwoFactorEnabled(targetUserId);
       return { isEnabled };
     } catch (error) {
-      // If 2FA service is not available or there's an error, return false
-      // This allows the frontend to still work even if 2FA is not fully set up
       console.warn("Error checking 2FA status:", error);
       return { isEnabled: false };
     }

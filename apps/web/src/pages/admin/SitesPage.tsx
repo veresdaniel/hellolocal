@@ -283,7 +283,7 @@ export function SitesPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.sites")}
         newButtonLabel={t("admin.forms.newSite")}
@@ -330,18 +330,18 @@ export function SitesPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-            border: "1px solid rgba(102, 126, 234, 0.1)",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+            border: "1px solid rgba(37, 99, 235, 0.1)",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editSite") : t("admin.forms.newSite")}
@@ -361,7 +361,7 @@ export function SitesPage() {
                         color:
                           readLang(formErrors, "name", selectedLang)
                             ? "#dc2626"
-                            : "#667eea",
+                            : "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -400,7 +400,7 @@ export function SitesPage() {
                         border:
                           readLang(formErrors, "name", selectedLang)
                             ? "2px solid #fca5a5"
-                            : "2px solid #e0e7ff",
+                            : "2px solid var(--admin-primary-border, #bfdbfe)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
@@ -414,14 +414,14 @@ export function SitesPage() {
                         const hasError =
                           readLang(formErrors, "name", selectedLang);
                         if (!hasError) {
-                          e.target.style.borderColor = "#667eea";
-                          e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                          e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                         }
                       }}
                       onBlur={(e) => {
                         const hasError =
                           readLang(formErrors, "name", selectedLang);
-                        e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
+                        e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -441,7 +441,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -481,18 +481,18 @@ export function SitesPage() {
                         fontSize: "clamp(15px, 3.5vw, 16px)",
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        border: "2px solid #e0e7ff",
+                        border: "2px solid var(--admin-primary-border, #bfdbfe)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "#667eea";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                        e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = "#e0e7ff";
+                        e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -505,7 +505,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -540,7 +540,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -564,18 +564,18 @@ export function SitesPage() {
                         fontSize: "clamp(15px, 3.5vw, 16px)",
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        border: "2px solid #e0e7ff",
+                        border: "2px solid var(--admin-primary-border, #bfdbfe)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "#667eea";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                        e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = "#e0e7ff";
+                        e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -608,7 +608,7 @@ export function SitesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: formErrors.brandId ? "#dc2626" : "#667eea",
+                    color: formErrors.brandId ? "#dc2626" : "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -626,7 +626,7 @@ export function SitesPage() {
                     fontSize: "clamp(15px, 3.5vw, 16px)",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "#e0e7ff"}`,
+                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)"}`,
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -635,12 +635,12 @@ export function SitesPage() {
                   }}
                   onFocus={(e) => {
                     if (!formErrors.brandId) {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                      e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                     }
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "#e0e7ff";
+                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -689,9 +689,9 @@ export function SitesPage() {
                 flexDirection: "column",
                 gap: 12,
                 padding: "16px 20px",
-                background: "#f8f8ff",
+                background: "var(--admin-surface-subtle, #f8fafc)",
                 borderRadius: 12,
-                border: "2px solid #e0e7ff",
+                border: "2px solid var(--admin-primary-border, #bfdbfe)",
               }}
             >
               <label
@@ -709,7 +709,7 @@ export function SitesPage() {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                 />
                 <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>

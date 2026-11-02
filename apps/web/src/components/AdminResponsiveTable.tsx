@@ -155,18 +155,18 @@ export function AdminResponsiveTable<T>({
               fontSize: "clamp(15px, 3.5vw, 16px)",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              border: "2px solid #e0e7ff",
+              border: "2px solid var(--admin-primary-border, #bfdbfe)",
               borderRadius: 8,
               outline: "none",
               transition: "all 0.3s ease",
               boxSizing: "border-box",
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = "#667eea";
-              e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+              e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+              e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = "#e0e7ff";
+              e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
               e.target.style.boxShadow = "none";
             }}
           />
@@ -346,7 +346,7 @@ export function AdminResponsiveTable<T>({
                       onClick={() => onEdit(item)}
                       style={{
                         padding: "6px 10px",
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        background: "var(--admin-primary, #2563eb)",
                         color: "var(--hl-on-dark-strong, #ffffff)",
                         border: "none",
                         borderRadius: 6,
@@ -355,18 +355,18 @@ export function AdminResponsiveTable<T>({
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         transition: "all 0.2s ease",
-                        boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.24)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
                       }}
                       title={t("common.edit")}
                     >
@@ -432,7 +432,7 @@ export function AdminResponsiveTable<T>({
                       onClick={() => onDelete(item)}
                       style={{
                         padding: "6px 10px",
-                        background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                        background: "var(--admin-danger, #b91c1c)",
                         color: "var(--hl-on-dark-strong, #ffffff)",
                         border: "none",
                         borderRadius: 6,
@@ -553,7 +553,7 @@ export function AdminResponsiveTable<T>({
                   }}
                   style={{
                     padding: "8px 16px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "var(--admin-primary, #2563eb)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
@@ -568,7 +568,7 @@ export function AdminResponsiveTable<T>({
                   style={{
                     fontSize: 15,
                     fontWeight: 600,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
@@ -588,7 +588,7 @@ export function AdminResponsiveTable<T>({
                   }}
                   style={{
                     padding: "8px 16px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "var(--admin-primary, #2563eb)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
@@ -903,7 +903,7 @@ export function AdminResponsiveTable<T>({
                               }}
                               style={{
                                 width: 80,
-                                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                background: "var(--admin-primary, #2563eb)",
                                 color: "var(--hl-on-dark-strong, #ffffff)",
                                 border: "none",
                                 cursor: "pointer",
@@ -987,7 +987,7 @@ export function AdminResponsiveTable<T>({
                               }}
                               style={{
                                 width: 80,
-                                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                                background: "var(--admin-danger, #b91c1c)",
                                 color: "var(--hl-on-dark-strong, #ffffff)",
                                 border: "none",
                                 cursor: "pointer",

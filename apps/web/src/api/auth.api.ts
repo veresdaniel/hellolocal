@@ -54,6 +54,8 @@ export interface User {
   role: UserRole;
   siteIds: string[];
   activeSiteId?: string | null; // null = visitor, non-null = active user
+  /** Opt-in floating AI Assistant dock; default false (superadmins seeded true). */
+  aiAssistantEnabled?: boolean;
   // Backward compatibility: backend may still return tenantIds
   tenantIds?: string[];
 }

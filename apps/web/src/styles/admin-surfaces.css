@@ -1,8 +1,90 @@
 /**
- * Admin contrast helpers — same --hl-* tokens as public.
- * Purple/navy page chrome → on-dark. White/cream cards/tables/nav → ink.
- * Do not paint cards blue; keep brand gradient on the page backdrop only.
+ * Admin design tokens — classic purple/violet chrome + readable contrast.
+ * Page backdrop: #667eea → #764ba2 gradient (not slate gray / brand cream).
+ * White cards/tables/nav keep dark ink; titles on purple stay white.
+ * Primary buttons: colored fill + white text.
  */
+
+.admin-layout,
+.admin-login {
+  --admin-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --admin-bg-solid: #667eea;
+  --admin-bg-accent: #f1f5f9;
+  --admin-surface: #ffffff;
+  --admin-surface-subtle: #f8fafc;
+  --admin-ink: #0f172a;
+  --admin-muted: #475569;
+  --admin-muted-strong: #334155;
+  --admin-text: var(--admin-ink);
+  --admin-text-muted: var(--admin-muted);
+  --admin-on-chrome: #ffffff;
+  --admin-on-chrome-soft: #eef2ff;
+  --admin-on-chrome-muted: #dbe4ff;
+  --admin-border: #cbd5e1;
+  --admin-border-subtle: #e2e8f0;
+  /* Deep indigo — readable on white cards; toolbar overrides for purple chrome */
+  --admin-primary: #4338ca;
+  --admin-primary-hover: #3730a3;
+  --admin-primary-soft: #eef2ff;
+  --admin-primary-border: #c7d2fe;
+  --admin-on-primary: #ffffff;
+  /* Violet accent/links — fits purple shell, high contrast on white (not washed blue) */
+  --admin-accent: #6d28d9;
+  --admin-link: #6d28d9;
+  --admin-link-hover: #5b21b6;
+  --admin-danger: #dc2626;
+  --admin-danger-hover: #b91c1c;
+  --admin-success: #059669;
+  --admin-success-hover: #047857;
+  --admin-warning: #d97706;
+  --admin-warning-bg: #fffbeb;
+  --admin-warning-text: #92400e;
+  --admin-warning-border: #fcd34d;
+  --admin-secondary: #64748b;
+  --admin-secondary-hover: #475569;
+  --admin-focus-ring: rgba(102, 126, 234, 0.28);
+  --admin-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --admin-radius: 12px;
+  --admin-font: Inter, "Source Sans 3", system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --admin-font-display: Inter, "Source Sans 3", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Shared content column — lists, forms, tables all inherit this width */
+  --admin-content-max-width: 1400px;
+  --admin-content-pad-x: clamp(16px, 4vw, 24px);
+
+  /* Seal public brand tokens so cream/paper cannot leak into admin */
+  --hl-bg: var(--admin-bg-solid);
+  --hl-bg-mid: #764ba2;
+  --hl-bg-deep: #5b3d8a;
+  --hl-card: var(--admin-surface);
+  --hl-surface: var(--admin-surface);
+  --hl-surface-solid: var(--admin-surface);
+  --hl-ink: var(--admin-ink);
+  --hl-muted: var(--admin-muted);
+  --hl-ink-on-card: var(--admin-ink);
+  --hl-muted-on-card: var(--admin-muted);
+  --hl-on-dark: var(--admin-on-chrome-soft);
+  --hl-on-dark-strong: var(--admin-on-chrome);
+  --hl-ink-strong: var(--admin-ink);
+  --hl-muted-on-dark: var(--admin-on-chrome-muted);
+  --hl-accent: var(--admin-accent);
+  --hl-on-accent: var(--admin-on-primary);
+  --hl-header: var(--admin-ink);
+  --hl-navy: var(--admin-ink);
+  --hl-blue: var(--admin-link);
+  --hl-mist: var(--admin-secondary);
+  --hl-line: rgba(15, 23, 42, 0.12);
+  --hl-line-on-card: rgba(15, 23, 42, 0.1);
+  --hl-bg-image: none;
+
+  font-family: var(--admin-font);
+  /* Default ink: most content lives in white cards. Purple-chrome titles opt in via classes. */
+  color: var(--admin-ink);
+  background: var(--admin-bg);
+  -webkit-font-smoothing: antialiased;
+}
 
 /* Never inherit public brand display/serif faces into admin chrome. */
 .admin-layout,
@@ -22,36 +104,143 @@
 .admin-layout h2,
 .admin-layout h3,
 .admin-layout h4 {
-  font-family: Inter, "Source Sans 3", system-ui, -apple-system, "Segoe UI",
-    sans-serif;
+  font-family: var(--admin-font);
 }
 
 .admin-layout {
-  color: var(--hl-on-dark, #f2f4fb);
+  color: var(--admin-ink);
+  background: var(--admin-bg);
 }
 
+/*
+ * Layout-level content column. AdminLayout <main> uses this so every admin
+ * screen (list + form) shares one max-width + horizontal padding/centering.
+ * Page wrappers should use .admin-page-content (no nested max-width).
+ */
+.admin-main {
+  width: 100%;
+  max-width: var(--admin-content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--admin-content-pad-x);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/*
+ * Shared page toolbar: [Vissza] + title/actions (AdminPageHeader portals into __main).
+ * Keeps Back and Create/Cancel on one horizontal row across admin screens.
+ */
+.admin-page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-page-toolbar__main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Primary actions on purple chrome need stronger contrast than card primaries */
+.admin-page-toolbar .admin-btn--primary {
+  background: #ffffff;
+  color: #4c1d95;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+}
+
+.admin-page-toolbar .admin-btn--primary:hover:not(:disabled) {
+  background: #f5f3ff;
+  color: #4c1d95;
+}
+
+/* Admin text links — violet on white surfaces (not washed pale blue) */
+.admin-main a:not(.admin-btn):not([class*="admin-btn"]),
+.admin-surface a:not(.admin-btn):not([class*="admin-btn"]),
+.admin-layout .admin-link,
+.admin-login a:not(.admin-btn) {
+  color: var(--admin-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.admin-main a:not(.admin-btn):not([class*="admin-btn"]):hover,
+.admin-surface a:not(.admin-btn):not([class*="admin-btn"]):hover,
+.admin-layout .admin-link:hover,
+.admin-login a:not(.admin-btn):hover {
+  color: var(--admin-link-hover);
+}
+
+.admin-layout .tiptap-link,
+.admin-layout a.tiptap-link {
+  color: var(--admin-link) !important;
+}
+
+.admin-layout .tiptap-link:hover,
+.admin-layout a.tiptap-link:hover {
+  color: var(--admin-link-hover) !important;
+}
+
+.admin-page-content {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * Headings default to dark ink so card/section titles stay readable on white.
+ * Titles sitting directly on the purple shell must use .admin-page-title /
+ * .admin-page-section-title (or an explicit on-chrome inline color).
+ */
+.admin-layout h1,
+.admin-layout h2,
+.admin-layout h3,
+.admin-layout h4 {
+  color: var(--admin-ink);
+}
+
+/* Titles / copy sitting on purple chrome */
 .admin-page-title {
-  color: var(--hl-on-dark-strong, #ffffff);
+  color: var(--admin-on-chrome) !important;
+  text-shadow: 0 1px 6px rgba(15, 23, 42, 0.25);
 }
 
 .admin-page-copy {
-  color: var(--hl-on-dark, #f2f4fb);
+  color: var(--admin-on-chrome-soft) !important;
 }
 
 .admin-page-muted {
-  color: var(--hl-muted-on-dark, #a8b0c8);
+  color: var(--admin-on-chrome-muted) !important;
+  text-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
+}
+
+.admin-page-section-title {
+  color: var(--admin-on-chrome) !important;
 }
 
 .admin-on-dark {
-  color: var(--hl-on-dark, #f2f4fb);
+  color: var(--admin-on-chrome-soft);
 }
 
 .admin-on-dark-strong {
-  color: var(--hl-on-dark-strong, #ffffff);
+  color: var(--admin-on-chrome);
 }
 
 .admin-on-dark-muted {
-  color: var(--hl-muted-on-dark, #a8b0c8);
+  color: var(--admin-on-chrome-muted);
 }
 
 /* Light surfaces: dark ink even when nested under purple chrome */
@@ -72,21 +261,14 @@
 .admin-layout [style*="background:#fff"],
 .admin-layout [style*="background: #ffffff"],
 .admin-layout [style*="background:#ffffff"],
-.admin-layout [style*="background: #f9fafb"],
-.admin-layout [style*="background:#f9fafb"],
-.admin-layout [style*="background: #fafbff"],
-.admin-layout [style*="background:#fafbff"],
-.admin-layout [style*="background: #f8f8ff"],
-.admin-layout [style*="background:#f8f8ff"],
-.admin-layout [style*="background: #f5f7ff"],
-.admin-layout [style*="background:#f5f7ff"],
-.admin-layout [style*="background: #f5f3ff"],
-.admin-layout [style*="background:#f5f3ff"],
-.admin-layout [style*="background: #fffdf9"],
-.admin-layout [style*="background:#fffdf9"],
-.admin-layout [style*="background: #fff3cd"],
-.admin-layout [style*="background:#fff3cd"] {
-  color: var(--hl-ink, #1b1730);
+.admin-layout [style*="background: var(--admin-surface"],
+.admin-layout [style*="background-color: white"],
+.admin-layout [style*="background-color:white"],
+.admin-layout [style*="background-color: #fff"],
+.admin-layout [style*="background-color:#fff"],
+.admin-layout [style*="background-color: #ffffff"],
+.admin-layout [style*="background-color:#ffffff"] {
+  color: var(--admin-ink);
 }
 
 .admin-surface h1,
@@ -97,8 +279,15 @@
 .admin-surface b,
 .admin-flist__card-title,
 .admin-flist__table th,
-.admin-flist__table td {
-  color: var(--hl-ink, #1b1730);
+.admin-flist__table td,
+.admin-layout [style*="background: white"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background:white"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background: #fff"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background:#fff"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background: #ffffff"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background:#ffffff"] :is(h1, h2, h3, h4),
+.admin-layout [style*="background: var(--admin-surface"] :is(h1, h2, h3, h4) {
+  color: var(--admin-ink);
 }
 
 .admin-surface p,
@@ -108,17 +297,17 @@
 .admin-flist__count,
 .admin-flist__empty,
 .admin-page-card-muted {
-  color: var(--hl-muted, #665d78);
+  color: var(--admin-muted);
 }
 
 /* Form chrome on light cards */
 .admin-layout label {
-  color: var(--hl-ink, #1b1730);
+  color: var(--admin-ink);
 }
 
 .admin-layout input::placeholder,
 .admin-layout textarea::placeholder {
-  color: var(--hl-muted, #665d78) !important;
+  color: var(--admin-muted) !important;
   opacity: 1;
 }
 
@@ -132,7 +321,22 @@
 .admin-layout input[type="search"],
 .admin-layout textarea,
 .admin-layout select {
-  color: var(--hl-ink, #1b1730) !important;
+  color: var(--admin-ink) !important;
+}
+
+.admin-layout input[type="text"]:focus,
+.admin-layout input[type="url"]:focus,
+.admin-layout input[type="email"]:focus,
+.admin-layout input[type="number"]:focus,
+.admin-layout input[type="date"]:focus,
+.admin-layout input[type="datetime-local"]:focus,
+.admin-layout input[type="password"]:focus,
+.admin-layout input[type="search"]:focus,
+.admin-layout textarea:focus,
+.admin-layout select:focus {
+  border-color: var(--admin-accent) !important;
+  box-shadow: 0 0 0 3px var(--admin-focus-ring);
+  outline: none;
 }
 
 /* Icon + label share the button’s text color */
@@ -143,9 +347,121 @@
   color: currentColor;
 }
 
-/* Dark dashboard tiles keep light text even if a child inherits wrongly */
+/* Shared admin button classes */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--admin-font);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.admin-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.admin-btn--primary {
+  background: var(--admin-primary);
+  color: var(--admin-on-primary);
+}
+
+.admin-btn--primary:hover:not(:disabled) {
+  background: var(--admin-primary-hover);
+  color: var(--admin-on-primary);
+}
+
+/* White chip — readable on purple chrome and on cards */
+.admin-btn--secondary {
+  background: #ffffff;
+  color: var(--admin-ink);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.admin-btn--secondary:hover:not(:disabled) {
+  background: var(--admin-bg-accent);
+  color: var(--admin-ink);
+}
+
+/* Ghost sits on purple page chrome → light border + light text */
+.admin-btn--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--admin-on-chrome);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.admin-btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--admin-on-chrome);
+}
+
+.admin-btn--danger {
+  background: var(--admin-danger);
+  color: var(--admin-on-primary);
+}
+
+.admin-btn--danger:hover:not(:disabled) {
+  background: var(--admin-danger-hover);
+  color: var(--admin-on-primary);
+}
+
+.admin-btn--success {
+  background: var(--admin-success);
+  color: var(--admin-on-primary);
+}
+
+.admin-btn--success:hover:not(:disabled) {
+  background: var(--admin-success-hover);
+  color: var(--admin-on-primary);
+}
+
+/* Status / info chips on light chrome */
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.admin-chip--active {
+  background: var(--admin-success);
+}
+
+.admin-chip--inactive {
+  background: var(--admin-secondary);
+}
+
+.admin-chip--info {
+  background: var(--admin-accent);
+}
+
+.admin-chip--neutral {
+  background: var(--admin-muted-strong);
+}
+
+/* Dashboard tiles — white cards on purple shell */
 .admin-dash-card {
-  color: var(--hl-on-dark, #f2f4fb);
+  color: var(--admin-ink) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18) !important;
+}
+
+.admin-dash-card:hover,
+.admin-dash-card:focus-visible {
+  border-color: #ffffff !important;
 }
 
 .admin-dash-card:focus-visible {
@@ -154,14 +470,28 @@
 }
 
 .admin-dash-card__title {
-  color: var(--hl-on-dark-strong, #ffffff);
+  color: var(--admin-ink) !important;
 }
 
 .admin-dash-card__desc {
-  /* Slightly brighter than page muted — cards sit on deep purple */
-  color: #c5cce0;
+  color: var(--admin-muted) !important;
 }
 
-.admin-page-section-title {
-  color: var(--hl-on-dark-strong, #ffffff);
+.admin-hierarchy__btn--primary {
+  background: var(--admin-primary) !important;
+  border: none !important;
+  color: var(--admin-on-primary) !important;
+}
+
+.admin-login {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg);
+  padding: 16px;
+  margin: 0;
+  box-sizing: border-box;
+  color: var(--admin-on-chrome-soft);
 }

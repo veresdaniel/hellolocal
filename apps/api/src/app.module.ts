@@ -23,6 +23,7 @@ import { TwoFactorModule } from "./two-factor/two-factor.module";
 import { SeoModule } from "./seo/seo.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { PlatformSettingsModule } from "./platform-settings/platform-settings.module";
+import { UnderConstructionModule } from "./under-construction/under-construction.module";
 import { UiCopyModule } from "./ui-copy/ui-copy.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { BillingModule } from "./billing/billing.module";
@@ -76,6 +77,7 @@ const envFilePath = configEnvFilePath();
     AuthModule,
     TwoFactorModule,
     AppSettingsModule, // Public app settings (no auth required)
+    UnderConstructionModule, // Public under-development gate + admin token/copy settings
     AdminModule, // AdminModule must be imported before PlacesModule to ensure /api/admin routes take precedence
     PlacesModule,
     TownsModule,
@@ -85,7 +87,7 @@ const envFilePath = configEnvFilePath();
     StaticPagesModule,
     CollectionsModule, // Curated collections (public)
     ProductsModule,
-    SeoModule, // SEO metadata for SSR
+    SeoModule, // SEO metadata + crawl (robots/sitemap) for SSR
     NotificationsModule, // Push notifications
     PlatformSettingsModule, // Platform settings API (Brand + Site + SiteInstance merged)
     UiCopyModule, // Public interface strings, stored per language

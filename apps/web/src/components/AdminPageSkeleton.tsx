@@ -47,13 +47,7 @@ export function AdminPageSkeleton() {
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: 1400,
-        margin: "0 auto",
-      }}
-    >
+    <div className="admin-page-content">
       {/* Page header skeleton - matches admin page header style */}
       <div
         style={{

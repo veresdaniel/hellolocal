@@ -256,11 +256,11 @@ export function LoginPage() {
       // Navigate after login completes - React will re-render when AuthContext updates
       navigate(`/${lang}/admin`, { replace: true });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t("admin.loginFailed");
+      const rawMessage = err instanceof Error ? err.message : t("admin.loginFailed");
+      const errorMessage = Array.isArray(rawMessage) ? rawMessage.join(" ") : String(rawMessage);
       const errorStatus = (err as any)?.status;
 
-      // Check if error indicates 2FA is required
-      // The backend returns 400 with message: "2FA verification required. Please provide a 2FA token."
+      // Backend returns 400: "2FA verification required..." only when that user opted in
       const lowerMessage = errorMessage.toLowerCase();
       const is2FARequired =
         errorStatus === 400 &&
@@ -272,10 +272,8 @@ export function LoginPage() {
       if (is2FARequired) {
         setRequiresTwoFactor(true);
         setError(t("admin.pleaseEnter2FACode"));
-        // Focus will be set by useEffect when requiresTwoFactor changes
       } else {
         setError(errorMessage);
-        // Reset 2FA requirement if it's a different error
         if (requiresTwoFactor) {
           setRequiresTwoFactor(false);
           setTwoFactorToken("");
@@ -304,38 +302,26 @@ export function LoginPage() {
   });
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        minWidth: "100vw",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f3efe8",
-        padding: "16px",
-        margin: 0,
-        boxSizing: "border-box",
-      }}
-    >
+    <div className="admin-login">
       <div
         style={{
           maxWidth: 440,
           width: "100%",
-          background: "white",
+          background: "var(--admin-surface, #ffffff)",
           borderRadius: 16,
           padding: "clamp(24px, 5vw, 40px)",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          boxShadow: "0 12px 40px rgba(15, 23, 42, 0.12)",
+          border: "1px solid var(--admin-border-subtle, #e2e8f0)",
         }}
       >
         <h1
           style={{
             marginBottom: 8,
             textAlign: "center",
-            color: "#667eea",
+            color: "var(--admin-text, #0f172a)",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
-            fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
           }}
         >
           {t("admin.login")}
@@ -343,11 +329,10 @@ export function LoginPage() {
         <p
           style={{
             textAlign: "center",
-            color: "#666",
+            color: "var(--admin-text-muted, #475569)",
             marginBottom: "clamp(20px, 4vw, 32px)",
             fontSize: "clamp(13px, 3vw, 14px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
             fontWeight: 400,
           }}
         >
@@ -359,10 +344,10 @@ export function LoginPage() {
             style={{
               padding: "clamp(12px, 3vw, 16px)",
               marginBottom: "clamp(16px, 4vw, 24px)",
-              background: "linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)",
-              color: "#5b21b6",
+              background: "var(--admin-primary-soft, #eff6ff)",
+              color: "var(--admin-text, #0f172a)",
               borderRadius: 12,
-              border: "1px solid #c4b5fd",
+              border: "1px solid var(--admin-primary-border, #bfdbfe)",
               display: "flex",
               flexDirection: "column",
               gap: 12,
@@ -385,7 +370,7 @@ export function LoginPage() {
               to={publicPagePath}
               style={{
                 padding: "clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)",
-                background: "#667eea",
+                background: "var(--admin-primary, #2563eb)",
                 color: "white",
                 textDecoration: "none",
                 borderRadius: 8,
@@ -401,11 +386,11 @@ export function LoginPage() {
                 gap: 8,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#5568d3";
+                e.currentTarget.style.background = "var(--admin-primary-hover, #1d4ed8)";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#667eea";
+                e.currentTarget.style.background = "var(--admin-primary, #2563eb)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -445,7 +430,7 @@ export function LoginPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: emailError ? "#dc2626" : "#667eea",
+                color: emailError ? "#dc2626" : "var(--admin-primary, #2563eb)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -466,7 +451,7 @@ export function LoginPage() {
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
-                border: `2px solid ${emailError ? "#fca5a5" : "#e0e7ff"}`,
+                border: `2px solid ${emailError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)"}`,
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -477,13 +462,13 @@ export function LoginPage() {
               }}
               onFocus={(e) => {
                 if (!emailError) {
-                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }
               }}
               onBlur={(e) => {
                 if (!emailError) {
-                  e.currentTarget.style.borderColor = "#e0e7ff";
+                  e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                   e.currentTarget.style.boxShadow = "none";
                 }
               }}
@@ -509,7 +494,7 @@ export function LoginPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: "#667eea",
+                color: "var(--admin-primary, #2563eb)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -528,7 +513,7 @@ export function LoginPage() {
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
-                border: "2px solid #e0e7ff",
+                border: "2px solid var(--admin-primary-border, #bfdbfe)",
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -537,11 +522,11 @@ export function LoginPage() {
                 boxSizing: "border-box",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#667eea";
+                e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e0e7ff";
+                e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
@@ -553,7 +538,7 @@ export function LoginPage() {
                 style={{
                   display: "block",
                   marginBottom: 8,
-                  color: "#667eea",
+                  color: "var(--admin-primary, #2563eb)",
                   fontWeight: 600,
                   fontSize: "clamp(13px, 3vw, 14px)",
                   fontFamily:
@@ -578,18 +563,18 @@ export function LoginPage() {
                   textAlign: "center",
                   letterSpacing: "clamp(4px, 1.5vw, 8px)",
                   fontFamily: "monospace",
-                  border: "2px solid #e0e7ff",
+                  border: "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   outline: "none",
                   transition: "all 0.3s ease",
                   boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#667eea";
+                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#e0e7ff";
+                  e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -620,7 +605,7 @@ export function LoginPage() {
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               background: isLoading
                 ? "#8d88a3"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                : "var(--admin-primary, #2563eb)",
               color: "white",
               border: "none",
               borderRadius: 8,
@@ -757,7 +742,7 @@ export function LoginPage() {
           <Link
             to={`/${lang}/admin/forgot-password`}
             style={{
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -790,7 +775,7 @@ export function LoginPage() {
           <Link
             to={`/${lang}/admin/register`}
             style={{
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

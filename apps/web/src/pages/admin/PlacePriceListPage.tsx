@@ -193,7 +193,7 @@ export function PlacePriceListPage() {
 
   if (!place) {
     return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(24px, 5vw, 32px)" }}>
+      <div className="admin-page-content">
         <div style={{ textAlign: "center", padding: 48 }}>
           <h2 style={{ color: "#dc3545", marginBottom: 16 }}>{t("error.notFound")}</h2>
           <p>{t("admin.errors.placeNotFound")}</p>
@@ -210,7 +210,7 @@ export function PlacePriceListPage() {
   // Show warning if selectedSiteId is missing
   if (!selectedSiteId) {
     return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(24px, 5vw, 32px)" }}>
+      <div className="admin-page-content">
         <div style={{ textAlign: "center", padding: 48 }}>
           <h2 style={{ color: "#dc3545", marginBottom: 16 }}>{t("error.errorOccurred")}</h2>
           <p>{t("admin.errors.siteNotSelected")}</p>
@@ -220,7 +220,7 @@ export function PlacePriceListPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title=""
         showNewButton={false}
@@ -229,7 +229,6 @@ export function PlacePriceListPage() {
         onCancel={() => navigate(`/${lang}/admin/places`)}
         saveLabel={t("common.save")}
         cancelLabel={t("admin.backToPlace")}
-        showBackButton={false}
         backTo={`/${lang}/admin/places`}
       />
 
@@ -239,8 +238,8 @@ export function PlacePriceListPage() {
           borderRadius: 16,
           padding: "clamp(24px, 5vw, 32px)",
           marginTop: 24,
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-          border: "1px solid rgba(102, 126, 234, 0.1)",
+          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+          border: "1px solid rgba(37, 99, 235, 0.1)",
         }}
       >
         {/* Header with title and saved status */}
@@ -407,7 +406,7 @@ export function PlacePriceListPage() {
               onClick={handleAddBlock}
               style={{
                 padding: "12px 24px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "var(--admin-primary, #2563eb)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -415,16 +414,16 @@ export function PlacePriceListPage() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, sans-serif",
-                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.18)",
                 transition: "all 0.3s ease",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.4)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(15, 23, 42, 0.24)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.18)";
               }}
             >
               + {t("admin.newBlock")}
@@ -618,7 +617,7 @@ export function PlacePriceListPage() {
               onClick={handleAddBlock}
               style={{
                 padding: "12px 24px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "var(--admin-primary, #2563eb)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -626,17 +625,17 @@ export function PlacePriceListPage() {
                 fontSize: "clamp(14px, 3.5vw, 16px)",
                 fontWeight: 600,
                 fontFamily: "'Inter', system-ui, sans-serif",
-                boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.18)",
                 transition: "all 0.3s ease",
                 alignSelf: "flex-start",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.4)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(15, 23, 42, 0.24)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.18)";
               }}
             >
               + {t("admin.newBlock")}
@@ -685,7 +684,7 @@ export function PlacePriceListPage() {
             position: "fixed",
             top: 20,
             right: 20,
-            background: "#667eea",
+            background: "var(--admin-primary, #2563eb)",
             color: "white",
             padding: "12px 24px",
             borderRadius: 8,

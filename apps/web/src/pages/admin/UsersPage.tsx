@@ -234,7 +234,7 @@ export function UsersPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <div
         style={{
           display: "flex",
@@ -246,14 +246,13 @@ export function UsersPage() {
         }}
       >
         <h1
+          className="admin-page-title"
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
             margin: 0,
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
           }}
         >
           {t("admin.usersManagement")}
@@ -268,8 +267,8 @@ export function UsersPage() {
           style={{
             padding: "10px 20px",
             background: editingId || isCreating ? "#e0e0e0" : "white",
-            color: editingId || isCreating ? "#999" : "#667eea",
-            border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
+            color: editingId || isCreating ? "#999" : "var(--admin-primary, #2563eb)",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary, #2563eb)",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -328,7 +327,7 @@ export function UsersPage() {
             style={{
               marginBottom: 16,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}
@@ -605,7 +604,7 @@ export function UsersPage() {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                 />
                 <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>
@@ -635,7 +634,7 @@ export function UsersPage() {
                   marginBottom: 12,
                   fontSize: 16,
                   fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
                 }}
               >
                 {t("admin.profile.twoFactorAuthentication")}
@@ -654,8 +653,20 @@ export function UsersPage() {
                     <button
                       onClick={async () => {
                         if (!confirm(t("admin.confirmations.disable2FA"))) return;
+                        const password =
+                          window.prompt(
+                            t("admin.twoFactor.disablePasswordPrompt") ||
+                              "Enter your admin password to disable this user's 2FA:"
+                          ) || "";
+                        if (!password.trim()) {
+                          alert(
+                            t("admin.twoFactor.stepUpRequired") ||
+                              "Password is required to disable 2FA"
+                          );
+                          return;
+                        }
                         try {
-                          await disableTwoFactorForUser(editingId);
+                          await disableTwoFactorForUser(editingId, password.trim());
                           await loadData();
                           const updatedUser = users.find((u) => u.id === editingId);
                           if (updatedUser) {

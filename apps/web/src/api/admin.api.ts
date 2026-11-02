@@ -12,6 +12,8 @@ export interface User {
   role: "superadmin" | "admin" | "editor" | "viewer";
   isActive: boolean;
   isTwoFactorEnabled?: boolean;
+  /** Opt-in floating AI Assistant dock; default false (superadmins seeded true). */
+  aiAssistantEnabled?: boolean;
   sites: Array<{
     id: string;
     siteId: string;
@@ -35,6 +37,7 @@ export interface UpdateUserDto {
   bio?: string;
   isActive?: boolean;
   siteIds?: string[];
+  aiAssistantEnabled?: boolean;
 }
 
 export interface UpdateUserRoleDto {
@@ -83,8 +86,8 @@ export function deleteUser(id: string) {
   return apiDelete<{ message: string }>(`/admin/users/${id}`);
 }
 
-export function disableTwoFactorForUser(id: string) {
-  return apiPost<{ message: string }>(`/admin/users/${id}/two-factor/disable`, {});
+export function disableTwoFactorForUser(id: string, password: string) {
+  return apiPost<{ message: string }>(`/admin/users/${id}/two-factor/disable`, { password });
 }
 
 // Categories
@@ -505,6 +508,46 @@ export function saveContentDraftSettings(data: {
 
 export function requestContentDraft(data: ContentDraftRequest) {
   return apiPost<ContentDraftResult>("/admin/content-draft", data);
+}
+
+export type UnderConstructionCopyFields = {
+  title: string;
+  body: string;
+  buttonLabel: string;
+};
+
+export type UnderConstructionCopyByLang = Record<"hu" | "en" | "de", UnderConstructionCopyFields>;
+
+export type UnderConstructionAdminStatus = {
+  enabled: boolean;
+  accessToken: string | null;
+  hasToken: boolean;
+  tokenUpdatedAt: string | null;
+  queryParam: string;
+  cookieName: string;
+  cookieMaxAgeSec: number;
+  copy: UnderConstructionCopyByLang;
+};
+
+export type UnderConstructionSaveDto = {
+  enabled: boolean;
+  copy?: Partial<Record<"hu" | "en" | "de", Partial<UnderConstructionCopyFields>>>;
+};
+
+export function getUnderConstructionSettings() {
+  return apiGet<UnderConstructionAdminStatus>("/admin/under-construction");
+}
+
+export function saveUnderConstructionSettings(data: UnderConstructionSaveDto) {
+  return apiPut<UnderConstructionAdminStatus>("/admin/under-construction", data);
+}
+
+export function regenerateUnderConstructionToken() {
+  return apiPost<UnderConstructionAdminStatus>("/admin/under-construction/regenerate-token", {});
+}
+
+export function invalidateUnderConstructionToken() {
+  return apiPost<UnderConstructionAdminStatus>("/admin/under-construction/invalidate-token", {});
 }
 
 export function getDefaultLanguage() {
@@ -1012,13 +1055,17 @@ export function verifyAndEnableTwoFactor(token: string) {
   return apiPost<VerifyTwoFactorResponse>("/two-factor/verify", { token });
 }
 
-export function disableTwoFactor(userId?: string) {
-  // Omit userId for self-disable — API uses the authenticated user.
-  // Pass userId only when an admin disables 2FA for someone else.
-  return apiPost<{ message: string }>(
-    "/two-factor/disable",
-    userId ? { userId } : {}
-  );
+export function disableTwoFactor(options?: {
+  userId?: string;
+  password?: string;
+  token?: string;
+}) {
+  // Backend requires password and/or TOTP step-up; defaults target to the authenticated user.
+  const body: { userId?: string; password?: string; token?: string } = {};
+  if (options?.userId) body.userId = options.userId;
+  if (options?.password) body.password = options.password;
+  if (options?.token) body.token = options.token;
+  return apiPost<{ message: string }>("/two-factor/disable", body);
 }
 
 export function getTwoFactorStatus() {

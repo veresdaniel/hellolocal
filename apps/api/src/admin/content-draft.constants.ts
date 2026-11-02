@@ -49,10 +49,19 @@ export const GEMINI_DRAFT_MODEL = "gemini-3.5-flash-lite";
 export const GROQ_DRAFT_MODEL = "llama-3.1-8b-instant";
 
 /**
- * OpenRouter Free Models Router — routes only to $0 / :free catalog entries
- * (https://openrouter.ai/openrouter/free). Avoids hard-coding a rotating :free model id.
+ * OpenRouter free-tier models for drafts.
+ * Prefer concrete :free chat models that return `message.content`.
+ * Avoid relying solely on `openrouter/free` — it often routes to reasoning
+ * models that burn max_tokens on `reasoning` and leave `content` null.
  */
-export const OPENROUTER_DRAFT_MODEL = "openrouter/free";
+export const OPENROUTER_DRAFT_MODEL = "dots-studio/dots-3-note-preview:free";
+
+/** Tried in order when a previous OpenRouter attempt returns empty/reasoning-only content. */
+export const OPENROUTER_DRAFT_FALLBACK_MODELS = [
+  OPENROUTER_DRAFT_MODEL,
+  "nvidia/nemotron-3.5-super-vl:free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+] as const;
 
 export function isContentDraftProvider(value: unknown): value is ContentDraftProviderId {
   return (

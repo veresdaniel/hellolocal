@@ -13,15 +13,19 @@ import {
 import type { User } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
+import { useAuthStore } from "../../stores/authStore";
 
 export function UserProfilePage() {
   const { t } = useTranslation();
   usePageTitle("admin.profile.title");
+  const setAuthUser = useAuthStore((s) => s.setUser);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAi, setIsSavingAi] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [aiSuccess, setAiSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -95,6 +99,40 @@ export function UserProfilePage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const syncAuthUserAiFlag = (enabled: boolean) => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, unknown>;
+        parsed.aiAssistantEnabled = enabled;
+        localStorage.setItem("user", JSON.stringify(parsed));
+        setAuthUser(parsed as never);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleToggleAiAssistant = async () => {
+    if (!user) return;
+    setIsSavingAi(true);
+    setError(null);
+    try {
+      const next = !Boolean(user.aiAssistantEnabled);
+      const updated = await updateUser(user.id, { aiAssistantEnabled: next });
+      const role = (updated.role || user.role).toLowerCase() as User["role"];
+      const nextUser = { ...updated, role, aiAssistantEnabled: next };
+      setUser(nextUser);
+      syncAuthUserAiFlag(next);
+      setAiSuccess(true);
+      setTimeout(() => setAiSuccess(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.errors.updateUserFailed"));
+    } finally {
+      setIsSavingAi(false);
+    }
+  };
+
   const loadTwoFactorStatus = async () => {
     try {
       const status = await getTwoFactorStatus();
@@ -159,11 +197,27 @@ export function UserProfilePage() {
       return;
     }
 
+    const token =
+      window.prompt(t("admin.twoFactor.disableTotpPrompt") || "Enter your current 6-digit 2FA code (or leave blank to use password):") ||
+      "";
+    const password = token.trim()
+      ? ""
+      : window.prompt(t("admin.twoFactor.disablePasswordPrompt") || "Enter your account password to disable 2FA:") ||
+        "";
+    if (!token.trim() && !password.trim()) {
+      setTwoFactorError(t("admin.twoFactor.stepUpRequired") || "Password or 2FA code is required");
+      return;
+    }
+
     setIsTwoFactorLoading(true);
     setTwoFactorError(null);
     setTwoFactorSuccess(null);
     try {
-      await disableTwoFactor();
+      await disableTwoFactor({
+        userId: user.id,
+        ...(token.trim() ? { token: token.trim() } : {}),
+        ...(password.trim() ? { password: password.trim() } : {}),
+      });
       setTwoFactorSuccess(t("admin.twoFactor.disableSuccess"));
       setQrCodeUrl(null);
       setTwoFactorSecret(null);
@@ -182,27 +236,25 @@ export function UserProfilePage() {
 
   return (
     <>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <div className="admin-page-content">
         {/* Header matching AdminDashboard style */}
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
           <h1
+            className="admin-page-title"
             style={{
               fontSize: "clamp(20px, 4vw, 28px)",
               fontWeight: 700,
-              color: "white",
               margin: 0,
               marginBottom: 8,
-              textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
             }}
           >
             {t("admin.profile.title")}
           </h1>
           <p
+            className="admin-page-muted"
             style={{
               fontSize: "clamp(13px, 3vw, 14px)",
-              color: "#c0c0d0",
               margin: 0,
-              textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
             }}
           >
             {user.username} • {user.email}
@@ -252,9 +304,9 @@ export function UserProfilePage() {
         >
           <div>
             <h2
+              className="admin-page-section-title"
               style={{
                 marginBottom: 16,
-                color: "white",
                 fontSize: "clamp(18px, 4vw, 20px)",
                 fontWeight: 700,
               }}
@@ -267,8 +319,8 @@ export function UserProfilePage() {
                   padding: "clamp(20px, 4vw, 24px)",
                   background: "white",
                   borderRadius: 12,
-                  boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
-                  border: "1px solid rgba(102, 126, 234, 0.1)",
+                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                  border: "1px solid rgba(37, 99, 235, 0.1)",
                 }}
               >
                 <div style={{ marginBottom: 16 }}>
@@ -363,14 +415,14 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid #e0e7ff",
+                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e0e7ff")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
                   />
                 </div>
 
@@ -400,14 +452,14 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid #e0e7ff",
+                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e0e7ff")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
                   />
                 </div>
 
@@ -436,15 +488,15 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid #e0e7ff",
+                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                       resize: "vertical",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#667eea")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e0e7ff")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
                   />
                 </div>
 
@@ -488,9 +540,9 @@ export function UserProfilePage() {
 
           <div>
             <h2
+              className="admin-page-section-title"
               style={{
                 marginBottom: 16,
-                color: "white",
                 fontSize: "clamp(18px, 4vw, 20px)",
                 fontWeight: 700,
               }}
@@ -503,8 +555,8 @@ export function UserProfilePage() {
                 background: "white",
                 borderRadius: 12,
                 marginBottom: 24,
-                boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
-                border: "1px solid rgba(102, 126, 234, 0.1)",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                border: "1px solid rgba(37, 99, 235, 0.1)",
               }}
             >
               <div
@@ -526,9 +578,9 @@ export function UserProfilePage() {
                     borderRadius: 6,
                     background:
                       user.role === ROLE_SUPERADMIN
-                        ? "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+                        ? "var(--admin-danger, #b91c1c)"
                         : user.role === ROLE_ADMIN
-                          ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                          ? "var(--admin-primary, #2563eb)"
                           : user.role === ROLE_EDITOR
                             ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)"
                             : "#6c757d",
@@ -594,9 +646,9 @@ export function UserProfilePage() {
             </div>
 
             <h3
+              className="admin-page-section-title"
               style={{
                 marginBottom: 16,
-                color: "white",
                 fontSize: "clamp(16px, 3vw, 18px)",
                 fontWeight: 700,
               }}
@@ -609,8 +661,8 @@ export function UserProfilePage() {
                 background: "white",
                 borderRadius: 12,
                 marginBottom: 24,
-                boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
-                border: "1px solid rgba(102, 126, 234, 0.1)",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                border: "1px solid rgba(37, 99, 235, 0.1)",
               }}
             >
               {!user.sites || user.sites.length === 0 ? (
@@ -638,7 +690,7 @@ export function UserProfilePage() {
                     >
                       {ut.site.slug}
                       {ut.isPrimary && (
-                        <span style={{ marginLeft: 8, color: "#667eea", fontWeight: 600 }}>
+                        <span style={{ marginLeft: 8, color: "var(--admin-primary, #2563eb)", fontWeight: 600 }}>
                           ★ {t("admin.profile.primary")}
                         </span>
                       )}
@@ -649,9 +701,95 @@ export function UserProfilePage() {
             </div>
 
             <h3
+              className="admin-page-section-title"
               style={{
                 marginBottom: 16,
-                color: "white",
+                fontSize: "clamp(16px, 3vw, 18px)",
+                fontWeight: 700,
+              }}
+            >
+              {t("admin.profile.aiAssistant")}
+            </h3>
+            <div
+              style={{
+                padding: "clamp(16px, 3vw, 20px)",
+                background: "white",
+                borderRadius: 12,
+                marginBottom: 24,
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 16px",
+                  color: "var(--admin-muted, #475569)",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                }}
+              >
+                {t("admin.profile.aiAssistantHelp")}
+              </p>
+              {aiSuccess ? (
+                <div
+                  style={{
+                    padding: 12,
+                    marginBottom: 16,
+                    background: "#ecfdf5",
+                    color: "#047857",
+                    borderRadius: 6,
+                    fontSize: 14,
+                    border: "1px solid #a7f3d0",
+                  }}
+                >
+                  {t("admin.profile.aiAssistantSaved")}
+                </div>
+              ) : null}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 12,
+                  justifyContent: "space-between",
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 600,
+                    color: user.aiAssistantEnabled
+                      ? "var(--admin-success, #059669)"
+                      : "var(--admin-muted, #475569)",
+                  }}
+                >
+                  {user.aiAssistantEnabled
+                    ? t("admin.profile.aiAssistantEnabled")
+                    : t("admin.profile.aiAssistantDisabled")}
+                </span>
+                <button
+                  type="button"
+                  className={
+                    user.aiAssistantEnabled
+                      ? "admin-btn admin-btn--secondary"
+                      : "admin-btn admin-btn--primary"
+                  }
+                  disabled={isSavingAi}
+                  onClick={() => void handleToggleAiAssistant()}
+                  style={{ padding: "10px 16px" }}
+                >
+                  {isSavingAi
+                    ? t("admin.profile.saving")
+                    : user.aiAssistantEnabled
+                      ? t("admin.profile.aiAssistantToggleOff")
+                      : t("admin.profile.aiAssistantToggleOn")}
+                </button>
+              </div>
+            </div>
+
+            <h3
+              className="admin-page-section-title"
+              style={{
+                marginBottom: 16,
                 fontSize: "clamp(16px, 3vw, 18px)",
                 fontWeight: 700,
               }}
@@ -663,8 +801,8 @@ export function UserProfilePage() {
                 padding: "clamp(16px, 3vw, 20px)",
                 background: "white",
                 borderRadius: 12,
-                boxShadow: "0 4px 16px rgba(102, 126, 234, 0.12)",
-                border: "1px solid rgba(102, 126, 234, 0.1)",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                border: "1px solid rgba(37, 99, 235, 0.1)",
               }}
             >
               {twoFactorError && (
@@ -753,7 +891,7 @@ export function UserProfilePage() {
                       fontWeight: 600,
                       background: isTwoFactorLoading
                         ? "#ddd"
-                        : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                        : "var(--admin-danger, #b91c1c)",
                       color: "white",
                       border: "none",
                       borderRadius: 8,
@@ -797,7 +935,7 @@ export function UserProfilePage() {
                           fontWeight: 600,
                           background: isTwoFactorLoading
                             ? "#ddd"
-                            : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                            : "var(--admin-primary, #2563eb)",
                           color: "white",
                           border: "none",
                           borderRadius: 8,
@@ -805,18 +943,18 @@ export function UserProfilePage() {
                           transition: "all 0.2s ease",
                           boxShadow: isTwoFactorLoading
                             ? "none"
-                            : "0 4px 12px rgba(102, 126, 234, 0.3)",
+                            : "0 4px 12px rgba(15, 23, 42, 0.18)",
                         }}
                         onMouseEnter={(e) => {
                           if (!isTwoFactorLoading) {
                             e.currentTarget.style.transform = "translateY(-2px)";
-                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.4)";
+                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(15, 23, 42, 0.24)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isTwoFactorLoading) {
                             e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.18)";
                           }
                         }}
                       >
