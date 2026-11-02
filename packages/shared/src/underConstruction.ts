@@ -5,16 +5,25 @@ export const UC_ACCESS_TOKEN_KEY = "underConstruction.accessToken";
 export const UC_TOKEN_UPDATED_AT_KEY = "underConstruction.tokenUpdatedAt";
 export const UC_COPY_KEY = "underConstruction.copy";
 
-/**
- * Legacy query param name kept for clearing old preview links/cookies.
- * Strict beta lock does not unlock the public site via `?access=`.
- */
+/** Query param for preview access links: `?access=<token>`. */
 export const UC_QUERY_PARAM = "access";
 
-/** Legacy preview cookie name — cleared when the gate is on; no longer grants access. */
+/** Cookie set after a valid query token so later navigations stay open. */
 export const UC_COOKIE_NAME = "hl_uc_access";
 
-/** Cookie Max-Age (seconds) used when clearing leftover preview cookies. */
+/**
+ * Header for public API calls while previewing (api.* does not receive the
+ * host-only cookie). Client copies the query token into sessionStorage.
+ */
+export const UC_ACCESS_HEADER = "x-uc-access";
+
+/** sessionStorage key for the preview token (readable by SPA; cookie is HttpOnly). */
+export const UC_ACCESS_SESSION_KEY = "hl_uc_access_token";
+
+/**
+ * Cookie Max-Age (seconds). Long-lived until token regen/invalidate.
+ * Browsers may clamp (e.g. Chrome ~400 days); validity is still token-bound.
+ */
 export const UC_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 400;
 
 /** Public + admin REST paths (without `/api` prefix used by Nest `@Controller`). */

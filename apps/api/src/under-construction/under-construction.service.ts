@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   UC_ACCESS_TOKEN_KEY,
@@ -77,6 +77,13 @@ function parseCopy(raw: string | null | undefined): UcCopyByLang {
       de: { ...UC_DEFAULT_COPY.de },
     };
   }
+}
+
+function tokensMatch(expected: string, provided: string | null | undefined): boolean {
+  if (!expected || !provided) return false;
+  const a = createHash("sha256").update(expected).digest();
+  const b = createHash("sha256").update(provided).digest();
+  return timingSafeEqual(a, b);
 }
 
 function newAccessToken(): string {
@@ -163,11 +170,15 @@ export class UnderConstructionService {
   async save(dto: UnderConstructionSaveDto): Promise<UnderConstructionAdminStatus> {
     const current = await this.getAdminStatus();
 
+    if (dto.enabled && !current.accessToken) {
+      await this.persistNewToken();
+    }
+
     await this.writeValue(
       UC_ENABLED_KEY,
       dto.enabled ? "true" : "false",
       "boolean",
-      "When true, public site and public APIs are fully locked (admin/auth only)"
+      "When true, public site is locked unless a valid access token or staff JWT is presented"
     );
     this.bustEnabledCache();
 
@@ -188,13 +199,11 @@ export class UnderConstructionService {
     return this.getAdminStatus();
   }
 
-  /** Legacy admin action — preview tokens no longer unlock the public site. */
   async regenerateToken(): Promise<UnderConstructionAdminStatus> {
     await this.persistNewToken();
     return this.getAdminStatus();
   }
 
-  /** Legacy admin action — clear stored preview token if any. */
   async invalidateToken(): Promise<UnderConstructionAdminStatus> {
     await this.prisma.$transaction([
       this.prisma.appSetting.upsert({
@@ -250,18 +259,26 @@ export class UnderConstructionService {
     this.enabledCache = null;
   }
 
+  /** True when the provided preview token matches the current access token. */
+  async isValidAccessToken(provided: string | null | undefined): Promise<boolean> {
+    const expected = ((await this.readValue(UC_ACCESS_TOKEN_KEY)) || "").trim();
+    return tokensMatch(expected, provided);
+  }
+
   async resolvePublic(input: {
     lang?: string | null;
     queryToken?: string | null;
     cookieToken?: string | null;
   }): Promise<UnderConstructionPublicResolve> {
     const lang = asLang(input.lang);
-    const [enabledRaw, copyRaw] = await Promise.all([
+    const [enabledRaw, token, copyRaw] = await Promise.all([
       this.readValue(UC_ENABLED_KEY),
+      this.readValue(UC_ACCESS_TOKEN_KEY),
       this.readValue(UC_COPY_KEY),
     ]);
     const enabled = enabledRaw === "true";
     const copy = parseCopy(copyRaw)[lang];
+    const expected = token?.trim() || "";
     this.enabledCache = { value: enabled, expiresAt: Date.now() + 5_000 };
 
     if (!enabled) {
@@ -278,17 +295,21 @@ export class UnderConstructionService {
       };
     }
 
-    // Strict beta lock: public site closed for everyone (no ?access= / cookie unlock).
-    // Admin/auth stay on separate routes. Clear any leftover preview cookie.
+    const queryOk = tokensMatch(expected, input.queryToken);
+    const cookieOk = tokensMatch(expected, input.cookieToken);
+    const allowed = queryOk || cookieOk;
+    // Only clear when a cookie was presented and is invalid (avoid race after ?access=).
+    const clearCookie = Boolean(input.cookieToken?.trim()) && !cookieOk;
+
     return {
       enabled: true,
-      allowed: false,
+      allowed,
       queryParam: UC_QUERY_PARAM,
       cookieName: UC_COOKIE_NAME,
       cookieMaxAgeSec: UC_COOKIE_MAX_AGE_SEC,
-      refreshCookie: false,
-      clearCookie: true,
-      cookieToken: null,
+      refreshCookie: Boolean(allowed && expected),
+      clearCookie,
+      cookieToken: allowed && expected ? expected : null,
       copy,
     };
   }

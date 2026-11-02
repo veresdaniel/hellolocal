@@ -1,3 +1,4 @@
+import { UC_ACCESS_HEADER, UC_ACCESS_SESSION_KEY } from "@hellolocal/shared";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
 import { DEFAULT_BACKEND_URL, type Lang} from "../app/config";
@@ -283,9 +284,21 @@ export async function apiGetPublic<T>(
   const fullUrl = `${apiBaseUrl}/api${path}`;
   let res: Response;
   try {
+    // Prefer staff JWT so logged-in admin can browse the public site while UC is on.
+    // Fall back to the preview access token (sessionStorage) for ?access= visitors —
+    // api.* does not receive the host-only UC cookie from hello-local.io.
+    const bearer = localStorage.getItem(ACCESS_TOKEN_KEY);
+    let previewToken: string | null = null;
+    try {
+      previewToken = sessionStorage.getItem(UC_ACCESS_SESSION_KEY);
+    } catch {
+      previewToken = null;
+    }
     res = await fetch(fullUrl, {
       headers: {
         Accept: "application/json",
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        ...(!bearer && previewToken ? { [UC_ACCESS_HEADER]: previewToken } : {}),
       },
       signal: options?.signal,
     });

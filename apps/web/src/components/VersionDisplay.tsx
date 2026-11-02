@@ -63,7 +63,7 @@ export function VersionDisplay() {
     >
       {betaOn ? (
         <span
-          title="Fejlesztés alatt mód bekapcsolva — nyilvános oldal zárva"
+          title="Fejlesztés alatt mód bekapcsolva (?access=… vagy staff login)"
           style={{
             fontSize: 10,
             fontWeight: 800,

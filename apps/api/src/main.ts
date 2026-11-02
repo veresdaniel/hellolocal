@@ -119,6 +119,7 @@ async function bootstrap() {
       "Pragma", // Allow pragma header (browser may send this)
       "Expires", // Allow expires header (browser may send this)
       "Accept", // Allow accept header (browser may send this)
+      "x-uc-access", // Under-construction preview token (api.* host; cookie is host-only on web)
     ],
     exposedHeaders: ["Content-Type", "Authorization"],
     preflightContinue: false,
