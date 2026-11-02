@@ -14,6 +14,7 @@ import type { User } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 import { useAuthStore } from "../../stores/authStore";
+import { USER_KEY } from "../../constants/authStorage";
 
 export function UserProfilePage() {
   const { t } = useTranslation();
@@ -63,11 +64,11 @@ export function UserProfilePage() {
         bio: data.bio || "",
       });
       // Update localStorage with fresh user data
-      const storedUser = localStorage.getItem("user");
+      const storedUser = localStorage.getItem(USER_KEY);
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         parsedUser.role = userData.role;
-        localStorage.setItem("user", JSON.stringify(parsedUser));
+        localStorage.setItem(USER_KEY, JSON.stringify(parsedUser));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.errors.loadUsersFailed"));
@@ -101,11 +102,11 @@ export function UserProfilePage() {
 
   const syncAuthUserAiFlag = (enabled: boolean) => {
     try {
-      const stored = localStorage.getItem("user");
+      const stored = localStorage.getItem(USER_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Record<string, unknown>;
         parsed.aiAssistantEnabled = enabled;
-        localStorage.setItem("user", JSON.stringify(parsed));
+        localStorage.setItem(USER_KEY, JSON.stringify(parsed));
         setAuthUser(parsed as never);
       }
     } catch {
@@ -415,14 +416,14 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
-                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border)")}
                   />
                 </div>
 
@@ -452,14 +453,14 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
-                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border)")}
                   />
                 </div>
 
@@ -488,15 +489,15 @@ export function UserProfilePage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       transition: "all 0.2s ease",
                       outline: "none",
                       boxSizing: "border-box",
                       resize: "vertical",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary, #2563eb)")}
-                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--admin-primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--admin-primary-border)")}
                   />
                 </div>
 
@@ -580,7 +581,7 @@ export function UserProfilePage() {
                       user.role === ROLE_SUPERADMIN
                         ? "var(--admin-danger, #b91c1c)"
                         : user.role === ROLE_ADMIN
-                          ? "var(--admin-primary, #2563eb)"
+                          ? "var(--admin-primary)"
                           : user.role === ROLE_EDITOR
                             ? "linear-gradient(135deg, #28a745 0%, #20c997 100%)"
                             : "#6c757d",
@@ -690,7 +691,7 @@ export function UserProfilePage() {
                     >
                       {ut.site.slug}
                       {ut.isPrimary && (
-                        <span style={{ marginLeft: 8, color: "var(--admin-primary, #2563eb)", fontWeight: 600 }}>
+                        <span style={{ marginLeft: 8, color: "var(--admin-primary)", fontWeight: 600 }}>
                           ★ {t("admin.profile.primary")}
                         </span>
                       )}
@@ -717,7 +718,7 @@ export function UserProfilePage() {
                 borderRadius: 12,
                 marginBottom: 24,
                 boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
-                border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                border: "1px solid var(--admin-border-subtle)",
               }}
             >
               <p
@@ -935,7 +936,7 @@ export function UserProfilePage() {
                           fontWeight: 600,
                           background: isTwoFactorLoading
                             ? "#ddd"
-                            : "var(--admin-primary, #2563eb)",
+                            : "var(--admin-primary)",
                           color: "white",
                           border: "none",
                           borderRadius: 8,

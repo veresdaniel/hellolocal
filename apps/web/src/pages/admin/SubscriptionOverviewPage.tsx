@@ -83,7 +83,7 @@ export function SubscriptionOverviewPage() {
 
   const planColors: Record<"BASIC" | "PRO" | "BUSINESS", string> = {
     BASIC: "#3b82f6",
-    PRO: "var(--admin-primary, #2563eb)",
+    PRO: "var(--admin-primary)",
     BUSINESS: "#8b5cf6",
   };
 
@@ -144,7 +144,7 @@ export function SubscriptionOverviewPage() {
                 padding: 20,
                 background: "white",
                 borderRadius: 12,
-                border: "1px solid var(--admin-primary-border, #bfdbfe)",
+                border: "1px solid var(--admin-primary-border)",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
@@ -164,7 +164,7 @@ export function SubscriptionOverviewPage() {
                       fontWeight: 600,
                       color: "#333",
                       fontFamily:
-                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                        "var(--admin-font-display)",
                     }}
                   >
                     {translation?.name || site.slug}
@@ -186,7 +186,7 @@ export function SubscriptionOverviewPage() {
                   onClick={() => handleEditSite(site.id)}
                   style={{
                     padding: "8px 16px",
-                    background: "var(--admin-primary, #2563eb)",
+                    background: "var(--admin-primary)",
                     color: "white",
                     border: "none",
                     borderRadius: 6,

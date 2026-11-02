@@ -28,6 +28,7 @@ import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 import { SitemapService } from "../seo/sitemap.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface OpeningHoursDto {
   dayOfWeek: number; // 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
@@ -471,7 +472,7 @@ export class AdminPlaceService {
     });
 
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     return place;
@@ -878,6 +879,24 @@ export class AdminPlaceService {
       data: updateData,
     });
 
+    if (updateData.lat !== undefined || updateData.lng !== undefined) {
+      const nextLat = updateData.lat !== undefined ? updateData.lat : place.lat;
+      const nextLng = updateData.lng !== undefined ? updateData.lng : place.lng;
+      if (nextLat != null && nextLng != null && (nextLat !== place.lat || nextLng !== place.lng)) {
+        await this.prisma.event.updateMany({
+          where: {
+            placeId: id,
+            OR: [
+              { lat: null },
+              { lng: null },
+              { AND: [{ lat: place.lat }, { lng: place.lng }] },
+            ],
+          },
+          data: { lat: nextLat, lng: nextLng },
+        });
+      }
+    }
+
     if (tagIds !== undefined) {
       await this.prisma.placeTag.deleteMany({
         where: { placeId: id },
@@ -1016,9 +1035,36 @@ export class AdminPlaceService {
       throw new ForbiddenException("Only owner or siteadmin can delete place");
     }
 
-    await this.prisma.place.delete({
-      where: { id },
+    const events = await this.prisma.event.findMany({
+      where: { placeId: id },
+      select: { id: true },
     });
+    const eventIds = events.map((event) => event.id);
+
+    // Drop dependents first. A plain place.delete stops on events, products,
+    // galleries and analytics rows when those foreign keys are not cascading.
+    await this.prisma.$transaction([
+      ...(eventIds.length
+        ? [
+            this.prisma.slug.deleteMany({
+              where: { entityType: SlugEntityType.event, entityId: { in: eventIds } },
+            }),
+          ]
+        : []),
+      this.prisma.slug.deleteMany({
+        where: { entityType: SlugEntityType.place, entityId: id },
+      }),
+      this.prisma.gallery.deleteMany({ where: { placeId: id } }),
+      this.prisma.event.deleteMany({ where: { placeId: id } }),
+      this.prisma.productClickDaily.deleteMany({ where: { placeId: id } }),
+      this.prisma.product.deleteMany({ where: { placeId: id } }),
+      this.prisma.analyticsDaily.deleteMany({ where: { placeId: id } }),
+      this.prisma.place.updateMany({
+        where: { parentPlaceId: id },
+        data: { parentPlaceId: null },
+      }),
+      this.prisma.place.delete({ where: { id } }),
+    ]);
 
     this.sitemapService.invalidate();
     return { message: "Place deleted successfully" };

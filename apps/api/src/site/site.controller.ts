@@ -2,6 +2,7 @@ import { Controller, Get, Param, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteResolverService } from "./site-resolver.service";
 import { assertLang } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Controller("/api/public/:lang/:siteKey")
 export class SiteController {
@@ -53,7 +54,7 @@ export class SiteController {
     });
 
     if (!site) {
-      throw new NotFoundException("Site not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
     }
 
     const t = site.translations?.[0] ?? null;

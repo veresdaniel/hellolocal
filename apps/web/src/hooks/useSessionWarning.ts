@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { isTokenExpired, getTokenExpiration } from "../utils/tokenUtils";
 import { TIMING } from "../app/config";
+import { ACCESS_TOKEN_KEY } from "../constants/authStorage";
 
 interface SessionWarningState {
   showWarning: boolean;
@@ -51,7 +52,7 @@ export function useSessionWarning() {
 
   useEffect(() => {
     const updateWarning = () => {
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (!accessToken || isTokenExpired(accessToken)) {
         setWarning({ showWarning: false, secondsRemaining: 0 });
         return;

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
 import { langOrDefault } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class CollectionsService {
@@ -61,7 +62,7 @@ export class CollectionsService {
       }
     }
 
-    throw new NotFoundException("Collection not found");
+    throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
   }
 
   /**

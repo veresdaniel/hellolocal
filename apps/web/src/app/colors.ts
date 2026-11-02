@@ -1,8 +1,11 @@
 // src/app/colors.ts
-// Centralized color constants for the application
+// Legacy palette helpers — prefer CSS tokens:
+// - Admin: `admin-surfaces.css` / `styles/adminStyles.ts` (`--admin-*`)
+// - Public: `styles/publicThemeColors.ts` / brand CSS vars (`--hl-*`)
+// New UI should not hardcode hex from this file when a token exists.
 
 /**
- * Primary brand colors
+ * Primary brand colors (aligned with admin purple chrome)
  */
 export const COLORS = {
   // Primary gradient colors (main brand)

@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 import { generateSlug } from "../slug/slug.helper";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export type ResolveResult = {
   siteId: string;
@@ -116,7 +117,7 @@ export class ResolveService {
     }
 
     if (!slugRecord || !slugRecord.isActive) {
-      throw new NotFoundException("Slug not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SLUG);
     }
 
     let canonicalSlug: string;

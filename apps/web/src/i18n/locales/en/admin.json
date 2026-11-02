@@ -196,7 +196,16 @@
       "managerCannotAssignOwner": "Manager cannot assign owner role",
       "managerCannotModifyOwner": "Manager cannot modify owner role",
       "editorCannotManageMemberships": "Editor cannot manage place memberships",
-      "managerCannotDeleteOwner": "Manager cannot delete owner membership"
+      "managerCannotDeleteOwner": "Manager cannot delete owner membership",
+      "twoFactorManageOthers": "You cannot manage 2FA for other users",
+      "updateOwnProfileOnly": "You can only update your own profile",
+      "noSiteAccess": "You do not have access to this site",
+      "noPlaceAccess": "You do not have access to this place",
+      "userNoSite": "User has no associated site",
+      "userNoRegion": "User has no associated region",
+      "platformSettingsSuperadminOnly": "Only a superadmin can edit platform settings text",
+      "insufficientSitePermissions": "Insufficient site permissions. Required: editor or higher",
+      "contentDraft": "Content draft is not available"
     },
     "notFound": {
       "user": "User not found",
@@ -206,7 +215,13 @@
       "site": "Region not found",
       "subscription": "Subscription not found",
       "legalPage": "Legal page not found",
-      "legalPageTranslation": "Legal page translation not found"
+      "legalPageTranslation": "Legal page translation not found",
+      "defaultSite": "Default site not found",
+      "event": "Event not found",
+      "collection": "Collection not found",
+      "collectionItem": "Collection item not found",
+      "gallery": "Gallery not found",
+      "product": "Product not found"
     },
     "badRequest": {
       "categoryParentSelf": "Category cannot be its own parent",
@@ -233,10 +248,30 @@
       "planImageLimit": "Plan image limit exceeded",
       "planFeaturedNotSupported": "Plan does not support featured placement",
       "slugConflict": "Slug already exists",
-      "unsupportedLegalPage": "Unsupported legal page"
+      "unsupportedLegalPage": "Unsupported legal page",
+      "twoFactorStepUpRequired": "Password confirmation is required to continue",
+      "twoFactorTokenRequired": "2FA verification required. Please provide a 2FA token.",
+      "invalidOrExpiredResetToken": "Invalid or expired reset token",
+      "userAlreadyExists": "User with this email or username already exists",
+      "siteIdRequired": "Site ID is required",
+      "placeIdRequired": "Place ID is required",
+      "townIdRequired": "Town ID is required",
+      "eventIdRequired": "Event ID is required",
+      "placeIdSameSite": "Place must belong to the same site",
+      "contentDraftInvalid": "Invalid content draft request",
+      "contentDraftNeedsName": "Content draft needs a name"
     },
     "unauthorized": {
-      "disableOwn2FA": "You can only disable your own 2FA"
+      "disableOwn2FA": "You can only disable your own 2FA",
+      "twoFactorStepUp": "Password confirmation failed",
+      "invalidCredentials": "Invalid credentials",
+      "invalid2FAToken": "Invalid 2FA token",
+      "twoFactorVerificationFailed": "2FA verification failed",
+      "twoFactorServiceUnavailable": "2FA service is not available",
+      "invalidRefreshToken": "Invalid refresh token",
+      "loginFailed": "Login failed",
+      "sessionExpired": "Session expired or invalid token",
+      "userSiteConfigInvalid": "User site configuration is invalid"
     },
     "internal": {
       "error": "Internal server error",
@@ -1235,7 +1270,8 @@
     "providerOpenRouter": "OpenRouter (free models)",
     "apiKey": "API key",
     "apiKeyPlaceholder": "Enter a new key",
-    "apiKeyConfigured": "Key saved (not shown).",
+    "apiKeyReplacePlaceholder": "Replace: enter a new key",
+    "apiKeyConfigured": "Key saved — shown starred below.",
     "apiKeyClearHelp": "Use “Clear key” to remove the saved credential.",
     "clearKey": "Clear key",
     "save": "Save",

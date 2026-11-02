@@ -10,6 +10,7 @@ import { DEFAULT_LANG,  type Lang, isLang} from "../app/config";
 import { isSuperadmin, isAdmin } from "../utils/roleHelpers";
 import { USER_ROLE_HIERARCHY, ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../types/enums";
 import type { UserRole } from "../types/enums";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../constants/authStorage";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -34,8 +35,8 @@ export function ProtectedRoute({
 
   // Check for tokens immediately (before waiting for AuthContext)
   const [shouldRedirect, setShouldRedirect] = useState(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshTokenValue = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
     // If no tokens at all, redirect immediately
     if (!accessToken && !refreshTokenValue) {
@@ -87,8 +88,8 @@ export function ProtectedRoute({
   // Check token expiration on mount and periodically
   useEffect(() => {
     const checkSession = () => {
-      const accessToken = localStorage.getItem("accessToken");
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
       // If no tokens at all, redirect to login
       if (!accessToken && !refreshTokenValue) {
@@ -133,8 +134,8 @@ export function ProtectedRoute({
   if (!authContext) {
     // If AuthContext is not available, check tokens again
     // If no tokens, redirect immediately
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshTokenValue = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!accessToken && !refreshTokenValue) {
       return <Navigate to={`/${lang}/admin/login`} replace />;
     }
@@ -152,8 +153,8 @@ export function ProtectedRoute({
   // This prevents blocking lazy-loaded modules
   if (isLoading || (considerSiteRole && isCheckingSiteRole)) {
     // But check tokens again while loading - if no tokens, redirect immediately
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshTokenValue = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!accessToken && !refreshTokenValue) {
       return <Navigate to={`/${lang}/admin/login`} replace />;
     }

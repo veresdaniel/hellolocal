@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface UpdateUserRoleDto {
   role: UserRole;
@@ -96,7 +97,7 @@ export class AdminUsersService {
     });
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
 
     return user;

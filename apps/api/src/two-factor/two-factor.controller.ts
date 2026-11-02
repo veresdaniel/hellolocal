@@ -17,6 +17,7 @@ import { TwoFactorService } from "./two-factor.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { UserRole } from "@prisma/client";
+import { API_TWO_FACTOR_BASE } from "@hellolocal/shared";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import {
   SetupTwoFactorDto,
@@ -29,7 +30,7 @@ import {
  * Users enable/disable for themselves; login only challenges when that user has 2FA on.
  * Superadmins may manage 2FA for other users with password confirmation (step-up).
  */
-@Controller("/api/two-factor")
+@Controller(API_TWO_FACTOR_BASE)
 @UseGuards(JwtAuthGuard)
 export class TwoFactorController {
   constructor(private readonly twoFactorService: TwoFactorService) {}

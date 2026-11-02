@@ -45,6 +45,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@hellolocal/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.2.8
         version: 11.2.8(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -175,6 +178,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@hellolocal/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@tanstack/react-query':
         specifier: ^5.90.16
         version: 5.90.16(react@19.2.3)
@@ -275,6 +281,12 @@ importers:
       vite:
         specifier: ^7.3.7
         version: 7.3.7(@types/node@24.10.4)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
+
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
 
 packages:
 

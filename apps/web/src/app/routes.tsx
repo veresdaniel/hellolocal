@@ -318,6 +318,7 @@ export const router = createBrowserRouter([
   { path: "/admin/*", element: <RootRedirect /> },
 
   // Admin routes (with language prefix) - MUST come before /:lang route to avoid conflicts
+  // (and outside UnderConstructionGate so admin stays open when the public site is locked)
   {
     path: `/:lang/admin`,
     element: <Outlet />, // Add explicit Outlet to prevent SiteLayout from being used

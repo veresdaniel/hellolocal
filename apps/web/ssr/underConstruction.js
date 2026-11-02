@@ -1,24 +1,16 @@
 /** SSR helpers for the public under-development gate (Express `server.js`). */
+import {
+  UC_COOKIE_MAX_AGE_SEC,
+  UC_COOKIE_NAME,
+  UC_DEFAULT_COPY,
+  UC_PUBLIC_API_PATH,
+  UC_QUERY_PARAM,
+  buildUcSetCookieHeader,
+  readCookieHeader,
+  ucFailClosedCopy,
+} from '@hellolocal/shared';
 
-export const UC_QUERY_PARAM = 'access';
-export const UC_COOKIE_NAME = 'hl_uc_access';
-/** Persistent until token regen/invalidate (browsers may clamp ~400 days). */
-export const UC_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 400;
-
-const FALLBACK_COPY = {
-  hu: {
-    title: 'Fejlesztés alatt',
-    body: 'Az oldal jelenleg fejlesztés alatt áll. Hamarosan visszatérünk.',
-  },
-  en: {
-    title: 'Under development',
-    body: 'This site is currently under development. Please check back soon.',
-  },
-  de: {
-    title: 'In Entwicklung',
-    body: 'Diese Seite befindet sich derzeit in Entwicklung. Bitte schauen Sie bald wieder vorbei.',
-  },
-};
+export { UC_QUERY_PARAM, UC_COOKIE_NAME, UC_COOKIE_MAX_AGE_SEC };
 
 export function escapeHtml(value) {
   return String(value ?? '')
@@ -30,20 +22,7 @@ export function escapeHtml(value) {
 }
 
 export function readCookie(header, name) {
-  if (!header) return null;
-  const parts = String(header).split(';');
-  for (const part of parts) {
-    const idx = part.indexOf('=');
-    if (idx <= 0) continue;
-    const key = part.slice(0, idx).trim();
-    if (key !== name) continue;
-    try {
-      return decodeURIComponent(part.slice(idx + 1).trim());
-    } catch {
-      return part.slice(idx + 1).trim();
-    }
-  }
-  return null;
+  return readCookieHeader(header, name);
 }
 
 export function langFromPath(pathname) {
@@ -54,61 +33,50 @@ export function langFromPath(pathname) {
   return 'hu';
 }
 
-function resolveCookieDomain() {
-  const configured = (process.env.COOKIE_DOMAIN || '').trim();
-  if (configured) return configured.startsWith('.') ? configured : `.${configured}`;
-  const frontend = (process.env.FRONTEND_URL || '').trim();
-  if (!frontend) return undefined;
-  try {
-    const host = new URL(frontend).hostname;
-    if (!host || host === 'localhost' || /^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return undefined;
-    const parts = host.split('.');
-    if (parts.length < 2) return undefined;
-    return `.${parts.slice(-2).join('.')}`;
-  } catch {
-    return undefined;
-  }
-}
-
 /** HttpOnly Secure cookie for SSR responses (token never returned to JS). */
 export function buildSetCookieHeader(token, maxAgeSec = UC_COOKIE_MAX_AGE_SEC, options = {}) {
-  const clear = Boolean(options.clear) || !token;
-  const maxAge = clear ? 0 : Math.max(0, Math.floor(Number(maxAgeSec) || UC_COOKIE_MAX_AGE_SEC));
-  const secure =
-    process.env.NODE_ENV === 'production' ||
-    process.env.COOKIE_SECURE === 'true' ||
-    String(process.env.FRONTEND_URL || '').startsWith('https:');
-  const parts = [
-    `${UC_COOKIE_NAME}=${clear ? '' : encodeURIComponent(token)}`,
-    'Path=/',
-    `Max-Age=${maxAge}`,
-    'HttpOnly',
-    'SameSite=Lax',
-  ];
-  if (secure) parts.push('Secure');
-  const domain = resolveCookieDomain();
-  if (domain) parts.push(`Domain=${domain}`);
-  return parts.join('; ');
+  return buildUcSetCookieHeader(token, maxAgeSec, {
+    clear: Boolean(options.clear) || !token,
+    env: {
+      cookieDomain: process.env.COOKIE_DOMAIN,
+      frontendUrl: process.env.FRONTEND_URL,
+      nodeEnv: process.env.NODE_ENV,
+      cookieSecure: process.env.COOKIE_SECURE,
+    },
+  });
 }
 
+/** Keep in sync with `apps/web/src/styles/under-construction.css`. */
+const UC_GATE_CSS = `
+.uc-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(160deg,#1f2937 0%,#0f172a 55%,#111827 100%);color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;position:relative;overflow:hidden;box-sizing:border-box}
+.uc-gate__glow{position:absolute;inset:-20%;background:radial-gradient(circle at 30% 20%,rgba(148,163,184,.18),transparent 45%),radial-gradient(circle at 70% 80%,rgba(100,116,139,.16),transparent 40%);pointer-events:none}
+.uc-gate__inner{position:relative;max-width:560px;z-index:1}
+.uc-gate__brand{margin:0 0 12px;letter-spacing:.08em;text-transform:uppercase;font-size:12px;color:rgba(248,250,252,.7);font-weight:600}
+.uc-gate__title{margin:0 0 16px;font-size:clamp(28px,6vw,42px);line-height:1.15;font-weight:700}
+.uc-gate__body{margin:0;font-size:clamp(16px,3.5vw,18px);line-height:1.6;color:rgba(248,250,252,.85)}
+.uc-gate__button{margin:28px 0 0;color:rgba(248,250,252,.65);font-size:14px}
+`;
+
 export function renderUnderConstructionBody(copy, lang = 'hu') {
-  const fallback = FALLBACK_COPY[lang] || FALLBACK_COPY.hu;
+  const fallback = UC_DEFAULT_COPY[lang] || UC_DEFAULT_COPY.hu;
   const title = escapeHtml((copy && copy.title) || fallback.title);
   const body = escapeHtml((copy && copy.body) || fallback.body).replace(/\n/g, '<br />');
   const button = copy && copy.buttonLabel ? escapeHtml(copy.buttonLabel) : '';
   return `
-    <main style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(160deg,#1f2937 0%,#0f172a 55%,#111827 100%);color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:560px;">
-        <p style="margin:0 0 12px;letter-spacing:0.08em;text-transform:uppercase;font-size:12px;color:rgba(248,250,252,0.7);font-weight:600;">HelloLocal</p>
-        <h1 style="margin:0 0 16px;font-size:clamp(28px,6vw,42px);line-height:1.15;font-weight:700;">${title}</h1>
-        <p style="margin:0;font-size:clamp(16px,3.5vw,18px);line-height:1.6;color:rgba(248,250,252,0.85);">${body}</p>
-        ${button ? `<p style="margin:28px 0 0;color:rgba(248,250,252,0.65);font-size:14px;">${button}</p>` : ''}
-      </div>
-    </main>`;
+    <style>${UC_GATE_CSS}</style>
+    <div class="uc-gate">
+      <div class="uc-gate__glow" aria-hidden="true"></div>
+      <main class="uc-gate__inner">
+        <p class="uc-gate__brand">HelloLocal</p>
+        <h1 class="uc-gate__title">${title}</h1>
+        <p class="uc-gate__body">${body}</p>
+        ${button ? `<p class="uc-gate__button">${button}</p>` : ''}
+      </main>
+    </div>`;
 }
 
 export function applyUnderConstructionDocument(html, copy, lang = 'hu') {
-  const fallback = FALLBACK_COPY[lang] || FALLBACK_COPY.hu;
+  const fallback = UC_DEFAULT_COPY[lang] || UC_DEFAULT_COPY.hu;
   const title = escapeHtml((copy && copy.title) || fallback.title);
   const description = escapeHtml((copy && copy.body) || fallback.body);
   let next = html;
@@ -144,10 +112,6 @@ export function applyUnderConstructionDocument(html, copy, lang = 'hu') {
   return next;
 }
 
-function failClosedCopy(lang) {
-  return FALLBACK_COPY[lang] || FALLBACK_COPY.hu;
-}
-
 /**
  * Fetch gate status from API.
  * Fail-CLOSED on errors: when the check cannot complete, treat as gated (do not serve the full site).
@@ -170,20 +134,17 @@ export async function fetchUnderConstructionGate({
     allowed: false,
     refreshCookie: false,
     clearCookie: false,
-    copy: failClosedCopy(lang),
+    copy: ucFailClosedCopy(lang),
     setCookieHeaders: [],
   };
   try {
-    const response = await fetch(
-      `${apiUrl}/api/app-settings/under-construction?${params.toString()}`,
-      {
-        signal: controller.signal,
-        headers: {
-          Accept: 'application/json',
-          ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-        },
-      }
-    );
+    const response = await fetch(`${apiUrl}${UC_PUBLIC_API_PATH}?${params.toString()}`, {
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+    });
     if (!response.ok) {
       return blocked;
     }

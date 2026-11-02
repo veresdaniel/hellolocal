@@ -13,6 +13,7 @@ import { canAddEvent, type PlacePlan } from "../config/place-limits.config";
 import { generateSlug } from "../slug/slug.helper";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { SitemapService } from "../seo/sitemap.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateEventDto {
   siteId: string;
@@ -550,7 +551,7 @@ export class AdminEventService {
     });
 
     if (!event) {
-      throw new NotFoundException("Event not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_EVENT);
     }
 
     return event;
@@ -582,10 +583,10 @@ export class AdminEventService {
 
     const place = await this.prisma.place.findFirst({
       where: { id: dto.placeId, siteId: dto.siteId },
-      select: { id: true, plan: true },
+      select: { id: true, plan: true, lat: true, lng: true },
     });
     if (!place) {
-      throw new BadRequestException("placeId must belong to the same site");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
     }
 
     const plan: PlacePlan = (place.plan as PlacePlan) || "free";
@@ -629,6 +630,8 @@ export class AdminEventService {
         isPinned: dto.isPinned ?? false,
         isRainSafe: dto.isRainSafe ?? false,
         showOnMap: dto.showOnMap ?? true,
+        lat: dto.lat ?? place.lat,
+        lng: dto.lng ?? place.lng,
         // Gallery is now managed via Gallery entities and shortcodes, not event.gallery array
         translations: {
           create: translations.map((t) => ({
@@ -817,7 +820,7 @@ export class AdminEventService {
         select: { id: true },
       });
       if (!place) {
-        throw new BadRequestException("placeId must belong to the same site");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
       }
       updateData.placeId = nextPlaceId;
     }

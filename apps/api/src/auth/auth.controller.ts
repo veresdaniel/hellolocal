@@ -24,12 +24,13 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { RequestWithSite } from "../common/middleware/site-resolve.middleware";
 import { langFromPath } from "../common/lang";
+import { API_AUTH_BASE } from "@hellolocal/shared";
 
 /**
  * Authentication controller.
  * Handles user registration, login, password reset, and token refresh.
  */
-@Controller("/api/auth")
+@Controller(API_AUTH_BASE)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

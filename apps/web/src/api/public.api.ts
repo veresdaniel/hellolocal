@@ -1,4 +1,11 @@
-import type { Lang} from "../types/enums";
+import {
+  UC_COOKIE_MAX_AGE_SEC,
+  UC_COOKIE_NAME,
+  UC_PUBLIC_API_PATH,
+  UC_QUERY_PARAM,
+  ucFailClosedCopy,
+} from "@hellolocal/shared";
+import type { Lang } from "../types/enums";
 // src/api/public.api.ts
 /**
  * Public API functions that don't require authentication
@@ -140,20 +147,18 @@ export type UnderConstructionPublicStatus = {
   copy: { title: string; body: string; buttonLabel: string };
 };
 
-const UC_FAIL_CLOSED: UnderConstructionPublicStatus = {
-  enabled: true,
-  allowed: false,
-  queryParam: "access",
-  cookieName: "hl_uc_access",
-  cookieMaxAgeSec: 60 * 60 * 24 * 400,
-  refreshCookie: false,
-  clearCookie: false,
-  copy: {
-    title: "Fejlesztés alatt",
-    body: "Az oldal jelenleg fejlesztés alatt áll.",
-    buttonLabel: "",
-  },
-};
+function ucFailClosedStatus(lang?: string): UnderConstructionPublicStatus {
+  return {
+    enabled: true,
+    allowed: false,
+    queryParam: UC_QUERY_PARAM,
+    cookieName: UC_COOKIE_NAME,
+    cookieMaxAgeSec: UC_COOKIE_MAX_AGE_SEC,
+    refreshCookie: false,
+    clearCookie: false,
+    copy: ucFailClosedCopy(lang),
+  };
+}
 
 /**
  * Public under-development gate.
@@ -167,22 +172,19 @@ export async function getUnderConstructionGate(options?: {
 }): Promise<UnderConstructionPublicStatus> {
   const params = new URLSearchParams();
   if (options?.lang) params.set("lang", options.lang);
-  if (options?.accessToken) params.set("access", options.accessToken);
+  if (options?.accessToken) params.set(UC_QUERY_PARAM, options.accessToken);
   const query = params.toString();
   try {
-    const res = await fetch(
-      `/api/app-settings/under-construction${query ? `?${query}` : ""}`,
-      {
-        headers: { Accept: "application/json" },
-        credentials: "include",
-        signal: options?.signal,
-      }
-    );
+    const res = await fetch(`${UC_PUBLIC_API_PATH}${query ? `?${query}` : ""}`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+      signal: options?.signal,
+    });
     if (!res.ok) {
-      return UC_FAIL_CLOSED;
+      return ucFailClosedStatus(options?.lang);
     }
     return (await res.json()) as UnderConstructionPublicStatus;
   } catch {
-    return UC_FAIL_CLOSED;
+    return ucFailClosedStatus(options?.lang);
   }
 }

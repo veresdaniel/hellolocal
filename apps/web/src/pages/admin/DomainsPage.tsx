@@ -289,7 +289,7 @@ export function DomainsPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(20px, 5vw, 24px)",
               fontWeight: 700,
             }}
@@ -312,7 +312,7 @@ export function DomainsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.name ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.name ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -347,7 +347,7 @@ export function DomainsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.logoUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.logoUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -382,7 +382,7 @@ export function DomainsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.faviconUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.faviconUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -402,15 +402,15 @@ export function DomainsPage() {
               )}
             </div>
 
-            <div style={{ borderTop: "1px solid var(--admin-primary-border, #bfdbfe)", paddingTop: 20 }}>
+            <div style={{ borderTop: "1px solid var(--admin-primary-border)", paddingTop: 20 }}>
               <h3
                 style={{
                   marginBottom: 16,
-                  color: "var(--admin-primary, #2563eb)",
+                  color: "var(--admin-primary)",
                   fontSize: "clamp(16px, 3.5vw, 18px)",
                   fontWeight: 600,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.placeholderImages")}
@@ -436,7 +436,7 @@ export function DomainsPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.defaultPlaceholderCardImage
                         ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border, #bfdbfe)",
+                        : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -478,7 +478,7 @@ export function DomainsPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.defaultPlaceholderDetailHeroImage
                         ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border, #bfdbfe)",
+                        : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -517,7 +517,7 @@ export function DomainsPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       border: formErrors.defaultEventPlaceholderCardImage
                         ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border, #bfdbfe)",
+                        : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -552,7 +552,7 @@ export function DomainsPage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.brandBadgeIcon ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: formErrors.brandBadgeIcon ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -574,15 +574,15 @@ export function DomainsPage() {
               </div>
             </div>
 
-            <div style={{ borderTop: "1px solid var(--admin-primary-border, #bfdbfe)", paddingTop: 20 }}>
+            <div style={{ borderTop: "1px solid var(--admin-primary-border)", paddingTop: 20 }}>
               <h3
                 style={{
                   marginBottom: 16,
-                  color: "var(--admin-primary, #2563eb)",
+                  color: "var(--admin-primary)",
                   fontSize: "clamp(16px, 3.5vw, 18px)",
                   fontWeight: 600,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.mapDefaults")}
@@ -609,7 +609,7 @@ export function DomainsPage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -631,7 +631,7 @@ export function DomainsPage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.mapDefaultLat ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: formErrors.mapDefaultLat ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -666,7 +666,7 @@ export function DomainsPage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.mapDefaultLng ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: formErrors.mapDefaultLng ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}
@@ -701,7 +701,7 @@ export function DomainsPage() {
                       fontSize: "clamp(15px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.mapDefaultZoom ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                      border: formErrors.mapDefaultZoom ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                       borderRadius: 8,
                       boxSizing: "border-box",
                     }}

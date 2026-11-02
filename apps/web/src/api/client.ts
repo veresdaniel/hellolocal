@@ -2,6 +2,7 @@ import { isTokenExpired } from "../utils/tokenUtils";
 import { refreshToken } from "./auth.api";
 import { DEFAULT_BACKEND_URL, type Lang} from "../app/config";
 import { preferredLang} from "../app/browserLang";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../constants/authStorage";
 
 /**
  * Get API base URL from environment variable or use relative path for development.
@@ -58,9 +59,9 @@ function redirectToLogin() {
   }
 
   // Clear tokens and user data
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("user");
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
 
   // Set session expired flag
   sessionStorage.setItem("sessionExpired", "true");
@@ -74,8 +75,8 @@ function redirectToLogin() {
  * Returns true if session is likely expired
  */
 function isSessionLikelyExpired(): boolean {
-  const accessToken = localStorage.getItem("accessToken");
-  const refreshTokenValue = localStorage.getItem("refreshToken");
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
   // If no tokens, session is expired
   if (!accessToken && !refreshTokenValue) {
@@ -114,8 +115,8 @@ function checkAndRedirectIfSessionExpired(): boolean {
  * Refreshes the access token if it's expired
  */
 async function ensureValidToken(): Promise<void> {
-  const accessToken = localStorage.getItem("accessToken");
-  const refreshTokenValue = localStorage.getItem("refreshToken");
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
   if (!accessToken || !refreshTokenValue) {
     throw new Error("No tokens available");
@@ -124,8 +125,8 @@ async function ensureValidToken(): Promise<void> {
   if (isTokenExpired(accessToken)) {
     try {
       const data = await refreshToken({ refreshToken: refreshTokenValue });
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
       recordApiInteraction(); // Record interaction after successful refresh
     } catch {
       // Refresh failed, redirect to login immediately
@@ -138,7 +139,7 @@ async function ensureValidToken(): Promise<void> {
 export async function apiGet<T>(path: string): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   const apiBaseUrl = getApiBaseUrl();
 
   // Add cache-busting headers and options for GET requests
@@ -168,12 +169,12 @@ export async function apiGet<T>(path: string): Promise<T> {
   if (!res.ok) {
     // If 401 (unauthorized), try to refresh token once more, then redirect to login if still fails
     if (res.status === 401) {
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (refreshTokenValue) {
         try {
           const data = await refreshToken({ refreshToken: refreshTokenValue });
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("refreshToken", data.refreshToken);
+          localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+          localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
           // Retry the original request with cache-busting
           let retryRes: Response;
           try {
@@ -200,9 +201,9 @@ export async function apiGet<T>(path: string): Promise<T> {
           if (!retryRes.ok) {
             // If still 401 after refresh, redirect to login
             if (retryRes.status === 401) {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
               redirectToLogin();
               throw new Error("Session expired. Please log in again.");
             }
@@ -382,7 +383,7 @@ export async function apiPostPublic<T>(path: string, data: unknown): Promise<T> 
 export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   const apiBaseUrl = getApiBaseUrl();
   let res: Response;
   try {
@@ -408,12 +409,12 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
   if (!res.ok) {
     // If 401, try to refresh token once more
     if (res.status === 401) {
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (refreshTokenValue) {
         try {
           const refreshData = await refreshToken({ refreshToken: refreshTokenValue });
-          localStorage.setItem("accessToken", refreshData.accessToken);
-          localStorage.setItem("refreshToken", refreshData.refreshToken);
+          localStorage.setItem(ACCESS_TOKEN_KEY, refreshData.accessToken);
+          localStorage.setItem(REFRESH_TOKEN_KEY, refreshData.refreshToken);
           // Retry the original request
           let retryRes: Response;
           try {
@@ -438,9 +439,9 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           if (!retryRes.ok) {
             // If still 401 after refresh, redirect to login
             if (retryRes.status === 401) {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
               redirectToLogin();
               throw new Error("Session expired. Please log in again.");
             }
@@ -450,9 +451,9 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
           return (await retryRes.json()) as T;
         } catch {
           // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
           redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }
@@ -519,7 +520,7 @@ export async function apiPost<T>(path: string, data: unknown): Promise<T> {
 export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   const apiBaseUrl = getApiBaseUrl();
   let res: Response;
   try {
@@ -545,12 +546,12 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
   if (!res.ok) {
     // If 401 (unauthorized), try to refresh token once more
     if (res.status === 401) {
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (refreshTokenValue) {
         try {
           const refreshData = await refreshToken({ refreshToken: refreshTokenValue });
-          localStorage.setItem("accessToken", refreshData.accessToken);
-          localStorage.setItem("refreshToken", refreshData.refreshToken);
+          localStorage.setItem(ACCESS_TOKEN_KEY, refreshData.accessToken);
+          localStorage.setItem(REFRESH_TOKEN_KEY, refreshData.refreshToken);
           // Retry the original request
           let retryRes: Response;
           try {
@@ -575,9 +576,9 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           if (!retryRes.ok) {
             // If still 401 after refresh, redirect to login
             if (retryRes.status === 401) {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
               redirectToLogin();
               throw new Error("Session expired. Please log in again.");
             }
@@ -587,9 +588,9 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
           return (await retryRes.json()) as T;
         } catch {
           // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
           redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }
@@ -663,7 +664,7 @@ export async function apiPut<T>(path: string, data: unknown): Promise<T> {
 export async function apiDelete<T>(path: string): Promise<T> {
   await ensureValidToken();
   recordApiInteraction(); // Record API interaction
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   const apiBaseUrl = getApiBaseUrl();
 
   let res: Response;
@@ -693,12 +694,12 @@ export async function apiDelete<T>(path: string): Promise<T> {
   if (!res.ok) {
     // If 401 (unauthorized), try to refresh token once more
     if (res.status === 401) {
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (refreshTokenValue) {
         try {
           const refreshData = await refreshToken({ refreshToken: refreshTokenValue });
-          localStorage.setItem("accessToken", refreshData.accessToken);
-          localStorage.setItem("refreshToken", refreshData.refreshToken);
+          localStorage.setItem(ACCESS_TOKEN_KEY, refreshData.accessToken);
+          localStorage.setItem(REFRESH_TOKEN_KEY, refreshData.refreshToken);
           // Retry the original request with cache-busting
           let retryRes: Response;
           try {
@@ -725,9 +726,9 @@ export async function apiDelete<T>(path: string): Promise<T> {
           if (!retryRes.ok) {
             // If still 401 after refresh, redirect to login
             if (retryRes.status === 401) {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
               redirectToLogin();
               throw new Error("Session expired. Please log in again.");
             }
@@ -738,9 +739,9 @@ export async function apiDelete<T>(path: string): Promise<T> {
           return data;
         } catch {
           // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
           redirectToLogin();
           throw new Error("Session expired. Please log in again.");
         }

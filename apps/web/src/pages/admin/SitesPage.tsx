@@ -337,11 +337,11 @@ export function SitesPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editSite") : t("admin.forms.newSite")}
@@ -361,7 +361,7 @@ export function SitesPage() {
                         color:
                           readLang(formErrors, "name", selectedLang)
                             ? "#dc2626"
-                            : "var(--admin-primary, #2563eb)",
+                            : "var(--admin-primary)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -400,7 +400,7 @@ export function SitesPage() {
                         border:
                           readLang(formErrors, "name", selectedLang)
                             ? "2px solid #fca5a5"
-                            : "2px solid var(--admin-primary-border, #bfdbfe)",
+                            : "2px solid var(--admin-primary-border)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
@@ -414,14 +414,14 @@ export function SitesPage() {
                         const hasError =
                           readLang(formErrors, "name", selectedLang);
                         if (!hasError) {
-                          e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                          e.target.style.borderColor = "var(--admin-primary)";
                           e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                         }
                       }}
                       onBlur={(e) => {
                         const hasError =
                           readLang(formErrors, "name", selectedLang);
-                        e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
+                        e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -441,7 +441,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "var(--admin-primary, #2563eb)",
+                        color: "var(--admin-primary)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -481,18 +481,18 @@ export function SitesPage() {
                         fontSize: "clamp(15px, 3.5vw, 16px)",
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                        border: "2px solid var(--admin-primary-border)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.target.style.borderColor = "var(--admin-primary)";
                         e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                        e.target.style.borderColor = "var(--admin-primary-border)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -505,7 +505,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "var(--admin-primary, #2563eb)",
+                        color: "var(--admin-primary)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -540,7 +540,7 @@ export function SitesPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "var(--admin-primary, #2563eb)",
+                        color: "var(--admin-primary)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -564,18 +564,18 @@ export function SitesPage() {
                         fontSize: "clamp(15px, 3.5vw, 16px)",
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                        border: "2px solid var(--admin-primary-border)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
                         boxSizing: "border-box",
                       }}
                       onFocus={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.target.style.borderColor = "var(--admin-primary)";
                         e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                        e.target.style.borderColor = "var(--admin-primary-border)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -608,7 +608,7 @@ export function SitesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: formErrors.brandId ? "#dc2626" : "var(--admin-primary, #2563eb)",
+                    color: formErrors.brandId ? "#dc2626" : "var(--admin-primary)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -626,7 +626,7 @@ export function SitesPage() {
                     fontSize: "clamp(15px, 3.5vw, 16px)",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)"}`,
+                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border)"}`,
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -635,12 +635,12 @@ export function SitesPage() {
                   }}
                   onFocus={(e) => {
                     if (!formErrors.brandId) {
-                      e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.target.style.borderColor = "var(--admin-primary)";
                       e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                     }
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
+                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -691,7 +691,7 @@ export function SitesPage() {
                 padding: "16px 20px",
                 background: "var(--admin-surface-subtle, #f8fafc)",
                 borderRadius: 12,
-                border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                border: "2px solid var(--admin-primary-border)",
               }}
             >
               <label
@@ -709,7 +709,7 @@ export function SitesPage() {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
                 />
                 <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>

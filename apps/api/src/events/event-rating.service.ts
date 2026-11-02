@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class EventRatingService {
@@ -24,7 +25,7 @@ export class EventRatingService {
     });
 
     if (!event) {
-      throw new NotFoundException("Event not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_EVENT);
     }
 
     // Upsert rating and update aggregated fields in a transaction

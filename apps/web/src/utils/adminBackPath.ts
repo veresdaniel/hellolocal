@@ -77,16 +77,7 @@ export function resolveAdminBackNavigation(
     return { type: "none" };
   }
 
-  const dashboard = `/${lang}/admin`;
-  const isHierarchicalParent = Boolean(backTo) || target !== dashboard;
-
-  if (isHierarchicalParent) {
-    return { type: "path", to: target };
-  }
-
-  if (canUseAdminHistoryBack()) {
-    return { type: "history" };
-  }
-
+  // Prefer an explicit parent path over history(-1) so Back is predictable
+  // even after deep links / refreshed edit screens.
   return { type: "path", to: target };
 }

@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { GalleryPublicService } from "./gallery-public.service";
 import { assertLang } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 /**
  * Public controller for gallery endpoints.
@@ -54,7 +55,7 @@ export class GalleryPublicController {
       );
 
       // For unexpected errors, throw as NotFoundException to avoid exposing internal errors
-      throw new NotFoundException("Gallery not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_GALLERY);
     }
   }
 }

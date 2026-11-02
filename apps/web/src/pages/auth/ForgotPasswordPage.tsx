@@ -100,7 +100,7 @@ export function ForgotPasswordPage() {
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
           }}
         >
           {t("admin.forgotPassword")}

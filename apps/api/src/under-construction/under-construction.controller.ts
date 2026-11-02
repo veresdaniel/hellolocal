@@ -15,25 +15,13 @@ import type { Response } from "express";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { readCookieHeader, UC_ADMIN_API_PATH, UC_PUBLIC_API_PATH } from "@hellolocal/shared";
 import { buildUcSetCookieHeader } from "./under-construction-cookie";
 import { UC_COOKIE_NAME, UC_QUERY_PARAM } from "./under-construction.constants";
 import { UnderConstructionSaveDto } from "./under-construction.dto";
 import { UnderConstructionService } from "./under-construction.service";
 
-function readCookie(header: string | undefined, name: string): string | null {
-  if (!header) return null;
-  const parts = header.split(";");
-  for (const part of parts) {
-    const idx = part.indexOf("=");
-    if (idx <= 0) continue;
-    const key = part.slice(0, idx).trim();
-    if (key !== name) continue;
-    return decodeURIComponent(part.slice(idx + 1).trim());
-  }
-  return null;
-}
-
-@Controller("/api/admin/under-construction")
+@Controller(UC_ADMIN_API_PATH)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.superadmin)
 export class UnderConstructionAdminController {
@@ -64,34 +52,32 @@ export class UnderConstructionAdminController {
  * Public gate check — no auth. Used by SPA + Express SSR (`server.js`).
  * Does not expose the access token in JSON; sets HttpOnly Secure cookie instead.
  */
-@Controller("/api/app-settings/under-construction")
+@Controller(UC_PUBLIC_API_PATH)
 @Throttle({ default: { limit: 60, ttl: 60000 } })
 export class UnderConstructionPublicController {
   constructor(private readonly underConstruction: UnderConstructionService) {}
 
   @Get()
   async gate(
+    @Res({ passthrough: true }) res: Response,
     @Query(UC_QUERY_PARAM) access?: string,
     @Query("lang") lang?: string,
-    @Headers("cookie") cookieHeader?: string,
-    @Res({ passthrough: true }) res?: Response
+    @Headers("cookie") cookieHeader?: string
   ) {
-    const cookieToken = readCookie(cookieHeader, UC_COOKIE_NAME);
+    const cookieToken = readCookieHeader(cookieHeader, UC_COOKIE_NAME);
     const resolved = await this.underConstruction.resolvePublic({
       lang,
       queryToken: typeof access === "string" ? access : null,
       cookieToken,
     });
 
-    if (res) {
-      if (resolved.refreshCookie && resolved.cookieToken) {
-        res.append(
-          "Set-Cookie",
-          buildUcSetCookieHeader(resolved.cookieToken, resolved.cookieMaxAgeSec)
-        );
-      } else if (resolved.clearCookie) {
-        res.append("Set-Cookie", buildUcSetCookieHeader("", 0, { clear: true }));
-      }
+    if (resolved.refreshCookie && resolved.cookieToken) {
+      res.append(
+        "Set-Cookie",
+        buildUcSetCookieHeader(resolved.cookieToken, resolved.cookieMaxAgeSec)
+      );
+    } else if (resolved.clearCookie) {
+      res.append("Set-Cookie", buildUcSetCookieHeader("", 0, { clear: true }));
     }
 
     return this.underConstruction.toPublicJson(resolved);

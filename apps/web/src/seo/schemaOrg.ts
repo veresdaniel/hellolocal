@@ -381,21 +381,26 @@ export function generateGraphSchema(nodes: object[]): object {
   };
 }
 
+const JSON_LD_ATTR = "data-hl-jsonld";
+
 /**
  * Inject JSON-LD script tag into document head
  */
 export function injectJsonLd(schema: object): void {
-  // Remove existing schema.org script if present
-  const existing = document.head.querySelector('script[type="application/ld+json"]');
-  if (existing) {
-    existing.remove();
-  }
+  removeJsonLd();
 
-  // Create new script tag
   const script = document.createElement("script");
   script.type = "application/ld+json";
+  script.setAttribute(JSON_LD_ATTR, "1");
   script.textContent = JSON.stringify(schema, null, 2);
   document.head.appendChild(script);
+}
+
+/** Remove JSON-LD scripts from document head (SPA navigation cleanup). */
+export function removeJsonLd(): void {
+  document.head
+    .querySelectorAll(`script[type="application/ld+json"]`)
+    .forEach((node) => node.remove());
 }
 
 /** Robots directive from platform/site crawlability flag. */

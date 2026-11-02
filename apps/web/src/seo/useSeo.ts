@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { Seo } from "../types/seo";
 import {
   injectJsonLd,
+  removeJsonLd,
   generateLocalBusinessSchema,
   generateEventSchema,
   generateArticleSchema,
@@ -134,5 +135,9 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
       }
       if (schema) injectJsonLd(schema);
     }
+
+    return () => {
+      removeJsonLd();
+    };
   }, [seo, opts?.defaultOgType, opts?.siteName, t]);
 }

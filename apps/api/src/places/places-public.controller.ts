@@ -9,6 +9,7 @@ import { PlacesService } from "./places.service";
 import { PlacesPriceListService } from "./places-price-list.service";
 import { AdminFloorplanService } from "../admin/admin-floorplan.service";
 import { assertLang } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 /**
  * Public controller for place-related endpoints.
@@ -162,7 +163,7 @@ export class PlacesPublicController {
     // Verify place belongs to site
     const place = await this.placesService.detailById({ lang, siteKey, placeId });
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Get all floorplans for the place (public read-only, no auth required)
@@ -191,7 +192,7 @@ export class PlacesPublicController {
     // Verify place belongs to site
     const place = await this.placesService.detailById({ lang, siteKey, placeId });
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Get floorplan (public read-only, no auth required)

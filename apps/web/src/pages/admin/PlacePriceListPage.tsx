@@ -406,7 +406,7 @@ export function PlacePriceListPage() {
               onClick={handleAddBlock}
               style={{
                 padding: "12px 24px",
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -617,7 +617,7 @@ export function PlacePriceListPage() {
               onClick={handleAddBlock}
               style={{
                 padding: "12px 24px",
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -684,7 +684,7 @@ export function PlacePriceListPage() {
             position: "fixed",
             top: 20,
             right: 20,
-            background: "var(--admin-primary, #2563eb)",
+            background: "var(--admin-primary)",
             color: "white",
             padding: "12px 24px",
             borderRadius: 8,

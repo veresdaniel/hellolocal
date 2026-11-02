@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class PlacesPriceListService {
@@ -33,7 +34,7 @@ export class PlacesPriceListService {
 
     // Verify place belongs to site and is active
     if (priceList.place.siteId !== siteId || !priceList.place.isActive) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Check if module is enabled

@@ -18,6 +18,7 @@ import { UserRole } from "@prisma/client";
 import { assertLang } from "../common/lang";
 import { RbacService } from "../auth/rbac.service";
 import { canEditCopy } from "../auth/copy-access";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Controller("api/:lang/:siteKey/platform-settings")
 @SkipThrottle({ default: true, strict: true })
@@ -57,10 +58,10 @@ export class AdminPlatformSettingsController {
   ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
-      throw new ForbiddenException("User has no associated site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.service.getMapSettings(siteId);
   }
@@ -79,10 +80,10 @@ export class AdminPlatformSettingsController {
     @CurrentUser() user: { siteIds: string[] }
   ) {
     if (!dto.siteId) {
-      throw new ForbiddenException("siteId is required");
+      throw new ForbiddenException(ERROR_MESSAGES.BAD_REQUEST_SITE_ID_REQUIRED);
     }
     if (!user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.service.setMapSettings(dto.siteId, {
       townId: dto.townId,
@@ -100,10 +101,10 @@ export class AdminPlatformSettingsController {
   ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
-      throw new ForbiddenException("User has no associated site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.service.getPlatformSettingsForAdmin(siteId);
   }
@@ -128,7 +129,7 @@ export class AdminPlatformSettingsController {
     @CurrentUser() user: { id: string; role: UserRole; siteIds: string[] }
   ) {
     if (!dto.siteId) {
-      throw new ForbiddenException("siteId is required");
+      throw new ForbiddenException(ERROR_MESSAGES.BAD_REQUEST_SITE_ID_REQUIRED);
     }
     const touchesCopy =
       dto.siteName !== undefined ||
@@ -143,7 +144,7 @@ export class AdminPlatformSettingsController {
       );
     }
     if (!owner && !user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     if (
       !touchesCopy &&
@@ -151,7 +152,7 @@ export class AdminPlatformSettingsController {
       user.role !== UserRole.superadmin &&
       user.role !== UserRole.admin
     ) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.service.setPlatformSettings(dto.siteId, {
       siteName: dto.siteName,

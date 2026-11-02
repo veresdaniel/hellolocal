@@ -1,4 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../../common/constants/error-messages";
 import { Reflector } from "@nestjs/core";
 import { UserRole } from "@prisma/client";
 
@@ -22,7 +23,7 @@ export class RolesGuard implements CanActivate {
 
     // If no user (session expired or invalid token), return 401
     if (!user) {
-      throw new UnauthorizedException("Session expired or invalid token");
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_SESSION_EXPIRED);
     }
 
     // Superadmin has access to everything - check this FIRST

@@ -5,7 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
-
+import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -127,7 +127,7 @@ export function RegisterPage() {
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
           }}
         >
           {t("admin.register")}
@@ -524,7 +524,7 @@ export function RegisterPage() {
         {/* Google OAuth Button */}
         <a
           key="google-register-button"
-          href={`/api/auth/google`}
+          href={API_AUTH_GOOGLE}
           style={{
             width: "100%",
             padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { TIMING } from "../app/config";
 import { refreshToken } from "../api/auth.api";
 import { getTokenExpiration } from "../utils/tokenUtils";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../constants/authStorage";
 
 interface SessionExpirationModalProps {
   onExtend: () => void;
@@ -22,7 +23,7 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
   // Reliable time tracking that works even when tab is inactive
   useEffect(() => {
     const updateTimeRemaining = () => {
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (!accessToken) {
         setTimeRemaining(null);
         return;
@@ -115,14 +116,14 @@ export function SessionExpirationModal({ onExtend, onDismiss }: SessionExpiratio
   const handleExtend = useCallback(async () => {
     setIsExtending(true);
     try {
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (!refreshTokenValue) {
         throw new Error("No refresh token available");
       }
 
       const data = await refreshToken({ refreshToken: refreshTokenValue });
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
 
       onExtend();
     } catch (error) {

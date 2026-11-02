@@ -48,6 +48,7 @@ type TownHierarchyListProps = {
   onSearchChange: (query: string) => void;
   onEditTown: (townId: string) => void;
   onDeleteTown: (townId: string) => void;
+  onDeletePlace: (placeId: string) => Promise<boolean>;
   isLoadingTowns?: boolean;
   error?: string | null;
 };
@@ -83,6 +84,7 @@ export function TownHierarchyList({
   onSearchChange,
   onEditTown,
   onDeleteTown,
+  onDeletePlace,
   isLoadingTowns = false,
   error = null,
 }: TownHierarchyListProps) {
@@ -416,6 +418,26 @@ export function TownHierarchyList({
             }}
           >
             {t("common.edit")}
+          </button>
+          <button
+            type="button"
+            className="admin-hierarchy__btn admin-hierarchy__btn--icon admin-hierarchy__btn--danger"
+            aria-label={t("common.delete")}
+            title={t("common.delete")}
+            onClick={(e) => {
+              e.stopPropagation();
+              void onDeletePlace(place.id).then((deleted) => {
+                if (!deleted) return;
+                setPlaces((prev) => prev.filter((item) => item.id !== place.id));
+                setExpandedPlaceIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(place.id);
+                  return next;
+                });
+              });
+            }}
+          >
+            🗑
           </button>
         </div>
 

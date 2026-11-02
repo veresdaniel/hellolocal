@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
 import { SitemapService } from "../seo/sitemap.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 const ALLOWED_KEYS = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
@@ -85,7 +86,7 @@ export class AdminLegalService {
     });
 
     if (!legalPage) {
-      throw new NotFoundException("Legal page not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_LEGAL_PAGE);
     }
 
     return legalPage;
@@ -106,7 +107,7 @@ export class AdminLegalService {
     });
 
     if (!legalPage) {
-      throw new NotFoundException("Legal page not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_LEGAL_PAGE);
     }
 
     return legalPage;

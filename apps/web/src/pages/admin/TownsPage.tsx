@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import { getTowns, createTown, updateTown, deleteTown } from "../../api/admin.api";
+import { getTowns, createTown, updateTown, deleteTown, deletePlace } from "../../api/admin.api";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
@@ -344,6 +344,19 @@ export function TownsPage() {
     }
   };
 
+  const handleDeletePlace = async (id: string) => {
+    if (!confirm(t("admin.confirmations.deletePlace"))) return false;
+
+    try {
+      await deletePlace(id, selectedSiteId || undefined);
+      notifyEntityChanged("places");
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.errors.deletePlaceFailed"));
+      return false;
+    }
+  };
+
   const startEdit = (town: Town) => {
     setEditingId(town.id);
     const hu = findTranslation(town.translations, "hu" as Lang);
@@ -462,11 +475,11 @@ export function TownsPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editTown") : t("admin.forms.newTown")}
@@ -638,7 +651,7 @@ export function TownsPage() {
               padding: "16px 20px",
               background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid var(--admin-primary-border, #bfdbfe)",
+              border: "2px solid var(--admin-primary-border)",
             }}
           >
             <label
@@ -654,7 +667,7 @@ export function TownsPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
@@ -819,6 +832,7 @@ export function TownsPage() {
               if (town) startEdit(town);
             }}
             onDeleteTown={(townId) => handleDelete(townId)}
+            onDeletePlace={handleDeletePlace}
             isLoadingTowns={isLoading}
             error={error}
           />

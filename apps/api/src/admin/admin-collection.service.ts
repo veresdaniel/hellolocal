@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { SitemapService } from "../seo/sitemap.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateCollectionDto {
   slug: string;
@@ -165,7 +166,7 @@ export class AdminCollectionService {
     });
 
     if (!collection) {
-      throw new NotFoundException("Collection not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
     }
 
     return collection;
@@ -305,7 +306,7 @@ export class AdminCollectionService {
       where: { id: dto.collectionId },
     });
     if (!collection) {
-      throw new NotFoundException("Collection not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
     }
 
     // Verify site exists
@@ -313,7 +314,7 @@ export class AdminCollectionService {
       where: { id: dto.siteId },
     });
     if (!site) {
-      throw new NotFoundException("Site not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
     }
 
     return this.prisma.collectionItem.create({
@@ -351,7 +352,7 @@ export class AdminCollectionService {
       where: { id: itemId },
     });
     if (!item) {
-      throw new NotFoundException("Collection item not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION_ITEM);
     }
 
     const updateData: Prisma.CollectionItemUpdateInput = {};
@@ -396,7 +397,7 @@ export class AdminCollectionService {
       where: { id: itemId },
     });
     if (!item) {
-      throw new NotFoundException("Collection item not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION_ITEM);
     }
 
     return this.prisma.collectionItem.delete({
@@ -411,7 +412,7 @@ export class AdminCollectionService {
       include: { items: true },
     });
     if (!collection) {
-      throw new NotFoundException("Collection not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
     }
 
     // Verify all items belong to this collection
@@ -459,7 +460,7 @@ export class AdminCollectionService {
       include: { items: true },
     });
     if (!collection) {
-      throw new NotFoundException("Collection not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
     }
 
     const existingItems = collection.items;

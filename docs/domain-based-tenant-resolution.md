@@ -59,3 +59,16 @@ Middleware logs domain matches at debug level. `GET /api/domain/:host` returns `
 Crawl files use the same DB host resolution at request time (`X-Forwarded-Host` →
 `SiteDomain` / `primaryDomain` / town-place-collection custom host). Adding a domain in
 admin does **not** require an app redeploy. See [frontend-seo-middleware.md](./frontend-seo-middleware.md).
+
+## Production TLS (Caddy) — no redeploy per domain
+
+App Host routing is DB-only. **TLS is not.** On Hetzner, Caddy uses **on-demand TLS**:
+
+1. Admin saves `SiteDomain` / `primaryDomain` / town-or-place `customDomain`
+2. DNS `A` (and optional `www`) → VPS IP `135.181.157.111` (same as `hello-local.io`)
+3. First HTTPS hit: Caddy asks `GET http://api-prod:3002/api/caddy/ask?domain=…` (200 = issue cert)
+4. Traffic is reverse-proxied to `web-prod` like `hello-local.io`
+
+CORS also accepts those admin hosts so the SPA on `https://custom.hu` can call `api.hello-local.io`.
+
+**DNS must exist first.** An unregistered or NXDOMAIN name never reaches Caddy (browser shows empty / DNS error). Platform path still works: `https://hello-local.io/hu/{slug}`.

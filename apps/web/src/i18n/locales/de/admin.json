@@ -188,7 +188,16 @@
       "managePlaceMemberships": "Sie haben keine Berechtigung, Ortsmitgliedschaften zu verwalten",
       "assignOwnerRole": "Manager kann keine Eigentümerrolle zuweisen",
       "modifyOwnerRole": "Manager kann die Eigentümerrolle nicht ändern",
-      "actorNotFound": "Benutzer nicht gefunden"
+      "actorNotFound": "Benutzer nicht gefunden",
+      "twoFactorManageOthers": "Sie können 2FA für andere Benutzer nicht verwalten",
+      "updateOwnProfileOnly": "Sie können nur Ihr eigenes Profil aktualisieren",
+      "noSiteAccess": "Sie haben keinen Zugriff auf diese Site",
+      "noPlaceAccess": "Sie haben keinen Zugriff auf diesen Ort",
+      "userNoSite": "Benutzer hat keine zugeordnete Site",
+      "userNoRegion": "Benutzer hat keine zugeordnete Region",
+      "platformSettingsSuperadminOnly": "Nur ein Superadmin kann Plattformtexte bearbeiten",
+      "insufficientSitePermissions": "Unzureichende Site-Berechtigungen. Editor oder höher erforderlich",
+      "contentDraft": "Inhaltsentwurf ist nicht verfügbar"
     },
     "notFound": {
       "user": "Benutzer nicht gefunden",
@@ -205,7 +214,13 @@
       "priceBand": "Preisstufe nicht gefunden",
       "brand": "Domain nicht gefunden",
       "slug": "Slug nicht gefunden",
-      "siteKey": "Site-Schlüssel nicht gefunden"
+      "siteKey": "Site-Schlüssel nicht gefunden",
+      "defaultSite": "Standard-Site nicht gefunden",
+      "event": "Ereignis nicht gefunden",
+      "collection": "Sammlung nicht gefunden",
+      "collectionItem": "Sammlungselement nicht gefunden",
+      "gallery": "Galerie nicht gefunden",
+      "product": "Produkt nicht gefunden"
     },
     "badRequest": {
       "categoryParentSelf": "Kategorie kann nicht ihr eigener Elternteil sein",
@@ -232,10 +247,30 @@
       "planImageLimit": "Bildlimit des Plans überschritten",
       "planFeaturedNotSupported": "Plan unterstützt keine hervorgehobene Platzierung",
       "slugConflict": "Slug existiert bereits",
-      "unsupportedLegalPage": "Nicht unterstützte rechtliche Seite"
+      "unsupportedLegalPage": "Nicht unterstützte rechtliche Seite",
+      "twoFactorStepUpRequired": "Zur Fortsetzung ist eine Passwortbestätigung erforderlich",
+      "twoFactorTokenRequired": "2FA-Überprüfung erforderlich. Bitte geben Sie einen 2FA-Code ein.",
+      "invalidOrExpiredResetToken": "Ungültiger oder abgelaufener Reset-Token",
+      "userAlreadyExists": "Benutzer mit dieser E-Mail oder diesem Benutzernamen existiert bereits",
+      "siteIdRequired": "Site-ID ist erforderlich",
+      "placeIdRequired": "Ort-ID ist erforderlich",
+      "townIdRequired": "Gemeinde-ID ist erforderlich",
+      "eventIdRequired": "Ereignis-ID ist erforderlich",
+      "placeIdSameSite": "Ort muss zur selben Site gehören",
+      "contentDraftInvalid": "Ungültige Inhaltsentwurf-Anfrage",
+      "contentDraftNeedsName": "Inhaltsentwurf benötigt einen Namen"
     },
     "unauthorized": {
-      "disableOwn2FA": "Sie können nur Ihre eigene 2FA deaktivieren"
+      "disableOwn2FA": "Sie können nur Ihre eigene 2FA deaktivieren",
+      "twoFactorStepUp": "Passwortbestätigung fehlgeschlagen",
+      "invalidCredentials": "Ungültige Anmeldedaten",
+      "invalid2FAToken": "Ungültiger 2FA-Code",
+      "twoFactorVerificationFailed": "2FA-Überprüfung fehlgeschlagen",
+      "twoFactorServiceUnavailable": "2FA-Dienst ist nicht verfügbar",
+      "invalidRefreshToken": "Ungültiger Refresh-Token",
+      "loginFailed": "Anmeldung fehlgeschlagen",
+      "sessionExpired": "Sitzung abgelaufen oder ungültiges Token",
+      "userSiteConfigInvalid": "Benutzer-Site-Konfiguration ist ungültig"
     },
     "internal": {
       "error": "Interner Serverfehler",
@@ -1236,7 +1271,8 @@
     "providerOpenRouter": "OpenRouter (Free-Modelle)",
     "apiKey": "API-Schlüssel",
     "apiKeyPlaceholder": "Neuen Schlüssel eingeben",
-    "apiKeyConfigured": "Schlüssel gespeichert (wird nicht angezeigt).",
+    "apiKeyReplacePlaceholder": "Ersetzen: neuen Schlüssel eingeben",
+    "apiKeyConfigured": "Schlüssel gespeichert — unten mit Sternen.",
     "apiKeyClearHelp": "Gespeicherten Schlüssel mit „Schlüssel löschen“ entfernen.",
     "clearKey": "Schlüssel löschen",
     "save": "Speichern",

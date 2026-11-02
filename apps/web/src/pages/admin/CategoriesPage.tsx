@@ -347,11 +347,11 @@ export function CategoriesPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editCategory") : t("admin.forms.newCategory")}
@@ -533,7 +533,7 @@ export function CategoriesPage() {
               padding: "16px 20px",
               background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid var(--admin-primary-border, #bfdbfe)",
+              border: "2px solid var(--admin-primary-border)",
             }}
           >
             <label
@@ -549,7 +549,7 @@ export function CategoriesPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
@@ -562,7 +562,7 @@ export function CategoriesPage() {
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input
                 type="color"
-                value={formData.color || "var(--admin-primary, #2563eb)"}
+                value={formData.color || "var(--admin-primary)"}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                 style={{
                   width: 60,
@@ -576,7 +576,7 @@ export function CategoriesPage() {
                 type="text"
                 value={formData.color || ""}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                placeholder="var(--admin-primary, #2563eb)"
+                placeholder="var(--admin-primary)"
                 pattern="^#[0-9A-Fa-f]{6}$"
                 style={{
                   flex: 1,
@@ -597,7 +597,7 @@ export function CategoriesPage() {
               }}
             >
               {t("admin.categoryColorDescription") ||
-                "Ez a szín jelenik meg a kártya alján. Hex formátum (pl. var(--admin-primary, #2563eb))"}
+                "Ez a szín jelenik meg a kártya alján. Hex formátum (pl. var(--admin-primary))"}
             </p>
           </div>
         </div>

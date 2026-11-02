@@ -321,7 +321,7 @@ export function SiteMembershipsPage() {
           <h2
             style={{
               margin: "0 0 8px 0",
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 20px)",
               fontWeight: 700,
             }}
@@ -345,7 +345,7 @@ export function SiteMembershipsPage() {
                 alignItems: "center",
                 gap: 8,
                 padding: "10px 16px",
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 color: "#fff",
                 borderRadius: 8,
                 textDecoration: "none",
@@ -382,7 +382,7 @@ export function SiteMembershipsPage() {
         <h2
           style={{
             margin: "0 0 16px 0",
-            color: "var(--admin-primary, #2563eb)",
+            color: "var(--admin-primary)",
             fontSize: "clamp(18px, 4vw, 20px)",
             fontWeight: 700,
           }}
@@ -404,7 +404,7 @@ export function SiteMembershipsPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(20px, 5vw, 24px)",
               fontWeight: 700,
             }}
@@ -429,7 +429,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.siteId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.siteId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -476,7 +476,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -521,7 +521,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}

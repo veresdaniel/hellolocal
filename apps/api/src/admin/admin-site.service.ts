@@ -13,6 +13,7 @@ import { isMissingColumn } from "../common/prisma-column";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { sanitizeSiteTheme } from "../common/public-theme-colors";
 import { SitemapService } from "../seo/sitemap.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateSiteDto {
   slug: string;
@@ -428,7 +429,7 @@ export class AdminSiteService {
     });
 
     if (!site) {
-      throw new NotFoundException("Site not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
     }
 
     // Calculate usage statistics

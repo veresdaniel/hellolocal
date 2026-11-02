@@ -409,7 +409,7 @@ export function LegalPagesPage() {
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
             margin: 0,
           }}
         >
@@ -425,8 +425,8 @@ export function LegalPagesPage() {
           style={{
             padding: "10px 20px",
             background: editingId || isCreating ? "#ccc" : "white",
-            color: editingId || isCreating ? "#999" : "var(--admin-primary, #2563eb)",
-            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary, #2563eb)",
+            color: editingId || isCreating ? "#999" : "var(--admin-primary)",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary)",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -485,7 +485,7 @@ export function LegalPagesPage() {
             style={{
               marginBottom: 16,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editLegalPage") : t("admin.forms.newLegalPage")}
@@ -534,7 +534,7 @@ export function LegalPagesPage() {
               padding: "16px 20px",
               background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid var(--admin-primary-border, #bfdbfe)",
+              border: "2px solid var(--admin-primary-border)",
             }}
           >
             <label
@@ -552,7 +552,7 @@ export function LegalPagesPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
@@ -700,9 +700,9 @@ export function LegalPagesPage() {
                   style={{
                     marginTop: 24,
                     padding: 16,
-                    background: "linear-gradient(135deg, var(--admin-primary, #2563eb)15 0%, var(--admin-primary-hover, #1d4ed8)15 100%)",
+                    background: "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
                     borderRadius: 8,
-                    border: "1px solid var(--admin-primary, #2563eb)30",
+                    border: "1px solid var(--admin-primary)30",
                   }}
                 >
                   <h3
@@ -710,9 +710,9 @@ export function LegalPagesPage() {
                       margin: "0 0 16px 0",
                       fontSize: "clamp(16px, 3.5vw, 18px)",
                       fontWeight: 600,
-                      color: "var(--admin-primary, #2563eb)",
+                      color: "var(--admin-primary)",
                       fontFamily:
-                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                        "var(--admin-font-display)",
                     }}
                   >
                     🔍 SEO {t("admin.settings")}

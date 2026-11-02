@@ -100,6 +100,7 @@ import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import {
   generateCreateDescription,
   generateUpdateDescription,
@@ -1416,7 +1417,7 @@ export class AdminController {
   ) {
     // Users can only update themselves, unless they are superadmin or admin
     if (user.id !== id && user.role !== UserRole.superadmin && user.role !== UserRole.admin) {
-      throw new ForbiddenException("You can only update your own profile");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_UPDATE_OWN_PROFILE_ONLY);
     }
     // Get old data for comparison
     const oldUser = await this.usersService.findOne(id);
@@ -1506,12 +1507,13 @@ export class AdminController {
     // Step-up: require the acting admin's password before stripping another user's 2FA.
     const password = typeof body?.password === "string" ? body.password : "";
     if (!password || password.length < 6) {
-      throw new BadRequestException("errors.badRequest.twoFactorStepUpRequired");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_STEP_UP_REQUIRED);
     }
     const hash = await this.twoFactorService.getPasswordHash(actor.id);
-    const bcrypt = await import("bcryptjs");
-    if (!hash || !(await bcrypt.compare(password, hash))) {
-      throw new UnauthorizedException("errors.unauthorized.twoFactorStepUp");
+    const bcryptMod = await import("bcryptjs");
+    const compare = bcryptMod.compare ?? bcryptMod.default?.compare;
+    if (!hash || !compare || !(await compare(password, hash))) {
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_2FA_STEP_UP);
     }
     await this.twoFactorService.disableTwoFactor(id);
     return { message: "2FA has been disabled for this user." };
@@ -1531,7 +1533,7 @@ export class AdminController {
     // Superadmin and admin can access any site
     // Other users can only access their assigned sites
     if (user.siteIds && !user.siteIds.includes(id)) {
-      throw new ForbiddenException("You do not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.siteService.findOne(id);
   }
@@ -1671,10 +1673,10 @@ export class AdminController {
   ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
-      throw new ForbiddenException("User has no associated site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -1705,7 +1707,7 @@ export class AdminController {
       dto.siteId = user.siteIds[0];
     }
     if (!user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     // RBAC: Check if user can create event for this place
@@ -1869,7 +1871,7 @@ export class AdminController {
   @Roles(UserRole.superadmin, UserRole.admin)
   async createAppSetting(@Body() dto: AppSettingDto, @CurrentUser() user: { role: UserRole }) {
     if (!canEditCopy({ role: user.role }, "platform")) {
-      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_PLATFORM_SETTINGS_SUPERADMIN_ONLY);
     }
     return this.appSettingsService.upsert(dto.key, dto);
   }
@@ -1882,7 +1884,7 @@ export class AdminController {
     @CurrentUser() user: { role: UserRole }
   ) {
     if (!canEditCopy({ role: user.role }, "platform")) {
-      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_PLATFORM_SETTINGS_SUPERADMIN_ONLY);
     }
     return this.appSettingsService.upsert(key, dto);
   }
@@ -1986,10 +1988,10 @@ export class AdminController {
   ) {
     const siteId = siteIdParam || user.siteIds[0];
     if (!siteId) {
-      throw new ForbiddenException("User has no associated site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_SITE);
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     const result = await this.placeService.generateMissingSlugs(siteId);
@@ -2146,7 +2148,7 @@ export class AdminController {
     @CurrentUser() user?: { id: string; siteIds: string[] }
   ) {
     if (!user?.id) {
-      throw new ForbiddenException("User ID is required");
+      throw new ForbiddenException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     return this.placeMembershipService.getMyPlaces(user.id, siteId);
   }
@@ -2306,7 +2308,7 @@ export class AdminController {
       throw new Error("User has no associated site");
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     const pageNum = page ? parseInt(page, 10) : undefined;
     const limitNum = limit ? parseInt(limit, 10) : undefined;
@@ -2324,7 +2326,7 @@ export class AdminController {
       throw new Error("User has no associated site");
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.galleryService.findOne(user.id, id, siteId);
   }
@@ -2335,7 +2337,7 @@ export class AdminController {
     @Body() dto: CreateGalleryDto
   ) {
     if (!user.siteIds.includes(dto.siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.galleryService.create(user.id, dto);
   }
@@ -2352,7 +2354,7 @@ export class AdminController {
       throw new Error("User has no associated site");
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.galleryService.update(id, user.id, siteId, dto);
   }
@@ -2368,7 +2370,7 @@ export class AdminController {
       throw new Error("User has no associated site");
     }
     if (!user.siteIds.includes(siteId)) {
-      throw new ForbiddenException("User does not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.galleryService.delete(user.id, id, siteId);
   }
@@ -2386,7 +2388,7 @@ export class AdminController {
     const siteIds = user.siteIds ?? [];
 
     if (!isSuperadmin && siteIds.length === 0) {
-      throw new ForbiddenException("User has no associated region");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_USER_NO_REGION);
     }
 
     const siteFilter = isSuperadmin ? undefined : { id: { in: siteIds } };
@@ -2567,7 +2569,7 @@ export class AdminController {
   async getCollection(@Param("id") id: string, @CurrentUser() user: { id: string }) {
     // Don't allow fetching with "new" as ID
     if (id === "new") {
-      throw new NotFoundException("Collection not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_COLLECTION);
     }
     return this.collectionService.findOne(id);
   }
@@ -2795,7 +2797,7 @@ export class AdminController {
     @Body() dto: CreateFeatureSubscriptionDto
   ) {
     if (!user.siteIds?.includes(dto.siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     // Note: Free account check is handled in the frontend (feature gate is hidden)
@@ -2841,7 +2843,7 @@ export class AdminController {
     }
 
     if (!user.siteIds?.includes(existingSub.siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     const result = await this.featureSubscriptionService.update(id, dto);
@@ -2896,7 +2898,7 @@ export class AdminController {
     }
 
     if (!user.siteIds?.includes(existingSub.siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     const result = await this.featureSubscriptionService.cancel(id);
@@ -2931,7 +2933,7 @@ export class AdminController {
     }
 
     if (!user.siteIds?.includes(existingSub.siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     const result = await this.featureSubscriptionService.suspend(id);
@@ -2966,7 +2968,7 @@ export class AdminController {
     }
 
     if (!user.siteIds?.includes(existingSub.siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     const result = await this.featureSubscriptionService.resume(id);
@@ -2992,7 +2994,7 @@ export class AdminController {
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     if (!user.siteIds?.includes(siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
     return this.featureSubscriptionService.getBySite(siteId);
   }
@@ -3020,7 +3022,7 @@ export class AdminController {
   ) {
     // If siteId is provided, check access
     if (siteId && !user.siteIds?.includes(siteId)) {
-      throw new ForbiddenException("You don't have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
 
     return this.featureSubscriptionService.getAll({

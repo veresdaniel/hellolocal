@@ -12,6 +12,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { TwoFactorService } from "../two-factor/two-factor.service";
 import { AdminEventLogService } from "../event-log/admin-eventlog.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -141,7 +142,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException("User with this email or username already exists");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ALREADY_EXISTS);
     }
 
     // Get site ID (priority: DTO > request context > referer-based resolution > default site)
@@ -151,7 +152,7 @@ export class AuthService {
         where: { id: dto.siteId },
       });
       if (!site) {
-        throw new NotFoundException("Site not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
       }
       siteId = dto.siteId;
     } else if (requestSiteId) {
@@ -206,7 +207,7 @@ export class AuthService {
         where: { slug: this.getDefaultSiteSlug() },
       });
       if (!defaultSite) {
-        throw new NotFoundException("Default site not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_DEFAULT_SITE);
       }
       siteId = defaultSite.id;
     }
@@ -222,7 +223,7 @@ export class AuthService {
     });
 
     if (!site) {
-      throw new NotFoundException("Site not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
     }
 
     // For pro/business plans, check if public registration is enabled
@@ -317,29 +318,29 @@ export class AuthService {
 
       if (!user) {
         // Log for debugging (not exposed to client for security)
-        throw new UnauthorizedException("Invalid credentials");
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_CREDENTIALS);
       }
 
       if (!user.isActive) {
         // Log for debugging (not exposed to client for security)
-        throw new UnauthorizedException("Invalid credentials");
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_CREDENTIALS);
       }
 
       const isPasswordValid = await this.comparePassword(dto.password, user.passwordHash);
       if (!isPasswordValid) {
         // Log for debugging (not exposed to client for security)
-        throw new UnauthorizedException("Invalid credentials");
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_CREDENTIALS);
       }
 
       // Check if 2FA is enabled for this user
       if (user.isTwoFactorEnabled) {
         if (!this.twoFactorService) {
           console.error("2FA is enabled for user but TwoFactorService is not available");
-          throw new UnauthorizedException("2FA service is not available");
+          throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_2FA_SERVICE_UNAVAILABLE);
         }
 
         if (!dto.twoFactorToken) {
-          throw new BadRequestException("2FA verification required. Please provide a 2FA token.");
+          throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_2FA_TOKEN_REQUIRED);
         }
 
         try {
@@ -348,7 +349,7 @@ export class AuthService {
             dto.twoFactorToken
           );
           if (!isValid) {
-            throw new UnauthorizedException("Invalid 2FA token");
+            throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_2FA_TOKEN);
           }
         } catch (error) {
           // If it's already a known exception, re-throw it
@@ -357,7 +358,7 @@ export class AuthService {
           }
           // Otherwise, log and throw a generic error
           console.error("2FA verification error:", error);
-          throw new UnauthorizedException("2FA verification failed");
+          throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_2FA_VERIFICATION_FAILED);
         }
       }
 
@@ -366,7 +367,7 @@ export class AuthService {
       // Ensure siteIds is always an array (even if empty)
       if (!Array.isArray(siteIds)) {
         console.error("Invalid siteIds format:", siteIds);
-        throw new UnauthorizedException("User site configuration is invalid");
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_USER_SITE_CONFIG_INVALID);
       }
 
       const payload: JwtPayload = {
@@ -470,7 +471,7 @@ export class AuthService {
       }
       // For other errors, throw a generic error but log the original
       console.error("Unexpected login error:", error);
-      throw new UnauthorizedException("Login failed");
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_LOGIN_FAILED);
     }
   }
 
@@ -526,7 +527,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException("Invalid or expired reset token");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_OR_EXPIRED_RESET_TOKEN);
     }
 
     const passwordHash = await this.hashPassword(dto.newPassword);
@@ -566,7 +567,7 @@ export class AuthService {
       });
 
       if (!user || !user.isActive) {
-        throw new UnauthorizedException("Invalid refresh token");
+        throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_REFRESH_TOKEN);
       }
 
       const siteIds = user.sites.map((s) => s.siteId);
@@ -581,7 +582,7 @@ export class AuthService {
 
       return await this.generateTokens(newPayload);
     } catch (error) {
-      throw new UnauthorizedException("Invalid refresh token");
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_INVALID_REFRESH_TOKEN);
     }
   }
 
@@ -681,7 +682,7 @@ export class AuthService {
       });
 
       if (!defaultSite) {
-        throw new NotFoundException("Default site not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_DEFAULT_SITE);
       }
 
       // Generate username from email (first part before @)

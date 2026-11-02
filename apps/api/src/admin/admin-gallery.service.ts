@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { RbacService } from "../auth/rbac.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface GalleryImage {
   id: string; // stable id (uuid/cuid)
@@ -103,7 +104,7 @@ export class AdminGalleryService {
     });
 
     if (!gallery) {
-      throw new NotFoundException("Gallery not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_GALLERY);
     }
 
     return gallery;
@@ -147,7 +148,7 @@ export class AdminGalleryService {
       select: { id: true },
     });
     if (!place) {
-      throw new BadRequestException("placeId must belong to the same site");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
     }
 
     if (dto.eventId) {
@@ -231,7 +232,7 @@ export class AdminGalleryService {
         select: { id: true },
       });
       if (!place) {
-        throw new BadRequestException("placeId must belong to the same site");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
       }
 
       const entitlements = await this.entitlementsService.getBySiteId(siteId);

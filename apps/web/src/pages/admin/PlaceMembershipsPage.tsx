@@ -376,7 +376,7 @@ export function PlaceMembershipsPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(20px, 5vw, 24px)",
               fontWeight: 700,
             }}
@@ -399,7 +399,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.placeId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.placeId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -441,7 +441,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -493,7 +493,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}

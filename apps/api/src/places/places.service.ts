@@ -8,6 +8,7 @@ import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { assignMissingSlugs, fallbackSlug } from "../slug/slug.helper";
 import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 type ListArgs = {
   lang: string;
@@ -620,7 +621,7 @@ export class PlacesService {
     });
 
     if (!place || !place.isActive || place.siteId !== site.siteId) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Step 3: Get canonical slug for this place

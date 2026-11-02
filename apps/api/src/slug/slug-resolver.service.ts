@@ -3,6 +3,7 @@ import { SlugEntityType } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { PrismaService } from "../prisma/prisma.service";
 import { generateSlug } from "./slug.helper";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export type ResolvedSlug = {
   siteId: string;
@@ -101,7 +102,7 @@ export class SlugResolverService {
       });
     }
 
-    if (!hit || !hit.isActive) throw new NotFoundException("Slug not found");
+    if (!hit || !hit.isActive) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SLUG);
 
     // Rule 1: Handle explicit redirects (redirectToId)
     // This allows URL aliases and URL migrations (e.g., old-slug -> new-slug)

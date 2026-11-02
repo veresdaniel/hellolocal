@@ -40,7 +40,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [toolbarMainEl, setToolbarMainEl] = useState<HTMLElement | null>(null);
+  const [toolbarActionsEl, setToolbarActionsEl] = useState<HTMLElement | null>(
+    null,
+  );
   const location = useLocation();
   const navigation = useNavigation();
   const navigate = useNavigate();
@@ -48,11 +50,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const isDashboard = isAdminDashboardPath(location.pathname);
   const pageChromeValue = useMemo(
     () => ({
-      toolbarMainEl,
+      toolbarActionsEl,
       // Slot exists whenever we're past the dashboard (toolbar mounts even if ref is pending).
       hasToolbarSlot: !isDashboard,
     }),
-    [toolbarMainEl, isDashboard],
+    [toolbarActionsEl, isDashboard],
   );
 
   // Track previous location to detect route changes
@@ -340,7 +342,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 style={{
                   fontSize: "clamp(18px, 3vw, 22px)",
                   fontWeight: 700,
-                  fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  fontFamily: "var(--admin-font-display)",
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -458,15 +460,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 style={{
                   padding: 8,
                   background: isMobileMenuOpen
-                    ? "var(--admin-primary, #2563eb)"
-                    : "var(--admin-primary-soft, #eff6ff)",
+                    ? "var(--admin-primary)"
+                    : "var(--admin-primary-soft)",
                   color: isMobileMenuOpen
-                    ? "var(--admin-on-primary, #ffffff)"
-                    : "var(--admin-primary, #2563eb)",
-                  border: "1px solid var(--admin-primary, #2563eb)",
+                    ? "var(--admin-on-primary)"
+                    : "var(--admin-primary)",
+                  border: "1px solid var(--admin-primary)",
                   borderRadius: 6,
                   cursor: "pointer",
-                  fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+                  fontFamily: "var(--admin-font)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -560,16 +562,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   padding: "10px 14px",
                   background: "var(--admin-surface-subtle, #f8fafc)",
                   borderRadius: 8,
-                  border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                  border: "1px solid var(--admin-border-subtle)",
                 }}
               >
                 <div
                   style={{
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    color: "var(--admin-text-muted, #475569)",
+                    color: "var(--admin-muted)",
                     marginBottom: 6,
                     fontWeight: 600,
-                    fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+                    fontFamily: "var(--admin-font)",
                   }}
                 >
                   {t("admin.language")}
@@ -583,16 +585,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     padding: "10px 14px",
                     background: "var(--admin-surface-subtle, #f8fafc)",
                     borderRadius: 8,
-                    border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                    border: "1px solid var(--admin-border-subtle)",
                   }}
                 >
                   <div
                     style={{
                       fontSize: "clamp(13px, 3vw, 15px)",
-                      color: "var(--admin-text-muted, #475569)",
+                      color: "var(--admin-muted)",
                       marginBottom: 6,
                       fontWeight: 600,
-                      fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+                      fontFamily: "var(--admin-font)",
                     }}
                   >
                     {t("admin.site")}
@@ -606,16 +608,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   padding: "10px 14px",
                   background: "var(--admin-surface-subtle, #f8fafc)",
                   borderRadius: 8,
-                  border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                  border: "1px solid var(--admin-border-subtle)",
                 }}
               >
                 <div
                   style={{
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    color: "var(--admin-text-muted, #475569)",
+                    color: "var(--admin-muted)",
                     marginBottom: 6,
                     fontWeight: 600,
-                    fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+                    fontFamily: "var(--admin-font)",
                   }}
                 >
                   {t("admin.userInfo")}
@@ -704,16 +706,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content — width via .admin-main (shared --admin-content-max-width) */}
       <main id="admin-main" className="admin-main" tabIndex={-1} style={{ flex: 1 }}>
         {/*
-          One toolbar row for every admin screen:
-          [Vissza] + [title / page actions via AdminPageHeader portal]
+          One action row ABOVE the title on every admin screen:
+          [Vissza] … [page actions via AdminPageHeader portal]
+          Title renders below in AdminPageHeader (not in this row).
         */}
         {!isNavigating && !isDashboard && (
           <div className="admin-page-toolbar">
             <AdminBackButton />
+            <div className="admin-page-toolbar__spacer" aria-hidden="true" />
             <div
-              ref={setToolbarMainEl}
-              className="admin-page-toolbar__main"
-              id="admin-page-toolbar-main"
+              ref={setToolbarActionsEl}
+              className="admin-page-toolbar__actions"
+              id="admin-page-toolbar-actions"
             />
           </div>
         )}

@@ -29,6 +29,7 @@ export const ERROR_MESSAGES = {
   NOT_FOUND_PARENT_CATEGORY: "errors.notFound.parentCategory",
   NOT_FOUND_PLACE: "errors.notFound.place",
   NOT_FOUND_SITE: "errors.notFound.site",
+  NOT_FOUND_DEFAULT_SITE: "errors.notFound.defaultSite",
   NOT_FOUND_SUBSCRIPTION: "errors.notFound.subscription",
   NOT_FOUND_LEGAL_PAGE: "errors.notFound.legalPage",
   NOT_FOUND_LEGAL_PAGE_TRANSLATION: "errors.notFound.legalPageTranslation",
@@ -39,6 +40,11 @@ export const ERROR_MESSAGES = {
   NOT_FOUND_BRAND: "errors.notFound.brand",
   NOT_FOUND_SLUG: "errors.notFound.slug",
   NOT_FOUND_SITE_KEY: "errors.notFound.siteKey",
+  NOT_FOUND_EVENT: "errors.notFound.event",
+  NOT_FOUND_COLLECTION: "errors.notFound.collection",
+  NOT_FOUND_COLLECTION_ITEM: "errors.notFound.collectionItem",
+  NOT_FOUND_GALLERY: "errors.notFound.gallery",
+  NOT_FOUND_PRODUCT: "errors.notFound.product",
 
   // Bad request errors
   BAD_REQUEST_CATEGORY_PARENT_SELF: "errors.badRequest.categoryParentSelf",
@@ -68,11 +74,37 @@ export const ERROR_MESSAGES = {
   BAD_REQUEST_PARENT_CATEGORIES_NOT_FOUND_OR_NOT_BELONG:
     "errors.badRequest.parentCategoriesNotFoundOrNotBelong",
 
-  // Unauthorized errors
+  // Unauthorized / auth errors
   UNAUTHORIZED_DISABLE_OWN_2FA: "errors.unauthorized.disableOwn2FA",
   UNAUTHORIZED_2FA_STEP_UP: "errors.unauthorized.twoFactorStepUp",
+  UNAUTHORIZED_INVALID_CREDENTIALS: "errors.unauthorized.invalidCredentials",
+  UNAUTHORIZED_INVALID_2FA_TOKEN: "errors.unauthorized.invalid2FAToken",
+  UNAUTHORIZED_2FA_VERIFICATION_FAILED: "errors.unauthorized.twoFactorVerificationFailed",
+  UNAUTHORIZED_2FA_SERVICE_UNAVAILABLE: "errors.unauthorized.twoFactorServiceUnavailable",
+  UNAUTHORIZED_INVALID_REFRESH_TOKEN: "errors.unauthorized.invalidRefreshToken",
+  UNAUTHORIZED_LOGIN_FAILED: "errors.unauthorized.loginFailed",
+  UNAUTHORIZED_SESSION_EXPIRED: "errors.unauthorized.sessionExpired",
+  UNAUTHORIZED_USER_SITE_CONFIG_INVALID: "errors.unauthorized.userSiteConfigInvalid",
   FORBIDDEN_2FA_MANAGE_OTHERS: "errors.forbidden.twoFactorManageOthers",
+  FORBIDDEN_UPDATE_OWN_PROFILE_ONLY: "errors.forbidden.updateOwnProfileOnly",
+  FORBIDDEN_NO_SITE_ACCESS: "errors.forbidden.noSiteAccess",
+  FORBIDDEN_NO_PLACE_ACCESS: "errors.forbidden.noPlaceAccess",
+  FORBIDDEN_USER_NO_SITE: "errors.forbidden.userNoSite",
+  FORBIDDEN_USER_NO_REGION: "errors.forbidden.userNoRegion",
+  FORBIDDEN_PLATFORM_SETTINGS_SUPERADMIN_ONLY: "errors.forbidden.platformSettingsSuperadminOnly",
+  FORBIDDEN_INSUFFICIENT_SITE_PERMISSIONS: "errors.forbidden.insufficientSitePermissions",
+  FORBIDDEN_CONTENT_DRAFT: "errors.forbidden.contentDraft",
   BAD_REQUEST_2FA_STEP_UP_REQUIRED: "errors.badRequest.twoFactorStepUpRequired",
+  BAD_REQUEST_2FA_TOKEN_REQUIRED: "errors.badRequest.twoFactorTokenRequired",
+  BAD_REQUEST_INVALID_OR_EXPIRED_RESET_TOKEN: "errors.badRequest.invalidOrExpiredResetToken",
+  BAD_REQUEST_USER_ALREADY_EXISTS: "errors.badRequest.userAlreadyExists",
+  BAD_REQUEST_SITE_ID_REQUIRED: "errors.badRequest.siteIdRequired",
+  BAD_REQUEST_PLACE_ID_REQUIRED: "errors.badRequest.placeIdRequired",
+  BAD_REQUEST_TOWN_ID_REQUIRED: "errors.badRequest.townIdRequired",
+  BAD_REQUEST_EVENT_ID_REQUIRED: "errors.badRequest.eventIdRequired",
+  BAD_REQUEST_PLACE_ID_SAME_SITE: "errors.badRequest.placeIdSameSite",
+  BAD_REQUEST_CONTENT_DRAFT_INVALID: "errors.badRequest.contentDraftInvalid",
+  BAD_REQUEST_CONTENT_DRAFT_NEEDS_NAME: "errors.badRequest.contentDraftNeedsName",
 
   // Internal errors
   INTERNAL_ERROR: "errors.internal.error",

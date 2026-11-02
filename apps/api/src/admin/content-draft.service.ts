@@ -25,6 +25,7 @@ import {
   type ContentDraftProviderId,
 } from "./content-draft.constants";
 import { ContentDraftRequestDto, ContentDraftSettingsDto } from "./content-draft.dto";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_DRAFTS_PER_WINDOW = 12;
@@ -139,10 +140,10 @@ export class ContentDraftService {
 
   async saveSettings(actor: Actor, dto: ContentDraftSettingsDto) {
     if (actor.role !== UserRole.superadmin) {
-      throw new ForbiddenException("content_draft_forbidden");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
     }
     if (!isContentDraftProvider(dto.provider)) {
-      throw new BadRequestException("content_draft_invalid");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
     }
 
     await this.appSettings.upsert(CONTENT_DRAFT_PROVIDER_KEY, {
@@ -154,7 +155,7 @@ export class ContentDraftService {
     if (typeof dto.apiKey === "string") {
       const apiKey = dto.apiKey.trim();
       if (apiKey && !isAcceptableCredential(apiKey)) {
-        throw new BadRequestException("content_draft_invalid");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
       }
       await this.appSettings.upsert(CONTENT_DRAFT_API_KEY, {
         value: apiKey,
@@ -169,27 +170,27 @@ export class ContentDraftService {
   async draft(actor: Actor, dto: ContentDraftRequestDto) {
     const lang = normalizeLanguageCode(dto.lang);
     if (!lang || !isContentDraftKind(dto.kind)) {
-      throw new BadRequestException("content_draft_invalid");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
     }
 
     const siteId = dto.siteId?.trim() || "";
     const placeId = dto.placeId?.trim() || "";
     if (dto.kind === "place" && !siteId) {
-      throw new BadRequestException("content_draft_invalid");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
     }
     if (!(await this.canDraft(actor, siteId || undefined, placeId || undefined))) {
-      throw new ForbiddenException("content_draft_forbidden");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
     }
 
     if (dto.field) {
       if (!isContentDraftField(dto.field)) {
-        throw new BadRequestException("content_draft_invalid");
+        throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
       }
       return this.draftField(actor, dto, lang, siteId, placeId);
     }
 
     if (dto.kind !== "site" && dto.kind !== "place") {
-      throw new BadRequestException("content_draft_invalid");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_INVALID);
     }
     return this.draftLegacyPair(actor, dto, lang, siteId, placeId);
   }
@@ -208,10 +209,10 @@ export class ContentDraftService {
     const isNamingField = field === "name" || field === "title";
 
     if (!isNamingField && !name) {
-      throw new BadRequestException("content_draft_needs_name");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_NEEDS_NAME);
     }
     if (isNamingField && !name && !context.hints && !oneLine(dto.contextHints, 200)) {
-      throw new BadRequestException("content_draft_needs_name");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_NEEDS_NAME);
     }
 
     const existingValue =
@@ -277,7 +278,7 @@ export class ContentDraftService {
         })
       : null;
     if (siteId && !site) {
-      throw new ForbiddenException("content_draft_forbidden");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
     }
 
     const place =
@@ -295,7 +296,7 @@ export class ContentDraftService {
           })
         : null;
     if (dto.kind === "place" && placeId && (!place || place.siteId !== siteId)) {
-      throw new ForbiddenException("content_draft_forbidden");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
     }
 
     const dbTranslation =
@@ -305,7 +306,7 @@ export class ContentDraftService {
 
     const name = oneLine(dto.name, 180) || oneLine(dbTranslation?.name, 180);
     if (!name) {
-      throw new BadRequestException("content_draft_needs_name");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_CONTENT_DRAFT_NEEDS_NAME);
     }
 
     const category =
@@ -375,7 +376,7 @@ export class ContentDraftService {
         where: { id: siteId },
         select: { translations: { select: { lang: true, name: true } } },
       });
-      if (!site) throw new ForbiddenException("content_draft_forbidden");
+      if (!site) throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
       if (dto.kind === "site") name = named(site.translations, lang);
       towns = await this.siteTownNames(siteId, lang);
     }
@@ -391,7 +392,7 @@ export class ContentDraftService {
         },
       });
       if (!place || (siteId && place.siteId !== siteId)) {
-        throw new ForbiddenException("content_draft_forbidden");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_CONTENT_DRAFT);
       }
       name = named(place.translations, lang);
       category = await this.categoryName(siteId || place.siteId, dto.categoryId, place.categoryId, lang);

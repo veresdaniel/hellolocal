@@ -29,7 +29,8 @@ On production, `Host` / `X-Forwarded-Host` is looked up against admin data:
 3. Platform host (`hello-local.io`) → platform pages + sites **without** a custom domain
 
 Adding a domain in admin takes effect immediately (Prisma lookup + sitemap cache invalidate).
-No per-domain env vars and no app redeploy.
+No per-domain env vars and no app redeploy. **TLS** for that host still needs DNS → VPS plus
+Caddy on-demand ask (`/api/caddy/ask`); see [domain-based-tenant-resolution.md](./domain-based-tenant-resolution.md).
 
 ### Cache / invalidation
 

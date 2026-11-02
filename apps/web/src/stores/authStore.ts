@@ -4,6 +4,7 @@ import { devtools, persist } from "zustand/middleware";
 import type { User } from "../api/auth.api";
 import { login, register, logout as apiLogout, refreshToken } from "../api/auth.api";
 import { preferredLang } from "../app/browserLang";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../constants/authStorage";
 
 interface AuthState {
   user: User | null;
@@ -140,9 +141,9 @@ export const useAuthStore = create<AuthState>()(
 
             // Store tokens
             if (typeof localStorage !== "undefined") {
-              localStorage.setItem("accessToken", response.accessToken);
-              localStorage.setItem("refreshToken", response.refreshToken);
-              localStorage.setItem("user", JSON.stringify(userData));
+              localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
+              localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
+              localStorage.setItem(USER_KEY, JSON.stringify(userData));
             }
 
             set(
@@ -178,9 +179,9 @@ export const useAuthStore = create<AuthState>()(
 
             // Store tokens
             if (typeof localStorage !== "undefined") {
-              localStorage.setItem("accessToken", response.accessToken);
-              localStorage.setItem("refreshToken", response.refreshToken);
-              localStorage.setItem("user", JSON.stringify(userData));
+              localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
+              localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
+              localStorage.setItem(USER_KEY, JSON.stringify(userData));
             }
 
             set(
@@ -210,9 +211,9 @@ export const useAuthStore = create<AuthState>()(
             }
 
             if (typeof localStorage !== "undefined") {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              localStorage.removeItem(USER_KEY);
               localStorage.removeItem("adminSelectedTenantId");
             }
 
@@ -243,8 +244,8 @@ export const useAuthStore = create<AuthState>()(
               return;
             }
 
-            const storedUser = localStorage.getItem("user");
-            const storedToken = localStorage.getItem("accessToken");
+            const storedUser = localStorage.getItem(USER_KEY);
+            const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
 
             if (!storedUser || !storedToken) {
               set({ user: null, isAuthenticated: false, isLoading: false }, false, "loadUserFromStorage:noData");
@@ -256,16 +257,16 @@ export const useAuthStore = create<AuthState>()(
               parsedUser = JSON.parse(storedUser);
             } catch (parseErr) {
               console.error("[AuthStore] Invalid user JSON in localStorage", parseErr);
-              localStorage.removeItem("user");
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
+              localStorage.removeItem(USER_KEY);
+              localStorage.removeItem(ACCESS_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
               set({ user: null, isAuthenticated: false, isLoading: false }, false, "loadUserFromStorage:parseError");
               return;
             }
 
             if (!isValidUser(parsedUser)) {
               console.error("[AuthStore] Invalid user object from localStorage");
-              localStorage.removeItem("user");
+              localStorage.removeItem(USER_KEY);
               set({ user: null, isAuthenticated: false, isLoading: false }, false, "loadUserFromStorage:invalidUser");
               return;
             }
@@ -293,9 +294,9 @@ export const useAuthStore = create<AuthState>()(
                 if (!response.ok) {
                   if (response.status === 401) {
                     // Token expired
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("accessToken");
-                    localStorage.removeItem("refreshToken");
+                    localStorage.removeItem(USER_KEY);
+                    localStorage.removeItem(ACCESS_TOKEN_KEY);
+                    localStorage.removeItem(REFRESH_TOKEN_KEY);
                     set({ user: null, isAuthenticated: false }, false, "loadUserFromStorage:tokenExpired");
                   }
                   return;
@@ -322,7 +323,7 @@ export const useAuthStore = create<AuthState>()(
                   siteIds,
                 } as User;
 
-                localStorage.setItem("user", JSON.stringify(updatedUser));
+                localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
                 set({ user: updatedUser }, false, "loadUserFromStorage:fromAPI");
               } catch (error) {
                 console.error("[AuthStore] Error refreshing user from API", error);
@@ -343,8 +344,8 @@ export const useAuthStore = create<AuthState>()(
           try {
             if (typeof localStorage === "undefined") return false;
 
-            const accessToken = localStorage.getItem("accessToken");
-            const refreshTokenValue = localStorage.getItem("refreshToken");
+            const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+            const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
             if (!accessToken || !refreshTokenValue) return false;
 
@@ -357,8 +358,8 @@ export const useAuthStore = create<AuthState>()(
               // If token expires in less than 5 minutes, refresh it
               if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
                 const data = await refreshToken({ refreshToken: refreshTokenValue });
-                localStorage.setItem("accessToken", data.accessToken);
-                localStorage.setItem("refreshToken", data.refreshToken);
+                localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+                localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
                 get().setShowSessionModal(false);
                 return true;
               }

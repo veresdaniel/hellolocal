@@ -10,6 +10,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { requireLang } from "../common/lang";
 import { isMissingProductClickTable } from "../analytics/product-click-table";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 const PAGE_SIZE_DEFAULT = 24;
 const PAGE_SIZE_MAX = 60;
@@ -166,7 +167,7 @@ export class ProductsService {
   async update(id: string, siteId: string, input: ProductWriteInput, actor: Actor) {
     this.assertSite(actor, siteId);
     const existing = await this.prisma.product.findFirst({ where: { id, siteId } });
-    if (!existing) throw new NotFoundException("Product not found");
+    if (!existing) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRODUCT);
     const data = await this.normalize(siteId, input);
     const updated = await this.prisma.product.update({
       where: { id },
@@ -186,7 +187,7 @@ export class ProductsService {
   async remove(id: string, siteId: string, actor: Actor) {
     this.assertSite(actor, siteId);
     const existing = await this.prisma.product.findFirst({ where: { id, siteId } });
-    if (!existing) throw new NotFoundException("Product not found");
+    if (!existing) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRODUCT);
     await this.prisma.product.delete({ where: { id } });
     return { ok: true };
   }
@@ -208,10 +209,10 @@ export class ProductsService {
   }
 
   private assertSite(actor: Actor, siteId: string) {
-    if (!siteId) throw new BadRequestException("siteId is required");
+    if (!siteId) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_SITE_ID_REQUIRED);
     if (actor.role === UserRole.superadmin) return;
     if (!actor.siteIds?.includes(siteId)) {
-      throw new ForbiddenException("You do not have access to this site");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_SITE_ACCESS);
     }
   }
 

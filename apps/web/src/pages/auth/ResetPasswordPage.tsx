@@ -131,11 +131,11 @@ export function ResetPasswordPage() {
           <h1
             style={{
               marginBottom: 16,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(24px, 6vw, 32px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {t("admin.passwordResetSuccess")}
@@ -206,11 +206,11 @@ export function ResetPasswordPage() {
           style={{
             marginBottom: 8,
             textAlign: "center",
-            color: "var(--admin-primary, #2563eb)",
+            color: "var(--admin-primary)",
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
           }}
         >
           {t("admin.resetPassword")}
@@ -276,7 +276,7 @@ export function ResetPasswordPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: passwordError ? "#dc2626" : "var(--admin-primary, #2563eb)",
+                color: passwordError ? "#dc2626" : "var(--admin-primary)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -307,7 +307,7 @@ export function ResetPasswordPage() {
               }}
               onFocus={(e) => {
                 if (!passwordError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }
               }}
@@ -339,7 +339,7 @@ export function ResetPasswordPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: confirmError ? "#dc2626" : "var(--admin-primary, #2563eb)",
+                color: confirmError ? "#dc2626" : "var(--admin-primary)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -370,7 +370,7 @@ export function ResetPasswordPage() {
               }}
               onFocus={(e) => {
                 if (!confirmError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }
               }}
@@ -440,7 +440,7 @@ export function ResetPasswordPage() {
           <Link
             to={`/${lang}/admin/login`}
             style={{
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

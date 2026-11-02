@@ -129,27 +129,41 @@
 }
 
 /*
- * Shared page toolbar: [Vissza] + title/actions (AdminPageHeader portals into __main).
- * Keeps Back and Create/Cancel on one horizontal row across admin screens.
+ * Shared page toolbar ABOVE the title:
+ * [Vissza] … [Létrehozás] [Mégse]  — single row, no title, no duplicates.
+ * AdminPageHeader portals actions into __actions; title stays below.
  */
 .admin-page-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px 16px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
   width: 100%;
   box-sizing: border-box;
 }
 
-.admin-page-toolbar__main {
+.admin-page-toolbar__spacer {
   flex: 1 1 auto;
+  min-width: 8px;
+}
+
+.admin-page-toolbar__actions,
+.admin-page-header__actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px 16px;
+  justify-content: flex-end;
+  gap: 12px;
   flex-wrap: wrap;
-  min-width: 0;
+  flex-shrink: 0;
+}
+
+.admin-page-header--below-toolbar {
+  margin-bottom: 24px;
+}
+
+.admin-page-toolbar--local {
+  margin-bottom: 12px;
 }
 
 /* Primary actions on purple chrome need stronger contrast than card primaries */
@@ -494,4 +508,115 @@
   margin: 0;
   box-sizing: border-box;
   color: var(--admin-on-chrome-soft);
+}
+
+/* White section card on purple shell (settings / forms) */
+.admin-section-card {
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.admin-section-card + .admin-section-card {
+  margin-top: 16px;
+}
+
+.admin-section-card__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--admin-ink);
+  font-family: var(--admin-font-display);
+}
+
+.admin-section-card__help {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--admin-muted);
+}
+
+/* Muted body copy on light surfaces */
+.admin-muted {
+  color: var(--admin-muted);
+}
+
+.admin-muted-strong {
+  color: var(--admin-muted-strong);
+}
+
+/* Shared form field spacing */
+.admin-field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.admin-field__label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--admin-ink);
+}
+
+.admin-field__control {
+  width: 100%;
+  max-width: 420px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  font: inherit;
+  color: var(--admin-ink);
+  background: var(--admin-surface);
+  box-sizing: border-box;
+}
+
+.admin-field__control--textarea {
+  min-height: 96px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.admin-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  padding: 32px 28px;
+  box-sizing: border-box;
+}
+
+.admin-auth-card__title {
+  margin: 0 0 8px;
+  font-size: clamp(24px, 4vw, 30px);
+  font-weight: 700;
+  color: var(--admin-ink);
+  font-family: var(--admin-font-display);
+}
+
+.admin-auth-card__subtitle {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--admin-muted);
 }

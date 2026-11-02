@@ -192,7 +192,16 @@
       "managerCannotAssignOwner": "A manager nem rendelhet owner szerepkört",
       "managerCannotModifyOwner": "A manager nem módosíthat owner szerepkört",
       "editorCannotManageMemberships": "Az editor nem kezelheti a hely tagságokat",
-      "managerCannotDeleteOwner": "A manager nem törölhet owner tagságot"
+      "managerCannotDeleteOwner": "A manager nem törölhet owner tagságot",
+      "twoFactorManageOthers": "Nem kezelheted más felhasználók 2FA-ját",
+      "updateOwnProfileOnly": "Csak a saját profilodat módosíthatod",
+      "noSiteAccess": "Nincs hozzáférésed ehhez a site-hoz",
+      "noPlaceAccess": "Nincs hozzáférésed ehhez a helyhez",
+      "userNoSite": "A felhasználóhoz nincs site rendelve",
+      "userNoRegion": "A felhasználóhoz nincs régió rendelve",
+      "platformSettingsSuperadminOnly": "Csak szuperadmin szerkesztheti a platform szövegeket",
+      "insufficientSitePermissions": "Nincs elegendő site jogosultság. Szerkesztő vagy magasabb szükséges",
+      "contentDraft": "A tartalomvázlat nem érhető el"
     },
     "notFound": {
       "user": "Felhasználó nem található",
@@ -209,7 +218,13 @@
       "priceBand": "Ár szint nem található",
       "brand": "Domain nem található",
       "slug": "Slug nem található",
-      "siteKey": "Régió kulcs nem található"
+      "siteKey": "Régió kulcs nem található",
+      "defaultSite": "Az alapértelmezett site nem található",
+      "event": "Esemény nem található",
+      "collection": "Gyűjtemény nem található",
+      "collectionItem": "Gyűjteményelem nem található",
+      "gallery": "Galéria nem található",
+      "product": "Termék nem található"
     },
     "badRequest": {
       "categoryParentSelf": "A kategória nem lehet a saját szülője",
@@ -236,10 +251,30 @@
       "planImageLimit": "A csomag maximális képkorlátja túllépve",
       "planFeaturedNotSupported": "A csomag nem támogatja a kiemelést",
       "slugConflict": "A slug már létezik",
-      "unsupportedLegalPage": "Nem támogatott jogi oldal"
+      "unsupportedLegalPage": "Nem támogatott jogi oldal",
+      "twoFactorStepUpRequired": "A folytatáshoz jelszó megerősítés szükséges",
+      "twoFactorTokenRequired": "2FA ellenőrzés szükséges. Add meg a 2FA kódot.",
+      "invalidOrExpiredResetToken": "Érvénytelen vagy lejárt visszaállító token",
+      "userAlreadyExists": "Ezzel az e-mail címmel vagy felhasználónévvel már létezik felhasználó",
+      "siteIdRequired": "Site azonosító kötelező",
+      "placeIdRequired": "Hely azonosító kötelező",
+      "townIdRequired": "Település azonosító kötelező",
+      "eventIdRequired": "Esemény azonosító kötelező",
+      "placeIdSameSite": "A helynek ugyanahhoz a site-hoz kell tartoznia",
+      "contentDraftInvalid": "Érvénytelen tartalomvázlat kérés",
+      "contentDraftNeedsName": "A tartalomvázlathoz név kell"
     },
     "unauthorized": {
-      "disableOwn2FA": "Csak a saját 2FA-dat tilthatod le"
+      "disableOwn2FA": "Csak a saját 2FA-dat kapcsolhatod ki",
+      "twoFactorStepUp": "A jelszó megerősítése sikertelen",
+      "invalidCredentials": "Érvénytelen belépési adatok",
+      "invalid2FAToken": "Érvénytelen 2FA kód",
+      "twoFactorVerificationFailed": "A 2FA ellenőrzés sikertelen",
+      "twoFactorServiceUnavailable": "A 2FA szolgáltatás nem elérhető",
+      "invalidRefreshToken": "Érvénytelen frissítő token",
+      "loginFailed": "Sikertelen belépés",
+      "sessionExpired": "A munkamenet lejárt vagy a token érvénytelen",
+      "userSiteConfigInvalid": "A felhasználó site konfigurációja érvénytelen"
     },
     "internal": {
       "error": "Belső szerver hiba",
@@ -1280,7 +1315,8 @@
     "providerOpenRouter": "OpenRouter (free modellek)",
     "apiKey": "API kulcs",
     "apiKeyPlaceholder": "Új kulcs megadása",
-    "apiKeyConfigured": "Kulcs mentve (nem jelenik meg).",
+    "apiKeyReplacePlaceholder": "Csere: új kulcs megadása",
+    "apiKeyConfigured": "Kulcs mentve — lent csillagozva látszik.",
     "apiKeyClearHelp": "A mentett kulcsot a „Kulcs törlése” gombbal lehet eltávolítani.",
     "clearKey": "Kulcs törlése",
     "save": "Mentés",

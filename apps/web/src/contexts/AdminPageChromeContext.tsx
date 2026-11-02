@@ -1,14 +1,14 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 export type AdminPageChromeValue = {
-  /** Host for AdminPageHeader title + page actions (same row as Vissza). */
-  toolbarMainEl: HTMLElement | null;
+  /** Host for page action buttons only (same row as Vissza; title stays below). */
+  toolbarActionsEl: HTMLElement | null;
   /** True when AdminLayout mounts the shared toolbar (even before the slot ref attaches). */
   hasToolbarSlot: boolean;
 };
 
 const defaultValue: AdminPageChromeValue = {
-  toolbarMainEl: null,
+  toolbarActionsEl: null,
   hasToolbarSlot: false,
 };
 

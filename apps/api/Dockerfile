@@ -10,8 +10,12 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
+
+COPY packages/shared ./packages/shared
+RUN pnpm -C packages/shared build
 
 COPY apps/api ./apps/api
 
@@ -27,9 +31,11 @@ ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
+COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts

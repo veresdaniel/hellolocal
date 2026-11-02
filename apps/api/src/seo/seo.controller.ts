@@ -14,6 +14,7 @@ import { Lang } from "../common/language-code";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import { assertLang } from "../common/lang";
 import { frontendOrigin, placePathSegment } from "./public-path.util";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 /**
  * Removes HTML tags from a string and normalizes whitespace
@@ -92,7 +93,7 @@ export class SeoController {
       });
 
       if (!place || !place.isActive) {
-        throw new NotFoundException("Place not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
       }
 
       const translation =
@@ -220,7 +221,7 @@ export class SeoController {
       });
 
       if (!event || !event.isActive) {
-        throw new NotFoundException("Event not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_EVENT);
       }
 
       const translation =

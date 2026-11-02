@@ -251,7 +251,7 @@ export function UsersPage() {
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
             margin: 0,
           }}
         >
@@ -267,8 +267,8 @@ export function UsersPage() {
           style={{
             padding: "10px 20px",
             background: editingId || isCreating ? "#e0e0e0" : "white",
-            color: editingId || isCreating ? "#999" : "var(--admin-primary, #2563eb)",
-            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary, #2563eb)",
+            color: editingId || isCreating ? "#999" : "var(--admin-primary)",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary)",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -327,7 +327,7 @@ export function UsersPage() {
             style={{
               marginBottom: 16,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editUser") : t("admin.forms.newUser")}
@@ -604,7 +604,7 @@ export function UsersPage() {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
                 />
                 <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
               </label>
@@ -634,7 +634,7 @@ export function UsersPage() {
                   marginBottom: 12,
                   fontSize: 16,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.profile.twoFactorAuthentication")}

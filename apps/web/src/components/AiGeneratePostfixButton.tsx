@@ -62,10 +62,13 @@ export function AiGeneratePostfixButton({
   const { t } = useTranslation();
   const confirm = useConfirm();
   const { showToast } = useToast();
+  const auth = useAuth();
   const { visible, enabled } = useContentDraftStatus(draft.siteId, draft.placeId);
   const [busy, setBusy] = useState(false);
+  const userAiEnabled = Boolean(auth?.user?.aiAssistantEnabled);
 
-  if (!visible) return null;
+  // Same per-user gate as the floating AI Assistant dock.
+  if (!visible || !userAiEnabled) return null;
 
   const run = async () => {
     // Keep clickable when gated so the disabled reason is never mysterious.

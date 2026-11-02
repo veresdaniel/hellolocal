@@ -83,7 +83,7 @@ describe("product click increment", () => {
 
     const missing = serviceFor(null);
     await expect(missing.service.trackProductClick({ productId: "missing" })).rejects.toThrow(
-      /Product not found/
+      /errors\.notFound\.product/
     );
     expect(missing.calls).toEqual([]);
   });

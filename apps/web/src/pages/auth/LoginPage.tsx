@@ -12,6 +12,8 @@ import { buildUrl } from "../../app/urls";
 import { ROLE_VIEWER } from "../../types/enums";
 import { useSeo } from "../../seo/useSeo";
 import { safeInternalPath } from "../../utils/safeInternalPath";
+import { API_AUTH_GOOGLE } from "@hellolocal/shared";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/authStorage";
 
 
 export function LoginPage() {
@@ -146,9 +148,9 @@ export function LoginPage() {
           }
 
           // Store tokens and user data
-          localStorage.setItem("accessToken", tokens.accessToken);
-          localStorage.setItem("refreshToken", tokens.refreshToken);
-          localStorage.setItem("user", JSON.stringify(tokens.user));
+          localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+          localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+          localStorage.setItem(USER_KEY, JSON.stringify(tokens.user));
 
           // Clear tokens from the address bar immediately
           clearAuthFragment();
@@ -303,39 +305,11 @@ export function LoginPage() {
 
   return (
     <div className="admin-login">
-      <div
-        style={{
-          maxWidth: 440,
-          width: "100%",
-          background: "var(--admin-surface, #ffffff)",
-          borderRadius: 16,
-          padding: "clamp(24px, 5vw, 40px)",
-          boxShadow: "0 12px 40px rgba(15, 23, 42, 0.12)",
-          border: "1px solid var(--admin-border-subtle, #e2e8f0)",
-        }}
-      >
-        <h1
-          style={{
-            marginBottom: 8,
-            textAlign: "center",
-            color: "var(--admin-text, #0f172a)",
-            fontSize: "clamp(24px, 6vw, 32px)",
-            fontWeight: 700,
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
-          }}
-        >
+      <div className="admin-auth-card">
+        <h1 className="admin-auth-card__title" style={{ textAlign: "center" }}>
           {t("admin.login")}
         </h1>
-        <p
-          style={{
-            textAlign: "center",
-            color: "var(--admin-text-muted, #475569)",
-            marginBottom: "clamp(20px, 4vw, 32px)",
-            fontSize: "clamp(13px, 3vw, 14px)",
-            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
-            fontWeight: 400,
-          }}
-        >
+        <p className="admin-auth-card__subtitle" style={{ textAlign: "center" }}>
           {t("admin.loginDescription")}
         </p>
 
@@ -344,10 +318,10 @@ export function LoginPage() {
             style={{
               padding: "clamp(12px, 3vw, 16px)",
               marginBottom: "clamp(16px, 4vw, 24px)",
-              background: "var(--admin-primary-soft, #eff6ff)",
-              color: "var(--admin-text, #0f172a)",
+              background: "var(--admin-primary-soft)",
+              color: "var(--admin-ink)",
               borderRadius: 12,
-              border: "1px solid var(--admin-primary-border, #bfdbfe)",
+              border: "1px solid var(--admin-primary-border)",
               display: "flex",
               flexDirection: "column",
               gap: 12,
@@ -370,7 +344,7 @@ export function LoginPage() {
               to={publicPagePath}
               style={{
                 padding: "clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)",
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 color: "white",
                 textDecoration: "none",
                 borderRadius: 8,
@@ -386,11 +360,11 @@ export function LoginPage() {
                 gap: 8,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--admin-primary-hover, #1d4ed8)";
+                e.currentTarget.style.background = "var(--admin-primary-hover)";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--admin-primary, #2563eb)";
+                e.currentTarget.style.background = "var(--admin-primary)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
             >
@@ -430,7 +404,7 @@ export function LoginPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: emailError ? "#dc2626" : "var(--admin-primary, #2563eb)",
+                color: emailError ? "#dc2626" : "var(--admin-primary)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -451,7 +425,7 @@ export function LoginPage() {
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
-                border: `2px solid ${emailError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)"}`,
+                border: `2px solid ${emailError ? "#fca5a5" : "var(--admin-primary-border)"}`,
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -462,13 +436,13 @@ export function LoginPage() {
               }}
               onFocus={(e) => {
                 if (!emailError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }
               }}
               onBlur={(e) => {
                 if (!emailError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary-border)";
                   e.currentTarget.style.boxShadow = "none";
                 }
               }}
@@ -494,7 +468,7 @@ export function LoginPage() {
               style={{
                 display: "block",
                 marginBottom: 8,
-                color: "var(--admin-primary, #2563eb)",
+                color: "var(--admin-primary)",
                 fontWeight: 600,
                 fontSize: "clamp(13px, 3vw, 14px)",
                 fontFamily:
@@ -513,7 +487,7 @@ export function LoginPage() {
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
                 fontSize: "clamp(14px, 3.5vw, 15px)",
-                border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                border: "2px solid var(--admin-primary-border)",
                 borderRadius: 8,
                 outline: "none",
                 transition: "all 0.3s ease",
@@ -522,11 +496,11 @@ export function LoginPage() {
                 boxSizing: "border-box",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                e.currentTarget.style.borderColor = "var(--admin-primary)";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                e.currentTarget.style.borderColor = "var(--admin-primary-border)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
@@ -538,7 +512,7 @@ export function LoginPage() {
                 style={{
                   display: "block",
                   marginBottom: 8,
-                  color: "var(--admin-primary, #2563eb)",
+                  color: "var(--admin-primary)",
                   fontWeight: 600,
                   fontSize: "clamp(13px, 3vw, 14px)",
                   fontFamily:
@@ -563,18 +537,18 @@ export function LoginPage() {
                   textAlign: "center",
                   letterSpacing: "clamp(4px, 1.5vw, 8px)",
                   fontFamily: "monospace",
-                  border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                  border: "2px solid var(--admin-primary-border)",
                   borderRadius: 8,
                   outline: "none",
                   transition: "all 0.3s ease",
                   boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary-border)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -605,7 +579,7 @@ export function LoginPage() {
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
               background: isLoading
                 ? "#8d88a3"
-                : "var(--admin-primary, #2563eb)",
+                : "var(--admin-primary)",
               color: "white",
               border: "none",
               borderRadius: 8,
@@ -657,7 +631,7 @@ export function LoginPage() {
         {/* Google OAuth Button */}
         <a
           key="google-login-button"
-          href={`/api/auth/google`}
+          href={API_AUTH_GOOGLE}
           onClick={(e) => {
             // Store current location as return URL before redirecting to Google OAuth
             const currentPath =
@@ -742,7 +716,7 @@ export function LoginPage() {
           <Link
             to={`/${lang}/admin/forgot-password`}
             style={{
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -775,7 +749,7 @@ export function LoginPage() {
           <Link
             to={`/${lang}/admin/register`}
             style={{
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

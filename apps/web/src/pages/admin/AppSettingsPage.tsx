@@ -7,6 +7,11 @@ import { useAdminSite } from "../../contexts/useAdminSite";
 import { useToast } from "../../contexts/ToastContext";
 import { useConfirm } from "../../hooks/useConfirm";
 import {
+  CONTENT_DRAFT_DEFAULT_PROVIDER,
+  CONTENT_DRAFT_PROVIDERS,
+  isContentDraftProvider,
+} from "@hellolocal/shared";
+import {
   getDefaultLanguage,
   setDefaultLanguage,
   getFeatureMatrix,
@@ -23,8 +28,8 @@ import {
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { PublicPlansEditor } from "../../components/PublicPlansEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
-import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
+import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
@@ -83,7 +88,8 @@ export function AppSettingsPage() {
   const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
   const [contentDraftKeyConfigured, setContentDraftKeyConfigured] = useState(false);
   const [contentDraftEnabled, setContentDraftEnabled] = useState(false);
-  const [contentDraftProvider, setContentDraftProvider] = useState<ContentDraftProvider>("gemini");
+  const [contentDraftProvider, setContentDraftProvider] =
+    useState<ContentDraftProvider>(CONTENT_DRAFT_DEFAULT_PROVIDER);
   const [contentDraftApiKey, setContentDraftApiKey] = useState("");
   const [contentDraftApiKeyEditing, setContentDraftApiKeyEditing] = useState(false);
   const [isSavingContentDraft, setIsSavingContentDraft] = useState(false);
@@ -163,14 +169,10 @@ export function AppSettingsPage() {
         setContentDraftKeyConfigured(Boolean(status.keyConfigured));
         setContentDraftApiKey("");
         setContentDraftApiKeyEditing(false);
-        if (
-          status.provider === "gemini" ||
-          status.provider === "groq" ||
-          status.provider === "openrouter"
-        ) {
+        if (isContentDraftProvider(status.provider)) {
           setContentDraftProvider(status.provider);
         } else {
-          setContentDraftProvider("gemini");
+          setContentDraftProvider(CONTENT_DRAFT_DEFAULT_PROVIDER);
         }
       })
       .catch(() => {
@@ -179,7 +181,7 @@ export function AppSettingsPage() {
         setContentDraftKeyConfigured(false);
         setContentDraftApiKey("");
         setContentDraftApiKeyEditing(false);
-        setContentDraftProvider("gemini");
+        setContentDraftProvider(CONTENT_DRAFT_DEFAULT_PROVIDER);
       });
     getBrands()
       .then((brands) => {
@@ -272,11 +274,7 @@ export function AppSettingsPage() {
       });
       setContentDraftEnabled(Boolean(status.enabled));
       setContentDraftKeyConfigured(Boolean(status.keyConfigured));
-      if (
-        status.provider === "gemini" ||
-        status.provider === "groq" ||
-        status.provider === "openrouter"
-      ) {
+      if (isContentDraftProvider(status.provider)) {
         setContentDraftProvider(status.provider);
       }
       setContentDraftApiKey("");
@@ -437,14 +435,14 @@ export function AppSettingsPage() {
         <div
           style={{
             padding: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
           }}
         >
           <p
             style={{
-              color: "#666",
+              color: "var(--admin-muted)",
               fontSize: 16,
               margin: 0,
               fontFamily:
@@ -460,9 +458,9 @@ export function AppSettingsPage() {
           style={{
             marginTop: 24,
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -488,7 +486,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.defaultLanguage")}
@@ -497,7 +495,7 @@ export function AppSettingsPage() {
             <span
               style={{
                 fontSize: 20,
-                color: "#666",
+                color: "var(--admin-muted)",
                 transition: "transform 0.2s",
                 transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)",
               }}
@@ -506,10 +504,10 @@ export function AppSettingsPage() {
             </span>
           </button>
           {languageOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <p
                 style={{
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 24,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontFamily:
@@ -543,7 +541,7 @@ export function AppSettingsPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
-                      background: "white",
+                      background: "var(--admin-surface)",
                       cursor: userIsAdmin && !isSaving ? "pointer" : "not-allowed",
                       minWidth: 200,
                     }}
@@ -610,7 +608,7 @@ export function AppSettingsPage() {
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
             margin: 0,
             marginBottom: 8,
           }}
@@ -635,9 +633,9 @@ export function AppSettingsPage() {
       <div
         style={{
           marginBottom: 24,
-          background: "white",
+          background: "var(--admin-surface)",
           borderRadius: 12,
-          border: "1px solid #e0e0e0",
+          border: "1px solid var(--admin-border-subtle)",
           overflow: "hidden",
         }}
       >
@@ -663,7 +661,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  "var(--admin-font-display)",
               }}
             >
               {t("admin.defaultLanguage")}
@@ -672,7 +670,7 @@ export function AppSettingsPage() {
           <span
             style={{
               fontSize: 20,
-              color: "#666",
+              color: "var(--admin-muted)",
               transition: "transform 0.2s",
               transform: languageOpen ? "rotate(180deg)" : "rotate(0deg)",
             }}
@@ -681,10 +679,10 @@ export function AppSettingsPage() {
           </span>
         </button>
         {languageOpen && (
-          <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+          <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
             <p
               style={{
-                color: "#666",
+                color: "var(--admin-muted)",
                 marginBottom: 24,
                 fontSize: 15,
                 fontFamily:
@@ -715,8 +713,8 @@ export function AppSettingsPage() {
                     padding: "12px 16px",
                     fontSize: 15,
                     borderRadius: 8,
-                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
-                    background: "white",
+                    border: "2px solid var(--admin-primary-border)",
+                    background: "var(--admin-surface)",
                     cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
                     minWidth: 200,
                     boxSizing: "border-box",
@@ -771,9 +769,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -797,7 +795,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  "var(--admin-font-display)",
               }}
             >
               {t("admin.typography.title")}
@@ -805,10 +803,10 @@ export function AppSettingsPage() {
             <span>{typographyOpen ? "▾" : "▸"}</span>
           </button>
           {typographyOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <p
                 style={{
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 24,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontFamily:
@@ -837,7 +835,7 @@ export function AppSettingsPage() {
                       fontSize: 16,
                       borderRadius: 6,
                       border: "1px solid #ddd",
-                      background: "white",
+                      background: "var(--admin-surface)",
                       minWidth: 220,
                     }}
                   >
@@ -859,7 +857,7 @@ export function AppSettingsPage() {
                       fontSize: 16,
                       borderRadius: 6,
                       border: "1px solid #ddd",
-                      background: "white",
+                      background: "var(--admin-surface)",
                       minWidth: 220,
                     }}
                   >
@@ -897,9 +895,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -923,7 +921,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  "var(--admin-font-display)",
               }}
             >
               {t("admin.themeColors.title")}
@@ -931,10 +929,10 @@ export function AppSettingsPage() {
             <span>{themeColorsOpen ? "▾" : "▸"}</span>
           </button>
           {themeColorsOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <p
                 style={{
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 24,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontFamily:
@@ -977,9 +975,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             padding: 24,
           }}
         >
@@ -989,12 +987,12 @@ export function AppSettingsPage() {
               fontSize: 20,
               fontWeight: 600,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {t("admin.i18n.landingMovedTitle")}
           </h2>
-          <p style={{ margin: "0 0 12px", color: "#666", lineHeight: 1.5 }}>
+          <p style={{ margin: "0 0 12px", color: "var(--admin-muted)", lineHeight: 1.5 }}>
             {t("admin.i18n.landingMovedHint")}
           </p>
           <Link
@@ -1011,9 +1009,9 @@ export function AppSettingsPage() {
           id="content-draft"
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             padding: 24,
             scrollMarginTop: 96,
           }}
@@ -1021,7 +1019,7 @@ export function AppSettingsPage() {
           <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
             {t("admin.contentDraft.settingsTitle")}
           </h2>
-          <p style={{ margin: "0 0 8px", color: "#666" }}>{t("admin.contentDraft.settingsHelp")}</p>
+          <p style={{ margin: "0 0 8px", color: "var(--admin-muted)" }}>{t("admin.contentDraft.settingsHelp")}</p>
           <p style={{ margin: "0 0 16px", color: contentDraftEnabled ? "#166534" : "#6b7280", fontWeight: 600 }}>
             {contentDraftEnabled
               ? t("admin.contentDraft.statusOn")
@@ -1044,18 +1042,26 @@ export function AppSettingsPage() {
               border: "1px solid #d9d3e4",
               borderRadius: 8,
               font: "inherit",
-              background: "#fff",
+              background: "var(--admin-surface)",
             }}
           >
-            <option value="gemini">{t("admin.contentDraft.providerGemini")}</option>
-            <option value="groq">{t("admin.contentDraft.providerGroq")}</option>
-            <option value="openrouter">{t("admin.contentDraft.providerOpenRouter")}</option>
+            {CONTENT_DRAFT_PROVIDERS.map((providerId) => (
+              <option key={providerId} value={providerId}>
+                {t(
+                  providerId === "gemini"
+                    ? "admin.contentDraft.providerGemini"
+                    : providerId === "groq"
+                      ? "admin.contentDraft.providerGroq"
+                      : "admin.contentDraft.providerOpenRouter"
+                )}
+              </option>
+            ))}
           </select>
           <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
             {t("admin.contentDraft.apiKey")}
           </label>
           {contentDraftKeyConfigured ? (
-            <p style={{ margin: "0 0 8px", color: "#6b7280", fontSize: 14 }}>
+            <p style={{ margin: "0 0 8px", color: "#166534", fontSize: 14, fontWeight: 600 }}>
               {t("admin.contentDraft.apiKeyConfigured")}
             </p>
           ) : null}
@@ -1103,8 +1109,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "var(--admin-primary, #1e293b)",
-                color: "var(--admin-on-primary, #ffffff)",
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
                 fontWeight: 600,
                 cursor: isSavingContentDraft ? "wait" : "pointer",
               }}
@@ -1121,7 +1127,7 @@ export function AppSettingsPage() {
                   padding: "0 16px",
                   border: "1px solid #d1d5db",
                   borderRadius: 999,
-                  background: "#fff",
+                  background: "var(--admin-surface)",
                   color: "#374151",
                   fontWeight: 600,
                   cursor: isSavingContentDraft ? "wait" : "pointer",
@@ -1138,16 +1144,16 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             padding: 24,
           }}
         >
           <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
             {t("admin.googleAnalytics.platformTitle")}
           </h2>
-          <p style={{ margin: "0 0 16px", color: "#666" }}>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.googleAnalytics.platformHelp")}
           </p>
           <input
@@ -1187,8 +1193,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "var(--admin-primary, #1e293b)",
-                color: "var(--admin-on-primary, #ffffff)",
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
                 fontWeight: 600,
                 cursor: isSavingPlatformGa ? "wait" : "pointer",
               }}
@@ -1203,16 +1209,16 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             padding: 24,
           }}
         >
           <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
             {t("public.overview.plans.recipient.label")}
           </h2>
-          <p style={{ margin: "0 0 16px", color: "#666" }}>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("public.overview.plans.recipient.help")}
           </p>
           <input
@@ -1239,8 +1245,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "var(--admin-primary, #1e293b)",
-                color: "var(--admin-on-primary, #ffffff)",
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
                 fontWeight: 600,
                 cursor: isSavingRecipient ? "wait" : "pointer",
               }}
@@ -1257,9 +1263,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -1283,7 +1289,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  "var(--admin-font-display)",
               }}
             >
               {t("public.overview.plansTitle")}
@@ -1291,7 +1297,7 @@ export function AppSettingsPage() {
             <span>{publicPlansOpen ? "▾" : "▸"}</span>
           </button>
           {publicPlansOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               {isLoadingFeatureMatrix && !featureMatrix ? (
                 <LoadingSpinner />
               ) : (
@@ -1310,9 +1316,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -1336,7 +1342,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  "var(--admin-font-display)",
               }}
             >
               {t("admin.visitorLadder.title")}
@@ -1344,7 +1350,7 @@ export function AppSettingsPage() {
             <span>{visitorLadderOpen ? "▾" : "▸"}</span>
           </button>
           {visitorLadderOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <VisitorLadderSettings />
             </div>
           )}
@@ -1356,9 +1362,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -1384,7 +1390,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.featureMatrix")}
@@ -1393,7 +1399,7 @@ export function AppSettingsPage() {
             <span
               style={{
                 fontSize: 20,
-                color: "#666",
+                color: "var(--admin-muted)",
                 transition: "transform 0.2s",
                 transform: featureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)",
               }}
@@ -1402,10 +1408,10 @@ export function AppSettingsPage() {
             </span>
           </button>
           {featureMatrixOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <p
                 style={{
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 24,
                   fontSize: 15,
                   fontFamily:
@@ -1478,9 +1484,9 @@ export function AppSettingsPage() {
         <div
           style={{
             marginBottom: 24,
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 12,
-            border: "1px solid #e0e0e0",
+            border: "1px solid var(--admin-border-subtle)",
             overflow: "hidden",
           }}
         >
@@ -1506,7 +1512,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                    "var(--admin-font-display)",
                 }}
               >
                 {t("admin.placeFeatureMatrix")}
@@ -1515,7 +1521,7 @@ export function AppSettingsPage() {
             <span
               style={{
                 fontSize: 20,
-                color: "#666",
+                color: "var(--admin-muted)",
                 transition: "transform 0.2s",
                 transform: placeFeatureMatrixOpen ? "rotate(180deg)" : "rotate(0deg)",
               }}
@@ -1524,10 +1530,10 @@ export function AppSettingsPage() {
             </span>
           </button>
           {placeFeatureMatrixOpen && (
-            <div style={{ padding: 24, borderTop: "1px solid #e0e0e0" }}>
+            <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
               <p
                 style={{
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 24,
                   fontSize: 15,
                   fontFamily:
@@ -1902,8 +1908,8 @@ function FeatureMatrixEditor({
         overflowX: "auto",
         WebkitOverflowScrolling: "touch",
         borderRadius: 8,
-        border: "1px solid #e0e0e0",
-        background: "white",
+        border: "1px solid var(--admin-border-subtle)",
+        background: "var(--admin-surface)",
       }}
     >
       <table
@@ -1916,7 +1922,7 @@ function FeatureMatrixEditor({
         <thead>
           <tr
             style={{
-              background: "var(--admin-primary, #2563eb)",
+              background: "var(--admin-primary)",
               borderBottom: "2px solid #dee2e6",
             }}
           >
@@ -1931,7 +1937,7 @@ function FeatureMatrixEditor({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 position: "sticky",
                 left: 0,
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 zIndex: 10,
               }}
             >
@@ -1989,7 +1995,7 @@ function FeatureMatrixEditor({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     position: "sticky",
                     left: 0,
-                    background: "white",
+                    background: "var(--admin-surface)",
                     zIndex: 5,
                     boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
                   }}
@@ -2070,7 +2076,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 18 : 20,
                               height: isMobile ? 18 : 20,
                               cursor: "pointer",
-                              accentColor: isOverridden ? "var(--admin-primary, #2563eb)" : "#6c757d",
+                              accentColor: isOverridden ? "var(--admin-primary)" : "#6c757d",
                             }}
                           />
                         ) : feature.type === "number" ? (
@@ -2097,7 +2103,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 60 : 80,
                               padding: isMobile ? "4px 6px" : "6px 8px",
                               fontSize: isMobile ? 12 : 14,
-                              border: `2px solid ${isOverridden ? "var(--admin-primary, #2563eb)" : "#ced4da"}`,
+                              border: `2px solid ${isOverridden ? "var(--admin-primary)" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
                               fontFamily:
@@ -2106,7 +2112,7 @@ function FeatureMatrixEditor({
                               outline: "none",
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                              e.currentTarget.style.borderColor = "var(--admin-primary)";
                               e.currentTarget.style.boxShadow =
                                 "0 0 0 3px rgba(37, 99, 235, 0.1)";
                             }}
@@ -2124,7 +2130,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 90 : 120,
                               padding: isMobile ? "4px 6px" : "6px 8px",
                               fontSize: isMobile ? 12 : 14,
-                              border: `2px solid ${isOverridden ? "var(--admin-primary, #2563eb)" : "#ced4da"}`,
+                              border: `2px solid ${isOverridden ? "var(--admin-primary)" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
                               fontFamily:
@@ -2133,7 +2139,7 @@ function FeatureMatrixEditor({
                               outline: "none",
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                              e.currentTarget.style.borderColor = "var(--admin-primary)";
                               e.currentTarget.style.boxShadow =
                                 "0 0 0 3px rgba(37, 99, 235, 0.1)";
                             }}
@@ -2146,7 +2152,7 @@ function FeatureMatrixEditor({
                           <div
                             style={{
                               fontSize: isMobile ? 9 : 10,
-                              color: "var(--admin-primary, #2563eb)",
+                              color: "var(--admin-primary)",
                               marginTop: 2,
                               fontWeight: 500,
                             }}
@@ -2261,8 +2267,8 @@ function PlaceFeatureMatrixEditor({
         overflowX: "auto",
         WebkitOverflowScrolling: "touch",
         borderRadius: 8,
-        border: "1px solid #e0e0e0",
-        background: "white",
+        border: "1px solid var(--admin-border-subtle)",
+        background: "var(--admin-surface)",
       }}
     >
       <table
@@ -2345,7 +2351,7 @@ function PlaceFeatureMatrixEditor({
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     position: "sticky",
                     left: 0,
-                    background: "white",
+                    background: "var(--admin-surface)",
                     zIndex: 5,
                     boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
                   }}

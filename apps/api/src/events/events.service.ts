@@ -7,6 +7,18 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
 import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
+
+/** Event pin, or the parent place pin when the event has no coordinates of its own. */
+function mapLocation(
+  event: { lat: number | null; lng: number | null },
+  place?: { lat: number | null; lng: number | null } | null
+): { lat: number; lng: number } | null {
+  const lat = event.lat ?? place?.lat ?? null;
+  const lng = event.lng ?? place?.lng ?? null;
+  if (lat == null || lng == null) return null;
+  return { lat, lng };
+}
 
 type ListArgs = {
   lang: string;
@@ -213,7 +225,7 @@ export class EventsService {
           shortDescription: eventTranslation?.shortDescription ?? null,
           description: eventTranslation?.description ?? null,
           heroImage: event.heroImage ?? null,
-          location: event.lat && event.lng ? { lat: event.lat, lng: event.lng } : null,
+          location: mapLocation(event, event.place),
           placeId: event.placeId,
           placeSlug,
           placeName,
@@ -320,7 +332,7 @@ export class EventsService {
     });
 
     if (!event || !event.isActive || event.siteId !== site.siteId) {
-      throw new NotFoundException("Event not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_EVENT);
     }
 
     // Get canonical slug for this event
@@ -398,7 +410,7 @@ export class EventsService {
       shortDescription: eventTranslation?.shortDescription ?? null,
       description: eventTranslation?.description ?? null,
       heroImage: event.heroImage ?? null,
-      location: event.lat && event.lng ? { lat: event.lat, lng: event.lng } : null,
+      location: mapLocation(event, event.place),
       placeId: event.placeId,
       placeSlug,
       placeName,

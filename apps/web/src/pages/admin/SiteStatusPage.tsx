@@ -184,7 +184,7 @@ export function SiteStatusPage() {
               padding: "12px 24px",
               background: "none",
               border: "none",
-              borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary, #2563eb)" : "3px solid transparent",
+              borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary)" : "3px solid transparent",
               color: activeTab === tab.id ? "#a8b3ff" : "rgba(255, 255, 255, 0.6)",
               fontSize: "15px",
               fontWeight: activeTab === tab.id ? 600 : 400,
@@ -232,7 +232,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
           icon="🌐"
           value={data.overview.sites.total}
           subtitle={`${data.overview.sites.active} active, ${data.overview.sites.inactive} inactive`}
-          color="var(--admin-primary, #2563eb)"
+          color="var(--admin-primary)"
         />
         <StatCard
           title={t("admin.siteStatus.stats.places") || "Places"}
@@ -315,7 +315,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
             fontSize: "18px",
             fontWeight: 600,
             color: "#a8b3ff",
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font-display)",
           }}
         >
           {t("admin.siteStatus.recentActivity.title") || "Recent Activity (Last 7 Days)"}
@@ -362,7 +362,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
               fontSize: "18px",
               fontWeight: 600,
               color: "#a8b3ff",
-              fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              fontFamily: "var(--admin-font-display)",
             }}
           >
             {t("admin.siteStatus.sitesByPlan.title") || "Sites by Plan"}
@@ -504,7 +504,7 @@ function CacheManagementTab({
             fontSize: "18px",
             fontWeight: 600,
             color: "#a8b3ff",
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font-display)",
           }}
         >
           {t("admin.siteStatus.cache.title") || "Cache Management"}
@@ -554,7 +554,7 @@ function CacheManagementTab({
                   fontSize: "15px",
                   fontWeight: 600,
                   color: "#a8b3ff",
-                  fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                  fontFamily: "var(--admin-font-display)",
                   marginBottom: "4px",
                 }}
               >
@@ -578,7 +578,7 @@ function CacheManagementTab({
                 background:
                   cacheType.id === "all"
                     ? "linear-gradient(135deg, #f56565 0%, #e53e3e 100%)"
-                    : "linear-gradient(135deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
+                    : "linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-hover) 100%)",
                 border: "none",
                 borderRadius: "6px",
                 color: "white",
@@ -656,7 +656,7 @@ function StatCard({
               fontSize: "28px",
               fontWeight: 700,
               color: color,
-              fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              fontFamily: "var(--admin-font-display)",
             }}
           >
             {value.toLocaleString()}

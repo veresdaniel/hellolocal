@@ -1,33 +1,38 @@
 /**
- * Centralized enums and types for the application
- * These should match the Prisma schema enums
+ * Centralized enums and types for the application.
+ * UI langs / roles come from `@hellolocal/shared`; Prisma-aligned plans stay local.
  */
+import { isUiLang as sharedIsUiLang, type UiLang } from "@hellolocal/shared";
 
-/** Interface languages that ship with translated UI strings. */
-export const LANG_VALUES = ["hu", "en", "de"] as const;
-export type UiLang = (typeof LANG_VALUES)[number];
+export {
+  LANG_VALUES,
+  FALLBACK_LANG,
+  isLanguageCode,
+  USER_ROLES,
+  SITE_ROLES,
+  PLACE_ROLES,
+  USER_ROLE_HIERARCHY,
+  SITE_ROLE_HIERARCHY,
+  ROLE_VIEWER,
+  ROLE_EDITOR,
+  ROLE_ADMIN,
+  ROLE_SUPERADMIN,
+  SITE_ROLE_VIEWER,
+  SITE_ROLE_EDITOR,
+  SITE_ROLE_SITEADMIN,
+  isUserRole,
+  isSiteRole,
+  type UiLang,
+  type UserRoleId as UserRole,
+  type SiteRoleId as SiteRole,
+  type PlaceRoleId as PlaceRole,
+} from "@hellolocal/shared";
+
 /** A published language. Any ISO 639-1 or 639-2 code, not only hu/en/de. */
 export type Lang = string;
 
 const LANGUAGE_CODE = /^[a-z]{2,3}$/;
 const RESERVED_LANGUAGE_CODES = new Set(["api", "assets", "static", "src", "www", "app", "css", "img"]);
-
-// User roles - matches Prisma UserRole enum
-export const USER_ROLES = ["superadmin", "admin", "editor", "viewer"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
-
-// Site roles - matches Prisma SiteRole enum
-export const SITE_ROLES = ["siteadmin", "editor", "viewer"] as const;
-export type SiteRole = (typeof SITE_ROLES)[number];
-
-// Site role constants
-export const SITE_ROLE_VIEWER: SiteRole = "viewer";
-export const SITE_ROLE_EDITOR: SiteRole = "editor";
-export const SITE_ROLE_SITEADMIN: SiteRole = "siteadmin";
-
-// Place roles - matches Prisma PlaceRole enum
-export const PLACE_ROLES = ["owner", "manager", "editor"] as const;
-export type PlaceRole = (typeof PLACE_ROLES)[number];
 
 // Place plans - matches Prisma PlacePlan enum
 export const PLACE_PLANS = ["free", "basic", "pro"] as const;
@@ -45,35 +50,6 @@ export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 export const BILLING_PERIODS = ["MONTHLY", "YEARLY"] as const;
 export type BillingPeriod = (typeof BILLING_PERIODS)[number];
 
-// Role hierarchy for permission checking
-export const USER_ROLE_HIERARCHY: Record<UserRole, number> = {
-  viewer: 1,
-  editor: 2,
-  admin: 3,
-  superadmin: 4,
-};
-
-export const SITE_ROLE_HIERARCHY: Record<SiteRole, number> = {
-  viewer: 1,
-  editor: 2,
-  siteadmin: 3,
-};
-
-// Role constants for easier access
-export const ROLE_VIEWER: UserRole = "viewer";
-export const ROLE_EDITOR: UserRole = "editor";
-export const ROLE_ADMIN: UserRole = "admin";
-export const ROLE_SUPERADMIN: UserRole = "superadmin";
-
-// Helper functions
-export function isUserRole(value: string): value is UserRole {
-  return USER_ROLES.includes(value as UserRole);
-}
-
-export function isSiteRole(value: string): value is SiteRole {
-  return SITE_ROLES.includes(value as SiteRole);
-}
-
 export function isPlacePlan(value: string): value is PlacePlan {
   return PLACE_PLANS.includes(value as PlacePlan);
 }
@@ -87,5 +63,5 @@ export function isLang(value: unknown): value is Lang {
 }
 
 export function isUiLang(value: unknown): value is UiLang {
-  return typeof value === "string" && (LANG_VALUES as readonly string[]).includes(value);
+  return sharedIsUiLang(typeof value === "string" ? value : undefined);
 }

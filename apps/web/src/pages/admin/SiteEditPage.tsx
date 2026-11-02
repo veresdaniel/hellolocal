@@ -418,7 +418,8 @@ export function SiteEditPage() {
 
   const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
   const currentTranslation =
-    site.translations.find((t) => t.lang === currentLang) || site.translations[0];
+    (site.translations ?? []).find((t) => t.lang === currentLang) ||
+    (site.translations ?? [])[0];
 
   const tabs: Array<{ id: TabId; label: string }> = [
     { id: "overview", label: t("admin.siteEdit.tabs.overview") },
@@ -471,7 +472,7 @@ export function SiteEditPage() {
       {/* Tabs */}
       <div
         style={{
-          background: "white",
+          background: "var(--admin-surface)",
           borderRadius: 16,
           marginBottom: 24,
           boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
@@ -490,13 +491,14 @@ export function SiteEditPage() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => selectTab(tab.id)}
               style={{
                 padding: "16px 24px",
                 border: "none",
-                borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary, #2563eb)" : "3px solid transparent",
+                borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary)" : "3px solid transparent",
                 background: "transparent",
-                color: activeTab === tab.id ? "var(--admin-primary, #2563eb)" : "#6b7280",
+                color: activeTab === tab.id ? "var(--admin-primary)" : "#6b7280",
                 fontWeight: activeTab === tab.id ? 600 : 400,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
@@ -507,7 +509,7 @@ export function SiteEditPage() {
               }}
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.color = "var(--admin-primary)";
                   e.currentTarget.style.background = "#f9fafb";
                 }
               }}
@@ -636,7 +638,7 @@ function OverviewTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.overview.title")}
@@ -696,10 +698,10 @@ function OverviewTab({
               onApply={(field, text) => {
                 if (field === "seoKeywords") return;
                 if (field === "intro") {
-                  setFormData(patchLang(formData, "listIntroHtml", selectedLang, text));
+                  setFormData((prev) => patchLang(prev, "listIntroHtml", selectedLang, text));
                   return;
                 }
-                setFormData(patchLang(formData, field, selectedLang, text));
+                setFormData((prev) => patchLang(prev, field, selectedLang, text));
               }}
             />
             <div>
@@ -724,7 +726,9 @@ function OverviewTab({
                   name: readLang(formData, "name", selectedLang),
                 }}
                 value={readLang(formData, "name", selectedLang)}
-                onApply={(text) => setFormData(patchLang(formData, "name", selectedLang, text))}
+                onApply={(text) =>
+                  setFormData((prev) => patchLang(prev, "name", selectedLang, text))
+                }
               >
               <input
                 type="text"
@@ -902,7 +906,7 @@ function OverviewTab({
                 style={{
                   marginTop: 8,
                   padding: "8px 16px",
-                  background: "var(--admin-primary, #2563eb)",
+                  background: "var(--admin-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: 6,
@@ -1045,7 +1049,7 @@ function OverviewTab({
                 style={{
                   marginTop: 8,
                   padding: "8px 16px",
-                  background: "var(--admin-primary, #2563eb)",
+                  background: "var(--admin-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: 6,
@@ -1104,7 +1108,7 @@ function OverviewTab({
             type="checkbox"
             checked={formData.isActive}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+            style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
           />
           <span
             style={{
@@ -1243,7 +1247,7 @@ function OverviewTab({
               padding: "10px 20px",
               border: "1px solid #d1d5db",
               borderRadius: 8,
-              background: "white",
+              background: "var(--admin-surface)",
               color: "#374151",
               cursor: "pointer",
               fontSize: 14,
@@ -1294,7 +1298,8 @@ function domainRowsFromSite(site: Site, siteDefault: string): DomainRow[] {
 }
 
 function blankDomainRow(isPrimary: boolean): DomainRow {
-  return { key: Math.random().toString(36).slice(2), domain: "", defaultLang: "", isPrimary };
+  // Stable key so the empty slot does not remount on every parent render.
+  return { key: isPrimary ? "blank-primary" : "blank-slot", domain: "", defaultLang: "", isPrimary };
 }
 
 // Domain Tab Component
@@ -1382,7 +1387,7 @@ function DomainTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.domain.title")}
@@ -1418,9 +1423,9 @@ function DomainTab({
               gap: 12,
               alignItems: "end",
               padding: 16,
-              background: row.isPrimary ? "var(--admin-primary-soft, #eff6ff)" : "#f9fafb",
+              background: row.isPrimary ? "var(--admin-primary-soft)" : "#f9fafb",
               borderRadius: 12,
-              border: row.isPrimary ? "1px solid var(--admin-primary-border, #bfdbfe)" : "1px solid #e5e7eb",
+              border: row.isPrimary ? "1px solid var(--admin-primary-border)" : "1px solid #e5e7eb",
             }}
           >
             <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 220px" }}>
@@ -1488,7 +1493,7 @@ function DomainTab({
                 padding: "8px 12px",
                 border: "1px solid #d1d5db",
                 borderRadius: 6,
-                background: "white",
+                background: "var(--admin-surface)",
                 cursor: "pointer",
                 marginBottom: 1,
               }}
@@ -1506,7 +1511,7 @@ function DomainTab({
             padding: "10px 16px",
             border: "1px solid #d1d5db",
             borderRadius: 8,
-            background: "white",
+            background: "var(--admin-surface)",
             cursor: "pointer",
             fontWeight: 600,
           }}
@@ -1521,7 +1526,7 @@ function DomainTab({
             padding: "10px 16px",
             border: "none",
             borderRadius: 8,
-            background: "var(--admin-primary, #2563eb)",
+            background: "var(--admin-primary)",
             color: "white",
             cursor: "pointer",
             fontWeight: 600,
@@ -1729,7 +1734,7 @@ function InstancesTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.instances.title")}
@@ -1770,7 +1775,7 @@ function InstancesTab({
               justifyContent: "space-between",
               gap: 12,
               padding: "14px 16px",
-              background: "#fff",
+              background: "var(--admin-surface)",
               border: "1px solid #e2e8f0",
               borderRadius: 10,
             }}
@@ -1782,8 +1787,8 @@ function InstancesTab({
                   style={{
                     padding: "2px 8px",
                     borderRadius: 999,
-                    background: "var(--admin-primary-soft, #eff6ff)",
-                    color: "var(--admin-primary, #2563eb)",
+                    background: "var(--admin-primary-soft)",
+                    color: "var(--admin-primary)",
                     fontSize: 12,
                     fontWeight: 600,
                   }}
@@ -1801,9 +1806,9 @@ function InstancesTab({
                   style={{
                     padding: "8px 12px",
                     borderRadius: 8,
-                    border: "1px solid var(--admin-primary-border, #bfdbfe)",
-                    background: "var(--admin-primary-soft, #eff6ff)",
-                    color: "var(--admin-primary, #2563eb)",
+                    border: "1px solid var(--admin-primary-border)",
+                    background: "var(--admin-primary-soft)",
+                    color: "var(--admin-primary)",
                     cursor: "pointer",
                     fontSize: 13,
                     fontWeight: 600,
@@ -1887,7 +1892,7 @@ function InstancesTab({
                 padding: "10px 16px",
                 borderRadius: 8,
                 border: "none",
-                background: "var(--admin-primary, #2563eb)",
+                background: "var(--admin-primary)",
                 color: "white",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -1902,7 +1907,7 @@ function InstancesTab({
                 padding: "10px 16px",
                 borderRadius: 8,
                 border: "1px solid #d1d5db",
-                background: "white",
+                background: "var(--admin-surface)",
                 cursor: "pointer",
               }}
             >
@@ -1923,7 +1928,7 @@ function InstancesTab({
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: availableLangs.length === 0 ? "#cbd5e1" : "var(--admin-primary, #2563eb)",
+            background: availableLangs.length === 0 ? "#cbd5e1" : "var(--admin-primary)",
             color: "white",
             fontWeight: 600,
             cursor: availableLangs.length === 0 ? "not-allowed" : "pointer",
@@ -2063,7 +2068,7 @@ function AppearanceTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.appearance.title")}
@@ -2335,7 +2340,7 @@ function AppearanceTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "var(--admin-primary, #2563eb)",
+              background: "var(--admin-primary)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -2418,7 +2423,7 @@ function MapTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.map.title")}
@@ -2663,7 +2668,7 @@ function MapTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "var(--admin-primary, #2563eb)",
+              background: "var(--admin-primary)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -2747,7 +2752,7 @@ function FeaturesTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "var(--admin-primary, #2563eb)",
+          color: "var(--admin-primary)",
         }}
       >
         {t("admin.siteEdit.features.title")}
@@ -2800,7 +2805,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableEvents}
                 onChange={(e) => setFormData({ ...formData, enableEvents: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span
                 style={{
@@ -2819,7 +2824,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableBlog}
                 onChange={(e) => setFormData({ ...formData, enableBlog: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span
                 style={{
@@ -2838,7 +2843,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableStaticPages}
                 onChange={(e) => setFormData({ ...formData, enableStaticPages: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span
                 style={{
@@ -2858,7 +2863,7 @@ function FeaturesTab({
                   type="checkbox"
                   checked={formData.isCrawlable}
                   onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
                 />
                 <span
                   style={{
@@ -2874,7 +2879,7 @@ function FeaturesTab({
               <div
                 style={{
                   fontSize: 12,
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginLeft: 28,
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -2892,7 +2897,7 @@ function FeaturesTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "var(--admin-primary, #2563eb)",
+              background: "var(--admin-primary)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -3085,7 +3090,7 @@ function SubscriptionTab({
 
   const planColors: Record<string, string> = {
     basic: "#3b82f6",
-    pro: "var(--admin-primary, #2563eb)",
+    pro: "var(--admin-primary)",
     business: "#8b5cf6",
     municipal: "#1b1730",
   };
@@ -3190,7 +3195,7 @@ function SubscriptionTab({
           }
           50% {
             transform: scale(1.15);
-            color: var(--admin-primary, #2563eb);
+            color: var(--admin-primary);
           }
           100% {
             transform: scale(1);
@@ -3203,7 +3208,7 @@ function SubscriptionTab({
       <div
         style={{
           padding: "16px 24px",
-          background: "#fff",
+          background: "var(--admin-surface)",
           borderRadius: 12,
           border: "1px solid #e5e7eb",
           boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -3284,7 +3289,7 @@ function SubscriptionTab({
               padding: "8px 16px",
               border: "none",
               borderRadius: 6,
-              background: "var(--admin-primary, #2563eb)",
+              background: "var(--admin-primary)",
               color: "white",
               cursor: isSavingGa ? "not-allowed" : "pointer",
               fontSize: 14,
@@ -3323,7 +3328,7 @@ function SubscriptionTab({
               margin: 0,
               fontSize: "clamp(16px, 3.5vw, 20px)",
               fontWeight: 600,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
@@ -3371,7 +3376,7 @@ function SubscriptionTab({
                       alignItems: "center",
                       gap: 8,
                       padding: "8px 18px",
-                      background: "white",
+                      background: "var(--admin-surface)",
                       border: `2px solid ${planColors[currentPlan]}`,
                       borderRadius: 8,
                       color: planColors[currentPlan],
@@ -3407,7 +3412,7 @@ function SubscriptionTab({
               <div
                 style={{
                   fontSize: "clamp(13px, 3vw, 15px)",
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   marginBottom: 6,
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -3793,7 +3798,7 @@ function SubscriptionTab({
                   padding: "10px 20px",
                   border: "1px solid #cbd5e1",
                   borderRadius: 8,
-                  background: "white",
+                  background: "var(--admin-surface)",
                   color: "#475569",
                   cursor: "pointer",
                   fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -4161,7 +4166,7 @@ function SubscriptionTab({
                       background:
                         usage.places >= limits.places
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary) 0%, var(--admin-primary-hover) 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
@@ -4261,7 +4266,7 @@ function SubscriptionTab({
                       background:
                         usage.featuredPlaces >= limits.featuredSlots
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary) 0%, var(--admin-primary-hover) 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
@@ -4356,7 +4361,7 @@ function SubscriptionTab({
                       background:
                         usage.events >= limits.events
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary) 0%, var(--admin-primary-hover) 100%)",
                       transition: "width 0.3s ease",
                       boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
@@ -4404,7 +4409,7 @@ function SubscriptionTab({
               padding: "8px 16px",
               border: "1px solid #d1d5db",
               borderRadius: 6,
-              background: "white",
+              background: "var(--admin-surface)",
               color: "#374151",
               cursor: "pointer",
               fontSize: 14,
@@ -4458,7 +4463,7 @@ function SubscriptionTab({
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      background: "white",
+                      background: "var(--admin-surface)",
                     }}
                   >
                     <option value="trial">
@@ -4502,7 +4507,7 @@ function SubscriptionTab({
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        background: "white",
+                        background: "var(--admin-surface)",
                       }}
                     />
                     <button
@@ -4556,13 +4561,13 @@ function SubscriptionTab({
                         gap: 12,
                         cursor: "pointer",
                         padding: "12px 16px",
-                        background: "white",
+                        background: "var(--admin-surface)",
                         borderRadius: 8,
                         border: "1px solid #d1d5db",
                         transition: "all 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.currentTarget.style.borderColor = "var(--admin-primary)";
                         e.currentTarget.style.background = "#f8fafc";
                       }}
                       onMouseLeave={(e) => {
@@ -4580,7 +4585,7 @@ function SubscriptionTab({
                           width: 20,
                           height: 20,
                           cursor: "pointer",
-                          accentColor: "var(--admin-primary, #2563eb)",
+                          accentColor: "var(--admin-primary)",
                         }}
                       />
                       <div style={{ flex: 1 }}>
@@ -4619,7 +4624,7 @@ function SubscriptionTab({
                     padding: "10px 16px",
                     border: "none",
                     borderRadius: 8,
-                    background: "var(--admin-primary, #2563eb)",
+                    background: "var(--admin-primary)",
                     color: "white",
                     cursor: isSaving ? "not-allowed" : "pointer",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -4631,12 +4636,12 @@ function SubscriptionTab({
                   }}
                   onMouseEnter={(e) => {
                     if (!isSaving) {
-                      e.currentTarget.style.background = "var(--admin-primary-hover, #1d4ed8)";
+                      e.currentTarget.style.background = "var(--admin-primary-hover)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSaving) {
-                      e.currentTarget.style.background = "var(--admin-primary, #2563eb)";
+                      e.currentTarget.style.background = "var(--admin-primary)";
                     }
                   }}
                 >

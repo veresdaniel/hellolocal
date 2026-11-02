@@ -1,9 +1,21 @@
-/** Client helpers for the public under-development gate cookie + query param. */
+/** Client helpers for the public under-development gate — constants from `@hellolocal/shared`. */
 
-export const UC_QUERY_PARAM = "access";
-export const UC_COOKIE_NAME = "hl_uc_access";
-/** Persistent until token regen/invalidate (browsers may clamp ~400 days). */
-export const UC_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 400;
+export {
+  UC_COOKIE_MAX_AGE_SEC,
+  UC_COOKIE_NAME,
+  UC_QUERY_PARAM,
+  UC_DEFAULT_COPY,
+  UC_PUBLIC_API_PATH,
+  buildAccessPreviewUrl,
+  isAdminOrAuthPath,
+  ucFailClosedCopy,
+} from "@hellolocal/shared";
+
+import {
+  UC_COOKIE_MAX_AGE_SEC,
+  UC_COOKIE_NAME,
+  UC_QUERY_PARAM,
+} from "@hellolocal/shared";
 
 export function readAccessQueryToken(search: string = window.location.search): string | null {
   try {
@@ -38,13 +50,11 @@ export function readAccessCookie(): string | null {
 
 /**
  * Legacy client-side cookie writer (HttpOnly cannot be set from JS).
- * Prefer the API/SSR Set-Cookie path. Kept for local/dev fallbacks only; always
- * marks Secure on HTTPS and never exposes a helper that skips SameSite.
+ * Prefer the API/SSR Set-Cookie path.
  */
 export function writeAccessCookie(token: string, maxAgeSec: number = UC_COOKIE_MAX_AGE_SEC): void {
   if (typeof document === "undefined" || !token) return;
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  // Not HttpOnly (impossible from document.cookie). Production uses server Set-Cookie.
   document.cookie = `${UC_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; Max-Age=${Math.max(
     0,
     Math.floor(maxAgeSec)
@@ -60,8 +70,7 @@ export function clearAccessCookie(): void {
 
 /**
  * Drop `?access=` from the URL without a navigation.
- * Prefer React Router `navigate(..., { replace: true })` from components when available;
- * this history helper remains for non-Router call sites.
+ * Prefer React Router `navigate(..., { replace: true })` from components when available.
  */
 export function stripAccessQueryFromUrl(): void {
   if (typeof window === "undefined") return;
@@ -70,17 +79,4 @@ export function stripAccessQueryFromUrl(): void {
   url.searchParams.delete(UC_QUERY_PARAM);
   const next = `${url.pathname}${url.search}${url.hash}`;
   window.history.replaceState(window.history.state, "", next);
-}
-
-export function buildAccessPreviewUrl(origin: string, lang: string, token: string): string {
-  const base = origin.replace(/\/$/, "");
-  const path = `/${lang || "hu"}`;
-  return `${base}${path}?${UC_QUERY_PARAM}=${encodeURIComponent(token)}`;
-}
-
-export function isAdminOrAuthPath(pathname: string): boolean {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] === "admin") return true;
-  if (parts[1] === "admin") return true;
-  return false;
 }

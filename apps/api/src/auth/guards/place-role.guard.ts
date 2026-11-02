@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ERROR_MESSAGES } from "../../common/constants/error-messages";
 import { Reflector } from "@nestjs/core";
 import { PlaceRole } from "@prisma/client";
 import { RbacService } from "../rbac.service";
@@ -38,7 +39,7 @@ export class PlaceRoleGuard implements CanActivate {
 
     // If no user (session expired or invalid token), return 401
     if (!user) {
-      throw new UnauthorizedException("Session expired or invalid token");
+      throw new UnauthorizedException(ERROR_MESSAGES.UNAUTHORIZED_SESSION_EXPIRED);
     }
 
     // Superadmin has access to everything

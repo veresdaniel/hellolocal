@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/com
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeLanguageCode } from "../common/language-code";
 import { canEditCopy } from "../auth/copy-access";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 function assertPlatformCopyEditor(role?: string | null) {
   if (!canEditCopy({ role }, "platform")) {
@@ -61,7 +62,7 @@ export class UiCopyService {
 
   async editorMessages(lang: string) {
     const code = normalizeLanguageCode(lang);
-    if (!code) throw new BadRequestException("Érvénytelen nyelvkód.");
+    if (!code) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LANG);
     const [languages, rows, reference] = await Promise.all([
       this.languageCodes(),
       this.prisma.uiMessage.findMany({ where: { lang: code }, select: { key: true, value: true } }),
@@ -110,7 +111,7 @@ export class UiCopyService {
   async removeLanguage(code: string, role?: string | null) {
     assertPlatformCopyEditor(role);
     const normalized = normalizeLanguageCode(code);
-    if (!normalized) throw new BadRequestException("Érvénytelen nyelvkód.");
+    if (!normalized) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LANG);
     if (normalized === FALLBACK) {
       throw new BadRequestException("A magyar a tartalék nyelv, nem törölhető.");
     }
@@ -122,7 +123,7 @@ export class UiCopyService {
   async saveMessages(lang: string, entries: Record<string, string>, role?: string | null) {
     assertPlatformCopyEditor(role);
     const code = normalizeLanguageCode(lang);
-    if (!code) throw new BadRequestException("Érvénytelen nyelvkód.");
+    if (!code) throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_INVALID_LANG);
     const language = await this.prisma.uiLanguage.findUnique({ where: { code } });
     if (!language) throw new BadRequestException("Ez a nyelv még nincs felvéve.");
     const rows = Object.entries(entries)

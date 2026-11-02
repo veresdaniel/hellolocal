@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireLang } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class SiteResolverService {
@@ -24,14 +25,14 @@ export class SiteResolverService {
       select: { siteId: true, slug: true, isActive: true },
     });
 
-    if (!sk || !sk.isActive) throw new NotFoundException("Site not found");
+    if (!sk || !sk.isActive) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
 
     const site = await this.prisma.site.findUnique({
       where: { id: sk.siteId },
       select: { id: true, isActive: true },
     });
 
-    if (!site || !site.isActive) throw new NotFoundException("Site not found");
+    if (!site || !site.isActive) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
 
     return { lang, siteId: site.id, siteKey: sk.slug };
   }

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { requireLang } from "../common/lang";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteKeyResolverService } from "../site/site-key-resolver.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 const ALLOWED_PAGES = new Set(["imprint", "terms", "privacy"] as const);
 type LegalKey = "imprint" | "terms" | "privacy";
@@ -42,7 +43,7 @@ export class LegalService {
       include: { translations: true }, // Get all translations for fallback
     });
 
-    if (!legal || !legal.isActive) throw new NotFoundException("Legal page not found");
+    if (!legal || !legal.isActive) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_LEGAL_PAGE);
 
     // Get translation with fallback to Hungarian
     const t =

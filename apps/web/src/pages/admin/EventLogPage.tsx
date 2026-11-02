@@ -355,7 +355,7 @@ export function EventLogPage() {
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
             margin: 0,
             marginBottom: 8,
           }}
@@ -391,7 +391,7 @@ export function EventLogPage() {
             marginTop: 0,
             marginBottom: 16,
             fontFamily:
-              "var(--admin-font-display, Inter, system-ui, sans-serif)",
+              "var(--admin-font-display)",
           }}
         >
           {t("admin.eventLog.filters")}

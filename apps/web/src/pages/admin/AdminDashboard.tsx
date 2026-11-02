@@ -287,7 +287,7 @@ export function AdminDashboard() {
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font-display)",
             color: "var(--admin-on-chrome, #ffffff)",
             margin: 0,
             marginBottom: 8,
@@ -299,7 +299,7 @@ export function AdminDashboard() {
           className="admin-page-muted"
           style={{
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font)",
             fontWeight: 400,
             color: "var(--admin-on-chrome-muted, #dbe4ff)",
             margin: 0,
@@ -357,7 +357,7 @@ function SectionTitle({ label }: { label: string }) {
       style={{
         fontSize: "clamp(14px, 3vw, 16px)",
         fontWeight: 600,
-        fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+        fontFamily: "var(--admin-font-display)",
         color: "var(--admin-on-chrome, #ffffff)",
         margin: "0 0 12px 0",
         textTransform: "uppercase",
@@ -388,7 +388,7 @@ function DashboardCard({
   const borderColor =
     variant === "admin"
       ? "var(--admin-border, #cbd5e1)"
-      : "var(--admin-border-subtle, #e2e8f0)";
+      : "var(--admin-border-subtle)";
 
   // Mobile: iPhone-style small icon-only cards
   if (isMobile) {
@@ -402,7 +402,7 @@ function DashboardCard({
           justifyContent: "center",
           gap: 6,
           aspectRatio: "1",
-          background: "var(--admin-surface, #ffffff)",
+          background: "var(--admin-surface)",
           borderRadius: 16,
           textDecoration: "none",
           color: "var(--admin-ink, #0f172a)",
@@ -438,7 +438,7 @@ function DashboardCard({
           className="admin-dash-card__title"
           style={{
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font-display)",
             fontWeight: 600,
             color: "var(--admin-ink, #0f172a)",
             textAlign: "center",
@@ -470,7 +470,7 @@ function DashboardCard({
         alignItems: "center",
         gap: "clamp(10px, 2vw, 12px)",
         padding: "clamp(10px, 2vw, 12px)",
-        background: "var(--admin-surface, #ffffff)",
+        background: "var(--admin-surface)",
         borderRadius: 12,
         textDecoration: "none",
         color: "var(--admin-ink, #0f172a)",
@@ -502,7 +502,7 @@ function DashboardCard({
           style={{
             margin: "0 0 3px 0",
             fontSize: "clamp(15px, 3.5vw, 16px)",
-            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font-display)",
             fontWeight: 700,
             color: "var(--admin-ink, #0f172a)",
             whiteSpace: "nowrap",
@@ -518,7 +518,7 @@ function DashboardCard({
             margin: 0,
             color: "var(--admin-muted, #475569)",
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+            fontFamily: "var(--admin-font)",
             lineHeight: 1.3,
             fontWeight: 400,
             display: "-webkit-box",

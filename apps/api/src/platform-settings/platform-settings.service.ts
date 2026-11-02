@@ -9,6 +9,7 @@ import { isMissingColumn } from "../common/prisma-column";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { UiCopyService } from "../ui-copy/ui-copy.service";
 import { alignPlanMatrixAndPublicPlans } from "./plan-matrix-sync";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 function pickLang(lang: string): Lang {
   return langOrDefault(lang);
@@ -92,7 +93,7 @@ export class PlatformSettingsService {
           where: { slug: siteKey },
           select: { id: true, slug: true },
         });
-        if (!site) throw new NotFoundException("Site not found");
+        if (!site) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
         siteId = site.id;
         resolvedSiteKey = site.slug;
       } else {
@@ -189,7 +190,7 @@ export class PlatformSettingsService {
         });
       }
     }
-    if (!site) throw new NotFoundException("Site not found");
+    if (!site) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
     if (!site.brand) throw new NotFoundException("Site has no brand assigned");
 
     let siteGaMeasurementId: string | null = null;
@@ -830,7 +831,7 @@ export class PlatformSettingsService {
    */
   async setFeatureMatrix(planOverrides: any, placePlanOverrides?: any, role?: string | null) {
     if (!canEditCopy({ role }, "platform")) {
-      throw new ForbiddenException("Only a superadmin can edit platform settings text");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_PLATFORM_SETTINGS_SUPERADMIN_ONLY);
     }
     // Get the first brand (assuming single brand for global settings)
     const brand = await this.prisma.brand.findFirst({

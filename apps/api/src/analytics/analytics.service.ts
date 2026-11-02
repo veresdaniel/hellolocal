@@ -6,6 +6,7 @@ import { TrackDto } from "./dto/track.dto";
 import { ProductClickDto } from "./dto/product-click.dto";
 import { isMissingProductClickTable } from "./product-click-table";
 import { RbacService } from "../auth/rbac.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 type TrackArgs = {
   lang: string;
@@ -108,7 +109,7 @@ export class AnalyticsService {
       where: { id: dto.productId },
       select: { id: true, siteId: true, placeId: true },
     });
-    if (!product) throw new NotFoundException("Product not found");
+    if (!product) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PRODUCT);
 
     const placeId = await this.resolveProductClickPlace(product, dto.placeId);
     await this.incrementProductClick({
@@ -123,7 +124,7 @@ export class AnalyticsService {
 
   async getGlobalDashboard(args: { lang: string; rangeDays: number; userId: string }) {
     if (!args.userId) {
-      throw new BadRequestException("userId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     const user = await this.prisma.user.findUnique({
       where: { id: args.userId },
@@ -349,7 +350,7 @@ export class AnalyticsService {
     userId: string;
   }) {
     if (!args.userId) {
-      throw new BadRequestException("userId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
 
@@ -360,7 +361,7 @@ export class AnalyticsService {
       "editor"
     );
     if (!hasPermission) {
-      throw new ForbiddenException("Insufficient site permissions. Required: editor or higher");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_INSUFFICIENT_SITE_PERMISSIONS);
     }
 
     const plan = await this.getSitePlan(site.siteId);
@@ -472,10 +473,10 @@ export class AnalyticsService {
     userId: string;
   }) {
     if (!args.userId) {
-      throw new BadRequestException("userId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     if (!args.placeId) {
-      throw new BadRequestException("placeId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_REQUIRED);
     }
     const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
 
@@ -561,10 +562,10 @@ export class AnalyticsService {
     userId: string;
   }) {
     if (!args.userId) {
-      throw new BadRequestException("userId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     if (!args.townId) {
-      throw new BadRequestException("townId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_TOWN_ID_REQUIRED);
     }
     const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
 
@@ -585,7 +586,7 @@ export class AnalyticsService {
       "editor"
     );
     if (!hasPermission) {
-      throw new ForbiddenException("Insufficient site permissions. Required: editor or higher");
+      throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_INSUFFICIENT_SITE_PERMISSIONS);
     }
 
     const plan = await this.getSitePlan(site.siteId);
@@ -788,10 +789,10 @@ export class AnalyticsService {
     userId: string;
   }) {
     if (!args.userId) {
-      throw new BadRequestException("userId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ID_REQUIRED);
     }
     if (!args.eventId) {
-      throw new BadRequestException("eventId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_EVENT_ID_REQUIRED);
     }
     const site = await this.siteResolver.resolve({ lang: args.lang, siteKey: args.siteKey });
 

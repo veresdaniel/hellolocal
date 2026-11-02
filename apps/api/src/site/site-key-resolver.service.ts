@@ -3,6 +3,7 @@ import { Lang } from "../common/language-code";
 import { requireLang } from "../common/lang";
 import { PrismaService } from "../prisma/prisma.service";
 import { Request } from "express";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 type ResolveSiteArgs = {
   lang: string;
@@ -177,7 +178,7 @@ export class SiteKeyResolverService {
           where: { id: hit.siteId },
           select: { id: true, slug: true },
         });
-        if (!site) throw new NotFoundException("Site not found");
+        if (!site) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
 
         return {
           siteId: site.id,
@@ -192,7 +193,7 @@ export class SiteKeyResolverService {
         where: { id: hit.siteId },
         select: { id: true, slug: true },
       });
-      if (!site) throw new NotFoundException("Site not found");
+      if (!site) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
 
       return {
         siteId: site.id,
@@ -208,7 +209,7 @@ export class SiteKeyResolverService {
       where: { id: hit.siteId },
       select: { id: true, slug: true },
     });
-    if (!site) throw new NotFoundException("Site not found");
+    if (!site) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_SITE);
 
     return {
       siteId: site.id,

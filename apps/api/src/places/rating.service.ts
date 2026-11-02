@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class RatingService {
@@ -24,7 +25,7 @@ export class RatingService {
     });
 
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Upsert rating and update aggregated fields in a transaction

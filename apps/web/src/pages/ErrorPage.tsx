@@ -15,6 +15,7 @@ import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 import { isTokenExpired } from "../utils/tokenUtils";
 import { NotFoundPage } from "./NotFoundPage";
 import { devLog } from "../lib/devLog";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../constants/authStorage";
 
 
 export function ErrorPage() {
@@ -40,8 +41,8 @@ export function ErrorPage() {
     const isInAdminArea = currentPath.includes("/admin") && !currentPath.includes("/admin/login");
 
     if (isInAdminArea) {
-      const accessToken = localStorage.getItem("accessToken");
-      const refreshTokenValue = localStorage.getItem("refreshToken");
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
 
       // If no tokens or both tokens expired, likely session issue
       const hasNoTokens = !accessToken && !refreshTokenValue;
@@ -52,9 +53,9 @@ export function ErrorPage() {
 
       if (hasNoTokens || bothTokensExpired) {
         // Clear tokens and redirect to login
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
         sessionStorage.setItem("sessionExpired", "true");
         setShouldRedirectToLogin(true);
       }

@@ -1,7 +1,7 @@
 {
   "name": "hellolocal-web",
   "private": true,
-  "version": "1.0.3-beta",
+  "version": "1.0.4-beta",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
@@ -17,6 +17,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hellolocal/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.16",
     "@tiptap/extension-image": "^2.1.13",
     "@tiptap/extension-link": "^2.1.13",

@@ -398,7 +398,7 @@ export function AiAssistantPanel({
         border: "1px solid var(--admin-border, #cbd5e1)",
         boxShadow: "0 12px 40px rgba(15, 23, 42, 0.22)",
         background: "var(--admin-surface, #fff)",
-        fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
+        fontFamily: "var(--admin-font)",
         ...style,
       }}
     >
@@ -528,7 +528,7 @@ export function AiAssistantPanel({
                     gap: 8,
                     padding: "10px 12px",
                     borderRadius: 8,
-                    border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                    border: "1px solid var(--admin-border-subtle)",
                     background: gated && action.id !== "seoScore" ? "#f8fafc" : "#f1f5f9",
                     color:
                       gated && action.id !== "seoScore"
@@ -557,7 +557,7 @@ export function AiAssistantPanel({
                 padding: 10,
                 borderRadius: 8,
                 background: "#f8fafc",
-                border: "1px solid var(--admin-border-subtle, #e2e8f0)",
+                border: "1px solid var(--admin-border-subtle)",
                 color: "var(--admin-ink, #0f172a)",
                 fontSize: 12,
                 lineHeight: 1.45,

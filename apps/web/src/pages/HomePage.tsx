@@ -340,28 +340,30 @@ export function HomePage() {
   const homeImage =
     selectedTown?.heroImage || platformSettings?.defaultPlaceholderCardImage || undefined;
 
-  useSeo(
-    {
+  const homeSeo = useMemo(
+    () => ({
       title: homeTitle,
       description: homeDescription,
       image: homeImage,
       canonical: pageCanonical,
       robots: robotsDirective(platformSettings?.isCrawlable),
       og: {
-        type: "website",
+        type: "website" as const,
         title: homeTitle || siteName,
         description: homeDescription,
         image: homeImage,
       },
       twitter: {
-        card: homeImage ? "summary_large_image" : "summary",
+        card: (homeImage ? "summary_large_image" : "summary") as
+          | "summary_large_image"
+          | "summary",
         title: homeTitle || siteName,
         description: homeDescription,
         image: homeImage,
       },
       schemaOrg: selectedTown
         ? {
-            type: "WebPage",
+            type: "WebPage" as const,
             data: {
               name: homeTitle,
               description: homeDescription,
@@ -371,7 +373,7 @@ export function HomePage() {
             },
           }
         : {
-            type: "Graph",
+            type: "Graph" as const,
             data: [
               generateOrganizationSchema({
                 name: siteName,
@@ -394,11 +396,24 @@ export function HomePage() {
               }),
             ],
           },
-    },
-    {
-      siteName: platformSettings?.siteName,
-    }
+    }),
+    [
+      homeTitle,
+      homeDescription,
+      homeImage,
+      pageCanonical,
+      platformSettings?.isCrawlable,
+      platformSettings?.faviconUrl,
+      siteName,
+      selectedTown,
+      lang,
+      siteUrl,
+    ]
   );
+
+  useSeo(homeSeo, {
+    siteName: platformSettings?.siteName,
+  });
 
   // Helper function to calculate distance in km using Haversine formula
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {

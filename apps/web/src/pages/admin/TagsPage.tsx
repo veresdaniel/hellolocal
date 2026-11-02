@@ -298,11 +298,11 @@ export function TagsPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editTag") : t("admin.forms.newTag")}
@@ -315,7 +315,7 @@ export function TagsPage() {
               padding: "16px 20px",
               background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid var(--admin-primary-border, #bfdbfe)",
+              border: "2px solid var(--admin-primary-border)",
             }}
           >
             <label
@@ -331,7 +331,7 @@ export function TagsPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
               />
               <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.active")}</span>
             </label>

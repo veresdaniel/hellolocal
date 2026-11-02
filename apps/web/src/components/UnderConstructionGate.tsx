@@ -8,6 +8,7 @@ import {
   isAdminOrAuthPath,
   readAccessQueryToken,
   UC_QUERY_PARAM,
+  ucFailClosedCopy,
 } from "../lib/underConstructionAccess";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { UnderConstructionPage } from "../pages/UnderConstructionPage";
@@ -73,14 +74,7 @@ export function UnderConstructionGate() {
         // Fail closed when the gate check cannot complete.
         if (!cancelled) {
           openedOnce.current = false;
-          setState({
-            status: "blocked",
-            copy: {
-              title: "Fejlesztés alatt",
-              body: "Az oldal jelenleg fejlesztés alatt áll.",
-              buttonLabel: "",
-            },
-          });
+          setState({ status: "blocked", copy: ucFailClosedCopy(lang) });
         }
       });
 

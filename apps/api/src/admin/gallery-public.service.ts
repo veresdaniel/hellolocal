@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SiteResolverService } from "../site/site-resolver.service";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Injectable()
 export class GalleryPublicService {
@@ -27,7 +28,7 @@ export class GalleryPublicService {
       });
 
       if (!gallery) {
-        throw new NotFoundException("Gallery not found");
+        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_GALLERY);
       }
 
       // Ensure images is an array (Prisma returns JSON, but we want to guarantee it's an array)
@@ -84,7 +85,7 @@ export class GalleryPublicService {
         throw error;
       }
       // For other errors, wrap in NotFoundException to avoid exposing internal errors
-      throw new NotFoundException("Gallery not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_GALLERY);
     }
   }
 }

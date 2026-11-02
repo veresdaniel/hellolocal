@@ -5,6 +5,7 @@ import { useAuthStore } from "../stores/authStore";
 import { TIMING } from "../app/config";
 import { SessionExpirationModal } from "../components/SessionExpirationModal";
 import { getTokenExpiration } from "../utils/tokenUtils";
+import { ACCESS_TOKEN_KEY } from "../constants/authStorage";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const {
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const accessToken = localStorage.getItem("accessToken");
+      const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
       if (!accessToken) {
         setShowSessionModal(false);
         return;

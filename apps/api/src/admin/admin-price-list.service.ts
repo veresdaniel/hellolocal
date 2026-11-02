@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UserRole } from "@prisma/client";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface PriceListBlock {
   title: string;
@@ -45,7 +46,7 @@ export class AdminPriceListService {
     });
 
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Check permissions if userId is provided
@@ -53,7 +54,7 @@ export class AdminPriceListService {
       // Check if user has access to this place
       const hasAccess = await this.hasPlaceAccess(userId, placeId, siteId);
       if (!hasAccess) {
-        throw new ForbiddenException("You do not have access to this place");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_PLACE_ACCESS);
       }
     }
 
@@ -78,14 +79,14 @@ export class AdminPriceListService {
     });
 
     if (!place) {
-      throw new NotFoundException("Place not found");
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 
     // Check permissions if userId is provided
     if (userId) {
       const hasAccess = await this.hasPlaceAccess(userId, placeId, siteId);
       if (!hasAccess) {
-        throw new ForbiddenException("You do not have access to this place");
+        throw new ForbiddenException(ERROR_MESSAGES.FORBIDDEN_NO_PLACE_ACCESS);
       }
     }
 

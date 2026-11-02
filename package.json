@@ -1,11 +1,15 @@
 {
   "name": "hellolocal",
-  "version": "1.0.0-beta",
+  "version": "1.0.4-beta",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
+    "prepare": "node scripts/install-git-hooks.cjs",
+    "hooks:install": "node scripts/install-git-hooks.cjs",
+    "version:bump": "node scripts/bump-version-on-commit.cjs",
     "dev:web": "pnpm -C apps/web dev",
     "dev:api": "pnpm -C apps/api start:dev",
     "local:dev": "node scripts/local-dev.cjs",
@@ -14,7 +18,8 @@
     "staging": "node scripts/staging.cjs",
     "staging:web": "pnpm -C apps/web staging",
     "staging:api": "pnpm -C apps/api start:staging",
-    "build": "pnpm -C apps/api build && pnpm -C apps/web build",
+    "build:shared": "pnpm -C packages/shared build",
+    "build": "pnpm run build:shared && pnpm -C apps/api build && pnpm -C apps/web build",
     "start:api": "pnpm -C apps/api start",
     "start:web": "pnpm -C apps/web preview",
     "test": "vitest run --config vitest.config.ts",

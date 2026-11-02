@@ -721,9 +721,9 @@ export function CollectionEditPage() {
                     padding: "16px 24px",
                     border: "none",
                     borderBottom:
-                      activeTab === tab.id ? "3px solid var(--admin-primary, #2563eb)" : "3px solid transparent",
+                      activeTab === tab.id ? "3px solid var(--admin-primary)" : "3px solid transparent",
                     background: activeTab === tab.id ? "white" : "transparent",
-                    color: activeTab === tab.id ? "var(--admin-primary, #2563eb)" : "#6b7280",
+                    color: activeTab === tab.id ? "var(--admin-primary)" : "#6b7280",
                     fontWeight: activeTab === tab.id ? 600 : 400,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
@@ -911,7 +911,7 @@ function ContentTab({
                       readLang(formErrors, "title", selectedLang)
                     )
                   ) {
-                    e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.currentTarget.style.borderColor = "var(--admin-primary)";
                   }
                 }}
                 onBlur={(e) => {
@@ -1022,7 +1022,7 @@ function ContentTab({
                   transition: "border-color 0.2s ease",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                  e.currentTarget.style.borderColor = "var(--admin-primary)";
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = "#d1d5db";
@@ -1087,7 +1087,7 @@ function ContentTab({
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.currentTarget.style.borderColor = "var(--admin-primary)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "#d1d5db";
@@ -1129,7 +1129,7 @@ function ContentTab({
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.currentTarget.style.borderColor = "var(--admin-primary)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "#d1d5db";
@@ -1171,7 +1171,7 @@ function ContentTab({
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.currentTarget.style.borderColor = "var(--admin-primary)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "#d1d5db";
@@ -1213,7 +1213,7 @@ function ContentTab({
                       transition: "border-color 0.2s ease",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.currentTarget.style.borderColor = "var(--admin-primary)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = "#d1d5db";
@@ -1246,7 +1246,7 @@ function ContentTab({
             padding: "16px 20px",
             background: "var(--admin-surface-subtle, #f8fafc)",
             borderRadius: 12,
-            border: "2px solid var(--admin-primary-border, #bfdbfe)",
+            border: "2px solid var(--admin-primary-border)",
           }}
         >
           <label
@@ -1263,7 +1263,7 @@ function ContentTab({
               type="checkbox"
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+              style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
             />
             <span
               style={{
@@ -1290,7 +1290,7 @@ function ContentTab({
               type="checkbox"
               checked={formData.isCrawlable}
               onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
-              style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
+              style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
             />
             <span
               style={{
@@ -1333,7 +1333,7 @@ function ContentTab({
               transition: "border-color 0.2s ease",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
+              e.currentTarget.style.borderColor = "var(--admin-primary)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = "#d1d5db";
@@ -1951,9 +1951,9 @@ function ItemsTab({
       {/* Right Panel: Collection Items */}
       <div
         style={{
-          background: dragOverCollectionPanel ? "var(--admin-primary-border, #bfdbfe)" : "white",
+          background: dragOverCollectionPanel ? "var(--admin-primary-border)" : "white",
           borderRadius: 12,
-          border: dragOverCollectionPanel ? "2px dashed var(--admin-primary, #2563eb)" : "1px solid #e5e7eb",
+          border: dragOverCollectionPanel ? "2px dashed var(--admin-primary)" : "1px solid #e5e7eb",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
@@ -2183,7 +2183,7 @@ function ItemsTab({
                       }}
                       onDragEnd={handleDragEnd}
                       style={{
-                        background: isDragging ? "#f3f4f6" : isDragOver ? "var(--admin-primary-border, #bfdbfe)" : "white",
+                        background: isDragging ? "#f3f4f6" : isDragOver ? "var(--admin-primary-border)" : "white",
                         opacity: isDragging ? 0.5 : 1,
                         cursor: "move",
                         transition: "background 0.2s ease",

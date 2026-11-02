@@ -20,8 +20,7 @@ interface AdminPageHeaderProps {
   saveLabel?: string;
   cancelLabel?: string;
   /**
-   * When true (default), renders Vissza in the shared toolbar row.
-   * Layout already hosts the toolbar; leave true so Back + actions stay one row.
+   * Fallback only (outside AdminLayout). Layout already owns Vissza in the toolbar.
    */
   showBackButton?: boolean;
   backTo?: string;
@@ -52,7 +51,7 @@ export function AdminPageHeader({
   const location = useLocation();
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
-  const { toolbarMainEl, hasToolbarSlot } = useAdminPageChrome();
+  const { toolbarActionsEl, hasToolbarSlot } = useAdminPageChrome();
 
   const lang = isLang(langParam)
     ? langParam
@@ -67,7 +66,6 @@ export function AdminPageHeader({
     onCancel?.();
     if (shouldCancelNavigate) {
       window.setTimeout(() => {
-        // Prefer explicit backTo / parent path for cancel (not history)
         const path =
           getAdminBackPath(location.pathname, lang, backTo) ?? `/${lang}/admin`;
         navigate(path);
@@ -76,7 +74,7 @@ export function AdminPageHeader({
   };
 
   const titleBlock = (
-    <div className="admin-page-header__title" style={{ flex: 1, minWidth: 0 }}>
+    <div className="admin-page-header__title">
       <h1
         className="admin-page-title"
         style={{
@@ -109,10 +107,7 @@ export function AdminPageHeader({
   );
 
   const actions = (
-    <div
-      className="admin-page-header__actions"
-      style={{ display: "flex", gap: 12, flexWrap: "wrap", flexShrink: 0 }}
-    >
+    <div className="admin-page-header__actions">
       {isCreatingOrEditing ? (
         <>
           {onSave && (
@@ -162,47 +157,29 @@ export function AdminPageHeader({
   );
 
   /**
-   * Prefer the layout toolbar slot so Vissza (layout) + title/actions share one row.
-   * While the slot ref is attaching, render nothing (avoid a duplicate Back flash).
-   * Fallback: self-contained row when outside AdminLayout.
+   * Layout owns [Vissza … actions] on one toolbar row.
+   * Portal only actions into that row; title always renders below (never beside Back).
    */
   if (hasToolbarSlot) {
-    if (!toolbarMainEl) return null;
-    return createPortal(
+    return (
       <>
-        {titleBlock}
-        {actions}
-      </>,
-      toolbarMainEl,
+        {toolbarActionsEl ? createPortal(actions, toolbarActionsEl) : null}
+        <div className="admin-page-header admin-page-header--below-toolbar">
+          {titleBlock}
+        </div>
+      </>
     );
   }
 
+  // Outside AdminLayout: self-contained header (Back + actions on one row, title below).
   return (
-    <div
-      className="admin-page-header"
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 24,
-        flexWrap: "wrap",
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
+    <div className="admin-page-header">
+      <div className="admin-page-toolbar admin-page-toolbar--local">
         {showBackButton && <AdminBackButton backTo={backTo} />}
-        {titleBlock}
+        <div className="admin-page-toolbar__spacer" />
+        {actions}
       </div>
-      {actions}
+      {titleBlock}
     </div>
   );
 }

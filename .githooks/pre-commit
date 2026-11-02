@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Auto-bump apps/web version (patch) before each commit.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+node "$ROOT/scripts/bump-version-on-commit.cjs"

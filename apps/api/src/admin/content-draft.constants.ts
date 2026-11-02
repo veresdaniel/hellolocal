@@ -1,12 +1,20 @@
+import {
+  CONTENT_DRAFT_DEFAULT_PROVIDER,
+  CONTENT_DRAFT_PROVIDERS,
+  isContentDraftProvider,
+  type ContentDraftProviderId,
+} from "@hellolocal/shared";
+
+export {
+  CONTENT_DRAFT_DEFAULT_PROVIDER,
+  CONTENT_DRAFT_PROVIDERS,
+  isContentDraftProvider,
+  type ContentDraftProviderId,
+};
+
 /** AppSetting keys for the optional text draft. The credential value is never returned to clients. */
 export const CONTENT_DRAFT_PROVIDER_KEY = "contentDraft.provider";
 export const CONTENT_DRAFT_API_KEY = "contentDraft.apiKey";
-
-export const CONTENT_DRAFT_PROVIDERS = ["gemini", "groq", "openrouter"] as const;
-export type ContentDraftProviderId = (typeof CONTENT_DRAFT_PROVIDERS)[number];
-
-/** Default free-tier provider (Gemini Developer API free tier). */
-export const CONTENT_DRAFT_DEFAULT_PROVIDER: ContentDraftProviderId = "gemini";
 
 export const CONTENT_DRAFT_KINDS = [
   "site",
@@ -62,13 +70,6 @@ export const OPENROUTER_DRAFT_FALLBACK_MODELS = [
   "nvidia/nemotron-3.5-super-vl:free",
   "nvidia/nemotron-3-ultra-550b-a55b:free",
 ] as const;
-
-export function isContentDraftProvider(value: unknown): value is ContentDraftProviderId {
-  return (
-    typeof value === "string" &&
-    (CONTENT_DRAFT_PROVIDERS as readonly string[]).includes(value)
-  );
-}
 
 export function isContentDraftKind(value: unknown): value is ContentDraftKindId {
   return typeof value === "string" && (CONTENT_DRAFT_KINDS as readonly string[]).includes(value);

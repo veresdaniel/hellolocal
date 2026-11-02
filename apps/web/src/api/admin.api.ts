@@ -1,6 +1,12 @@
 // src/api/admin.api.ts
+import {
+  CONTENT_DRAFT_DEFAULT_PROVIDER,
+  UC_ADMIN_CLIENT_PATH,
+  type ContentDraftProviderId,
+} from "@hellolocal/shared";
 import { apiGet, apiPost, apiPut, apiDelete } from "./client";
 import type { UserRole, SiteRole, Lang} from "../types/enums";
+import { ACCESS_TOKEN_KEY } from "../constants/authStorage";
 
 export interface User {
   id: string;
@@ -272,8 +278,8 @@ export function updatePlace(id: string, data: any, siteId?: string) {
   return apiPut<any>(`/admin/places/${id}${params}`, data);
 }
 
-export function deletePlace(id: string, tenantId?: string) {
-  const params = tenantId ? `?tenantId=${tenantId}` : "";
+export function deletePlace(id: string, siteId?: string) {
+  const params = siteId ? `?siteId=${siteId}` : "";
   return apiDelete<{ message: string }>(`/admin/places/${id}${params}`);
 }
 
@@ -432,7 +438,8 @@ export function deleteAppSetting(key: string) {
   return apiDelete<{ message: string }>(`/admin/app-settings/${key}`);
 }
 
-export type ContentDraftProvider = "gemini" | "groq" | "openrouter";
+export type ContentDraftProvider = ContentDraftProviderId;
+export { CONTENT_DRAFT_DEFAULT_PROVIDER };
 
 export type ContentDraftKind =
   | "site"
@@ -535,19 +542,19 @@ export type UnderConstructionSaveDto = {
 };
 
 export function getUnderConstructionSettings() {
-  return apiGet<UnderConstructionAdminStatus>("/admin/under-construction");
+  return apiGet<UnderConstructionAdminStatus>(UC_ADMIN_CLIENT_PATH);
 }
 
 export function saveUnderConstructionSettings(data: UnderConstructionSaveDto) {
-  return apiPut<UnderConstructionAdminStatus>("/admin/under-construction", data);
+  return apiPut<UnderConstructionAdminStatus>(UC_ADMIN_CLIENT_PATH, data);
 }
 
 export function regenerateUnderConstructionToken() {
-  return apiPost<UnderConstructionAdminStatus>("/admin/under-construction/regenerate-token", {});
+  return apiPost<UnderConstructionAdminStatus>(`${UC_ADMIN_CLIENT_PATH}/regenerate-token`, {});
 }
 
 export function invalidateUnderConstructionToken() {
-  return apiPost<UnderConstructionAdminStatus>("/admin/under-construction/invalidate-token", {});
+  return apiPost<UnderConstructionAdminStatus>(`${UC_ADMIN_CLIENT_PATH}/invalidate-token`, {});
 }
 
 export function getDefaultLanguage() {
@@ -1514,7 +1521,7 @@ export function exportEventLogs(filters: EventLogFilterDto): Promise<Blob> {
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_KEY)}`,
       },
     }
   ).then((res) => {

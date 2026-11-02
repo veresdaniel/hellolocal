@@ -1092,7 +1092,7 @@ export function PlacesPage() {
         <div
           style={{
             padding: "clamp(24px, 5vw, 32px)",
-            background: "white",
+            background: "var(--admin-surface)",
             borderRadius: 16,
             marginBottom: 32,
             boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
@@ -1102,11 +1102,11 @@ export function PlacesPage() {
           <h2
             style={{
               marginBottom: 24,
-              color: "var(--admin-primary, #2563eb)",
+              color: "var(--admin-primary)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                "var(--admin-font-display)",
             }}
           >
             {editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}
@@ -1137,7 +1137,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "var(--admin-primary, #2563eb)",
+                    color: "var(--admin-primary)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                   }}
@@ -1171,7 +1171,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "var(--admin-primary, #2563eb)",
+                    color: "var(--admin-primary)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -1187,22 +1187,22 @@ export function PlacesPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                    border: "2px solid var(--admin-primary-border)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: "white",
+                    background: "var(--admin-surface)",
                     cursor: "pointer",
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.target.style.borderColor = "var(--admin-primary)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                    e.target.style.borderColor = "var(--admin-primary-border)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -1219,7 +1219,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "var(--admin-primary, #2563eb)",
+                    color: "var(--admin-primary)",
                     fontWeight: 600,
                     fontSize: "clamp(13px, 3vw, 14px)",
                   }}
@@ -1233,22 +1233,22 @@ export function PlacesPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
+                    border: "2px solid var(--admin-primary-border)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: "white",
+                    background: "var(--admin-surface)",
                     cursor: "pointer",
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.target.style.borderColor = "var(--admin-primary)";
                     e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
+                    e.target.style.borderColor = "var(--admin-primary-border)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -1297,10 +1297,12 @@ export function PlacesPage() {
                           .split(/[,;]/)
                           .map((part) => part.trim())
                           .filter(Boolean);
-                        setFormData(patchLang(formData, "seoKeywords", selectedLang, keywords));
+                        setFormData((prev) =>
+                          patchLang(prev, "seoKeywords", selectedLang, keywords)
+                        );
                         return;
                       }
-                      setFormData(patchLang(formData, field, selectedLang, text));
+                      setFormData((prev) => patchLang(prev, field, selectedLang, text));
                     }}
                   />
                   {/* Name - only editable by owner/manager (affects slugs) */}
@@ -1333,7 +1335,7 @@ export function PlacesPage() {
                         }}
                         value={readLang(formData, "name", selectedLang)}
                         onApply={(text) =>
-                          setFormData(patchLang(formData, "name", selectedLang, text))
+                          setFormData((prev) => patchLang(prev, "name", selectedLang, text))
                         }
                       >
                       <input
@@ -1351,7 +1353,7 @@ export function PlacesPage() {
                           border:
                             readLang(formErrors, "name", selectedLang)
                               ? "2px solid #fca5a5"
-                              : "2px solid var(--admin-primary-border, #bfdbfe)",
+                              : "2px solid var(--admin-primary-border)",
                           borderRadius: 8,
                           outline: "none",
                           transition: "all 0.3s ease",
@@ -1367,14 +1369,14 @@ export function PlacesPage() {
                           const hasError =
                             readLang(formErrors, "name", selectedLang);
                           if (!hasError) {
-                            e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                            e.target.style.borderColor = "var(--admin-primary)";
                             e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                           }
                         }}
                         onBlur={(e) => {
                           const hasError =
                             readLang(formErrors, "name", selectedLang);
-                          e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
+                          e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border)";
                           e.target.style.boxShadow = "none";
                         }}
                       />
@@ -1546,9 +1548,9 @@ export function PlacesPage() {
                       style={{
                         marginTop: 24,
                         padding: 16,
-                        background: "linear-gradient(135deg, var(--admin-primary, #2563eb)15 0%, var(--admin-primary-hover, #1d4ed8)15 100%)",
+                        background: "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
                         borderRadius: 8,
-                        border: "1px solid var(--admin-primary, #2563eb)30",
+                        border: "1px solid var(--admin-primary)30",
                       }}
                     >
                       <h3
@@ -1556,9 +1558,9 @@ export function PlacesPage() {
                           margin: "0 0 16px 0",
                           fontSize: "clamp(16px, 3.5vw, 18px)",
                           fontWeight: 600,
-                          color: "var(--admin-primary, #2563eb)",
+                          color: "var(--admin-primary)",
                           fontFamily:
-                            "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                            "var(--admin-font-display)",
                         }}
                       >
                         🔍 SEO {t("admin.settings")}
@@ -1577,7 +1579,7 @@ export function PlacesPage() {
                           }}
                           value={readLang(formData, "seoTitle", selectedLang)}
                           onApply={(text) =>
-                            setFormData(patchLang(formData, "seoTitle", selectedLang, text))
+                            setFormData((prev) => patchLang(prev, "seoTitle", selectedLang, text))
                           }
                         >
                         <input
@@ -1627,7 +1629,9 @@ export function PlacesPage() {
                           }}
                           value={readLang(formData, "seoDescription", selectedLang)}
                           onApply={(text) =>
-                            setFormData(patchLang(formData, "seoDescription", selectedLang, text))
+                            setFormData((prev) =>
+                              patchLang(prev, "seoDescription", selectedLang, text)
+                            )
                           }
                           variant="textarea"
                         >
@@ -2005,7 +2009,7 @@ export function PlacesPage() {
                       fontWeight: 700,
                       marginBottom: 4,
                       fontFamily:
-                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
+                        "var(--admin-font-display)",
                     }}
                   >
                     {formData.isActive ? t("admin.placeActive") : t("admin.placeInactive")}
@@ -2067,7 +2071,7 @@ export function PlacesPage() {
                 style={{
                   marginTop: 6,
                   fontSize: 13,
-                  color: "#666",
+                  color: "var(--admin-muted)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 }}
@@ -2114,7 +2118,7 @@ export function PlacesPage() {
                 style={{
                   marginTop: 32,
                   padding: "clamp(24px, 5vw, 32px)",
-                  background: "white",
+                  background: "var(--admin-surface)",
                   borderRadius: 16,
                   boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
                   border: "1px solid rgba(37, 99, 235, 0.1)",
@@ -2307,7 +2311,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "6px 12px",
-                    background: "var(--admin-primary, #2563eb)",
+                    background: "var(--admin-primary)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
@@ -2495,7 +2499,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "8px 16px",
-                    background: "var(--admin-primary, #2563eb)",
+                    background: "var(--admin-primary)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 8,

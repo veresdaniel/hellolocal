@@ -15,6 +15,7 @@ import { ProductClickDto } from "./dto/product-click.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { assertLang } from "../common/lang";
+import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 @Controller("/api/:lang/analytics")
 export class AnalyticsController {
@@ -58,7 +59,7 @@ export class AnalyticsController {
   ) {
     assertLang(lang);
     if (!user?.id) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
     return this.analytics.getGlobalDashboard({
       lang,
@@ -77,7 +78,7 @@ export class AnalyticsController {
   ) {
     assertLang(lang);
     if (!user?.id) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
     return this.analytics.getSiteDashboard({
       lang,
@@ -98,10 +99,10 @@ export class AnalyticsController {
   ) {
     assertLang(lang);
     if (!user?.id) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
     if (!placeId) {
-      throw new BadRequestException("placeId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_REQUIRED);
     }
     return this.analytics.getPlaceDashboard({
       lang,
@@ -123,10 +124,10 @@ export class AnalyticsController {
   ) {
     assertLang(lang);
     if (!user?.id) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
     if (!townId) {
-      throw new BadRequestException("townId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_TOWN_ID_REQUIRED);
     }
     return this.analytics.getTownDashboard({
       lang,
@@ -148,10 +149,10 @@ export class AnalyticsController {
   ) {
     assertLang(lang);
     if (!user?.id) {
-      throw new BadRequestException("User not found");
+      throw new BadRequestException(ERROR_MESSAGES.NOT_FOUND_USER);
     }
     if (!eventId) {
-      throw new BadRequestException("eventId is required");
+      throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_EVENT_ID_REQUIRED);
     }
     return this.analytics.getEventDashboard({
       lang,

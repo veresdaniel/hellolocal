@@ -12,6 +12,7 @@ import {
   isAdminPath,
 } from './ssr/renderPublicContent.js';
 import { applySocialMeta, publicOrigin, resolvePublicShare } from './ssr/socialMeta.js';
+import { UC_COOKIE_MAX_AGE_SEC, ucFailClosedCopy } from '@hellolocal/shared';
 import {
   applyUnderConstructionDocument,
   buildSetCookieHeader,
@@ -158,21 +159,17 @@ app.get('/api/app-settings/under-construction', async (req, res) => {
     res.send(body);
   } catch (error) {
     console.error(`[UC] Same-origin proxy failed: ${error.message}`);
-    // Fail closed: pretend gate is on and blocked.
+    // Fail closed: pretend gate is on and blocked (copy from shared UC defaults).
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({
       enabled: true,
       allowed: false,
       queryParam: UC_QUERY_PARAM,
       cookieName: UC_COOKIE_NAME,
-      cookieMaxAgeSec: 60 * 60 * 24 * 400,
+      cookieMaxAgeSec: UC_COOKIE_MAX_AGE_SEC,
       refreshCookie: false,
       clearCookie: false,
-      copy: {
-        title: 'Fejlesztés alatt',
-        body: 'Az oldal jelenleg fejlesztés alatt áll.',
-        buttonLabel: '',
-      },
+      copy: ucFailClosedCopy(),
     });
   } finally {
     clearTimeout(timer);

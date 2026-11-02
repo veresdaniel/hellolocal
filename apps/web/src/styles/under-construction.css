@@ -1,0 +1,61 @@
+/* Shared under-development gate chrome (React page + SSR HTML). */
+
+.uc-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  background: linear-gradient(160deg, #1f2937 0%, #0f172a 55%, #111827 100%);
+  color: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.uc-gate__glow {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(148, 163, 184, 0.18), transparent 45%),
+    radial-gradient(circle at 70% 80%, rgba(100, 116, 139, 0.16), transparent 40%);
+  pointer-events: none;
+}
+
+.uc-gate__inner {
+  position: relative;
+  max-width: 560px;
+  z-index: 1;
+}
+
+.uc-gate__brand {
+  margin: 0 0 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: rgba(248, 250, 252, 0.7);
+  font-weight: 600;
+}
+
+.uc-gate__title {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 6vw, 42px);
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.uc-gate__body {
+  margin: 0;
+  font-size: clamp(16px, 3.5vw, 18px);
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.85);
+  white-space: pre-wrap;
+}
+
+.uc-gate__button {
+  margin: 28px 0 0;
+  color: rgba(248, 250, 252, 0.65);
+  font-size: 14px;
+}

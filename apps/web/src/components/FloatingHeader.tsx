@@ -17,6 +17,7 @@ import { ROLE_SUPERADMIN } from "../types/enums";
 import { useViewStore } from "../stores/useViewStore";
 import { openSiteExplore } from "../utils/siteLanding";
 import { BREAKPOINTS } from "../utils/viewport";
+import { USER_KEY } from "../constants/authStorage";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
@@ -210,7 +211,7 @@ export function FloatingHeader({
           role: freshUser.role.toLowerCase() as "superadmin" | "admin" | "editor" | "viewer",
         };
         // Update localStorage with fresh user data
-        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem(USER_KEY, JSON.stringify(userData));
 
         // Trigger AuthContext refresh to update UI
         if (authContext && authContext.refreshUser) {
