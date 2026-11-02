@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { isPlacePathSegment, isTownPathSegment } from "./entityPaths";
 import { siteForHost, type HostResolve } from "./hostResolve";
 import { isPlatformHost } from "./urls";
-import { setPlatformPublicHosts } from "./platformOrigin";
+import { setPlatformPublicHostEntries, setPlatformPublicHosts } from "./platformOrigin";
 import { getPublicPlatformHost } from "../api/public.api";
 
 export type HostScope =
@@ -75,7 +75,10 @@ export function HostScopeProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const row = await getPublicPlatformHost();
-        if (!ac.signal.aborted) setPlatformPublicHosts(row.hosts);
+        if (!ac.signal.aborted) {
+          if (row.entries.length) setPlatformPublicHostEntries(row.entries);
+          else setPlatformPublicHosts(row.hosts);
+        }
       } catch {
         if (!ac.signal.aborted) setPlatformPublicHosts([]);
       }

@@ -1669,7 +1669,10 @@
   "quoteRecipientDescription": "Posteingang für Angebots- und Demoanfragen",
   "platformHost": {
     "title": "Öffentliche Plattformadressen",
-    "help": "Mehrere Domains können die Plattform-Startseite sein, eine pro Zeile. Die erste ist die Standardadresse, wenn ein Link eine eigene Regionsdomain verlässt. www gilt ohne eigene Zeile. Leer bleibt nur hello-local.io.",
+    "help": "Mehrere Domains können die Plattform-Startseite sein. Jede kann in einer eigenen Sprache öffnen. Die erste ist die Standardadresse, wenn ein Link eine eigene Regionsdomain verlässt. www gilt ohne eigene Zeile. Leer bleibt nur hello-local.io.",
+    "language": "Sprache",
+    "add": "Domain hinzufügen",
+    "remove": "Domain entfernen",
     "save": "Plattformadressen speichern",
     "saved": "Plattformadressen gespeichert"
   },

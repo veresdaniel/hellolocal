@@ -145,6 +145,9 @@ export async function fetchUnderConstructionGate({
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
     });
+    if (response.status === 429) {
+      return { ...blocked, enabled: false, allowed: true };
+    }
     if (!response.ok) {
       return blocked;
     }

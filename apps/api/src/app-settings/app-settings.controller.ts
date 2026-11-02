@@ -3,7 +3,7 @@ import { Controller, Get } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { readPlatformPublicHosts } from "../common/platform-public-host";
+import { readPlatformPublicHostEntries } from "../common/platform-public-host";
 
 /**
  * Public controller for app settings that don't require authentication
@@ -54,8 +54,9 @@ export class AppSettingsController {
    */
   @Get("/app-settings/platform-host")
   async getPlatformHost() {
-    const hosts = await readPlatformPublicHosts(this.prisma);
+    const entries = await readPlatformPublicHostEntries(this.prisma);
+    const hosts = entries.map((entry) => entry.host);
     const host = hosts[0] ?? null;
-    return { hosts, host, origin: host ? `https://${host}` : null };
+    return { hosts, entries, host, origin: host ? `https://${host}` : null };
   }
 }

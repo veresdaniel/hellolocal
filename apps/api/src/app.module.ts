@@ -63,15 +63,15 @@ const envFilePath = configEnvFilePath();
     ThrottlerModule.forRoot([
       {
         name: "default",
-        ttl: 60000, // 1 perc (milliszekundumban)
-        // Fejlesztésben sokkal lazább limit, productionban szigorúbb
-        limit: process.env.NODE_ENV === "production" ? 400 : 10000, // 200 kérés/perc production, 10000 fejlesztés
+        ttl: 60000,
+        // Per visitor, after trust proxy. A page load fires many calls.
+        limit: process.env.NODE_ENV === "production" ? 20000 : 10000,
       },
       {
         name: "strict",
-        ttl: 60000, // 1 perc
-        // Auth endpoint-ok: fejlesztésben lazább, productionban szigorúbb
-        limit: process.env.NODE_ENV === "production" ? 200 : 1000, // 10 kérés/perc production, 1000 fejlesztés
+        ttl: 60000,
+        // Auth routes set their own low strict limit. This one must not cap public traffic.
+        limit: process.env.NODE_ENV === "production" ? 20000 : 1000,
       },
     ]),
     PrismaModule,

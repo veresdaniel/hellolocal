@@ -150,8 +150,11 @@ export type PlatformGaResponse = {
 };
 
 /** Platform-wide GA4 ID for platform routes only (no site fallback). */
+export type PlatformHostEntry = { host: string; lang: string };
+
 export type PlatformHostResponse = {
   hosts: string[];
+  entries: PlatformHostEntry[];
   host: string | null;
   origin: string | null;
 };
@@ -162,14 +165,27 @@ export async function getPublicPlatformHost(): Promise<PlatformHostResponse> {
   const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-host`, {
     headers: { Accept: "application/json" },
   });
-  if (!res.ok) return { hosts: [], host: null, origin: null };
+  if (!res.ok) return { hosts: [], entries: [], host: null, origin: null };
   const data = (await res.json()) as Partial<PlatformHostResponse>;
   const hosts = Array.isArray(data.hosts)
     ? data.hosts.map((item) => String(item).trim()).filter(Boolean)
     : data.host?.trim()
       ? [data.host.trim()]
       : [];
-  return { hosts, host: hosts[0] ?? null, origin: data.origin?.trim() || (hosts[0] ? `https://${hosts[0]}` : null) };
+  const entries = Array.isArray(data.entries)
+    ? data.entries.flatMap((item) => {
+        const host = String(item?.host ?? "").trim();
+        const lang = String(item?.lang ?? "").trim();
+        if (!host) return [];
+        return [{ host, lang: lang === "en" || lang === "de" ? lang : "hu" }];
+      })
+    : [];
+  return {
+    hosts,
+    entries,
+    host: hosts[0] ?? null,
+    origin: data.origin?.trim() || (hosts[0] ? `https://${hosts[0]}` : null),
+  };
 }
 
 export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
@@ -235,6 +251,9 @@ export async function getUnderConstructionGate(options?: {
       credentials: "include",
       signal: options?.signal,
     });
+    if (res.status === 429) {
+      return { ...ucFailClosedStatus(options?.lang), enabled: false, allowed: true };
+    }
     if (!res.ok) {
       return ucFailClosedStatus(options?.lang);
     }

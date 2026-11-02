@@ -1723,7 +1723,10 @@
   "quoteRecipientDescription": "Beérkező ajánlat- és demókérések címzettje",
   "platformHost": {
     "title": "Nyilvános platformcímek",
-    "help": "Több domain is a platform nyitóoldala lehet, soronként egy. Az első az alapcím, ha egy egyedi régiódomainről a platformra mutatunk. A www külön sor nélkül is jár hozzá. Üresen csak a hello-local.io marad.",
+    "help": "Több domain is a platform nyitóoldala lehet. Mindegyikhez kiválasztható, milyen nyelven nyíljon meg. Az első az alapcím, ha egy egyedi régiódomainről a platformra mutatunk. A www külön sor nélkül is jár hozzá. Üresen csak a hello-local.io marad.",
+    "language": "Nyelv",
+    "add": "Domain hozzáadása",
+    "remove": "Domain törlése",
     "save": "Platformcímek mentése",
     "saved": "Platformcímek elmentve"
   },

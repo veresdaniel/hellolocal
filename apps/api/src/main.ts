@@ -11,6 +11,8 @@ const CUSTOM_ORIGIN_CACHE_TTL_MS = 60_000;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Caddy is one hop. req.ip then is the visitor, so the rate limit is not one bucket for the whole site.
+  app.getHttpAdapter().getInstance().set("trust proxy", 1);
   const prisma = app.get(PrismaService);
   const customOriginCache = new Map<string, { ok: boolean; exp: number }>();
 

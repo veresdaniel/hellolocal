@@ -1668,7 +1668,10 @@
   "quoteRecipientDescription": "Inbox for quote and demo requests",
   "platformHost": {
     "title": "Public platform addresses",
-    "help": "Several domains can serve the platform home, one per line. The first is the default when a link leaves a custom region domain. www is included without its own line. Empty keeps only hello-local.io.",
+    "help": "Several domains can serve the platform home. Each one can open in its own language. The first is the default when a link leaves a custom region domain. www is included without its own line. Empty keeps only hello-local.io.",
+    "language": "Language",
+    "add": "Add domain",
+    "remove": "Remove domain",
     "save": "Save platform addresses",
     "saved": "Platform addresses saved"
   },

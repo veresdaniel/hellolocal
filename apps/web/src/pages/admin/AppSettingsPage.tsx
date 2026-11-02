@@ -55,6 +55,36 @@ import { GaMeasurementField } from "../../components/GaMeasurementField";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
+
+type PlatformHostRow = { key: string; host: string; lang: Lang };
+
+let platformHostRowSeq = 1;
+
+function nextPlatformHostRow(host = "", lang: Lang = "hu"): PlatformHostRow {
+  platformHostRowSeq += 1;
+  return { key: `host-${platformHostRowSeq}`, host, lang };
+}
+
+function platformHostRowsFromValue(value: string): PlatformHostRow[] {
+  const lines = value
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length) return [nextPlatformHostRow()];
+  return lines.map((line) => {
+    const parts = line.split(/[\s|]+/).filter(Boolean);
+    const lang = parts[1] === "en" || parts[1] === "de" ? parts[1] : "hu";
+    return nextPlatformHostRow(parts[0] ?? "", lang);
+  });
+}
+
+function platformHostValueFromRows(rows: readonly PlatformHostRow[]): string {
+  return rows
+    .map((row) => ({ host: row.host.trim().toLowerCase(), lang: row.lang }))
+    .filter((row) => row.host)
+    .map((row) => `${row.host} ${row.lang}`)
+    .join("\n");
+}
 /** Display-only mask; never a real key. Cleared on focus so a new key can be typed. */
 const CONTENT_DRAFT_API_KEY_MASK = "••••••••••••••••";
 
@@ -86,7 +116,9 @@ export function AppSettingsPage() {
   const [isSavingPublicPlans, setIsSavingPublicPlans] = useState(false);
   const [quoteRecipient, setQuoteRecipient] = useState("");
   const [isSavingRecipient, setIsSavingRecipient] = useState(false);
-  const [platformHost, setPlatformHost] = useState("");
+  const [platformHostRows, setPlatformHostRows] = useState<PlatformHostRow[]>(() => [
+    nextPlatformHostRow(),
+  ]);
   const [isSavingPlatformHost, setIsSavingPlatformHost] = useState(false);
   const [platformGaId, setPlatformGaId] = useState("");
   const [platformGaError, setPlatformGaError] = useState("");
@@ -162,10 +194,10 @@ export function AppSettingsPage() {
       });
     getAppSetting(PLATFORM_HOST_SETTING_KEY)
       .then((row) => {
-        if (!cancelled) setPlatformHost(row?.value ?? "");
+        if (!cancelled) setPlatformHostRows(platformHostRowsFromValue(row?.value ?? ""));
       })
       .catch(() => {
-        if (!cancelled) setPlatformHost("");
+        if (!cancelled) setPlatformHostRows([nextPlatformHostRow()]);
       });
     getAppSetting(PLATFORM_GA_SETTING_KEY)
       .then((row) => {
@@ -304,13 +336,14 @@ export function AppSettingsPage() {
   const handleSavePlatformHost = async () => {
     try {
       setIsSavingPlatformHost(true);
+      const value = platformHostValueFromRows(platformHostRows);
       const saved = await createAppSetting({
         key: PLATFORM_HOST_SETTING_KEY,
-        value: platformHost.trim(),
+        value,
         type: "string",
         description: t("admin.platformHost.title"),
       });
-      setPlatformHost(saved?.value ?? platformHost.trim());
+      setPlatformHostRows(platformHostRowsFromValue(saved?.value ?? value));
       showToast(t("admin.platformHost.saved"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
@@ -1233,24 +1266,91 @@ export function AppSettingsPage() {
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.platformHost.help")}
           </p>
-          <textarea
-            rows={5}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder={"hellolocal.hu\nwww.masik.hu"}
-            value={platformHost}
-            onChange={(event) => setPlatformHost(event.target.value)}
-            style={{
-              width: "100%",
-              maxWidth: 420,
-              minHeight: 120,
-              padding: "10px 12px",
-              border: "1px solid #d9d3e4",
-              borderRadius: 8,
-              font: "inherit",
-              resize: "vertical",
-            }}
-          />
+          <div style={{ display: "grid", gap: 10, maxWidth: 560 }}>
+            {platformHostRows.map((row) => (
+              <div key={row.key} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="hellolocal.hu"
+                  value={row.host}
+                  onChange={(event) =>
+                    setPlatformHostRows((rows) =>
+                      rows.map((item) =>
+                        item.key === row.key ? { ...item, host: event.target.value } : item
+                      )
+                    )
+                  }
+                  style={{
+                    flex: 1,
+                    minHeight: 42,
+                    padding: "0 12px",
+                    border: "1px solid #d9d3e4",
+                    borderRadius: 8,
+                    font: "inherit",
+                  }}
+                />
+                <select
+                  aria-label={t("admin.platformHost.language")}
+                  value={row.lang}
+                  onChange={(event) =>
+                    setPlatformHostRows((rows) =>
+                      rows.map((item) =>
+                        item.key === row.key
+                          ? { ...item, lang: event.target.value as Lang }
+                          : item
+                      )
+                    )
+                  }
+                  style={{
+                    minHeight: 42,
+                    padding: "0 10px",
+                    border: "1px solid #d9d3e4",
+                    borderRadius: 8,
+                    font: "inherit",
+                    background: "#fff",
+                  }}
+                >
+                  <LanguageSelectOptions variant="endonym" codes={["hu", "en", "de"]} />
+                </select>
+                <button
+                  type="button"
+                  aria-label={t("admin.platformHost.remove")}
+                  onClick={() =>
+                    setPlatformHostRows((rows) =>
+                      rows.length === 1 ? [nextPlatformHostRow()] : rows.filter((item) => item.key !== row.key)
+                    )
+                  }
+                  style={{
+                    minHeight: 42,
+                    padding: "0 12px",
+                    border: "1px solid #d9d3e4",
+                    borderRadius: 8,
+                    background: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setPlatformHostRows((rows) => [...rows, nextPlatformHostRow()])}
+              style={{
+                justifySelf: "start",
+                minHeight: 36,
+                padding: "0 12px",
+                border: 0,
+                background: "transparent",
+                color: "var(--admin-primary)",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t("admin.platformHost.add")}
+            </button>
+          </div>
           <div style={{ marginTop: 12 }}>
             <button
               type="button"

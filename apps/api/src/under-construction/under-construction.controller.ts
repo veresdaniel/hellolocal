@@ -9,7 +9,7 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { Throttle } from "@nestjs/throttler";
+import { SkipThrottle } from "@nestjs/throttler";
 import { UserRole } from "@prisma/client";
 import type { Response } from "express";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -53,7 +53,9 @@ export class UnderConstructionAdminController {
  * Does not expose the access token in JSON; sets HttpOnly Secure cookie instead.
  */
 @Controller(UC_PUBLIC_API_PATH)
-@Throttle({ default: { limit: 60, ttl: 60000 } })
+// Every public visit checks this through the web container, so the calls share one address.
+// A low limit turned into HTTP 429, and the site then drew the construction page.
+@SkipThrottle({ default: true, strict: true })
 export class UnderConstructionPublicController {
   constructor(private readonly underConstruction: UnderConstructionService) {}
 

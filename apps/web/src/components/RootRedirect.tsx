@@ -4,31 +4,44 @@ import { Navigate, useLocation } from "react-router-dom";
 import { preferredLang } from "../app/browserLang";
 import { isPlatformHost } from "../app/urls";
 import { pathForHostResolve, siteForHost } from "../app/hostResolve";
+import { platformHostLanguage, setPlatformPublicHostEntries, setPlatformPublicHosts } from "../app/platformOrigin";
+import { getPublicPlatformHost } from "../api/public.api";
 import { LoadingSpinner } from "./LoadingSpinner";
 
 export function RootRedirect() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  const customHost =
-    !isAdminRoute && typeof window !== "undefined" && !isPlatformHost(window.location.hostname);
-  const [customTarget, setCustomTarget] = useState<string | null>(null);
-  const [customReady, setCustomReady] = useState(!customHost);
+  const [publicTarget, setPublicTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!customHost) return;
+    if (isAdminRoute) return;
     const ac = new AbortController();
-    void siteForHost(window.location.hostname, ac.signal).then((site) => {
+    void (async () => {
+      try {
+        const row = await getPublicPlatformHost();
+        if (ac.signal.aborted) return;
+        if (row.entries.length) setPlatformPublicHostEntries(row.entries);
+        else setPlatformPublicHosts(row.hosts);
+      } catch {
+        if (!ac.signal.aborted) setPlatformPublicHosts([]);
+      }
+      if (ac.signal.aborted || typeof window === "undefined") return;
+      const host = window.location.hostname;
+      if (isPlatformHost(host)) {
+        setPublicTarget(`/${platformHostLanguage(host) || preferredLang()}/overview`);
+        return;
+      }
+      const site = await siteForHost(host, ac.signal);
       if (ac.signal.aborted) return;
-      setCustomTarget(site ? pathForHostResolve(site, location.search) : null);
-      setCustomReady(true);
-    });
-    return () => {
-      ac.abort();
-    };
-  }, [customHost, location.search]);
+      setPublicTarget(
+        site ? pathForHostResolve(site, location.search) : `/${preferredLang()}/overview`
+      );
+    })();
+    return () => ac.abort();
+  }, [isAdminRoute, location.search]);
 
-  if (customHost && !customReady) return <LoadingSpinner />;
-  if (customHost && customTarget) return <Navigate to={customTarget} replace />;
+  if (!isAdminRoute && !publicTarget) return <LoadingSpinner />;
+  if (!isAdminRoute && publicTarget) return <Navigate to={publicTarget} replace />;
 
   if (isAdminRoute) {
     // Extract the path after /admin (e.g., "/login" from "/admin/login", or "" from "/admin")
@@ -45,6 +58,5 @@ export function RootRedirect() {
     return <Navigate to={finalPath} replace />;
   }
 
-  // Public entry is the marketing overview. Region homes stay at /:lang/:siteKey.
-  return <Navigate to={`/${preferredLang()}/overview`} replace />;
+  return <LoadingSpinner />;
 }
