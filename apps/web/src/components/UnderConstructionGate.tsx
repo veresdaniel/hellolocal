@@ -1,15 +1,16 @@
-// Blocks public SPA routes when under-development mode is on and access is missing.
+// Blocks public SPA routes when under-development mode is on.
+// Admin/auth routes and logged-in staff are outside this lock.
 import { useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Outlet, useLocation, useParams } from "react-router-dom";
+import { isUserRole } from "@hellolocal/shared";
 import { getUnderConstructionGate } from "../api/public.api";
 import { DEFAULT_LANG, isLang, type Lang } from "../app/config";
 import {
   clearAccessCookie,
   isAdminOrAuthPath,
-  readAccessQueryToken,
-  UC_QUERY_PARAM,
   ucFailClosedCopy,
 } from "../lib/underConstructionAccess";
+import { useAuthStore } from "../stores/authStore";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { UnderConstructionPage } from "../pages/UnderConstructionPage";
 
@@ -20,34 +21,30 @@ type GateState =
 
 export function UnderConstructionGate() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  const user = useAuthStore((s) => s.user);
+  const staffBypass = Boolean(user?.role && isUserRole(String(user.role)));
   const [state, setState] = useState<GateState>({ status: "loading" });
   const openedOnce = useRef(false);
-  /** Skip the immediate re-fetch caused by stripping ?access= after a successful unlock. */
-  const skipNextValidation = useRef(false);
 
   useEffect(() => {
-    if (isAdminOrAuthPath(location.pathname) || location.pathname === "/offline") {
+    if (
+      staffBypass ||
+      isAdminOrAuthPath(location.pathname) ||
+      location.pathname === "/offline"
+    ) {
       setState({ status: "open" });
       openedOnce.current = true;
       return;
     }
 
-    if (skipNextValidation.current) {
-      skipNextValidation.current = false;
-      return;
-    }
-
     let cancelled = false;
-    const queryToken = readAccessQueryToken(location.search);
-    // First paint only: keep Outlet mounted while revalidating on later navigations.
     if (!openedOnce.current) {
       setState({ status: "loading" });
     }
 
-    getUnderConstructionGate({ lang, accessToken: queryToken })
+    getUnderConstructionGate({ lang })
       .then((gate) => {
         if (cancelled) return;
         if (!gate.enabled) {
@@ -56,31 +53,12 @@ export function UnderConstructionGate() {
           setState({ status: "open" });
           return;
         }
-        if (gate.allowed) {
-          // HttpOnly cookie is set by the API Set-Cookie on this same-origin fetch.
-          if (queryToken) {
-            const params = new URLSearchParams(location.search);
-            if (params.has(UC_QUERY_PARAM)) {
-              params.delete(UC_QUERY_PARAM);
-              const search = params.toString();
-              // Avoid a second gate round-trip that can race the new Set-Cookie.
-              skipNextValidation.current = true;
-              navigate(
-                { pathname: location.pathname, search: search ? `?${search}` : "", hash: location.hash },
-                { replace: true }
-              );
-            }
-          }
-          openedOnce.current = true;
-          setState({ status: "open" });
-          return;
-        }
+        // Strict lock: no public unlock via cookie/?access=.
         clearAccessCookie();
         openedOnce.current = false;
         setState({ status: "blocked", copy: gate.copy });
       })
       .catch(() => {
-        // Fail closed on first paint; keep an already-open session on transient errors.
         if (cancelled) return;
         if (openedOnce.current) return;
         openedOnce.current = false;
@@ -90,7 +68,7 @@ export function UnderConstructionGate() {
     return () => {
       cancelled = true;
     };
-  }, [lang, location.pathname, location.search, location.hash, navigate]);
+  }, [lang, location.pathname, location.search, staffBypass]);
 
   if (state.status === "loading") {
     return (

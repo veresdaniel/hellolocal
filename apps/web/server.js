@@ -355,8 +355,9 @@ app.get('*', async (req, res, next) => {
     return next();
   }
 
-  // Admin always open (login + console). Public routes may be gated.
-  if (isAdminPath(req.path)) {
+  // Admin always open (login + every console subpage). Public routes may be gated.
+  const requestPath = String(req.originalUrl || req.url || req.path || '').split('?')[0];
+  if (isAdminPath(requestPath)) {
     try {
       const html = applyAdminRobots(readShell());
       res.setHeader('Content-Type', 'text/html; charset=utf-8');

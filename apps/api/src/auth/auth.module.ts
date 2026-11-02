@@ -51,6 +51,6 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, GoogleStrategy, RbacService, SiteRoleGuard, PlaceRoleGuard],
-  exports: [AuthService, RbacService, SiteRoleGuard, PlaceRoleGuard],
+  exports: [AuthService, RbacService, SiteRoleGuard, PlaceRoleGuard, JwtModule],
 })
 export class AuthModule {}

@@ -146,9 +146,14 @@ export function buildAccessPreviewUrl(
   return `${base}${path}?${UC_QUERY_PARAM}=${encodeURIComponent(token)}`;
 }
 
+/**
+ * Admin console + auth pages (any depth): `/admin`, `/hu/admin`, `/hu/admin/sites/...`.
+ * Used by the SPA gate so the whole admin tree stays outside the public UC lock.
+ */
 export function isAdminOrAuthPath(pathname: string): boolean {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] === "admin") return true;
-  if (parts[1] === "admin") return true;
-  return false;
+  const parts = String(pathname || "")
+    .split("?")[0]
+    .split("/")
+    .filter(Boolean);
+  return parts.includes("admin");
 }
