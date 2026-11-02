@@ -1,7 +1,7 @@
 // src/pages/admin/UsersPage.tsx
 import { useState, useEffect, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -31,6 +31,7 @@ import { ROLE_SUPERADMIN } from "../../types/enums";
 export function UsersPage() {
   const { t } = useTranslation();
   const location = useLocation();
+  const { lang } = useParams<{ lang: string }>();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
@@ -693,7 +694,15 @@ export function UsersPage() {
                           "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       }}
                     >
-                      {t("admin.profile.usersCanEnable2FA")}
+                      {t("admin.profile.usersCanEnable2FA")}{" "}
+                      <Link
+                        to={`/${lang || "hu"}/admin/profile`}
+                        style={{ color: "#3730a3", fontWeight: 600 }}
+                      >
+                        {t("admin.profile.openProfile", {
+                          defaultValue: "Profil & 2FA megnyitása",
+                        })}
+                      </Link>
                     </p>
                   </div>
                 );

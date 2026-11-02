@@ -229,7 +229,7 @@ export function PlacePriceListPage() {
         onCancel={() => navigate(`/${lang}/admin/places`)}
         saveLabel={t("common.save")}
         cancelLabel={t("admin.backToPlace")}
-        showBackButton={true}
+        showBackButton={false}
         backTo={`/${lang}/admin/places`}
       />
 

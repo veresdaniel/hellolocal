@@ -29,7 +29,8 @@ export function AdminPageHeader({
   onCancel,
   saveLabel,
   cancelLabel,
-  showBackButton = true,
+  // Layout already renders a global AdminBackButton — keep page headers clean by default.
+  showBackButton = false,
   backTo,
 }: AdminPageHeaderProps) {
   const { t } = useTranslation();

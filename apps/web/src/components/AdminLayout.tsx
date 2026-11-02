@@ -9,6 +9,7 @@ import { useAdminCache } from "../hooks/useAdminCache";
 import { useVersionCheck } from "../hooks/useVersionCheck";
 import { SiteSelector } from "./SiteSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
+import { AdminBackButton } from "./AdminBackButton";
 import { LanguageSelector } from "./LanguageSelector";
 import { ToastContainer } from "./Toast";
 import { VersionDisplay } from "./VersionDisplay";
@@ -704,6 +705,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       >
         {/* Only show skeleton if we're navigating between admin routes */}
         {/* Don't rely on isNavigationPending alone as it can get stuck during lazy loading */}
+        <AdminBackButton />
         {isNavigating ? <AdminPageSkeleton /> : children}
       </main>
 
