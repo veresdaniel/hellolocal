@@ -205,15 +205,9 @@ Render.com is **retired** in this repo (`render.yaml` removed). Historical notes
 | **Heroku** | $7/hó | Megbízható | Nincs ingyenes tier |
 | **VPS (egyéb)** | €4-5/hó | Teljes kontroll | Több setup munka |
 
-## 🔐 Alapértelmezett Admin Felhasználók
+## 🔐 Alapértelmezett admin
 
-A seed script létrehozza a következő felhasználókat:
-
-- **Superadmin**: `superadmin@hellolocal.com` / `password123`
-- **Admin**: `admin@hellolocal.com` / `password123`
-- **Editor**: `editor@hellolocal.com` / `password123`
-
-⚠️ **FONTOS**: Változtasd meg ezeket a jelszavakat production környezetben!
+A seed és az üres adatbázis indulása a `super@example.com` superadmin fiókot tölti be (`admin` felhasználónév). A jelszó a snapshotban tárolt hash, nem egy külön példa jelszó. Meglévő superadmint nem ír felül.
 
 ## 📚 Dokumentáció
 

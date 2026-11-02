@@ -5,7 +5,8 @@
 #
 # Postgres lives only on the internal network, under the DNS name beta-db.
 # The first boot of the empty volume hellolocal-beta-pgdata creates a new
-# database. The API then runs `prisma migrate deploy` (schema only, no seed).
+# database. The API then runs `prisma migrate deploy` and, if no superadmin
+# exists yet, inserts the snapshot account. It does not reload demo content.
 # Do not restore a production dump here unless someone asks for an anonymized copy.
 #
 # TLS stays on the production Caddy (ports 80 and 443). api-beta and web-beta
@@ -44,7 +45,7 @@ services:
       JWT_EXPIRES_IN: 7d
       FRONTEND_URL: https://beta.hello-local.io
       CORS_ORIGIN: https://beta.hello-local.io
-    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node dist/main.js"]
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node prisma/ensure-superadmin.cjs && node dist/main.js"]
     depends_on:
       beta-db:
         condition: service_healthy
