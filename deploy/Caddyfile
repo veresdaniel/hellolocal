@@ -1,5 +1,10 @@
 {
 	email admin@hello-local.io
+	# Custom SiteDomain / town-place hosts: issue certs only when admin DB knows the host.
+	# Ask runs inside the Docker network — no redeploy per SEO domain.
+	on_demand_tls {
+		ask http://api-prod:3002/api/caddy/ask
+	}
 }
 
 www.hello-local.io {
@@ -29,3 +34,13 @@ api.devel.hello-local.io {
 # Beta site blocks are copied to this directory by deploy/remote-deploy-beta.sh.
 # Zero matches is not an error, and these names are not wired until that file exists.
 import /etc/caddy/imports/*.caddy
+
+# Admin-configured custom domains (helloetyek.hu, …). Named blocks above win first;
+# unknown Hosts only get a cert when /api/caddy/ask returns 200.
+https:// {
+	tls {
+		on_demand
+	}
+	encode gzip
+	reverse_proxy web-prod:3000
+}

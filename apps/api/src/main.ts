@@ -4,9 +4,15 @@ import { ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { PrismaService } from "./prisma/prisma.service";
+import { isKnownPublicHostname } from "./common/is-known-public-hostname";
+
+const CUSTOM_ORIGIN_CACHE_TTL_MS = 60_000;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const prisma = app.get(PrismaService);
+  const customOriginCache = new Map<string, { ok: boolean; exp: number }>();
 
   // Security headers (Helmet.js)
   app.use(
@@ -20,10 +26,11 @@ async function bootstrap() {
         },
       },
       crossOriginEmbedderPolicy: false, // Disabled for CORS compatibility
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     })
   );
 
-  // CORS konfiguráció - productionban csak megbízható domain-ek
+  // CORS: static env list + admin-configured custom domains (SiteDomain / customDomain).
   const allowedOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     : process.env.FRONTEND_URL
@@ -40,32 +47,11 @@ async function bootstrap() {
     console.warn(
       "   Please set CORS_ORIGIN environment variable (e.g., CORS_ORIGIN=https://hello-local.io)"
     );
-  } else if (allowedOrigins.length > 0) {
   }
 
-  // CORS origin validation function - dinamikusan ellenőrzi az origin-eket
-  const originValidator = (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Check if origin is in allowed list
-    if (allowedOrigins.length === 0) {
-      // Production mode without CORS_ORIGIN - deny all
-      console.warn(`❌ CORS blocked: Origin "${origin}" not allowed (CORS_ORIGIN not set)`);
-      return callback(null, false);
-    }
-
-    const isAllowed = allowedOrigins.some((allowedOrigin) => {
-      // Exact match
-      if (origin === allowedOrigin) {
-        return true;
-      }
-      // Support wildcard subdomains (e.g., *.hello-local.io)
+  const isStaticAllowed = (origin: string): boolean =>
+    allowedOrigins.some((allowedOrigin) => {
+      if (origin === allowedOrigin) return true;
       if (allowedOrigin.startsWith("*.")) {
         const domain = allowedOrigin.substring(2);
         return (
@@ -77,14 +63,48 @@ async function bootstrap() {
       return false;
     });
 
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(
-        `❌ CORS blocked: Origin "${origin}" not in allowed list: [${allowedOrigins.join(", ")}]`
-      );
-      callback(null, false);
+  const isCustomDomainOrigin = async (origin: string): Promise<boolean> => {
+    let hostname: string;
+    try {
+      hostname = new URL(origin).hostname;
+    } catch {
+      return false;
     }
+    const cached = customOriginCache.get(hostname);
+    if (cached && cached.exp > Date.now()) return cached.ok;
+    const ok = await isKnownPublicHostname(prisma, hostname);
+    customOriginCache.set(hostname, { ok, exp: Date.now() + CUSTOM_ORIGIN_CACHE_TTL_MS });
+    return ok;
+  };
+
+  const originValidator = (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.length === 0) {
+      console.warn(`❌ CORS blocked: Origin "${origin}" not allowed (CORS_ORIGIN not set)`);
+      return callback(null, false);
+    }
+
+    if (isStaticAllowed(origin)) {
+      return callback(null, true);
+    }
+
+    void isCustomDomainOrigin(origin).then(
+      (ok) => {
+        if (!ok) {
+          console.warn(
+            `❌ CORS blocked: Origin "${origin}" not in env list or admin custom domains`
+          );
+        }
+        callback(null, ok);
+      },
+      () => callback(null, false)
+    );
   };
 
   app.enableCors({

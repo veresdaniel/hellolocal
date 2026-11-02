@@ -52,7 +52,10 @@ export class SiteResolveMiddleware implements NestMiddleware {
     try {
       // Priority 1: Domain-based resolution (highest priority)
       // SiteDomain first, then Town.customDomain / Place.customDomain → parent Site
-      const host = this.normalizeHost(req.headers.host);
+      // Prefer X-Forwarded-Host (Caddy / web SSR proxy) then Host.
+      const host = this.normalizeHost(
+        (req.headers["x-forwarded-host"] as string | string[] | undefined) || req.headers.host
+      );
       if (host && !this.isLocalhostOrIp(host)) {
         const resolved = await this.resolveHostToSite(host);
         if (resolved) {

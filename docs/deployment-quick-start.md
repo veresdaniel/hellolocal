@@ -219,7 +219,7 @@ TTL: 3600
 
 ### 2. Platform Custom Domain Hozzáadás
 
-**Hetzner / Caddy:** point DNS at the VPS; hosts are listed in `deploy/Caddyfile`.
+**Hetzner / Caddy:** point DNS `A` at the VPS (`135.181.157.111`). Platform hosts are in `deploy/Caddyfile`; **tenant custom domains** use on-demand TLS via `GET /api/caddy/ask` (admin DB) — no Caddyfile edit per domain. Domain must be registered and resolving before the first HTTPS request.
 
 **Railway.app:**
 1. Settings → Domains

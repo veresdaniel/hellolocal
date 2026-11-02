@@ -5,6 +5,7 @@ import { PlacesModule } from "../places/places.module";
 import { EventsModule } from "../events/events.module";
 import { SiteController } from "./site.controller";
 import { DomainResolveController } from "./domain-resolve.controller";
+import { CaddyAskController } from "./caddy-ask.controller";
 import { ResolveController } from "./resolve.controller";
 import { SiteResolverService } from "./site-resolver.service";
 import { ResolveService } from "./resolve.service";
@@ -17,7 +18,7 @@ import { SiteKeyResolverService } from "./site-key-resolver.service";
     forwardRef(() => PlacesModule),
     forwardRef(() => EventsModule),
   ],
-  controllers: [SiteController, ResolveController, DomainResolveController],
+  controllers: [SiteController, ResolveController, DomainResolveController, CaddyAskController],
   providers: [SiteResolverService, ResolveService, SiteKeyResolverService],
   exports: [SiteResolverService, ResolveService, SiteKeyResolverService],
 })
