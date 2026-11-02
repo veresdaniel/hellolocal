@@ -207,7 +207,7 @@ Render.com is **retired** in this repo (`render.yaml` removed). Historical notes
 
 ## 🔐 Alapértelmezett admin
 
-A seed és az üres adatbázis indulása a `super@example.com` superadmin fiókot tölti be (`admin` felhasználónév). A jelszó a snapshotban tárolt hash, nem egy külön példa jelszó. Meglévő superadmint nem ír felül.
+A seed és az üres adatbázis indulása a `super@example.com` superadmin fiókot tölti be (`admin` felhasználónév), és ha még nincs régió, az Etyek–Budai mintaadatot is: település, helyek, események, szövegek és fordítások. A jelszó a snapshotban tárolt hash. Meglévő régiót és superadmin jelszót nem ír felül.
 
 ## 📚 Dokumentáció
 

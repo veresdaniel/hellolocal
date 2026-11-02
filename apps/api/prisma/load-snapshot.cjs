@@ -5,6 +5,8 @@
  *   Allowed on 127.0.0.1 or a database named hellolocal_devel.
  * platform: superadmin, interface copy, translation keys, and the empty country shell.
  *   Allowed on the live database or a beta host. Never hellolocal_devel.
+ * SEED_ENSURE=1: if the database has no region, load the same demo content.
+ *   An existing region is left in place. An existing superadmin password is not changed.
  *
  * Remote runs must set SEED_CONFIRM to the same value as SEED_PROFILE.
  * SEED_DATABASE swaps only the database name. SEED_ROLLBACK=1 undoes the load.
@@ -37,6 +39,12 @@ const PLATFORM_SETTING_KEYS = new Set([
   "defaultLanguage",
   "underConstruction.copy",
   "underConstruction.enabled",
+]);
+
+const SECRET_SETTING_KEYS = new Set([
+  "contentDraft.apiKey",
+  "underConstruction.accessToken",
+  "underConstruction.tokenUpdatedAt",
 ]);
 
 const DEMO_LOAD = [
@@ -196,7 +204,81 @@ function quietUser(user) {
   };
 }
 
+function readSnapshot() {
+  return JSON.parse(
+    readFileSync(process.env.SNAPSHOT_PATH || join(__dirname, "dev-seed", "snapshot.json"), "utf8")
+  );
+}
+
+async function loadDemoTables(client, snapshot, user, includeSecrets) {
+  let places = 0;
+  let events = 0;
+  for (const [table, key, single] of DEMO_LOAD) {
+    let source = key === "user" ? [user] : rowsOf(snapshot, key, single);
+    if (key === "user") {
+      const existing = await client.query(
+        `SELECT id FROM "User" WHERE id = $1 OR email = $2 LIMIT 1`,
+        [user.id, user.email]
+      );
+      if (existing.rowCount) continue;
+    }
+    if (key === "appSettings" && !includeSecrets) {
+      source = source.filter((row) => !SECRET_SETTING_KEYS.has(row.key));
+    }
+    const count = await insertRows(client, table, source);
+    if (table === "Place") places = count;
+    if (table === "Event") events = count;
+  }
+  if (snapshot.site?.id) {
+    await client.query(
+      `UPDATE "User" SET "activeSiteId" = $1 WHERE email = $2 AND "activeSiteId" IS NULL`,
+      [snapshot.site.id, user.email]
+    );
+  }
+  return { places, events };
+}
+
+async function ensureDemoRegion() {
+  const url = targetUrl();
+  const snapshot = readSnapshot();
+  const user = quietUser(snapshot.user);
+  const client = new Client({ connectionString: url.toString() });
+  await client.connect();
+  try {
+    const sites = await client.query(`SELECT count(*)::int AS n FROM "Site"`);
+    if (sites.rows[0].n > 0) {
+      const existing = await client.query(
+        `SELECT id FROM "User" WHERE email = $1 OR role = 'superadmin'::"UserRole" LIMIT 1`,
+        [user.email]
+      );
+      if (!existing.rowCount) await insertRows(client, "User", [user]);
+      console.log(existing.rowCount ? "Region already present" : `Superadmin ready: ${user.email}`);
+      return;
+    }
+
+    await client.query("BEGIN");
+    const { places, events } = await loadDemoTables(client, snapshot, user, false);
+    await client.query("COMMIT");
+    console.log(
+      `Demo ready: ${user.email} · ${snapshot.site?.slug || "no-region"} · ${places} places · ${events} events`
+    );
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* the failed statement already aborted the transaction */
+    }
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
 async function main() {
+  if (process.env.SEED_ENSURE === "1") {
+    await ensureDemoRegion();
+    return;
+  }
   const url = targetUrl();
   const local = ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
   const profile = process.env.SEED_PROFILE || (local ? "demo" : "");
@@ -204,9 +286,7 @@ async function main() {
     throw new Error("Remote load requires SEED_CONFIRM set to the same value as SEED_PROFILE.");
   }
   const database = assertAllowed(profile, url);
-  const snapshot = JSON.parse(
-    readFileSync(process.env.SNAPSHOT_PATH || join(__dirname, "dev-seed", "snapshot.json"), "utf8")
-  );
+  const snapshot = readSnapshot();
   const client = new Client({ connectionString: url.toString() });
   await client.connect();
   const rollback = process.env.SEED_ROLLBACK === "1";
@@ -231,20 +311,7 @@ async function main() {
       return;
     }
 
-    let places = 0;
-    let events = 0;
-    for (const [table, key, single] of DEMO_LOAD) {
-      const source = key === "user" ? [user] : rowsOf(snapshot, key, single);
-      const count = await insertRows(client, table, source);
-      if (table === "Place") places = count;
-      if (table === "Event") events = count;
-    }
-    if (snapshot.site?.id) {
-      await client.query(`UPDATE "User" SET "activeSiteId" = $1 WHERE id = $2`, [
-        snapshot.site.id,
-        user.id,
-      ]);
-    }
+    const { places, events } = await loadDemoTables(client, snapshot, user, true);
     if (rollback) await client.query("ROLLBACK");
     else await client.query("COMMIT");
     console.log(

@@ -45,7 +45,7 @@ services:
       JWT_EXPIRES_IN: 7d
       FRONTEND_URL: https://beta.hello-local.io
       CORS_ORIGIN: https://beta.hello-local.io
-    command: ["sh", "-c", "pnpm exec prisma migrate deploy && node prisma/ensure-superadmin.cjs && node dist/main.js"]
+    command: ["sh", "-c", "pnpm exec prisma migrate deploy && SEED_ENSURE=1 node prisma/load-snapshot.cjs && node dist/main.js"]
     depends_on:
       beta-db:
         condition: service_healthy
