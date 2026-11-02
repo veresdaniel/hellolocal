@@ -3,6 +3,7 @@ import { Controller, Get } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { readPlatformPublicHosts } from "../common/platform-public-host";
 
 /**
  * Public controller for app settings that don't require authentication
@@ -45,5 +46,16 @@ export class AppSettingsController {
   async getPlatformGa() {
     const gaMeasurementId = await this.appSettingsService.getPlatformGaMeasurementId();
     return { gaMeasurementId };
+  }
+
+  /**
+   * Extra public platform hostnames. The first is the default origin.
+   * hello-local.io stays available even when this list is empty.
+   */
+  @Get("/app-settings/platform-host")
+  async getPlatformHost() {
+    const hosts = await readPlatformPublicHosts(this.prisma);
+    const host = hosts[0] ?? null;
+    return { hosts, host, origin: host ? `https://${host}` : null };
   }
 }

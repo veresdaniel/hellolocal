@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
+import { useHostScope } from "../app/hostScope";
 import {
   getPlaces,
   getEvents,
@@ -51,9 +52,15 @@ export function HomePage() {
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
   const { townSlug: townSlugParam } = useParams<{ townSlug?: string }>();
+  const hostScope = useHostScope();
   const [searchParams] = useSearchParams();
-  // Prefer path segment (/telepules|:town|:gemeinde/:slug); keep ?town= as legacy alias
-  const townSlug = townSlugParam?.trim() || searchParams.get("town")?.trim() || undefined;
+  // Prefer path segment (/telepules|:town|:gemeinde/:slug); keep ?town= as legacy alias.
+  // A town's own domain has no slug in the path.
+  const townSlug =
+    townSlugParam?.trim() ||
+    (hostScope.status === "ready" && hostScope.kind === "town" ? hostScope.entitySlug : undefined) ||
+    searchParams.get("town")?.trim() ||
+    undefined;
 
   // Use Zustand stores for state management with persistence
   const {
@@ -164,6 +171,40 @@ export function HomePage() {
     if (!townSlug || !townsPayload?.towns?.length) return null;
     return townsPayload.towns.find((t: PublicTown) => t.slug === townSlug) ?? null;
   }, [townSlug, townsPayload]);
+
+  // Map view keeps the settlement in the path: /telepules/:slug (or town/gemeinde).
+  // A region with one town, or a legacy ?town=, is rewritten. A town's own domain stays /:lang.
+  useEffect(() => {
+    if (!showMap || townSlugParam) return;
+    if (hostScope.status === "loading") return;
+    if (hostScope.status === "ready" && hostScope.kind === "town") return;
+    if (isLoadingTowns) return;
+    const fromQuery = searchParams.get("town")?.trim() || "";
+    const onlyTown =
+      townsPayload?.towns?.length === 1 ? townsPayload.towns[0]?.slug?.trim() || "" : "";
+    const slug = fromQuery || onlyTown;
+    if (!slug) return;
+    const params = new URLSearchParams(searchParams);
+    params.delete("town");
+    const search = params.toString();
+    const next = buildUrl({
+      lang,
+      siteKey: siteKey || "",
+      path: townEntityPath(lang, slug),
+    });
+    navigate(search ? `${next}?${search}` : next, { replace: true });
+  }, [
+    showMap,
+    townSlugParam,
+    hostScope,
+    isLoadingTowns,
+    townsPayload,
+    searchParams,
+    lang,
+    siteKey,
+    navigate,
+  ]);
+
   const townGaId = selectedTown?.gaMeasurementId ?? null;
   usePublicGaOverride(townGaId);
 

@@ -415,28 +415,6 @@ export function PlacesListView({
     <div
       className={`places-discover__controls${inIntro ? " is-in-intro" : ""}`}
     >
-      <div
-        className="places-discover__tabs"
-        role="tablist"
-        aria-label={t("public.explore.title", { defaultValue: "Felfedezés" })}
-      >
-        {(["places", "services"] as const).map((key) => {
-          const active = section === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setSection(key)}
-              className={`places-section-tab${active ? " is-active" : ""}`}
-            >
-              {t(key === "places" ? "public.placesTab" : "public.servicesTab")}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="places-discover__form">
         <label htmlFor="places-discover-search" className="hl-visually-hidden">
           {t("public.searchPlaces") || t("common.search")}
@@ -464,6 +442,8 @@ export function PlacesListView({
             onHasEventTodayChange={setHasEventToday}
             onWithin30MinutesChange={setWithin30Minutes}
             onRainSafeChange={setRainSafe}
+            section={section}
+            onSectionChange={setSection}
             lang={lang}
           />
         </div>
@@ -550,33 +530,6 @@ export function PlacesListView({
             aspect-ratio: 4 / 3;
           }
         }
-        .places-discover__tabs {
-          display: flex;
-          flex-wrap: wrap;
-          gap: var(--pd-2);
-        }
-        .places-section-tab {
-          min-height: 44px;
-          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.14));
-          border-radius: 999px;
-          padding: 0 var(--pd-3);
-          cursor: pointer;
-          font-weight: 650;
-          font-size: 14px;
-          font-family: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
-          background: rgba(27, 23, 48, 0.04);
-          color: var(--hl-ink-on-card);
-          box-sizing: border-box;
-        }
-        .places-section-tab.is-active {
-          border-color: transparent;
-          background: var(--hl-accent);
-          color: var(--hl-on-accent, #fffdf9);
-        }
-        .places-section-tab:focus-visible {
-          outline: 3px solid var(--hl-accent, #c45c26);
-          outline-offset: 2px;
-        }
         .places-discover__form {
           display: flex;
           flex-direction: column;
@@ -589,10 +542,6 @@ export function PlacesListView({
         }
         .places-discover__controls:not(.is-in-intro) {
           margin-bottom: clamp(28px, 4vw, 40px);
-        }
-        .places-discover__controls:not(.is-in-intro) .places-section-tab:not(.is-active) {
-          background: var(--hl-card);
-          border-color: var(--hl-line);
         }
         .places-discover__intro .places-discover__controls {
           margin-top: var(--pd-1);
@@ -652,19 +601,23 @@ export function PlacesListView({
         }
         .places-discover__filters .map-filters-inline__head h2,
         .places-discover__filters .map-filters-inline h3,
-        .places-discover__filters .map-dock__section h3 {
+        .places-discover__filters .map-dock__section h3,
+        .places-discover__filters .map-dock__chip-label {
           margin: 0 0 var(--pd-1);
-          font-size: 14px;
+          font-size: 18px;
           font-weight: 650;
           color: var(--hl-ink, #1b1730);
+        }
+        .places-discover__filters .map-dock__chip-label {
+          margin: 0 4px 0 12px;
         }
         .places-discover__filters .map-dock__chips {
           gap: var(--pd-2);
         }
         .places-discover__filters .map-dock__chip {
-          min-height: 44px;
-          padding: 8px 14px;
-          font-size: 15px;
+          min-height: 48px;
+          padding: 10px 18px;
+          font-size: 18px;
           font-weight: 600;
           color: var(--hl-ink, #1b1730);
         }

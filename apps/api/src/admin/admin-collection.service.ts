@@ -3,12 +3,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { Lang } from "../common/language-code";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { domainLanguage } from "../common/domain-lang";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 export interface CreateCollectionDto {
   slug: string;
   domain?: string | null;
+  domainLang?: string | null;
   isActive?: boolean;
   isCrawlable?: boolean;
   order?: number;
@@ -27,6 +29,7 @@ export interface CreateCollectionDto {
 export interface UpdateCollectionDto {
   slug?: string;
   domain?: string | null;
+  domainLang?: string | null;
   isActive?: boolean;
   isCrawlable?: boolean;
   order?: number;
@@ -193,6 +196,7 @@ export class AdminCollectionService {
       data: {
         slug: dto.slug,
         domain,
+        domainLang: domainLanguage(dto.domainLang, Boolean(domain)),
         isActive: dto.isActive ?? false,
         isCrawlable: dto.isCrawlable ?? true,
         order: dto.order ?? 0,
@@ -239,6 +243,7 @@ export class AdminCollectionService {
         kind: "collection",
         collectionId: id,
       });
+      updateData.domainLang = domainLanguage(dto.domainLang, Boolean(updateData.domain));
     }
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.isCrawlable !== undefined) updateData.isCrawlable = dto.isCrawlable;

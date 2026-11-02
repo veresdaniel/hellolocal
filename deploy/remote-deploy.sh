@@ -42,3 +42,13 @@ docker compose \
   --project-directory /opt/hellolocal/prod \
   "${PROFILE_ARGS[@]}" \
   up -d --build "${SERVICES[@]}"
+
+# git checkout replaces the Caddyfile with a new inode. The running proxy
+# keeps the previous file until the container is recreated.
+if printf '%s\n' "${SERVICES[@]}" | grep -qx caddy; then
+  docker compose \
+    --env-file /opt/hellolocal/stack.env \
+    -f /opt/hellolocal/prod/deploy/docker-compose.yml \
+    --project-directory /opt/hellolocal/prod \
+    up -d --force-recreate --no-deps caddy
+fi

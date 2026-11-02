@@ -39,6 +39,7 @@ import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { DomainInput } from "../../components/DomainInput";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
@@ -124,6 +125,9 @@ export function EventsPage() {
     isPinned: false,
     isRainSafe: false,
     showOnMap: true,
+    customDomain: "",
+    customDomainEnabled: false,
+    domainLang: "hu",
     gaMeasurementId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -387,6 +391,8 @@ export function EventsPage() {
         heroImage: formData.heroImage || null,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
+        customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
         gaMeasurementId: formData.gaMeasurementId.trim()
           ? formData.gaMeasurementId.trim().toUpperCase()
           : null,
@@ -490,6 +496,8 @@ export function EventsPage() {
           heroImage: formData.heroImage || null,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
+          customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+          domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
           gaMeasurementId: formData.gaMeasurementId.trim()
             ? formData.gaMeasurementId.trim().toUpperCase()
             : null,
@@ -589,6 +597,9 @@ export function EventsPage() {
       isPinned: event.isPinned,
       isRainSafe: event.isRainSafe || false,
       showOnMap: event.showOnMap ?? true,
+      customDomain: event.customDomain || "",
+      customDomainEnabled: !!event.customDomain,
+      domainLang: event.domainLang || "hu",
       gaMeasurementId: event.gaMeasurementId || "",
     });
   };
@@ -638,6 +649,9 @@ export function EventsPage() {
       isPinned: false,
       isRainSafe: false,
       showOnMap: true,
+      customDomain: "",
+      customDomainEnabled: false,
+      domainLang: "hu",
       gaMeasurementId: "",
     });
     setFormErrors({});
@@ -1740,6 +1754,20 @@ export function EventsPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <DomainInput
+                value={formData.customDomain}
+                onChange={(value) => setFormData({ ...formData, customDomain: value })}
+                checked={formData.customDomainEnabled}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, customDomainEnabled: checked })
+                }
+                lang={formData.domainLang}
+                onLangChange={(domainLang) => setFormData({ ...formData, domainLang })}
+                label={t("admin.customDomain")}
+              />
             </div>
 
             <GaMeasurementField

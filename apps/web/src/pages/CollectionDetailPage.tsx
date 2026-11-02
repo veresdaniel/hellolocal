@@ -8,6 +8,7 @@ import { getCollectionByDomain, getCollectionBySlug, getPlatformSettings } from 
 import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
 import { SiteCard } from "../ui/site/SiteCard";
 import { useRouteCtx } from "../app/useRouteCtx";
+import { useHostScope } from "../app/hostScope";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { DEFAULT_LANG, DEFAULT_SITE_SLUG, type Lang, isLang} from "../app/config";
 import { buildUrl } from "../app/urls";
@@ -45,6 +46,12 @@ export function CollectionDetailPage() {
     "impresszum",
     "aszf",
     "adatvedelem",
+    "imprint",
+    "terms",
+    "privacy",
+    "impressum",
+    "agb",
+    "datenschutz",
     "pricing",
     "tarife",
     "preise",
@@ -60,9 +67,9 @@ export function CollectionDetailPage() {
   // Get slug from URL
   const slug = params.slug;
 
-  // Try to determine if this is a domain-based collection
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  const isDomainBased = hostname && hostname !== "localhost" && !hostname.includes("127.0.0.1");
+  const hostScope = useHostScope();
+  const isDomainBased = hostScope.status === "ready" && hostScope.kind === "collection";
 
   // Load collection
   const {
@@ -260,7 +267,10 @@ export function CollectionDetailPage() {
                   <div
                     key={item.id}
                     className="hl-content-card"
-                    onClick={() => navigate(siteUrl)}
+                    onClick={() => {
+                      if (siteUrl.startsWith("http")) window.location.assign(siteUrl);
+                      else navigate(siteUrl);
+                    }}
                     style={{
                       cursor: "pointer",
                       borderRadius: 12,

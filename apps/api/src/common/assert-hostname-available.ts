@@ -1,12 +1,14 @@
 import { BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "./domain-host";
+import { isConfiguredPlatformHost, readPlatformPublicHosts } from "./platform-public-host";
 
 export type HostnameOwner =
   | { kind: "site"; siteId: string }
   | { kind: "town"; townId: string }
   | { kind: "place"; placeId: string }
-  | { kind: "collection"; collectionId: string };
+  | { kind: "collection"; collectionId: string }
+  | { kind: "event"; eventId: string };
 
 /**
  * Ensures a custom hostname is free for routing.
@@ -24,6 +26,10 @@ export async function assertHostnameAvailable(
   const domain = normalizeDomainHost(raw);
   if (!domain) {
     throw new BadRequestException(`Érvénytelen domain: „${raw}”. Példa: pelda.hu`);
+  }
+  const platformHosts = await readPlatformPublicHosts(prisma);
+  if (isConfiguredPlatformHost(domain, platformHosts)) {
+    throw new BadRequestException(`A(z) ${domain} a platform nyilvános címe, régióhoz nem adható.`);
   }
 
   const siteDomain = await prisma.siteDomain.findUnique({
@@ -78,6 +84,14 @@ export async function assertHostnameAvailable(
     select: { id: true },
   });
   if (collection && !(owner.kind === "collection" && collection.id === owner.collectionId)) {
+    throw new BadRequestException(`A(z) ${domain} domain már használatban van.`);
+  }
+
+  const event = await prisma.event.findUnique({
+    where: { customDomain: domain },
+    select: { id: true },
+  });
+  if (event && !(owner.kind === "event" && event.id === owner.eventId)) {
     throw new BadRequestException(`A(z) ${domain} domain már használatban van.`);
   }
 

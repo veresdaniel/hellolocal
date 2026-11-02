@@ -108,7 +108,7 @@
       },
       "editors": {
         "q": "Ki írja a szöveget?",
-        "a": "Aki a helyet viszi: a kézműves, a szolgáltató, vagy a hivatal és az iroda munkatársa. Mindenki a saját részét gondozza."
+        "a": "Aki a helyet viszi: a kézműves, a szolgáltató, vagy a hivatal és az iroda munkatársa. Mindenki a saját részét gondozza. Van hozzá AI-generátor, és analitika a forgalomról."
       },
       "towns": {
         "q": "Egy rendszerben elfér több település?",
@@ -138,7 +138,7 @@
       },
       "editors": {
         "title": "Aki a helyet viszi, az írja",
-        "text": "A kézműves, a szolgáltató vagy a település munkatársa a saját szövegét gondozza. A vendég azt látja, ami éppen igaz."
+        "text": "A kézműves, a szolgáltató vagy a település munkatársa a saját szövegét gondozza. AI-generátorral is megírathatja, és látja a forgalmat. A vendég azt látja, ami éppen igaz."
       }
     },
     "stories": {
@@ -189,16 +189,16 @@
       "invalidEmail": "Ez nem tűnik email címnek."
     },
     "plansTitle": "Csomagok",
-    "plansLead": "Havonta, forintban. Egy helynek, egy vállalkozásnak vagy egy településnek.",
+    "plansLead": "Havonta, forintban. Látszódj, minden helyeden, vagy egy település.",
     "plans": {
       "priceUnit": "Ft / hó",
       "freePrice": "Ingyenes",
-      "freeForever": "örökre, számla nélkül",
+      "freeForever": "Ft az első hónapban",
       "places": "{{count}} hely a térképen",
       "eventsNone": "Programok nélkül, amíg kipróbálod",
       "events": "{{count}} program havonta",
-      "languagesOne": "Magyar nyelv, saját címmel",
-      "languages": "{{count}} nyelv, mindegyik saját címmel",
+      "languagesOne": "Több nyelven",
+      "languages": "{{count}} nyelv",
       "adminNote": "A hely / program / nyelv számok a jogosultsági mátrixszal együtt mentődnek, és a kártyákon a {{count}} sablonokba kerülnek. A nevek és a pitch kézzel szerkeszthető. Az önkormányzati csomagnak nincs mátrix-limit syncje.",
       "visible": "Látható a nyilvános oldalon",
       "save": "Csomagok mentése",
@@ -210,28 +210,32 @@
         "languages": "Nyelvek"
       },
       "free": {
-        "name": "Egy hely",
+        "name": "Látszódj",
         "kicker": "Magánszemélynek",
-        "pitch": "Egy műhely, pince vagy szolgáltatás. Magyarul, a saját címeden.",
+        "pitch": "Egy műhely, pince vagy szolgáltatás. Saját domain a következő csomagtól.",
+        "domain": "Saját domain a következő csomagtól",
         "cta": "Ingyenesen"
       },
       "basic": {
-        "name": "Vállalkozás",
+        "name": "Minden helyeden",
         "kicker": "Egy cégnek, pár hellyel",
         "badge": "A szokásos választás",
-        "pitch": "Néhány telephely, egy vállalkozás. Magyarul, a saját domaineteken.",
-        "cta": "Vállalkozásként"
+        "pitch": "Néhány telephely, egy vállalkozás. A saját domaineteken.",
+        "domain": "Saját domain",
+        "cta": "Saját domaint kérek"
       },
       "premium": {
-        "name": "Több telephely",
+        "name": "Egy márka",
         "kicker": "Nagyobb cégnek",
-        "pitch": "Több telephely, egy márka. Magyarul, a saját domaineteken.",
-        "cta": "Több telephellyel"
+        "pitch": "Több telephely, egy márka. A saját domaineteken.",
+        "domain": "Saját domain",
+        "cta": "Egy márkát kérek"
       },
       "municipal": {
         "name": "Település",
         "kicker": "Önkormányzatnak",
-        "pitch": "Az árat a településhez írjuk. Nincs fix havi díj.",
+        "pitch": "Saját domainnel. Az árat a településhez írjuk. Nincs fix havi díj.",
+        "domain": "Saját domain",
         "cta": "Egyedi árat kérek",
         "places": "Akárhány hely",
         "events": "A programok az ajánlat részei",

@@ -1370,6 +1370,8 @@ export interface Event {
   heroImage: string | null;
   lat: number | null;
   lng: number | null;
+  customDomain?: string | null;
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Null = inherit Place/Town/Site. */
   gaMeasurementId?: string | null;
   place?: {
@@ -1412,6 +1414,8 @@ export interface CreateEventDto {
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  customDomain?: string | null;
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty/null inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
   translations: Array<{
@@ -1442,6 +1446,8 @@ export interface UpdateEventDto {
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  customDomain?: string | null;
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty/null clears / inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
   translations?: Array<{
@@ -2160,6 +2166,7 @@ export interface Collection {
   id: string;
   slug: string;
   domain?: string | null;
+  domainLang?: string | null;
   isActive: boolean;
   isCrawlable: boolean;
   order: number;
@@ -2206,6 +2213,7 @@ export interface Collection {
 export interface CreateCollectionDto {
   slug: string;
   domain?: string | null;
+  domainLang?: string | null;
   isActive?: boolean;
   isCrawlable?: boolean;
   order?: number;
@@ -2224,6 +2232,7 @@ export interface CreateCollectionDto {
 export interface UpdateCollectionDto {
   slug?: string;
   domain?: string | null;
+  domainLang?: string | null;
   isActive?: boolean;
   isCrawlable?: boolean;
   order?: number;

@@ -12,6 +12,9 @@ import { RbacService } from "../auth/rbac.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { generateSlug } from "../slug/slug.helper";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { domainLanguage } from "../common/domain-lang";
+import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
@@ -22,6 +25,10 @@ export interface CreateEventDto {
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
   createdByUserId?: string | null; // User who created the event (for audit trail)
+  /** Optional custom hostname for this event. */
+  customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
   translations: Array<{
@@ -58,6 +65,10 @@ export interface UpdateEventDto {
   categoryId?: string | null; // Legacy: kept for backward compatibility
   categoryIds?: string[]; // New: multiple categories support
   tagIds?: string[];
+  /** Optional custom hostname for this event. Pass null/empty to clear. */
+  customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null clears / inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
   translations?: Array<{
@@ -570,6 +581,8 @@ export class AdminEventService {
       categoryIds = [],
       translations,
       isPublished,
+      customDomain: customDomainRaw,
+      domainLang: domainLangRaw,
       gaMeasurementId: gaMeasurementIdRaw,
       ...eventData
     } = dto;
@@ -600,6 +613,19 @@ export class AdminEventService {
       await this.assertEventCapacity(dto.createdByUserId || undefined, dto.siteId, dto.placeId);
     }
 
+    let customDomain: string | null = null;
+    if (customDomainRaw !== undefined && String(customDomainRaw ?? "").trim()) {
+      const ent = await this.entitlementsService.getBySiteId(dto.siteId);
+      assertSiteAllowsCustomDomain(
+        ent,
+        "A régió csomagja nem engedi a saját domaint (esemény domain a régió jogosultságát örökli)."
+      );
+      customDomain = await assertHostnameAvailable(this.prisma, customDomainRaw, {
+        kind: "event",
+        eventId: "__new__",
+      });
+    }
+
     let gaMeasurementId: string | null = null;
     if (gaMeasurementIdRaw !== undefined) {
       try {
@@ -614,6 +640,8 @@ export class AdminEventService {
     const event = await this.prisma.event.create({
       data: {
         ...eventData,
+        customDomain,
+        domainLang: domainLanguage(domainLangRaw, Boolean(customDomain)),
         gaMeasurementId,
         placeId: dto.placeId,
         ...(dto.createdByUserId ? { createdByUserId: dto.createdByUserId } : {}),
@@ -717,7 +745,15 @@ export class AdminEventService {
     if (actorUserId && dto.isActive === true && event.isActive !== true) {
       await this.assertEventCapacity(actorUserId, siteId, event.placeId);
     }
-    const { tagIds, categoryIds, translations, isPublished, ...eventData } = dto;
+    const {
+      tagIds,
+      categoryIds,
+      translations,
+      isPublished,
+      customDomain: customDomainRaw,
+      domainLang: domainLangRaw,
+      ...eventData
+    } = dto;
 
     // Update translations if provided
     if (translations && translations.length > 0) {
@@ -823,6 +859,21 @@ export class AdminEventService {
         throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_PLACE_ID_SAME_SITE);
       }
       updateData.placeId = nextPlaceId;
+    }
+
+    if (customDomainRaw !== undefined) {
+      if (String(customDomainRaw ?? "").trim()) {
+        const ent = await this.entitlementsService.getBySiteId(siteId);
+        assertSiteAllowsCustomDomain(
+          ent,
+          "A régió csomagja nem engedi a saját domaint (esemény domain a régió jogosultságát örökli)."
+        );
+      }
+      updateData.customDomain = await assertHostnameAvailable(this.prisma, customDomainRaw, {
+        kind: "event",
+        eventId: id,
+      });
+      updateData.domainLang = domainLanguage(domainLangRaw, Boolean(updateData.customDomain));
     }
 
     if (gaMeasurementIdRaw !== undefined) {

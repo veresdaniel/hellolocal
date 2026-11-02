@@ -211,6 +211,7 @@ export const PLAN_CARD_FIELDS: Record<PublicPlanId, PlanCopyField[]> = {
     field("plans.free.name", ["Név", "Name", "Name"]),
     field("plans.free.kicker", ["Felirat", "Kicker", "Dachzeile"]),
     field("plans.free.pitch", ["Leírás", "Pitch", "Text"], true),
+    field("plans.free.domain", ["Saját domain sora", "Own domain line", "Eigene-Domain-Zeile"]),
     field("plans.free.cta", ["Gomb", "Button", "Schaltfläche"]),
   ],
   basic: [
@@ -218,12 +219,14 @@ export const PLAN_CARD_FIELDS: Record<PublicPlanId, PlanCopyField[]> = {
     field("plans.basic.kicker", ["Felirat", "Kicker", "Dachzeile"]),
     field("plans.basic.badge", ["Jelvény", "Badge", "Abzeichen"]),
     field("plans.basic.pitch", ["Leírás", "Pitch", "Text"], true),
+    field("plans.basic.domain", ["Saját domain sora", "Own domain line", "Eigene-Domain-Zeile"]),
     field("plans.basic.cta", ["Gomb", "Button", "Schaltfläche"]),
   ],
   premium: [
     field("plans.premium.name", ["Név", "Name", "Name"]),
     field("plans.premium.kicker", ["Felirat", "Kicker", "Dachzeile"]),
     field("plans.premium.pitch", ["Leírás", "Pitch", "Text"], true),
+    field("plans.premium.domain", ["Saját domain sora", "Own domain line", "Eigene-Domain-Zeile"]),
     field("plans.premium.cta", ["Gomb", "Button", "Schaltfläche"]),
   ],
 };
@@ -236,6 +239,7 @@ export const PLAN_MUNICIPAL_FIELDS: PlanCopyField[] = [
   field("plans.municipal.places", ["Helyek sora", "Places line", "Orte-Zeile"]),
   field("plans.municipal.events", ["Programok sora", "Events line", "Termine-Zeile"]),
   field("plans.municipal.languages", ["Nyelvek sora", "Languages line", "Sprachen-Zeile"]),
+  field("plans.municipal.domain", ["Saját domain sora", "Own domain line", "Eigene-Domain-Zeile"]),
 ];
 
 export const ALL_PLAN_COPY_FIELDS: PlanCopyField[] = [

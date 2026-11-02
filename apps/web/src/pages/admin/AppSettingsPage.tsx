@@ -54,6 +54,7 @@ import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
+const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
 /** Display-only mask; never a real key. Cleared on focus so a new key can be typed. */
 const CONTENT_DRAFT_API_KEY_MASK = "••••••••••••••••";
 
@@ -85,6 +86,8 @@ export function AppSettingsPage() {
   const [isSavingPublicPlans, setIsSavingPublicPlans] = useState(false);
   const [quoteRecipient, setQuoteRecipient] = useState("");
   const [isSavingRecipient, setIsSavingRecipient] = useState(false);
+  const [platformHost, setPlatformHost] = useState("");
+  const [isSavingPlatformHost, setIsSavingPlatformHost] = useState(false);
   const [platformGaId, setPlatformGaId] = useState("");
   const [platformGaError, setPlatformGaError] = useState("");
   const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
@@ -156,6 +159,13 @@ export function AppSettingsPage() {
       })
       .catch(() => {
         if (!cancelled) setQuoteRecipient("");
+      });
+    getAppSetting(PLATFORM_HOST_SETTING_KEY)
+      .then((row) => {
+        if (!cancelled) setPlatformHost(row?.value ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) setPlatformHost("");
       });
     getAppSetting(PLATFORM_GA_SETTING_KEY)
       .then((row) => {
@@ -288,6 +298,24 @@ export function AppSettingsPage() {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
     } finally {
       setIsSavingContentDraft(false);
+    }
+  };
+
+  const handleSavePlatformHost = async () => {
+    try {
+      setIsSavingPlatformHost(true);
+      const saved = await createAppSetting({
+        key: PLATFORM_HOST_SETTING_KEY,
+        value: platformHost.trim(),
+        type: "string",
+        description: t("admin.platformHost.title"),
+      });
+      setPlatformHost(saved?.value ?? platformHost.trim());
+      showToast(t("admin.platformHost.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingPlatformHost(false);
     }
   };
 
@@ -1184,6 +1212,62 @@ export function AppSettingsPage() {
               }}
             >
               {isSavingPlatformGa ? t("common.loading") : t("admin.googleAnalytics.save")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "var(--admin-surface)",
+            borderRadius: 12,
+            border: "1px solid var(--admin-border-subtle)",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("admin.platformHost.title")}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
+            {t("admin.platformHost.help")}
+          </p>
+          <textarea
+            rows={5}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={"hellolocal.hu\nwww.masik.hu"}
+            value={platformHost}
+            onChange={(event) => setPlatformHost(event.target.value)}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              minHeight: 120,
+              padding: "10px 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+              resize: "vertical",
+            }}
+          />
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => void handleSavePlatformHost()}
+              disabled={isSavingPlatformHost}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
+                fontWeight: 600,
+                cursor: isSavingPlatformHost ? "wait" : "pointer",
+              }}
+            >
+              {isSavingPlatformHost ? t("common.loading") : t("admin.platformHost.save")}
             </button>
           </div>
         </div>

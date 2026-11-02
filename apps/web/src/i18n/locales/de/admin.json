@@ -6,7 +6,8 @@
   "domainInput": {
     "label": "Benutzerdefinierte Domain",
     "placeholder": "beispiel.de oder hu.beispiel.de",
-    "disabledHint": "Aktivieren Sie das Kontrollkästchen, um eine benutzerdefinierte Domain einzugeben"
+    "disabledHint": "Aktivieren Sie das Kontrollkästchen, um eine benutzerdefinierte Domain einzugeben",
+    "language": "Sprache"
   },
   "edit": "Bearbeiten",
   "dashboard": "Dashboard",
@@ -606,9 +607,9 @@
       "aliases": "Aliase",
       "subdomain": "Subdomain",
       "primaryDomainLabel": "Primäre Domain",
-      "subdomainLabel": "Subdomain",
-      "addSubdomain": "Subdomain hinzufügen",
-      "primarySubdomainHint": "Die primäre Domain ist der Haupt-Host (Apex); Subdomains sind weitere Hostnamen (z. B. hu.beispiel.de), jeweils mit eigener Standardsprache. Beide führen zu dieser Region.",
+      "subdomainLabel": "Weitere Domain",
+      "addSubdomain": "Domain hinzufügen",
+      "primarySubdomainHint": "Eine Region kann mehrere Domains haben, zum Beispiel etyek.hu und etyek.eu. Die Sprache neben jeder Adresse ist die Sprache, in der diese Domain öffnet.",
       "countryTitle": "Land",
       "countryHint": "Die Region gehört zu genau einem Land. Landesdomains sind eine eigene Instanz. Die Namen kommen aus der Länderliste des Browsers.",
       "countryPlaceholder": "Land suchen",
@@ -1666,6 +1667,12 @@
   "statusPastDue": "Überfällig",
   "statusCanceled": "Gekündigt",
   "quoteRecipientDescription": "Posteingang für Angebots- und Demoanfragen",
+  "platformHost": {
+    "title": "Öffentliche Plattformadressen",
+    "help": "Mehrere Domains können die Plattform-Startseite sein, eine pro Zeile. Die erste ist die Standardadresse, wenn ein Link eine eigene Regionsdomain verlässt. www gilt ohne eigene Zeile. Leer bleibt nur hello-local.io.",
+    "save": "Plattformadressen speichern",
+    "saved": "Plattformadressen gespeichert"
+  },
   "geocode": {
     "suggest": "Koordinaten vorschlagen",
     "suggested": "Vorschlag: {{label}}. Breite und Länge bleiben editierbar.",

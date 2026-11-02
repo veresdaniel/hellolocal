@@ -72,6 +72,7 @@ interface Place {
   heroImage: string | null;
   mapImage?: string | null;
   customDomain?: string | null;
+  domainLang?: string | null;
   gaMeasurementId?: string | null;
   lat: number | null;
   lng: number | null;
@@ -297,6 +298,7 @@ export function PlacesPage() {
     featuredUntil: "",
     customDomain: "",
     customDomainEnabled: false,
+    domainLang: "hu",
     gaMeasurementId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -628,6 +630,7 @@ export function PlacesPage() {
           ? new Date(formData.featuredUntil).toISOString()
           : null,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
         gaMeasurementId: formData.gaMeasurementId.trim()
           ? formData.gaMeasurementId.trim().toUpperCase()
           : null,
@@ -767,6 +770,7 @@ export function PlacesPage() {
             ? new Date(formData.featuredUntil).toISOString()
             : null,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
           gaMeasurementId: formData.gaMeasurementId.trim()
             ? formData.gaMeasurementId.trim().toUpperCase()
             : null,
@@ -876,6 +880,7 @@ export function PlacesPage() {
         : "",
       customDomain: place.customDomain || "",
       customDomainEnabled: !!place.customDomain,
+      domainLang: place.domainLang || "hu",
       gaMeasurementId: place.gaMeasurementId || "",
     });
     setFormData((current) =>
@@ -948,6 +953,7 @@ export function PlacesPage() {
       featuredUntil: "",
       customDomain: "",
       customDomainEnabled: false,
+      domainLang: "hu",
       gaMeasurementId: "",
     });
     setFormErrors({});
@@ -1062,6 +1068,7 @@ export function PlacesPage() {
           featuredUntil: "",
           customDomain: "",
           customDomainEnabled: false,
+          domainLang: "hu",
           gaMeasurementId: "",
         });
         setFormErrors({});
@@ -1958,6 +1965,8 @@ export function PlacesPage() {
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, customDomainEnabled: checked })
                 }
+                lang={formData.domainLang}
+                onLangChange={(domainLang) => setFormData({ ...formData, domainLang })}
                 label={t("admin.customDomain")}
               />
               <p

@@ -1,5 +1,6 @@
 // src/pages/admin/LegalPagesPage.tsx
 import { useTranslation } from "react-i18next";
+import { legalSegment } from "../../app/entityPaths";
 import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useState, useEffect } from "react";
@@ -1057,12 +1058,10 @@ export function LegalPagesPage() {
             {
               key: "view",
               render: (legalPage) => {
-                const keyMap: Record<string, string> = {
-                  imprint: "impresszum",
-                  terms: "aszf",
-                  privacy: "adatvedelem",
-                };
-                const path = keyMap[legalPage.key] || legalPage.key;
+                const path =
+                  legalPage.key === "imprint" || legalPage.key === "terms" || legalPage.key === "privacy"
+                    ? legalSegment(i18n.language || "hu", legalPage.key)
+                    : legalPage.key;
                 const publicUrl = currentSite?.slug
                   ? buildUrl({
                       lang: i18n.language || "hu",
@@ -1125,12 +1124,10 @@ export function LegalPagesPage() {
           ]}
           onEdit={startEdit}
           onView={(legalPage) => {
-            const keyMap: Record<string, string> = {
-              imprint: "impresszum",
-              terms: "aszf",
-              privacy: "adatvedelem",
-            };
-            const path = keyMap[legalPage.key] || legalPage.key;
+            const path =
+              legalPage.key === "imprint" || legalPage.key === "terms" || legalPage.key === "privacy"
+                ? legalSegment(i18n.language || "hu", legalPage.key)
+                : legalPage.key;
             const publicUrl = currentSite?.slug
               ? buildUrl({
                   lang: i18n.language || "hu",

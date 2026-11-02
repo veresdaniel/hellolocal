@@ -14,6 +14,7 @@ import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
 import { generateEventSchema } from "../seo/schemaOrg";
 import { buildUrl } from "../app/urls";
+import { useHostScope } from "../app/hostScope";
 import { placeEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
@@ -37,7 +38,17 @@ import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
 export function EventDetailPage() {
   const { t } = useTranslation();
-  const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const params = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const hostScope = useHostScope();
+  const lang = params.lang;
+  const slug =
+    params.slug ||
+    (hostScope.status === "ready" && hostScope.kind === "event" ? hostScope.entitySlug : "");
+  const siteKey =
+    params.siteKey ||
+    (hostScope.status === "ready" && hostScope.kind !== "platform" && hostScope.kind !== "collection"
+      ? hostScope.siteSlug
+      : "");
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -1143,7 +1154,7 @@ export function EventDetailPage() {
                 className="hl-content-card"
                 style={{
                   width: "100%",
-                  height: 300,
+                  height: 390,
                   borderRadius: 12,
                   overflow: "hidden",
                   padding: 0,

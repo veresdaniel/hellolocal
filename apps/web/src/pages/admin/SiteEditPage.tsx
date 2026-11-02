@@ -1265,27 +1265,34 @@ function domainRowsFromSite(site: Site, siteDefault: string): DomainRow[] {
   const stored = [...(site.siteDomains ?? [])].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   if (!stored.length && site.primaryDomain) {
     return [
-      { key: "primary", domain: site.primaryDomain, defaultLang: "", isPrimary: true },
-      blankDomainRow(false),
+      { key: "primary", domain: site.primaryDomain, defaultLang: siteDefault, isPrimary: true },
+      blankDomainRow(false, siteDefault),
     ];
   }
-  if (!stored.length) return [blankDomainRow(true), blankDomainRow(false)];
+  if (!stored.length) return [blankDomainRow(true, siteDefault), blankDomainRow(false, siteDefault)];
   const rows = stored.map((item) => ({
     key: item.id,
     domain: item.domain,
-    defaultLang: item.defaultLang && item.defaultLang !== siteDefault ? item.defaultLang : "",
+    defaultLang: item.defaultLang || siteDefault,
     isPrimary: item.isPrimary,
   }));
   // Always offer an empty subdomain slot so primary vs additional hosts stay obvious.
   if (!rows.some((row) => !row.domain.trim())) {
-    rows.push(blankDomainRow(false));
+    rows.push(blankDomainRow(false, siteDefault));
   }
   return rows;
 }
 
-function blankDomainRow(isPrimary: boolean): DomainRow {
-  // Stable key so the empty slot does not remount on every parent render.
-  return { key: isPrimary ? "blank-primary" : "blank-slot", domain: "", defaultLang: "", isPrimary };
+let domainRowSeq = 0;
+
+function blankDomainRow(isPrimary: boolean, defaultLang = "hu"): DomainRow {
+  domainRowSeq += 1;
+  return {
+    key: `domain-${domainRowSeq}`,
+    domain: "",
+    defaultLang,
+    isPrimary,
+  };
 }
 
 // Domain Tab Component
@@ -1347,10 +1354,17 @@ function DomainTab({
       : filled.map((row, index) => ({ ...row, isPrimary: index === 0 }));
     setIsSaving(true);
     try {
+      const languages = Array.from(
+        new Set([
+          ...contentLanguages,
+          ...withPrimary.map((row) => row.defaultLang || siteDefault),
+        ])
+      );
       await updateSite(site.id, {
+        languages,
         domains: withPrimary.map((row) => ({
           domain: row.domain.trim(),
-          defaultLang: row.defaultLang || null,
+          defaultLang: row.defaultLang || siteDefault,
           isPrimary: row.isPrimary,
         })),
       });
@@ -1424,7 +1438,7 @@ function DomainTab({
                 type="text"
                 value={row.domain}
                 onChange={(e) => updateRow(row.key, { domain: e.target.value })}
-                placeholder={row.isPrimary ? "pelda.hu" : "hu.pelda.hu"}
+                placeholder={row.isPrimary ? "etyek.hu" : "etyek.eu"}
                 style={{
                   width: "100%",
                   padding: "8px 12px",
@@ -1439,7 +1453,7 @@ function DomainTab({
                 {t("admin.siteEdit.domain.defaultLang")}
               </span>
               <select
-                value={row.defaultLang}
+                value={row.defaultLang || siteDefault}
                 onChange={(e) => updateRow(row.key, { defaultLang: e.target.value })}
                 style={{
                   width: "100%",
@@ -1449,8 +1463,7 @@ function DomainTab({
                   fontSize: 15,
                 }}
               >
-                <option value="">{t("admin.siteEdit.domain.regionDefaultLang")}</option>
-                <LanguageSelectOptions variant="endonym" codes={contentLanguages} />
+                <LanguageSelectOptions variant="endonym" />
               </select>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, cursor: "pointer" }}>
@@ -1469,9 +1482,9 @@ function DomainTab({
               onClick={() =>
                 setRows((current) => {
                   const next = current.filter((item) => item.key !== row.key);
-                  if (!next.length) return [blankDomainRow(true), blankDomainRow(false)];
+                  if (!next.length) return [blankDomainRow(true, siteDefault), blankDomainRow(false, siteDefault)];
                   if (!next.some((item) => item.isPrimary)) next[0] = { ...next[0], isPrimary: true };
-                  if (!next.some((item) => !item.isPrimary)) next.push(blankDomainRow(false));
+                  if (!next.some((item) => !item.isPrimary)) next.push(blankDomainRow(false, siteDefault));
                   return next;
                 })
               }
@@ -1492,7 +1505,9 @@ function DomainTab({
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <button
           type="button"
-          onClick={() => setRows((current) => [...current, blankDomainRow(current.length === 0)])}
+          onClick={() =>
+            setRows((current) => [...current, blankDomainRow(current.length === 0, siteDefault)])
+          }
           style={{
             padding: "10px 16px",
             border: "1px solid #d1d5db",

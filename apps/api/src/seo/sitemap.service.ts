@@ -15,6 +15,7 @@ import {
   regionListPath,
   siteHomePath,
   staticPagePath,
+  withoutOwnerPrefix,
   staticPagesListPath,
   townDetailPath,
 } from "./public-path.util";
@@ -134,6 +135,17 @@ ${entries}
     if (scope.kind === "collection") {
       return chunk === "collections" ? this.collectionHostUrls(scope) : [];
     }
+    if (scope.kind === "event") {
+      if (chunk !== "events") return [];
+      const lang = scope.domainLang || "hu";
+      return [
+        {
+          loc: absoluteUrlOnOrigin(scope.origin, `/${lang}`),
+          changefreq: "weekly",
+          priority: 0.9,
+        },
+      ];
+    }
 
     const siteIds =
       scope.kind === "site"
@@ -144,7 +156,7 @@ ${entries}
       case "static":
         return scope.kind === "platform" ? this.staticPlatformUrls(scope.origin) : [];
       case "sites":
-        return this.siteUrls(scope.origin, siteIds);
+        return this.siteUrls(scope.origin, siteIds, scope.kind === "site");
       case "places":
         return this.entitySlugUrls(
           scope.origin,
@@ -153,7 +165,7 @@ ${entries}
           placeDetailPath,
           "weekly",
           0.8,
-          { excludeOwnCustomDomain: true }
+          { excludeOwnCustomDomain: true, omitOwner: scope.kind === "site" }
         );
       case "events":
         return this.entitySlugUrls(
@@ -162,7 +174,8 @@ ${entries}
           SlugEntityType.event,
           eventDetailPath,
           "daily",
-          0.7
+          0.7,
+          { omitOwner: scope.kind === "site" }
         );
       case "towns":
         return this.entitySlugUrls(
@@ -172,7 +185,7 @@ ${entries}
           townDetailPath,
           "weekly",
           0.7,
-          { excludeOwnCustomDomain: true }
+          { excludeOwnCustomDomain: true, omitOwner: scope.kind === "site" }
         );
       case "pages":
         return this.entitySlugUrls(
@@ -181,7 +194,8 @@ ${entries}
           SlugEntityType.page,
           staticPagePath,
           "monthly",
-          0.6
+          0.6,
+          { omitOwner: scope.kind === "site" }
         );
       case "collections":
         return scope.kind === "platform" ? this.collectionUrls(scope.origin) : [];
@@ -217,7 +231,7 @@ ${entries}
     return urls;
   }
 
-  private async siteUrls(origin: string, siteIds: string[]): Promise<SitemapUrl[]> {
+  private async siteUrls(origin: string, siteIds: string[], omitOwner = false): Promise<SitemapUrl[]> {
     if (siteIds.length === 0) return [];
     const sites = await this.prisma.site.findMany({
       where: { id: { in: siteIds }, isActive: true },
@@ -245,19 +259,30 @@ ${entries}
         if (!site.languages.includes(lang)) continue;
         if (site.isCrawlable) {
           urls.push({
-            loc: absoluteUrlOnOrigin(origin, siteHomePath(lang, key.slug)),
+            loc: absoluteUrlOnOrigin(
+              origin,
+              omitOwner ? withoutOwnerPrefix(siteHomePath(lang, key.slug), lang, key.slug) : siteHomePath(lang, key.slug)
+            ),
             lastmod,
             changefreq: "daily",
             priority: 0.9,
           });
           urls.push({
-            loc: absoluteUrlOnOrigin(origin, productsPath(lang, key.slug)),
+            loc: absoluteUrlOnOrigin(
+              origin,
+              omitOwner ? withoutOwnerPrefix(productsPath(lang, key.slug), lang, key.slug) : productsPath(lang, key.slug)
+            ),
             lastmod,
             changefreq: "weekly",
             priority: 0.5,
           });
           urls.push({
-            loc: absoluteUrlOnOrigin(origin, staticPagesListPath(lang, key.slug)),
+            loc: absoluteUrlOnOrigin(
+              origin,
+              omitOwner
+                ? withoutOwnerPrefix(staticPagesListPath(lang, key.slug), lang, key.slug)
+                : staticPagesListPath(lang, key.slug)
+            ),
             lastmod,
             changefreq: "weekly",
             priority: 0.5,
@@ -267,7 +292,7 @@ ${entries}
           const path = legalPagePath(lang, key.slug, legal.key);
           if (!path) continue;
           urls.push({
-            loc: absoluteUrlOnOrigin(origin, path),
+            loc: absoluteUrlOnOrigin(origin, omitOwner ? withoutOwnerPrefix(path, lang, key.slug) : path),
             lastmod: legal.updatedAt.toISOString(),
             changefreq: "yearly",
             priority: 0.3,
@@ -285,7 +310,7 @@ ${entries}
     pathFn: (lang: string, siteKey: string, slug: string) => string,
     changefreq: SitemapUrl["changefreq"],
     priority: number,
-    opts?: { excludeOwnCustomDomain?: boolean }
+    opts?: { excludeOwnCustomDomain?: boolean; omitOwner?: boolean }
   ): Promise<SitemapUrl[]> {
     if (siteIds.length === 0) return [];
 
@@ -327,8 +352,12 @@ ${entries}
       if (!row.site.languages.includes(row.lang)) continue;
       const siteKey = row.site.siteKeys.find((k) => k.lang === row.lang)?.slug;
       if (!siteKey) continue;
+      const path = pathFn(row.lang, siteKey, row.slug);
       urls.push({
-        loc: absoluteUrlOnOrigin(origin, pathFn(row.lang, siteKey, row.slug)),
+        loc: absoluteUrlOnOrigin(
+          origin,
+          opts?.omitOwner ? withoutOwnerPrefix(path, row.lang, siteKey) : path
+        ),
         lastmod: row.updatedAt.toISOString(),
         changefreq,
         priority,
@@ -409,7 +438,7 @@ ${entries}
       select: { slug: true, updatedAt: true, translations: { select: { lang: true } } },
     });
     if (!collection) return [];
-    return this.collectionRowsToUrls(scope.origin, [collection]);
+    return this.collectionRowsToUrls(scope.origin, [collection], true);
   }
 
   private collectionRowsToUrls(
@@ -418,7 +447,8 @@ ${entries}
       slug: string;
       updatedAt: Date;
       translations: Array<{ lang: string }>;
-    }>
+    }>,
+    onOwnHost = false
   ): SitemapUrl[] {
     const urls: SitemapUrl[] = [];
     for (const collection of collections) {
@@ -426,7 +456,7 @@ ${entries}
       const targets = langs.length > 0 ? langs : PUBLIC_LANGS;
       for (const lang of targets) {
         urls.push({
-          loc: absoluteUrlOnOrigin(origin, collectionPath(lang, collection.slug)),
+          loc: absoluteUrlOnOrigin(origin, onOwnHost ? `/${lang}` : collectionPath(lang, collection.slug)),
           lastmod: collection.updatedAt.toISOString(),
           changefreq: "weekly",
           priority: 0.6,
@@ -477,7 +507,7 @@ ${entries}
       );
       if (!slug) continue;
       urls.push({
-        loc: absoluteUrlOnOrigin(scope.origin, townDetailPath(lang, siteKey, slug)),
+        loc: absoluteUrlOnOrigin(scope.origin, `/${lang}`),
         lastmod: town.updatedAt.toISOString(),
         changefreq: "weekly",
         priority: 0.9,
@@ -527,7 +557,7 @@ ${entries}
       );
       if (!slug) continue;
       urls.push({
-        loc: absoluteUrlOnOrigin(scope.origin, placeDetailPath(lang, siteKey, slug)),
+        loc: absoluteUrlOnOrigin(scope.origin, `/${lang}`),
         lastmod: place.updatedAt.toISOString(),
         changefreq: "weekly",
         priority: 0.9,

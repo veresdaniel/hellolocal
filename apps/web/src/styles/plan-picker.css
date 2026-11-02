@@ -232,6 +232,30 @@
   line-height: 1.45;
 }
 
+.plan-picker__card li.is-domain {
+  margin: 4px 0 8px;
+  padding: 10px 12px 10px 36px;
+  border: 0;
+  border-radius: 12px;
+  background: #efe7c8;
+  color: #16131f;
+  font-weight: 700;
+}
+
+.plan-picker__card li.is-domain::before {
+  top: 16px;
+  left: 12px;
+}
+
+.plan-picker__card.is-featured li.is-domain {
+  background: #efe7c8;
+  color: #16131f;
+}
+
+.plan-picker__card.is-featured li.is-domain::before {
+  border-color: #3c2f78;
+}
+
 .plan-picker__card li::before {
   content: "";
   position: absolute;

@@ -1,6 +1,6 @@
 // src/app/routes.tsx
-import { lazy, Suspense } from "react";
-import { createBrowserRouter, Outlet, useParams, Navigate } from "react-router-dom";
+import { lazy, Suspense, type ReactNode } from "react";
+import { createBrowserRouter, Outlet, useParams, Navigate, useLocation } from "react-router-dom";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang, isLang } from "./config";
 import { SiteLayout } from "./site/SiteLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
@@ -11,7 +11,9 @@ import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
-import { PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH } from "./entityPaths";
+import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, TOWN_PATH_ALIASES, townSegment, type LegalPageKey } from "./entityPaths";
+import { canonicalHostPath, useHostScope } from "./hostScope";
+import { isPlatformHost } from "./urls";
 import { useAdminSite } from "../contexts/useAdminSite";
 
 // Public entry / shell pages — keep eager (LCP, auth, error paths)
@@ -168,6 +170,100 @@ const CollectionDetailPage = lazy(() =>
   import("../pages/CollectionDetailPage").then((m) => ({ default: m.CollectionDetailPage }))
 );
 
+function PublicLangLayout() {
+  const scope = useHostScope();
+  const location = useLocation();
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  if (host && !isPlatformHost(host) && scope.status === "loading") {
+    return <LoadingSpinner isLoading />;
+  }
+  const shortPath = canonicalHostPath(location.pathname, scope);
+  if (shortPath) {
+    return <Navigate to={`${shortPath}${location.search}${location.hash}`} replace />;
+  }
+  if (
+    scope.status === "ready" &&
+    (scope.kind === "site" || scope.kind === "town" || scope.kind === "place" || scope.kind === "event")
+  ) {
+    return <SiteLayout />;
+  }
+  return (
+    <>
+      <DomainRedirect />
+      <Outlet />
+    </>
+  );
+}
+
+function LangIndex() {
+  const scope = useHostScope();
+  if (scope.status === "ready" && scope.kind === "place") return <PlaceDetailPage />;
+  if (scope.status === "ready" && scope.kind === "event") return <EventDetailPage />;
+  if (scope.status === "ready" && scope.kind === "collection") return <CollectionDetailPage />;
+  if (scope.status === "ready" && (scope.kind === "site" || scope.kind === "town")) return <HomePage />;
+  return <OverviewPage />;
+}
+
+function HostPlaceRoute() {
+  const scope = useHostScope();
+  const { lang, slug } = useParams<{ lang: string; slug: string }>();
+  const safeLang: Lang = isLang(lang) ? lang : "hu";
+  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.kind === "place" && slug === scope.entitySlug) {
+    return <Navigate to={`/${safeLang}`} replace />;
+  }
+  if (scope.kind === "site" || scope.kind === "town" || scope.kind === "place" || scope.kind === "event") {
+    return <PlaceDetailPage />;
+  }
+  return <RedirectToSiteRoute entityType="place" />;
+}
+
+function HostEventRoute() {
+  const scope = useHostScope();
+  const { lang, slug } = useParams<{ lang: string; slug: string }>();
+  const safeLang: Lang = isLang(lang) ? lang : "hu";
+  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.kind === "event") {
+    if (!slug || slug === scope.entitySlug) return <Navigate to={`/${safeLang}`} replace />;
+    return <EventDetailPage />;
+  }
+  if (scope.kind === "site" || scope.kind === "town" || scope.kind === "place" || scope.kind === "event") {
+    return <EventDetailPage />;
+  }
+  return <RedirectToSiteRoute entityType="event" />;
+}
+
+function HostTownRoute() {
+  const scope = useHostScope();
+  const { lang, townSlug } = useParams<{ lang: string; townSlug: string }>();
+  const safeLang: Lang = isLang(lang) ? lang : "hu";
+  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.kind === "town" && townSlug === scope.entitySlug) {
+    return <Navigate to={`/${safeLang}`} replace />;
+  }
+  if (scope.kind === "site" || scope.kind === "town") return <HomePage />;
+  return (
+    <Navigate
+      to={`/${safeLang}/${DEFAULT_SITE_SLUG}/${townSegment(safeLang)}/${townSlug || ""}`}
+      replace
+    />
+  );
+}
+
+function HostStaticPage() {
+  const { id } = useParams<{ id: string }>();
+  return <HostOwnedPage tail={`static-page/${id || ""}`} element={<StaticPageDetailPage />} />;
+}
+
+function HostOwnedPage({ tail, element }: { tail: string; element: ReactNode }) {
+  const scope = useHostScope();
+  const { lang } = useParams<{ lang: string }>();
+  const safeLang: Lang = isLang(lang) ? lang : "hu";
+  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.kind === "site" || scope.kind === "town" || scope.kind === "place" || scope.kind === "event") return <>{element}</>;
+  return <Navigate to={`/${safeLang}/${DEFAULT_SITE_SLUG}/${tail}`} replace />;
+}
+
 // Redirect URLs without region slug to the default region
 function RedirectToSiteRoute({ entityType }: { entityType: "place" | "event" }) {
   const { lang, slug } = useParams<{ lang: string; slug: string }>();
@@ -216,6 +312,32 @@ const townExploreRoutes = [
   { path: "gemeinde/:townSlug", element: <HomePage /> },
 ];
 
+function LegalPath({ pageKey }: { pageKey: LegalPageKey }) {
+  const params = useParams();
+  const location = useLocation();
+  const canonical = legalSegment(params.lang || "hu", pageKey);
+  const parts = location.pathname.split("/");
+  let changed = false;
+  const next = parts.map((part) => {
+    if (legalKeyFromSegment(part) === pageKey && part !== canonical) {
+      changed = true;
+      return canonical;
+    }
+    return part;
+  });
+  if (changed) {
+    return <Navigate to={`${next.join("/")}${location.search}${location.hash}`} replace />;
+  }
+  return <LegalPage pageKey={pageKey} />;
+}
+
+function legalPageRoutes() {
+  return LEGAL_PATH_ALIASES.map((segment) => ({
+    path: segment,
+    element: <LegalPath pageKey={legalKeyFromSegment(segment)!} />,
+  }));
+}
+
 const regionListRoutes = [
   { path: REGION_LIST_PATH.hu, element: <SitesListPage /> },
   { path: REGION_LIST_PATH.en, element: <SitesListPage /> },
@@ -236,9 +358,7 @@ const createPublicRoutes = () => {
     { path: "products", element: <ProductsPage /> },
     { path: "static-page/:id", element: <StaticPageDetailPage /> },
     ...regionListRoutes,
-    { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
-    { path: "aszf", element: <LegalPage pageKey="terms" /> },
-    { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+    ...legalPageRoutes(),
     { path: "pricing", element: <PricingPage /> },
     { path: "tarife", element: <PricingPage /> },
     { path: "preise", element: <PricingPage /> },
@@ -254,31 +374,40 @@ const createPublicRoutes = () => {
     return [
       {
         path: `/:lang`,
-        element: (
-          <>
-            <DomainRedirect />
-            <Outlet />
-          </>
-        ),
+        element: <PublicLangLayout />,
         errorElement: <ErrorPage />,
         children: [
           {
             element: <PlatformGaShell />,
             children: [
-              { index: true, element: <OverviewPage /> },
+              { index: true, element: <LangIndex /> },
               ...regionListRoutes,
               { path: "overview", element: <OverviewPage /> },
               { path: "pricing", element: <PublicPricingPage /> },
               { path: "tarife", element: <PublicPricingPage /> },
               { path: "preise", element: <PublicPricingPage /> },
-              { path: "impresszum", element: <LegalPage pageKey="imprint" /> },
-              { path: "aszf", element: <LegalPage pageKey="terms" /> },
-              { path: "adatvedelem", element: <LegalPage pageKey="privacy" /> },
+              ...legalPageRoutes(),
               ...PLACE_PATH_ALIASES.map((segment) => ({
                 path: `${segment}/:slug`,
-                element: <RedirectToSiteRoute entityType="place" />,
+                element: <HostPlaceRoute />,
               })),
-              { path: "event/:slug", element: <RedirectToSiteRoute entityType="event" /> },
+              ...TOWN_PATH_ALIASES.map((segment) => ({
+                path: `${segment}/:townSlug`,
+                element: <HostTownRoute />,
+              })),
+              { path: "event/:slug", element: <HostEventRoute /> },
+              {
+                path: "products",
+                element: <HostOwnedPage tail="products" element={<ProductsPage />} />,
+              },
+              {
+                path: "static-pages",
+                element: <HostOwnedPage tail="static-pages" element={<StaticPagesRouteGuard />} />,
+              },
+              {
+                path: "static-page/:id",
+                element: <HostStaticPage />,
+              },
             ],
           },
           { path: "login", element: <LoginPage /> },

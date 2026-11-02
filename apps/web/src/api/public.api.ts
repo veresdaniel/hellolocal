@@ -150,6 +150,28 @@ export type PlatformGaResponse = {
 };
 
 /** Platform-wide GA4 ID for platform routes only (no site fallback). */
+export type PlatformHostResponse = {
+  hosts: string[];
+  host: string | null;
+  origin: string | null;
+};
+
+/** Extra public platform hostnames. The first is the default origin. */
+export async function getPublicPlatformHost(): Promise<PlatformHostResponse> {
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-host`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return { hosts: [], host: null, origin: null };
+  const data = (await res.json()) as Partial<PlatformHostResponse>;
+  const hosts = Array.isArray(data.hosts)
+    ? data.hosts.map((item) => String(item).trim()).filter(Boolean)
+    : data.host?.trim()
+      ? [data.host.trim()]
+      : [];
+  return { hosts, host: hosts[0] ?? null, origin: data.origin?.trim() || (hosts[0] ? `https://${hosts[0]}` : null) };
+}
+
 export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
   const apiBaseUrl = getApiBaseUrl();
   const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-ga`, {

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_SITE_SLUG, type Lang} from "../app/config";
+import { LEGAL_PATH_ALIASES } from "../app/entityPaths";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
@@ -28,9 +29,7 @@ export function LegalPage({ pageKey }: Props) {
   const { lang, siteKey } = useSiteContext();
   const safeLang = lang ?? "hu";
   const reservedSiteKey = new Set([
-    "impresszum",
-    "aszf",
-    "adatvedelem",
+    ...LEGAL_PATH_ALIASES,
     "pricing",
     "preise",
     "tarife",

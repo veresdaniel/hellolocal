@@ -31,6 +31,7 @@ interface Town {
   isActive: boolean;
   isCrawlable?: boolean;
   customDomain?: string | null;
+  domainLang?: string | null;
   gaMeasurementId?: string | null;
   lat: number | null;
   lng: number | null;
@@ -79,6 +80,7 @@ function emptyTownForm(siteId = "") {
     isCrawlable: true,
     customDomain: "",
     customDomainEnabled: false,
+    domainLang: "hu",
     gaMeasurementId: "",
   };
 }
@@ -262,6 +264,7 @@ export function TownsPage() {
         isActive: formData.isActive,
         isCrawlable: formData.isCrawlable,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
         gaMeasurementId: formData.gaMeasurementId.trim()
           ? formData.gaMeasurementId.trim().toUpperCase()
           : null,
@@ -350,6 +353,7 @@ export function TownsPage() {
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
+        domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
           gaMeasurementId: formData.gaMeasurementId.trim()
             ? formData.gaMeasurementId.trim().toUpperCase()
             : null,
@@ -414,6 +418,7 @@ export function TownsPage() {
       isCrawlable: town.isCrawlable !== false,
       customDomain: town.customDomain || "",
       customDomainEnabled: !!town.customDomain,
+      domainLang: town.domainLang || "hu",
       gaMeasurementId: town.gaMeasurementId || "",
     });
   };
@@ -696,6 +701,8 @@ export function TownsPage() {
               onCheckedChange={(checked) =>
                 setFormData({ ...formData, customDomainEnabled: checked })
               }
+              lang={formData.domainLang}
+              onLangChange={(domainLang) => setFormData({ ...formData, domainLang })}
               label={t("admin.customDomain")}
             />
             <p

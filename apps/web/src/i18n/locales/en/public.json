@@ -108,7 +108,7 @@
       },
       "editors": {
         "q": "Who writes the text?",
-        "a": "Whoever runs the place: the maker, the service, or someone at the council or the office. Each looks after their own part."
+        "a": "Whoever runs the place: the maker, the service, or someone at the council or the office. Each looks after their own part. An AI generator writes with them, and analytics shows the traffic."
       },
       "towns": {
         "q": "Can several settlements share one system?",
@@ -138,7 +138,7 @@
       },
       "editors": {
         "title": "Whoever runs the place writes it",
-        "text": "The maker, the service or the local staff looks after their own text. The guest sees what is true right now."
+        "text": "The maker, the service or the local staff looks after their own text. They can draft it with an AI generator, and they can see the traffic. The guest sees what is true right now."
       }
     },
     "stories": {
@@ -189,16 +189,16 @@
       "invalidEmail": "That does not look like an email address."
     },
     "plansTitle": "Plans",
-    "plansLead": "A monthly price in forints. For one place, a business, or a town.",
+    "plansLead": "A monthly price in forints. Be seen, every location, or a town.",
     "plans": {
       "priceUnit": "HUF / month",
       "freePrice": "Free",
-      "freeForever": "for good, no invoice",
+      "freeForever": "HUF for the first month",
       "places": "{{count}} places on the map",
       "eventsNone": "No events while you try it",
       "events": "{{count}} events a month",
-      "languagesOne": "Hungarian, on its own address",
-      "languages": "{{count}} languages, each on its own address",
+      "languagesOne": "In several languages",
+      "languages": "{{count}} languages",
       "adminNote": "Place / event / language numbers save with the entitlement matrix and fill the {{count}} templates on the cards. Names and pitch stay manually editable. The municipal plan has no matrix-limit sync.",
       "visible": "Shown on the public page",
       "save": "Save plans",
@@ -210,28 +210,32 @@
         "languages": "Languages"
       },
       "free": {
-        "name": "One place",
+        "name": "Be seen",
         "kicker": "For a private customer",
-        "pitch": "One workshop, cellar, or service. In Hungarian, on your own address.",
+        "pitch": "One workshop, cellar, or service. Your own domain starts with the next plan.",
+        "domain": "Own domain from the next plan",
         "cta": "Register free"
       },
       "basic": {
-        "name": "Business",
+        "name": "Every location",
         "kicker": "One company, a few locations",
         "badge": "The usual choice",
-        "pitch": "A few locations under one business. In Hungarian, on your own domain.",
-        "cta": "Get Business"
+        "pitch": "A few locations under one business. On your own domain.",
+        "domain": "Own domain",
+        "cta": "Get your own domain"
       },
       "premium": {
-        "name": "Several locations",
+        "name": "One brand",
         "kicker": "For a larger company",
-        "pitch": "Several locations, one brand. In Hungarian, on your own domain.",
-        "cta": "Get several locations"
+        "pitch": "Several locations, one brand. On your own domain.",
+        "domain": "Own domain",
+        "cta": "Get one brand"
       },
       "municipal": {
         "name": "Town",
         "kicker": "For a council",
-        "pitch": "The price is written for the town. There is no fixed monthly fee.",
+        "pitch": "On your own domain. The price is written for the town. There is no fixed monthly fee.",
+        "domain": "Own domain",
         "cta": "Custom quote",
         "places": "As many places as the town needs",
         "events": "Events are part of the quote",

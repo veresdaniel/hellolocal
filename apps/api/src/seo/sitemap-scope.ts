@@ -8,6 +8,7 @@ import {
   requestHostname,
   requestProto,
 } from "./public-path.util";
+import { matchingPlatformHost, readPlatformPublicHosts } from "../common/platform-public-host";
 
 /**
  * Request-time SEO scope derived from Host / X-Forwarded-Host.
@@ -37,6 +38,14 @@ export type SitemapScope =
       host: string;
       collectionId: string;
     }
+  | {
+      kind: "event";
+      origin: string;
+      host: string;
+      siteId: string;
+      eventId: string;
+      domainLang: string;
+    }
   /** Hostname is not platform and not configured in admin. */
   | { kind: "unknown"; origin: string; host: string };
 
@@ -60,6 +69,12 @@ export class SitemapScopeResolver {
 
     if (!host || isPlatformHostname(host)) {
       return { kind: "platform", origin, host: host || "platform" };
+    }
+
+    const platformHosts = await readPlatformPublicHosts(this.prisma);
+    const platformHost = matchingPlatformHost(host, platformHosts);
+    if (platformHost) {
+      return { kind: "platform", origin: `https://${platformHost}`, host: platformHost };
     }
 
     // Registrable custom hosts only (same rules as Domains admin / domain-resolve).
@@ -133,6 +148,21 @@ export class SitemapScopeResolver {
         origin,
         host: domain,
         collectionId: collection.id,
+      };
+    }
+
+    const event = await this.prisma.event.findUnique({
+      where: { customDomain: domain },
+      select: { id: true, isActive: true, isCrawlable: true, siteId: true, domainLang: true },
+    });
+    if (event?.isActive && event.isCrawlable) {
+      return {
+        kind: "event",
+        origin,
+        host: domain,
+        siteId: event.siteId,
+        eventId: event.id,
+        domainLang: event.domainLang || "hu",
       };
     }
 

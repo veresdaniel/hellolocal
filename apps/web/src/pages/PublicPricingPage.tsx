@@ -18,6 +18,12 @@ const RESERVED = new Set([
   "impresszum",
   "aszf",
   "adatvedelem",
+  "imprint",
+  "terms",
+  "privacy",
+  "impressum",
+  "agb",
+  "datenschutz",
   "overview",
 ]);
 

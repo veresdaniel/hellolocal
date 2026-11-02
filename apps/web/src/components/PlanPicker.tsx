@@ -127,6 +127,7 @@ function PlanCard({
       </p>
       <p className="plan-picker__pitch">{text(`plans.${id}.pitch`)}</p>
       <ul>
+        <li className="is-domain">{text(`plans.${id}.domain`)}</li>
         {planBullets(numbers, lang, text).map((line) => (
           <li key={line}>{line}</li>
         ))}
@@ -148,6 +149,7 @@ function MunicipalCard({ lang, onOpen }: { lang: Lang; onOpen: () => void }) {
       <h3>{text("plans.municipal.name")}</h3>
       <p className="plan-picker__pitch">{text("plans.municipal.pitch")}</p>
       <ul>
+        <li className="is-domain">{text("plans.municipal.domain")}</li>
         <li>{text("plans.municipal.places")}</li>
         <li>{text("plans.municipal.events")}</li>
         <li>{text("plans.municipal.languages")}</li>

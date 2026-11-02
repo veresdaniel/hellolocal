@@ -84,6 +84,7 @@ export function CollectionEditPage() {
     slug: "",
     domain: "",
     domainEnabled: false,
+    domainLang: "hu",
     isActive: true,
     isCrawlable: true,
     order: 0,
@@ -243,6 +244,7 @@ export function CollectionEditPage() {
         slug: data.slug,
         domain: data.domain || "",
         domainEnabled: !!data.domain,
+        domainLang: data.domainLang || "hu",
         isActive: data.isActive,
         isCrawlable: data.isCrawlable ?? true,
         order: data.order,
@@ -320,6 +322,7 @@ export function CollectionEditPage() {
         const newCollection = await createCollection({
           slug: formData.slug,
           domain: formData.domainEnabled ? formData.domain || null : null,
+          domainLang: formData.domainEnabled ? formData.domainLang || "hu" : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -334,6 +337,7 @@ export function CollectionEditPage() {
           slug: newCollection.slug,
           domain: newCollection.domain || "",
           domainEnabled: !!newCollection.domain,
+          domainLang: newCollection.domainLang || "hu",
           isActive: newCollection.isActive,
           isCrawlable: newCollection.isCrawlable ?? true,
           order: newCollection.order,
@@ -379,6 +383,7 @@ export function CollectionEditPage() {
         await updateCollection(id, {
           slug: formData.slug,
           domain: formData.domainEnabled ? formData.domain || null : null,
+          domainLang: formData.domainEnabled ? formData.domainLang || "hu" : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -422,6 +427,7 @@ export function CollectionEditPage() {
         const newCollection = await createCollection({
           slug: formData.slug,
           domain: formData.domainEnabled ? formData.domain || null : null,
+          domainLang: formData.domainEnabled ? formData.domainLang || "hu" : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -435,6 +441,7 @@ export function CollectionEditPage() {
         await updateCollection(id, {
           slug: formData.slug,
           domain: formData.domainEnabled ? formData.domain || null : null,
+          domainLang: formData.domainEnabled ? formData.domainLang || "hu" : null,
           isActive: formData.isActive,
           isCrawlable: formData.isCrawlable,
           order: formData.order,
@@ -1234,6 +1241,8 @@ function ContentTab({
             onChange={(value) => setFormData({ ...formData, domain: value })}
             checked={formData.domainEnabled}
             onCheckedChange={(checked) => setFormData({ ...formData, domainEnabled: checked })}
+            lang={formData.domainLang}
+            onLangChange={(domainLang) => setFormData({ ...formData, domainLang })}
             label={t("admin.collections.domain")}
           />
         </div>

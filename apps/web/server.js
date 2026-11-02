@@ -82,6 +82,7 @@ const KNOWN_PUBLIC_SEGMENTS = new Set([
   'event',
   'blog', 'tudastar', 'infok',
   'imprint', 'terms', 'privacy', 'impresszum', 'aszf', 'adatvedelem',
+  'impressum', 'agb', 'datenschutz',
   'overview', 'pricing', 'tarife', 'preise',
   'admin', 'teruletek', 'regiok', 'regions', 'regionen',
   'products', 'collections', 'static-pages', 'static-page', 'offline',

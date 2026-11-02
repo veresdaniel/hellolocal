@@ -13,6 +13,17 @@ const LANGS = ["hu", "en", "de"];
 const PLACE_SEGMENTS = new Set(["hely", "place", "ort"]);
 const TOWN_SEGMENTS = new Set(["telepules", "town", "gemeinde"]);
 const REGION_LIST_SEGMENTS = new Set(["regiok", "teruletek", "regions", "regionen"]);
+const LEGAL_PAGE_BY_SEGMENT = {
+  impresszum: "imprint",
+  imprint: "imprint",
+  impressum: "imprint",
+  aszf: "terms",
+  terms: "terms",
+  agb: "terms",
+  adatvedelem: "privacy",
+  privacy: "privacy",
+  datenschutz: "privacy",
+};
 const PLACE_SEGMENT_BY_LANG = { hu: "hely", en: "place", de: "ort" };
 const RESERVED = new Set([
   "overview",
@@ -22,6 +33,12 @@ const RESERVED = new Set([
   "impresszum",
   "aszf",
   "adatvedelem",
+  "imprint",
+  "terms",
+  "privacy",
+  "impressum",
+  "agb",
+  "datenschutz",
   "teruletek",
   "regiok",
   "regions",
@@ -164,9 +181,7 @@ export function parsePublicPath(pathname) {
   if (second === "admin") return { kind: "admin", lang };
   if (second === "overview") return { kind: "overview", lang };
   if (second === "pricing" || second === "tarife" || second === "preise") return { kind: "pricing", lang };
-  if (second === "impresszum") return { kind: "legal", lang, page: "imprint" };
-  if (second === "aszf") return { kind: "legal", lang, page: "terms" };
-  if (second === "adatvedelem") return { kind: "legal", lang, page: "privacy" };
+  if (LEGAL_PAGE_BY_SEGMENT[second]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[second] };
   if (REGION_LIST_SEGMENTS.has(second)) return { kind: "sites", lang };
   if (second === "collections") return { kind: "collections", lang };
   if (second === "products") return { kind: "products", lang };
@@ -187,9 +202,7 @@ export function parsePublicPath(pathname) {
   if (TOWN_SEGMENTS.has(route) && slug) return { kind: "town", lang, siteKey, slug };
   if (route === "overview") return { kind: "overview", lang };
   if (route === "pricing" || route === "tarife" || route === "preise") return { kind: "pricing", lang };
-  if (route === "impresszum") return { kind: "legal", lang, page: "imprint" };
-  if (route === "aszf") return { kind: "legal", lang, page: "terms" };
-  if (route === "adatvedelem") return { kind: "legal", lang, page: "privacy" };
+  if (LEGAL_PAGE_BY_SEGMENT[route]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[route] };
   if (route === "products") return { kind: "products", lang, siteKey };
   if (route === "collections") return { kind: "collections", lang };
   if (route === "admin") return { kind: "admin", lang, siteKey };

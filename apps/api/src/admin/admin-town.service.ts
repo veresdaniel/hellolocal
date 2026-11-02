@@ -4,6 +4,7 @@ import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { domainLanguage } from "../common/domain-lang";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { generateSlug } from "../slug/slug.helper";
 import { EntitlementsService } from "../entitlements/entitlements.service";
@@ -27,6 +28,8 @@ export interface CreateTownDto {
   siteId?: string | null;
   /** Optional custom hostname for this town. */
   customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null disables / inherits Site. */
   gaMeasurementId?: string | null;
   translations: Array<{
@@ -52,6 +55,8 @@ export interface UpdateTownDto {
   siteId?: string | null;
   /** Optional custom hostname for this town. Pass null/empty to clear. */
   customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null clears / inherits Site. */
   gaMeasurementId?: string | null;
   translations?: Array<{
@@ -224,6 +229,7 @@ export class AdminTownService {
       data: {
         siteId,
         customDomain,
+        domainLang: domainLanguage(dto.domainLang, Boolean(customDomain)),
         gaMeasurementId,
         isActive: dto.isActive ?? true,
         isCrawlable: dto.isCrawlable ?? true,
@@ -271,6 +277,7 @@ export class AdminTownService {
       zoom?: number | null;
       siteId?: string | null;
       customDomain?: string | null;
+      domainLang?: string | null;
       gaMeasurementId?: string | null;
     } = {};
 
@@ -326,10 +333,12 @@ export class AdminTownService {
         kind: "town",
         townId: id,
       });
+      updateData.domainLang = domainLanguage(dto.domainLang, Boolean(updateData.customDomain));
     }
     // Clearing the region also clears a domain that would no longer resolve.
     if (dto.siteId !== undefined && !nextSiteId && existing.customDomain) {
       updateData.customDomain = null;
+      updateData.domainLang = null;
     }
 
     const regionChanged =

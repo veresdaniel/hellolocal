@@ -24,6 +24,9 @@ function mockPrisma(overrides: {
     collection: {
       findUnique: vi.fn().mockResolvedValue(overrides.collection ?? null),
     },
+    event: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
     countryDomain: {
       findUnique: vi.fn().mockResolvedValue(null),
     },

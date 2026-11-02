@@ -108,7 +108,7 @@
       },
       "editors": {
         "q": "Wer schreibt den Text?",
-        "a": "Wer den Ort führt: das Handwerk, der Dienst oder jemand aus der Gemeinde oder dem Büro. Jeder pflegt seinen Teil."
+        "a": "Wer den Ort führt: das Handwerk, der Dienst oder jemand aus der Gemeinde oder dem Büro. Jeder pflegt seinen Teil. Ein KI-Generator schreibt mit, und die Analytik zeigt den Verkehr."
       },
       "towns": {
         "q": "Können mehrere Orte ein System teilen?",
@@ -138,7 +138,7 @@
       },
       "editors": {
         "title": "Wer den Ort führt, schreibt ihn",
-        "text": "Handwerk, Dienst oder jemand aus dem Ort pflegt den eigenen Text. Der Gast sieht, was gerade stimmt."
+        "text": "Handwerk, Dienst oder jemand aus dem Ort pflegt den eigenen Text. Mit einem KI-Generator lässt er ihn schreiben und sieht den Verkehr. Der Gast sieht, was gerade stimmt."
       }
     },
     "stories": {
@@ -189,16 +189,16 @@
       "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
     },
     "plansTitle": "Pakete",
-    "plansLead": "Monatlich, in Forint. Für einen Ort, einen Betrieb oder eine Gemeinde.",
+    "plansLead": "Monatlich, in Forint. Sichtbar werden, an jedem Ort oder eine Gemeinde.",
     "plans": {
       "priceUnit": "Ft / Monat",
       "freePrice": "Kostenlos",
-      "freeForever": "dauerhaft, ohne Rechnung",
+      "freeForever": "Ft im ersten Monat",
       "places": "{{count}} Orte auf der Karte",
       "eventsNone": "Noch ohne Programm, solange Sie es ausprobieren",
       "events": "{{count}} Veranstaltungen im Monat",
-      "languagesOne": "Ungarisch, unter eigener Adresse",
-      "languages": "{{count}} Sprachen, jede unter eigener Adresse",
+      "languagesOne": "Mehrsprachig",
+      "languages": "{{count}} Sprachen",
       "adminNote": "Orte / Termine / Sprachen werden mit der Rechtematrix gespeichert und füllen die {{count}}-Vorlagen auf den Karten. Namen und Pitch bleiben manuell. Das Gemeinde-Paket hat keinen Matrix-Limit-Sync.",
       "visible": "Auf der öffentlichen Seite sichtbar",
       "save": "Pakete speichern",
@@ -210,28 +210,32 @@
         "languages": "Sprachen"
       },
       "free": {
-        "name": "Ein Ort",
+        "name": "Werde sichtbar",
         "kicker": "Für Privatkunden",
-        "pitch": "Eine Werkstatt, ein Keller oder ein Dienst. Auf Ungarisch, unter der eigenen Adresse.",
+        "pitch": "Eine Werkstatt, ein Keller oder ein Dienst. Die eigene Domain gibt es ab dem nächsten Paket.",
+        "domain": "Eigene Domain ab dem nächsten Paket",
         "cta": "Kostenlos"
       },
       "basic": {
-        "name": "Betrieb",
+        "name": "An jedem Ort",
         "kicker": "Ein Unternehmen, ein paar Standorte",
         "badge": "Die übliche Wahl",
-        "pitch": "Ein paar Standorte, ein Betrieb. Auf Ungarisch, auf der eigenen Domain.",
-        "cta": "Als Betrieb"
+        "pitch": "Ein paar Standorte, ein Betrieb. Auf der eigenen Domain.",
+        "domain": "Eigene Domain",
+        "cta": "Eigene Domain sichern"
       },
       "premium": {
-        "name": "Mehrere Standorte",
+        "name": "Eine Marke",
         "kicker": "Für ein größeres Unternehmen",
-        "pitch": "Mehrere Standorte, eine Marke. Auf Ungarisch, auf der eigenen Domain.",
-        "cta": "Mehrere Standorte"
+        "pitch": "Mehrere Standorte, eine Marke. Auf der eigenen Domain.",
+        "domain": "Eigene Domain",
+        "cta": "Eine Marke sichern"
       },
       "municipal": {
         "name": "Gemeinde",
         "kicker": "Für die Gemeindeverwaltung",
-        "pitch": "Der Preis gilt für die Gemeinde. Es gibt keinen festen Monatspreis.",
+        "pitch": "Mit eigener Domain. Der Preis gilt für die Gemeinde. Es gibt keinen festen Monatspreis.",
+        "domain": "Eigene Domain",
         "cta": "Angebot anfragen",
         "places": "So viele Orte, wie die Gemeinde braucht",
         "events": "Die Termine sind Teil des Angebots",

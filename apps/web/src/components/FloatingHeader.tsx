@@ -3,6 +3,7 @@ import { useState, useEffect, useContext, type CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../app/urls";
+import { legalSegment, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
@@ -27,6 +28,8 @@ interface FloatingHeaderProps {
   hideMapViewButton?: boolean; // Whether to hide the map view button
   landingMode?: boolean; // Opening page: keep the map action available
   visitorAuth?: boolean; // Region, place, event, curator list: public sign-in
+  /** Map view of this settlement keeps its name in the URL. */
+  mapTownSlug?: string | null;
 }
 
 export function FloatingHeader({
@@ -36,6 +39,7 @@ export function FloatingHeader({
   hideMapViewButton = false,
   landingMode = false,
   visitorAuth = false,
+  mapTownSlug = null,
 }: FloatingHeaderProps = {}) {
   const { t } = useTranslation();
   const { lang, siteKey, siteKeyParam } = useRouteCtx();
@@ -77,7 +81,13 @@ export function FloatingHeader({
   const openExplore = (mode: "map" | "list") => {
     setIsMobileMenuOpen(false);
     openSiteExplore(mode);
-    const homePath = buildUrl({ lang, siteKey: siteKey || DEFAULT_SITE_SLUG, path: "" });
+    const slug =
+      mode === "map" ? mapTownSlug?.trim() || townSlugFromPath(location.pathname) : null;
+    const homePath = buildUrl({
+      lang,
+      siteKey: siteKey || DEFAULT_SITE_SLUG,
+      path: slug ? townEntityPath(lang, slug) : "",
+    });
     if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
       navigate(homePath);
     }
@@ -646,19 +656,20 @@ export function FloatingHeader({
                 <>
                   <button
                     onClick={() => {
-                      openSiteExplore("map");
-                      if (onMapViewClick) {
-                        onMapViewClick();
-                        return;
-                      }
-                      const homePath = buildUrl({
-                        lang,
-                        siteKey: siteKey || undefined,
-                        path: "",
-                      });
-                      if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
-                        navigate(homePath);
-                      }
+                    openSiteExplore("map");
+                    if (onMapViewClick) {
+                      onMapViewClick();
+                      return;
+                    }
+                    const slug = mapTownSlug?.trim() || townSlugFromPath(location.pathname);
+                    const homePath = buildUrl({
+                      lang,
+                      siteKey: siteKey || undefined,
+                      path: slug ? townEntityPath(lang, slug) : "",
+                    });
+                    if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
+                      navigate(homePath);
+                    }
                     }}
                     style={{
                       background: "rgba(242, 244, 251, 0.08)",
@@ -1107,7 +1118,12 @@ export function FloatingHeader({
                       onMapViewClick();
                       return;
                     }
-                    const homePath = buildUrl({ lang, siteKey: siteKey || undefined, path: "" });
+                    const slug = mapTownSlug?.trim() || townSlugFromPath(location.pathname);
+                    const homePath = buildUrl({
+                      lang,
+                      siteKey: siteKey || undefined,
+                      path: slug ? townEntityPath(lang, slug) : "",
+                    });
                     if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
                       navigate(homePath);
                     }
@@ -1158,7 +1174,7 @@ export function FloatingHeader({
               <LanguageSelector />
             </div>
             <Link
-              to={buildUrl({ lang, siteKey, path: "impresszum" })}
+              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "imprint") })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1171,7 +1187,7 @@ export function FloatingHeader({
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("impresszum")
+                background: pathnameHasLegal(location.pathname, "imprint")
                   ? "rgba(196, 92, 38, 0.1)"
                   : "transparent",
                 display: "flex",
@@ -1180,24 +1196,24 @@ export function FloatingHeader({
                 WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
               }}
               onTouchStart={(e) => {
-                if (!location.pathname.includes("impresszum")) {
+                if (!pathnameHasLegal(location.pathname, "imprint")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onTouchEnd={(e) => {
-                if (!location.pathname.includes("impresszum")) {
+                if (!pathnameHasLegal(location.pathname, "imprint")) {
                   setTimeout(() => {
                     e.currentTarget.style.background = "transparent";
                   }, 150);
                 }
               }}
               onMouseEnter={(e) => {
-                if (!location.pathname.includes("impresszum")) {
+                if (!pathnameHasLegal(location.pathname, "imprint")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onMouseLeave={(e) => {
-                if (!location.pathname.includes("impresszum")) {
+                if (!pathnameHasLegal(location.pathname, "imprint")) {
                   e.currentTarget.style.background = "transparent";
                 }
               }}
@@ -1205,7 +1221,7 @@ export function FloatingHeader({
               {t("public.legal.imprint.title")}
             </Link>
             <Link
-              to={buildUrl({ lang, siteKey, path: "aszf" })}
+              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "terms") })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1218,7 +1234,7 @@ export function FloatingHeader({
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("aszf")
+                background: pathnameHasLegal(location.pathname, "terms")
                   ? "rgba(196, 92, 38, 0.1)"
                   : "transparent",
                 display: "flex",
@@ -1227,24 +1243,24 @@ export function FloatingHeader({
                 WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
               }}
               onTouchStart={(e) => {
-                if (!location.pathname.includes("aszf")) {
+                if (!pathnameHasLegal(location.pathname, "terms")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onTouchEnd={(e) => {
-                if (!location.pathname.includes("aszf")) {
+                if (!pathnameHasLegal(location.pathname, "terms")) {
                   setTimeout(() => {
                     e.currentTarget.style.background = "transparent";
                   }, 150);
                 }
               }}
               onMouseEnter={(e) => {
-                if (!location.pathname.includes("aszf")) {
+                if (!pathnameHasLegal(location.pathname, "terms")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onMouseLeave={(e) => {
-                if (!location.pathname.includes("aszf")) {
+                if (!pathnameHasLegal(location.pathname, "terms")) {
                   e.currentTarget.style.background = "transparent";
                 }
               }}
@@ -1252,7 +1268,7 @@ export function FloatingHeader({
               {t("public.legal.terms.title")}
             </Link>
             <Link
-              to={buildUrl({ lang, siteKey, path: "adatvedelem" })}
+              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "privacy") })}
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 textDecoration: "none",
@@ -1265,7 +1281,7 @@ export function FloatingHeader({
                 minHeight: "56px",
                 borderRadius: 12,
                 transition: "all 0.2s",
-                background: location.pathname.includes("adatvedelem")
+                background: pathnameHasLegal(location.pathname, "privacy")
                   ? "rgba(196, 92, 38, 0.1)"
                   : "transparent",
                 display: "flex",
@@ -1274,24 +1290,24 @@ export function FloatingHeader({
                 WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
               }}
               onTouchStart={(e) => {
-                if (!location.pathname.includes("adatvedelem")) {
+                if (!pathnameHasLegal(location.pathname, "privacy")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onTouchEnd={(e) => {
-                if (!location.pathname.includes("adatvedelem")) {
+                if (!pathnameHasLegal(location.pathname, "privacy")) {
                   setTimeout(() => {
                     e.currentTarget.style.background = "transparent";
                   }, 150);
                 }
               }}
               onMouseEnter={(e) => {
-                if (!location.pathname.includes("adatvedelem")) {
+                if (!pathnameHasLegal(location.pathname, "privacy")) {
                   e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
                 }
               }}
               onMouseLeave={(e) => {
-                if (!location.pathname.includes("adatvedelem")) {
+                if (!pathnameHasLegal(location.pathname, "privacy")) {
                   e.currentTarget.style.background = "transparent";
                 }
               }}

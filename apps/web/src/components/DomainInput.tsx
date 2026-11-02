@@ -7,12 +7,16 @@
 
 import React, { useId } from "react";
 import { useTranslation } from "react-i18next";
+import { LanguageSelectOptions } from "./LanguageSelectOptions";
 
 export interface DomainInputProps {
   value: string;
   onChange: (value: string) => void;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  /** Language this hostname opens in. Shown when onLangChange is set. */
+  lang?: string;
+  onLangChange?: (lang: string) => void;
   label?: string;
   placeholder?: string;
   error?: string;
@@ -25,6 +29,8 @@ export function DomainInput({
   onChange,
   checked,
   onCheckedChange,
+  lang,
+  onLangChange,
   label,
   placeholder,
   error,
@@ -113,6 +119,36 @@ export function DomainInput({
           }
         }}
       />
+      {checked && onLangChange && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginTop: 8,
+            fontSize: 14,
+            color: "#374151",
+            fontFamily:
+              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>{t("admin.domainInput.language")}</span>
+          <select
+            value={lang || "hu"}
+            onChange={(e) => onLangChange(e.target.value)}
+            aria-label={t("admin.domainInput.language")}
+            style={{
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: 6,
+              fontSize: 15,
+              background: "white",
+            }}
+          >
+            <LanguageSelectOptions variant="endonym" codes={["hu", "en", "de"]} />
+          </select>
+        </label>
+      )}
       {error && (
         <div
           id={errorId}

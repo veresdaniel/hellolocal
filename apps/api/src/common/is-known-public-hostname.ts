@@ -1,9 +1,10 @@
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "./domain-host";
+import { isConfiguredPlatformHost, readPlatformPublicHosts } from "./platform-public-host";
 
 /**
  * True when `raw` is an admin-configured public hostname
- * (SiteDomain / Site.primaryDomain / Town|Place.customDomain / Collection.domain).
+ * (SiteDomain / Site.primaryDomain / Town|Place|Event.customDomain / Collection.domain).
  * Used by Caddy on-demand TLS ask and CORS for custom-domain SPA origins.
  */
 export async function isKnownPublicHostname(
@@ -12,6 +13,9 @@ export async function isKnownPublicHostname(
 ): Promise<boolean> {
   const domain = normalizeDomainHost(raw);
   if (!domain) return false;
+
+  const platformHosts = await readPlatformPublicHosts(prisma);
+  if (isConfiguredPlatformHost(domain, platformHosts)) return true;
 
   const siteDomain = await prisma.siteDomain.findUnique({
     where: { domain },
@@ -53,5 +57,11 @@ export async function isKnownPublicHostname(
     where: { domain },
     select: { isActive: true },
   });
-  return Boolean(collection?.isActive);
+  if (collection?.isActive) return true;
+
+  const event = await prisma.event.findUnique({
+    where: { customDomain: domain },
+    select: { isActive: true },
+  });
+  return Boolean(event?.isActive);
 }

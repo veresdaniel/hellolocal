@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
+import { legalKeyFromSegment, legalSegment } from "../app/entityPaths";
 import { buildUrl } from "../app/urls";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { type Lang } from "../app/config";
@@ -32,8 +33,15 @@ export function LanguageSelector() {
     // If we're on a public page (has lang in URL), navigate to new language URL
     if (!isAdminPage && currentLang) {
       const currentPath = location.pathname;
-      // Replace the language segment in the path
-      const newPath = currentPath.replace(`/${currentLang}`, `/${lang}`);
+      // Replace the language segment, and the legal page slug that belongs to it.
+      const swapped = currentPath.replace(`/${currentLang}`, `/${lang}`);
+      const newPath = swapped
+        .split("/")
+        .map((part) => {
+          const key = legalKeyFromSegment(part);
+          return key ? legalSegment(lang, key) : part;
+        })
+        .join("/");
       if (newPath !== currentPath) {
         navigate(newPath + location.search, { replace: true });
       } else {

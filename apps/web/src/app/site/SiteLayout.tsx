@@ -1,5 +1,8 @@
 // src/app/site/SiteLayout.tsx
 import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
+import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment } from "../entityPaths";
+import { canonicalHostPath, useHostScope } from "../hostScope";
+import { isPlatformHost } from "../urls";
 import { lazy, Suspense } from "react";
 import { DEFAULT_LANG, DEFAULT_SITE_SLUG, HAS_MULTIPLE_SITES, type Lang, isLang } from "../config";
 import { Footer } from "../../ui/layout/Footer";
@@ -17,7 +20,7 @@ import { useApplyPublicFonts } from "../../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPublicTheme";
 import { CookieConsent } from "../../components/CookieConsent";
 import { GoogleAnalytics } from "../../components/GoogleAnalytics";
-import { PlatformGaShell } from "../../components/PlatformGaShell";
+import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
 import {
   PublicGaOverrideProvider,
   usePublicGaOverrideId,
@@ -38,8 +41,13 @@ export function SiteLayout() {
 
   const langParam = params.lang;
   const siteKeyParam = params.siteKey;
+  const scope = useHostScope();
 
   const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  const hostSlug =
+    scope.status === "ready" && scope.kind !== "platform" && scope.kind !== "collection"
+      ? scope.siteSlug
+      : undefined;
 
   // Check if we're on a collections route (which doesn't require siteKey)
   const isCollectionsRoute = location.pathname.includes("/collections/");
@@ -54,9 +62,7 @@ export function SiteLayout() {
     "admin",
     "static-pages",
     "static-page",
-    "impresszum",
-    "aszf",
-    "adatvedelem",
+    ...LEGAL_PATH_ALIASES,
     "pricing",
     "tarife",
     "preise",
@@ -77,13 +83,23 @@ export function SiteLayout() {
     ? isCollectionsRoute
       ? DEFAULT_SITE_SLUG
       : RESERVED_PATHS.includes(siteKeyParam || "")
-        ? DEFAULT_SITE_SLUG
-        : (siteKeyParam ?? DEFAULT_SITE_SLUG)
+        ? hostSlug ?? DEFAULT_SITE_SLUG
+        : (siteKeyParam ?? hostSlug ?? DEFAULT_SITE_SLUG)
     : DEFAULT_SITE_SLUG;
 
   // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
   // Hook-okat mindig a komponens elején kell hívni, még a korai return-ek előtt
   const { data: platform, isLoading, isError, error, refetch } = usePlatformSettings({ lang, siteKey });
+
+  const customHost =
+    typeof window !== "undefined" && !isPlatformHost(window.location.hostname);
+  if (customHost && scope.status === "loading") {
+    return <LoadingSpinner isLoading={true} delay={0} />;
+  }
+  const shortPath = canonicalHostPath(location.pathname, scope);
+  if (shortPath) {
+    return <Navigate to={`${shortPath}${location.search}${location.hash}`} replace />;
+  }
 
   // Reserved segments are public pages, not site slugs. Render them after hooks
   // so navigating onto one of these paths does not change the hook count.
@@ -99,24 +115,15 @@ export function SiteLayout() {
         </PlatformGaShell>
       );
     }
-    if (siteKeyParam === "impresszum") {
+    const legalKey = legalKeyFromSegment(siteKeyParam);
+    if (legalKey) {
+      const canonical = legalSegment(lang, legalKey);
+      if (siteKeyParam !== canonical) {
+        return <Navigate to={`/${lang}/${canonical}${location.search}${location.hash}`} replace />;
+      }
       return (
         <PlatformGaShell>
-          <LegalPage pageKey="imprint" />
-        </PlatformGaShell>
-      );
-    }
-    if (siteKeyParam === "aszf") {
-      return (
-        <PlatformGaShell>
-          <LegalPage pageKey="terms" />
-        </PlatformGaShell>
-      );
-    }
-    if (siteKeyParam === "adatvedelem") {
-      return (
-        <PlatformGaShell>
-          <LegalPage pageKey="privacy" />
+          <LegalPage pageKey={legalKey} />
         </PlatformGaShell>
       );
     }
@@ -137,7 +144,7 @@ export function SiteLayout() {
   // (mert a /:lang route már kezeli a SitesListPage-et)
   // De ha mégis ide jön, akkor redirectáljuk a default site-ra
   // Exception: collections route doesn't need siteKey
-  if (HAS_MULTIPLE_SITES && !siteKeyParam && !isCollectionsRoute) {
+  if (HAS_MULTIPLE_SITES && !siteKeyParam && !hostSlug && !isCollectionsRoute) {
     return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}`} replace />;
   }
 
@@ -250,9 +257,11 @@ function SiteLayoutContent({
       </a>
       {/* ide később jöhet Header, site alapján brandelt */}
       <div id="public-main" tabIndex={-1} style={{ flex: "1 0 auto" }}>
-        <Suspense fallback={<LoadingSpinner isLoading={true} delay={200} />}>
-          <Outlet context={{ lang, siteKey, platform }} />
-        </Suspense>
+        <InsideSiteChrome.Provider value={true}>
+          <Suspense fallback={<LoadingSpinner isLoading={true} delay={200} />}>
+            <Outlet context={{ lang, siteKey, platform }} />
+          </Suspense>
+        </InsideSiteChrome.Provider>
       </div>
       {/* Footer always visible at bottom, using flexbox to keep it there */}
       {platform && (

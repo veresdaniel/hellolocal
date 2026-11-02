@@ -788,7 +788,16 @@ export class AdminSiteService {
     if (dto.brandId !== undefined) updateData.brandId = dto.brandId;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     const siteLanguages = normalizeLanguageList(site.languages ?? []);
-    const languageList = siteLanguages.length ? siteLanguages : ["hu"];
+    let languageList = siteLanguages.length ? siteLanguages : ["hu"];
+    if (dto.languages !== undefined) {
+      const next = normalizeLanguageList(dto.languages);
+      if (!next.length) {
+        throw new BadRequestException("A régiónak legalább egy nyelve kell.");
+      }
+      await this.assertCanGrowLanguages(id, siteLanguages, next);
+      updateData.languages = next;
+      languageList = next;
+    }
     if (dto.domains !== undefined) {
       await this.syncDomains(id, dto.domains, languageList);
     } else if (dto.primaryDomain !== undefined) {
@@ -807,16 +816,6 @@ export class AdminSiteService {
     }
     if (dto.planLimits !== undefined) updateData.planLimits = dto.planLimits;
     if (dto.billingEmail !== undefined) updateData.billingEmail = dto.billingEmail;
-    if (dto.languages !== undefined) {
-      const next = normalizeLanguageList(dto.languages);
-      if (!next.length) {
-        throw new BadRequestException("A településnek legalább egy nyelve kell.");
-      }
-      const current = normalizeLanguageList(site.languages ?? []);
-      await this.assertCanGrowLanguages(id, current, next);
-      updateData.languages = next;
-    }
-
     if (dto.allowPublicRegistration !== undefined) {
       // Only allow setting this for pro/business plans
       // Basic plan always allows public registration

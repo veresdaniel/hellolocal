@@ -34,11 +34,11 @@ const PRICING_PATH: Record<PublicLang, string> = {
   de: "preise",
 };
 
-/** Legal pages use fixed Hungarian path segments across locales. */
-export const LEGAL_PATH_BY_KEY: Record<string, string> = {
-  imprint: "impresszum",
-  terms: "aszf",
-  privacy: "adatvedelem",
+/** Legal pages follow the page language, same as place and town segments. */
+const LEGAL_PATH: Record<PublicLang, Record<string, string>> = {
+  hu: { imprint: "impresszum", terms: "aszf", privacy: "adatvedelem" },
+  en: { imprint: "imprint", terms: "terms", privacy: "privacy" },
+  de: { imprint: "impressum", terms: "agb", privacy: "datenschutz" },
 };
 
 export function asPublicLang(lang: string): PublicLang {
@@ -164,6 +164,14 @@ export function siteHomePath(lang: string, siteKey: string): string {
   return `/${lang}/${siteKey}`;
 }
 
+/** Drop /:lang/:siteKey when the host already is that region, town, place, or collection. */
+export function withoutOwnerPrefix(path: string, lang: string, siteKey: string): string {
+  const prefix = `/${lang}/${siteKey}`;
+  if (path === prefix) return `/${lang}`;
+  if (path.startsWith(`${prefix}/`)) return `/${lang}${path.slice(prefix.length)}`;
+  return path;
+}
+
 export function placeDetailPath(lang: string, siteKey: string, slug: string): string {
   return `/${lang}/${siteKey}/${placePathSegment(lang)}/${slug}`;
 }
@@ -189,7 +197,7 @@ export function productsPath(lang: string, siteKey: string): string {
 }
 
 export function legalPagePath(lang: string, siteKey: string, key: string): string | null {
-  const segment = LEGAL_PATH_BY_KEY[key];
+  const segment = LEGAL_PATH[asPublicLang(lang)][key];
   if (!segment) return null;
   return `/${lang}/${siteKey}/${segment}`;
 }

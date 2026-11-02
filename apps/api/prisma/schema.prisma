@@ -364,6 +364,8 @@ model Town {
   // Single primary custom hostname for this town (no SiteDomain-style subdomain list).
   // Cross-entity uniqueness vs SiteDomain / Place.customDomain / Collection.domain is enforced in app code.
   customDomain String? @unique
+  // Language this hostname opens in (hu, en, de). Null uses the region default.
+  domainLang String? @db.VarChar(8)
 
   // GA4 measurement ID for this town's public pages (G-…). Null = inherit Site / disabled.
   gaMeasurementId String?
@@ -534,6 +536,8 @@ model Place {
   // Single primary custom hostname for this place (no SiteDomain-style subdomain list).
   // Cross-entity uniqueness vs SiteDomain / Town.customDomain / Collection.domain is enforced in app code.
   customDomain String? @unique
+  // Language this hostname opens in (hu, en, de). Null uses the region default.
+  domainLang String? @db.VarChar(8)
 
   // GA4 measurement ID for this place's public pages (G-…). Null = inherit Town/Site.
   gaMeasurementId String?
@@ -1014,6 +1018,10 @@ model Event {
   lat             Float? // Optional latitude for map display
   lng             Float? // Optional longitude for map display
 
+  // Optional hostname for this event. Language is domainLang.
+  customDomain String? @unique
+  domainLang String? @db.VarChar(8)
+
   // GA4 measurement ID for this event's public page (G-…). Null = inherit Place/Town/Site.
   gaMeasurementId String?
 
@@ -1357,6 +1365,7 @@ model Collection {
   id          String  @id @default(cuid())
   slug        String  @unique // URL path (domain nélkül)
   domain      String? @unique // opcionális custom domain
+  domainLang  String? @db.VarChar(8)
   isActive    Boolean @default(false)
   isCrawlable Boolean @default(true) // SEO: ha false, akkor noindex meta tag
   order       Int     @default(0)

@@ -2,6 +2,8 @@
 import { HAS_MULTIPLE_SITES } from "./config";
 import type { Lang } from "./config";
 import { placeEntityPath, regionListSegment, townEntityPath } from "./entityPaths";
+import { getHostScope } from "./hostScope";
+import { getPlatformOrigin, platformHostMatches } from "./platformOrigin";
 
 type BuildArgs = {
   lang: Lang;
@@ -31,6 +33,7 @@ export function isPlatformHost(hostname: string): boolean {
   const host = hostname.toLowerCase().split(":")[0];
   if (!host || PLATFORM_HOSTS.has(host)) return true;
   if (host.endsWith(".hello-local.io")) return true;
+  if (platformHostMatches(host)) return true;
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
 }
 
@@ -54,7 +57,10 @@ export function regionAddress({
   const clean = path.replace(/^\//, "");
   const tail = clean ? `/${clean}` : "";
   const domain = hostFromDomain(primaryDomain);
-  if (domain) return `https://${domain}/${lang}/${slug}${tail}`;
+  if (domain) {
+    const root = `https://${domain}/${lang}${tail}`;
+    return root.replace(/\/$/, "");
+  }
   return buildUrl({ lang: lang as Lang, siteKey: slug, path });
 }
 
@@ -78,7 +84,7 @@ export function entityPublicAddress({
   customDomain?: string | null;
 }): string {
   const own = hostFromDomain(customDomain);
-  if (own) return `https://${own}/`;
+  if (own) return `https://${own}/${lang}`;
   const path =
     entityType === "town"
       ? townEntityPath(lang, entitySlug)
@@ -91,8 +97,29 @@ export function entityPublicAddress({
   });
 }
 
+function platformAbsolute(lang: string, siteKey: string, clean: string): string {
+  const path = clean ? `/${lang}/${siteKey}/${clean}` : `/${lang}/${siteKey}`;
+  if (typeof window === "undefined" || isPlatformHost(window.location.hostname)) return path;
+  const origin = import.meta.env.DEV ? window.location.origin : getPlatformOrigin();
+  return `${origin}${path}`;
+}
+
 export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
-  const clean = path.replace(/^\//, "");
+  const clean = path.replace(/^\//, "").replace(/\/$/, "");
+  const scope = getHostScope();
+  if (scope.status === "ready" && scope.kind !== "platform") {
+    if (scope.kind === "collection") {
+      if (!siteKey) return `/${lang}`;
+      return platformAbsolute(lang, siteKey, clean);
+    }
+    const sameRegion = !siteKey || siteKey === scope.siteSlug;
+    if (!sameRegion && siteKey) return platformAbsolute(lang, siteKey, clean);
+    let tail = clean;
+    if (scope.kind === "town" && tail === townEntityPath(lang, scope.entitySlug)) tail = "";
+    if (scope.kind === "place" && tail === placeEntityPath(lang, scope.entitySlug)) tail = "";
+    if (scope.kind === "event" && tail === `event/${scope.entitySlug}`) tail = "";
+    return tail ? `/${lang}/${tail}` : `/${lang}`;
+  }
   const key = siteKey;
   if (HAS_MULTIPLE_SITES) {
     // If siteKey is not provided in multi-site mode, use lang-only URL

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
 import type { Lang} from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
+import { legalSegment } from "../../app/entityPaths";
 import { buildUrl } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
 
@@ -176,7 +177,7 @@ export function Footer({
                 </Link>
               ) : null}
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "impresszum" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "imprint") })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -197,7 +198,7 @@ export function Footer({
                 {t("public.legal.imprint.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "aszf" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -218,7 +219,7 @@ export function Footer({
                 {t("public.legal.terms.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "adatvedelem" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -416,7 +417,7 @@ export function Footer({
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "impresszum" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "imprint") })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -439,7 +440,7 @@ export function Footer({
                 {t("public.legal.imprint.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "aszf" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -462,7 +463,7 @@ export function Footer({
                 {t("public.legal.terms.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "adatvedelem" })}
+                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") })}
                 style={{
                   color: "white",
                   textDecoration: "none",

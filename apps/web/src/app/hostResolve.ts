@@ -1,24 +1,19 @@
-import { placeEntityPath, townEntityPath } from "./entityPaths";
 import { devLog } from "../lib/devLog";
 
 export type HostResolve = {
-  kind?: "site" | "town" | "place";
+  kind?: "site" | "town" | "place" | "collection" | "event";
   slug: string;
   defaultLang: string;
   entitySlug?: string;
 };
 
-/** Build the in-app path for a resolved custom hostname. */
+/**
+ * Custom host already names the region, town, place, or collection.
+ * The in-app path is /:lang, without that slug.
+ */
 export function pathForHostResolve(resolved: HostResolve, search = ""): string {
   const lang = resolved.defaultLang || "hu";
-  const siteSlug = resolved.slug;
-  if (resolved.kind === "town" && resolved.entitySlug) {
-    return `/${lang}/${siteSlug}/${townEntityPath(lang, resolved.entitySlug)}${search}`;
-  }
-  if (resolved.kind === "place" && resolved.entitySlug) {
-    return `/${lang}/${siteSlug}/${placeEntityPath(lang, resolved.entitySlug)}${search}`;
-  }
-  return `/${lang}/${siteSlug}${search}`;
+  return `/${lang}${search}`;
 }
 
 export async function siteForHost(

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../../app/urls";
+import { townEntityPath, townSlugFromPath } from "../../app/entityPaths";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { usePlatformSettingsContext } from "../../context/PlatformSettingsContext";
 import { LanguageSelector } from "../../components/LanguageSelector";
@@ -18,11 +19,17 @@ export function Header() {
     typeof window !== "undefined" && !window.matchMedia("(pointer: coarse)").matches;
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // Check if we're on map view (HomePage with showMap=true)
+  // Header only renders on the map. A selected town stays in the path.
+  const townInPath = townSlugFromPath(location.pathname);
+  const explorePath = buildUrl({
+    lang,
+    siteKey,
+    path: townInPath ? townEntityPath(lang, townInPath) : "",
+  });
+  const barePath = location.pathname.replace(/\/$/, "") || "/";
   const isOnMapView =
     location.pathname.includes("/admin") === false &&
-    (location.pathname === buildUrl({ lang, siteKey, path: "" }) ||
-      location.pathname === buildUrl({ lang, siteKey, path: "" }) + "/");
+    barePath === (explorePath.replace(/\/$/, "") || "/");
 
   // Default positions: bal fent (top left)
   const defaultPositionDesktop = { top: 16, left: 16 };
@@ -363,8 +370,7 @@ export function Header() {
             />
             <button
               onClick={() => {
-                const homePath = buildUrl({ lang, siteKey, path: "" });
-                navigate(homePath);
+                navigate(explorePath);
                 // Trigger map view after navigation
                 setTimeout(() => {
                   window.dispatchEvent(new CustomEvent("showMapView"));

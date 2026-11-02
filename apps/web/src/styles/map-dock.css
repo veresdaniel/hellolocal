@@ -165,7 +165,18 @@
 .map-dock__chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+}
+
+.map-dock__chip-label {
+  margin: 0 4px 0 12px;
+  font-family: var(--map-ui-font);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--hl-ink, #1b1730);
 }
 
 .map-dock__chip {
@@ -289,7 +300,7 @@
 .map-filters-inline__head h2 {
   margin: 0;
   font-family: var(--map-ui-font);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
@@ -317,10 +328,14 @@
   gap: 8px;
 }
 
+.map-filters-inline .map-dock__chip,
+.map-filters-inline .map-dock__chip-label {
+  font-size: 18px;
+}
+
 .map-filters-inline .map-dock__chip {
-  min-height: 44px;
-  padding: 8px 14px;
-  font-size: 15px;
+  min-height: 48px;
+  padding: 10px 18px;
   font-weight: 600;
   color: var(--hl-ink, #1b1730);
 }
@@ -356,10 +371,16 @@
   }
 
   .map-dock__chip,
-  .map-filters-inline .map-dock__chip {
+  .map-filters-inline .map-dock__chip,
+  .map-filters-inline .map-dock__chip-label {
     min-height: 44px;
     padding: 8px 14px;
-    font-size: 15px;
+    font-size: 17px;
+  }
+
+  .map-filters-inline .map-dock__chip-label {
+    min-height: 0;
+    padding: 0;
   }
 
   .map-dock__panel {
@@ -377,7 +398,7 @@
   }
 
   .map-filters-inline__head h2 {
-    font-size: 14px;
+    font-size: 17px;
   }
 
   .map-filters-inline .map-dock__section {

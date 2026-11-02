@@ -6,7 +6,7 @@ import { normalizeDomainHost } from "../common/domain-host";
 import { generateSlug } from "../slug/slug.helper";
 import { devLog } from "../common/dev-log";
 
-export type DomainResolveKind = "site" | "town" | "place";
+export type DomainResolveKind = "site" | "town" | "place" | "collection" | "event";
 
 export type DomainResolveResponse = {
   kind: DomainResolveKind;
@@ -27,8 +27,8 @@ export type DomainResolveResponse = {
  * Which geo entity a custom domain belongs to.
  * Site: SiteDomain rows (primary + subdomains) with Site.primaryDomain fallback.
  * Town/Place: single customDomain (primary host only for that entity).
- * Response always includes the parent region slug when available so the frontend can open /:lang/:slug.
- * Town/Place also return entitySlug for /:lang/:siteSlug/{telepules|hely}/:entitySlug.
+ * The public path on that host omits the entity the hostname already is: /:lang, not /:lang/:slug.
+ * Town/Place still return entitySlug so the app can open that entity at /:lang.
  * Event has no customDomain (N/A).
  */
 @Controller("/api/domain")
@@ -89,10 +89,11 @@ export class DomainResolveController {
         siteId: true,
         site: { select: { id: true, slug: true, isActive: true, languages: true } },
         translations: { select: { lang: true, name: true } },
+        domainLang: true,
       },
     });
     if (town?.isActive && town.site?.isActive && town.site.slug && town.siteId) {
-      const defaultLang = town.site.languages?.[0] || "hu";
+      const defaultLang = town.domainLang || town.site.languages?.[0] || "hu";
       const entitySlug = await this.resolveEntitySlug({
         siteId: town.siteId,
         entityType: SlugEntityType.town,
@@ -124,10 +125,11 @@ export class DomainResolveController {
         siteId: true,
         site: { select: { slug: true, isActive: true, languages: true } },
         translations: { select: { lang: true, name: true } },
+        domainLang: true,
       },
     });
     if (place?.isActive && place.site?.isActive) {
-      const defaultLang = place.site.languages?.[0] || "hu";
+      const defaultLang = place.domainLang || place.site.languages?.[0] || "hu";
       const entitySlug = await this.resolveEntitySlug({
         siteId: place.siteId,
         entityType: SlugEntityType.place,
@@ -151,13 +153,62 @@ export class DomainResolveController {
       };
     }
 
+    const collection = await this.prisma.collection.findUnique({
+      where: { domain },
+      select: { slug: true, isActive: true, domainLang: true },
+    });
+    if (collection?.isActive && collection.slug) {
+      devLog.debug("[domain-resolve] matched collection", domain, collection.slug);
+      return {
+        kind: "collection",
+        slug: collection.slug,
+        defaultLang: collection.domainLang || "hu",
+        domain,
+        isPrimary: true,
+      };
+    }
+
+    const event = await this.prisma.event.findUnique({
+      where: { customDomain: domain },
+      select: {
+        id: true,
+        isActive: true,
+        siteId: true,
+        domainLang: true,
+        site: { select: { slug: true, isActive: true } },
+        translations: { select: { lang: true, title: true } },
+      },
+    });
+    if (event?.isActive && event.site?.isActive && event.site.slug) {
+      const defaultLang = event.domainLang || "hu";
+      const entitySlug = await this.resolveEntitySlug({
+        siteId: event.siteId,
+        entityType: SlugEntityType.event,
+        entityId: event.id,
+        lang: defaultLang,
+        translations: event.translations.map((row) => ({ lang: row.lang, name: row.title })),
+      });
+      if (!entitySlug) {
+        devLog.warn("[domain-resolve] event missing entitySlug", domain, event.id);
+        throw new NotFoundException();
+      }
+      return {
+        kind: "event",
+        slug: event.site.slug,
+        entitySlug,
+        defaultLang,
+        domain,
+        isPrimary: true,
+      };
+    }
+
     devLog.warn("[domain-resolve] no match", domain);
     throw new NotFoundException();
   }
 
   private async resolveEntitySlug(args: {
     siteId: string;
-    entityType: typeof SlugEntityType.town | typeof SlugEntityType.place;
+    entityType: typeof SlugEntityType.town | typeof SlugEntityType.place | typeof SlugEntityType.event;
     entityId: string;
     lang: string;
     translations: Array<{ lang: string; name: string }>;

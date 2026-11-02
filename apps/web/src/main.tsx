@@ -9,6 +9,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { ToastContainer } from "./components/Toast";
 import { ConfirmationModalProvider } from "./contexts/ConfirmationModalContext";
 import { router } from "./app/routes";
+import { HostScopeProvider } from "./app/hostScope";
 import "./styles/public-tokens.css";
 import "./styles/public-surfaces.css";
 import "./styles/admin-surfaces.css";
@@ -88,7 +89,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <ConfirmationModalProvider>
               <AuthProvider>
                 <AdminSiteProvider>
-                  <RouterProvider router={router} />
+                  <HostScopeProvider>
+                    <RouterProvider router={router} />
+                  </HostScopeProvider>
                 </AdminSiteProvider>
               </AuthProvider>
             </ConfirmationModalProvider>

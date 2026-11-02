@@ -6,8 +6,7 @@ import { isLang } from "../types/enums";
 import { devLog } from "../lib/devLog";
 
 /**
- * On a region's / town's / place's own domain, / and /:lang open that entity.
- * On the platform host the address stays /:lang/:slug.
+ * On a custom domain, /:lang is already the entity. Do not append the region slug.
  */
 export function DomainRedirect() {
   const location = useLocation();

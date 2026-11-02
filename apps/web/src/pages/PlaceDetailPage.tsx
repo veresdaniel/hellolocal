@@ -22,6 +22,7 @@ import { buildPlaceSeo } from "../seo/buildPlaceSeo";
 import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
 import { buildUrl } from "../app/urls";
+import { useHostScope } from "../app/hostScope";
 import { placeEntityPath, townEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
@@ -53,7 +54,16 @@ import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
 export function PlaceDetailPage() {
   const { t } = useTranslation();
-  const { lang, siteKey, slug } = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const params = useParams<{ lang: string; siteKey: string; slug: string }>();
+  const hostScope = useHostScope();
+  const lang = params.lang;
+  const siteKey =
+    params.siteKey ||
+    (hostScope.status === "ready" && hostScope.kind !== "platform" && hostScope.kind !== "collection"
+      ? hostScope.siteSlug
+      : "");
+  const slug =
+    params.slug || (hostScope.status === "ready" && hostScope.kind === "place" ? hostScope.entitySlug : "");
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -562,7 +572,12 @@ export function PlaceDetailPage() {
 
   return (
     <>
-      <FloatingHeader visitorAuth editUrl={editUrl} showEditButton={canEditPlace} />
+      <FloatingHeader
+        visitorAuth
+        editUrl={editUrl}
+        showEditButton={canEditPlace}
+        mapTownSlug={place.townSlug}
+      />
       <div
         style={{
           minHeight: "100vh",
@@ -867,7 +882,7 @@ export function PlaceDetailPage() {
             <div
               style={{
                 margin: "0 16px 24px",
-                height: 360,
+                height: 468,
                 borderRadius: 12,
                 overflow: "hidden",
               }}
@@ -877,7 +892,7 @@ export function PlaceDetailPage() {
                   latitude={place.location.lat}
                   longitude={place.location.lng}
                   defaultZoom={16}
-                  height={360}
+                  height={468}
                   interactive
                   hideLocationButton
                   markers={[

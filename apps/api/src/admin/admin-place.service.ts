@@ -33,6 +33,7 @@ import {
 import { PlaceUpsellService } from "../entitlements/place-upsell.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
+import { domainLanguage } from "../common/domain-lang";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 import { SitemapService } from "../seo/sitemap.service";
@@ -56,6 +57,8 @@ export interface CreatePlaceDto {
   openingHours?: OpeningHoursDto[]; // New: structured opening hours
   /** Optional custom hostname for this place. */
   customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null inherits Town/Site. */
   gaMeasurementId?: string | null;
   translations: Array<{
@@ -99,6 +102,8 @@ export interface UpdatePlaceDto {
   openingHours?: OpeningHoursDto[]; // New: structured opening hours
   /** Optional custom hostname for this place. Pass null/empty to clear. */
   customDomain?: string | null;
+  /** Language this hostname opens in. Ignored when customDomain is empty. */
+  domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty string or null clears / inherits Town/Site. */
   gaMeasurementId?: string | null;
   translations?: Array<{
@@ -538,6 +543,7 @@ export class AdminPlaceService {
       lng: _lng,
       parentPlaceId,
       customDomain: customDomainRaw,
+      domainLang: domainLangRaw,
       gaMeasurementId: gaMeasurementIdRaw,
       ...placeData
     } = dto;
@@ -627,6 +633,7 @@ export class AdminPlaceService {
         townId: dto.townId,
         parentPlaceId: parentPlaceId || null,
         customDomain,
+        domainLang: domainLanguage(domainLangRaw, Boolean(customDomain)),
         gaMeasurementId,
         lat,
         lng,
@@ -785,6 +792,7 @@ export class AdminPlaceService {
       lat: _lat,
       lng: _lng,
       customDomain: customDomainRaw,
+      domainLang: domainLangRaw,
       gaMeasurementId: gaMeasurementIdRaw,
       ...restData
     } = dto;
@@ -802,6 +810,7 @@ export class AdminPlaceService {
         kind: "place",
         placeId: id,
       });
+      updateData.domainLang = domainLanguage(domainLangRaw, Boolean(updateData.customDomain));
     }
     if (gaMeasurementIdRaw !== undefined) {
       try {

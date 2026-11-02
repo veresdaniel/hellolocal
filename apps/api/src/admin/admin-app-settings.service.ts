@@ -10,6 +10,12 @@ import { encryptSecret } from "../common/secret-box";
 import { CONTENT_DRAFT_API_KEY } from "./content-draft.constants";
 import { UC_ACCESS_TOKEN_KEY } from "../under-construction/under-construction.constants";
 import { SitemapService } from "../seo/sitemap.service";
+import {
+  clearPlatformPublicHostCache,
+  formatPlatformPublicHosts,
+  parsePlatformPublicHosts,
+  PLATFORM_PUBLIC_HOST_KEY,
+} from "../common/platform-public-host";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -54,6 +60,14 @@ export class AdminAppSettingsService {
           "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
         );
       }
+    }
+    if (key === PLATFORM_PUBLIC_HOST_KEY) {
+      const parsed = parsePlatformPublicHosts(value);
+      if ("error" in parsed) {
+        throw new BadRequestException(`Érvénytelen domain: „${parsed.error}”. Példa: hellolocal.hu`);
+      }
+      value = formatPlatformPublicHosts(parsed.hosts);
+      clearPlatformPublicHostCache();
     }
     const secret = SECRET_SETTING_KEYS.has(key);
     if (ENCRYPTED_AT_REST_KEYS.has(key) && value) {

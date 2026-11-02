@@ -6,7 +6,8 @@
   "domainInput": {
     "label": "Egyedi domain",
     "placeholder": "pelda.hu vagy hu.pelda.hu",
-    "disabledHint": "Kapcsold be a checkbox-ot az egyedi domain megadásához"
+    "disabledHint": "Kapcsold be a checkbox-ot az egyedi domain megadásához",
+    "language": "Nyelv"
   },
   "edit": "Szerkesztés",
   "dashboard": "Irányítópult",
@@ -631,9 +632,9 @@
       "aliases": "Aliasok",
       "subdomain": "Aldomain",
       "primaryDomainLabel": "Elsődleges domain",
-      "subdomainLabel": "Aldomain",
-      "addSubdomain": "Aldomain hozzáadása",
-      "primarySubdomainHint": "Az elsődleges domain a fő (apex) host; az aldomainek további hostnevek (pl. hu.pelda.hu), mindegyik saját alapnyelvvel. Mindkettő ugyanarra a régióra oldódik fel.",
+      "subdomainLabel": "További domain",
+      "addSubdomain": "Domain hozzáadása",
+      "primarySubdomainHint": "Egy régiónak több saját domainje lehet, például etyek.hu és etyek.eu. Minden cím mellett a nyelv legördülőből állítható: a domain ezen a nyelven nyílik meg.",
       "countryTitle": "Ország",
       "countryHint": "A régió egy ország alá tartozik. Az ország saját domainjei külön instance-t kapnak. A nevek a böngésző országlistájából jönnek.",
       "countryPlaceholder": "Ország keresése",
@@ -659,7 +660,7 @@
       "noSiteKeys": "Nincs SiteKey",
       "domainRequired": "Domain megadása kötelező",
       "domainAdded": "Domain hozzáadva",
-      "severalDomains": "Elsődleges domain és aldomainek a régió Domain fülén adhatók meg.",
+      "severalDomains": "Több domain az elsődleges mellett a régió Domain fülén adható meg.",
       "publicAddresses": "A publikus címek: {{addresses}}. Üres nyelv a régió alapértelmezett nyelve ({{lang}}).",
       "slugAddress": "Saját domain nélkül a címke marad a cím: {{address}}.",
       "dnsHint": "A hostnév csak akkor nyitja a régiót, ha a DNS A rekordja a szerverre mutat.",
@@ -1720,6 +1721,12 @@
   "statusPastDue": "Lejárt",
   "statusCanceled": "Megszakítva",
   "quoteRecipientDescription": "Beérkező ajánlat- és demókérések címzettje",
+  "platformHost": {
+    "title": "Nyilvános platformcímek",
+    "help": "Több domain is a platform nyitóoldala lehet, soronként egy. Az első az alapcím, ha egy egyedi régiódomainről a platformra mutatunk. A www külön sor nélkül is jár hozzá. Üresen csak a hello-local.io marad.",
+    "save": "Platformcímek mentése",
+    "saved": "Platformcímek elmentve"
+  },
   "geocode": {
     "suggest": "Koordináta javaslat",
     "suggested": "Javaslat: {{label}}. A szélesség és a hosszúság kézzel módosítható.",
