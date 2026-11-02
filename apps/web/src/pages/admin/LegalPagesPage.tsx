@@ -391,7 +391,7 @@ export function LegalPagesPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       {/* Header */}
       <div
         style={{
@@ -404,13 +404,12 @@ export function LegalPagesPage() {
         }}
       >
         <h1
+          className="admin-page-title"
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
-            textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
             margin: 0,
           }}
         >
@@ -426,28 +425,28 @@ export function LegalPagesPage() {
           style={{
             padding: "10px 20px",
             background: editingId || isCreating ? "#ccc" : "white",
-            color: editingId || isCreating ? "#999" : "#667eea",
-            border: editingId || isCreating ? "2px solid #ccc" : "2px solid #667eea",
+            color: editingId || isCreating ? "#999" : "var(--admin-primary, #2563eb)",
+            border: editingId || isCreating ? "2px solid #ccc" : "2px solid var(--admin-primary, #2563eb)",
             borderRadius: 8,
             cursor: editingId || isCreating ? "not-allowed" : "pointer",
             fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 700,
-            boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(102, 126, 234, 0.3)",
+            boxShadow: editingId || isCreating ? "none" : "0 4px 12px rgba(15, 23, 42, 0.18)",
             transition: "all 0.3s ease",
           }}
           onMouseEnter={(e) => {
             if (!editingId && !isCreating) {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(102, 126, 234, 0.4)";
-              e.currentTarget.style.background = "#f8f8ff";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(15, 23, 42, 0.24)";
+              e.currentTarget.style.background = "var(--admin-surface-subtle, #f8fafc)";
             }
           }}
           onMouseLeave={(e) => {
             if (!editingId && !isCreating) {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.18)";
               e.currentTarget.style.background = "white";
             }
           }}
@@ -486,7 +485,7 @@ export function LegalPagesPage() {
             style={{
               marginBottom: 16,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editLegalPage") : t("admin.forms.newLegalPage")}
@@ -533,9 +532,9 @@ export function LegalPagesPage() {
             style={{
               marginBottom: 16,
               padding: "16px 20px",
-              background: "#f8f8ff",
+              background: "var(--admin-surface-subtle, #f8fafc)",
               borderRadius: 12,
-              border: "2px solid #e0e7ff",
+              border: "2px solid var(--admin-primary-border, #bfdbfe)",
             }}
           >
             <label
@@ -553,7 +552,7 @@ export function LegalPagesPage() {
                 type="checkbox"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
               />
               <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
             </label>
@@ -701,9 +700,9 @@ export function LegalPagesPage() {
                   style={{
                     marginTop: 24,
                     padding: 16,
-                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    background: "linear-gradient(135deg, var(--admin-primary, #2563eb)15 0%, var(--admin-primary-hover, #1d4ed8)15 100%)",
                     borderRadius: 8,
-                    border: "1px solid #667eea30",
+                    border: "1px solid var(--admin-primary, #2563eb)30",
                   }}
                 >
                   <h3
@@ -711,9 +710,9 @@ export function LegalPagesPage() {
                       margin: "0 0 16px 0",
                       fontSize: "clamp(16px, 3.5vw, 18px)",
                       fontWeight: 600,
-                      color: "#667eea",
+                      color: "var(--admin-primary, #2563eb)",
                       fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
                     }}
                   >
                     🔍 SEO {t("admin.settings")}

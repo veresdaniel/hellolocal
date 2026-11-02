@@ -43,7 +43,14 @@ export function SiteLanguagesEditor({
   return (
     <section style={{ marginBottom: 28 }}>
       <h3 style={{ margin: "0 0 8px", fontSize: 18 }}>{t("admin.siteLanguages")}</h3>
-      <p style={{ margin: "0 0 14px", color: "#5c564e", maxWidth: 640, lineHeight: 1.5 }}>
+      <p
+        style={{
+          margin: "0 0 14px",
+          color: "var(--admin-muted, #475569)",
+          maxWidth: 640,
+          lineHeight: 1.5,
+        }}
+      >
         {t("admin.siteLanguagesHint")}
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
@@ -98,18 +105,7 @@ export function SiteLanguagesEditor({
             width: 140,
           }}
         />
-        <button
-          type="submit"
-          disabled={busy}
-          style={{
-            padding: "10px 16px",
-            border: 0,
-            borderRadius: 8,
-            background: "#1b1730",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
+        <button type="submit" disabled={busy} className="admin-btn admin-btn--primary">
           {t("admin.addLanguage")}
         </button>
       </form>

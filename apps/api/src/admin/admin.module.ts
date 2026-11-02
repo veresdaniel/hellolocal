@@ -35,7 +35,7 @@ import { AuthModule } from "../auth/auth.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
-import { SeoModule } from "../seo/seo.module";
+import { SeoCrawlModule } from "../seo/seo-crawl.module";
 
 @Module({
   imports: [
@@ -48,7 +48,7 @@ import { SeoModule } from "../seo/seo.module";
     forwardRef(() => EntitlementsModule),
     SiteModule,
     VisitorLadderModule,
-    SeoModule,
+    SeoCrawlModule,
   ],
   controllers: [AdminController, GalleryPublicController, ContentDraftController],
   providers: [

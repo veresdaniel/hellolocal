@@ -346,32 +346,30 @@ export function EventLogPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       {/* Header */}
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <h1
+          className="admin-page-title"
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
             margin: 0,
             marginBottom: 8,
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
           }}
         >
           {t("admin.eventLog.title")}
         </h1>
         <p
+          className="admin-page-muted"
           style={{
             fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 400,
-            color: "#c0c0d0",
             margin: 0,
-            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
           {t("admin.eventLog.description")}
@@ -393,7 +391,7 @@ export function EventLogPage() {
             marginTop: 0,
             marginBottom: 16,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
           }}
         >
           {t("admin.eventLog.filters")}

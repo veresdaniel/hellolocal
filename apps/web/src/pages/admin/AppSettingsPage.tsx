@@ -24,6 +24,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { PublicPlansEditor } from "../../components/PublicPlansEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
+import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
@@ -46,6 +47,8 @@ import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEdito
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
+/** Display-only mask; never a real key. Cleared on focus so a new key can be typed. */
+const CONTENT_DRAFT_API_KEY_MASK = "••••••••••••••••";
 
 export function AppSettingsPage() {
   const { t } = useTranslation();
@@ -82,6 +85,7 @@ export function AppSettingsPage() {
   const [contentDraftEnabled, setContentDraftEnabled] = useState(false);
   const [contentDraftProvider, setContentDraftProvider] = useState<ContentDraftProvider>("gemini");
   const [contentDraftApiKey, setContentDraftApiKey] = useState("");
+  const [contentDraftApiKeyEditing, setContentDraftApiKeyEditing] = useState(false);
   const [isSavingContentDraft, setIsSavingContentDraft] = useState(false);
   const [typographyOpen, setTypographyOpen] = useState(false);
   const [themeColorsOpen, setThemeColorsOpen] = useState(false);
@@ -157,6 +161,8 @@ export function AppSettingsPage() {
         if (cancelled) return;
         setContentDraftEnabled(Boolean(status.enabled));
         setContentDraftKeyConfigured(Boolean(status.keyConfigured));
+        setContentDraftApiKey("");
+        setContentDraftApiKeyEditing(false);
         if (
           status.provider === "gemini" ||
           status.provider === "groq" ||
@@ -171,6 +177,8 @@ export function AppSettingsPage() {
         if (cancelled) return;
         setContentDraftEnabled(false);
         setContentDraftKeyConfigured(false);
+        setContentDraftApiKey("");
+        setContentDraftApiKeyEditing(false);
         setContentDraftProvider("gemini");
       });
     getBrands()
@@ -272,6 +280,9 @@ export function AppSettingsPage() {
         setContentDraftProvider(status.provider);
       }
       setContentDraftApiKey("");
+      setContentDraftApiKeyEditing(false);
+      const { clearContentDraftStatusCache } = await import("../../hooks/useContentDraftStatus");
+      clearContentDraftStatusCache();
       showToast(t("admin.contentDraft.saved"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
@@ -416,8 +427,11 @@ export function AppSettingsPage() {
   // Show message if no site is selected (but allow language settings which don't need site)
   if (!selectedSiteId && HAS_MULTIPLE_SITES) {
     return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
-        <h1 style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}>
+      <div className="admin-page-content">
+        <h1
+          className="admin-page-title"
+          style={{ marginBottom: 32, fontSize: 32, fontWeight: 700 }}
+        >
           {t("admin.appSettings")}
         </h1>
         <div
@@ -474,7 +488,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
                 }}
               >
                 {t("admin.defaultLanguage")}
@@ -582,32 +596,35 @@ export function AppSettingsPage() {
     );
   }
 
+  const showContentDraftApiKeyMask =
+    contentDraftKeyConfigured &&
+    !contentDraftApiKeyEditing &&
+    !contentDraftApiKey.trim();
+
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>
         <h1
+          className="admin-page-title"
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "white",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
             margin: 0,
             marginBottom: 8,
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
           }}
         >
           {t("admin.appSettings")}
         </h1>
         <p
+          className="admin-page-muted"
           style={{
             fontSize: "clamp(14px, 3.5vw, 16px)",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontWeight: 400,
-            color: "#c0c0d0",
             margin: 0,
-            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
           {t("admin.appSettingsDesc")}
@@ -646,7 +663,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
               }}
             >
               {t("admin.defaultLanguage")}
@@ -698,7 +715,7 @@ export function AppSettingsPage() {
                     padding: "12px 16px",
                     fontSize: 15,
                     borderRadius: 8,
-                    border: "2px solid #e0e7ff",
+                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
                     background: "white",
                     cursor: isAdmin && !isSaving ? "pointer" : "not-allowed",
                     minWidth: 200,
@@ -780,7 +797,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
               }}
             >
               {t("admin.typography.title")}
@@ -906,7 +923,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
               }}
             >
               {t("admin.themeColors.title")}
@@ -954,6 +971,8 @@ export function AppSettingsPage() {
         </div>
       )}
 
+      {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
+
       {userIsSuperadmin && (
         <div
           style={{
@@ -970,7 +989,7 @@ export function AppSettingsPage() {
               fontSize: 20,
               fontWeight: 600,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {t("admin.i18n.landingMovedTitle")}
@@ -989,12 +1008,14 @@ export function AppSettingsPage() {
 
       {userIsSuperadmin && (
         <div
+          id="content-draft"
           style={{
             marginBottom: 24,
             background: "white",
             borderRadius: 12,
             border: "1px solid #e0e0e0",
             padding: 24,
+            scrollMarginTop: 96,
           }}
         >
           <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
@@ -1039,11 +1060,23 @@ export function AppSettingsPage() {
             </p>
           ) : null}
           <input
-            type="password"
+            type={showContentDraftApiKeyMask ? "text" : "password"}
             autoComplete="new-password"
-            value={contentDraftApiKey}
+            value={showContentDraftApiKeyMask ? CONTENT_DRAFT_API_KEY_MASK : contentDraftApiKey}
+            readOnly={showContentDraftApiKeyMask}
+            onFocus={() => {
+              if (contentDraftKeyConfigured) setContentDraftApiKeyEditing(true);
+            }}
+            onBlur={() => {
+              if (!contentDraftApiKey.trim()) setContentDraftApiKeyEditing(false);
+            }}
             onChange={(event) => setContentDraftApiKey(event.target.value)}
             placeholder={t("admin.contentDraft.apiKeyPlaceholder")}
+            aria-label={
+              showContentDraftApiKeyMask
+                ? t("admin.contentDraft.apiKeyConfigured")
+                : t("admin.contentDraft.apiKey")
+            }
             style={{
               width: "100%",
               maxWidth: 420,
@@ -1052,6 +1085,9 @@ export function AppSettingsPage() {
               border: "1px solid #d9d3e4",
               borderRadius: 8,
               font: "inherit",
+              color: showContentDraftApiKeyMask ? "#6b7280" : undefined,
+              letterSpacing: showContentDraftApiKeyMask ? "0.14em" : undefined,
+              cursor: showContentDraftApiKeyMask ? "text" : undefined,
             }}
           />
           <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: 13 }}>
@@ -1067,8 +1103,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "#16131f",
-                color: "#fffdf8",
+                background: "var(--admin-primary, #1e293b)",
+                color: "var(--admin-on-primary, #ffffff)",
                 fontWeight: 600,
                 cursor: isSavingContentDraft ? "wait" : "pointer",
               }}
@@ -1151,8 +1187,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "#16131f",
-                color: "#fffdf8",
+                background: "var(--admin-primary, #1e293b)",
+                color: "var(--admin-on-primary, #ffffff)",
                 fontWeight: 600,
                 cursor: isSavingPlatformGa ? "wait" : "pointer",
               }}
@@ -1203,8 +1239,8 @@ export function AppSettingsPage() {
                 padding: "0 16px",
                 border: 0,
                 borderRadius: 999,
-                background: "#16131f",
-                color: "#fffdf8",
+                background: "var(--admin-primary, #1e293b)",
+                color: "var(--admin-on-primary, #ffffff)",
                 fontWeight: 600,
                 cursor: isSavingRecipient ? "wait" : "pointer",
               }}
@@ -1247,7 +1283,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
               }}
             >
               {t("public.overview.plansTitle")}
@@ -1300,7 +1336,7 @@ export function AppSettingsPage() {
                 fontSize: 20,
                 fontWeight: 600,
                 fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  "var(--admin-font-display, Inter, system-ui, sans-serif)",
               }}
             >
               {t("admin.visitorLadder.title")}
@@ -1348,7 +1384,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
                 }}
               >
                 {t("admin.featureMatrix")}
@@ -1470,7 +1506,7 @@ export function AppSettingsPage() {
                   fontSize: 20,
                   fontWeight: 600,
                   fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
                 }}
               >
                 {t("admin.placeFeatureMatrix")}
@@ -1880,7 +1916,7 @@ function FeatureMatrixEditor({
         <thead>
           <tr
             style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "var(--admin-primary, #2563eb)",
               borderBottom: "2px solid #dee2e6",
             }}
           >
@@ -1895,7 +1931,7 @@ function FeatureMatrixEditor({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 position: "sticky",
                 left: 0,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "var(--admin-primary, #2563eb)",
                 zIndex: 10,
               }}
             >
@@ -2034,7 +2070,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 18 : 20,
                               height: isMobile ? 18 : 20,
                               cursor: "pointer",
-                              accentColor: isOverridden ? "#667eea" : "#6c757d",
+                              accentColor: isOverridden ? "var(--admin-primary, #2563eb)" : "#6c757d",
                             }}
                           />
                         ) : feature.type === "number" ? (
@@ -2061,7 +2097,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 60 : 80,
                               padding: isMobile ? "4px 6px" : "6px 8px",
                               fontSize: isMobile ? 12 : 14,
-                              border: `2px solid ${isOverridden ? "#667eea" : "#ced4da"}`,
+                              border: `2px solid ${isOverridden ? "var(--admin-primary, #2563eb)" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
                               fontFamily:
@@ -2070,9 +2106,9 @@ function FeatureMatrixEditor({
                               outline: "none",
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "#667eea";
+                              e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                               e.currentTarget.style.boxShadow =
-                                "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                                "0 0 0 3px rgba(37, 99, 235, 0.1)";
                             }}
                             onBlur={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -2088,7 +2124,7 @@ function FeatureMatrixEditor({
                               width: isMobile ? 90 : 120,
                               padding: isMobile ? "4px 6px" : "6px 8px",
                               fontSize: isMobile ? 12 : 14,
-                              border: `2px solid ${isOverridden ? "#667eea" : "#ced4da"}`,
+                              border: `2px solid ${isOverridden ? "var(--admin-primary, #2563eb)" : "#ced4da"}`,
                               borderRadius: 6,
                               textAlign: "center",
                               fontFamily:
@@ -2097,9 +2133,9 @@ function FeatureMatrixEditor({
                               outline: "none",
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "#667eea";
+                              e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                               e.currentTarget.style.boxShadow =
-                                "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                                "0 0 0 3px rgba(37, 99, 235, 0.1)";
                             }}
                             onBlur={(e) => {
                               e.currentTarget.style.boxShadow = "none";
@@ -2110,7 +2146,7 @@ function FeatureMatrixEditor({
                           <div
                             style={{
                               fontSize: isMobile ? 9 : 10,
-                              color: "#667eea",
+                              color: "var(--admin-primary, #2563eb)",
                               marginTop: 2,
                               fontWeight: 500,
                             }}
@@ -2239,7 +2275,7 @@ function PlaceFeatureMatrixEditor({
         <thead>
           <tr
             style={{
-              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+              background: "var(--admin-danger, #b91c1c)",
               borderBottom: "2px solid #dee2e6",
             }}
           >
@@ -2254,7 +2290,7 @@ function PlaceFeatureMatrixEditor({
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 position: "sticky",
                 left: 0,
-                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                background: "var(--admin-danger, #b91c1c)",
                 zIndex: 10,
               }}
             >

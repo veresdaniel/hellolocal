@@ -50,9 +50,11 @@ export function I18nAdminPage() {
 
   if (!userIsSuperadmin) {
     return (
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
-        <h1 style={{ margin: "0 0 8px", fontSize: 32, fontWeight: 700 }}>{t("admin.i18n.title")}</h1>
-        <p style={{ color: "#666" }}>{t("admin.i18n.accessDenied")}</p>
+      <div className="admin-page-content">
+        <h1 className="admin-page-title" style={{ margin: "0 0 8px", fontSize: 32, fontWeight: 700 }}>
+          {t("admin.i18n.title")}
+        </h1>
+        <p className="admin-page-muted">{t("admin.i18n.accessDenied")}</p>
       </div>
     );
   }
@@ -61,7 +63,7 @@ export function I18nAdminPage() {
   const pageOptions = available.filter((section) => section.group === "pages");
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+    <div className="admin-page-content">
       <div
         style={{
           display: "flex",
@@ -73,8 +75,10 @@ export function I18nAdminPage() {
         }}
       >
         <div>
-          <h1 style={{ margin: "0 0 8px", fontSize: 32, fontWeight: 700 }}>{t("admin.i18n.title")}</h1>
-          <p style={{ margin: 0, color: "#555", maxWidth: 720, lineHeight: 1.5 }}>
+          <h1 className="admin-page-title" style={{ margin: "0 0 8px", fontSize: 32, fontWeight: 700 }}>
+            {t("admin.i18n.title")}
+          </h1>
+          <p className="admin-page-muted" style={{ margin: 0, maxWidth: 720, lineHeight: 1.5 }}>
             {t("admin.i18n.hintSuperadmin")}
           </p>
         </div>

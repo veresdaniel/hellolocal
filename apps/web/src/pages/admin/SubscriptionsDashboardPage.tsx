@@ -369,7 +369,7 @@ export function SubscriptionsDashboardPage() {
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "PRO":
-        return "#667eea";
+        return "var(--admin-primary, #2563eb)";
       case "BASIC":
         return "#3b82f6";
       case "BUSINESS":
@@ -494,7 +494,7 @@ export function SubscriptionsDashboardPage() {
               }}
               style={{
                 padding: isMobile ? "6px 12px" : "8px 16px",
-                background: scope === s ? "#667eea" : "white",
+                background: scope === s ? "var(--admin-primary, #2563eb)" : "white",
                 color: scope === s ? "white" : "#333",
                 border: "1px solid #e5e7eb",
                 borderRadius: 6,
@@ -523,7 +523,7 @@ export function SubscriptionsDashboardPage() {
               }}
               style={{
                 padding: isMobile ? "6px 12px" : "8px 16px",
-                background: statusFilter === s ? "#667eea" : "white",
+                background: statusFilter === s ? "var(--admin-primary, #2563eb)" : "white",
                 color: statusFilter === s ? "white" : "#333",
                 border: "1px solid #e5e7eb",
                 borderRadius: 6,
@@ -774,7 +774,7 @@ export function SubscriptionsDashboardPage() {
               fontSize: isMobile ? 16 : 18,
               fontWeight: 600,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {t("admin.subscriptions.expiring7d")}
@@ -885,7 +885,7 @@ export function SubscriptionsDashboardPage() {
                         onClick={() => navigate(`/${lang}${item.adminUrl}`)}
                         style={{
                           padding: "4px 8px",
-                          background: "#667eea",
+                          background: "var(--admin-primary, #2563eb)",
                           color: "white",
                           border: "none",
                           borderRadius: 4,
@@ -921,7 +921,7 @@ export function SubscriptionsDashboardPage() {
               fontSize: isMobile ? 16 : 18,
               fontWeight: 600,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {t("admin.subscriptions.trends")}
@@ -1361,7 +1361,7 @@ export function SubscriptionsDashboardPage() {
                               onClick={() => handleEdit(item)}
                               style={{
                                 padding: "4px 8px",
-                                background: "#667eea",
+                                background: "var(--admin-primary, #2563eb)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: 4,
@@ -1491,7 +1491,7 @@ export function SubscriptionsDashboardPage() {
                       <span
                         style={{
                           padding: "4px 8px",
-                          background: "#667eea",
+                          background: "var(--admin-primary, #2563eb)",
                           color: "white",
                           borderRadius: 4,
                           fontSize: 12,
@@ -1701,7 +1701,7 @@ export function SubscriptionsDashboardPage() {
                               }}
                               style={{
                                 padding: "4px 8px",
-                                background: "#667eea",
+                                background: "var(--admin-primary, #2563eb)",
                                 color: "white",
                                 border: "none",
                                 borderRadius: 4,
@@ -1854,7 +1854,7 @@ export function SubscriptionsDashboardPage() {
                 disabled={page === 0}
                 style={{
                   padding: isMobile ? "10px 16px" : "8px 16px",
-                  background: page === 0 ? "#f3f4f6" : "#667eea",
+                  background: page === 0 ? "#f3f4f6" : "var(--admin-primary, #2563eb)",
                   color: page === 0 ? "#9ca3af" : "white",
                   border: "none",
                   borderRadius: 6,
@@ -1871,7 +1871,7 @@ export function SubscriptionsDashboardPage() {
                 disabled={(page + 1) * pageSize >= total}
                 style={{
                   padding: isMobile ? "10px 16px" : "8px 16px",
-                  background: (page + 1) * pageSize >= total ? "#f3f4f6" : "#667eea",
+                  background: (page + 1) * pageSize >= total ? "#f3f4f6" : "var(--admin-primary, #2563eb)",
                   color: (page + 1) * pageSize >= total ? "#9ca3af" : "white",
                   border: "none",
                   borderRadius: 6,
@@ -1938,7 +1938,7 @@ export function SubscriptionsDashboardPage() {
                   fontSize: isMobile ? 18 : 24,
                   fontWeight: 600,
                   fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    "var(--admin-font-display, Inter, system-ui, sans-serif)",
                 }}
               >
                 {t("admin.subscriptionHistory")}
@@ -2158,7 +2158,7 @@ export function SubscriptionsDashboardPage() {
                         disabled={historyPage === 0}
                         style={{
                           padding: "8px 16px",
-                          background: historyPage === 0 ? "#e5e7eb" : "#667eea",
+                          background: historyPage === 0 ? "#e5e7eb" : "var(--admin-primary, #2563eb)",
                           color: historyPage === 0 ? "#999" : "white",
                           border: "none",
                           borderRadius: 6,
@@ -2185,7 +2185,7 @@ export function SubscriptionsDashboardPage() {
                           background:
                             (historyPage + 1) * historyPageSize >= historyTotal
                               ? "#e5e7eb"
-                              : "#667eea",
+                              : "var(--admin-primary, #2563eb)",
                           color:
                             (historyPage + 1) * historyPageSize >= historyTotal ? "#999" : "white",
                           border: "none",
@@ -2227,7 +2227,7 @@ export function SubscriptionsDashboardPage() {
             fontSize: isMobile ? 20 : 24,
             fontWeight: 600,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
             color: "#333",
           }}
         >
@@ -2409,7 +2409,7 @@ export function SubscriptionsDashboardPage() {
                     disabled={eventLogPage === 0}
                     style={{
                       padding: "8px 16px",
-                      background: eventLogPage === 0 ? "#e5e7eb" : "#667eea",
+                      background: eventLogPage === 0 ? "#e5e7eb" : "var(--admin-primary, #2563eb)",
                       color: eventLogPage === 0 ? "#999" : "white",
                       border: "none",
                       borderRadius: 6,
@@ -2429,7 +2429,7 @@ export function SubscriptionsDashboardPage() {
                       background:
                         (eventLogPage + 1) * eventLogPageSize >= eventLogTotal
                           ? "#e5e7eb"
-                          : "#667eea",
+                          : "var(--admin-primary, #2563eb)",
                       color:
                         (eventLogPage + 1) * eventLogPageSize >= eventLogTotal ? "#999" : "white",
                       border: "none",

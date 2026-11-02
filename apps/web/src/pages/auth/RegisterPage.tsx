@@ -107,17 +107,7 @@ export function RegisterPage() {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        minWidth: "100vw",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f3efe8",
-        padding: "16px",
-        margin: 0,
-        boxSizing: "border-box",
-      }}
+      className="admin-login"
     >
       <div
         style={{
@@ -137,7 +127,7 @@ export function RegisterPage() {
             fontSize: "clamp(24px, 6vw, 32px)",
             fontWeight: 700,
             fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              "var(--admin-font-display, Inter, system-ui, sans-serif)",
           }}
         >
           {t("admin.register")}

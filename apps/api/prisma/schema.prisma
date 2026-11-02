@@ -708,6 +708,9 @@ model User {
   totpSecret         String? // TOTP secret for 2FA
   isTwoFactorEnabled Boolean @default(false) // Whether 2FA is enabled for this user
 
+  // Optional floating AI Assistant dock (content draft). Default off; superadmins seeded on.
+  aiAssistantEnabled Boolean @default(false)
+
   // Active site for visitor status
   // activeSiteId === null → visitor (no active site)
   // activeSiteId !== null → active user (has active site)

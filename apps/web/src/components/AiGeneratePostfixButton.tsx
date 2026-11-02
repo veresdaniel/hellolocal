@@ -8,6 +8,7 @@ import {
 import { useConfirm } from "../hooks/useConfirm";
 import { useContentDraftStatus } from "../hooks/useContentDraftStatus";
 import { useToast } from "../contexts/ToastContext";
+import { useAuth } from "../contexts/useAuth";
 import { hasVisibleHtml } from "../utils/hasVisibleHtml";
 
 export type AiDraftTarget = {
@@ -36,6 +37,9 @@ function draftErrorMessage(err: unknown, t: (key: string) => string): string {
   const raw = err instanceof Error ? err.message : "";
   if (raw.includes("content_draft_disabled")) return t("admin.contentDraft.disabled");
   if (raw.includes("content_draft_needs_name")) return t("admin.contentDraft.needsName");
+  if (raw.includes("content_draft_auth") || raw.includes("401")) {
+    return t("admin.contentDraft.authFailed");
+  }
   if (raw.includes("content_draft_rate_limited") || raw.includes("429")) {
     return t("admin.contentDraft.rateLimited");
   }
@@ -64,6 +68,7 @@ export function AiGeneratePostfixButton({
   if (!visible) return null;
 
   const run = async () => {
+    // Keep clickable when gated so the disabled reason is never mysterious.
     if (!enabled) {
       showToast(t("admin.contentDraft.disabled"), "info");
       return;
@@ -137,7 +142,7 @@ export function AiGeneratePostfixButton({
           fontSize: 12,
           fontWeight: 700,
           letterSpacing: 0.2,
-          cursor: busy ? "wait" : enabled ? "pointer" : "not-allowed",
+          cursor: busy ? "wait" : "pointer",
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }
@@ -158,7 +163,7 @@ export function AiGeneratePostfixButton({
           fontWeight: 700,
           letterSpacing: 0.3,
           lineHeight: 1,
-          cursor: busy ? "wait" : enabled ? "pointer" : "not-allowed",
+          cursor: busy ? "wait" : "pointer",
           boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -169,7 +174,8 @@ export function AiGeneratePostfixButton({
       type="button"
       className={`ai-postfix-btn ai-postfix-btn--${variant}`}
       onClick={() => void run()}
-      disabled={busy || !enabled}
+      disabled={busy}
+      aria-disabled={!enabled}
       title={title}
       aria-label={title}
       style={{ ...base, ...style }}

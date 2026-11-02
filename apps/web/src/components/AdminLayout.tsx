@@ -1,9 +1,10 @@
 // src/components/AdminLayout.tsx
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useContext, useState, useEffect, useRef } from "react";
+import { useContext, useState, useEffect, useRef, useMemo } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { AdminSiteContext } from "../contexts/AdminSiteContext";
+import { AdminPageChromeProvider } from "../contexts/AdminPageChromeContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
 import { useAdminCache } from "../hooks/useAdminCache";
 import { useVersionCheck } from "../hooks/useVersionCheck";
@@ -20,6 +21,8 @@ import {
   isLang,
 } from "../app/config";
 import { AdminPageSkeleton } from "./AdminPageSkeleton";
+import { AdminBackButton } from "./AdminBackButton";
+import { isAdminDashboardPath } from "../utils/adminBackPath";
 import { isSuperadmin } from "../utils/roleHelpers";
 import type { UserRole } from "../types/enums";
 import "../styles/sessionWarning.css";
@@ -37,10 +40,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [toolbarMainEl, setToolbarMainEl] = useState<HTMLElement | null>(null);
   const location = useLocation();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
+  const isDashboard = isAdminDashboardPath(location.pathname);
+  const pageChromeValue = useMemo(
+    () => ({
+      toolbarMainEl,
+      // Slot exists whenever we're past the dashboard (toolbar mounts even if ref is pending).
+      hasToolbarSlot: !isDashboard,
+    }),
+    [toolbarMainEl, isDashboard],
+  );
 
   // Track previous location to detect route changes
   const [previousLocation, setPreviousLocation] = useState<string | null>(null);
@@ -196,9 +209,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   if (isLoading) {
     return (
       <div
+        className="admin-layout"
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "var(--admin-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%))",
         }}
       />
     );
@@ -226,7 +240,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       className="admin-layout"
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: "var(--admin-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%))",
         margin: 0,
         padding: 0,
         width: "100%",
@@ -307,7 +321,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               to={adminPath("")}
               style={{
                 textDecoration: "none",
-                color: "var(--hl-ink, #1b1730)",
+                color: "var(--admin-primary, #667eea)",
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
@@ -324,8 +338,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 style={{
                   fontSize: "clamp(18px, 3vw, 22px)",
                   fontWeight: 700,
-                  fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -442,13 +455,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 }
                 style={{
                   padding: 8,
-                  background: isMobileMenuOpen ? "#667eea" : "#f0f0ff",
-                  color: isMobileMenuOpen ? "white" : "#667eea",
-                  border: "1px solid #667eea",
+                  background: isMobileMenuOpen
+                    ? "var(--admin-primary, #2563eb)"
+                    : "var(--admin-primary-soft, #eff6ff)",
+                  color: isMobileMenuOpen
+                    ? "var(--admin-on-primary, #ffffff)"
+                    : "var(--admin-primary, #2563eb)",
+                  border: "1px solid var(--admin-primary, #2563eb)",
                   borderRadius: 6,
                   cursor: "pointer",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -540,19 +556,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div
                 style={{
                   padding: "10px 14px",
-                  background: "#f8f8ff",
+                  background: "var(--admin-surface-subtle, #f8fafc)",
                   borderRadius: 8,
-                  border: "1px solid #e0e0ff",
+                  border: "1px solid var(--admin-border-subtle, #e2e8f0)",
                 }}
               >
                 <div
                   style={{
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    color: "#666",
+                    color: "var(--admin-text-muted, #475569)",
                     marginBottom: 6,
                     fontWeight: 600,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
                   }}
                 >
                   {t("admin.language")}
@@ -564,19 +579,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div
                   style={{
                     padding: "10px 14px",
-                    background: "#f8f8ff",
+                    background: "var(--admin-surface-subtle, #f8fafc)",
                     borderRadius: 8,
-                    border: "1px solid #e0e0ff",
+                    border: "1px solid var(--admin-border-subtle, #e2e8f0)",
                   }}
                 >
                   <div
                     style={{
                       fontSize: "clamp(13px, 3vw, 15px)",
-                      color: "#666",
+                      color: "var(--admin-text-muted, #475569)",
                       marginBottom: 6,
                       fontWeight: 600,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
                     }}
                   >
                     {t("admin.site")}
@@ -588,19 +602,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div
                 style={{
                   padding: "10px 14px",
-                  background: "#f8f8ff",
+                  background: "var(--admin-surface-subtle, #f8fafc)",
                   borderRadius: 8,
-                  border: "1px solid #e0e0ff",
+                  border: "1px solid var(--admin-border-subtle, #e2e8f0)",
                 }}
               >
                 <div
                   style={{
                     fontSize: "clamp(13px, 3vw, 15px)",
-                    color: "#666",
+                    color: "var(--admin-text-muted, #475569)",
                     marginBottom: 6,
                     fontWeight: 600,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
                   }}
                 >
                   {t("admin.userInfo")}
@@ -686,25 +699,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       )}
 
-      {/* Main Content */}
-      <main
-        id="admin-main"
-        tabIndex={-1}
-        style={{
-          padding: isMobile ? "16px" : "clamp(16px, 4vw, 24px)",
-          margin: 0,
-          maxWidth: 1400,
-          marginLeft: "auto",
-          marginRight: "auto",
-          width: "100%",
-          boxSizing: "border-box",
-          overflowX: "hidden",
-          overflowY: "auto",
-        }}
-      >
-        {/* Only show skeleton if we're navigating between admin routes */}
-        {/* Don't rely on isNavigationPending alone as it can get stuck during lazy loading */}
-        {isNavigating ? <AdminPageSkeleton /> : children}
+      {/* Main Content — width via .admin-main (shared --admin-content-max-width) */}
+      <main id="admin-main" className="admin-main" tabIndex={-1}>
+        {/*
+          One toolbar row for every admin screen:
+          [Vissza] + [title / page actions via AdminPageHeader portal]
+        */}
+        {!isNavigating && !isDashboard && (
+          <div className="admin-page-toolbar">
+            <AdminBackButton />
+            <div
+              ref={setToolbarMainEl}
+              className="admin-page-toolbar__main"
+              id="admin-page-toolbar-main"
+            />
+          </div>
+        )}
+        <AdminPageChromeProvider value={pageChromeValue}>
+          {/* Only show skeleton if we're navigating between admin routes */}
+          {/* Don't rely on isNavigationPending alone as it can get stuck during lazy loading */}
+          {isNavigating ? <AdminPageSkeleton /> : children}
+        </AdminPageChromeProvider>
       </main>
 
       <VersionDisplay />

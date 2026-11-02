@@ -2,19 +2,43 @@
 
 ## Crawl files (robots + sitemap)
 
-Production Caddy sends `hello-local.io` to the **web** container (`server.js`), not the API host.
-Therefore crawl files are exposed on the public origin via web → API proxy:
+Production Caddy sends public hosts to the **web** container (`server.js`), not the API host.
+Crawl files are exposed on each public origin via web → API proxy. The web proxy forwards
+`X-Forwarded-Host` / `X-Forwarded-Proto` so the API can resolve the tenant **at request time**.
 
 | Public URL | Proxied API |
 |------------|-------------|
-| `https://hello-local.io/robots.txt` | `GET /api/seo/robots.txt` |
-| `https://hello-local.io/sitemap.xml` | `GET /api/seo/sitemap.xml` (index) |
-| `https://hello-local.io/sitemap-{chunk}.xml` | `GET /api/seo/sitemap-{chunk}.xml` |
+| `https://{host}/robots.txt` | `GET /api/seo/robots.txt` |
+| `https://{host}/sitemap.xml` | `GET /api/seo/sitemap.xml` (index) |
+| `https://{host}/sitemap-{chunk}.xml` | `GET /api/seo/sitemap-{chunk}.xml` |
 
 Chunks: `static`, `sites`, `places`, `events`, `towns`, `pages`, `collections`.
-`FRONTEND_URL` must be the canonical public origin (used in sitemap `<loc>` and robots `Sitemap:`).
 
-After deploy: submit `https://hello-local.io/sitemap.xml` in Google Search Console.
+### Production vs non-prod
+
+Live SEO is gated by `FRONTEND_URL` being `https://hello-local.io` (or `www`).
+Beta (`beta.hello-local.io`), devel, and local all get `Disallow: /` and **no** `Sitemap:` line;
+sitemap endpoints return 404. `NODE_ENV=production` alone is not enough (beta/devel also set it).
+
+### Domain-scoped, DB-driven (no redeploy per domain)
+
+On production, `Host` / `X-Forwarded-Host` is looked up against admin data:
+
+1. `SiteDomain.domain` / `Site.primaryDomain` → that Site’s URLs only, origin = that host
+2. `Town.customDomain` / `Place.customDomain` / `Collection.domain` → that entity only
+3. Platform host (`hello-local.io`) → platform pages + sites **without** a custom domain
+
+Adding a domain in admin takes effect immediately (Prisma lookup + sitemap cache invalidate).
+No per-domain env vars and no app redeploy.
+
+### Cache / invalidation
+
+In-memory sitemap cache TTL: **60 seconds** (`SEO_CACHE_TTL_SECONDS`).
+Admin writes to site / place / event / town / page / legal / collection / domains call
+`SitemapService.invalidate()` and clear the cache immediately. HTTP `Cache-Control: max-age=60`.
+
+After deploy: submit each public host’s `https://{domain}/sitemap.xml` in Google Search Console
+(platform + each Site custom domain as needed).
 
 ## Áttekintés
 

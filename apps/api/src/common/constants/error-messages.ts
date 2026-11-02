@@ -53,6 +53,7 @@ export const ERROR_MESSAGES = {
   BAD_REQUEST_LANG_REQUIRED: "errors.badRequest.langRequired",
   BAD_REQUEST_USER_ID_REQUIRED: "errors.badRequest.userIdRequired",
   BAD_REQUEST_2FA_NOT_SETUP: "errors.badRequest.2FANotSetup",
+  BAD_REQUEST_2FA_ALREADY_ENABLED: "errors.badRequest.2FAAlreadyEnabled",
   BAD_REQUEST_2FA_DEPENDENCIES_NOT_INSTALLED: "errors.badRequest.2FADependenciesNotInstalled",
   BAD_REQUEST_2FA_QR_CODE_NOT_AVAILABLE: "errors.badRequest.2FAQRCodeNotAvailable",
   BAD_REQUEST_INVALID_LOGO_URL: "errors.badRequest.invalidLogoUrl",
@@ -69,6 +70,9 @@ export const ERROR_MESSAGES = {
 
   // Unauthorized errors
   UNAUTHORIZED_DISABLE_OWN_2FA: "errors.unauthorized.disableOwn2FA",
+  UNAUTHORIZED_2FA_STEP_UP: "errors.unauthorized.twoFactorStepUp",
+  FORBIDDEN_2FA_MANAGE_OTHERS: "errors.forbidden.twoFactorManageOthers",
+  BAD_REQUEST_2FA_STEP_UP_REQUIRED: "errors.badRequest.twoFactorStepUpRequired",
 
   // Internal errors
   INTERNAL_ERROR: "errors.internal.error",

@@ -260,7 +260,7 @@ export function SiteMembershipsPage() {
   const siteSelectLocked = !userIsSuperadmin || !!selectedSiteId || !!editingId;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.dashboardCards.regionAndMemberships")}
         subtitle={t("admin.dashboardCards.regionAndMembershipsDesc")}
@@ -315,13 +315,13 @@ export function SiteMembershipsPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 24,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.12)",
+            boxShadow: "var(--admin-shadow, 0 8px 24px rgba(15, 23, 42, 0.08))",
           }}
         >
           <h2
             style={{
               margin: "0 0 8px 0",
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(18px, 4vw, 20px)",
               fontWeight: 700,
             }}
@@ -345,7 +345,7 @@ export function SiteMembershipsPage() {
                 alignItems: "center",
                 gap: 8,
                 padding: "10px 16px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "var(--admin-primary, #2563eb)",
                 color: "#fff",
                 borderRadius: 8,
                 textDecoration: "none",
@@ -382,7 +382,7 @@ export function SiteMembershipsPage() {
         <h2
           style={{
             margin: "0 0 16px 0",
-            color: "#667eea",
+            color: "var(--admin-primary, #2563eb)",
             fontSize: "clamp(18px, 4vw, 20px)",
             fontWeight: 700,
           }}
@@ -398,13 +398,13 @@ export function SiteMembershipsPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            boxShadow: "var(--admin-shadow, 0 8px 24px rgba(15, 23, 42, 0.08))",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(20px, 5vw, 24px)",
               fontWeight: 700,
             }}
@@ -429,7 +429,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.siteId ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.siteId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -476,7 +476,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -521,7 +521,7 @@ export function SiteMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}

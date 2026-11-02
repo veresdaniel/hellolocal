@@ -548,7 +548,7 @@ export function GalleriesPage() {
                 disabled={isUploading}
                 style={{
                   padding: "8px 16px",
-                  background: "#667eea",
+                  background: "var(--admin-primary, #2563eb)",
                   color: "white",
                   border: "none",
                   borderRadius: "4px",
@@ -748,7 +748,7 @@ export function GalleriesPage() {
               onClick={isCreating ? handleCreate : () => handleUpdate(editingId!)}
               style={{
                 padding: "10px 20px",
-                background: "#667eea",
+                background: "var(--admin-primary, #2563eb)",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",

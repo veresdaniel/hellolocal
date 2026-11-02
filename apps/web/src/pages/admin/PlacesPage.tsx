@@ -30,6 +30,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { AiAssistantPanel } from "../../components/AiAssistantPanel";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
@@ -619,7 +620,7 @@ export function PlacesPage() {
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
-        navigate("/admin");
+        navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
     } catch (err) {
@@ -759,7 +760,7 @@ export function PlacesPage() {
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
-        navigate("/admin");
+        navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
     } catch (err) {
@@ -1062,7 +1063,7 @@ export function PlacesPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.places")}
         newButtonLabel={t("admin.forms.newPlace")}
@@ -1078,15 +1079,12 @@ export function PlacesPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-
-          // If we came from dashboard, navigate back to dashboard
-          const fromParam = searchParams.get("from");
-          if (fromParam === "dashboard") {
-            navigate("/admin");
-            return;
-          }
-          // Back button will handle navigation otherwise
         }}
+        backTo={
+          searchParams.get("from") === "dashboard"
+            ? `/${(i18n.language || "hu").split("-")[0]}/admin`
+            : undefined
+        }
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
 
@@ -1097,18 +1095,18 @@ export function PlacesPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-            border: "1px solid rgba(102, 126, 234, 0.1)",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+            border: "1px solid rgba(37, 99, 235, 0.1)",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editPlace") : t("admin.forms.newPlace")}
@@ -1139,7 +1137,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                   }}
@@ -1173,7 +1171,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -1189,7 +1187,7 @@ export function PlacesPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid #e0e7ff",
+                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -1200,11 +1198,11 @@ export function PlacesPage() {
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                    e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -1221,7 +1219,7 @@ export function PlacesPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(13px, 3vw, 14px)",
                   }}
@@ -1235,7 +1233,7 @@ export function PlacesPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid #e0e7ff",
+                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -1246,11 +1244,11 @@ export function PlacesPage() {
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                    e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -1276,6 +1274,35 @@ export function PlacesPage() {
             <LanguageAwareForm>
               {(selectedLang) => (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <AiAssistantPanel
+                    kind="place"
+                    lang={selectedLang}
+                    siteId={selectedSiteId || undefined}
+                    placeId={editingId || undefined}
+                    name={readLang(formData, "name", selectedLang)}
+                    categoryId={formData.categoryId || undefined}
+                    townId={formData.townId || undefined}
+                    storageKey={`hl-ai-assistant:place:${editingId || "new"}`}
+                    values={{
+                      name: readLang(formData, "name", selectedLang),
+                      shortDescription: readLang(formData, "shortDescription", selectedLang),
+                      description: readLang(formData, "description", selectedLang),
+                      seoTitle: readLang(formData, "seoTitle", selectedLang),
+                      seoDescription: readLang(formData, "seoDescription", selectedLang),
+                      seoKeywords: readLangList(formData, "seoKeywords", selectedLang).join(", "),
+                    }}
+                    onApply={(field, text) => {
+                      if (field === "seoKeywords") {
+                        const keywords = text
+                          .split(/[,;]/)
+                          .map((part) => part.trim())
+                          .filter(Boolean);
+                        setFormData(patchLang(formData, "seoKeywords", selectedLang, keywords));
+                        return;
+                      }
+                      setFormData(patchLang(formData, field, selectedLang, text));
+                    }}
+                  />
                   {/* Name - only editable by owner/manager (affects slugs) */}
                   {canModifySeo() ? (
                     <div>
@@ -1324,7 +1351,7 @@ export function PlacesPage() {
                           border:
                             readLang(formErrors, "name", selectedLang)
                               ? "2px solid #fca5a5"
-                              : "2px solid #e0e7ff",
+                              : "2px solid var(--admin-primary-border, #bfdbfe)",
                           borderRadius: 8,
                           outline: "none",
                           transition: "all 0.3s ease",
@@ -1340,14 +1367,14 @@ export function PlacesPage() {
                           const hasError =
                             readLang(formErrors, "name", selectedLang);
                           if (!hasError) {
-                            e.target.style.borderColor = "#667eea";
-                            e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                            e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                            e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                           }
                         }}
                         onBlur={(e) => {
                           const hasError =
                             readLang(formErrors, "name", selectedLang);
-                          e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
+                          e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
                           e.target.style.boxShadow = "none";
                         }}
                       />
@@ -1519,9 +1546,9 @@ export function PlacesPage() {
                       style={{
                         marginTop: 24,
                         padding: 16,
-                        background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                        background: "linear-gradient(135deg, var(--admin-primary, #2563eb)15 0%, var(--admin-primary-hover, #1d4ed8)15 100%)",
                         borderRadius: 8,
-                        border: "1px solid #667eea30",
+                        border: "1px solid var(--admin-primary, #2563eb)30",
                       }}
                     >
                       <h3
@@ -1529,9 +1556,9 @@ export function PlacesPage() {
                           margin: "0 0 16px 0",
                           fontSize: "clamp(16px, 3.5vw, 18px)",
                           fontWeight: 600,
-                          color: "#667eea",
+                          color: "var(--admin-primary, #2563eb)",
                           fontFamily:
-                            "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                            "var(--admin-font-display, Inter, system-ui, sans-serif)",
                         }}
                       >
                         🔍 SEO {t("admin.settings")}
@@ -1978,7 +2005,7 @@ export function PlacesPage() {
                       fontWeight: 700,
                       marginBottom: 4,
                       fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
                     }}
                   >
                     {formData.isActive ? t("admin.placeActive") : t("admin.placeInactive")}
@@ -2089,8 +2116,8 @@ export function PlacesPage() {
                   padding: "clamp(24px, 5vw, 32px)",
                   background: "white",
                   borderRadius: 16,
-                  boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-                  border: "1px solid rgba(102, 126, 234, 0.1)",
+                  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+                  border: "1px solid rgba(37, 99, 235, 0.1)",
                 }}
               >
                 <FloorplanSection
@@ -2243,7 +2270,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "6px 12px",
-                    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                    background: "var(--admin-danger, #b91c1c)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
@@ -2280,7 +2307,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "6px 12px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "var(--admin-primary, #2563eb)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 6,
@@ -2290,16 +2317,16 @@ export function PlacesPage() {
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     transition: "all 0.2s ease",
-                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     marginLeft: 8,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.24)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
                   }}
                 >
                   {t("admin.analyticsLabel")}
@@ -2354,7 +2381,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "8px 16px",
-                    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                    background: "var(--admin-danger, #b91c1c)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 8,
@@ -2468,7 +2495,7 @@ export function PlacesPage() {
                   }}
                   style={{
                     padding: "8px 16px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "var(--admin-primary, #2563eb)",
                     color: "var(--hl-on-dark-strong, #ffffff)",
                     border: "none",
                     borderRadius: 8,
@@ -2478,16 +2505,16 @@ export function PlacesPage() {
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     marginTop: 8,
-                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     transition: "all 0.3s ease",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.4)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(15, 23, 42, 0.24)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(102, 126, 234, 0.3)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.18)";
                   }}
                 >
                   {t("admin.analyticsLabel")}

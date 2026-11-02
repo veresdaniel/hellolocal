@@ -318,7 +318,7 @@ export function PlaceMembershipsPage() {
   // Place options are always loaded for selectedSiteId (régió); empty/"none" remains selectable.
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(16px, 4vw, 24px)" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.placeMemberships")}
         newButtonLabel={t("admin.forms.newPlaceMembership")}
@@ -370,13 +370,13 @@ export function PlaceMembershipsPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(20px, 5vw, 24px)",
               fontWeight: 700,
             }}
@@ -399,7 +399,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.placeId ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.placeId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -441,7 +441,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}
@@ -493,7 +493,7 @@ export function PlaceMembershipsPage() {
                   fontSize: "clamp(15px, 3.5vw, 16px)",
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.role ? "2px solid #dc3545" : "2px solid #e0e7ff",
+                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border, #bfdbfe)",
                   borderRadius: 8,
                   boxSizing: "border-box",
                 }}

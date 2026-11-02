@@ -8,7 +8,7 @@ export function SiteAnalyticsPage() {
   usePageTitle("admin.analyticsLabel");
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.hierarchy.regionAnalytics") || "Régió analitika"}
         subtitle={

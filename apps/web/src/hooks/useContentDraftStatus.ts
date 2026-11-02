@@ -9,9 +9,19 @@ type CacheEntry = {
 const CACHE_TTL_MS = 60_000;
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<ContentDraftStatus>>();
+let cacheEpoch = 0;
+const epochListeners = new Set<() => void>();
 
 function cacheKey(siteId?: string, placeId?: string) {
   return `${siteId || ""}::${placeId || ""}`;
+}
+
+/** Drop cached status after App Settings save so AI controls re-enable promptly. */
+export function clearContentDraftStatusCache() {
+  cache.clear();
+  inflight.clear();
+  cacheEpoch += 1;
+  for (const listener of epochListeners) listener();
 }
 
 async function loadStatus(siteId?: string, placeId?: string): Promise<ContentDraftStatus> {
@@ -39,6 +49,16 @@ export function useContentDraftStatus(siteId?: string, placeId?: string) {
   const [ready, setReady] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [allowed, setAllowed] = useState(false);
+  const [keyConfigured, setKeyConfigured] = useState(false);
+  const [epoch, setEpoch] = useState(cacheEpoch);
+
+  useEffect(() => {
+    const onBump = () => setEpoch(cacheEpoch);
+    epochListeners.add(onBump);
+    return () => {
+      epochListeners.delete(onBump);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,11 +68,13 @@ export function useContentDraftStatus(siteId?: string, placeId?: string) {
         if (cancelled) return;
         setEnabled(Boolean(status.enabled));
         setAllowed(Boolean(status.allowed));
+        setKeyConfigured(Boolean(status.keyConfigured ?? status.enabled));
       })
       .catch(() => {
         if (cancelled) return;
         setEnabled(false);
         setAllowed(false);
+        setKeyConfigured(false);
       })
       .finally(() => {
         if (!cancelled) setReady(true);
@@ -60,7 +82,7 @@ export function useContentDraftStatus(siteId?: string, placeId?: string) {
     return () => {
       cancelled = true;
     };
-  }, [siteId, placeId]);
+  }, [siteId, placeId, epoch]);
 
-  return { ready, enabled, allowed, visible: ready && allowed };
+  return { ready, enabled, allowed, keyConfigured, visible: ready && allowed };
 }

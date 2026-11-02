@@ -53,3 +53,9 @@ Frontend `pathForHostResolve` / `entityPublicAddress` prefer an entity `customDo
 ## Debugging
 
 Middleware logs domain matches at debug level. `GET /api/domain/:host` returns `{ kind, slug, defaultLang, domain, entitySlug? }` or 404.
+
+## SEO (robots / sitemap)
+
+Crawl files use the same DB host resolution at request time (`X-Forwarded-Host` →
+`SiteDomain` / `primaryDomain` / town-place-collection custom host). Adding a domain in
+admin does **not** require an app redeploy. See [frontend-seo-middleware.md](./frontend-seo-middleware.md).

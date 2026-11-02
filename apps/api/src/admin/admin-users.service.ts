@@ -30,6 +30,8 @@ export interface UpdateUserDto {
   bio?: string;
   isActive?: boolean;
   siteIds?: string[];
+  /** Opt-in floating AI Assistant; users may toggle for themselves. */
+  aiAssistantEnabled?: boolean;
 }
 
 @Injectable()
@@ -114,20 +116,29 @@ export class AdminUsersService {
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { role: newRole },
+      data: {
+        role: newRole,
+        // New superadmins get AI Assistant on; demotion leaves the flag as-is.
+        ...(newRole === UserRole.superadmin ? { aiAssistantEnabled: true } : {}),
+      },
       select: {
         id: true,
         username: true,
         email: true,
         role: true,
+        aiAssistantEnabled: true,
       },
     });
   }
 
   async updateUser(userId: string, dto: UpdateUserDto) {
+    const data: UpdateUserDto = { ...dto };
+    // Never allow mass-assigning siteIds through prisma data object.
+    const { siteIds: _siteIds, ...userFields } = data;
+    void _siteIds;
     return this.prisma.user.update({
       where: { id: userId },
-      data: dto,
+      data: userFields,
       include: {
         sites: {
           include: {
@@ -196,6 +207,7 @@ export class AdminUsersService {
 
     // Create user (as visitor - activeSiteId is null by default)
     // User will become active when they activate a site
+    const role = dto.role || UserRole.viewer;
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
@@ -204,8 +216,10 @@ export class AdminUsersService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         bio: dto.bio,
-        role: dto.role || UserRole.viewer,
+        role,
         isActive: dto.isActive ?? true,
+        // Superadmins get AI Assistant enabled by default; everyone else stays off.
+        aiAssistantEnabled: role === UserRole.superadmin,
         activeSiteId: null, // Visitor by default
         sites: dto.siteIds
           ? {
@@ -251,26 +265,49 @@ export class AdminUsersService {
     return { message: "User deleted successfully" };
   }
 
-  async updateUserWithSites(userId: string, dto: UpdateUserDto, currentUserRole: UserRole) {
-    // Only superadmin or admin can update other users
-    if (currentUserRole !== UserRole.superadmin && currentUserRole !== UserRole.admin) {
+  async updateUserWithSites(
+    userId: string,
+    dto: UpdateUserDto,
+    currentUserRole: UserRole,
+    options?: { isSelf?: boolean }
+  ) {
+    const isAdmin =
+      currentUserRole === UserRole.superadmin || currentUserRole === UserRole.admin;
+    const isSelf = Boolean(options?.isSelf);
+
+    // Non-admins may only update their own safe profile fields (incl. AI Assistant opt-in).
+    if (!isAdmin && !isSelf) {
       throw new ForbiddenException("Only superadmin or admin can update users");
+    }
+
+    if (!isAdmin && isSelf) {
+      const allowedSelfKeys = ["firstName", "lastName", "bio", "aiAssistantEnabled"] as const;
+      const disallowed = Object.keys(dto).filter(
+        (key) => !allowedSelfKeys.includes(key as (typeof allowedSelfKeys)[number])
+      );
+      if (disallowed.length > 0) {
+        throw new ForbiddenException("You can only update your own profile fields");
+      }
+      if (dto.siteIds !== undefined || dto.isActive !== undefined) {
+        throw new ForbiddenException("You cannot change site memberships or active state");
+      }
     }
 
     const updateData: Partial<UpdateUserDto> = {};
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.bio !== undefined) updateData.bio = dto.bio;
-    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+    if (dto.isActive !== undefined && isAdmin) updateData.isActive = dto.isActive;
+    if (dto.aiAssistantEnabled !== undefined) {
+      updateData.aiAssistantEnabled = dto.aiAssistantEnabled;
+    }
 
-    // Update site relationships if provided
-    if (dto.siteIds !== undefined) {
-      // Delete existing site relationships
+    // Update site relationships if provided (admin only)
+    if (dto.siteIds !== undefined && isAdmin) {
       await this.prisma.userSite.deleteMany({
         where: { userId },
       });
 
-      // Create new site relationships
       if (dto.siteIds.length > 0) {
         await this.prisma.userSite.createMany({
           data: dto.siteIds.map((siteId, index) => ({

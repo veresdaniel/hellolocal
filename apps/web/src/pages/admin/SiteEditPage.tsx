@@ -13,6 +13,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { SiteLanguagesEditor } from "../../components/SiteLanguagesEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { AiAssistantPanel } from "../../components/AiAssistantPanel";
 import { LANG_VALUES, type Lang } from "../../types/enums";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { uploadService } from "../../services/upload/uploadService";
@@ -431,14 +432,11 @@ export function SiteEditPage() {
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={currentTranslation?.name || site.slug}
         isCreatingOrEditing={true}
         onSave={handleSave}
-        onCancel={() => {
-          // Back button will handle navigation to sites list
-        }}
         saveLabel={t("common.save")}
         cancelLabel={t("common.cancel")}
       />
@@ -446,48 +444,17 @@ export function SiteEditPage() {
       {/* Status chips */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
         <span
-          style={{
-            padding: "6px 12px",
-            borderRadius: 6,
-            background: site.isActive ? "#10b981" : "#6b7280",
-            color: "white",
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontWeight: 600,
-          }}
+          className={site.isActive ? "admin-chip admin-chip--active" : "admin-chip admin-chip--inactive"}
         >
           {site.isActive ? t("common.active") : t("common.inactive")}
         </span>
-        <span
-          style={{
-            padding: "6px 12px",
-            borderRadius: 6,
-            background: "#3b82f6",
-            color: "white",
-            fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            fontWeight: 600,
-          }}
-        >
+        <span className="admin-chip admin-chip--info">
           {t("admin.plan")}: {formData.plan}
         </span>
         {(site.primaryDomain ||
           site.siteDomains?.find((item) => item.isPrimary)?.domain ||
           site.siteDomains?.[0]?.domain) && (
-          <span
-            style={{
-              padding: "6px 12px",
-              borderRadius: 6,
-              background: "#8b5cf6",
-              color: "white",
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontWeight: 600,
-            }}
-          >
+          <span className="admin-chip admin-chip--neutral">
             {site.primaryDomain ||
               site.siteDomains?.find((item) => item.isPrimary)?.domain ||
               site.siteDomains?.[0]?.domain}
@@ -507,8 +474,8 @@ export function SiteEditPage() {
           background: "white",
           borderRadius: 16,
           marginBottom: 24,
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-          border: "1px solid rgba(102, 126, 234, 0.1)",
+          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+          border: "1px solid rgba(37, 99, 235, 0.1)",
           overflow: "hidden",
         }}
       >
@@ -527,9 +494,9 @@ export function SiteEditPage() {
               style={{
                 padding: "16px 24px",
                 border: "none",
-                borderBottom: activeTab === tab.id ? "3px solid #667eea" : "3px solid transparent",
+                borderBottom: activeTab === tab.id ? "3px solid var(--admin-primary, #2563eb)" : "3px solid transparent",
                 background: "transparent",
-                color: activeTab === tab.id ? "#667eea" : "#6b7280",
+                color: activeTab === tab.id ? "var(--admin-primary, #2563eb)" : "#6b7280",
                 fontWeight: activeTab === tab.id ? 600 : 400,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
@@ -540,7 +507,7 @@ export function SiteEditPage() {
               }}
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = "#667eea";
+                  e.currentTarget.style.color = "var(--admin-primary, #2563eb)";
                   e.currentTarget.style.background = "#f9fafb";
                 }
               }}
@@ -669,7 +636,7 @@ function OverviewTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.overview.title")}
@@ -714,6 +681,27 @@ function OverviewTab({
       <LanguageAwareForm>
         {(selectedLang) => (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <AiAssistantPanel
+              kind="site"
+              lang={selectedLang}
+              siteId={site.id}
+              name={readLang(formData, "name", selectedLang)}
+              storageKey={`hl-ai-assistant:site:${site.id}`}
+              values={{
+                name: readLang(formData, "name", selectedLang),
+                shortDescription: readLang(formData, "shortDescription", selectedLang),
+                description: readLang(formData, "description", selectedLang),
+                intro: readLang(formData, "listIntroHtml", selectedLang),
+              }}
+              onApply={(field, text) => {
+                if (field === "seoKeywords") return;
+                if (field === "intro") {
+                  setFormData(patchLang(formData, "listIntroHtml", selectedLang, text));
+                  return;
+                }
+                setFormData(patchLang(formData, field, selectedLang, text));
+              }}
+            />
             <div>
               <label
                 style={{
@@ -914,7 +902,7 @@ function OverviewTab({
                 style={{
                   marginTop: 8,
                   padding: "8px 16px",
-                  background: "#667eea",
+                  background: "var(--admin-primary, #2563eb)",
                   color: "white",
                   border: "none",
                   borderRadius: 6,
@@ -1057,7 +1045,7 @@ function OverviewTab({
                 style={{
                   marginTop: 8,
                   padding: "8px 16px",
-                  background: "#667eea",
+                  background: "var(--admin-primary, #2563eb)",
                   color: "white",
                   border: "none",
                   borderRadius: 6,
@@ -1116,7 +1104,7 @@ function OverviewTab({
             type="checkbox"
             checked={formData.isActive}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+            style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
           />
           <span
             style={{
@@ -1394,7 +1382,7 @@ function DomainTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.domain.title")}
@@ -1430,9 +1418,9 @@ function DomainTab({
               gap: 12,
               alignItems: "end",
               padding: 16,
-              background: row.isPrimary ? "#eef2ff" : "#f9fafb",
+              background: row.isPrimary ? "var(--admin-primary-soft, #eff6ff)" : "#f9fafb",
               borderRadius: 12,
-              border: row.isPrimary ? "1px solid #c7d2fe" : "1px solid #e5e7eb",
+              border: row.isPrimary ? "1px solid var(--admin-primary-border, #bfdbfe)" : "1px solid #e5e7eb",
             }}
           >
             <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 220px" }}>
@@ -1533,7 +1521,7 @@ function DomainTab({
             padding: "10px 16px",
             border: "none",
             borderRadius: 8,
-            background: "#667eea",
+            background: "var(--admin-primary, #2563eb)",
             color: "white",
             cursor: "pointer",
             fontWeight: 600,
@@ -1741,7 +1729,7 @@ function InstancesTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.instances.title")}
@@ -1794,8 +1782,8 @@ function InstancesTab({
                   style={{
                     padding: "2px 8px",
                     borderRadius: 999,
-                    background: "#eef2ff",
-                    color: "#4338ca",
+                    background: "var(--admin-primary-soft, #eff6ff)",
+                    color: "var(--admin-primary, #2563eb)",
                     fontSize: 12,
                     fontWeight: 600,
                   }}
@@ -1813,9 +1801,9 @@ function InstancesTab({
                   style={{
                     padding: "8px 12px",
                     borderRadius: 8,
-                    border: "1px solid #c7d2fe",
-                    background: "#eef2ff",
-                    color: "#4338ca",
+                    border: "1px solid var(--admin-primary-border, #bfdbfe)",
+                    background: "var(--admin-primary-soft, #eff6ff)",
+                    color: "var(--admin-primary, #2563eb)",
                     cursor: "pointer",
                     fontSize: 13,
                     fontWeight: 600,
@@ -1899,7 +1887,7 @@ function InstancesTab({
                 padding: "10px 16px",
                 borderRadius: 8,
                 border: "none",
-                background: "#667eea",
+                background: "var(--admin-primary, #2563eb)",
                 color: "white",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -1935,7 +1923,7 @@ function InstancesTab({
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: availableLangs.length === 0 ? "#cbd5e1" : "#667eea",
+            background: availableLangs.length === 0 ? "#cbd5e1" : "var(--admin-primary, #2563eb)",
             color: "white",
             fontWeight: 600,
             cursor: availableLangs.length === 0 ? "not-allowed" : "pointer",
@@ -2075,7 +2063,7 @@ function AppearanceTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.appearance.title")}
@@ -2347,7 +2335,7 @@ function AppearanceTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "#667eea",
+              background: "var(--admin-primary, #2563eb)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -2430,7 +2418,7 @@ function MapTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.map.title")}
@@ -2675,7 +2663,7 @@ function MapTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "#667eea",
+              background: "var(--admin-primary, #2563eb)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -2759,7 +2747,7 @@ function FeaturesTab({
           fontWeight: 700,
           fontFamily:
             "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          color: "#667eea",
+          color: "var(--admin-primary, #2563eb)",
         }}
       >
         {t("admin.siteEdit.features.title")}
@@ -2812,7 +2800,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableEvents}
                 onChange={(e) => setFormData({ ...formData, enableEvents: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
               />
               <span
                 style={{
@@ -2831,7 +2819,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableBlog}
                 onChange={(e) => setFormData({ ...formData, enableBlog: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
               />
               <span
                 style={{
@@ -2850,7 +2838,7 @@ function FeaturesTab({
                 type="checkbox"
                 checked={formData.enableStaticPages}
                 onChange={(e) => setFormData({ ...formData, enableStaticPages: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
               />
               <span
                 style={{
@@ -2870,7 +2858,7 @@ function FeaturesTab({
                   type="checkbox"
                   checked={formData.isCrawlable}
                   onChange={(e) => setFormData({ ...formData, isCrawlable: e.target.checked })}
-                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                  style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                 />
                 <span
                   style={{
@@ -2904,7 +2892,7 @@ function FeaturesTab({
               padding: "10px 20px",
               border: "none",
               borderRadius: 8,
-              background: "#667eea",
+              background: "var(--admin-primary, #2563eb)",
               color: "white",
               cursor: "pointer",
               fontSize: 14,
@@ -3097,7 +3085,7 @@ function SubscriptionTab({
 
   const planColors: Record<string, string> = {
     basic: "#3b82f6",
-    pro: "#667eea",
+    pro: "var(--admin-primary, #2563eb)",
     business: "#8b5cf6",
     municipal: "#1b1730",
   };
@@ -3202,7 +3190,7 @@ function SubscriptionTab({
           }
           50% {
             transform: scale(1.15);
-            color: #667eea;
+            color: var(--admin-primary, #2563eb);
           }
           100% {
             transform: scale(1);
@@ -3296,7 +3284,7 @@ function SubscriptionTab({
               padding: "8px 16px",
               border: "none",
               borderRadius: 6,
-              background: "#667eea",
+              background: "var(--admin-primary, #2563eb)",
               color: "white",
               cursor: isSavingGa ? "not-allowed" : "pointer",
               fontSize: 14,
@@ -3335,7 +3323,7 @@ function SubscriptionTab({
               margin: 0,
               fontSize: "clamp(16px, 3.5vw, 20px)",
               fontWeight: 600,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             }}
@@ -4173,9 +4161,9 @@ function SubscriptionTab({
                       background:
                         usage.places >= limits.places
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
                       transition: "width 0.3s ease",
-                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                      boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
                   />
                 </div>
@@ -4273,9 +4261,9 @@ function SubscriptionTab({
                       background:
                         usage.featuredPlaces >= limits.featuredSlots
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
                       transition: "width 0.3s ease",
-                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                      boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
                   />
                 </div>
@@ -4368,9 +4356,9 @@ function SubscriptionTab({
                       background:
                         usage.events >= limits.events
                           ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)"
-                          : "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                          : "linear-gradient(90deg, var(--admin-primary, #2563eb) 0%, var(--admin-primary-hover, #1d4ed8) 100%)",
                       transition: "width 0.3s ease",
-                      boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                      boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                     }}
                   />
                 </div>
@@ -4574,7 +4562,7 @@ function SubscriptionTab({
                         transition: "all 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "#667eea";
+                        e.currentTarget.style.borderColor = "var(--admin-primary, #2563eb)";
                         e.currentTarget.style.background = "#f8fafc";
                       }}
                       onMouseLeave={(e) => {
@@ -4592,7 +4580,7 @@ function SubscriptionTab({
                           width: 20,
                           height: 20,
                           cursor: "pointer",
-                          accentColor: "#667eea",
+                          accentColor: "var(--admin-primary, #2563eb)",
                         }}
                       />
                       <div style={{ flex: 1 }}>
@@ -4631,7 +4619,7 @@ function SubscriptionTab({
                     padding: "10px 16px",
                     border: "none",
                     borderRadius: 8,
-                    background: "#667eea",
+                    background: "var(--admin-primary, #2563eb)",
                     color: "white",
                     cursor: isSaving ? "not-allowed" : "pointer",
                     fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -4643,12 +4631,12 @@ function SubscriptionTab({
                   }}
                   onMouseEnter={(e) => {
                     if (!isSaving) {
-                      e.currentTarget.style.background = "#5568d3";
+                      e.currentTarget.style.background = "var(--admin-primary-hover, #1d4ed8)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSaving) {
-                      e.currentTarget.style.background = "#667eea";
+                      e.currentTarget.style.background = "var(--admin-primary, #2563eb)";
                     }
                   }}
                 >

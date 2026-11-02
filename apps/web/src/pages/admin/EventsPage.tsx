@@ -37,6 +37,7 @@ import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { AiAssistantPanel } from "../../components/AiAssistantPanel";
 import { SlugInput } from "../../components/SlugInput";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { findTranslation } from "../../utils/langHelpers";
@@ -402,7 +403,7 @@ export function EventsPage() {
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
-        navigate("/admin");
+        navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
     } catch (err) {
@@ -506,7 +507,7 @@ export function EventsPage() {
       // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
       if (fromParam === "dashboard") {
-        navigate("/admin");
+        navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
     } catch (err) {
@@ -711,7 +712,7 @@ export function EventsPage() {
   });
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.events")}
         newButtonLabel={t("admin.forms.newEvent")}
@@ -727,15 +728,12 @@ export function EventsPage() {
           setIsCreating(false);
           setEditingId(null);
           resetForm();
-
-          // If we came from dashboard, navigate back to dashboard
-          const fromParam = searchParams.get("from");
-          if (fromParam === "dashboard") {
-            navigate("/admin");
-            return;
-          }
-          // Back button will handle navigation otherwise
         }}
+        backTo={
+          searchParams.get("from") === "dashboard"
+            ? `/${(i18n.language || "hu").split("-")[0]}/admin`
+            : undefined
+        }
         saveLabel={editingId ? t("common.update") : t("common.create")}
       />
 
@@ -815,18 +813,18 @@ export function EventsPage() {
             background: "white",
             borderRadius: 16,
             marginBottom: 32,
-            boxShadow: "0 8px 24px rgba(102, 126, 234, 0.15)",
-            border: "1px solid rgba(102, 126, 234, 0.1)",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+            border: "1px solid rgba(37, 99, 235, 0.1)",
           }}
         >
           <h2
             style={{
               marginBottom: 24,
-              color: "#667eea",
+              color: "var(--admin-primary, #2563eb)",
               fontSize: "clamp(18px, 4vw, 22px)",
               fontWeight: 700,
               fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                "var(--admin-font-display, Inter, system-ui, sans-serif)",
             }}
           >
             {editingId ? t("admin.forms.editEvent") : t("admin.forms.newEvent")}
@@ -846,7 +844,7 @@ export function EventsPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -862,7 +860,7 @@ export function EventsPage() {
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid #e0e7ff",
+                    border: "2px solid var(--admin-primary-border, #bfdbfe)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -873,11 +871,11 @@ export function EventsPage() {
                     boxSizing: "border-box",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#667eea";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                    e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#e0e7ff";
+                    e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                     e.target.style.boxShadow = "none";
                   }}
                 >
@@ -931,6 +929,23 @@ export function EventsPage() {
             <LanguageAwareForm>
               {(selectedLang) => (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <AiAssistantPanel
+                    kind="event"
+                    lang={selectedLang}
+                    siteId={selectedSiteId || undefined}
+                    placeId={formData.placeId || undefined}
+                    name={readLang(formData, "title", selectedLang)}
+                    storageKey={`hl-ai-assistant:event:${editingId || "new"}`}
+                    values={{
+                      title: readLang(formData, "title", selectedLang),
+                      shortDescription: readLang(formData, "shortDescription", selectedLang),
+                      description: readLang(formData, "description", selectedLang),
+                    }}
+                    onApply={(field, text) => {
+                      if (field === "seoKeywords") return;
+                      setFormData(patchLang(formData, field, selectedLang, text));
+                    }}
+                  />
                   {/* Title */}
                   <div>
                     <label
@@ -940,7 +955,7 @@ export function EventsPage() {
                         color:
                           readLang(formErrors, "title", selectedLang)
                             ? "#dc2626"
-                            : "#667eea",
+                            : "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(13px, 3vw, 14px)",
                       }}
@@ -976,7 +991,7 @@ export function EventsPage() {
                         border:
                           readLang(formErrors, "title", selectedLang)
                             ? "2px solid #fca5a5"
-                            : "2px solid #e0e7ff",
+                            : "2px solid var(--admin-primary-border, #bfdbfe)",
                         borderRadius: 8,
                         outline: "none",
                         transition: "all 0.3s ease",
@@ -992,14 +1007,14 @@ export function EventsPage() {
                         const hasError =
                           readLang(formErrors, "title", selectedLang);
                         if (!hasError) {
-                          e.target.style.borderColor = "#667eea";
-                          e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                          e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                         }
                       }}
                       onBlur={(e) => {
                         const hasError =
                           readLang(formErrors, "title", selectedLang);
-                        e.target.style.borderColor = hasError ? "#fca5a5" : "#e0e7ff";
+                        e.target.style.borderColor = hasError ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
                         e.target.style.boxShadow = "none";
                       }}
                     />
@@ -1038,7 +1053,7 @@ export function EventsPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(13px, 3vw, 14px)",
                       }}
@@ -1071,7 +1086,7 @@ export function EventsPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(13px, 3vw, 14px)",
                       }}
@@ -1117,9 +1132,9 @@ export function EventsPage() {
                   style={{
                     marginTop: 24,
                     padding: 16,
-                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    background: "linear-gradient(135deg, var(--admin-primary, #2563eb)15 0%, var(--admin-primary-hover, #1d4ed8)15 100%)",
                     borderRadius: 8,
-                    border: "1px solid #667eea30",
+                    border: "1px solid var(--admin-primary, #2563eb)30",
                   }}
                 >
                   <h3
@@ -1127,9 +1142,9 @@ export function EventsPage() {
                       margin: "0 0 16px 0",
                       fontSize: "clamp(16px, 3.5vw, 18px)",
                       fontWeight: 600,
-                      color: "#667eea",
+                      color: "var(--admin-primary, #2563eb)",
                       fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
                     }}
                   >
                     🔍 SEO {t("admin.settings")}
@@ -1454,7 +1469,7 @@ export function EventsPage() {
                     style={{
                       display: "block",
                       marginBottom: 8,
-                      color: formErrors.startDate ? "#dc2626" : "#667eea",
+                      color: formErrors.startDate ? "#dc2626" : "var(--admin-primary, #2563eb)",
                       fontWeight: 600,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontFamily:
@@ -1471,7 +1486,7 @@ export function EventsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: 15,
-                      border: `2px solid ${formErrors.startDate ? "#fca5a5" : "#e0e7ff"}`,
+                      border: `2px solid ${formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)"}`,
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
@@ -1482,12 +1497,12 @@ export function EventsPage() {
                     }}
                     onFocus={(e) => {
                       if (!formErrors.startDate) {
-                        e.target.style.borderColor = "#667eea";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                        e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "#e0e7ff";
+                      e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border, #bfdbfe)";
                       e.target.style.boxShadow = "none";
                     }}
                   />
@@ -1502,7 +1517,7 @@ export function EventsPage() {
                     style={{
                       display: "block",
                       marginBottom: 8,
-                      color: "#667eea",
+                      color: "var(--admin-primary, #2563eb)",
                       fontWeight: 600,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontFamily:
@@ -1519,7 +1534,7 @@ export function EventsPage() {
                       width: "100%",
                       padding: "12px 16px",
                       fontSize: 15,
-                      border: "2px solid #e0e7ff",
+                      border: "2px solid var(--admin-primary-border, #bfdbfe)",
                       borderRadius: 8,
                       outline: "none",
                       transition: "all 0.3s ease",
@@ -1528,11 +1543,11 @@ export function EventsPage() {
                       boxSizing: "border-box",
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = "#667eea";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                      e.target.style.borderColor = "var(--admin-primary, #2563eb)";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = "#e0e7ff";
+                      e.target.style.borderColor = "var(--admin-primary-border, #bfdbfe)";
                       e.target.style.boxShadow = "none";
                     }}
                   />
@@ -1544,7 +1559,7 @@ export function EventsPage() {
                     style={{
                       display: "block",
                       marginBottom: 8,
-                      color: "#667eea",
+                      color: "var(--admin-primary, #2563eb)",
                       fontWeight: 600,
                       fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontFamily:
@@ -1585,7 +1600,7 @@ export function EventsPage() {
                       type="checkbox"
                       checked={formData.isPinned}
                       onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                     />
                     <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.isPinned")}</span>
                   </label>
@@ -1602,7 +1617,7 @@ export function EventsPage() {
                       type="checkbox"
                       checked={formData.isRainSafe}
                       onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                     />
                     <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
                   </label>
@@ -1622,7 +1637,7 @@ export function EventsPage() {
                       type="checkbox"
                       checked={formData.showOnMap}
                       onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#667eea" }}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary, #2563eb)" }}
                     />
                     <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
                   </label>
@@ -1638,7 +1653,7 @@ export function EventsPage() {
                   style={{
                     display: "block",
                     marginBottom: 8,
-                    color: "#667eea",
+                    color: "var(--admin-primary, #2563eb)",
                     fontWeight: 600,
                     fontSize: "clamp(14px, 3.5vw, 16px)",
                     fontFamily:
@@ -1665,7 +1680,7 @@ export function EventsPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -1696,7 +1711,7 @@ export function EventsPage() {
                       style={{
                         display: "block",
                         marginBottom: 8,
-                        color: "#667eea",
+                        color: "var(--admin-primary, #2563eb)",
                         fontWeight: 600,
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         fontFamily:
@@ -1807,7 +1822,7 @@ export function EventsPage() {
                       fontWeight: 700,
                       marginBottom: 4,
                       fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                        "var(--admin-font-display, Inter, system-ui, sans-serif)",
                     }}
                   >
                     {formData.isActive ? t("admin.eventActive") : t("admin.eventInactive")}
@@ -1924,7 +1939,7 @@ export function EventsPage() {
                             onClick={() => startEdit(event)}
                             style={{
                               padding: "6px 10px",
-                              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                              background: "var(--admin-primary, #2563eb)",
                               color: "var(--hl-on-dark-strong, #ffffff)",
                               border: "none",
                               borderRadius: 6,
@@ -1933,7 +1948,7 @@ export function EventsPage() {
                               fontFamily:
                                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                               transition: "all 0.2s ease",
-                              boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.18)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -1941,12 +1956,12 @@ export function EventsPage() {
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = "translateY(-1px)";
                               e.currentTarget.style.boxShadow =
-                                "0 4px 12px rgba(102, 126, 234, 0.4)";
+                                "0 4px 12px rgba(15, 23, 42, 0.24)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = "translateY(0)";
                               e.currentTarget.style.boxShadow =
-                                "0 2px 8px rgba(102, 126, 234, 0.3)";
+                                "0 2px 8px rgba(15, 23, 42, 0.18)";
                             }}
                             title={t("common.edit")}
                           >
@@ -2031,7 +2046,7 @@ export function EventsPage() {
                             onClick={() => handleDelete(event.id)}
                             style={{
                               padding: "6px 10px",
-                              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                              background: "var(--admin-danger, #b91c1c)",
                               color: "var(--hl-on-dark-strong, #ffffff)",
                               border: "none",
                               borderRadius: 6,
@@ -2139,7 +2154,7 @@ export function EventsPage() {
                       background:
                         currentMobileIndex === 0
                           ? "#e5e7eb"
-                          : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          : "var(--admin-primary, #2563eb)",
                       color: currentMobileIndex === 0 ? "#9ca3af" : "white",
                       border: "none",
                       borderRadius: 6,
@@ -2150,7 +2165,7 @@ export function EventsPage() {
                   >
                     ‹
                   </button>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: "#667eea" }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-primary, #2563eb)" }}>
                     {currentMobileIndex + 1} / {filteredEvents.length}
                   </span>
                   <button
@@ -2165,7 +2180,7 @@ export function EventsPage() {
                       background:
                         currentMobileIndex === filteredEvents.length - 1
                           ? "#e5e7eb"
-                          : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          : "var(--admin-primary, #2563eb)",
                       color: currentMobileIndex === filteredEvents.length - 1 ? "#9ca3af" : "white",
                       border: "none",
                       borderRadius: 6,
@@ -2469,7 +2484,7 @@ export function EventsPage() {
                                 }}
                                 style={{
                                   width: 80,
-                                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                                  background: "var(--admin-primary, #2563eb)",
                                   color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",
@@ -2518,7 +2533,7 @@ export function EventsPage() {
                                 }}
                                 style={{
                                   width: 80,
-                                  background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                                  background: "var(--admin-danger, #b91c1c)",
                                   color: "var(--hl-on-dark-strong, #ffffff)",
                                   border: "none",
                                   cursor: "pointer",

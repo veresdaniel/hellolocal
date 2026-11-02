@@ -15,6 +15,7 @@ import {
   CONTENT_DRAFT_PROVIDER_KEY,
   GEMINI_DRAFT_MODEL,
   GROQ_DRAFT_MODEL,
+  OPENROUTER_DRAFT_FALLBACK_MODELS,
   OPENROUTER_DRAFT_MODEL,
   isContentDraftField,
   isContentDraftKind,
@@ -441,8 +442,53 @@ export class ContentDraftService {
       where: { key: { in: [CONTENT_DRAFT_PROVIDER_KEY, CONTENT_DRAFT_API_KEY] } },
       select: { key: true, value: true },
     });
-    const providerValue = rows.find((row) => row.key === CONTENT_DRAFT_PROVIDER_KEY)?.value;
-    const apiKey = rows.find((row) => row.key === CONTENT_DRAFT_API_KEY)?.value?.trim() ?? "";
+    let providerValue = rows.find((row) => row.key === CONTENT_DRAFT_PROVIDER_KEY)?.value;
+    const storedKey = rows.find((row) => row.key === CONTENT_DRAFT_API_KEY)?.value?.trim() ?? "";
+    let apiKey = "";
+    if (storedKey) {
+      try {
+        const { decryptSecret, isEncryptedSecret } = await import("../common/secret-box");
+        apiKey = decryptSecret(storedKey);
+        // Opportunistically migrate legacy plaintext keys to encrypted-at-rest.
+        if (apiKey && !isEncryptedSecret(storedKey)) {
+          await this.appSettings
+            .upsert(CONTENT_DRAFT_API_KEY, {
+              value: apiKey,
+              type: "string",
+              description: "Server-only content draft credential (encrypted at rest)",
+            })
+            .catch(() => undefined);
+        }
+      } catch (error) {
+        console.error("[content-draft] Failed to decrypt API key at rest");
+        apiKey = "";
+      }
+    }
+
+    // Env fallbacks when App Settings has no key (local/ops). Prefer stored settings.
+    if (!apiKey) {
+      const envByProvider: Record<ContentDraftProviderId, string> = {
+        gemini:
+          process.env.CONTENT_DRAFT_API_KEY?.trim() ||
+          process.env.GEMINI_API_KEY?.trim() ||
+          "",
+        groq: process.env.GROQ_API_KEY?.trim() || "",
+        openrouter: process.env.OPENROUTER_API_KEY?.trim() || "",
+      };
+      if (isContentDraftProvider(providerValue) && envByProvider[providerValue]) {
+        apiKey = envByProvider[providerValue];
+      } else if (envByProvider.gemini) {
+        apiKey = envByProvider.gemini;
+        providerValue = "gemini";
+      } else if (envByProvider.groq) {
+        apiKey = envByProvider.groq;
+        providerValue = "groq";
+      } else if (envByProvider.openrouter) {
+        apiKey = envByProvider.openrouter;
+        providerValue = "openrouter";
+      }
+    }
+
     const provider = isContentDraftProvider(providerValue)
       ? providerValue
       : apiKey
@@ -531,16 +577,50 @@ export class ContentDraftService {
         prompt,
       });
     }
-    return this.callOpenAiCompatible({
-      url: "https://openrouter.ai/api/v1/chat/completions",
-      apiKey,
-      model: OPENROUTER_DRAFT_MODEL,
-      prompt,
-      extraHeaders: {
-        "HTTP-Referer": "https://hellolocal.app",
-        "X-Title": "HelloLocal",
-      },
-    });
+    return this.callOpenRouter(apiKey, prompt);
+  }
+
+  /**
+   * OpenRouter free models are flaky: some reasoning endpoints return HTTP 200 with
+   * `message.content: null` (tokens spent in `reasoning`, finish_reason=length).
+   * Prefer stable chat models and retry with the next fallback on empty content.
+   */
+  private async callOpenRouter(apiKey: string, prompt: string): Promise<string> {
+    const models = Array.from(
+      new Set<string>([OPENROUTER_DRAFT_MODEL, ...OPENROUTER_DRAFT_FALLBACK_MODELS])
+    );
+    let lastError: HttpException | null = null;
+    for (const model of models) {
+      try {
+        const text = await this.callOpenAiCompatible({
+          url: "https://openrouter.ai/api/v1/chat/completions",
+          apiKey,
+          model,
+          prompt,
+          extraHeaders: {
+            "HTTP-Referer": "https://hellolocal.app",
+            "X-Title": "HelloLocal",
+          },
+          // Minimize reasoning so free models do not burn the token budget before content.
+          extraBody: { reasoning: { effort: "none" } },
+          allowEmpty: true,
+        });
+        if (text) return text;
+        console.error(`[content-draft] openrouter model ${model} returned empty content; trying fallback`);
+      } catch (err) {
+        if (err instanceof HttpException) {
+          // Auth / rate-limit are not fixed by switching models.
+          if (err.getStatus() === HttpStatus.TOO_MANY_REQUESTS || err.getStatus() === HttpStatus.UNAUTHORIZED) {
+            throw err;
+          }
+          lastError = err;
+          console.error(`[content-draft] openrouter model ${model} failed; trying fallback`);
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastError ?? new HttpException("content_draft_failed", HttpStatus.BAD_GATEWAY);
   }
 
   private async callGemini(apiKey: string, prompt: string): Promise<string> {
@@ -607,6 +687,9 @@ export class ContentDraftService {
     model: string;
     prompt: string;
     extraHeaders?: Record<string, string>;
+    extraBody?: Record<string, unknown>;
+    /** When true, return "" on empty content instead of throwing (caller may retry). */
+    allowEmpty?: boolean;
   }): Promise<string> {
     const res = await fetch(input.url, {
       method: "POST",
@@ -620,6 +703,7 @@ export class ContentDraftService {
         temperature: 0.4,
         max_tokens: MAX_OUTPUT_TOKENS,
         messages: [{ role: "user", content: input.prompt }],
+        ...(input.extraBody ?? {}),
       }),
       signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     }).catch(() => {
@@ -627,15 +711,38 @@ export class ContentDraftService {
     });
 
     if (!res.ok) {
-      console.error(`[content-draft] openai-compatible responded ${res.status}`);
+      const status = res.status;
+      console.error(`[content-draft] openai-compatible ${input.model} responded ${status}`);
       await res.arrayBuffer().catch(() => undefined);
+      if (status === 401 || status === 403) {
+        throw new HttpException("content_draft_auth", HttpStatus.UNAUTHORIZED);
+      }
+      if (status === 429) {
+        throw new HttpException("content_draft_rate_limited", HttpStatus.TOO_MANY_REQUESTS);
+      }
       throw new HttpException("content_draft_failed", HttpStatus.BAD_GATEWAY);
     }
 
     const body = (await res.json().catch(() => null)) as {
-      choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }>;
+      error?: { message?: string };
+      model?: string;
+      choices?: Array<{
+        finish_reason?: string | null;
+        message?: {
+          content?: string | Array<{ type?: string; text?: string }> | null;
+          reasoning?: unknown;
+        };
+      }>;
     } | null;
-    const content = body?.choices?.[0]?.message?.content;
+
+    if (body?.error?.message) {
+      console.error(`[content-draft] openai-compatible ${input.model} error payload`);
+      throw new HttpException("content_draft_failed", HttpStatus.BAD_GATEWAY);
+    }
+
+    const choice = body?.choices?.[0];
+    const message = choice?.message;
+    const content = message?.content;
     let text = "";
     if (typeof content === "string") {
       text = content.trim();
@@ -645,7 +752,15 @@ export class ContentDraftService {
         .join("")
         .trim();
     }
+
+    // Reasoning-only / null content (common on free reasoning models) is a soft failure.
     if (!text) {
+      const hasReasoning = Boolean(message?.reasoning);
+      console.error(
+        `[content-draft] openai-compatible ${input.model} empty content` +
+          ` (used=${body?.model ?? input.model}, finish=${choice?.finish_reason ?? "?"}, reasoning=${hasReasoning})`
+      );
+      if (input.allowEmpty) return "";
       throw new HttpException("content_draft_failed", HttpStatus.BAD_GATEWAY);
     }
     return text.slice(0, 8000);

@@ -1,7 +1,12 @@
 // src/components/AdminPageHeader.tsx
 import { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { getAdminBackPath } from "../utils/adminBackPath";
+import { DEFAULT_LANG, isLang } from "../app/config";
+import { useAdminPageChrome } from "../contexts/AdminPageChromeContext";
+import { AdminBackButton } from "./AdminBackButton";
 
 interface AdminPageHeaderProps {
   title: string;
@@ -14,8 +19,17 @@ interface AdminPageHeaderProps {
   onCancel?: () => void;
   saveLabel?: string;
   cancelLabel?: string;
+  /**
+   * When true (default), renders Vissza in the shared toolbar row.
+   * Layout already hosts the toolbar; leave true so Back + actions stay one row.
+   */
   showBackButton?: boolean;
   backTo?: string;
+  /**
+   * When true, Mégse also navigates (via backTo / getAdminBackPath) after onCancel.
+   * Defaults to true on dedicated `/edit` routes; false on in-place list forms.
+   */
+  cancelNavigates?: boolean;
 }
 
 export function AdminPageHeader({
@@ -31,61 +45,140 @@ export function AdminPageHeader({
   cancelLabel,
   showBackButton = true,
   backTo,
+  cancelNavigates,
 }: AdminPageHeaderProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { lang } = useParams<{ lang?: string }>();
+  const { lang: langParam } = useParams<{ lang?: string }>();
+  const { toolbarMainEl, hasToolbarSlot } = useAdminPageChrome();
 
-  // Determine back navigation path
-  const getBackPath = (): string => {
-    if (backTo) {
-      return backTo;
+  const lang = isLang(langParam)
+    ? langParam
+    : isLang(i18n.language)
+      ? i18n.language
+      : DEFAULT_LANG;
+
+  const isDedicatedEditRoute = /\/edit(?:\/|$)/.test(location.pathname);
+  const shouldCancelNavigate = cancelNavigates ?? isDedicatedEditRoute;
+
+  const handleCancel = () => {
+    onCancel?.();
+    if (shouldCancelNavigate) {
+      window.setTimeout(() => {
+        // Prefer explicit backTo / parent path for cancel (not history)
+        const path =
+          getAdminBackPath(location.pathname, lang, backTo) ?? `/${lang}/admin`;
+        navigate(path);
+      }, 0);
     }
-
-    const path = location.pathname;
-    const langPrefix = lang ? `/${lang}` : "";
-
-    // If creating/editing, go back to list page
-    if (isCreatingOrEditing) {
-      // Extract entity type from path (e.g., /admin/places -> places, /admin/events -> events)
-      const match = path.match(/\/admin\/([^\/]+)/);
-      if (match) {
-        const entityType = match[1];
-        // Handle special cases for sites
-        if (entityType === "sites") {
-          // If editing a site (SiteEditPage), go back to sites list
-          if (path.includes("/edit")) {
-            return `${langPrefix}/admin/sites`;
-          }
-          // If creating a site on SitesPage, go to dashboard (sites list is dashboard level)
-          return `${langPrefix}/admin`;
-        }
-        return `${langPrefix}/admin/${entityType}`;
-      }
-    }
-
-    // If on list page, go to dashboard
-    // Special case: sites list page should go to dashboard
-    if (path.match(/\/admin\/sites$/)) {
-      return `${langPrefix}/admin`;
-    }
-    return `${langPrefix}/admin`;
   };
 
-  const handleBack = () => {
-    // Always navigate, but call onCancel first if provided (to reset form state)
-    if (onCancel) {
-      onCancel();
-    }
-    // Navigate after a short delay to allow form reset
-    setTimeout(() => {
-      navigate(getBackPath());
-    }, 0);
-  };
+  const titleBlock = (
+    <div className="admin-page-header__title" style={{ flex: 1, minWidth: 0 }}>
+      <h1
+        className="admin-page-title"
+        style={{
+          fontSize: "clamp(20px, 4vw, 28px)",
+          fontWeight: 700,
+          margin: 0,
+          marginBottom: subtitle ? 8 : 0,
+          display: typeof title === "string" ? "block" : "flex",
+          justifyContent:
+            typeof title === "string" ? "flex-start" : "space-between",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        {title}
+      </h1>
+      {subtitle && (
+        <div
+          className="admin-page-muted"
+          style={{
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            fontWeight: 400,
+            margin: 0,
+          }}
+        >
+          {subtitle}
+        </div>
+      )}
+    </div>
+  );
+
+  const actions = (
+    <div
+      className="admin-page-header__actions"
+      style={{ display: "flex", gap: 12, flexWrap: "wrap", flexShrink: 0 }}
+    >
+      {isCreatingOrEditing ? (
+        <>
+          {onSave && (
+            <button
+              type="button"
+              onClick={onSave}
+              className="admin-btn admin-btn--primary"
+              style={{
+                padding: "10px 20px",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+              }}
+            >
+              {saveLabel || t("common.update")}
+            </button>
+          )}
+          {(onCancel || shouldCancelNavigate) && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="admin-btn admin-btn--secondary"
+              style={{
+                padding: "10px 20px",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+              }}
+            >
+              {cancelLabel || t("common.cancel")}
+            </button>
+          )}
+        </>
+      ) : (
+        showNewButton &&
+        onNewClick && (
+          <button
+            type="button"
+            onClick={onNewClick}
+            className="admin-btn admin-btn--primary"
+            style={{
+              padding: "10px 20px",
+              fontSize: "clamp(14px, 3.5vw, 16px)",
+            }}
+          >
+            + {newButtonLabel || t("admin.forms.newItem")}
+          </button>
+        )
+      )}
+    </div>
+  );
+
+  /**
+   * Prefer the layout toolbar slot so Vissza (layout) + title/actions share one row.
+   * While the slot ref is attaching, render nothing (avoid a duplicate Back flash).
+   * Fallback: self-contained row when outside AdminLayout.
+   */
+  if (hasToolbarSlot) {
+    if (!toolbarMainEl) return null;
+    return createPortal(
+      <>
+        {titleBlock}
+        {actions}
+      </>,
+      toolbarMainEl,
+    );
+  }
 
   return (
     <div
+      className="admin-page-header"
       style={{
         display: "flex",
         justifyContent: "space-between",
@@ -95,177 +188,20 @@ export function AdminPageHeader({
         gap: 16,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        {showBackButton && (
-          <button
-            onClick={handleBack}
-            style={{
-              padding: "8px 16px",
-              background: "rgba(255, 255, 255, 0.2)",
-              color: "var(--hl-on-dark-strong, #ffffff)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontWeight: 600,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-              e.currentTarget.style.transform = "translateX(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-              e.currentTarget.style.transform = "translateX(0)";
-            }}
-          >
-            <span>←</span>
-            <span>{t("common.goBack") || t("common.back") || "Vissza"}</span>
-          </button>
-        )}
-        <div style={{ flex: 1 }}>
-          <h1
-            className="admin-page-title"
-            style={{
-              fontSize: "clamp(20px, 4vw, 28px)",
-              fontWeight: 700,
-              fontFamily:
-                "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              color: "var(--hl-on-dark-strong, #ffffff)",
-              margin: 0,
-              marginBottom: subtitle ? 8 : 0,
-              textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-              display: typeof title === "string" ? "block" : "flex",
-              justifyContent: typeof title === "string" ? "flex-start" : "space-between",
-              alignItems: "center",
-              width: "100%",
-            }}
-          >
-            {title}
-          </h1>
-          {subtitle && (
-            <div
-              className="admin-page-muted"
-              style={{
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontWeight: 400,
-                color: "var(--hl-muted-on-dark, #a8b0c8)",
-                margin: 0,
-                textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-              }}
-            >
-              {subtitle}
-            </div>
-          )}
-        </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        {showBackButton && <AdminBackButton backTo={backTo} />}
+        {titleBlock}
       </div>
-
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {isCreatingOrEditing ? (
-          <>
-            {onSave && (
-              <button
-                onClick={onSave}
-                style={{
-                  padding: "10px 20px",
-                  background: "linear-gradient(135deg, #28a745 0%, #20c997 100%)",
-                  color: "var(--hl-on-dark-strong, #ffffff)",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontWeight: 600,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(40, 167, 69, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(40, 167, 69, 0.3)";
-                }}
-              >
-                {saveLabel || t("common.update")}
-              </button>
-            )}
-            {onCancel && (
-              <button
-                onClick={onCancel}
-                style={{
-                  padding: "10px 20px",
-                  background: "#6c757d",
-                  color: "var(--hl-on-dark-strong, #ffffff)",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontWeight: 600,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  transition: "all 0.3s ease",
-                  boxShadow: "0 4px 12px rgba(108, 117, 125, 0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#5a6268";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(108, 117, 125, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#6c757d";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 117, 125, 0.3)";
-                }}
-              >
-                {cancelLabel || t("common.cancel")}
-              </button>
-            )}
-          </>
-        ) : (
-          showNewButton &&
-          onNewClick && (
-            <button
-              onClick={onNewClick}
-              style={{
-                padding: "10px 20px",
-                background: "#4a90e2",
-                color: "var(--hl-on-dark-strong, #ffffff)",
-                border: "2px solid var(--hl-on-dark-strong, #ffffff)",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontWeight: 600,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                transition: "all 0.3s ease",
-                boxShadow: "0 2px 8px rgba(74, 144, 226, 0.3)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#357abd";
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(74, 144, 226, 0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#4a90e2";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(74, 144, 226, 0.3)";
-              }}
-            >
-              + {newButtonLabel || t("admin.forms.newItem")}
-            </button>
-          )
-        )}
-      </div>
+      {actions}
     </div>
   );
 }

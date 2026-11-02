@@ -125,3 +125,64 @@ export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
   const data = (await res.json()) as PlatformGaResponse;
   return { gaMeasurementId: data.gaMeasurementId?.trim() || null };
 }
+
+export type UnderConstructionPublicStatus = {
+  enabled: boolean;
+  allowed: boolean;
+  queryParam: string;
+  cookieName: string;
+  cookieMaxAgeSec: number;
+  /** Server set/cleared HttpOnly cookie via Set-Cookie (token not in JSON). */
+  refreshCookie?: boolean;
+  clearCookie?: boolean;
+  /** @deprecated Prefer refreshCookie; never trust client-readable tokens. */
+  setCookieToken?: string | null;
+  copy: { title: string; body: string; buttonLabel: string };
+};
+
+const UC_FAIL_CLOSED: UnderConstructionPublicStatus = {
+  enabled: true,
+  allowed: false,
+  queryParam: "access",
+  cookieName: "hl_uc_access",
+  cookieMaxAgeSec: 60 * 60 * 24 * 400,
+  refreshCookie: false,
+  clearCookie: false,
+  copy: {
+    title: "Fejlesztés alatt",
+    body: "Az oldal jelenleg fejlesztés alatt áll.",
+    buttonLabel: "",
+  },
+};
+
+/**
+ * Public under-development gate.
+ * Uses same-origin `/api` (Vite/web proxy) so the HttpOnly preview cookie is host-scoped
+ * on the public site and reaches the gate on every navigation — not api.* alone.
+ */
+export async function getUnderConstructionGate(options?: {
+  lang?: string;
+  accessToken?: string | null;
+  signal?: AbortSignal;
+}): Promise<UnderConstructionPublicStatus> {
+  const params = new URLSearchParams();
+  if (options?.lang) params.set("lang", options.lang);
+  if (options?.accessToken) params.set("access", options.accessToken);
+  const query = params.toString();
+  try {
+    const res = await fetch(
+      `/api/app-settings/under-construction${query ? `?${query}` : ""}`,
+      {
+        headers: { Accept: "application/json" },
+        credentials: "include",
+        signal: options?.signal,
+      }
+    );
+    if (!res.ok) {
+      return UC_FAIL_CLOSED;
+    }
+    return (await res.json()) as UnderConstructionPublicStatus;
+  } catch {
+    return UC_FAIL_CLOSED;
+  }
+}

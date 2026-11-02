@@ -287,12 +287,10 @@ export function AdminDashboard() {
           style={{
             fontSize: "clamp(20px, 4vw, 28px)",
             fontWeight: 700,
-            fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            color: "var(--hl-on-dark-strong, #ffffff)",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+            color: "var(--admin-on-chrome, #ffffff)",
             margin: 0,
             marginBottom: 8,
-            textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
           }}
         >
           {t("admin.dashboard")}
@@ -301,12 +299,10 @@ export function AdminDashboard() {
           className="admin-page-muted"
           style={{
             fontSize: "clamp(14px, 3.5vw, 16px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
             fontWeight: 400,
-            color: "var(--hl-muted-on-dark, #a8b0c8)",
+            color: "var(--admin-on-chrome-muted, #dbe4ff)",
             margin: 0,
-            textShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
           }}
         >
           {t("admin.dashboardWelcome")}
@@ -361,9 +357,8 @@ function SectionTitle({ label }: { label: string }) {
       style={{
         fontSize: "clamp(14px, 3vw, 16px)",
         fontWeight: 600,
-        fontFamily:
-          "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "var(--hl-on-dark-strong, #ffffff)",
+        fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
+        color: "var(--admin-on-chrome, #ffffff)",
         margin: "0 0 12px 0",
         textTransform: "uppercase",
         letterSpacing: "0.5px",
@@ -389,14 +384,11 @@ function DashboardCard({
   isMobile?: boolean;
   variant?: "content" | "admin";
 }) {
-  // Color variants: content = lighter, admin = darker/neutral
-  const contentBg = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
-  const contentBgHover = "linear-gradient(135deg, #5a5574 0%, #4d4a68 100%)";
-  const adminBg = "linear-gradient(135deg, #3a3456 0%, #2d2a4a 100%)";
-  const adminBgHover = "linear-gradient(135deg, #4a4564 0%, #3d3a58 100%)";
-
-  const background = variant === "content" ? contentBg : adminBg;
-  const backgroundHover = variant === "content" ? contentBgHover : adminBgHover;
+  // Light surface tiles; platform cards get a slightly stronger border via variant class usage
+  const borderColor =
+    variant === "admin"
+      ? "var(--admin-border, #cbd5e1)"
+      : "var(--admin-border-subtle, #e2e8f0)";
 
   // Mobile: iPhone-style small icon-only cards
   if (isMobile) {
@@ -410,13 +402,13 @@ function DashboardCard({
           justifyContent: "center",
           gap: 6,
           aspectRatio: "1",
-          background,
+          background: "var(--admin-surface, #ffffff)",
           borderRadius: 16,
           textDecoration: "none",
-          color: "var(--hl-on-dark, #f2f4fb)",
+          color: "var(--admin-ink, #0f172a)",
           transition: "all 0.2s ease",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
-          border: "1px solid rgba(102, 126, 234, 0.3)",
+          boxShadow: "var(--admin-shadow, 0 8px 24px rgba(15, 23, 42, 0.08))",
+          border: `1px solid ${borderColor}`,
           position: "relative",
           padding: 8,
           boxSizing: "border-box",
@@ -424,12 +416,9 @@ function DashboardCard({
         className="admin-dash-card"
         onTouchStart={(e) => {
           e.currentTarget.style.transform = "scale(0.95)";
-          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.3)";
         }}
         onTouchEnd={(e) => {
           e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow =
-            "0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
         }}
       >
         <div
@@ -440,7 +429,6 @@ function DashboardCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))",
             flexShrink: 0,
           }}
         >
@@ -450,10 +438,9 @@ function DashboardCard({
           className="admin-dash-card__title"
           style={{
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
             fontWeight: 600,
-            color: "var(--hl-on-dark-strong, #ffffff)",
+            color: "var(--admin-ink, #0f172a)",
             textAlign: "center",
             lineHeight: 1.2,
             overflow: "hidden",
@@ -483,33 +470,27 @@ function DashboardCard({
         alignItems: "center",
         gap: "clamp(10px, 2vw, 12px)",
         padding: "clamp(10px, 2vw, 12px)",
-        background,
+        background: "var(--admin-surface, #ffffff)",
         borderRadius: 12,
         textDecoration: "none",
-        color: "var(--hl-on-dark, #f2f4fb)",
-        transition: "all 0.3s ease",
-        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)",
+        color: "var(--admin-ink, #0f172a)",
+        transition: "all 0.2s ease",
+        boxShadow: "var(--admin-shadow, 0 8px 24px rgba(15, 23, 42, 0.08))",
         minHeight: 70,
-        border: "1px solid rgba(102, 126, 234, 0.3)",
+        border: `1px solid ${borderColor}`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px) scale(1.01)";
-        e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.35), 0 0 0 2px #667eea";
-        e.currentTarget.style.borderColor = "#667eea";
-        e.currentTarget.style.background = backgroundHover;
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.borderColor = "var(--admin-accent, #2563eb)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0) scale(1)";
-        e.currentTarget.style.boxShadow =
-          "0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(102, 126, 234, 0.3)";
-        e.currentTarget.style.borderColor = "rgba(102, 126, 234, 0.3)";
-        e.currentTarget.style.background = background;
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = borderColor;
       }}
     >
       <div
         style={{
           fontSize: "clamp(30px, 5vw, 34px)",
-          filter: "drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))",
           flexShrink: 0,
         }}
       >
@@ -521,10 +502,9 @@ function DashboardCard({
           style={{
             margin: "0 0 3px 0",
             fontSize: "clamp(15px, 3.5vw, 16px)",
-            fontFamily:
-              "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font-display, Inter, system-ui, sans-serif)",
             fontWeight: 700,
-            color: "var(--hl-on-dark-strong, #ffffff)",
+            color: "var(--admin-ink, #0f172a)",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -536,10 +516,9 @@ function DashboardCard({
           className="admin-dash-card__desc"
           style={{
             margin: 0,
-            color: "var(--hl-muted-on-dark, #a8b0c8)",
+            color: "var(--admin-muted, #475569)",
             fontSize: "clamp(13px, 3vw, 15px)",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "var(--admin-font, Inter, system-ui, sans-serif)",
             lineHeight: 1.3,
             fontWeight: 400,
             display: "-webkit-box",

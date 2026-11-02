@@ -42,6 +42,7 @@ export interface AuthResponse {
     role: UserRole;
     siteIds: string[];
     activeSiteId?: string | null;
+    aiAssistantEnabled?: boolean;
   };
 }
 
@@ -295,6 +296,7 @@ export class AuthService {
         role: user.role,
         siteIds,
         activeSiteId: user.activeSiteId,
+        aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
       },
     };
   }
@@ -449,6 +451,7 @@ export class AuthService {
           role: user.role as UserRole,
           siteIds,
           activeSiteId: user.activeSiteId,
+          aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
         },
       };
     } catch (error) {
@@ -743,6 +746,7 @@ export class AuthService {
         role: user.role,
         siteIds,
         activeSiteId: user.activeSiteId,
+        aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
       },
     };
   }
