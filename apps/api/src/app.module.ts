@@ -24,6 +24,7 @@ import { SeoModule } from "./seo/seo.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { PlatformSettingsModule } from "./platform-settings/platform-settings.module";
 import { UnderConstructionModule } from "./under-construction/under-construction.module";
+import { UnderConstructionLockMiddleware } from "./under-construction/under-construction-lock.middleware";
 import { UiCopyModule } from "./ui-copy/ui-copy.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { BillingModule } from "./billing/billing.module";
@@ -103,6 +104,7 @@ const envFilePath = configEnvFilePath();
   providers: [
     SeoInjectorMiddleware,
     SiteResolveMiddleware, // Site resolve middleware (canonical flow)
+    UnderConstructionLockMiddleware,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -118,6 +120,9 @@ export class AppModule implements NestModule {
     // Apply site resolve middleware first (canonical flow for /:lang/:siteKey/* routes)
     // This is the core of the Site-based architecture
     consumer.apply(SiteResolveMiddleware).forRoutes("*");
+
+    // When UC is on, block public API data (admin/auth/health/gate stay open).
+    consumer.apply(UnderConstructionLockMiddleware).forRoutes("*");
 
     // Apply SEO injector middleware to all routes except API and admin
     consumer.apply(SeoInjectorMiddleware).forRoutes("*");

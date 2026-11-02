@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { createHash, randomBytes, timingSafeEqual } from "crypto";
+import { randomBytes } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   UC_ACCESS_TOKEN_KEY,
@@ -79,19 +79,15 @@ function parseCopy(raw: string | null | undefined): UcCopyByLang {
   }
 }
 
-function tokensMatch(expected: string, provided: string | null | undefined): boolean {
-  if (!expected || !provided) return false;
-  const a = createHash("sha256").update(expected).digest();
-  const b = createHash("sha256").update(provided).digest();
-  return timingSafeEqual(a, b);
-}
-
 function newAccessToken(): string {
   return randomBytes(24).toString("base64url");
 }
 
 @Injectable()
 export class UnderConstructionService {
+  /** Cached flag for the API lock middleware (short TTL; fail closed on read errors). */
+  private enabledCache: { value: boolean; expiresAt: number } | null = null;
+
   constructor(private readonly prisma: PrismaService) {}
 
   private async readValue(key: string): Promise<string | null> {
@@ -167,17 +163,13 @@ export class UnderConstructionService {
   async save(dto: UnderConstructionSaveDto): Promise<UnderConstructionAdminStatus> {
     const current = await this.getAdminStatus();
 
-    // Enabling with no token must always mint one so Copy link works immediately.
-    if (dto.enabled && !current.accessToken) {
-      await this.persistNewToken();
-    }
-
     await this.writeValue(
       UC_ENABLED_KEY,
       dto.enabled ? "true" : "false",
       "boolean",
-      "When true, public site shows under-development page unless a valid access token is presented"
+      "When true, public site and public APIs are fully locked (admin/auth only)"
     );
+    this.bustEnabledCache();
 
     if (dto.copy) {
       const next: UcCopyByLang = {
@@ -196,13 +188,13 @@ export class UnderConstructionService {
     return this.getAdminStatus();
   }
 
-  /** Issue a new token; previous query links and cookies stop working immediately. */
+  /** Legacy admin action — preview tokens no longer unlock the public site. */
   async regenerateToken(): Promise<UnderConstructionAdminStatus> {
     await this.persistNewToken();
     return this.getAdminStatus();
   }
 
-  /** Clear the token so no preview link/cookie works until regenerate. Gate stays as configured. */
+  /** Legacy admin action — clear stored preview token if any. */
   async invalidateToken(): Promise<UnderConstructionAdminStatus> {
     await this.prisma.$transaction([
       this.prisma.appSetting.upsert({
@@ -237,20 +229,40 @@ export class UnderConstructionService {
     return this.getAdminStatus();
   }
 
+  /** Whether under-development lock is on. Used by public API middleware. */
+  async isEnabled(): Promise<boolean> {
+    const now = Date.now();
+    if (this.enabledCache && this.enabledCache.expiresAt > now) {
+      return this.enabledCache.value;
+    }
+    try {
+      const enabled = (await this.readValue(UC_ENABLED_KEY)) === "true";
+      this.enabledCache = { value: enabled, expiresAt: now + 5_000 };
+      return enabled;
+    } catch {
+      // Fail closed: treat as locked if we cannot read the flag.
+      this.enabledCache = { value: true, expiresAt: now + 2_000 };
+      return true;
+    }
+  }
+
+  private bustEnabledCache() {
+    this.enabledCache = null;
+  }
+
   async resolvePublic(input: {
     lang?: string | null;
     queryToken?: string | null;
     cookieToken?: string | null;
   }): Promise<UnderConstructionPublicResolve> {
     const lang = asLang(input.lang);
-    const [enabledRaw, token, copyRaw] = await Promise.all([
+    const [enabledRaw, copyRaw] = await Promise.all([
       this.readValue(UC_ENABLED_KEY),
-      this.readValue(UC_ACCESS_TOKEN_KEY),
       this.readValue(UC_COPY_KEY),
     ]);
     const enabled = enabledRaw === "true";
     const copy = parseCopy(copyRaw)[lang];
-    const expected = token?.trim() || "";
+    this.enabledCache = { value: enabled, expiresAt: Date.now() + 5_000 };
 
     if (!enabled) {
       return {
@@ -266,25 +278,17 @@ export class UnderConstructionService {
       };
     }
 
-    const queryOk = tokensMatch(expected, input.queryToken);
-    const cookieOk = tokensMatch(expected, input.cookieToken);
-    const allowed = queryOk || cookieOk;
-    // Only clear when a cookie was actually presented and is invalid.
-    // Clearing on every deny races with ?access= → strip-query: the follow-up
-    // check can arrive before the browser attaches the new cookie and would
-    // wipe the just-issued preview session (home hard-loads feel "query only").
-    const clearCookie = Boolean(input.cookieToken?.trim()) && !cookieOk;
-
+    // Strict beta lock: public site closed for everyone (no ?access= / cookie unlock).
+    // Admin/auth stay on separate routes. Clear any leftover preview cookie.
     return {
       enabled: true,
-      allowed,
+      allowed: false,
       queryParam: UC_QUERY_PARAM,
       cookieName: UC_COOKIE_NAME,
       cookieMaxAgeSec: UC_COOKIE_MAX_AGE_SEC,
-      // Refresh persistent HttpOnly cookie whenever access is valid (query or existing cookie).
-      refreshCookie: Boolean(allowed && expected),
-      clearCookie,
-      cookieToken: allowed && expected ? expected : null,
+      refreshCookie: false,
+      clearCookie: true,
+      cookieToken: null,
       copy,
     };
   }

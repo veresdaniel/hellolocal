@@ -1,21 +1,14 @@
-// Platform settings: under-development gate toggle, editable page copy, access link.
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+// Platform settings: under-development gate toggle + editable page copy.
+import { useEffect, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  getSite,
   getUnderConstructionSettings,
-  invalidateUnderConstructionToken,
-  regenerateUnderConstructionToken,
   saveUnderConstructionSettings,
   type UnderConstructionAdminStatus,
   type UnderConstructionCopyByLang,
   type UnderConstructionCopyFields,
 } from "../api/admin.api";
-import { buildAccessPreviewUrl } from "../lib/underConstructionAccess";
-import { DEFAULT_SITE_SLUG } from "../app/config";
-import { useAdminSite } from "../contexts/useAdminSite";
 import { useToast } from "../contexts/ToastContext";
-import { useConfirm } from "../hooks/useConfirm";
 import { LoadingSpinner } from "./LoadingSpinner";
 
 const LANGS = ["hu", "en", "de"] as const;
@@ -30,20 +23,15 @@ type Props = {
   adminLang: string;
 };
 
-export function UnderConstructionSettings({ adminLang }: Props) {
+export function UnderConstructionSettings({ adminLang: _adminLang }: Props) {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const confirm = useConfirm();
-  const { selectedSiteId } = useAdminSite();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [busyToken, setBusyToken] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [status, setStatus] = useState<UnderConstructionAdminStatus | null>(null);
   const [copy, setCopy] = useState<UnderConstructionCopyByLang>(emptyCopy);
   const [copyLang, setCopyLang] = useState<(typeof LANGS)[number]>("hu");
-  const [copied, setCopied] = useState(false);
-  const [previewSiteSlug, setPreviewSiteSlug] = useState(DEFAULT_SITE_SLUG);
 
   const applyStatus = (next: UnderConstructionAdminStatus) => {
     setStatus(next);
@@ -73,35 +61,6 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     };
   }, [showToast, t]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!selectedSiteId) {
-      setPreviewSiteSlug(DEFAULT_SITE_SLUG);
-      return;
-    }
-    void getSite(selectedSiteId)
-      .then((site) => {
-        if (cancelled) return;
-        const slug =
-          typeof site?.slug === "string" && site.slug.trim() ? site.slug.trim() : DEFAULT_SITE_SLUG;
-        setPreviewSiteSlug(slug);
-      })
-      .catch(() => {
-        if (!cancelled) setPreviewSiteSlug(DEFAULT_SITE_SLUG);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedSiteId]);
-
-  // Stay on the current platform origin (hello-local.io / beta / …). Never send the
-  // beta ?access= link to Site.primaryDomain — that host may have no DNS yet.
-  const previewUrl = useMemo(() => {
-    const token = status?.accessToken;
-    if (!token || typeof window === "undefined") return "";
-    return buildAccessPreviewUrl(window.location.origin, adminLang || "hu", token, previewSiteSlug);
-  }, [adminLang, previewSiteSlug, status?.accessToken]);
-
   const setField = (field: keyof UnderConstructionCopyFields, value: string) => {
     setCopy((prev) => ({
       ...prev,
@@ -110,11 +69,7 @@ export function UnderConstructionSettings({ adminLang }: Props) {
   };
 
   const persistSettings = async (nextEnabled: boolean, nextCopy = copy) => {
-    let next = await saveUnderConstructionSettings({ enabled: nextEnabled, copy: nextCopy });
-    // Safety net: enabling must always yield a concrete token for Copy link.
-    if (nextEnabled && !next.hasToken) {
-      next = await regenerateUnderConstructionToken();
-    }
+    const next = await saveUnderConstructionSettings({ enabled: nextEnabled, copy: nextCopy });
     applyStatus(next);
     return next;
   };
@@ -134,20 +89,13 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     }
   };
 
-  const handleEnabledChange = async (checked: boolean) => {
+  const handleEnabledChange = async (nextEnabled: boolean) => {
     const previous = enabled;
-    setEnabled(checked);
-    // Persist ON and OFF immediately so the toggle is never a dirty-only UX.
-    // Enabling also mints a token so Copy link works without a second click.
+    setEnabled(nextEnabled);
     try {
       setSaving(true);
-      await persistSettings(checked, copy);
-      showToast(
-        checked
-          ? t("admin.underConstruction.tokenReady")
-          : t("admin.underConstruction.saved"),
-        "success"
-      );
+      await persistSettings(nextEnabled, copy);
+      showToast(t("admin.underConstruction.saved"), "success");
     } catch (err) {
       setEnabled(previous);
       showToast(
@@ -159,74 +107,6 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     }
   };
 
-  const handleRegenerate = async () => {
-    const hadToken = Boolean(status?.hasToken);
-    if (hadToken) {
-      const ok = await confirm({
-        title: t("admin.underConstruction.regenerate"),
-        message: t("admin.underConstruction.regenerateConfirm"),
-        confirmLabel: t("admin.underConstruction.regenerate"),
-        cancelLabel: t("common.cancel"),
-        confirmVariant: "danger",
-      });
-      if (!ok) return;
-    }
-    try {
-      setBusyToken(true);
-      const next = await regenerateUnderConstructionToken();
-      applyStatus(next);
-      showToast(
-        hadToken
-          ? t("admin.underConstruction.tokenRegenerated")
-          : t("admin.underConstruction.tokenReady"),
-        "success"
-      );
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : t("admin.underConstruction.saveFailed"),
-        "error"
-      );
-    } finally {
-      setBusyToken(false);
-    }
-  };
-
-  const handleInvalidate = async () => {
-    const ok = await confirm({
-      title: t("admin.underConstruction.invalidate"),
-      message: t("admin.underConstruction.invalidateConfirm"),
-      confirmLabel: t("admin.underConstruction.invalidate"),
-      cancelLabel: t("common.cancel"),
-      confirmVariant: "danger",
-    });
-    if (!ok) return;
-    try {
-      setBusyToken(true);
-      const next = await invalidateUnderConstructionToken();
-      applyStatus(next);
-      showToast(t("admin.underConstruction.tokenInvalidated"), "success");
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : t("admin.underConstruction.saveFailed"),
-        "error"
-      );
-    } finally {
-      setBusyToken(false);
-    }
-  };
-
-  const handleCopyLink = async () => {
-    if (!previewUrl) return;
-    try {
-      await navigator.clipboard.writeText(previewUrl);
-      setCopied(true);
-      showToast(t("admin.underConstruction.linkCopied"), "success");
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      showToast(t("admin.underConstruction.copyFailed"), "error");
-    }
-  };
-
   if (loading) {
     return (
       <div style={{ padding: 24 }}>
@@ -235,7 +115,8 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     );
   }
 
-  const fields = copy[copyLang];
+  const fields = copy[copyLang] || emptyCopy()[copyLang];
+
   const inputStyle: CSSProperties = {
     width: "100%",
     maxWidth: 640,
@@ -286,7 +167,7 @@ export function UnderConstructionSettings({ adminLang }: Props) {
         <input
           type="checkbox"
           checked={enabled}
-          disabled={saving || busyToken}
+          disabled={saving}
           onChange={(event) => void handleEnabledChange(event.target.checked)}
           style={{ width: 18, height: 18 }}
         />
@@ -367,7 +248,7 @@ export function UnderConstructionSettings({ adminLang }: Props) {
         style={{ ...inputStyle, marginBottom: 16 }}
       />
 
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 8 }}>
         <button
           type="button"
           onClick={() => void handleSave()}
@@ -384,116 +265,6 @@ export function UnderConstructionSettings({ adminLang }: Props) {
           }}
         >
           {saving ? t("common.loading") : t("admin.underConstruction.save")}
-        </button>
-      </div>
-
-      <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600, color: "#0f172a" }}>
-        {t("admin.underConstruction.accessTitle")}
-      </h3>
-      <p style={{ margin: "0 0 12px", color: "#475569", fontSize: 14, lineHeight: 1.5 }}>
-        {t("admin.underConstruction.accessHelp", {
-          param: status?.queryParam || "access",
-        })}
-      </p>
-
-      {status?.hasToken && previewUrl ? (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: 12,
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            borderRadius: 8,
-            maxWidth: 720,
-          }}
-        >
-          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 6, fontWeight: 600 }}>
-            {t("admin.underConstruction.previewLink")}
-          </div>
-          <code
-            style={{
-              display: "block",
-              wordBreak: "break-all",
-              fontSize: 13,
-              color: "#0f172a",
-              marginBottom: 10,
-            }}
-          >
-            {previewUrl}
-          </code>
-          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4, fontWeight: 600 }}>
-            {t("admin.underConstruction.tokenLabel")}
-          </div>
-          <code style={{ display: "block", wordBreak: "break-all", fontSize: 12, color: "#475569" }}>
-            {status.accessToken}
-          </code>
-          {status.tokenUpdatedAt ? (
-            <p style={{ margin: "8px 0 0", fontSize: 12, color: "#94a3b8" }}>
-              {t("admin.underConstruction.tokenUpdatedAt", {
-                date: new Date(status.tokenUpdatedAt).toLocaleString(),
-              })}
-            </p>
-          ) : null}
-        </div>
-      ) : (
-        <p style={{ margin: "0 0 12px", color: "#6b7280", fontSize: 14 }}>
-          {t("admin.underConstruction.noToken")}
-        </p>
-      )}
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button
-          type="button"
-          onClick={() => void handleCopyLink()}
-          disabled={!previewUrl || busyToken}
-          style={{
-            minHeight: 42,
-            padding: "0 16px",
-            border: 0,
-            borderRadius: 999,
-            background: previewUrl ? "#0f766e" : "#94a3b8",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: previewUrl ? "pointer" : "not-allowed",
-          }}
-        >
-          {copied ? t("admin.underConstruction.copied") : t("admin.underConstruction.copyLink")}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleRegenerate()}
-          disabled={busyToken || saving}
-          style={{
-            minHeight: 42,
-            padding: "0 16px",
-            border: "1px solid #d1d5db",
-            borderRadius: 999,
-            background: "#fff",
-            color: "#374151",
-            fontWeight: 600,
-            cursor: busyToken || saving ? "wait" : "pointer",
-          }}
-        >
-          {status?.hasToken
-            ? t("admin.underConstruction.regenerate")
-            : t("admin.underConstruction.generate")}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleInvalidate()}
-          disabled={busyToken || !status?.hasToken}
-          style={{
-            minHeight: 42,
-            padding: "0 16px",
-            border: "1px solid #fecaca",
-            borderRadius: 999,
-            background: "#fff",
-            color: "#b91c1c",
-            fontWeight: 600,
-            cursor: busyToken || !status?.hasToken ? "not-allowed" : "pointer",
-          }}
-        >
-          {t("admin.underConstruction.invalidate")}
         </button>
       </div>
     </div>
