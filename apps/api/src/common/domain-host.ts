@@ -13,7 +13,16 @@ export function normalizeDomainHost(value: string | null | undefined): string | 
   if (!isRegistrableHost(host)) return null;
   if (host === "localhost" || host.startsWith("localhost.")) return null;
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return null;
-  if (host === "hello-local.io" || host === "www.hello-local.io" || host === "api.hello-local.io") {
+  if (
+    host === "hello-local.io" ||
+    host === "www.hello-local.io" ||
+    host === "api.hello-local.io" ||
+    host === "beta.hello-local.io" ||
+    host === "api.beta.hello-local.io" ||
+    host === "devel.hello-local.io" ||
+    host === "api.devel.hello-local.io" ||
+    host.endsWith(".hello-local.io")
+  ) {
     return null;
   }
   return host;

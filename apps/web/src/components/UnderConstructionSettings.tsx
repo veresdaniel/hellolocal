@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  getSite,
   getUnderConstructionSettings,
   invalidateUnderConstructionToken,
   regenerateUnderConstructionToken,
@@ -11,6 +12,8 @@ import {
   type UnderConstructionCopyFields,
 } from "../api/admin.api";
 import { buildAccessPreviewUrl } from "../lib/underConstructionAccess";
+import { DEFAULT_SITE_SLUG } from "../app/config";
+import { useAdminSite } from "../contexts/useAdminSite";
 import { useToast } from "../contexts/ToastContext";
 import { useConfirm } from "../hooks/useConfirm";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -31,6 +34,7 @@ export function UnderConstructionSettings({ adminLang }: Props) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const confirm = useConfirm();
+  const { selectedSiteId } = useAdminSite();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyToken, setBusyToken] = useState(false);
@@ -39,6 +43,10 @@ export function UnderConstructionSettings({ adminLang }: Props) {
   const [copy, setCopy] = useState<UnderConstructionCopyByLang>(emptyCopy);
   const [copyLang, setCopyLang] = useState<(typeof LANGS)[number]>("hu");
   const [copied, setCopied] = useState(false);
+  const [previewOrigin, setPreviewOrigin] = useState(() =>
+    typeof window !== "undefined" ? window.location.origin : ""
+  );
+  const [previewSiteSlug, setPreviewSiteSlug] = useState(DEFAULT_SITE_SLUG);
 
   const applyStatus = (next: UnderConstructionAdminStatus) => {
     setStatus(next);
@@ -68,11 +76,41 @@ export function UnderConstructionSettings({ adminLang }: Props) {
     };
   }, [showToast, t]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedSiteId) {
+      setPreviewSiteSlug(DEFAULT_SITE_SLUG);
+      if (typeof window !== "undefined") setPreviewOrigin(window.location.origin);
+      return;
+    }
+    void getSite(selectedSiteId)
+      .then((site) => {
+        if (cancelled) return;
+        const slug = typeof site?.slug === "string" && site.slug.trim() ? site.slug.trim() : DEFAULT_SITE_SLUG;
+        setPreviewSiteSlug(slug);
+        const domain =
+          typeof site?.primaryDomain === "string" ? site.primaryDomain.trim().toLowerCase() : "";
+        if (domain) {
+          setPreviewOrigin(`https://${domain.replace(/^https?:\/\//, "").split("/")[0]}`);
+        } else if (typeof window !== "undefined") {
+          setPreviewOrigin(window.location.origin);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPreviewSiteSlug(DEFAULT_SITE_SLUG);
+        if (typeof window !== "undefined") setPreviewOrigin(window.location.origin);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSiteId]);
+
   const previewUrl = useMemo(() => {
     const token = status?.accessToken;
-    if (!token || typeof window === "undefined") return "";
-    return buildAccessPreviewUrl(window.location.origin, adminLang || "hu", token);
-  }, [adminLang, status?.accessToken]);
+    if (!token || !previewOrigin) return "";
+    return buildAccessPreviewUrl(previewOrigin, adminLang || "hu", token, previewSiteSlug);
+  }, [adminLang, previewOrigin, previewSiteSlug, status?.accessToken]);
 
   const setField = (field: keyof UnderConstructionCopyFields, value: string) => {
     setCopy((prev) => ({

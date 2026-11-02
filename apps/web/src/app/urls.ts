@@ -10,11 +10,27 @@ type BuildArgs = {
   path?: string; // pl. "hely/xyz" / "place/xyz"
 };
 
-const PLATFORM_HOSTS = new Set(["localhost", "127.0.0.1", "hello-local.io", "www.hello-local.io"]);
+const PLATFORM_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "hello-local.io",
+  "www.hello-local.io",
+  "api.hello-local.io",
+  "beta.hello-local.io",
+  "api.beta.hello-local.io",
+  "devel.hello-local.io",
+  "api.devel.hello-local.io",
+]);
 
+/**
+ * Platform multi-tenant hosts (slug paths). Custom SiteDomain hosts are false.
+ * Includes beta/devel — without this, DomainRedirect treats beta as a custom domain
+ * and mis-routes `/` and `/:lang`.
+ */
 export function isPlatformHost(hostname: string): boolean {
   const host = hostname.toLowerCase().split(":")[0];
   if (!host || PLATFORM_HOSTS.has(host)) return true;
+  if (host.endsWith(".hello-local.io")) return true;
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
 }
 

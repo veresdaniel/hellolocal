@@ -69,28 +69,19 @@ export type UcCookieEnv = {
 };
 
 /**
- * Parent cookie Domain for sharing between the public host and api.* subdomain.
- * Omit on localhost / IPs (host-only cookies).
+ * Cookie Domain for the UC preview cookie.
+ *
+ * Default: host-only (no Domain attribute). The public SPA talks to the gate via
+ * same-origin `/api` on whichever host the visitor uses (platform or custom domain),
+ * so a shared parent Domain is unnecessary — and a Domain derived from FRONTEND_URL
+ * (e.g. `.hello-local.io`) is rejected by the browser on `helloetyek.hu`.
+ *
+ * Set COOKIE_DOMAIN only if you intentionally need a parent Domain.
  */
 export function resolveUcCookieDomain(env: UcCookieEnv = {}): string | undefined {
   const configured = env.cookieDomain?.trim();
-  if (configured) {
-    return configured.startsWith(".") ? configured : `.${configured}`;
-  }
-  const frontend =
-    env.frontendUrl?.trim() || env.corsOrigin?.split(",")[0]?.trim() || "";
-  if (!frontend) return undefined;
-  try {
-    const host = new URL(frontend).hostname;
-    if (!host || host === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
-      return undefined;
-    }
-    const parts = host.split(".");
-    if (parts.length < 2) return undefined;
-    return `.${parts.slice(-2).join(".")}`;
-  } catch {
-    return undefined;
-  }
+  if (!configured) return undefined;
+  return configured.startsWith(".") ? configured : `.${configured}`;
 }
 
 export function buildUcSetCookieHeader(
@@ -137,9 +128,21 @@ export function readCookieHeader(header: string | undefined | null, name: string
   return null;
 }
 
-export function buildAccessPreviewUrl(origin: string, lang: string, token: string): string {
+/**
+ * Shareable beta/?access= preview URL.
+ * Prefer a site slug path (`/hu/etyek-budai`) so the visitor lands on the region home,
+ * not the platform region list (`/hu`).
+ */
+export function buildAccessPreviewUrl(
+  origin: string,
+  lang: string,
+  token: string,
+  siteSlug?: string | null
+): string {
   const base = origin.replace(/\/$/, "");
-  const path = `/${lang || "hu"}`;
+  const langSeg = lang || "hu";
+  const slug = typeof siteSlug === "string" ? siteSlug.trim().replace(/^\/+|\/+$/g, "") : "";
+  const path = slug ? `/${langSeg}/${slug}` : `/${langSeg}`;
   return `${base}${path}?${UC_QUERY_PARAM}=${encodeURIComponent(token)}`;
 }
 

@@ -62,6 +62,8 @@ describe("region address", () => {
       })
     ).toBe("https://etyek.hu/en/etyek-budai/place/pince");
     expect(isPlatformHost("Hello-Local.io:443")).toBe(true);
+    expect(isPlatformHost("beta.hello-local.io")).toBe(true);
+    expect(isPlatformHost("api.beta.hello-local.io")).toBe(true);
     expect(isPlatformHost("etyek.hu")).toBe(false);
   });
 });

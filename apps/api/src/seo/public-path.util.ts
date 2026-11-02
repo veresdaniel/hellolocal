@@ -103,7 +103,8 @@ export function isPlatformHostname(hostname: string): boolean {
     host === "127.0.0.1" ||
     host === "hello-local.io" ||
     host === "www.hello-local.io" ||
-    host === "api.hello-local.io"
+    host === "api.hello-local.io" ||
+    host.endsWith(".hello-local.io")
   ) {
     return true;
   }
