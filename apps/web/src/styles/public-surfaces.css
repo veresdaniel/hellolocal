@@ -99,10 +99,147 @@
   color: var(--hl-navy, #1b1730);
 }
 
+/* Event story: one sheet, not a stack of unrelated boxes. */
+.hl-event {
+  margin: 0 16px 20px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.hl-event__facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px 32px;
+  margin: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+}
+
+.hl-event__facts > div {
+  min-width: 0;
+}
+
+.hl-event__facts dt {
+  margin: 0 0 4px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--hl-muted, #665d78);
+}
+
+.hl-event__facts dd {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(17px, 1.05vw, 20px);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--hl-ink, #1b1730);
+}
+
+.hl-content-card .hl-event__facts a {
+  color: var(--hl-ink, #1b1730);
+  text-decoration: none;
+}
+
+.hl-content-card .hl-event__facts a:hover {
+  color: var(--hl-accent, #c45c26);
+}
+
+.hl-event__copy {
+  padding: 20px 22px 8px;
+}
+
+.hl-content-card .hl-event__lead {
+  margin: 0 0 12px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(19px, 1.15vw, 22px);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hl-ink, #1b1730);
+}
+
+.hl-event__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+  padding: 14px 22px 16px;
+  border-top: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+}
+
+.hl-event__rate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hl-event__rate-label {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hl-muted, #665d78);
+}
+
+.hl-content-card .hl-event__login {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--hl-accent, #c45c26);
+  text-decoration: none;
+}
+
+.hl-content-card .hl-event__login:hover {
+  color: var(--hl-navy, #1b1730);
+}
+
+.hl-event__share button {
+  background: transparent !important;
+  color: var(--hl-ink, #1b1730) !important;
+  border: 1px solid rgba(27, 23, 48, 0.16) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.hl-event__share button:hover {
+  background: var(--hl-navy, #1b1730) !important;
+  color: #fff !important;
+  border-color: var(--hl-navy, #1b1730) !important;
+}
+
+.hl-event__kicker {
+  margin: 0 16px 8px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hl-mist, #7a92c8);
+}
+
+.hl-event__back {
+  margin: 0 16px 28px;
+}
+
+.hl-event__gallery {
+  margin: 0 16px 24px;
+  padding: 12px;
+}
+
+@media (min-width: 720px) {
+  .hl-event__facts:has(> :nth-child(2)) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
 /* Rich HTML inside cream panels */
 .hl-richtext {
   font-family: var(--font-body, Inter, system-ui, sans-serif);
-  font-size: clamp(17px, 3.5vw, 19px);
+  font-size: clamp(17px, 1.05vw, 21px);
   line-height: 1.8;
   color: var(--hl-muted, #665d78);
 }

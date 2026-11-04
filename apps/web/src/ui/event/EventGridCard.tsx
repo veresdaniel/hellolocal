@@ -4,6 +4,7 @@ import type { Event } from "../../api/places.api";
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
 import { Badge } from "../../components/Badge";
+import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import "../../styles/list-card.css";
 
@@ -27,13 +28,26 @@ export function EventGridCard({
     <article
       className="list-card"
       style={{
-        borderBottom: event.category ? "3px solid #c45c26" : undefined,
+        ["--list-accent" as string]: "#c45c26",
         opacity: hasValidSlug ? 1 : 0.75,
       }}
     >
-      <div className="list-card__media">
+      <div className="list-card__media" style={{ background: "#c45c26" }}>
         {imageUrl ? (
-          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+          <div className="list-card__media-fill">
+            <ImageWithSkeleton
+              src={imageUrl}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center top",
+                display: "block",
+              }}
+              skeletonStyle={{ borderRadius: 0 }}
+            />
+          </div>
         ) : null}
         <div style={{ position: "absolute", top: 12, left: 12, zIndex: 2 }}>
           <Badge

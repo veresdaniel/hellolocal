@@ -106,7 +106,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
       <div
         className="list-card__media"
         style={{
-          background: `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`,
+          background: categoryColor,
         }}
       >
         {imageUrl && (
@@ -120,25 +120,10 @@ export function PlaceCard({ place }: PlaceCardProps) {
                 objectFit: "cover",
                 objectPosition: "center top",
                 display: "block",
-                transition: "transform 0.4s ease",
               }}
               skeletonStyle={{
                 borderRadius: 0,
               }}
-              onMouseEnter={
-                hasSlug
-                  ? (e) => {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                    }
-                  : undefined
-              }
-              onMouseLeave={
-                hasSlug
-                  ? (e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                    }
-                  : undefined
-              }
             />
           </div>
         )}
@@ -222,7 +207,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
                 alignItems: "center",
                 gap: 8,
                 color: categoryColor,
-                fontSize: 15,
+                fontSize: "inherit",
                 fontWeight: 500,
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -271,7 +256,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
         className="list-card"
         style={{
           cursor: "default",
-          borderBottom: `3px solid ${categoryColor}`,
+          ["--list-accent" as string]: categoryColor,
           opacity: 0.8,
         }}
       >
@@ -294,17 +279,8 @@ export function PlaceCard({ place }: PlaceCardProps) {
       <article
         className="list-card"
         style={{
-          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
           cursor: "pointer",
-          borderBottom: `3px solid ${categoryColor}`,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-8px) scale(1.02)";
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.15)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "translateY(0) scale(1)";
-          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+          ["--list-accent" as string]: categoryColor,
         }}
       >
         {articleContent}

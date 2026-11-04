@@ -36,6 +36,21 @@ import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 import { GalleryViewer } from "../components/GalleryViewer";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
+function formatEventWhen(startIso: string, endIso: string | null | undefined, lang: string) {
+  const start = new Date(startIso);
+  const end = endIso ? new Date(endIso) : null;
+  const locale = lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US";
+  const date = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" });
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
+  if (!end || Number.isNaN(end.getTime())) return `${date.format(start)} · ${time.format(start)}`;
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
+  if (sameDay) return `${date.format(start)} · ${time.format(start)}–${time.format(end)}`;
+  return `${date.format(start)}, ${time.format(start)} – ${date.format(end)}, ${time.format(end)}`;
+}
+
 export function EventDetailPage() {
   const { t } = useTranslation();
   const params = useParams<{ lang: string; siteKey: string; slug: string }>();
@@ -569,22 +584,23 @@ export function EventDetailPage() {
       >
         <article
           style={{
-            maxWidth: 960,
+            maxWidth: 1920,
             margin: "0 auto",
             paddingBottom: 64,
             width: "100%",
           }}
         >
-          {/* Hero Image */}
+          {/* Hero spans the viewport, and stops at 1920. */}
           {event.heroImage && (
             <div
               style={{
-                width: "calc(100% - 32px)",
-                margin: "24px 16px 16px",
-                height: "clamp(250px, 50vw, 400px)",
-                borderRadius: 16,
+                width: "100%",
+                maxWidth: 1920,
+                margin: "0 auto 16px",
+                height: "clamp(220px, 36vw, 640px)",
+                borderRadius: 0,
                 overflow: "hidden",
-                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                boxShadow: "0 12px 24px -16px rgba(0, 0, 0, 0.35)",
                 position: "relative",
                 boxSizing: "border-box",
               }}
@@ -684,27 +700,9 @@ export function EventDetailPage() {
             </div>
           )}
 
-          {/* Back Link */}
-          <div style={{ margin: "0 16px 16px" }}>
-            <Link
-              to={buildUrl({ lang: lang as Lang, siteKey, path: "" })}
-              className="hl-page-link"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                minHeight: 44,
-              }}
-            >
-              ← {t("public.backToHome")}
-            </Link>
-          </div>
-
-          {/* Title - light on navy page backdrop */}
-          <div style={{ margin: "0 16px 16px" }}>
+          <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+          {event.category && <p className="hl-event__kicker">{event.category}</p>}
+          <div style={{ margin: "0 16px 18px" }}>
             <h1
               className="hl-page-title"
               style={{
@@ -714,7 +712,7 @@ export function EventDetailPage() {
                 fontFamily:
                   "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                 letterSpacing: "-0.02em",
-                lineHeight: 1.2,
+                lineHeight: 1.15,
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
               }}
@@ -724,414 +722,140 @@ export function EventDetailPage() {
             </h1>
           </div>
 
-          {/* Rating Section with Share Icons in frame */}
-          <div style={{ margin: "0 16px 24px" }}>
-            {isAuthenticated ? (
-              /* Interactive rating (if authenticated) with share icons */
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  padding: "12px",
-                  background: "var(--hl-card)",
-                  borderRadius: "8px",
-                  border: "1px solid var(--hl-line-on-card)",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                    flex: 1,
-                    minWidth: "200px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "var(--hl-ink)",
-                    }}
-                  >
-                    {!myRating
-                      ? lang === "hu"
-                        ? "Értékeld az eseményt:"
-                        : lang === "en"
-                          ? "Rate this event:"
-                          : "Bewerten Sie diese Veranstaltung:"
-                      : lang === "hu"
-                        ? "Módosítsd az értékelésed:"
-                        : lang === "en"
-                          ? "Update your rating:"
-                          : "Aktualisieren Sie Ihre Bewertung:"}
-                  </span>
-                  <StarRating
-                    avg={event.rating?.avg ?? null}
-                    count={event.rating?.count ?? null}
-                    interactive={true}
-                    initialValue={myRating?.value ?? null}
-                    onRate={handleRate}
-                    saving={isRatingSaving}
-                    size="md"
-                  />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                  <SocialShareButtons
-                    url={window.location.href}
-                    title={event.name}
-                    description={event.shortDescription || event.description || ""}
-                    image={event.heroImage || undefined}
-                  />
-                </div>
+          <article className="hl-content-card hl-event">
+            <dl className="hl-event__facts">
+              <div>
+                <dt>{t("public.when")}</dt>
+                <dd>{formatEventWhen(event.startDate, event.endDate, lang || "hu")}</dd>
               </div>
-            ) : (
-              /* Read-only rating display (if not authenticated) with share icons */
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  padding: "12px",
-                  background: "var(--hl-card)",
-                  borderRadius: "8px",
-                  border: "1px solid var(--hl-line-on-card)",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: "200px" }}>
-                  <StarRating
-                    avg={event.rating?.avg ?? null}
-                    count={event.rating?.count ?? null}
-                    interactive={false}
-                    size="md"
-                  />
-                  <Link
-                    to={visitorAuthPath(lang || "hu", "login")}
-                    onClick={() => rememberAuthReturn()}
-                    style={{
-                      display: "inline-block",
-                      marginTop: 6,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--hl-accent, #6d28d9)",
-                    }}
-                  >
-                    {t("public.visitorAuth.loginToRate")}
-                  </Link>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                  <SocialShareButtons
-                    url={window.location.href}
-                    title={event.name}
-                    description={event.shortDescription || event.description || ""}
-                    image={event.heroImage || undefined}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Opening Hours and Gallery side by side */}
-          {(() => {
-            const hasOpeningHours = true; // Events always have date/time
-            const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
-
-            // Show grid if we have opening hours or gallery
-            if (!hasOpeningHours && !hasGallery) {
-              return null;
-            }
-
-            // Always two columns on desktop if we have gallery
-            const shouldShowTwoColumns = hasGallery;
-
-            return (
-              <div
-                className="opening-hours-gallery-grid"
-                style={{
-                  margin: "0 16px 24px",
-                  display: "grid",
-                  gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
-                  gap: 12,
-                }}
-              >
-                <style>{`
-                @media (max-width: 767px) {
-                  .opening-hours-gallery-grid {
-                    gridTemplateColumns: 1fr !important;
-                  }
-                  .gallery-compact {
-                    order: 2;
-                  }
-                }
-              `}</style>
-                {/* Opening Hours - Left */}
-                <div
-                  style={{
-                    background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                    padding: "16px",
-                    borderRadius: 12,
-                    boxShadow: "0 4px 12px rgba(251, 191, 36, 0.2)",
-                    color: "#1a1a1a",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: "clamp(18px, 3vw, 24px)",
-                      fontWeight: 600,
-                      fontFamily:
-                        "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      color: "#1a1a1a",
-                      marginBottom: "clamp(12px, 2vw, 20px)",
-                      marginTop: 0,
-                    }}
-                  >
-                    {t("public.openingHours")}
-                  </h3>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: "rgba(255, 255, 255, 0.9)",
-                        backdropFilter: "blur(10px)",
-                        padding: "10px 12px",
-                        borderRadius: 8,
-                        border: "1px solid rgba(0, 0, 0, 0.1)",
-                      }}
-                    >
-                      <strong
-                        style={{
-                          color: "rgba(0, 0, 0, 0.7)",
-                          fontSize: 11,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          marginBottom: 6,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          fontWeight: 500,
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        }}
+              {event.placeName && (
+                <div>
+                  <dt>{t("public.where")}</dt>
+                  <dd>
+                    {event.placeSlug ? (
+                      <Link
+                        to={buildUrl({
+                          lang: lang as Lang,
+                          siteKey,
+                          path: placeEntityPath(lang as Lang, event.placeSlug),
+                        })}
                       >
-                        <span>📅</span>
-                        {lang === "hu"
-                          ? "Dátum és idő"
-                          : lang === "en"
-                            ? "Date and time"
-                            : "Datum und Uhrzeit"}
-                      </strong>
-                      <div
-                        style={{
-                          color: "#1a1a1a",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          lineHeight: 1.5,
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontWeight: 400,
-                        }}
-                      >
-                        {new Date(event.startDate).toLocaleDateString(
-                          lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                        {event.endDate && (
-                          <>
-                            {" - "}
-                            {new Date(event.endDate).toLocaleDateString(
-                              lang === "hu" ? "hu-HU" : lang === "de" ? "de-DE" : "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {event.placeName && (
-                      <div
-                        style={{
-                          background: "rgba(255, 255, 255, 0.9)",
-                          backdropFilter: "blur(10px)",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          border: "1px solid rgba(0, 0, 0, 0.1)",
-                        }}
-                      >
-                        <strong
-                          style={{
-                            color: "rgba(0, 0, 0, 0.7)",
-                            fontSize: 11,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            marginBottom: 6,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            fontWeight: 500,
-                            fontFamily:
-                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          }}
-                        >
-                          <span>📍</span>
-                          {lang === "hu" ? "Helyszín" : lang === "en" ? "Location" : "Ort"}
-                        </strong>
-                        <Link
-                          to={buildUrl({
-                            lang: lang as Lang,
-                            siteKey,
-                            path: placeEntityPath(lang as Lang, event.placeSlug),
-                          })}
-                          style={{
-                            color: "#1a1a1a",
-                            textDecoration: "none",
-                            fontSize: "clamp(14px, 3.5vw, 16px)",
-                            fontFamily:
-                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            fontWeight: 400,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            transition: "all 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.textDecoration = "underline";
-                            e.currentTarget.style.transform = "translateX(4px)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.textDecoration = "none";
-                            e.currentTarget.style.transform = "translateX(0)";
-                          }}
-                        >
-                          {event.placeName}
-                          <span
-                            style={{
-                              fontSize: "clamp(13px, 3vw, 15px)",
-                              fontFamily:
-                                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                            }}
-                          >
-                            →
-                          </span>
-                        </Link>
-                      </div>
+                        {event.placeName}
+                      </Link>
+                    ) : (
+                      event.placeName
                     )}
-                  </div>
+                  </dd>
                 </div>
+              )}
+            </dl>
 
-                {/* Gallery - Right */}
-                {hasGallery ? (
-                  <div
-                    style={{
-                      background: "white",
-                      padding: "12px",
-                      borderRadius: 12,
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                      border: "1px solid rgba(251, 191, 36, 0.1)",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                    className="gallery-compact"
-                  >
-                    {galleryIds.map((galleryId) => {
-                      const gallery = galleries[galleryId];
-                      if (!gallery || !gallery.images || gallery.images.length === 0) return null;
-                      return (
-                        <GalleryViewer
-                          key={galleryId}
-                          images={gallery.images}
-                          name={gallery.name}
-                          layout={gallery.layout}
-                          aspect={gallery.aspect}
-                          compact={true}
-                        />
-                      );
-                    })}
+            {(event.shortDescription || event.description) && (
+              <div className="hl-event__copy">
+                {event.shortDescription && (
+                  <p className="hl-event__lead">{event.shortDescription}</p>
+                )}
+                {event.description && (
+                  <div ref={descriptionRef} className="hl-richtext">
+                    <ShortcodeRenderer
+                      content={event.description}
+                      lang={lang!}
+                      siteKey={siteKey!}
+                      hideGalleries={galleryIds.length > 0 && Object.keys(galleries).length > 0}
+                    />
                   </div>
-                ) : null}
-              </div>
-            );
-          })()}
-
-          {/* Event Details */}
-          <div style={{ margin: "0 16px 32px" }}>
-            {event.category && (
-              <div style={{ marginBottom: 16 }}>
-                <Badge variant="category" color="#667eea" size="medium" opacity={0.9}>
-                  {event.category}
-                </Badge>
+                )}
               </div>
             )}
-          </div>
 
-          {/* Short + long description in cream card for readable body copy */}
-          {(event.shortDescription || event.description) && (
-            <div
-              className="hl-content-card"
+            <div className="hl-event__foot">
+              <div className="hl-event__rate">
+                {isAuthenticated ? (
+                  <>
+                    <span className="hl-event__rate-label">
+                      {!myRating
+                        ? lang === "hu"
+                          ? "Értékeld az eseményt"
+                          : lang === "en"
+                            ? "Rate this event"
+                            : "Bewerten Sie diese Veranstaltung"
+                        : lang === "hu"
+                          ? "Módosítsd az értékelésed"
+                          : lang === "en"
+                            ? "Update your rating"
+                            : "Aktualisieren Sie Ihre Bewertung"}
+                    </span>
+                    <StarRating
+                      avg={event.rating?.avg ?? null}
+                      count={event.rating?.count ?? null}
+                      interactive={true}
+                      initialValue={myRating?.value ?? null}
+                      onRate={handleRate}
+                      saving={isRatingSaving}
+                      size="md"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <StarRating
+                      avg={event.rating?.avg ?? null}
+                      count={event.rating?.count ?? null}
+                      interactive={false}
+                      size="md"
+                    />
+                    <Link
+                      to={visitorAuthPath(lang || "hu", "login")}
+                      onClick={() => rememberAuthReturn()}
+                      className="hl-event__login"
+                    >
+                      {t("public.visitorAuth.loginToRate")}
+                    </Link>
+                  </>
+                )}
+              </div>
+              <div className="hl-event__share">
+                <SocialShareButtons
+                  url={window.location.href}
+                  title={event.name}
+                  description={event.shortDescription || event.description || ""}
+                  image={event.heroImage || undefined}
+                />
+              </div>
+            </div>
+          </article>
+
+          <div className="hl-event__back">
+            <Link
+              to={buildUrl({ lang: lang as Lang, siteKey, path: "" })}
+              className="hl-page-link"
               style={{
-                margin: "0 16px 32px",
-                padding: "clamp(16px, 4vw, 28px)",
-                width: "calc(100% - 32px)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 15,
+                minHeight: 44,
               }}
             >
-              {event.shortDescription && (
-                <div
-                  style={{
-                    fontSize: 18,
-                    lineHeight: 1.8,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 500,
-                    color: "var(--hl-ink)",
-                    marginBottom: event.description ? 16 : 0,
-                  }}
-                >
-                  {event.shortDescription}
-                </div>
-              )}
-              {event.description && (
-                <div
-                  ref={descriptionRef}
-                  className="hl-richtext"
-                  style={{
-                    fontSize: 16,
-                    lineHeight: 1.8,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 400,
-                  }}
-                >
-                  <ShortcodeRenderer
-                    content={event.description}
-                    lang={lang!}
-                    siteKey={siteKey!}
-                    hideGalleries={
-                      galleryIds.length > 0 && Object.keys(galleries).length > 0
-                    }
+              ← {t("public.backToHome")}
+            </Link>
+          </div>
+
+          {galleryIds.length > 0 && Object.keys(galleries).length > 0 && (
+            <div className="hl-content-card hl-event__gallery">
+              {galleryIds.map((galleryId) => {
+                const gallery = galleries[galleryId];
+                if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                return (
+                  <GalleryViewer
+                    key={galleryId}
+                    images={gallery.images}
+                    name={gallery.name}
+                    layout={gallery.layout}
+                    aspect={gallery.aspect}
+                    compact={true}
                   />
-                </div>
-              )}
+                );
+              })}
             </div>
           )}
 
@@ -1141,11 +865,12 @@ export function EventDetailPage() {
               <h2
                 className="hl-page-title"
                 style={{
-                  fontSize: 24,
-                  fontWeight: 700,
+                  fontSize: 18,
+                  fontWeight: 650,
+                  letterSpacing: "-0.01em",
                   fontFamily:
                     "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  marginBottom: 16,
+                  margin: "0 0 12px",
                 }}
               >
                 {t("public.location")}
@@ -1169,6 +894,7 @@ export function EventDetailPage() {
               </div>
             </div>
           )}
+          </div>
         </article>
       </div>
     </>

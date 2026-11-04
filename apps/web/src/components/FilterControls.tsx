@@ -21,9 +21,9 @@ export interface FilterControlProps {
   onHasEventTodayChange: (value: boolean) => void;
   onWithin30MinutesChange: (value: boolean) => void;
   onRainSafeChange: (value: boolean) => void;
-  /** List pages: Helyek / Szolgáltatások on the same chip row. */
-  section?: "places" | "services";
-  onSectionChange?: (section: "places" | "services") => void;
+  /** List pages: Helyek / Szolgáltatások / Események. Null means neither chip is on. */
+  section?: "places" | "services" | "events" | null;
+  onSectionChange?: (section: "places" | "services" | "events" | null) => void;
 }
 
 export function activeFilterCount(props: FilterControlProps) {
@@ -117,38 +117,9 @@ export function FilterControls(props: FilterControlProps) {
   ];
 
   return (
-    <>
-      <div className="map-dock__section">
-        <div className="map-dock__chips">
-          {props.onSectionChange && (
-            <>
-              {(["places", "services"] as const).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  className="map-dock__chip"
-                  aria-pressed={props.section === key}
-                  onClick={() => props.onSectionChange?.(key)}
-                >
-                  {t(key === "places" ? "public.placesTab" : "public.servicesTab")}
-                </button>
-              ))}
-            </>
-          )}
-          {quick.map((chip) => (
-            <button
-              key={chip.key}
-              type="button"
-              className="map-dock__chip"
-              aria-pressed={chip.pressed}
-              onClick={chip.onClick}
-            >
-              {chip.label}
-            </button>
-          ))}
-          {categories.length > 0 && (
-            <span className="map-dock__chip-label">{t("public.filters.categories")}</span>
-          )}
+    <div className="map-dock__filter-row">
+      {categories.length > 0 && (
+        <div className="map-dock__filter-group">
           {categories.map((category) => (
             <button
               key={category.id}
@@ -163,26 +134,57 @@ export function FilterControls(props: FilterControlProps) {
             </button>
           ))}
         </div>
-      </div>
-
-      {priceBands.length > 0 && (
-        <div className="map-dock__section">
-          <h3>{t("public.filters.price")}</h3>
-          <div className="map-dock__chips">
-            {priceBands.map((band) => (
-              <button
-                key={band.id}
-                type="button"
-                className="map-dock__chip"
-                aria-pressed={props.selectedPriceBands.includes(band.id)}
-                onClick={() => toggle(props.selectedPriceBands, band.id, props.onPriceBandsChange)}
-              >
-                {band.name}
-              </button>
-            ))}
-          </div>
+      )}
+      {props.onSectionChange && (
+        <div className="map-dock__filter-group map-dock__filter-group--kind">
+          {(["places", "services", "events"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className="map-dock__chip"
+              aria-pressed={props.section === key}
+              onClick={() => props.onSectionChange?.(props.section === key ? null : key)}
+            >
+              {t(
+                key === "places"
+                  ? "public.placesTab"
+                  : key === "services"
+                    ? "public.servicesTab"
+                    : "public.events"
+              )}
+            </button>
+          ))}
         </div>
       )}
-    </>
+      <div className="map-dock__filter-group">
+        {quick.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            className="map-dock__chip"
+            aria-pressed={chip.pressed}
+            onClick={chip.onClick}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+      {priceBands.length > 0 && (
+        <div className="map-dock__filter-group">
+          <span className="map-dock__chip-label">{t("public.filters.price")}</span>
+          {priceBands.map((band) => (
+            <button
+              key={band.id}
+              type="button"
+              className="map-dock__chip"
+              aria-pressed={props.selectedPriceBands.includes(band.id)}
+              onClick={() => toggle(props.selectedPriceBands, band.id, props.onPriceBandsChange)}
+            >
+              {band.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

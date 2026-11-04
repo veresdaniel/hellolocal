@@ -962,7 +962,9 @@ export function MapComponent({
       // Only use route distance for the currently selected marker
       // This prevents showing stale route data when switching between markers
       const route =
-        selectedMarkerId === marker.id ? routes.find((r) => r.markerId === marker.id) : null;
+        selectedMarkerId === marker.id || navigationMarkerId === marker.id
+          ? routes.find((r) => r.markerId === marker.id)
+          : null;
 
       // Only show distance if we have route data from API
       // Don't use fallback straight-line calculation
@@ -978,7 +980,7 @@ export function MapComponent({
         isRouteDistance: !!route?.distance, // Flag to indicate if this is route distance or straight-line
       };
     });
-  }, [markers, userLocation, routes, selectedMarkerId, showUserLocation]);
+  }, [markers, userLocation, routes, selectedMarkerId, navigationMarkerId, showUserLocation]);
 
   // Apply clustering to reduce marker density at veryFar zoom
   const visibleMarkers = useMemo(() => {
@@ -1034,7 +1036,7 @@ export function MapComponent({
       cancelHoverClose();
       suppressHoverIdRef.current = marker.id;
       setHoveredMarkerId(null);
-      setSelectedMarkerId(null);
+      setSelectedMarkerId(marker.id);
       navigationMarkerIdRef.current = marker.id;
       setNavigationMarkerId(marker.id);
       shouldHaveRoutesRef.current = true;
@@ -1440,7 +1442,8 @@ export function MapComponent({
           const isSelected = selectedMarkerId === marker.id;
           const isHovered = hoveredMarkerId === marker.id;
           const isPinned = pinnedMarkerId === marker.id;
-          const showEnhancedCard = isSelected || isHovered || isPinned;
+          const isNavigatingHere = navigationMarkerId === marker.id;
+          const showEnhancedCard = isSelected || isHovered || isPinned || isNavigatingHere;
           const showZoomChip =
             !showEnhancedCard && showLabel && (!!marker.name || !!marker.category);
           const destinationReady = Number.isFinite(marker.lat) && Number.isFinite(marker.lng);
@@ -1572,7 +1575,7 @@ export function MapComponent({
                       {marker.category && (
                         <span className="hl-map-marker-card__category">{marker.category}</span>
                       )}
-                      {isSelected && (
+                      {(isSelected || isNavigatingHere) && (
                         <>
                           {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
                             <>
@@ -1772,62 +1775,70 @@ export function MapComponent({
                   const checked = e.target.checked;
 
                   if (checked) {
-                    // User wants to enable location tracking
+                    // The switch follows the click. A slow or missing fix must not leave it stuck off.
+                    setShowUserLocation(true);
+                    const localHost =
+                      typeof window !== "undefined" &&
+                      (window.location.hostname === "localhost" ||
+                        window.location.hostname === "127.0.0.1");
+                    const useMapCenter = () => {
+                      if (localHost && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+                        setUserLocation({ lat: latitude, lng: longitude });
+                      }
+                    };
+                    const startWatch = () => {
+                      if (!navigator.geolocation) return;
+                      if (watchIdRef.current !== null) {
+                        navigator.geolocation.clearWatch(watchIdRef.current);
+                      }
+                      watchIdRef.current = navigator.geolocation.watchPosition(
+                        (updatedPosition) => {
+                          setUserLocation({
+                            lat: updatedPosition.coords.latitude,
+                            lng: updatedPosition.coords.longitude,
+                          });
+                        },
+                        (error) => {
+                          console.warn("Geolocation watch error:", error);
+                          if (error.code === error.PERMISSION_DENIED) {
+                            setShowUserLocation(false);
+                            setUserLocation(null);
+                          }
+                        },
+                        {
+                          enableHighAccuracy: false,
+                          maximumAge: 30000,
+                          timeout: 10000,
+                        }
+                      );
+                    };
                     if (navigator.geolocation) {
-                      // Request geolocation in user gesture context (required for iOS)
                       navigator.geolocation.getCurrentPosition(
                         (position) => {
-                          // Success: set location and enable tracking
                           setUserLocation({
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                           });
-                          setShowUserLocation(true);
-
-                          // Start watching for updates
-                          if (watchIdRef.current !== null) {
-                            navigator.geolocation.clearWatch(watchIdRef.current);
-                          }
-                          watchIdRef.current = navigator.geolocation.watchPosition(
-                            (updatedPosition) => {
-                              setUserLocation({
-                                lat: updatedPosition.coords.latitude,
-                                lng: updatedPosition.coords.longitude,
-                              });
-                            },
-                            (error) => {
-                              console.warn("Geolocation watch error:", error);
-                              if (error.code === error.PERMISSION_DENIED) {
-                                setShowUserLocation(false);
-                                setUserLocation(null);
-                              }
-                            },
-                            {
-                              enableHighAccuracy: true,
-                              maximumAge: 30000,
-                              timeout: 10000,
-                            }
-                          );
+                          startWatch();
                         },
                         (error) => {
-                          // Permission denied or error - don't enable
                           console.warn("Geolocation error:", error);
-                          setShowUserLocation(false);
-                          setUserLocation(null);
-                          // Reset checkbox state
-                          e.target.checked = false;
+                          if (error.code === error.PERMISSION_DENIED) {
+                            setShowUserLocation(false);
+                            setUserLocation(null);
+                            return;
+                          }
+                          useMapCenter();
+                          startWatch();
                         },
                         {
-                          enableHighAccuracy: true,
+                          enableHighAccuracy: false,
                           maximumAge: 300000,
-                          timeout: 15000,
+                          timeout: 8000,
                         }
                       );
                     } else {
-                      // Geolocation not available
-                      console.warn("Geolocation not supported");
-                      setShowUserLocation(false);
-                      e.target.checked = false;
+                      useMapCenter();
                     }
                   } else {
                     // User wants to disable location tracking

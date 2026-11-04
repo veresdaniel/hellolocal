@@ -88,7 +88,7 @@ describe("town/place custom domain addresses", () => {
         entitySlug: "etyek",
         primaryDomain: "etyek-region.hu",
       })
-    ).toBe("https://etyek-region.hu/hu/etyek-budai/telepules/etyek");
+    ).toBe("https://etyek-region.hu/hu/etyek-budai/etyek");
   });
 
   it("maps host resolve kinds to the public entity path", () => {
@@ -98,7 +98,7 @@ describe("town/place custom domain addresses", () => {
         slug: "etyek-budai",
         defaultLang: "hu",
       })
-    ).toBe("/hu/etyek-budai");
+    ).toBe("/hu");
     expect(
       pathForHostResolve({
         kind: "town",
@@ -106,7 +106,7 @@ describe("town/place custom domain addresses", () => {
         defaultLang: "en",
         entitySlug: "etyek",
       })
-    ).toBe("/en/etyek-budai/town/etyek");
+    ).toBe("/en");
     expect(
       pathForHostResolve({
         kind: "place",
@@ -114,6 +114,6 @@ describe("town/place custom domain addresses", () => {
         defaultLang: "de",
         entitySlug: "pince",
       })
-    ).toBe("/de/etyek-budai/ort/pince");
+    ).toBe("/de");
   });
 });

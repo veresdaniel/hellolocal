@@ -18,6 +18,7 @@ import {
   withoutOwnerPrefix,
   staticPagesListPath,
   townDetailPath,
+  townMapPath,
 } from "./public-path.util";
 import { SitemapScope, SitemapScopeResolver } from "./sitemap-scope";
 
@@ -177,16 +178,28 @@ ${entries}
           0.7,
           { omitOwner: scope.kind === "site" }
         );
-      case "towns":
-        return this.entitySlugUrls(
+      case "towns": {
+        const opts = { excludeOwnCustomDomain: true, omitOwner: scope.kind === "site" as const };
+        const maps = await this.entitySlugUrls(
           scope.origin,
           siteIds,
           SlugEntityType.town,
           townDetailPath,
           "weekly",
-          0.7,
-          { excludeOwnCustomDomain: true, omitOwner: scope.kind === "site" }
+          0.8,
+          opts
         );
+        const lists = await this.entitySlugUrls(
+          scope.origin,
+          siteIds,
+          SlugEntityType.town,
+          townMapPath,
+          "weekly",
+          0.7,
+          opts
+        );
+        return [...maps, ...lists];
+      }
       case "pages":
         return this.entitySlugUrls(
           scope.origin,
@@ -506,11 +519,18 @@ ${entries}
         lang
       );
       if (!slug) continue;
+      const mapWord = lang === "de" ? "karte" : lang === "en" ? "map" : "terkep";
       urls.push({
         loc: absoluteUrlOnOrigin(scope.origin, `/${lang}`),
         lastmod: town.updatedAt.toISOString(),
         changefreq: "weekly",
         priority: 0.9,
+      });
+      urls.push({
+        loc: absoluteUrlOnOrigin(scope.origin, `/${lang}/${mapWord}`),
+        lastmod: town.updatedAt.toISOString(),
+        changefreq: "weekly",
+        priority: 0.8,
       });
     }
     return urls;

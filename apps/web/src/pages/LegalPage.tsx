@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_SITE_SLUG, type Lang} from "../app/config";
-import { LEGAL_PATH_ALIASES } from "../app/entityPaths";
+import { LEGAL_PATH_ALIASES, OVERVIEW_PATH_ALIASES } from "../app/entityPaths";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
@@ -33,7 +33,7 @@ export function LegalPage({ pageKey }: Props) {
     "pricing",
     "preise",
     "tarife",
-    "overview",
+    ...OVERVIEW_PATH_ALIASES,
   ]);
   const safeSiteKey = !siteKey || reservedSiteKey.has(siteKey) ? DEFAULT_SITE_SLUG : siteKey;
   const { isAuthenticated, user } = useAuth();

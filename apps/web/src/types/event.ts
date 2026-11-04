@@ -5,6 +5,8 @@ export type Event = BaseEntity & {
   placeId?: string | null;
   placeSlug?: string | null;
   placeName?: string | null;
+  townSlug?: string | null;
+  townName?: string | null;
   startDate: string; // ISO date string
   endDate?: string | null; // ISO date string
   isPinned: boolean;

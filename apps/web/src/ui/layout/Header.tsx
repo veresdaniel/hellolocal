@@ -3,15 +3,18 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../../app/urls";
-import { townEntityPath, townSlugFromPath } from "../../app/entityPaths";
+import { mapViewSegment, townEntityPath, townSlugFromPath } from "../../app/entityPaths";
 import { useRouteCtx } from "../../app/useRouteCtx";
+import { useHostScope } from "../../app/hostScope";
 import { usePlatformSettingsContext } from "../../context/PlatformSettingsContext";
 import { LanguageSelector } from "../../components/LanguageSelector";
 import { AuthContext } from "../../contexts/AuthContext";
 import { rememberAuthReturn, visitorAuthPath } from "../../auth/visitorAuth";
+import { useViewTitle } from "../../app/viewTitle";
 
 export function Header() {
   const { lang, siteKey } = useRouteCtx();
+  const hostScope = useHostScope();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,11 +23,14 @@ export function Header() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   // Header only renders on the map. A selected town stays in the path.
-  const townInPath = townSlugFromPath(location.pathname);
+  const townInPath = townSlugFromPath(
+    location.pathname,
+    hostScope.status === "ready" ? hostScope : undefined
+  );
   const explorePath = buildUrl({
     lang,
     siteKey,
-    path: townInPath ? townEntityPath(lang, townInPath) : "",
+    path: townInPath ? townEntityPath(lang, townInPath, "map") : mapViewSegment(lang),
   });
   const barePath = location.pathname.replace(/\/$/, "") || "/";
   const isOnMapView =
@@ -51,6 +57,7 @@ export function Header() {
   });
 
   const [isDragging, setIsDragging] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const headerRef = useRef<HTMLElement>(null);
 
@@ -63,7 +70,7 @@ export function Header() {
   const user = auth?.user ?? null;
   const platformSettings = usePlatformSettingsContext();
 
-  const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
+  const siteName = useViewTitle();
   const brandBadgeIcon = platformSettings?.placeholders.avatar;
 
   // Load position when device type changes
@@ -189,7 +196,7 @@ export function Header() {
         background: "rgba(255, 253, 249, 0.94)",
         borderRadius: 999,
         padding: isMobile ? "8px 12px" : "10px 16px",
-        maxWidth: isMobile ? "min(72vw, 280px)" : "none",
+        maxWidth: isMobile ? "calc(100vw - 168px)" : "none",
         boxShadow: "0 12px 32px rgba(27, 23, 48, 0.16)",
         border: "1px solid rgba(255, 255, 255, 0.8)",
         backdropFilter: "blur(20px)",
@@ -258,6 +265,7 @@ export function Header() {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   minWidth: 0,
+                  flex: "1 1 auto",
                 }}
               >
                 {siteName}
@@ -265,8 +273,8 @@ export function Header() {
             )}
           </Link>
         )}
-        {/* Language selector after site name */}
-        {(siteName || brandBadgeIcon) && (
+        {/* Language selector after site name. On a phone it sits in the menu. */}
+        {!isMobile && (siteName || brandBadgeIcon) && (
           <div
             style={{
               paddingLeft: 4,
@@ -301,6 +309,30 @@ export function Header() {
             </div>
           </div>
         )}
+        {isMobile ? (
+          <button
+            type="button"
+            aria-expanded={menuOpen}
+            aria-label={t("public.menu")}
+            onClick={() => setMenuOpen((open) => !open)}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            style={{
+              flex: "none",
+              width: 36,
+              height: 36,
+              borderRadius: 999,
+              border: "1px solid rgba(27, 23, 48, 0.16)",
+              background: menuOpen ? "#1b1730" : "transparent",
+              color: menuOpen ? "#fffdf9" : "#1b1730",
+              fontSize: 18,
+              lineHeight: 1,
+              cursor: "pointer",
+            }}
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
+        ) : (
         <div
           style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: 8 }}
           onMouseDown={(e) => e.stopPropagation()}
@@ -356,6 +388,79 @@ export function Header() {
             </>
           )}
         </div>
+        )}
+        {isMobile && menuOpen && (
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              left: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              minWidth: 180,
+              padding: 10,
+              borderRadius: 16,
+              background: "rgba(255, 253, 249, 0.98)",
+              border: "1px solid rgba(27, 23, 48, 0.08)",
+              boxShadow: "0 12px 32px rgba(27, 23, 48, 0.16)",
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <LanguageSelector />
+            {user ? (
+              <button
+                type="button"
+                onClick={() => auth?.logout(true)}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(27, 23, 48, 0.16)",
+                  borderRadius: 999,
+                  color: "#1b1730",
+                  fontSize: 15,
+                  fontWeight: 650,
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                }}
+              >
+                {t("public.visitorAuth.logout")}
+              </button>
+            ) : (
+              <>
+                <Link
+                  to={visitorAuthPath(lang, "login")}
+                  onClick={rememberAuthReturn}
+                  style={{
+                    color: "#1b1730",
+                    fontSize: 15,
+                    fontWeight: 650,
+                    textDecoration: "none",
+                    padding: "10px 14px",
+                  }}
+                >
+                  {t("public.visitorAuth.login")}
+                </Link>
+                <Link
+                  to={visitorAuthPath(lang, "register")}
+                  onClick={rememberAuthReturn}
+                  style={{
+                    background: "#1b1730",
+                    color: "#fffdf9",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    borderRadius: 999,
+                    padding: "10px 14px",
+                    textAlign: "center",
+                  }}
+                >
+                  {t("public.visitorAuth.register")}
+                </Link>
+              </>
+            )}
+          </div>
+        )}
         {/* Map view button - show when NOT on map view */}
         {!isOnMapView && (
           <>

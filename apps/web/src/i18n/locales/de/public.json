@@ -6,8 +6,10 @@
   "explore": {
     "title": "Entdecken",
     "siteTitle": "{{name}} entdecken",
+    "mapTitle": "Karte von {{name}}",
     "description": "Lokale Erlebnisse: Weingut, Gastronomie, Unterkunft, Handwerk."
   },
+  "breadcrumb": "Pfad",
   "listView": "Listenansicht",
   "mapView": "Kartenansicht",
   "visitorAuth": {
@@ -381,6 +383,8 @@
   "email": "E-Mail",
   "website": "Website",
   "openingHours": "Öffnungszeiten",
+  "when": "Wann",
+  "where": "Wo",
   "accessibility": "Barrierefreiheit",
   "searchPlaces": "Suchen...",
   "errorLoadingPlaces": "Fehler beim Laden der Orte",

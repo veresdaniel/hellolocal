@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { preferredLang } from "../app/browserLang";
+import { overviewSegment } from "../app/entityPaths";
 import { isPlatformHost } from "../app/urls";
 import { pathForHostResolve, siteForHost } from "../app/hostResolve";
 import { platformHostLanguage, setPlatformPublicHostEntries, setPlatformPublicHosts } from "../app/platformOrigin";
@@ -28,13 +29,16 @@ export function RootRedirect() {
       if (ac.signal.aborted || typeof window === "undefined") return;
       const host = window.location.hostname;
       if (isPlatformHost(host)) {
-        setPublicTarget(`/${platformHostLanguage(host) || preferredLang()}/overview`);
+        const opener = platformHostLanguage(host) || preferredLang();
+        setPublicTarget(`/${opener}/${overviewSegment(opener)}`);
         return;
       }
       const site = await siteForHost(host, ac.signal);
       if (ac.signal.aborted) return;
       setPublicTarget(
-        site ? pathForHostResolve(site, location.search) : `/${preferredLang()}/overview`
+        site
+          ? pathForHostResolve(site, location.search)
+          : `/${preferredLang()}/${overviewSegment(preferredLang())}`
       );
     })();
     return () => ac.abort();

@@ -22,10 +22,22 @@ const TOWN_PATH: Record<PublicLang, string> = {
   de: "gemeinde",
 };
 
+const MAP_VIEW_PATH: Record<PublicLang, string> = {
+  hu: "terkep",
+  en: "map",
+  de: "karte",
+};
+
 const REGION_LIST_PATH: Record<PublicLang, string> = {
   hu: "regiok",
   en: "regions",
   de: "regionen",
+};
+
+const OVERVIEW_PATH: Record<PublicLang, string> = {
+  hu: "attekintes",
+  en: "overview",
+  de: "ueberblick",
 };
 
 const PRICING_PATH: Record<PublicLang, string> = {
@@ -176,8 +188,13 @@ export function placeDetailPath(lang: string, siteKey: string, slug: string): st
   return `/${lang}/${siteKey}/${placePathSegment(lang)}/${slug}`;
 }
 
+/** Town directory. The map is townMapPath. Legacy telepules/town/gemeinde and lista redirect on the web. */
 export function townDetailPath(lang: string, siteKey: string, slug: string): string {
-  return `/${lang}/${siteKey}/${townPathSegment(lang)}/${slug}`;
+  return `/${lang}/${siteKey}/${slug}`;
+}
+
+export function townMapPath(lang: string, siteKey: string, slug: string): string {
+  return `/${lang}/${siteKey}/${slug}/${MAP_VIEW_PATH[asPublicLang(lang)]}`;
 }
 
 export function eventDetailPath(lang: string, siteKey: string, slug: string): string {
@@ -207,7 +224,8 @@ export function collectionPath(lang: string, slug: string): string {
 }
 
 export function overviewPath(lang: string): string {
-  return `/${lang}/overview`;
+  const code = asPublicLang(lang);
+  return `/${code}/${OVERVIEW_PATH[code]}`;
 }
 
 export function regionListPath(lang: string): string {

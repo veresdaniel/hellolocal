@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { isPlacePathSegment, isTownPathSegment } from "./entityPaths";
+import { isPlacePathSegment } from "./entityPaths";
 import { siteForHost, type HostResolve } from "./hostResolve";
 import { isPlatformHost } from "./urls";
 import { setPlatformPublicHostEntries, setPlatformPublicHosts } from "./platformOrigin";
@@ -118,8 +118,8 @@ export function canonicalHostPath(pathname: string, scope: HostScope): string | 
   }
 
   if (tail[0] === scope.siteSlug) tail = tail.slice(1);
-  if (scope.kind === "town" && isTownPathSegment(tail[0]) && tail[1] === scope.entitySlug) {
-    tail = tail.slice(2);
+  if (scope.kind === "town" && tail[0] === scope.entitySlug) {
+    tail = tail.slice(1);
   }
   if (scope.kind === "place" && isPlacePathSegment(tail[0]) && tail[1] === scope.entitySlug) {
     tail = tail.slice(2);

@@ -6,8 +6,10 @@
   "explore": {
     "title": "Explore",
     "siteTitle": "Explore {{name}}",
+    "mapTitle": "Map of {{name}}",
     "description": "Local experiences: winery, gastronomy, accommodation, crafts."
   },
+  "breadcrumb": "Breadcrumb",
   "listView": "List View",
   "mapView": "Map View",
   "visitorAuth": {
@@ -391,6 +393,8 @@
   "email": "Email",
   "website": "Website",
   "openingHours": "Opening Hours",
+  "when": "When",
+  "where": "Where",
   "accessibility": "Accessibility",
   "searchPlaces": "Search...",
   "errorLoadingPlaces": "Error loading places",

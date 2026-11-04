@@ -6,8 +6,10 @@
   "explore": {
     "title": "Felfedezés",
     "siteTitle": "{{name}} felfedezése",
+    "mapTitle": "{{name}} térképe",
     "description": "Helyi élmények: borászat, gasztro, szállás, kézműves."
   },
+  "breadcrumb": "Útvonal",
   "listView": "Lista nézet",
   "mapView": "Térkép nézet",
   "visitorAuth": {
@@ -391,6 +393,8 @@
   "email": "Email",
   "website": "Weboldal",
   "openingHours": "Nyitvatartás",
+  "when": "Mikor",
+  "where": "Hol",
   "accessibility": "Akadálymentesség",
   "searchPlaces": "Keresés...",
   "errorLoadingPlaces": "Hiba a helyek betöltésekor",

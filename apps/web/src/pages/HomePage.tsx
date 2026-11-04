@@ -23,8 +23,15 @@ import { MapDock } from "../components/MapDock";
 import { PlacesListView } from "../components/PlacesListView";
 import { Header } from "../ui/layout/Header";
 import { buildUrl } from "../app/urls";
-import { placeEntityPath, townEntityPath } from "../app/entityPaths";
+import {
+  isExploreViewSegment,
+  isReservedPublicSegment,
+  mapViewSegment,
+  placeEntityPath,
+  townEntityPath,
+} from "../app/entityPaths";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { NotFoundPage } from "./NotFoundPage";
 import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { BREAKPOINTS } from "../utils/viewport";
 import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
@@ -51,16 +58,45 @@ export function HomePage() {
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
   const navigate = useNavigate();
-  const { townSlug: townSlugParam } = useParams<{ townSlug?: string }>();
+  const {
+    townSlug: townSlugParam,
+    exploreView,
+    siteKey: siteKeyParam,
+  } = useParams<{ townSlug?: string; exploreView?: string; siteKey?: string }>();
   const hostScope = useHostScope();
   const [searchParams] = useSearchParams();
-  // Prefer path segment (/telepules|:town|:gemeinde/:slug); keep ?town= as legacy alias.
-  // A town's own domain has no slug in the path.
+  // Region domain: /:lang/:town. Platform: /:lang/:region/:town. A town domain has no slug.
+  const onRegionHost =
+    hostScope.status === "ready" &&
+    hostScope.kind === "site" &&
+    !!siteKeyParam &&
+    siteKeyParam !== hostScope.siteSlug &&
+    !isReservedPublicSegment(siteKeyParam);
+  const onTownHost = hostScope.status === "ready" && hostScope.kind === "town";
+  const viewWord = onRegionHost ? townSlugParam : onTownHost ? siteKeyParam : exploreView;
+  const pathTown = onRegionHost
+    ? siteKeyParam
+    : onTownHost
+      ? hostScope.entitySlug
+      : townSlugParam && !isExploreViewSegment(townSlugParam)
+        ? townSlugParam
+        : undefined;
   const townSlug =
-    townSlugParam?.trim() ||
+    pathTown ||
     (hostScope.status === "ready" && hostScope.kind === "town" ? hostScope.entitySlug : undefined) ||
     searchParams.get("town")?.trim() ||
     undefined;
+  const mapWord = mapViewSegment(lang);
+  // /:region/terkep and a region domain's /:lang/terkep. Not a town.
+  const regionMap =
+    !pathTown &&
+    (hostScope.status === "ready" && hostScope.kind === "site"
+      ? siteKeyParam === mapWord
+      : !onTownHost && townSlugParam === mapWord && !exploreView);
+  const viewIsMap =
+    regionMap ||
+    (onTownHost && siteKeyParam === mapWord) ||
+    (!!pathTown && viewWord === mapWord);
 
   // Use Zustand stores for state management with persistence
   const {
@@ -172,38 +208,10 @@ export function HomePage() {
     return townsPayload.towns.find((t: PublicTown) => t.slug === townSlug) ?? null;
   }, [townSlug, townsPayload]);
 
-  // Map view keeps the settlement in the path: /telepules/:slug (or town/gemeinde).
-  // A region with one town, or a legacy ?town=, is rewritten. A town's own domain stays /:lang.
+  // The path decides the view. A saved map preference must not replace the region page.
   useEffect(() => {
-    if (!showMap || townSlugParam) return;
-    if (hostScope.status === "loading") return;
-    if (hostScope.status === "ready" && hostScope.kind === "town") return;
-    if (isLoadingTowns) return;
-    const fromQuery = searchParams.get("town")?.trim() || "";
-    const onlyTown =
-      townsPayload?.towns?.length === 1 ? townsPayload.towns[0]?.slug?.trim() || "" : "";
-    const slug = fromQuery || onlyTown;
-    if (!slug) return;
-    const params = new URLSearchParams(searchParams);
-    params.delete("town");
-    const search = params.toString();
-    const next = buildUrl({
-      lang,
-      siteKey: siteKey || "",
-      path: townEntityPath(lang, slug),
-    });
-    navigate(search ? `${next}?${search}` : next, { replace: true });
-  }, [
-    showMap,
-    townSlugParam,
-    hostScope,
-    isLoadingTowns,
-    townsPayload,
-    searchParams,
-    lang,
-    siteKey,
-    navigate,
-  ]);
+    if (showMap !== viewIsMap) setShowMap(viewIsMap);
+  }, [viewIsMap, showMap, setShowMap]);
 
   const townGaId = selectedTown?.gaMeasurementId ?? null;
   usePublicGaOverride(townGaId);
@@ -368,7 +376,9 @@ export function HomePage() {
       .trim();
 
   const homeTitle = selectedTown
-    ? selectedTown.name
+    ? t(viewIsMap ? "public.explore.mapTitle" : "public.explore.siteTitle", {
+        name: selectedTown.name,
+      })
     : platformSettings?.seoTitle || t("public.home.title");
   const homeDescription = selectedTown
     ? stripHtml(selectedTown.description) ||
@@ -793,7 +803,7 @@ export function HomePage() {
   // so a filled landing does not flash the map while settings load.
   // Multi-town régió → public region index of települések (only when régió exists).
   // Single-settlement sites (Szeged) keep current landing / map behavior.
-  if (!landingDismissed) {
+  if (!landingDismissed && !pathTown && !regionMap) {
     if (isLoadingPlatformSettings || isLoadingTowns) {
       return <PublicPageSkeleton withHero label={t("common.loading")} />;
     }
@@ -803,7 +813,11 @@ export function HomePage() {
       const selectTown = (town: PublicTown) => {
         openSiteExplore("list");
         navigate(
-          buildUrl({ lang, siteKey: siteKey || "", path: townEntityPath(lang, town.slug) }),
+          buildUrl({
+            lang,
+            siteKey: siteKey || "",
+            path: townEntityPath(lang, town.slug, "list"),
+          }),
           { replace: true }
         );
       };
@@ -821,6 +835,10 @@ export function HomePage() {
     if (landing) {
       return <SiteLanding lang={lang} siteKey={siteKey || ""} landing={landing} />;
     }
+  }
+
+  if (pathTown && !isLoadingTowns && townsPayload && !selectedTown) {
+    return <NotFoundPage />;
   }
 
   if (isCriticalDataLoading) {
@@ -845,17 +863,17 @@ export function HomePage() {
   return (
     <div
       style={{
-        display: showMap ? (isMobile ? "block" : "flex") : "block",
-        flexDirection: showMap && !isMobile ? "column" : undefined,
+        display: viewIsMap ? (isMobile ? "block" : "flex") : "block",
+        flexDirection: viewIsMap && !isMobile ? "column" : undefined,
         position: "relative",
         width: "100%",
-        height: showMap ? "100vh" : "auto",
-        overflow: showMap ? "hidden" : "visible",
+        height: viewIsMap ? "100vh" : "auto",
+        overflow: viewIsMap ? "hidden" : "visible",
         margin: 0,
         padding: 0,
       }}
     >
-      {showMap ? (
+      {viewIsMap ? (
         <>
           {/* Map container - fills viewport on mobile, flex on desktop */}
           <div
@@ -907,16 +925,25 @@ export function HomePage() {
             </Suspense>
             {/* Lista nézet gomb - same position as map view button in FloatingHeader */}
             <div
+              data-map-list-toggle
               style={{
                 position: "absolute",
                 top: isMobile ? 12 : 16,
-                right: isMobile ? 12 : 48,
+                right: isMobile ? 12 : 16,
                 zIndex: 1000,
                 maxWidth: isMobile ? "calc(100% - 24px)" : undefined,
               }}
             >
               <button
-                onClick={() => setShowMap(false)}
+                onClick={() => {
+                  navigate(
+                    buildUrl({
+                      lang,
+                      siteKey: siteKey || "",
+                      path: townSlug ? townEntityPath(lang, townSlug, "list") : "",
+                    })
+                  );
+                }}
                 style={{
                   padding: isMobile ? "10px 14px" : "8px 16px",
                   minHeight: 44,
@@ -971,7 +998,15 @@ export function HomePage() {
       ) : (
         <>
           <PlacesListView
-            onMapViewClick={() => setShowMap(true)}
+            onMapViewClick={() => {
+              navigate(
+                buildUrl({
+                  lang,
+                  siteKey: siteKey || "",
+                  path: townSlug ? townEntityPath(lang, townSlug, "map") : mapWord,
+                })
+              );
+            }}
             selectedCategories={selectedCategories}
             selectedPriceBands={selectedPriceBands}
             onCategoriesChange={setSelectedCategories}

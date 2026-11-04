@@ -108,5 +108,10 @@ export function publicFormErrorMessage(t: TFunction, err: unknown, fallback: str
   if (code === "public_form_rejected") return t("public.form.rejected");
   if (code === "username_taken") return t("public.visitorAuth.usernameTaken");
   if (code === "username_invalid") return t("public.visitorAuth.usernameInvalid");
+  if (code.startsWith("errors.")) {
+    const key = `admin.${code}`;
+    const translated = t(key);
+    if (translated && translated !== key) return translated;
+  }
   return code || fallback;
 }

@@ -595,7 +595,13 @@ export class PlacesService {
     const place = await this.prisma.place.findUnique({
       where: { id: args.placeId },
       include: {
-        town: { select: { id: true, gaMeasurementId: true } },
+        town: {
+          select: {
+            id: true,
+            gaMeasurementId: true,
+            translations: { select: { lang: true, name: true } },
+          },
+        },
         site: { select: { gaMeasurementId: true } },
         category: {
           include: {
@@ -710,6 +716,9 @@ export class PlacesService {
       siteKey: site.canonicalSiteKey ?? null,
       siteRedirected: site.redirected,
       townSlug,
+      townName: place.town?.translations
+        ? getTranslation(place.town.translations, "name")
+        : null,
       category: categoryName,
       categoryColor: categoryColor,
       name: placeTranslation?.name ?? "(missing translation)",

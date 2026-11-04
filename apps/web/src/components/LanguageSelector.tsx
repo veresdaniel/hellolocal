@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { legalKeyFromSegment, legalSegment } from "../app/entityPaths";
+import { isMapViewSegment, isOverviewPathSegment, legalKeyFromSegment, legalSegment, MAP_VIEW_PATH, overviewSegment } from "../app/entityPaths";
 import { buildUrl } from "../app/urls";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { type Lang } from "../app/config";
@@ -37,9 +37,12 @@ export function LanguageSelector() {
       const swapped = currentPath.replace(`/${currentLang}`, `/${lang}`);
       const newPath = swapped
         .split("/")
-        .map((part) => {
+        .flatMap((part) => {
           const key = legalKeyFromSegment(part);
-          return key ? legalSegment(lang, key) : part;
+          if (key) return [legalSegment(lang, key)];
+          if (isOverviewPathSegment(part)) return [overviewSegment(lang)];
+          if (isMapViewSegment(part)) return [MAP_VIEW_PATH[lang]];
+          return [part];
         })
         .join("/");
       if (newPath !== currentPath) {

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
 import type { Lang} from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
-import { legalSegment } from "../../app/entityPaths";
+import { legalSegment, overviewSegment } from "../../app/entityPaths";
 import { buildUrl } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
 
@@ -81,7 +81,7 @@ export function Footer({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            flexWrap: isMobile ? "nowrap" : "wrap",
+            flexWrap: "wrap",
             gap: isMobile ? 8 : 16,
           }}
         >
@@ -240,7 +240,7 @@ export function Footer({
                 {t("public.legal.privacy.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, path: "overview" })}
+                to={buildUrl({ lang, path: overviewSegment(lang) })}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -307,336 +307,76 @@ export function Footer({
   }
 
   // Full version for other pages
+  const imprint = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "imprint") });
+  const terms = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") });
+  const privacy = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") });
+  const home = buildUrl({ lang, siteKey: effectiveSiteSlug });
+  const overview = buildUrl({ lang, path: overviewSegment(lang) });
+  const staticPagesPath = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" });
+  const products = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" });
+  const pricing = buildUrl({ lang, path: lang === "de" ? "preise" : "pricing" });
+
   return (
-    <footer
-      className={variant === "overview" ? "hl-public overview-footer" : "hl-public"}
-      style={{
-        marginTop: "auto",
-        background: "#1b1730",
-        color: "white",
-        borderTop: "none",
-      }}
-    >
-      <div
-        className="hl-public-pad-x"
-        style={{
-          paddingTop: 48,
-          paddingBottom: 32,
-          ...(variant === "overview"
-            ? { paddingLeft: "clamp(16px, 4vw, 28px)", paddingRight: "clamp(16px, 4vw, 28px)" }
-            : {}),
-        }}
-      >
-      <div className="hl-public-width" style={variant === "overview" ? { maxWidth: 1120 } : undefined}>
-        {/* Main Footer Content */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              variant === "overview"
-                ? isMobile
-                  ? "1fr"
-                  : "repeat(2, minmax(0, 1fr))"
-                : "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: variant === "overview" ? (isMobile ? 28 : 48) : 40,
-            marginBottom: variant === "overview" ? 28 : 40,
-            alignItems: "start",
-          }}
-        >
-          {/* Brand Section */}
-          {(siteName || brandBadgeIcon) && (
-            <div>
-              <h3
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  fontFamily:
-                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  marginBottom: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                {brandBadgeIcon && !logoError && (
-                  <img
-                    src={brandBadgeIcon}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    style={{
-                      height: 32,
-                      width: "auto",
-                      objectFit: "contain",
-                      borderRadius: 4,
-                      display: "block",
-                    }}
-                    onError={(e) => {
-                      console.warn("[Footer] Failed to load brandBadgeIcon:", brandBadgeIcon);
-                      setLogoError(true);
-                      e.currentTarget.style.display = "none";
-                    }}
-                    onLoad={() => {
-                      setLogoError(false);
-                    }}
-                  />
-                )}
-                {siteName && <span>{siteName}</span>}
-              </h3>
-              <p
-                style={{
-                  fontSize: 15,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  lineHeight: 1.6,
-                  margin: 0,
-                  fontWeight: 400,
-                }}
-              >
-                {t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}
-              </p>
-            </div>
-          )}
+    <footer className={variant === "overview" ? "hl-public hl-footer hl-footer--overview" : "hl-public hl-footer"}>
+      <div className="hl-public-pad-x hl-footer__pad">
+        <div className="hl-public-width">
+          <div className="hl-footer__grid">
+            {(siteName || brandBadgeIcon) && (
+              <div className="hl-footer__brand">
+                <h3>
+                  {brandBadgeIcon && !logoError && (
+                    <img
+                      src={brandBadgeIcon}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        console.warn("[Footer] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                        setLogoError(true);
+                        e.currentTarget.style.display = "none";
+                      }}
+                      onLoad={() => {
+                        setLogoError(false);
+                      }}
+                    />
+                  )}
+                  {siteName && <span>{siteName}</span>}
+                </h3>
+                <p>{t("public.footer.tagline") || "Fedezd fel a helyi kincseket"}</p>
+              </div>
+            )}
 
-          {/* Legal Links */}
-          <div>
-            <h4
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                marginBottom: 16,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                opacity: 0.8,
-              }}
-            >
-              {t("public.footer.legal") || "Jogi információk"}
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "imprint") })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.legal.imprint.title")}
-              </Link>
-              <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.legal.terms.title")}
-              </Link>
-              <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.legal.privacy.title")}
-              </Link>
-            </div>
-          </div>
+            <nav className="hl-footer__nav" aria-label={t("public.footer.quickLinks") || "Gyors linkek"}>
+              <div>
+                <h4>{t("public.footer.legal") || "Jogi információk"}</h4>
+                <ul>
+                  <li><Link to={imprint}>{t("public.legal.imprint.title")}</Link></li>
+                  <li><Link to={terms}>{t("public.legal.terms.title")}</Link></li>
+                  <li><Link to={privacy}>{t("public.legal.privacy.title")}</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4>{t("public.footer.quickLinks") || "Gyors linkek"}</h4>
+                <ul>
+                  <li><Link to={home}>{t("public.home.title")}</Link></li>
+                  <li><Link to={overview}>{t("public.overview.menu")}</Link></li>
+                  {hasStaticPages && (
+                    <li><Link to={staticPagesPath}>{t("public.staticPages.title")}</Link></li>
+                  )}
+                  {effectiveSiteSlug ? (
+                    <li><Link to={products}>{t("public.catalog.title")}</Link></li>
+                  ) : null}
+                  <li><Link to={pricing}>{t("public.pricing.title")}</Link></li>
+                </ul>
+              </div>
+            </nav>
 
-          {/* Quick Links */}
-          <div>
-            <h4
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                marginBottom: 16,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                opacity: 0.8,
-              }}
-            >
-              {t("public.footer.quickLinks") || "Gyors linkek"}
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <Link
-                to={buildUrl({ lang, siteKey: effectiveSiteSlug })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.home.title")}
-              </Link>
-              <Link
-                to={buildUrl({ lang, path: "overview" })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.overview.menu")}
-              </Link>
-              {hasStaticPages && (
-                <Link
-                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" })}
-                  style={{
-                    color: "white",
-                    textDecoration: "none",
-                    fontSize: 15,
-                    fontWeight: 500,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    opacity: 0.9,
-                    transition: "opacity 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.textDecoration = "underline";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "0.9";
-                    e.currentTarget.style.textDecoration = "none";
-                  }}
-                >
-                  {t("public.staticPages.title")}
-                </Link>
-              )}
-              {effectiveSiteSlug ? (
-                <Link
-                  to={buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" })}
-                  style={{
-                    color: "white",
-                    textDecoration: "none",
-                    fontSize: 15,
-                    fontWeight: 500,
-                    opacity: 0.9,
-                  }}
-                >
-                  {t("public.catalog.title")}
-                </Link>
-              ) : null}
-              <Link
-                to={buildUrl({
-                  lang,
-                  path: lang === "de" ? "preise" : "pricing",
-                })}
-                style={{
-                  color: "white",
-                  textDecoration: "none",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = "1";
-                  e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = "0.9";
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                {t("public.pricing.title")}
-              </Link>
+            <div className="hl-footer__bar">
+              <span>© {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}</span>
+              <span>{t("public.footer.rights") || "Minden jog fenntartva."}</span>
             </div>
           </div>
         </div>
-
-        {/* Copyright */}
-        <div
-          style={{
-            paddingTop: 24,
-            borderTop: "1px solid rgba(255, 255, 255, 0.2)",
-            textAlign: "center",
-            fontSize: 15,
-            fontWeight: 500,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            opacity: 0.8,
-          }}
-        >
-          © {currentYear} {siteName || t("common.siteName", { defaultValue: "" })}.{" "}
-          {t("public.footer.rights") || "Minden jog fenntartva."}
-        </div>
-      </div>
       </div>
     </footer>
   );

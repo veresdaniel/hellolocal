@@ -29,6 +29,12 @@ const catalog = loadLanguageCatalog();
 const LANGS = catalog.languages.map((language) => language.code);
 const FALLBACK_LANG = catalog.fallback || "hu";
 const RESERVED = new Set(["api", "assets", "static", "src", "www", "app", "css", "img"]);
+const OVERVIEW_BY_LANG = { hu: "attekintes", en: "overview", de: "ueberblick" };
+const OVERVIEW_SEGMENTS = new Set(Object.values(OVERVIEW_BY_LANG));
+
+function overviewSegment(lang) {
+  return OVERVIEW_BY_LANG[lang] || OVERVIEW_BY_LANG[FALLBACK_LANG];
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -204,14 +210,14 @@ function loadOverview(lang, override, messages) {
 
 export function overviewLang(pathname) {
   const parts = pathname.split("/").filter(Boolean);
-  if (parts.length === 1 && parts[0] === "overview") return FALLBACK_LANG;
-  // Language root is the public opener, the same landing as /:lang/overview.
+  if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return FALLBACK_LANG;
+  // Language root is the public opener, the same landing as /:lang/<overview>.
   if (parts.length === 1 && LANGS.includes(parts[0])) return parts[0];
   if (
     parts.length === 2 &&
     /^[a-z]{2,3}$/.test(parts[0]) &&
     !RESERVED.has(parts[0]) &&
-    parts[1] === "overview"
+    OVERVIEW_SEGMENTS.has(parts[1])
   ) {
     return parts[0];
   }
@@ -225,11 +231,11 @@ export function renderOverviewDocument(
   origin = publicOrigin(origin);
   const copy = loadOverview(lang, override, messages);
   const published = Array.isArray(languages) && languages.length ? languages : LANGS;
-  const url = `${origin}/${lang}/overview`;
+  const url = `${origin}/${lang}/${overviewSegment(lang)}`;
   const image = `${origin}/marketing/map-szeged.jpg`;
   const keywords = escapeHtml(copy.keywords);
   const alternates = published.map(
-    (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}/overview" />`
+    (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}/${overviewSegment(code)}" />`
   ).join("");
 
   const questions = ["app", "languages", "editors", "towns"].map((key) => ({
@@ -309,7 +315,7 @@ export function renderOverviewDocument(
     <meta name="keywords" content="${keywords}" />
     <meta name="robots" content="index,follow" />
     ${alternates}
-    <link rel="alternate" hreflang="x-default" href="${origin}/${FALLBACK_LANG}/overview" />
+    <link rel="alternate" hreflang="x-default" href="${origin}/${FALLBACK_LANG}/${overviewSegment(FALLBACK_LANG)}" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
   return applySocialMeta(indexHtml, {

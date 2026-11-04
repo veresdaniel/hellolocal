@@ -8,6 +8,7 @@ import { Footer } from "../ui/layout/Footer";
 import { useSeo } from "../seo/useSeo";
 import { LiveDemoLink } from "../components/LiveDemoLink";
 import { APP_LANGS, DEFAULT_LANG, type Lang, isLang } from "../app/config";
+import { overviewSegment } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useLandingText } from "../hooks/useLandingText";
 import { getPlatformSettings } from "../api/places.api";
@@ -188,7 +189,7 @@ export function OverviewPage() {
       .map((word) => word.trim())
       .filter(Boolean),
     image,
-    canonical: `${origin}/${lang}/overview`,
+    canonical: `${origin}/${lang}/${overviewSegment(lang)}`,
     robots:
       (platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) === false
         ? "noindex, nofollow"
@@ -207,7 +208,7 @@ export function OverviewPage() {
         link.hreflang = code;
         document.head.appendChild(link);
       }
-      link.href = `${origin}/${code}/overview`;
+      link.href = `${origin}/${code}/${overviewSegment(code)}`;
     });
     let xDefault = document.head.querySelector<HTMLLinkElement>(
       'link[rel="alternate"][hreflang="x-default"]'
@@ -218,7 +219,7 @@ export function OverviewPage() {
       xDefault.hreflang = "x-default";
       document.head.appendChild(xDefault);
     }
-    xDefault.href = `${origin}/${DEFAULT_LANG}/overview`;
+    xDefault.href = `${origin}/${DEFAULT_LANG}/${overviewSegment(DEFAULT_LANG)}`;
 
     const graph = {
       "@context": "https://schema.org",
@@ -228,7 +229,7 @@ export function OverviewPage() {
           name: "HelloLocal",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
-          url: `${origin}/${lang}/overview`,
+          url: `${origin}/${lang}/${overviewSegment(lang)}`,
           description,
           inLanguage: LANGS,
           image,

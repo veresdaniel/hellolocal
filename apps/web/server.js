@@ -79,11 +79,12 @@ function readShell() {
 const KNOWN_PUBLIC_SEGMENTS = new Set([
   'place', 'hely', 'ort',
   'town', 'telepules', 'gemeinde',
+  'lista', 'list', 'liste', 'terkep', 'map', 'karte',
   'event',
   'blog', 'tudastar', 'infok',
   'imprint', 'terms', 'privacy', 'impresszum', 'aszf', 'adatvedelem',
   'impressum', 'agb', 'datenschutz',
-  'overview', 'pricing', 'tarife', 'preise',
+  'attekintes', 'overview', 'ueberblick', 'pricing', 'tarife', 'preise',
   'admin', 'teruletek', 'regiok', 'regions', 'regionen',
   'products', 'collections', 'static-pages', 'static-page', 'offline',
 ]);

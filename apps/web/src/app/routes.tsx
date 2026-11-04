@@ -11,9 +11,10 @@ import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
-import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, TOWN_PATH_ALIASES, townSegment, type LegalPageKey } from "./entityPaths";
+import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, overviewSegment, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, type LegalPageKey } from "./entityPaths";
 import { canonicalHostPath, useHostScope } from "./hostScope";
 import { isPlatformHost } from "./urls";
+import { useRouteCtx } from "./useRouteCtx";
 import { useAdminSite } from "../contexts/useAdminSite";
 
 // Public entry / shell pages — keep eager (LCP, auth, error paths)
@@ -233,21 +234,29 @@ function HostEventRoute() {
   return <RedirectToSiteRoute entityType="event" />;
 }
 
-function HostTownRoute() {
+/** Town directory is `/:region/:town`. The map is `/:region/:town/terkep`. Anything else is a 404. */
+function TownExplore() {
+  const params = useParams<{
+    lang: string;
+    siteKey?: string;
+    townSlug?: string;
+    exploreView?: string;
+  }>();
+  const { lang } = useRouteCtx();
   const scope = useHostScope();
-  const { lang, townSlug } = useParams<{ lang: string; townSlug: string }>();
-  const safeLang: Lang = isLang(lang) ? lang : "hu";
-  if (scope.status === "loading") return <LoadingSpinner isLoading />;
-  if (scope.kind === "town" && townSlug === scope.entitySlug) {
-    return <Navigate to={`/${safeLang}`} replace />;
-  }
-  if (scope.kind === "site" || scope.kind === "town") return <HomePage />;
-  return (
-    <Navigate
-      to={`/${safeLang}/${DEFAULT_SITE_SLUG}/${townSegment(safeLang)}/${townSlug || ""}`}
-      replace
-    />
-  );
+  const safeLang: Lang = isLang(params.lang) ? params.lang : lang;
+  const onRegionHost =
+    scope.status === "ready" &&
+    scope.kind === "site" &&
+    !!params.siteKey &&
+    params.siteKey !== scope.siteSlug;
+  const rawTown = onRegionHost ? params.siteKey : params.townSlug;
+  const rawView = onRegionHost ? params.townSlug : params.exploreView;
+  if (!rawTown) return <NotFoundPage />;
+  // /:region/terkep is the region map, not a town named after the map word.
+  if (!onRegionHost && !rawView && rawTown === mapViewSegment(safeLang)) return <HomePage />;
+  if (rawView && rawView !== mapViewSegment(safeLang)) return <NotFoundPage />;
+  return <HomePage />;
 }
 
 function HostStaticPage() {
@@ -307,9 +316,8 @@ const placeDetailRoutes = PLACE_PATH_ALIASES.map((segment) => ({
 }));
 
 const townExploreRoutes = [
-  { path: "town/:townSlug", element: <HomePage /> },
-  { path: "telepules/:townSlug", element: <HomePage /> },
-  { path: "gemeinde/:townSlug", element: <HomePage /> },
+  { path: ":townSlug/:exploreView", element: <TownExplore /> },
+  { path: ":townSlug", element: <TownExplore /> },
 ];
 
 function LegalPath({ pageKey }: { pageKey: LegalPageKey }) {
@@ -338,6 +346,32 @@ function legalPageRoutes() {
   }));
 }
 
+function OverviewPath() {
+  const params = useParams();
+  const location = useLocation();
+  const canonical = overviewSegment(params.lang || "hu");
+  const parts = location.pathname.split("/");
+  let changed = false;
+  const next = parts.map((part) => {
+    if (isOverviewPathSegment(part) && part !== canonical) {
+      changed = true;
+      return canonical;
+    }
+    return part;
+  });
+  if (changed) {
+    return <Navigate to={`${next.join("/")}${location.search}${location.hash}`} replace />;
+  }
+  return <OverviewPage />;
+}
+
+function overviewRoutes() {
+  return OVERVIEW_PATH_ALIASES.map((segment) => ({
+    path: segment,
+    element: <OverviewPath />,
+  }));
+}
+
 const regionListRoutes = [
   { path: REGION_LIST_PATH.hu, element: <SitesListPage /> },
   { path: REGION_LIST_PATH.en, element: <SitesListPage /> },
@@ -362,7 +396,7 @@ const createPublicRoutes = () => {
     { path: "pricing", element: <PricingPage /> },
     { path: "tarife", element: <PricingPage /> },
     { path: "preise", element: <PricingPage /> },
-    { path: "overview", element: <OverviewPage /> },
+    ...overviewRoutes(),
     { path: "offline", element: <OfflinePage /> },
   ];
 
@@ -382,7 +416,7 @@ const createPublicRoutes = () => {
             children: [
               { index: true, element: <LangIndex /> },
               ...regionListRoutes,
-              { path: "overview", element: <OverviewPage /> },
+              ...overviewRoutes(),
               { path: "pricing", element: <PublicPricingPage /> },
               { path: "tarife", element: <PublicPricingPage /> },
               { path: "preise", element: <PublicPricingPage /> },
@@ -390,10 +424,6 @@ const createPublicRoutes = () => {
               ...PLACE_PATH_ALIASES.map((segment) => ({
                 path: `${segment}/:slug`,
                 element: <HostPlaceRoute />,
-              })),
-              ...TOWN_PATH_ALIASES.map((segment) => ({
-                path: `${segment}/:townSlug`,
-                element: <HostTownRoute />,
               })),
               { path: "event/:slug", element: <HostEventRoute /> },
               {

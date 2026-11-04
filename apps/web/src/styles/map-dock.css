@@ -2,9 +2,10 @@
   --map-ui-font: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
   position: absolute;
   z-index: 1200;
-  top: 64px;
+  top: 16px;
   right: 16px;
-  width: min(380px, calc(100% - 32px));
+  width: max-content;
+  max-width: calc(100% - 32px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -51,13 +52,14 @@
 }
 
 .map-dock__tab {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 40px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -66,6 +68,13 @@
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
+}
+
+.map-dock__tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .map-dock__tab[aria-pressed="true"] {
@@ -328,6 +337,43 @@
   gap: 8px;
 }
 
+.map-dock__filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 28px;
+  row-gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.map-dock__filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.map-dock__filter-group--kind {
+  margin-inline: 10px;
+}
+
+.map-dock__filter-group .map-dock__chip-label,
+.map-filters-inline .map-dock__filter-group .map-dock__chip-label {
+  margin: 0 2px 0 0;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.map-dock__filter-row .map-dock__chip,
+.map-filters-inline .map-dock__filter-row .map-dock__chip {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-size: 14px;
+}
+
 .map-filters-inline .map-dock__chip,
 .map-filters-inline .map-dock__chip-label {
   font-size: 18px;
@@ -357,16 +403,33 @@
     max-width: none;
   }
 
+  .map-dock__grip {
+    display: none;
+  }
+
   .map-dock__bar {
     gap: 2px;
     padding: 4px;
   }
 
   .map-dock__tab {
+    flex: 1 1 0;
     min-height: 44px;
-    padding: 8px 8px;
-    font-size: 14px;
-    gap: 6px;
+    padding: 8px 4px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .map-dock__tab:has(.map-dock__count) {
+    flex-grow: 1.45;
+  }
+
+  .map-dock__count {
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 16px;
   }
 
   .map-dock__close {
@@ -418,6 +481,18 @@
 
   .map-filters-inline .map-dock__chips {
     gap: 8px;
+  }
+
+  .map-dock__filter-row {
+    column-gap: 16px;
+    row-gap: 8px;
+  }
+
+  .map-dock__filter-row .map-dock__chip,
+  .map-filters-inline .map-dock__filter-row .map-dock__chip {
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 15px;
   }
 
   .map-dock__events {

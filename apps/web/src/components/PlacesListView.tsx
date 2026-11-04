@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
+import { useViewTitle } from "../app/viewTitle";
 import { getPlaces, getEvents, type Event, getPlatformSettings } from "../api/places.api";
 import type { Place } from "../types/place";
 import { PlaceCard } from "../ui/place/PlaceCard";
@@ -53,6 +54,7 @@ export function PlacesListView({
 }: PlacesListViewProps) {
   const { t } = useTranslation();
   const { lang, siteKey } = useRouteCtx();
+  const viewTitle = useViewTitle();
 
   const storeFilters = useFiltersStore();
   const selectedCategories = propSelectedCategories ?? storeFilters.selectedCategories;
@@ -71,7 +73,7 @@ export function PlacesListView({
   const setRainSafe = propOnRainSafeChange ?? storeFilters.setRainSafe;
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [section, setSection] = useState<"places" | "services">("places");
+  const [section, setSection] = useState<"places" | "services" | "events" | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Fetch places with infinite scroll
@@ -340,6 +342,19 @@ export function PlacesListView({
 
     const pinnedEvents = uniqueEvents.filter((e) => e.isPinned);
     const regularEvents = uniqueEvents.filter((e) => !e.isPinned);
+    const eventItems = [
+      ...pinnedEvents.map((event) => ({
+        type: "event" as const,
+        data: event,
+        sortDate: new Date(event.startDate),
+      })),
+      ...regularEvents.map((event) => ({
+        type: "event" as const,
+        data: event,
+        sortDate: new Date(event.startDate),
+      })),
+    ];
+    if (section === "events") return eventItems;
 
     // Use a fixed date for places (far in the past) so events are sorted by date and appear first
     const placesDefaultDate = new Date(2000, 0, 1);
@@ -348,7 +363,7 @@ export function PlacesListView({
     );
     // A place category (for example Szállás) is a place filter. Events stay on the
     // unfiltered places list and on the events tab, and must not be merged back in.
-    if (section === "services" || selectedCategories.length > 0) {
+    if (section != null || selectedCategories.length > 0) {
       return visiblePlaces.map((place) => ({
         type: "place" as const,
         data: place,
@@ -468,7 +483,7 @@ export function PlacesListView({
         }
         .places-discover__title {
           margin: 0 0 var(--pd-3);
-          font-size: clamp(22px, 4.5vw, 30px);
+          font-size: clamp(28px, 2.2vw, 44px);
           font-weight: 700;
           font-family: var(--font-heading);
           color: var(--hl-ink-strong);
@@ -520,6 +535,9 @@ export function PlacesListView({
         }
         .places-discover__intro-copy a {
           color: var(--hl-accent, #c45c26);
+        }
+        .places-discover__intro:not(.has-image) .places-discover__intro-copy {
+          max-width: 68ch;
         }
         @media (min-width: 720px) {
           .places-discover__intro.has-image {
@@ -609,27 +627,39 @@ export function PlacesListView({
           color: var(--hl-ink, #1b1730);
         }
         .places-discover__filters .map-dock__chip-label {
-          margin: 0 4px 0 12px;
+          margin: 0 2px 0 0;
+          font-size: 14px;
         }
-        .places-discover__filters .map-dock__chips {
-          gap: var(--pd-2);
-        }
-        .places-discover__filters .map-dock__chip {
-          min-height: 48px;
-          padding: 10px 18px;
-          font-size: 18px;
+        .places-discover__filters .map-dock__filter-row .map-dock__chip {
+          min-height: 40px;
+          padding: 6px 14px;
+          font-size: clamp(16px, 0.95vw, 18px);
           font-weight: 600;
           color: var(--hl-ink, #1b1730);
+        }
+        @media (max-width: 767px) {
+          .places-discover__filters .map-dock__filter-row {
+            column-gap: 16px;
+          }
+          .places-discover__filters .map-dock__filter-row .map-dock__chip {
+            min-height: 40px;
+            padding: 6px 12px;
+            font-size: 15px;
+          }
         }
         .places-discover__filters .map-dock__chip[aria-pressed="true"] {
           background: var(--hl-navy, #1b1730);
           border-color: var(--hl-navy, #1b1730);
           color: #fff;
         }
+        .places-list {
+          container-type: inline-size;
+          container-name: places;
+        }
         .places-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: var(--pd-4, 20px);
+          gap: clamp(16px, 1.6vw, 24px);
           margin-bottom: var(--pd-5);
           width: 100%;
           max-width: 100%;
@@ -643,18 +673,17 @@ export function PlacesListView({
           max-width: 100%;
           min-width: 0;
         }
-        @media (min-width: 640px) {
+        @container (min-width: 680px) {
           .places-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
-        /* Wider cards: fewer columns until larger viewports */
-        @media (min-width: 1100px) {
+        @container (min-width: 1040px) {
           .places-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
         }
-        @media (min-width: 1920px) {
+        @container (min-width: 1400px) {
           .places-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
           }
@@ -663,9 +692,9 @@ export function PlacesListView({
       <div className="places-discover">
         <div className="places-list hl-public-width">
           <h1 className="places-discover__title">
-            {platformSettings?.siteName
+            {(viewTitle || platformSettings?.siteName)
               ? t("public.explore.siteTitle", {
-                  name: platformSettings.siteName,
+                  name: viewTitle || platformSettings?.siteName,
                   defaultValue: "{{name}} felfedezése",
                 })
               : t("public.explore.title")}
@@ -704,10 +733,12 @@ export function PlacesListView({
               title={
                 section === "services"
                   ? t("public.noServices")
-                  : t("public.noPlacesFound")
+                  : section === "events"
+                    ? t("public.noEvents")
+                    : t("public.noPlacesFound")
               }
               description={
-                section === "services"
+                section === "services" || section === "events"
                   ? undefined
                   : t("public.emptyResultsDefaultHint")
               }

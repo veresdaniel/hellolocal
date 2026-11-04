@@ -137,11 +137,23 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       const parentBox = parent.getBoundingClientRect();
       const width = isMobile ? Math.max(280, parentBox.width - 16) : dock.offsetWidth || 360;
       const height = dock.offsetHeight || 56;
+      const barHeight = dock.querySelector<HTMLElement>(".map-dock__bar")?.offsetHeight || height;
+      const toggle = parent.querySelector<HTMLElement>("[data-map-list-toggle]");
+      const toggleBox = !isMobile && toggle ? toggle.getBoundingClientRect() : null;
+      const besideToggle =
+        toggleBox && toggleBox.width > 0
+          ? {
+              left: toggleBox.left - parentBox.left - width - 8,
+              top: toggleBox.top - parentBox.top + (toggleBox.height - barHeight) / 2,
+            }
+          : null;
       const fallback = isMobile
         ? { left: 8, top: Math.max(8, parentBox.height - height - 8) }
-        : { left: Math.max(8, parentBox.width - width - 16), top: 64 };
+        : (besideToggle ?? { left: Math.max(8, parentBox.width - width - 16), top: 16 });
       setPos((current) => {
-        const base = crossed || !current ? readPosition(isMobile) ?? fallback : current;
+        const saved = readPosition(isMobile);
+        // A saved drag stays put. The default row is recomputed so it keeps sitting beside the list button.
+        const base = saved && !crossed && current ? current : (saved ?? fallback);
         const clamped = clampPosition(base, parentBox.width, parentBox.height, width, height);
         // Mobile: full-width dock — keep left edge fixed, allow vertical offset only.
         return isMobile ? { left: 8, top: clamped.top } : clamped;
@@ -320,7 +332,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
           aria-pressed={panel === "filters"}
           onClick={() => open("filters")}
         >
-          {t("public.filtersTitle")}
+          <span className="map-dock__tab-label">{t("public.filtersTitle")}</span>
           {filterCount > 0 && <span className="map-dock__count">{filterCount}</span>}
         </button>
         <button
@@ -329,7 +341,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
           aria-pressed={panel === "events"}
           onClick={() => open("events")}
         >
-          {t("public.events")}
+          <span className="map-dock__tab-label">{t("public.events")}</span>
           {events.length > 0 && <span className="map-dock__count">{events.length}</span>}
         </button>
         <button
@@ -338,7 +350,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
           aria-pressed={panel === "services"}
           onClick={() => open("services")}
         >
-          {t("public.servicesTab")}
+          <span className="map-dock__tab-label">{t("public.servicesTab")}</span>
           {services.length > 0 && <span className="map-dock__count">{services.length}</span>}
         </button>
       </div>

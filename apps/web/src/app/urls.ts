@@ -1,7 +1,7 @@
 // src/app/urls.ts
 import { HAS_MULTIPLE_SITES } from "./config";
 import type { Lang } from "./config";
-import { placeEntityPath, regionListSegment, townEntityPath } from "./entityPaths";
+import { mapViewSegment, placeEntityPath, regionListSegment, townEntityPath } from "./entityPaths";
 import { getHostScope } from "./hostScope";
 import { getPlatformOrigin, platformHostMatches } from "./platformOrigin";
 
@@ -115,7 +115,12 @@ export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
     const sameRegion = !siteKey || siteKey === scope.siteSlug;
     if (!sameRegion && siteKey) return platformAbsolute(lang, siteKey, clean);
     let tail = clean;
-    if (scope.kind === "town" && tail === townEntityPath(lang, scope.entitySlug)) tail = "";
+    if (scope.kind === "town") {
+      const slug = scope.entitySlug;
+      const mapWord = mapViewSegment(lang);
+      if (tail === slug) tail = "";
+      else if (tail === `${slug}/${mapWord}`) tail = mapWord;
+    }
     if (scope.kind === "place" && tail === placeEntityPath(lang, scope.entitySlug)) tail = "";
     if (scope.kind === "event" && tail === `event/${scope.entitySlug}`) tail = "";
     return tail ? `/${lang}/${tail}` : `/${lang}`;

@@ -60,20 +60,24 @@ const envFilePath = configEnvFilePath();
       isGlobal: true,
       ...(envFilePath ? { envFilePath } : {}),
     }),
-    ThrottlerModule.forRoot([
-      {
-        name: "default",
-        ttl: 60000,
-        // Per visitor, after trust proxy. A page load fires many calls.
-        limit: process.env.NODE_ENV === "production" ? 20000 : 10000,
-      },
-      {
-        name: "strict",
-        ttl: 60000,
-        // Auth routes set their own low strict limit. This one must not cap public traffic.
-        limit: process.env.NODE_ENV === "production" ? 20000 : 1000,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      // Local and staging stay unlimited. Login's 3/min limit was blocking development.
+      skipIf: () => process.env.NODE_ENV !== "production",
+      throttlers: [
+        {
+          name: "default",
+          ttl: 60000,
+          // Per visitor, after trust proxy. A page load fires many calls.
+          limit: process.env.NODE_ENV === "production" ? 20000 : 10000,
+        },
+        {
+          name: "strict",
+          ttl: 60000,
+          // Auth routes set their own low strict limit. This one must not cap public traffic.
+          limit: process.env.NODE_ENV === "production" ? 20000 : 1000,
+        },
+      ],
+    }),
     PrismaModule,
     SlugModule,
     AuthModule,

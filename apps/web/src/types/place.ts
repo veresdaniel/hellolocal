@@ -15,6 +15,7 @@ export type Place = {
 
   tenantSlug?: string | null; // tenantKey from API
   townSlug?: string | null;
+  townName?: string | null;
 
   category: PlaceCategory | null; // Localized category name
   categoryColor?: string | null; // Category color for card border

@@ -587,25 +587,25 @@ export function PlaceDetailPage() {
       >
         <article
           style={{
-            maxWidth: 960,
+            maxWidth: 1920,
             margin: "0 auto",
             paddingBottom: 64,
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {/* Hero Image with Category Badges - use default placeholder if no image */}
+          {/* Hero spans the viewport, and stops at 1920. */}
           {(sanitizeImageUrl(place.heroImage) ||
             sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage)) && (
             <div
               style={{
-                width: "calc(100% - 32px)",
-                maxWidth: "100%",
-                margin: "24px 16px 16px",
-                height: "clamp(250px, 50vw, 400px)",
-                borderRadius: 16,
+                width: "100%",
+                maxWidth: 1920,
+                margin: "0 auto 16px",
+                height: "clamp(220px, 36vw, 640px)",
+                borderRadius: 0,
                 overflow: "hidden",
-                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                boxShadow: "0 12px 24px -16px rgba(0, 0, 0, 0.35)",
                 position: "relative",
                 boxSizing: "border-box",
               }}
@@ -752,6 +752,7 @@ export function PlaceDetailPage() {
             </div>
           )}
 
+          <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
           {/* Title - directly below image with small offset */}
           <div style={{ margin: "0 16px 16px" }}>
             <h1
@@ -771,6 +772,110 @@ export function PlaceDetailPage() {
               {place.name}
             </h1>
           </div>
+
+          {/* Description comes right after the title. */}
+          {place.description && place.description.trim() && (
+            <div
+              ref={descriptionRef}
+              style={{
+                margin: "0 16px 24px",
+                background: "var(--hl-card)",
+                padding: "clamp(16px, 4vw, 32px)",
+                borderRadius: 16,
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                width: "calc(100% - 32px)",
+                maxWidth: "100%",
+                boxSizing: "border-box",
+              }}
+            >
+              <style>{`
+                  .description-content {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: var(--hl-muted);
+                  }
+                  .description-content p {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: var(--hl-muted);
+                    margin: 0 0 1.2em 0;
+                  }
+                  .description-content p:last-child {
+                    margin-bottom: 0;
+                  }
+                  .description-content h1,
+                  .description-content h2,
+                  .description-content h3,
+                  .description-content h4,
+                  .description-content h5,
+                  .description-content h6 {
+                    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    color: var(--hl-ink);
+                    margin-top: 1.5em;
+                    margin-bottom: 0.8em;
+                  }
+                  .description-content h1:first-child,
+                  .description-content h2:first-child,
+                  .description-content h3:first-child,
+                  .description-content h4:first-child,
+                  .description-content h5:first-child,
+                  .description-content h6:first-child {
+                    margin-top: 0;
+                  }
+                  .description-content ul,
+                  .description-content ol {
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: clamp(17px, 3.5vw, 19px);
+                    line-height: 1.8;
+                    color: var(--hl-muted);
+                    margin: 1.2em 0;
+                    padding-left: 1.5em;
+                  }
+                  .description-content li {
+                    margin: 0.6em 0;
+                  }
+                  .description-content a {
+                    color: var(--hl-accent);
+                    text-decoration: none;
+                    transition: color 0.2s;
+                  }
+                  .description-content a:hover {
+                    color: var(--hl-navy);
+                    text-decoration: underline;
+                  }
+                  .description-content strong,
+                  .description-content b {
+                    font-weight: 600;
+                    color: var(--hl-ink);
+                  }
+                  .description-content em,
+                  .description-content i {
+                    font-style: italic;
+                  }
+                  .description-content blockquote {
+                    border-left: 4px solid #c45c26;
+                    padding-left: 1.5em;
+                    margin: 1.5em 0;
+                    font-style: italic;
+                    color: var(--hl-muted, #665d78);
+                  }
+                `}</style>
+              <div className="description-content">
+                <ShortcodeRenderer
+                  content={place.description}
+                  lang={lang!}
+                  siteKey={siteKey!}
+                  hideGalleries={
+                    !place.openingHours?.length &&
+                    galleryIds.length > 0 &&
+                    Object.keys(galleries).length > 0
+                  }
+                />
+              </div>
+            </div>
+          )}
 
           {/* Rating Section with Share Icons in frame */}
           <div style={{ margin: "0 16px 24px" }}>
@@ -1519,111 +1624,9 @@ export function PlaceDetailPage() {
             );
           })()}
 
-          {/* Description and Floorplan section */}
+          {/* Floorplan stays after the hours, when the place has a description. */}
           {place.description && place.description.trim() && (
             <>
-              {/* Description - Full width */}
-              <div
-                ref={descriptionRef}
-                style={{
-                  margin: "0 16px 32px",
-                  background: "var(--hl-card)",
-                  padding: "clamp(16px, 4vw, 32px)",
-                  borderRadius: 16,
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-                  width: "calc(100% - 32px)",
-                  maxWidth: "100%",
-                  boxSizing: "border-box",
-                }}
-              >
-                <style>{`
-                  .description-content {
-                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    font-size: clamp(17px, 3.5vw, 19px);
-                    line-height: 1.8;
-                    color: var(--hl-muted);
-                  }
-                  .description-content p {
-                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    font-size: clamp(17px, 3.5vw, 19px);
-                    line-height: 1.8;
-                    color: var(--hl-muted);
-                    margin: 0 0 1.2em 0;
-                  }
-                  .description-content p:last-child {
-                    margin-bottom: 0;
-                  }
-                  .description-content h1,
-                  .description-content h2,
-                  .description-content h3,
-                  .description-content h4,
-                  .description-content h5,
-                  .description-content h6 {
-                    font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    color: var(--hl-ink);
-                    margin-top: 1.5em;
-                    margin-bottom: 0.8em;
-                  }
-                  .description-content h1:first-child,
-                  .description-content h2:first-child,
-                  .description-content h3:first-child,
-                  .description-content h4:first-child,
-                  .description-content h5:first-child,
-                  .description-content h6:first-child {
-                    margin-top: 0;
-                  }
-                  .description-content ul,
-                  .description-content ol {
-                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    font-size: clamp(17px, 3.5vw, 19px);
-                    line-height: 1.8;
-                    color: var(--hl-muted);
-                    margin: 1.2em 0;
-                    padding-left: 1.5em;
-                  }
-                  .description-content li {
-                    margin: 0.6em 0;
-                  }
-                  .description-content a {
-                    color: var(--hl-accent);
-                    text-decoration: none;
-                    transition: color 0.2s;
-                  }
-                  .description-content a:hover {
-                    color: var(--hl-navy);
-                    text-decoration: underline;
-                  }
-                  .description-content strong,
-                  .description-content b {
-                    font-weight: 600;
-                    color: var(--hl-ink);
-                  }
-                  .description-content em,
-                  .description-content i {
-                    font-style: italic;
-                  }
-                  .description-content blockquote {
-                    border-left: 4px solid #c45c26;
-                    padding-left: 1.5em;
-                    margin: 1.5em 0;
-                    font-style: italic;
-                    color: var(--hl-muted, #665d78);
-                  }
-                `}</style>
-                <div className="description-content">
-                  <ShortcodeRenderer
-                    content={place.description}
-                    lang={lang!}
-                    siteKey={siteKey!}
-                    hideGalleries={
-                      // Hide galleries in description if they're shown in opening hours position
-                      !place.openingHours?.length &&
-                      galleryIds.length > 0 &&
-                      Object.keys(galleries).length > 0
-                    }
-                  />
-                </div>
-              </div>
 
               {/* Floorplan - Full width, below description */}
               {floorplans &&
@@ -2406,7 +2409,11 @@ export function PlaceDetailPage() {
             }}
           >
             <Link
-              to={buildUrl({ lang: lang as Lang, siteKey, path: "" })}
+              to={buildUrl({
+                lang: lang as Lang,
+                siteKey,
+                path: place.townSlug ? townEntityPath(lang as Lang, place.townSlug, "list") : "",
+              })}
               className="hl-page-link"
               style={{
                 display: "inline-flex",
@@ -2420,6 +2427,7 @@ export function PlaceDetailPage() {
             >
               ← {t("public.backToList")}
             </Link>
+          </div>
           </div>
         </article>
       </div>

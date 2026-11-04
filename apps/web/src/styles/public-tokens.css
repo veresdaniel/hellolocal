@@ -51,8 +51,8 @@
   --navy: var(--hl-navy);
   --blue: var(--hl-blue);
   --mist: var(--hl-mist);
-  /* Horizontal inset shared by list cards + footer content */
-  --hl-public-pad-x: 16px;
+  /* Horizontal inset shared by list cards + footer. Grows with the viewport. */
+  --hl-public-pad-x: clamp(16px, 1.8vw, 28px);
 }
 
 .hl-public {
@@ -69,36 +69,222 @@
   color: var(--hl-on-dark-strong);
 }
 
-/* Shared public content column — same horizontal bounds as the places card grid. */
+/* Shared public content column. Fills the viewport up to a wide cap,
+   so laptops are not stuck on the old 960px step. */
 .hl-public-width {
   width: 100%;
-  max-width: 960px;
+  max-width: 1760px;
   margin-left: auto;
   margin-right: auto;
-}
-
-@media (min-width: 1280px) {
-  .hl-public-width {
-    max-width: 1200px;
-  }
-}
-
-@media (min-width: 1536px) {
-  .hl-public-width {
-    max-width: 1480px;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hl-public-width {
-    max-width: 1760px;
-  }
 }
 
 /* Outer horizontal inset that pairs with .hl-public-width (matches .places-discover). */
 .hl-public-pad-x {
   padding-left: var(--hl-public-pad-x);
   padding-right: var(--hl-public-pad-x);
+}
+
+/* Full public footer. Brand stays a readable measure; the two link
+   groups share a top edge and sit on the right from 860px up. On
+   narrow screens they are two equal columns, never a leftover third. */
+.hl-footer {
+  margin-top: auto;
+  background: #1b1730;
+  color: #fff;
+}
+
+.hl-footer__pad {
+  padding-top: clamp(36px, 4vw, 52px);
+  padding-bottom: 20px;
+}
+
+.hl-footer--overview .hl-public-width {
+  max-width: 1120px;
+}
+
+.hl-footer__grid {
+  display: grid;
+  gap: 28px 40px;
+  align-items: start;
+}
+
+.hl-footer__brand h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.hl-footer__brand img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  display: block;
+}
+
+.hl-footer__brand p {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--hl-muted-on-dark);
+}
+
+.hl-footer__nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 28px;
+}
+
+.hl-footer__nav h4 {
+  margin: 0 0 12px;
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hl-muted-on-dark);
+}
+
+.hl-footer__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hl-footer .hl-footer__nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.hl-footer .hl-footer__nav a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hl-footer__bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-top: 4px;
+  padding: 16px 0 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--hl-muted-on-dark);
+}
+
+@media (min-width: 860px) {
+  .hl-footer__grid {
+    grid-template-columns: minmax(240px, max-content) minmax(0, 1fr);
+    column-gap: 64px;
+  }
+
+  .hl-footer__brand {
+    max-width: 420px;
+  }
+
+  .hl-footer__nav {
+    grid-template-columns: max-content max-content;
+    justify-content: end;
+    align-content: start;
+    gap: 12px 64px;
+    padding-top: 2px;
+  }
+}
+
+/* Place and event header trail. Parents are links; the current page is not. */
+.hl-crumb {
+  min-width: 0;
+  max-width: min(46vw, 640px);
+}
+
+.hl-crumb ol {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.hl-crumb li {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.hl-crumb li:last-child {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.hl-public .hl-crumb a,
+.hl-crumb a {
+  color: rgba(255, 253, 249, 0.7);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hl-public .hl-crumb a:hover,
+.hl-crumb a:hover {
+  color: #fffdf9;
+}
+
+.hl-crumb [aria-current="page"] {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fffdf9;
+  font-weight: 650;
+  cursor: default;
+}
+
+.hl-crumb__sep {
+  width: 12px;
+  height: 12px;
+  margin: 0 7px;
+  flex: none;
+  color: rgba(255, 253, 249, 0.4);
+}
+
+@media (max-width: 767px) {
+  .hl-crumb {
+    max-width: min(54vw, 230px);
+  }
+
+  .hl-crumb ol {
+    font-size: 15px;
+  }
+
+  .hl-crumb a {
+    max-width: 14ch;
+  }
 }
 
 /* Page-level discover title on navy backdrop. */

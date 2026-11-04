@@ -24,7 +24,9 @@ const RESERVED = new Set([
   "impressum",
   "agb",
   "datenschutz",
+  "attekintes",
   "overview",
+  "ueberblick",
 ]);
 
 export function PublicPricingPage() {

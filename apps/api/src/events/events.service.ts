@@ -307,7 +307,13 @@ export class EventsService {
         place: {
           include: {
             translations: true,
-            town: { select: { gaMeasurementId: true } },
+            town: {
+              select: {
+                id: true,
+                gaMeasurementId: true,
+                translations: { select: { lang: true, name: true } },
+              },
+            },
           },
         },
         category: {
@@ -405,6 +411,26 @@ export class EventsService {
       placeName = placeTranslation?.name ?? null;
     }
 
+    let townSlug: string | null = null;
+    let townName: string | null = null;
+    if (event.place?.town?.id) {
+      townSlug =
+        (
+          await this.prisma.slug.findFirst({
+            where: {
+              siteId: site.siteId,
+              lang: site.lang,
+              entityType: SlugEntityType.town,
+              entityId: event.place.town.id,
+              isPrimary: true,
+              isActive: true,
+            },
+            select: { slug: true },
+          })
+        )?.slug ?? null;
+      townName = getTranslation(event.place.town.translations, "name");
+    }
+
     return {
       id: event.id,
       slug: canonicalSlug,
@@ -420,6 +446,8 @@ export class EventsService {
       placeId: event.placeId,
       placeSlug,
       placeName,
+      townSlug,
+      townName,
       startDate: event.startDate.toISOString(),
       endDate: event.endDate?.toISOString() ?? null,
       isPinned: event.isPinned,

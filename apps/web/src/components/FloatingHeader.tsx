@@ -1,9 +1,10 @@
 // src/components/FloatingHeader.tsx
 import { useState, useEffect, useContext, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../app/urls";
-import { legalSegment, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
+import { isOverviewPathSegment, legalSegment, mapViewSegment, overviewSegment, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
@@ -21,6 +22,8 @@ import { openSiteExplore } from "../utils/siteLanding";
 import { BREAKPOINTS } from "../utils/viewport";
 import { USER_KEY } from "../constants/authStorage";
 import { rememberAuthReturn } from "../auth/visitorAuth";
+import { useViewHeading } from "../app/viewTitle";
+import { HeaderCrumb } from "./HeaderCrumb";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
@@ -65,7 +68,9 @@ export function FloatingHeader({
     location.pathname === `/${lang}` || location.pathname === `/${lang}/`;
   // /:lang is the sales overview only on a platform host. A region domain uses it for the map and the list.
   const onPlatform = hostScope.status === "ready" && hostScope.kind === "platform";
-  const isOverview = location.pathname.includes("/overview") || (isLangLanding && onPlatform);
+  const isOverview =
+    location.pathname.split("/").some((part) => isOverviewPathSegment(part)) ||
+    (isLangLanding && onPlatform);
   const scrollToDemo = () => {
     setIsMobileMenuOpen(false);
     window.requestAnimationFrame(() => {
@@ -86,26 +91,35 @@ export function FloatingHeader({
     setIsMobileMenuOpen(false);
     openSiteExplore(mode);
     const slug =
-      mode === "map" ? mapTownSlug?.trim() || townSlugFromPath(location.pathname) : null;
-    const homePath = buildUrl({
+      mapTownSlug?.trim() ||
+      townSlugFromPath(location.pathname, hostScope.status === "ready" ? hostScope : undefined);
+    const nextPath = buildUrl({
       lang,
       siteKey: siteKey || DEFAULT_SITE_SLUG,
-      path: slug ? townEntityPath(lang, slug) : "",
+      path: slug ? townEntityPath(lang, slug, mode) : mode === "map" ? mapViewSegment(lang) : "",
     });
-    if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
-      navigate(homePath);
+    if (location.pathname !== nextPath && location.pathname !== `${nextPath}/`) {
+      navigate(nextPath);
     }
   };
   const menuButton = (primary: boolean, wide: boolean): CSSProperties => ({
     flex: wide ? 1 : undefined,
     minHeight: wide ? 52 : 44,
     padding: wide ? "12px 16px" : "0 18px",
-    border: primary
-      ? "1px solid #fffdf9"
-      : "1px solid rgba(242, 244, 251, 0.28)",
+    border: wide
+      ? "1px solid rgba(27, 23, 48, 0.18)"
+      : primary
+        ? "1px solid #fffdf9"
+        : "1px solid rgba(242, 244, 251, 0.28)",
     borderRadius: 999,
-    background: primary ? "#fffdf9" : "rgba(242, 244, 251, 0.08)",
-    color: primary ? "#1b1730" : "#f2f4fb",
+    background: wide
+      ? primary
+        ? "#1b1730"
+        : "transparent"
+      : primary
+        ? "#fffdf9"
+        : "rgba(242, 244, 251, 0.08)",
+    color: wide ? (primary ? "#fffdf9" : "#1b1730") : primary ? "#1b1730" : "#f2f4fb",
     fontWeight: 700,
     fontSize: wide ? 16 : 15,
     letterSpacing: "-0.01em",
@@ -144,7 +158,7 @@ export function FloatingHeader({
   // If context is not available (e.g., on TenantsListPage), use undefined
   const platformSettings = usePlatformSettingsContextOptional();
 
-  const siteName = platformSettings?.site.name || t("common.siteName", { defaultValue: "" });
+  const { title: siteName, crumbs } = useViewHeading();
   const brandBadgeIcon = platformSettings?.placeholders.avatar;
   const [logoError, setLogoError] = useState(false);
 
@@ -332,82 +346,93 @@ export function FloatingHeader({
               display: "flex",
               alignItems: "center",
               gap: 16,
-              flexShrink: 0,
+              flexShrink: 1,
+              minWidth: 0,
               paddingLeft: isMobile ? 16 : 24,
               boxSizing: "border-box",
             }}
           >
-            <Link
-              to={buildUrl({ lang, siteKey: siteKey || undefined, path: "" })}
-              aria-label={siteName || t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"}
-              style={{
-                textDecoration: "none",
-                color: "#fffdf9",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                fontSize: 20,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                fontFamily:
-                  "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                lineHeight: 1,
-                margin: 0,
-                padding: 0,
-              }}
-            >
-              {brandBadgeIcon && !logoError && (
-                <img
-                  src={brandBadgeIcon}
-                  alt=""
-                  style={{
-                    height: 32,
-                    width: "auto",
-                    objectFit: "contain",
-                    borderRadius: 4,
-                    display: "block",
-                    verticalAlign: "middle",
-                    flexShrink: 0,
-                  }}
-                  onError={(e) => {
-                    console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
-                    setLogoError(true);
-                    e.currentTarget.style.display = "none";
-                  }}
-                  onLoad={() => {
-                    setLogoError(false);
-                  }}
-                />
-              )}
-              {/* On list discovery the site name lives in the page title; keep logo or product brand only. */}
-              {(!isListDiscover || !brandBadgeIcon || logoError) && (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    lineHeight: 1,
-                    maxWidth: isMobile ? "min(58vw, 220px)" : "none",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+            {(brandBadgeIcon && !logoError) || !crumbs ? (
+              <Link
+                to={buildUrl({ lang, siteKey: siteKey || undefined, path: "" })}
+                aria-label={
+                  crumbs
+                    ? platformSettings?.site.name ||
+                      t("common.siteName", { defaultValue: "HelloLocal" }) ||
+                      "HelloLocal"
+                    : siteName || t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"
+                }
+                style={{
+                  textDecoration: "none",
+                  color: "#fffdf9",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: 20,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  fontFamily:
+                    "'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  lineHeight: 1,
+                  margin: 0,
+                  padding: 0,
+                  flexShrink: 0,
+                }}
+              >
+                {brandBadgeIcon && !logoError && (
+                  <img
+                    src={brandBadgeIcon}
+                    alt=""
+                    style={{
+                      height: 32,
+                      width: "auto",
+                      objectFit: "contain",
+                      borderRadius: 4,
+                      display: "block",
+                      verticalAlign: "middle",
+                      flexShrink: 0,
+                    }}
+                    onError={(e) => {
+                      console.warn("[FloatingHeader] Failed to load brandBadgeIcon:", brandBadgeIcon);
+                      setLogoError(true);
+                      e.currentTarget.style.display = "none";
+                    }}
+                    onLoad={() => {
+                      setLogoError(false);
+                    }}
+                  />
+                )}
+                {/* On list discovery the site name lives in the page title; keep logo or product brand only. */}
+                {!crumbs && (!isListDiscover || !brandBadgeIcon || logoError) && (
                   <span
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      lineHeight: 1,
+                      maxWidth: isMobile ? "min(58vw, 220px)" : "min(42vw, 560px)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {isListDiscover
-                      ? t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"
-                      : siteName ||
-                        t("common.siteName", { defaultValue: "HelloLocal" }) ||
-                        "HelloLocal"}
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {isListDiscover
+                        ? t("common.siteName", { defaultValue: "HelloLocal" }) || "HelloLocal"
+                        : siteName ||
+                          t("common.siteName", { defaultValue: "HelloLocal" }) ||
+                          "HelloLocal"}
+                    </span>
                   </span>
-                </span>
-              )}
-            </Link>
+                )}
+              </Link>
+            ) : null}
+            {crumbs && crumbs.length > 0 ? <HeaderCrumb crumbs={crumbs} /> : null}
           </div>
 
           {/* Desktop Navigation */}
@@ -611,7 +636,7 @@ export function FloatingHeader({
 
             {!location.pathname.includes("/admin") && !isOverview && (
               <Link
-                to={buildUrl({ lang, path: "overview" })}
+                to={buildUrl({ lang, path: overviewSegment(lang) })}
                 style={{
                   background: "rgba(242, 244, 251, 0.08)",
                   border: "1px solid rgba(242, 244, 251, 0.28)",
@@ -665,11 +690,16 @@ export function FloatingHeader({
                       onMapViewClick();
                       return;
                     }
-                    const slug = mapTownSlug?.trim() || townSlugFromPath(location.pathname);
+                    const slug =
+                      mapTownSlug?.trim() ||
+                      townSlugFromPath(
+                        location.pathname,
+                        hostScope.status === "ready" ? hostScope : undefined
+                      );
                     const homePath = buildUrl({
                       lang,
                       siteKey: siteKey || undefined,
-                      path: slug ? townEntityPath(lang, slug) : "",
+                      path: slug ? townEntityPath(lang, slug, "map") : "",
                     });
                     if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
                       navigate(homePath);
@@ -876,8 +906,10 @@ export function FloatingHeader({
           )}
         </div>
 
-        {/* Mobile Menu Overlay - Full Screen */}
-        {isMobile && (
+        {/* Mobile menu is portaled: the header's transform and blur would trap a fixed layer inside the bar. */}
+        {isMobile &&
+          typeof document !== "undefined" &&
+          createPortal(
           <nav
             data-mobile-menu
             style={{
@@ -890,7 +922,7 @@ export function FloatingHeader({
               maxWidth: "100%",
               height: "100%",
               background: "#fffdf9",
-              zIndex: 10000,
+              zIndex: 12000,
               opacity: isMobileMenuOpen ? 1 : 0,
               visibility: isMobileMenuOpen ? "visible" : "hidden",
               transition: "opacity 0.3s ease, visibility 0.3s ease",
@@ -1001,7 +1033,7 @@ export function FloatingHeader({
                       setShowActivationModal(true);
                     }}
                     style={{
-                      margin: "20px 24px",
+                      margin: "12px 0",
                       background: "#1b1730",
                       border: "none",
                       borderRadius: 12,
@@ -1038,7 +1070,7 @@ export function FloatingHeader({
                     onClick={() => setIsMobileMenuOpen(false)}
                     style={{
                       textDecoration: "none",
-                      margin: "20px 24px",
+                      margin: "12px 0",
                       background: "#1b1730",
                       color: "white",
                       fontSize: 18,
@@ -1070,10 +1102,10 @@ export function FloatingHeader({
             )}
             {!location.pathname.includes("/admin") && !isOverview && (
               <Link
-                to={buildUrl({ lang, path: "overview" })}
+                to={buildUrl({ lang, path: overviewSegment(lang) })}
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{
-                  margin: "20px 24px 0",
+                  margin: "12px 0 0",
                   background: "rgba(242, 244, 251, 0.08)",
                   border: "1px solid rgba(27, 23, 48, 0.16)",
                   borderRadius: 12,
@@ -1122,18 +1154,23 @@ export function FloatingHeader({
                       onMapViewClick();
                       return;
                     }
-                    const slug = mapTownSlug?.trim() || townSlugFromPath(location.pathname);
+                    const slug =
+                      mapTownSlug?.trim() ||
+                      townSlugFromPath(
+                        location.pathname,
+                        hostScope.status === "ready" ? hostScope : undefined
+                      );
                     const homePath = buildUrl({
                       lang,
                       siteKey: siteKey || undefined,
-                      path: slug ? townEntityPath(lang, slug) : "",
+                      path: slug ? townEntityPath(lang, slug, "map") : "",
                     });
                     if (location.pathname !== homePath && location.pathname !== `${homePath}/`) {
                       navigate(homePath);
                     }
                   }}
                   style={{
-                    margin: "20px 24px",
+                    margin: "12px 0",
                     background: "rgba(196, 92, 38, 0.1)",
                     border: "1px solid rgba(196, 92, 38, 0.3)",
                     borderRadius: 12,
@@ -1371,7 +1408,7 @@ export function FloatingHeader({
               <>
                 <div
                   style={{
-                    margin: "12px 24px 0",
+                    margin: "12px 0 0",
                     padding: "20px 0 0",
                     borderTop: "1px solid rgba(0, 0, 0, 0.08)",
                     fontSize: 18,
@@ -1391,7 +1428,7 @@ export function FloatingHeader({
                     }
                   }}
                   style={{
-                    margin: "12px 24px 20px 24px",
+                    margin: "12px 0 0",
                     background: "transparent",
                     border: "1px solid rgba(27, 23, 48, 0.16)",
                     borderRadius: 12,
@@ -1422,7 +1459,8 @@ export function FloatingHeader({
                 </button>
               </>
             )}
-          </nav>
+          </nav>,
+          document.body
         )}
 
         {/* Activation Confirmation Modal */}

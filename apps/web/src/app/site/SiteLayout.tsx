@@ -1,6 +1,6 @@
 // src/app/site/SiteLayout.tsx
 import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
-import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment } from "../entityPaths";
+import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, overviewSegment } from "../entityPaths";
 import { canonicalHostPath, useHostScope } from "../hostScope";
 import { isPlatformHost } from "../urls";
 import { lazy, Suspense } from "react";
@@ -10,6 +10,7 @@ import { usePlatformSettings } from "./usePlatformSettings";
 import { PlatformSettingsProvider } from "../../context/PlatformSettingsContext";
 import { useFavicon } from "../../hooks/useFavicon";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { PublicPageSkeleton } from "../../components/PublicSkeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,9 @@ const LegalPage = lazy(() =>
 );
 const PublicPricingPage = lazy(() =>
   import("../../pages/PublicPricingPage").then((m) => ({ default: m.PublicPricingPage }))
+);
+const OverviewPage = lazy(() =>
+  import("../../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
 );
 
 
@@ -66,25 +70,41 @@ export function SiteLayout() {
     "pricing",
     "tarife",
     "preise",
-    "overview",
+    ...OVERVIEW_PATH_ALIASES,
     "collections",
     "hely",
     "place",
     "ort",
-    "telepules",
-    "town",
-    "gemeinde",
     "event",
   ];
+
+  const mapWord = mapViewSegment(lang);
+  // A town domain keeps the map at /:lang/terkep. The directory is /:lang.
+  const viewOnTownHost =
+    scope.status === "ready" && scope.kind === "town" && siteKeyParam === mapWord;
+  // A region domain keeps the region map at /:lang/terkep.
+  const regionMap =
+    scope.status === "ready" && scope.kind === "site" && siteKeyParam === mapWord;
+
+  // On a region domain, /:lang/:town uses the town slug where a region slug would be.
+  const townOnRegionHost =
+    scope.status === "ready" &&
+    scope.kind === "site" &&
+    !!siteKeyParam &&
+    siteKeyParam !== scope.siteSlug &&
+    siteKeyParam !== mapWord &&
+    !RESERVED_PATHS.includes(siteKeyParam);
 
   // Determine siteKey - use DEFAULT_SITE_SLUG if siteKeyParam is a reserved path
   // For collections route, always use DEFAULT_SITE_SLUG (no siteKey in URL)
   const siteKey = HAS_MULTIPLE_SITES
     ? isCollectionsRoute
       ? DEFAULT_SITE_SLUG
-      : RESERVED_PATHS.includes(siteKeyParam || "")
-        ? hostSlug ?? DEFAULT_SITE_SLUG
-        : (siteKeyParam ?? hostSlug ?? DEFAULT_SITE_SLUG)
+      : viewOnTownHost || townOnRegionHost || regionMap
+        ? scope.siteSlug
+        : RESERVED_PATHS.includes(siteKeyParam || "")
+          ? hostSlug ?? DEFAULT_SITE_SLUG
+          : (siteKeyParam ?? hostSlug ?? DEFAULT_SITE_SLUG)
     : DEFAULT_SITE_SLUG;
 
   // Site-hez kötött platform settings / brand / instance betöltés (API-ból)
@@ -94,7 +114,11 @@ export function SiteLayout() {
   const customHost =
     typeof window !== "undefined" && !isPlatformHost(window.location.hostname);
   if (customHost && scope.status === "loading") {
-    return <LoadingSpinner isLoading={true} delay={0} />;
+    return (
+      <div className="hl-public" style={{ minHeight: "100vh" }}>
+        <PublicPageSkeleton withHero label={t("common.loading")} />
+      </div>
+    );
   }
   const shortPath = canonicalHostPath(location.pathname, scope);
   if (shortPath) {
@@ -103,9 +127,19 @@ export function SiteLayout() {
 
   // Reserved segments are public pages, not site slugs. Render them after hooks
   // so navigating onto one of these paths does not change the hook count.
-  if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam)) {
-    if (siteKeyParam === "overview") {
-      return <Navigate to={`/${lang}/overview`} replace />;
+  if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam) && !viewOnTownHost) {
+    if (isOverviewPathSegment(siteKeyParam)) {
+      const canonical = overviewSegment(lang);
+      if (siteKeyParam !== canonical) {
+        return <Navigate to={`/${lang}/${canonical}${location.search}${location.hash}`} replace />;
+      }
+      return (
+        <PlatformGaShell>
+          <Suspense fallback={<PublicPageSkeleton withHero label={t("common.loading")} />}>
+            <OverviewPage />
+          </Suspense>
+        </PlatformGaShell>
+      );
     }
     // Reserved paths are platform pages — use platform GA, not a site ID
     if (siteKeyParam === "pricing" || siteKeyParam === "preise" || siteKeyParam === "tarife") {
@@ -148,9 +182,12 @@ export function SiteLayout() {
     return <Navigate to={`/${lang}/${DEFAULT_SITE_SLUG}`} replace />;
   }
 
-  // Full screen spinner for loading
   if (isLoading) {
-    return <LoadingSpinner isLoading={true} delay={500} />;
+    return (
+      <div className="hl-public" style={{ minHeight: "100vh" }}>
+        <PublicPageSkeleton withHero label={t("common.loading")} />
+      </div>
+    );
   }
 
   // Hiba esetén (pl. rossz siteKey): 404 → NotFoundPage, egyéb → 500 state.
@@ -258,7 +295,7 @@ function SiteLayoutContent({
       {/* ide később jöhet Header, site alapján brandelt */}
       <div id="public-main" tabIndex={-1} style={{ flex: "1 0 auto" }}>
         <InsideSiteChrome.Provider value={true}>
-          <Suspense fallback={<LoadingSpinner isLoading={true} delay={200} />}>
+          <Suspense fallback={<PublicPageSkeleton withHero label={t("common.loading")} />}>
             <Outlet context={{ lang, siteKey, platform }} />
           </Suspense>
         </InsideSiteChrome.Provider>

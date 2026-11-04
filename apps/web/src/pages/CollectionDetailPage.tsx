@@ -55,7 +55,9 @@ export function CollectionDetailPage() {
     "pricing",
     "tarife",
     "preise",
+    "attekintes",
     "overview",
+    "ueberblick",
     "collections",
   ];
 
@@ -197,23 +199,16 @@ export function CollectionDetailPage() {
   return (
     <>
       <FloatingHeader visitorAuth hideMapViewButton={true} />
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "clamp(16px, 4vw, 24px)",
-          paddingTop: "clamp(72px, 8vw, 88px)",
-        }}
-      >
-        {/* Hero section */}
+      <div style={{ paddingTop: "clamp(72px, 8vw, 88px)" }}>
+        {/* Hero spans the viewport, and stops at 1920. */}
         {collection.heroImage && (
           <div
             style={{
               width: "100%",
-              height: "clamp(200px, 40vw, 400px)",
-              borderRadius: 12,
+              maxWidth: 1920,
+              margin: "0 auto 32px",
+              height: "clamp(220px, 36vw, 640px)",
               overflow: "hidden",
-              marginBottom: 32,
               backgroundImage: `url(${collection.heroImage})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
@@ -221,6 +216,13 @@ export function CollectionDetailPage() {
           />
         )}
 
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "0 clamp(16px, 4vw, 24px) clamp(16px, 4vw, 24px)",
+          }}
+        >
         {/* Title and description */}
         <div style={{ marginBottom: 32 }}>
           <h1
@@ -347,6 +349,7 @@ export function CollectionDetailPage() {
             <p>{t("public.collections.noItems")}</p>
           </div>
         )}
+        </div>
       </div>
     </>
   );

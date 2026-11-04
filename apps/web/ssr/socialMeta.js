@@ -12,6 +12,7 @@ const LOCALES = { hu: "hu_HU", en: "en_US", de: "de_DE" };
 const LANGS = ["hu", "en", "de"];
 const PLACE_SEGMENTS = new Set(["hely", "place", "ort"]);
 const TOWN_SEGMENTS = new Set(["telepules", "town", "gemeinde"]);
+const VIEW_SEGMENTS = new Set(["lista", "list", "liste", "terkep", "map", "karte"]);
 const REGION_LIST_SEGMENTS = new Set(["regiok", "teruletek", "regions", "regionen"]);
 const LEGAL_PAGE_BY_SEGMENT = {
   impresszum: "imprint",
@@ -25,8 +26,11 @@ const LEGAL_PAGE_BY_SEGMENT = {
   datenschutz: "privacy",
 };
 const PLACE_SEGMENT_BY_LANG = { hu: "hely", en: "place", de: "ort" };
+const OVERVIEW_SEGMENTS = new Set(["attekintes", "overview", "ueberblick"]);
 const RESERVED = new Set([
+  "attekintes",
   "overview",
+  "ueberblick",
   "pricing",
   "tarife",
   "preise",
@@ -49,6 +53,12 @@ const RESERVED = new Set([
   "telepules",
   "town",
   "gemeinde",
+  "lista",
+  "list",
+  "liste",
+  "terkep",
+  "map",
+  "karte",
   "event",
   "collections",
   "admin",
@@ -179,7 +189,7 @@ export function parsePublicPath(pathname) {
   if (parts.length === 1) return { kind: "sites", lang };
   const second = parts[1];
   if (second === "admin") return { kind: "admin", lang };
-  if (second === "overview") return { kind: "overview", lang };
+  if (OVERVIEW_SEGMENTS.has(second)) return { kind: "overview", lang };
   if (second === "pricing" || second === "tarife" || second === "preise") return { kind: "pricing", lang };
   if (LEGAL_PAGE_BY_SEGMENT[second]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[second] };
   if (REGION_LIST_SEGMENTS.has(second)) return { kind: "sites", lang };
@@ -200,7 +210,10 @@ export function parsePublicPath(pathname) {
   if (PLACE_SEGMENTS.has(route) && slug) return { kind: "place", lang, siteKey, slug };
   if (route === "event" && slug) return { kind: "event", lang, siteKey, slug };
   if (TOWN_SEGMENTS.has(route) && slug) return { kind: "town", lang, siteKey, slug };
-  if (route === "overview") return { kind: "overview", lang };
+  if (route && !RESERVED.has(route) && (!slug || VIEW_SEGMENTS.has(slug))) {
+    return { kind: "town", lang, siteKey, slug: route };
+  }
+  if (OVERVIEW_SEGMENTS.has(route)) return { kind: "overview", lang };
   if (route === "pricing" || route === "tarife" || route === "preise") return { kind: "pricing", lang };
   if (LEGAL_PAGE_BY_SEGMENT[route]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[route] };
   if (route === "products") return { kind: "products", lang, siteKey };
